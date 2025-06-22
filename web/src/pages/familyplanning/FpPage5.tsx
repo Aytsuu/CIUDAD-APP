@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form"
@@ -32,7 +30,7 @@ type FamilyPlanningMethod =
   | "Vasectomy"
 
 
-const methodLabels: Record<string,string> = {
+const methodLabels: Record<string, string> = {
   coc: "COC",
   "iud-interval": "IUD-Interval",
   "iud-postpartum": "IUD-Post Partum",
@@ -111,17 +109,21 @@ export default function FamilyPlanningForm5({
       selectedMethod: getSelectedMethodFromPage1(),
       clientSignature: formData?.acknowledgement?.clientSignature || "",
       clientSignatureDate: formData?.acknowledgement?.clientSignatureDate || new Date().toISOString().split("T")[0],
-      clientName: formData?.acknowledgement?.clientName || "",
+      clientName: formData?.acknowledgement?.clientName || "", // This will now be auto-populated
       guardianSignature: formData?.acknowledgement?.guardianSignature || "",
       guardianSignatureDate: formData?.acknowledgement?.guardianSignatureDate || new Date().toISOString().split("T")[0],
     },
   }
-
   const form = useForm({
     defaultValues,
     mode: "onChange",
     // resolver: zodResolver(page5Schema),
   })
+  useEffect(() => {
+    if (formData?.acknowledgement?.clientName) {
+      form.setValue("acknowledgement.clientName", formData.acknowledgement.clientName)
+    }
+  }, [formData?.acknowledgement?.clientName, form])
 
   const [clientSignature, setClientSignature] = useState<string>(formData?.acknowledgement?.clientSignature || "")
   const [guardianSignature, setGuardianSignature] = useState<string>(formData?.acknowledgement?.guardianSignature || "")
@@ -384,6 +386,7 @@ export default function FamilyPlanningForm5({
                           placeholder="Client's name"
                           className="border-b border-t-0 border-l-0 border-r-0 rounded-none px-2"
                           {...field}
+                          readOnly
                           onChange={(e) => {
                             field.onChange(e)
                             const updatedData = {

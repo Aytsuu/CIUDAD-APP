@@ -1,51 +1,75 @@
 import { api2 } from "@/api/api"
 
+// export const getFPRecordsList = async () => {
+//   try {
+//     const [fpResponse, patientResponse] = await Promise.all([
+//       api2.get("familyplanning/fp_record/"),
+//       api2.get("patientrecords/patient/")
+//     ]);
+
+//     const fpRecords = fpResponse.data;
+//     const patients = patientResponse.data;
+
+//     const transformedData = fpRecords.map((fp: any) => {
+//       // Find the corresponding patient data for the current FP record
+//       // Assumes patrec_id in fpRecord corresponds to pat_id in patient data
+//       const patient = patients.find((p: any) => p.pat_id === fp.patrec_id);
+
+//       const personal = patient?.personal_info;
+
+//       // Extract personal information, providing "N/A" or "Unknown" as fallbacks
+//       const fname = personal?.per_fname || "N/A";
+//       const lname = personal?.per_lname || "N/A";
+//       const dob = personal?.per_dob; // Date of birth for age calculation
+//       const sex = personal?.per_sex || "Unknown"; // Patient's sex
+
+//       return {
+//         fprecord_id: fp.fprecord_id,
+//         patient_name: `${lname}, ${fname}`, // Combine last name and first name for display
+//         patient_age: dob ? calculateAge(dob) : "N/A", // Calculate age from DOB
+//         client_type: patient?.pat_type || "Unknown", // Type of client (e.g., Resident, Non-Resident)
+//         method_used: "N/A", // Placeholder: Update this if method_used comes from fp record
+//         created_at: fp.created_at,
+//         sex: sex // Include sex in the transformed data
+//       };
+//     });
+
+//     return transformedData;
+//   } catch (err) {
+//     console.error("❌ Error fetching FP records list:", err);
+//     return [];
+//   }
+// };
+
 export const getFPRecordsList = async () => {
   try {
-    const [fpResponse, patientResponse] = await Promise.all([
-      api2.get("familyplanning/fp_record/"),
-      api2.get("patientrecords/patient/")
-    ]);
+    // Call the new comprehensive API endpoint
+    const response = await api2.get("familyplanning/overall-records/"); // This should match your new URL
+    const fpRecords = response.data;
 
-    const fpRecords = fpResponse.data;
-    const patients = patientResponse.data;
-
-    const transformedData = fpRecords.map((fp: any) => {
-      // Find the corresponding patient data for the current FP record
-      // Assumes patrec_id in fpRecord corresponds to pat_id in patient data
-      const patient = patients.find((p: any) => p.pat_id === fp.patrec_id);
-
-      const personal = patient?.personal_info;
-
-      // Extract personal information, providing "N/A" or "Unknown" as fallbacks
-      const fname = personal?.per_fname || "N/A";
-      const lname = personal?.per_lname || "N/A";
-      const dob = personal?.per_dob; // Date of birth for age calculation
-      const sex = personal?.per_sex || "Unknown"; // Patient's sex
+    // Transform data to match the FPRecord interface in OverallTable.tsx
+    const transformedData = fpRecords.map((record: any) => {
+      const personal = record.personal_info;
 
       return {
-        fprecord_id: fp.fprecord_id,
-        patient_name: `${lname}, ${fname}`, // Combine last name and first name for display
-        patient_age: dob ? calculateAge(dob) : "N/A", // Calculate age from DOB
-        client_type: patient?.pat_type || "Unknown", // Type of client (e.g., Resident, Non-Resident)
-        method_used: "N/A", // Placeholder: Update this if method_used comes from fp record
-        created_at: fp.created_at,
-        sex: sex // Include sex in the transformed data
+        fprecord_id: record.fprecord_id,
+        client_id: record.clientID || "N/A",
+        patient_name: personal ? `${personal.per_lname || ''}, ${personal.per_fname || ''}`.trim() : "N/A",
+        patient_age: personal ? personal.age : "N/A", // Age should now be calculated by the serializer
+        client_type: record.typeOfClient || "N/A",
+        method_used: record.methodUsed || "N/A", // Directly from the comprehensive record
+        created_at: record.created_at || "N/A",
+        updated_at: record.updated_at || "N/A",
+        sex: personal ? personal.per_sex || "Unknown" : "Unknown",
       };
     });
 
     return transformedData;
   } catch (err) {
-    console.error("❌ Error fetching FP records list:", err);
+    console.error("Error fetching FP records:", err);
     return [];
   }
 };
-
-/**
- * Calculates the age of a person based on their date of birth.
- * @param dob - Date of birth in string format (e.g., "YYYY-MM-DD").
- * @returns The age in years.
- */
 const calculateAge = (dob: string): number => {
   const birthDate = new Date(dob);
   const today = new Date();

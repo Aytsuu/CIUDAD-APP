@@ -1,9 +1,9 @@
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { toTitleCase } from "../case";
 
 export const addCommodity = async (commodityName: string) => {
     try {
-      const res = await api.post("inventory/commoditylist/", {
+      const res = await api2.post("inventory/commoditylist/", {
         com_name: toTitleCase(commodityName),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

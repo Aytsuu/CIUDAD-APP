@@ -189,20 +189,21 @@ export default function FamilyPlanningForm6({
     if (sigRef) setRecord((prev) => ({ ...prev, serviceProviderSignature: sigRef.toDataURL() }))
   }
 
-  const onConfirmSubmit = form.handleSubmit((data) => {
-    const complete = record.methodAccepted && record.nameOfServiceProvider
-    const finalRecords = complete ? [...records, record] : records
-    
-    const latestFollowUpDate = finalRecords.length > 0 
+const onConfirmSubmit = form.handleSubmit((data) => {
+  const complete = record.methodAccepted && record.nameOfServiceProvider
+  const finalRecords = complete ? [...records, record] : records
+  
+  const latestFollowUpDate = finalRecords.length > 0 
     ? finalRecords[finalRecords.length - 1].dateOfFollowUp 
     : "";
 
-    updateFormData({
-      serviceProvisionRecords: finalRecords,
-      pregnancyCheck: data.pregnancyCheck,
-      latestFollowUpDate: latestFollowUpDate
-    })
-    
+     updateFormData({
+    serviceProvisionRecords: finalRecords, // <-- Make sure this is correctly spelled
+    pregnancyCheck: data.pregnancyCheck,
+    latestFollowUpDate: latestFollowUpDate
+  })
+  
+  
     onSubmitFinal()
     navigate("/FamPlanning_table")
   })

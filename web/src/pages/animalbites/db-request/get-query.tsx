@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getAnimalbiteDetails, getAnimalBitePatientDetails, getAnimalbiteReferrals, getUniqueAnimalbitePatients, getPatientRecordsByPatId, getPatientRecordsByReferralId} from "../api/get-api" // Updated import
 import { getAllPatients, getPatientById, createPatient, updatePatient, deletePatient } from "../api/get-api"
 import { toast } from "sonner"
+import { submitAnimalBiteReferral } from "./postrequest"
 
 // // Existing hooks...
 

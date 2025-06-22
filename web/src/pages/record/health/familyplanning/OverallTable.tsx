@@ -70,38 +70,49 @@ export default function FamPlanningTable() {
 
   // Define the columns for the data table
   const columns: ColumnDef<FPRecord>[] = [
-    { accessorKey: "fprecord_id", header: "#" }, // Column for record ID
-    {
-      accessorKey: "patient_name",
-      header: "Patient",
-      cell: ({ row }) => {
-        const record = row.original
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{record.patient_name}</div>
-              <div className="text-sm text-darkGray">
-                {record.patient_age} years old • {record.sex} • {record.client_type} {/* Display sex here */}
-              </div>
-            </div>
+  { 
+    accessorKey: "fprecord_id", 
+    header: "Record ID",
+    cell: ({ row }) => `FP-${row.original.fprecord_id.toString().padStart(4, '0')}`
+  },
+  {
+    accessorKey: "patient_info",
+    header: "Patient",
+    cell: ({ row }) => {
+      const record = row.original;
+      return (
+        <div className="flex flex-col min-w-[200px]">
+          <div className="font-medium">
+            {record.patient_name || 'No name available'}
           </div>
-        )
-      },
+          <div className="text-sm text-gray-600">
+            {record.patient_age ? `${record.patient_age} years` : 'Age not available'} • 
+            {record.sex || 'Gender not available'} • 
+            {record.client_type || 'Type not available'}
+          </div>
+        </div>
+      );
     },
-    {
-      accessorKey: "method_used",
-      header: "Method Used",
-      cell: ({ row }) => (
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-          {row.original.method_used}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "created_at",
-      header: "Date Created",
-      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(), // Format date
-    },
+  },
+  {
+    accessorKey: "method_used",
+    header: "Method",
+    cell: ({ row }) => (
+      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+        {row.original.method_used || 'Not specified'}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "created_at",
+    header: "Date Created",
+    cell: ({ row }) => (
+      new Date(row.original.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    )},
     {
       accessorKey: "action",
       header: "Action",

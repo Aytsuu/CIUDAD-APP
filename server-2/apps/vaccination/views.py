@@ -19,6 +19,23 @@ from .utils import *
 class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
     queryset  =VaccinationRecord.objects.all()
+    
+    
+
+# class VaccineRecordView(generics.RetrieveUpdateAPIView):
+#     serializer_class = VaccinationRecordSerializer
+#     queryset  =VaccinationRecord.objects.all()
+#     lookup_field = 'vacrec_id'
+    
+#     def get_object(self):
+#         try:
+#             return super().get_object()
+#         except NotFound:
+#             return Response({"error": "Vaccination Record record not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    
+    
+    
    
    
 class VitalSignsView(generics.ListCreateAPIView):
@@ -33,10 +50,11 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
 # all Vaccination  Display  
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
-    
+
     def get_queryset(self):
         return Patient.objects.filter(
-        Q(patient_records__patrec_type__iexact='Vaccination'),
+            Q(patient_records__patrec_type__iexact='Vaccination'),
+            Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
         ).distinct()
 
 

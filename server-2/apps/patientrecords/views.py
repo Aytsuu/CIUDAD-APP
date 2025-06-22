@@ -22,16 +22,6 @@ def get_resident_profile_list(request):
 
     serializer = ResidentProfileListSerializer(residents, many=True)
     return Response(serializer.data)
- 
-
-# class TransientListView(generics.ListAPIView):
-#     serializer_class = TransientSerializer
-
-#     def get_queryset(self):
-#         return Transient.objects.filter(
-#             patients__isnull=True
-#         ).select_related('tradd_id').prefetch_related('tradd_id__sitio')
-
 
 
 class PatientView(generics.ListCreateAPIView):
@@ -94,6 +84,9 @@ class PatientView(generics.ListCreateAPIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
+                trans_id = transient_data.get('trans_id')
+                is_update = bool(trans_id)
+                
                 # Validate required transient fields
                 required_transient_fields = [
                     'tran_lname', 'tran_fname', 'tran_dob', 'tran_sex', 
@@ -133,56 +126,134 @@ class PatientView(generics.ListCreateAPIView):
                                 status=status.HTTP_400_BAD_REQUEST
                             )
                     
-                    transient_address = TransientAddress.objects.create(
-                        tradd_province=address_data['tradd_province'],
-                        tradd_city=address_data['tradd_city'],
-                        tradd_barangay=address_data['tradd_barangay'],
-                        tradd_street=address_data['tradd_street'],
-                        tradd_sitio=address_data.get('tradd_sitio', '')
+                    if is_update: # update if trans_id and tradd_id exist
+                        try:
+                            existing_transient = Transient.objects.get(trans_id=trans_id)
+                            if(existing_transient.tradd_id):
+                                transient_address = existing_transient.tradd_id
+                                transient_address.tradd_province = address_data['tradd_province']
+                                transient_address.tradd_city = address_data['tradd_city']
+                                transient_address.tradd_barangay = address_data['tradd_barangay']
+                                transient_address.tradd_street = address_data['tradd_street']
+                                transient_address.tradd_sitio = address_data.get('tradd_sitio', '')
+                                transient_address.save()
+                        except Transient.DoesNotExist:
+                            return Response(
+                                {'error': f'Transient with trans_id {trans_id} does not exist'},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                    else: # create new transient address
+                        transient_address = TransientAddress.objects.create(
+                            tradd_province=address_data['tradd_province'],
+                            tradd_city=address_data['tradd_city'],
+                            tradd_barangay=address_data['tradd_barangay'],
+                            tradd_street=address_data['tradd_street'],
+                            tradd_sitio=address_data.get('tradd_sitio', '')
+                        )
+                
+                if is_update:
+                    try:
+                        transient = Transient.objects.get(trans_id=trans_id)
+                        fields_to_check = [
+                            ('tran_lname', transient_data['tran_lname']),
+                            ('tran_fname', transient_data['tran_fname']),
+                            ('tran_mname', transient_data.get('tran_mname', '')),
+                            ('tran_suffix', transient_data.get('tran_suffix', '')),
+                            ('tran_dob', transient_data['tran_dob']),
+                            ('tran_sex', transient_data['tran_sex']),
+                            ('tran_contact', transient_data['tran_contact']),
+                            ('tran_status', transient_data['tran_status']),
+                            ('tran_ed_attainment', transient_data['tran_ed_attainment']),
+                            ('tran_religion', transient_data['tran_religion']),
+                        ]
+
+                        has_changes = False
+                        for field_name, new_value in fields_to_check:
+                            current_value = getattr(transient, field_name)
+                            if current_value != new_value:
+                                has_changes = True
+                                setattr(transient, field_name, new_value)
+                        
+                        # check if address has changed
+                        if transient_address and transient.tradd_id != transient_address:
+                            transient.tradd_id = transient_address
+                            has_changes = True
+                        
+                        if has_changes:
+                            transient.save()
+                            print(f"Transient {trans_id} updated with changes.")
+                        else:
+                            print(f'No changes detected therefore no update for Transient {trans_id}');
+                    
+                    except Transient.DoesNotExist:
+                        return Response(
+                            {'error': f'Transient {trans_id} does not exist'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                else:
+                    # Generate unique trans_id
+                    year = datetime.now().year
+                    prefix = f'T{year}'
+                    
+                    existing_transients = Transient.objects.filter(
+                        trans_id__startswith=prefix
+                    ).values_list('trans_id', flat=True)
+                    
+                    existing_numbers = []
+                    for trans_id in existing_transients:
+                        try:
+                            number_part = trans_id[len(prefix):]
+                            existing_numbers.append(int(number_part))
+                        except (ValueError, IndexError):
+                            continue
+                    
+                    next_number = max(existing_numbers, default=0) + 1
+                    trans_id = f'{prefix}{str(next_number).zfill(4)}'
+                    
+                    # Create Transient record
+                    transient = Transient.objects.create(
+                        trans_id=trans_id,
+                        tran_lname=transient_data['tran_lname'],
+                        tran_fname=transient_data['tran_fname'],
+                        tran_mname=transient_data.get('tran_mname', ''),
+                        tran_suffix=transient_data.get('tran_suffix', ''),
+                        tran_dob=transient_data['tran_dob'],
+                        tran_sex=transient_data['tran_sex'],
+                        tran_status=transient_data['tran_status'],
+                        tran_ed_attainment=transient_data['tran_ed_attainment'],
+                        tran_religion=transient_data['tran_religion'],
+                        tran_contact=transient_data['tran_contact'],
+                        tradd_id=transient_address
                     )
                 
-                # Generate unique trans_id
-                year = datetime.now().year
-                prefix = f'T{year}'
-                
-                existing_transients = Transient.objects.filter(
-                    trans_id__startswith=prefix
-                ).values_list('trans_id', flat=True)
-                
-                existing_numbers = []
-                for trans_id in existing_transients:
+                if is_update:
                     try:
-                        number_part = trans_id[len(prefix):]
-                        existing_numbers.append(int(number_part))
-                    except (ValueError, IndexError):
-                        continue
-                
-                next_number = max(existing_numbers, default=0) + 1
-                trans_id = f'{prefix}{str(next_number).zfill(4)}'
-                
-                # Create Transient record
-                transient = Transient.objects.create(
-                    trans_id=trans_id,
-                    tran_lname=transient_data['tran_lname'],
-                    tran_fname=transient_data['tran_fname'],
-                    tran_mname=transient_data.get('tran_mname', ''),
-                    tran_suffix=transient_data.get('tran_suffix', ''),
-                    tran_dob=transient_data['tran_dob'],
-                    tran_sex=transient_data['tran_sex'],
-                    tran_status=transient_data['tran_status'],
-                    tran_ed_attainment=transient_data['tran_ed_attainment'],
-                    tran_religion=transient_data['tran_religion'],
-                    tran_contact=transient_data['tran_contact'],
-                    tradd_id=transient_address
-                )
-                
-                # Create transient patient
-                patient_data = {
-                    'pat_type': pat_type,
-                    'trans_id': transient,
-                    'pat_status': 'Active'
-                }
-                patient = Patient.objects.create(**patient_data)
+                        patient = Patient.objects.get(trans_id=transient)
+                        print(f'Found existing patient: {patient.pat_id} for transient: {trans_id}')
+                        # if patient.pat_status != "Active":
+                        #     patient.pat_status = "Active"
+                        #     patient.save()
+                    
+                    except Patient.DoesNotExist:
+                        patient_data = {
+                            'pat_type': pat_type,
+                            'trans_id': transient,
+                            'pat_status': 'Active'
+                        }
+                        patient = Patient.objects.create(**patient_data)
+                        print(f'Created new patient: {patient.pat_id} for transient')
+                        
+                        return Response (
+                            { 'error': f'Patient record not found for transient {trans_id}' },
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                else: # Create transient patient
+                    patient_data = {
+                        'pat_type': pat_type,
+                        'trans_id': transient,
+                        'pat_status': 'Active'
+                    }
+                    patient = Patient.objects.create(**patient_data)
                 
             serializer = self.get_serializer(patient)
             print(f"Patient created successfully: {patient.pat_id}")
@@ -513,4 +584,5 @@ class GetPendingFollowUpVisits(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+  
   

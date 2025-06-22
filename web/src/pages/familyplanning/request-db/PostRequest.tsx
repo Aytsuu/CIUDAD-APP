@@ -16,7 +16,7 @@ export const fp_record = async (data: Record<string, any>) => {
     console.log("✅ Patient record created:", patientRecordRes.data);
     
     const pat_id = patientRecordRes.data.pat_id;
-
+    const patrec_id = patientRecordRes.data.patrec_id
     let per_id = data.per_id;
 
     if (!per_id) {
@@ -34,29 +34,8 @@ export const fp_record = async (data: Record<string, any>) => {
         throw new Error("Could not determine personal ID required for health record. Please ensure patient data includes per_id or patient fetch endpoint is correct.");
       }
     }
-    const philhealthNo = data.philhealthNo || "";
-    let hrd_res_data = null; 
-    try {
-        const hrd_data_to_send = {
-            hrd_blood_type: "",
-            hrd_philhealth_id: philhealthNo || "",
-            per: Number(per_id)
-        };
-
-        console.log("📌 Attempting to create HRD record:", hrd_data_to_send);
-        const hrdResponse = await api2.post("/health-profiling/healthrelateddetails", hrd_data_to_send);
-        hrd_res_data = hrdResponse.data;
-        console.log("✅ HRD record created/updated:", hrd_res_data);
-    } catch (hrdErr) {
-        if (axios.isAxiosError(hrdErr)) {
-            console.error("❌ HRD Record API Error:", hrdErr.response?.data || hrdErr.message);
-            // Re-throw if HRD creation is critical for the FP record, or handle gracefully
-            throw new Error(`HRD Record API Error: ${hrdErr.response?.data?.detail || hrdErr.message}`);
-        } else {
-            console.error("❌ Unexpected HRD Error:", hrdErr);
-            throw hrdErr;
-        }
-    }
+    // const philhealthNo = data.philhealthNo || "";
+   
 
     // Step 2: Create FP Record with the patient record ID and linked HRD ID
     const requestData = {
@@ -65,10 +44,10 @@ export const fp_record = async (data: Record<string, any>) => {
       four_ps: data.pantawid_4ps || false,
       plan_more_children: data.planToHaveMoreChildren || false,
       avg_monthly_income: data.averageMonthlyIncome || "0",
-      patrec_id: patrec_id, // Link to the PatientRecord
+      patrec_id: patrec_id, 
       patrec: patrec_id,
       pat: pat_id,
-      hrd: hrd_res_data ? hrd_res_data.hrd_id : null,
+      hrd: data.hrd_res_data ? data.hrd_res_data.hrd_id : null,
       spouse: "", 
     };
 
@@ -80,7 +59,7 @@ export const fp_record = async (data: Record<string, any>) => {
       fprecord_id: res.data.fprecord_id,
       patrec_id: patrec_id,
       pat_id: pat_id,
-      hrd_id: hrd_res_data ? hrd_res_data.hrd_id : null // Return hrd_id if it was created/updated
+      // hrd_id: hrd_res_data ? hrd_res_data.hrd_id : null // Return hrd_id if it was created/updated
     };
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -175,14 +154,18 @@ export const risk_vaw = async (data: Record<string, any>, fpRecordId?: number) =
     throw err;
   }
 };
-export const fp_obstetrical = async (data: Record<string, any>, fpRecordId?: number) => {
+
+export const fp_obstetrical = async (data: Record<string, any>, patrec_id?: number, fpRecordId?: number) => {
   try {
     const recordId = fpRecordId || data.fprecord_id;
-    
-    const patientRecordRes = await api2.post("familyplanning/patient-record/", patientRecordData);
-    const patrec_id = patientRecordRes.data.patrec_id;
+    const patientRecordId = patrec_id || data.patrec_id; // Use the passed parameter first
+
     if (!recordId) {
       throw new Error("FP Record ID is required for creating Obstetrical History");
+    }
+
+    if (!patientRecordId) {
+      throw new Error("Patient Record ID (patrec_id) is required for creating Obstetrical History");
     }
 
     if (!data.obstetricalHistory) {
@@ -191,25 +174,23 @@ export const fp_obstetrical = async (data: Record<string, any>, fpRecordId?: num
     }
 
     const obs_main_requestData = {
-      obs_living_ch: data.obstetricalHistory.livingChildren, // Added comma
-      obs_abortion: data.obstetricalHistory.abortion,       // Added comma
-      obs_gravida: data.obstetricalHistory.g_pregnancies,   // Added comma
-      obs_para: data.obstetricalHistory.p_pregnancies,     // Added comma
-      obs_fullterm: data.obstetricalHistory.fullTerm,       // Added comma
-      obs_preterm: data.obstetricalHistory.premature,       // No comma needed after last item
-      patrec_id: data.patrec_id,
-      obs_ch_born_alive: "",
-      obs_lg_babies: "",
-      obs_record_from: "",
-      obs_still_birth: "",
+      obs_living_ch: data.obstetricalHistory.livingChildren || 0, 
+      obs_abortion: data.obstetricalHistory.abortion || 0,      
+      obs_gravida: data.obstetricalHistory.g_pregnancies || 0, 
+      obs_para: data.obstetricalHistory.p_pregnancies || 0,     
+      obs_fullterm: data.obstetricalHistory.fullTerm || 0,       
+      obs_preterm: data.obstetricalHistory.premature || 0,      
+      obs_ch_born_alive: 0,
+      obs_lg_babies: 0,
+      obs_record_from: 0,
+      obs_still_birth: 0,
+      patrec_id: patientRecordId, // Use the properly obtained patientRecordId
     };
-    const obs_res = await api2.post("/patientrecords/obstetrical_history/", obs_main_requestData);
 
     console.log("Sending patient records obstetrical history data:", obs_main_requestData);
+    const obs_res = await api2.post("/patientrecords/obstetrical_history/", obs_main_requestData);
     console.log("Patient records obstetrical history created successfully:", obs_res.data);
 
-
-    // --- First API Call: Create Family Planning Obstetrical History ---
     const fp_obstetrical_requestData = {
       fpob_last_delivery: data.obstetricalHistory?.lastDeliveryDate || null,
       fpob_type_last_delivery: data.obstetricalHistory?.typeOfLastDelivery || null,
@@ -225,14 +206,11 @@ export const fp_obstetrical = async (data: Record<string, any>, fpRecordId?: num
     console.log("Sending family planning obstetrical history data:", fp_obstetrical_requestData);
     const fp_obstetrical_res = await api2.post("familyplanning/obstetrical/", fp_obstetrical_requestData);
     console.log("Family planning obstetrical history created successfully:", fp_obstetrical_res.data);
-    const fpob_id = fp_obstetrical_res.data.fpob_id; // Store the ID if you need it
+    const fpob_id = fp_obstetrical_res.data.fpob_id;
 
-  
-    // --- Return Combined Results (Optional, but good practice if both calls are critical) ---
-    // You might want to return an object containing IDs or data from both successful calls
     return {
       fpob_id: fpob_id,
-      patient_obs_record: obs_res.data // Assuming this endpoint returns an object with an ID
+      patient_obs_record: obs_res.data
     };
 
   } catch (err) {
@@ -241,6 +219,7 @@ export const fp_obstetrical = async (data: Record<string, any>, fpRecordId?: num
   }
 };
 
+
 export const physical_exam = async (data: Record<string, any>, fpRecordId?: number) => {
   try {
     const recordId = fpRecordId || data.fprecord_id;
@@ -248,15 +227,61 @@ export const physical_exam = async (data: Record<string, any>, fpRecordId?: numb
     if (!recordId) {
       throw new Error("FP Record ID is required for creating Physical Exam");
     }
+
+    // Calculate BMI if weight and height are provided
+    const weight = parseFloat(data.weight);
+    const height = parseFloat(data.height);
+    let bmi = 0;
+    let bmi_category = "Unknown";
+
+    if (weight && height) {
+      // Calculate BMI (weight in kg / (height in m)^2)
+      const heightInMeters = height / 100;
+      bmi = weight / (heightInMeters * heightInMeters);
+      
+      // Round BMI to 2 decimal places and ensure it has no more than 5 digits total
+      bmi = parseFloat(bmi.toFixed(2));
+      
+      // If BMI has more than 5 digits (e.g., 123.45 has 5 digits), adjust it
+      const bmiString = bmi.toString();
+      if (bmiString.replace('.', '').length > 5) {
+        // If integer part is 3 digits or more, don't use decimals
+        if (bmi >= 100) {
+          bmi = Math.round(bmi);
+        } 
+        // If integer part is 2 digits, allow 1 decimal
+        else if (bmi >= 10) {
+          bmi = parseFloat(bmi.toFixed(1));
+        }
+        // Otherwise allow 2 decimals
+        else {
+          bmi = parseFloat(bmi.toFixed(2));
+        }
+      }
+      
+      // Determine BMI category
+      if (bmi < 18.5) {
+        bmi_category = "Underweight";
+      } else if (bmi >= 18.5 && bmi < 25) {
+        bmi_category = "Normal";
+      } else if (bmi >= 25 && bmi < 30) {
+        bmi_category = "Overweight";
+      } else {
+        bmi_category = "Obese";
+      }
+    }
+
     const requestBody = {
       weight: data.weight,
       height: data.height,
-      bmi: "",
-      age: "",
+      bmi: bmi,
+      bmi_category: bmi_category,
+      age: data.age || 0,
       category: "Family planning",
       pat_id: data.pat_id,
       created_at: new Date().toISOString(), 
     }
+
     const requestData = {
       skinExamination: data.skinExamination || "normal",
       conjunctivaExamination: data.conjunctivaExamination || "normal",
@@ -265,14 +290,16 @@ export const physical_exam = async (data: Record<string, any>, fpRecordId?: numb
       abdomenExamination: data.abdomenExamination || "normal",
       extremitiesExamination: data.extremitiesExamination || "normal",
       fprecord_id: recordId,
-      // bm_id: 1, // Assuming bm_id is a fixed or derived value
     };
 
+    console.log("Sending body measurements:", requestBody);
     console.log("Sending physical exam data:", requestData);
-    const res1 = await api2.post("patientrecords/body-measurements",requestBody)
+    
+    const res1 = await api2.post("patientrecords/body-measurements/", requestBody);
     const res = await api2.post("familyplanning/physical_exam/", requestData);
+    
     console.log("Physical exam created successfully:", res.data);
-    console.log("Weight and height created",res1.data)
+    console.log("Weight and height created", res1.data);
     return res.data.fp_pe_id;
   } catch (err) {
     console.error("Failed to create physical exam:", err);
@@ -344,70 +371,114 @@ export const acknowledgement = async (data: Record<string, any>, fprecord_id_arg
     throw err;
   }
 };
-
-export const assessment = async (data: Record<string, any>, fpRecordId?: number, patrec_id?: number, fpt_id?: number) => {
+export const assessment = async (
+  data: Record<string, any>,
+  patientRecordId?: number,
+  fpRecordId?: number,
+  fpTypeId?: number
+) => {
   try {
-    const familyPlanningRecordId = fpRecordId || data.fprecord_id;
-    const fptId = fpt_id || data.fpt_id;
-    if (!fptId) {
-      throw new Error("FP Type ID (fpt_id) is required for creating Assessment record.");
+    // Debug: Log all incoming data
+    console.log('Assessment function called with:', {
+      params: { patientRecordId, fpRecordId, fpTypeId },
+      formData: {
+        fpt_id: data.fpt_id,
+        fp_type_id: data.fp_type_id,
+        availableKeys: Object.keys(data)
+      },
+      serviceRecords: data.serviceProvisionRecords
+    });
+
+    const resolvedPatientId = patientRecordId || data.patrec_id || data.patient_record_id;
+    const resolvedFPRecordId = fpRecordId || data.fprecord_id || data.fp_record_id;
+    const resolvedFPTypeId = fpTypeId || data.fpt_id || data.fp_type_id || data.method?.type_id;
+
+    // Validate required fields with detailed errors
+    // if (!resolvedFPTypeId) {
+    //   throw new Error(`Missing FP Type ID. Available data: ${JSON.stringify({
+    //     params: { fpTypeId },
+    //     data: { 
+    //       fpt_id: resolvedFPTypeId,
+    //     }
+    //   })}`);
+    // }
+
+    if (!resolvedPatientId) {
+      throw new Error('Patient Record ID is required');
     }
-    const patientRecordId = patrec_id;
-    if (!patientRecordId) {
-      throw new Error("Patient Record ID (patrec_id) is required for creating Follow-up Visit.");
+
+    if (!resolvedFPRecordId) {
+      throw new Error('Family Planning Record ID is required');
     }
+
+    // Get the latest service record
+    const serviceRecords = data.serviceProvisionRecords || [];
+    const latestRecord = serviceRecords[serviceRecords.length - 1];
+
+    if (!latestRecord?.dateOfFollowUp) {
+      throw new Error('No valid follow-up date found in service records');
+    }
+
+    // 1. Create Follow-up Visit
     const followUpData = {
-      patrec: patientRecordId, // Foreign key to PatientRecord from models.py
-      followv_date: data.ServiceProvisionRecord?.dateOfFollowUp,
-      followv_status: "pending", 
-      followv_description: "Family Planning Follow up", 
-      created_at: new Date().toISOString(), 
-      updated_at: new Date().toISOString(), 
+      patrec: resolvedPatientId,
+      followv_date: latestRecord.dateOfFollowUp,
+      followv_status: 'pending',
+      followv_description: 'Family Planning Follow up',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    console.log("date:", followUpData.followv_date)
-    console.log("🔄 Sending Follow-up Visit data for creation:", followUpData);
-    const followUpRes = await api2.post("patientrecords/follow-up-visit/", followUpData);
-    console.log("✅ Follow-up Visit created successfully:", followUpRes.data);
 
-    const followv_id = followUpRes.data.followv_id; 
+    console.log('Creating follow-up visit:', followUpData);
+    const followUpRes = await api2.post('patientrecords/follow-up-visit/', followUpData);
+    const followv_id = followUpRes.data.followv_id;
+
     if (!followv_id) {
-        throw new Error("Failed to retrieve Follow-up Visit ID after creation.");
+      throw new Error('Failed to get follow-up visit ID');
     }
 
-    // --- Step 2: Create Assessment data ---
+    // 2. Create Assessment
     const assessmentData = {
-      quantity: Number(data.serviceProvisionRecords?.methodQuantity) || 0,
-      as_provider_signature: data.serviceProvisionRecords?.serviceProviderSignature || "",
-      as_provider_name: data.serviceProvisionRecords?.nameOfServiceProvider || "",
-      as_findings: data.serviceProvisionRecords?.medicalFindings || "None",
-      followv: followv_id, 
-      fpt: fptId, // Correctly set to 'fpt' for Django ForeignKey
-
-      // Optional Foreign Keys - Only include if data is present
+      quantity: Number(latestRecord?.methodQuantity) || 0,
+      as_provider_signature: latestRecord?.serviceProviderSignature || '',
+      as_provider_name: latestRecord?.nameOfServiceProvider || '',
+      as_findings: latestRecord?.medicalFindings || 'None',
+      followv: followv_id,
+      // fpt: resolvedFPTypeId,  // FP Type ID
+      fprecord: resolvedFPRecordId,  // FP Record ID
+      // Optional fields
       vital_signs: data.vital_signs_id || null,
-      dispensed_commodity_item: data.dispensed_commodity_item_id || null,
-      dispensed_medicine_item: data.dispensed_medicine_item_id || null,
-      dispensed_vaccine_item: data.dispensed_vaccine_item_id || null,
-      dispensed_item_name_for_report: data.dispensed_item_name_for_report || null,
+      dispensed_items: data.dispensed_items || null,
+      created_at: new Date().toISOString()
     };
 
-    console.log("🔄 Sending Assessment data for creation:", assessmentData);
-    const assessmentRes = await api2.post("familyplanning/assessment/", assessmentData);
-    console.log("✅ Assessment created successfully:", assessmentRes.data);
+    console.log('Creating assessment:', assessmentData);
+    const assessmentRes = await api2.post('familyplanning/assessment/', assessmentData);
 
     return {
-      assessmentResult: assessmentRes.data,
-      followUpResult: followUpRes.data
+      assessmentId: assessmentRes.data.as_id,
+      followUpId: followv_id,
+      fpRecordId: resolvedFPRecordId
     };
 
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      console.error("❌ API Error during assessment/follow-up:", err.response?.data || err.message);
-      throw new Error(`API Error during assessment/follow-up: ${err.response?.data?.detail || err.message}`);
-    } else {
-      console.error("❌ Unexpected Error during assessment/follow-up:", err);
-      throw err;
+  } catch (error) {
+    console.error('❌ Full error details:', {
+      error,
+      inputData: data,
+      timestamp: new Date().toISOString()
+    });
+
+    if (axios.isAxiosError(error)) {
+      const apiError = {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      };
+      console.error('API Error Details:', apiError);
+      throw new Error(`Assessment failed: ${apiError.message}\n${JSON.stringify(apiError.data)}`);
     }
+
+    throw new Error(`Assessment failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 

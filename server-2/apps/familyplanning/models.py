@@ -229,10 +229,11 @@ class FP_Assessment_Record(models.Model):
     as_findings = models.CharField(max_length=100,default="None")
     
     # for method used
-    fpt = models.ForeignKey(FP_type,on_delete=models.CASCADE) 
+    # fpt = models.ForeignKey(FP_type,on_delete=models.CASCADE) 
+    fprecord = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
     #for weight
-    bm = models.ForeignKey(BodyMeasurement,on_delete=models.CASCADE)
-    staff = models.ForeignKey(Staff,on_delete=models.CASCADE)
+    # bm = models.ForeignKey(BodyMeasurement,on_delete=models.CASCADE)
+    # staff = models.ForeignKey(Staff,on_delete=models.CASCADE)
     followv = models.ForeignKey(FollowUpVisit,on_delete=models.CASCADE)
 
     vital_signs = models.ForeignKey(

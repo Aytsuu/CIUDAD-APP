@@ -146,6 +146,8 @@ const items: MenuItem[] = [
       { title: "Patients Record", url: "/patients-record-main" },
       { title: "Family Profiling", url: "/family-profiling-main" },
       {title: "Medicine", url:"/AllMedicineRecords"},
+      { title: "Firstaid", url: "/all-firstaid-records" },
+      {title:"Forwarded Records", url: "/forwarded-vaccination-records"},
       
       
       {

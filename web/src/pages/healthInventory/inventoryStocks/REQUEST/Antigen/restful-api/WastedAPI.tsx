@@ -1,13 +1,13 @@
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 
 export const fetchVaccineStockById = async (vacStck_id: number) => {
-  const response = await api.get(`inventory/vaccine_stocks/${vacStck_id}/`);
+  const response = await api2.get(`inventory/vaccine_stocks/${vacStck_id}/`);
   return response.data;
 };
 
 
 export const fetchImzSupplyStockById = async (imzStck_id: number) => {
-  const response = await api.get(`inventory/immunization_stock/${imzStck_id}/`);
+  const response = await api2.get(`inventory/immunization_stock/${imzStck_id}/`);
   return response.data;
 };
 
@@ -24,7 +24,7 @@ export const updateVaccineStockQuantity = async (
     updated_at: new Date().toISOString()
   };
 
-  const response = await api.put(
+  const response = await api2.put(
     `inventory/vaccine_stocks/${vacStck_id}/`,
     payload
   );
@@ -44,7 +44,7 @@ export const createVaccineWasteTransaction = async (
     created_at: new Date().toISOString()
   };
 
-  const response = await api.post("inventory/antigens_stocks/", payload);
+  const response = await api2.post("inventory/antigens_stocks/", payload);
   return response.data;
 };
 
@@ -71,7 +71,7 @@ export const updateImmunizationStockQuantity = async (
 
   
 
-  const response = await api.put(
+  const response = await api2.put(
     `inventory/immunization_stock/${imzStck_id}/`,
     payload
   );
@@ -91,6 +91,6 @@ export const createImmunizationWasteTransaction = async (
     created_at: new Date().toISOString()
   };
 
-  const response = await api.post("inventory/imz_transaction/", payload);
+  const response = await api2.post("inventory/imz_transaction/", payload);
   return response.data;
 };

@@ -1,10 +1,10 @@
 import { toTitleCase } from "../case";
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 
 
 export const addFirstAid = async (firstAidName: string) => {
     try {
-      const res = await api.post("inventory/firstaidlist/", {
+      const res = await api2.post("inventory/firstaidlist/", {
         fa_name: toTitleCase(firstAidName),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

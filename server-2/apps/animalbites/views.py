@@ -194,10 +194,6 @@ class CreateAnimalBiteRecordView(APIView):
             )
 
 class AnimalbiteDetailsView(generics.ListCreateAPIView):
-    """
-    API view for listing and creating AnimalBite_Details.
-    Can be filtered by referral ID.
-    """
     serializer_class = AnimalBiteDetailsSerializer
     queryset = AnimalBite_Details.objects.all() 
 
@@ -215,9 +211,6 @@ class AnimalbiteReferralView(generics.ListCreateAPIView):
     queryset = AnimalBite_Referral.objects.all()
 
 class UpdateAnimalBiteRecordView(APIView):
-    """
-    API view to update an existing Animal Bite record (details and related referral).
-    """
     def put(self, request, bite_id):
         try:
             bite_detail = get_object_or_404(AnimalBite_Details, bite_id=bite_id)

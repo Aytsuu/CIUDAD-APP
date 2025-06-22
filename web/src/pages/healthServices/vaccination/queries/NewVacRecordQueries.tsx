@@ -20,45 +20,8 @@ import { getVaccinationHistory } from "../restful-api/GetVaccination";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
 import { useNavigate } from "react-router";
-// 
-// Mutation for deducting vaccine stock
-// export const useDeductVaccineStock = () => {
-//   const queryClient = useQueryClient();
-//   return useMutation({
-//     mutationFn: async (vacStck_id: number) => {
-//       // Fetch specific vaccine stock instead of entire inventory
-//       const existingItem = await getVaccineStock(vacStck_id.toString());
+import {checkVaccineStatus} from "../restful-api/FetchVaccination";
 
-//       if (!existingItem) {
-//         throw new Error("Vaccine item not found. Please check the ID.");
-//       }
-
-//       const currentQtyAvail = existingItem.vacStck_qty_avail;
-//       const existingUsedItem = existingItem.vacStck_used;
-
-//       if (currentQtyAvail < 1) {
-//         throw new Error("Insufficient vaccine stock available.");
-//       }
-
-//       const updatePayload = {
-//         vacStck_qty_avail: currentQtyAvail - 1,
-//         vacStck_used: existingUsedItem + 1,
-//       };
-
-//       await api.put(`inventory/vaccine_stocks/${vacStck_id}/`, updatePayload);
-//       await createAntigenStockTransaction(vacStck_id);
-
-//       return true;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ['vaccineStocks'] });
-//     },
-//     onError: (error: Error) => {
-//       console.error("Vaccine stock update failed:", error);
-//       toast.error(error.message);
-//     },
-//   });
-// };
 
 // Mutation for Step 1 submission
 export const useSubmitStep1 = () => {
@@ -69,11 +32,18 @@ export const useSubmitStep1 = () => {
     mutationFn: async ({
       data,
       assignmentOption,
-      form,
+      vacStck_id,
+      vac_id,
+      vac_name,
+      expiry_date,
     }: {
       data: Record<string, any>;
       assignmentOption: "self" | "other";
-      form: { reset: any };
+      vacStck_id: string;
+      vac_id: string;
+      vac_name: string;
+      expiry_date: string;
+      pat_id: string | null;
     }) => {
       if (!data.pat_id) {
         throw new Error("Patient ID is required.");
@@ -84,47 +54,32 @@ export const useSubmitStep1 = () => {
         let vacrec_id: string | null = null;
 
         try {
-          const checkVaccinationHistory = await getVaccinationHistory();
-          const existingVAccinationHistory = checkVaccinationHistory.find(
-            (record: { vacStck: { vac_id: string } }) =>
-              record.vacStck.vac_id === data.vaccinetype
-          );
-          if (existingVAccinationHistory) {
-            form.reset();
-            throw new Error("Vaccination already exists in the record.");
-          }
-
+          const response = await checkVaccineStatus(data.pat_id,parseInt(vac_id, 10));
+          if (response?.exists) {throw new Error("Patient already has this vaccine in their record.");}
+  
           const patientRecord = await createPatientRecord(data.pat_id);
           patrec_id = patientRecord.patrec_id;
 
-          if (!patrec_id) {
-            throw new Error(
-              "Patient record ID is null. Cannot create vaccination record."
-            );
-          }
+          if (!patrec_id) {throw new Error( "Patient record ID is null. Cannot create vaccination record.");}
 
-          const vaccinationRecord = await createVaccinationRecord(
-            patrec_id,
-            // "forwarded",
-            0
-          );
+          const vaccinationRecord = await createVaccinationRecord(patrec_id, 1);
           vacrec_id = vaccinationRecord.vacrec_id;
-
+          let age = data.age
           if (vacrec_id) {
             await createVaccinationHistory(
               vacrec_id,
               data,
-              data.vaccinetype,
-              0,
-              "forwarded"
+              vacStck_id,
+              1,
+              "forwarded",
+              age
             );
           } else {
             throw new Error(
               "Vaccination record ID is null. Cannot create vaccination history."
             );
           }
-
-          queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+          queryClient.invalidateQueries({queryKey: ["patientVaccinationDetails", "vaccinationRecords"], });
           return;
         } catch (error) {
           // Rollback
@@ -135,7 +90,7 @@ export const useSubmitStep1 = () => {
       }
     },
     onSuccess: () => {
-      navigate(-1)
+      navigate(-1);
       toast.success("Form forwarded successfully", {
         icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
         duration: 2000,
@@ -158,25 +113,24 @@ export const useSubmitStep2 = () => {
   return useMutation({
     mutationFn: async ({
       data,
-      patientId,
+      pat_id,
       form,
       form2,
+      vacStck_id,
+      vac_id,
+      vac_name,
+      expiry_date,
     }: {
       data: Record<string, any>;
-      patientId: string;
+      pat_id: string;
       form: { setError: any; getValues: any; reset: any };
       form2: { getValues: any; reset: any };
+      vacStck_id: string;
+      vac_id: string;
+      vac_name: string;
+      expiry_date: string;
     }) => {
-      const vaccineType = form.getValues("vaccinetype");
-
-      if (!vaccineType) {
-        form.setError("vaccinetype", {
-          type: "manual",
-          message: "Please select a vaccine type",
-        });
-        throw new Error("Please select a vaccine type");
-      }
-
+     
       let patrec_id: string | null = null;
       let vacrec_id: string | null = null;
       let vital_id: string | null = null;
@@ -184,24 +138,16 @@ export const useSubmitStep2 = () => {
       let followv_id: string | null = null;
 
       try {
-        const vacStck = vaccineType;
-        const vaccineData = await getVaccineStock(vacStck);
+        const vaccineData = await getVaccineStock(vacStck_id);
         const maxDoses = vaccineData.vaccinelist.no_of_doses;
+        
+        const response = await checkVaccineStatus(pat_id,parseInt(vac_id, 10));
+        if (response?.exists) {throw new Error("Patient already has this vaccine in their record.");}
 
-        const response = await api2.get(
-          `/vaccination/check-vaccine/${patientId}/${parseInt(vaccineType)}`
-        );
 
-        if (response.data.exists) {
-          form.reset();
-          form2.reset();
-          throw new Error("Patient already has this vaccine in their record.");
-        }
-
-        const patientRecord = await createPatientRecord(patientId);
+        const patientRecord = await createPatientRecord(pat_id);
         patrec_id = patientRecord.patrec_id;
 
-        // const status = maxDoses === 1 ? "completed" : "partially vaccinated";
         if (!patrec_id) {
           throw new Error(
             "Patient record ID is null. Cannot create vaccination record."
@@ -210,22 +156,23 @@ export const useSubmitStep2 = () => {
 
         const vaccinationRecord = await createVaccinationRecord(
           patrec_id,
-          // status.toLowerCase() as "completed" | "partially vaccinated",
           maxDoses
         );
-        vacrec_id = vaccinationRecord.vacrec_id;
 
+        vacrec_id = vaccinationRecord.vacrec_id;
         const vitalSigns = await createVitalSigns(data);
         vital_id = vitalSigns.vital_id;
 
-        await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck, 10)}/`, {
-          vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
-          vacStck_used: vaccineData.vacStck_used + 1,
-        });
-        await createAntigenStockTransaction(parseInt(vacStck, 10));
+        await api2.put(
+          `inventory/vaccine_stocks/${parseInt(vacStck_id, 10)}/`,
+          {
+            vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
+            vacStck_used: vaccineData.vacStck_used + 1,
+          }
+        );
+        await createAntigenStockTransaction(parseInt(vacStck_id, 10));
 
         let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
-
         if (vac_type_choices === "routine") {
           const { interval, time_unit } =
             vaccineData.vaccinelist.routine_frequency;
@@ -236,7 +183,8 @@ export const useSubmitStep2 = () => {
           );
           const followUpVisit = await createFollowUpVisit(
             patrec_id,
-            nextVisitDate.toISOString().split("T")[0]
+            nextVisitDate.toISOString().split("T")[0],
+            `Routine vaccination for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}` // Added description
           );
           followv_id = followUpVisit.followv_id;
         } else if (vaccineData.vaccinelist.no_of_doses >= 2) {
@@ -256,26 +204,32 @@ export const useSubmitStep2 = () => {
             );
             const followUpVisit = await createFollowUpVisit(
               patrec_id,
-              nextVisitDate.toISOString().split("T")[0]
+              nextVisitDate.toISOString().split("T")[0],
+              `Follow-up visit for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}` // Added description
             );
             followv_id = followUpVisit.followv_id;
           }
         }
 
+
+        let age = form.getValues("age");
         const historyStatus =
-          maxDoses === 1 ? "completed" : "partially Vaccinated";
+          maxDoses === 1 ? "completed" : "partially vaccinated";
         const vaccinationHistory = await createVaccinationHistory(
           vacrec_id ?? "",
-          { ...data, age: form.getValues("age") },
-          vacStck,
+          { ...data },
+          vacStck_id,
           1,
           historyStatus,
+          age,
           vital_id,
           followv_id
         );
+  
         vachist_id = vaccinationHistory.vachist_id;
-        queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
-        queryClient.invalidateQueries({ queryKey: ["invVaccinationRecord"] });
+        queryClient.invalidateQueries({queryKey: ["patientVaccinationDetails", "vaccinationRecords"], });
+
+        
         return;
       } catch (error) {
         // Rollback
@@ -288,7 +242,7 @@ export const useSubmitStep2 = () => {
       }
     },
     onSuccess: () => {
-      navigate(-1)
+      navigate(-1);
 
       toast.success("Successfully  Recorded", {
         icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,

@@ -1,13 +1,13 @@
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 
 export const getAntigen = async () => {
     try {
       // Fetch all data in parallel including immunization supplies
       const [vaccines, intervals, frequencies, supplies] = await Promise.all([
-        api.get("inventory/vac_list/"),
-        api.get("inventory/vac_intervals/"),
-        api.get("inventory/routine_freq/"),
-        api.get("inventory/imz_supplies/") // Add immunization supplies endpoint
+        api2.get("inventory/vac_list/"),
+        api2.get("inventory/vac_intervals/"),
+        api2.get("inventory/routine_freq/"),
+        api2.get("inventory/imz_supplies/") // Add immunization supplies endpoint
       ]);
   
       if (vaccines.status !== 200 || intervals.status !== 200 || 
@@ -66,7 +66,7 @@ export const getAntigen = async () => {
 
   export const getImzSup = async () => {
     try {
-      const res = await api.get("inventory/imz_supplies/");
+      const res = await api2.get("inventory/imz_supplies/");
       if (res.status === 200) {
         return res.data;
       }

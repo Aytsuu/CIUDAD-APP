@@ -215,7 +215,7 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
       ...initialFormData,
       // Patient and FP Record data
       pat_id: apiData.fp_record?.per_id?.toString() || "",
-      clientID: apiData.fp_record?.client_id || "",
+      clientID: apiData.fp_record?.clientID || "",
       nhts_status: apiData.fp_record?.nhts || false,
       pantawid_4ps: apiData.fp_record?.four_ps || false,
       planToHaveMoreChildren: apiData.fp_record?.plan_more_children || false,
@@ -367,7 +367,7 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
         await updateExistingRecord();
       }
       toast.success("Family Planning Record saved successfully!");
-      navigate("/family-planning");
+      navigate("/FamPlanning_table");
     } catch (error) {
       console.error("Submission error:", error);
       toast.error(`Failed to save record: ${error instanceof Error ? error.message : String(error)}`);
@@ -417,7 +417,7 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
 
       // Now call other functions, passing the correctly extracted IDs
       console.log("📌 Step 3: Creating Obstetrical History...");
-      await fp_obstetrical(formData, familyPlanningRecordId);
+      await fp_obstetrical(formData, patientRecordId, familyPlanningRecordId);
 
       console.log("📌 Step 4: Creating Risk STI...");
       await risk_sti(formData, familyPlanningRecordId);
@@ -436,7 +436,17 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
 
       // Call assessment with correctly extracted IDs
       console.log("📌 Step 9: Creating Assessment and Follow-up Visit...");
-      await assessment(formData, familyPlanningRecordId, patientRecordId, fptId);
+      try {
+      const result = await assessment(
+        formData,
+        patientRecordId,  // patrec_id
+        familyPlanningRecordId,  // fp_record_id
+        // formData.fpt_id
+      );
+      console.log('Success:', result);
+    } catch (error) {
+      console.error('Operation failed:', error);
+    }
 
       console.log("📌 Step 10: Creating Acknowledgement...");
       await acknowledgement(formData, familyPlanningRecordId, fptId);

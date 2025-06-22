@@ -61,7 +61,7 @@ export default function AllVaccinationRecords() {
     resident_vaccinated: 0,
     transient_vaccinated: 0,
   });
-
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -71,11 +71,10 @@ export default function AllVaccinationRecords() {
         console.error("Error loading vaccination counts", err);
       }
     };
-
-    const timeoutId = setTimeout(fetchData, 0); // Trigger fetch immediately with minimal delay
-
-    return () => clearTimeout(timeoutId); // Cleanup timeout
+  
+    fetchData(); // ✅ call the function directly instead of setTimeout
   }, []);
+  
 
   // Fetch vaccination records from API
   const { data: vaccinationRecords, isLoading } = useQuery<VaccinationRecord[]>(
@@ -91,6 +90,7 @@ export default function AllVaccinationRecords() {
     console.log(vaccinationRecords);
   }, []);
 
+  
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
 

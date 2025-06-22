@@ -9,12 +9,6 @@ import { Button } from "@/components/ui/button/button"
 import { useRiskStiData } from "./queries/fpFetchQuery"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-// // Extract only the fields needed for this page
-// const page3Schema = FamilyPlanningSchema.pick({
-//   sexuallyTransmittedInfections: true,
-//   violenceAgainstWomen: true,
-// })
-
 type Page3Props = {
   onPrevious2: () => void
   onNext4: () => void

@@ -39,10 +39,12 @@ interface Patient {
 export default function IndivPatNewMedRecForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+  const { medicineStocksOptions, isLoading: isMedicinesLoading } =
+    fetchMedicinesWithStock();
   const [selectedMedicines, setSelectedMedicines] = useState<
     { minv_id: string; medrec_qty: number; reason: string }[]
   >([]);
@@ -104,23 +106,16 @@ export default function IndivPatNewMedRecForm() {
   const onSubmit = useCallback(
     async (data: MedicineRequestArrayType) => {
       setIsConfirming(true);
-      try {
-        const requestData = {
-          pat_id: data.pat_id,
-          medicines: selectedMedicines.map((med) => ({
-            minv_id: med.minv_id,
-            medrec_qty: med.medrec_qty,
-            reason: med.reason || "",
-          })),
-        };
-
-        await submitMedicineRequest(requestData);
-      } catch (error) {
-        console.error("Error in onSubmit handler:", error);
-        toast.error("Failed to submit request");
-      } finally {
-        setIsConfirming(false);
-      }
+      const requestData = {
+        pat_id: data.pat_id,
+        medicines: selectedMedicines.map((med) => ({
+          minv_id: med.minv_id,
+          medrec_qty: med.medrec_qty,
+          reason: med.reason || "No r",
+        })),
+      };
+      await submitMedicineRequest(requestData);
+      setIsConfirming(false);
     },
     [selectedMedicines, submitMedicineRequest]
   );

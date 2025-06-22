@@ -9,6 +9,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 
 // --- Type Definition ---
 type PatientRecordDetail = {
@@ -21,6 +22,7 @@ type PatientRecordDetail = {
   patient_fname: string;
   patient_lname: string;
   patient_mname?: string;
+  patient_dob?: string;
   patient_sex: string;
   patient_age: string;
   patient_address: string;
@@ -122,6 +124,27 @@ const IndividualPatientHistory: React.FC = () => {
     enabled: !!id,
   });
   
+   const patientData = useMemo(() => {
+    if (patientRecords.length === 0) return null;
+    
+    const firstRecord = patientRecords[0];
+    return {
+      pat_id: Number(firstRecord.patient_id),
+      pat_type: "Animal Bite Patient",
+      personal_info: {
+        per_fname: firstRecord.patient_fname || "",
+        per_lname: firstRecord.patient_lname || "",
+        per_mname: firstRecord.patient_mname || "",
+        per_sex: firstRecord.patient_sex,
+        per_dob: firstRecord.patient_dob, 
+        
+      },
+      address: {
+        add_street: firstRecord.patient_address,
+      }
+    };
+  }, [patientRecords]);
+
   const handlePrintClick = (record: PatientRecordDetail) => {
     setSelectedRecord(record);
     setPrintModalOpen(true);
@@ -143,14 +166,15 @@ const IndividualPatientHistory: React.FC = () => {
                 <Button size="sm" onClick={() => handlePrintClick(row.original)}>
                     <Printer size={16} className="mr-2"/> Print
                 </Button>
-                {/* New Archive Button */}
-                <Button variant="destructive" size="sm"> {/* Added onClick handler */}
-                    <Archive size={16} className="mr-2"/> Archive {/* Added mr-2 for icon spacing */}
-                </Button>
+               
             </div>
         ),
-    }
-  ], []);
+      }
+    ], []);
+    
+    {/* <Button variant="destructive" size="sm"> {/* Added onClick handler */}
+        // <Archive size={16} className="mr-2"/> Archive {/* Added mr-2 for icon spacing */}
+    // </Button> 
 
   const historyFields = [
     { label: "Exposure Type", key: "exposure_type", icon: <ShieldCheck className="w-4 h-4 text-gray-500" /> },
@@ -186,6 +210,8 @@ const IndividualPatientHistory: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <PatientInfoCard patient={patientData} />
 
         {/* Records Summary Table */}
         <div className="bg-white p-6 rounded-lg shadow-md">

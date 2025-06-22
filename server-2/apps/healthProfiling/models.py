@@ -1,8 +1,3 @@
-# from django.db import models
-
-# # Create your models here.
-# from django.db import models
-
 from django.db import models
 from django.conf import settings
 from datetime import date
@@ -44,7 +39,6 @@ class Personal(models.Model):
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=100)  
-
     class Meta:
         db_table = 'personal'
 
@@ -130,15 +124,14 @@ class RequestRegistration(models.Model):
         return f"Request #{self.req_id} by {self.per} on {self.req_date}"
 
 class HealthRelatedDetails(models.Model):
-    hrd_id = models.CharField(max_length=50, primary_key=True)
+    hrd_id = models.BigAutoField(primary_key=True)
     hrd_blood_type = models.CharField(max_length=5)
     hrd_philhealth_id = models.CharField(max_length=50)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     
- 
-#     class Meta:
-#         db_table = 'health_related_details'
- 
+    class Meta:
+        db_table = 'health_related_details'
+
 class Dependents_Over_Five(models.Model):
     dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
     # dep = models.ForeignKey(Dependent, on_delete=models.CASCADE)
@@ -155,17 +148,17 @@ class Dependents_Under_Five(models.Model):
     duf_exclusive_bf= models.CharField(max_length=50 )
     fc = models.ForeignKey(FamilyComposition, on_delete=models.CASCADE)
 
-#     class Meta:
-#         db_table = 'dependents_under_five'
+    class Meta:
+        db_table = 'dep_under_five'
 
-# class WaterSupply(models.Model):
-#     water_sup_id = models.CharField(max_length=50, primary_key=True)
-#     water_sup_type = models.CharField(max_length=50)
-#     water_sup_desc = models.TextField(max_length=1000)
-#     # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+class WaterSupply(models.Model):
+    water_sup_id = models.CharField(max_length=50, primary_key=True)
+    water_sup_type = models.CharField(max_length=50)
+    water_sup_desc = models.TextField(max_length=1000)
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 
-#     class Meta:
-#         db_table = 'water_supply'
+    class Meta:
+        db_table = 'water_supply'
 #     class Meta:
 #         db_table = 'water_supply'
 
@@ -173,29 +166,57 @@ class Dependents_Under_Five(models.Model):
 #     sf_id = models.CharField(max_length=50, primary_key=True)
 #     sf_type = models.CharField(max_length=50)
 #     sf_toilet_type = models.CharField(max_length=50)
-# class SanitaryFacility(models.Model):
-#     sf_id = models.CharField(max_length=50, primary_key=True)
-#     sf_type = models.CharField(max_length=50)
-#     sf_toilet_type = models.CharField(max_length=50)
 
-#     # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+class SanitaryFacility(models.Model):
+    sf_id = models.CharField(max_length=50, primary_key=True)
+    sf_type = models.CharField(max_length=50)
+    sf_toilet_type = models.CharField(max_length=50)
 
-#     class Meta:
-#         db_table = 'sanitary_facility'
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 
-# class Facility_Details(models.Model):
-#     fd_id = models.CharField(max_length=50, primary_key=True)
-#     fd_description = models.CharField(max_length=200)
-#     sf = models.ForeignKey(SanitaryFacility, on_delete=models.CASCADE)
+    class Meta:
+        db_table = 'sanitary_facility'
 
-class Solid_Waste_Mgmt(models.Model):
+class FacilityDetails(models.Model):
+    fd_id = models.CharField(max_length=50, primary_key=True)
+    fd_description = models.CharField(max_length=200)
+
+    sf = models.ForeignKey(SanitaryFacility, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'facility_details'
+
+class SolidWasteMgmt(models.Model):
     swm_id = models.CharField(max_length=50, primary_key=True)
     swn_desposal_type = models.CharField(max_length=50)
     swm_desc = models.TextField(max_length=1000)
-    # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
     
-#     class Meta:
-#         db_table = 'solid_waste_mgmt'
+    class Meta:
+        db_table = 'solid_waste_mgmt'
+        
+class TBsurveilance(models.Model):
+    tb_id = models.CharField(max_length=50, primary_key=True)
+    tb_meds_source = models.CharField(max_length=100)
+    tb_days_taking_meds = models.IntegerField()
+    tb_status = models.CharField(max_length=100)
+
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'tb_surveillance_records'
+
+class NonCommunicableDisease(models.Model):
+    ncd_id = models.CharField(max_length=50, primary_key=True)
+    ncd_riskclass_age = models.CharField(max_length=100)
+    ncd_comorbidities = models.CharField(max_length=100)
+    ncd_lifestyle_risk = models.CharField(max_length=100)
+    ncd_maintenance_status = models.CharField(max_length=100)
+
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'non_communicable_disease'
 
 
 # class Patient(models.Model):
@@ -233,6 +254,3 @@ class Solid_Waste_Mgmt(models.Model):
 
 #     class Meta:
 #         db_table = 'illness'
-
-# class TB_Surveilance(models.Model):
-#     pass

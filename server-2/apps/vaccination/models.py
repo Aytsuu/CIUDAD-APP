@@ -21,7 +21,7 @@ class VaccinationHistory(models.Model):
     vachist_age = models.CharField(default="", max_length=100)
     vachist_status = models.CharField(max_length=100, default="Pending")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     assigned_to = models.PositiveIntegerField(null=True, blank=True)
     staff_id = models.PositiveIntegerField(default=1)    
     vital= models.ForeignKey( VitalSigns,  on_delete=models.CASCADE,  null=True,   blank=True,  related_name='vaccination_histories')
@@ -30,3 +30,8 @@ class VaccinationHistory(models.Model):
     followv = models.ForeignKey( FollowUpVisit,  on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)
     class Meta:
         db_table = 'vaccination_history'
+        indexes = [
+            models.Index(fields=['vacrec', 'vachist_status']),
+        ]
+        
+        
