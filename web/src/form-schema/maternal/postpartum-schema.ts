@@ -3,7 +3,6 @@ import { z } from "zod";
 export const PostPartumSchema = z.object({
     mothersPersonalInfo: z.object({
         familyNo: z.string().min(1, 'Family No. is required'),
-        isTransient: z.string().default('Resident'),
         motherLName: z.string().min(1, 'Last name is required'),
         motherFName: z.string().min(1, 'First name is required'),
         motherMName: z.string().optional(),
@@ -35,6 +34,7 @@ export const PostPartumSchema = z.object({
         mebendazole: z.string().date().optional(),
         dateBfInitiated: z.string().date(),
         timeBfInitiated: z.string(),
+        nextVisitDate: z.string().date().optional(),
     }),
 
     postpartumTable: z.object({

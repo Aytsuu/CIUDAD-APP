@@ -3,7 +3,7 @@ from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone
 from django.core.validators import MinValueValidator
-from apps.patientrecords.models import PatientRecord
+from apps.patientrecords.models import PatientRecord, Spouse, VitalSigns, FollowUpVisit
 # from apps.healthProfiling.models import Staff
 
 # ************** prenatal **************
@@ -13,6 +13,8 @@ year = str(today.year)
 
 class Prenatal_Form(models.Model):
     pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)
+    pf_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
+    pf_tor = models.CharField(max_length=100, default="Not Applicable")
     pf_lmp = models.DateField()
     pf_edc = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -131,7 +133,6 @@ class Checklist(models.Model):
 class PostpartumRecord(models.Model):
     ppr_id = models.CharField(primary_key=True, max_length=20, unique=True, editable=False)
     ppr_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
-    ppr_tor = models.CharField(max_length=100, default="Not Applicable")
     ppr_lochial_discharges = models.CharField(max_length=100)
     ppr_vit_a_date_given = models.DateField()
     ppr_num_of_pads = models.PositiveIntegerField()
@@ -142,6 +143,9 @@ class PostpartumRecord(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, null=True, related_name='postpartum_record', db_column='pf_id')
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_record', null=False, db_column='patrec_id')
+    spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_record', db_column='spouse_id', null=True)
+    vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_record', db_column='vital_id', null=False)
+    followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
     def save(self, *args, **kwargs):
@@ -159,7 +163,7 @@ class PostpartumRecord(models.Model):
 class PostpartumDeliveryRecord(models.Model):
     ppdr_id = models.BigAutoField(primary_key=True) 
     ppdr_date_of_delivery = models.DateField()
-    ppdr_time_of_delivery = models.TimeField()
+    ppdr_time_of_delivery = models.TimeField(null=True, blank=True)
     ppdr_place_of_delivery = models.CharField(max_length=50)
     ppdr_attended_by = models.CharField(max_length=50)
     ppdr_outcome = models.CharField(max_length=50)
@@ -172,8 +176,6 @@ class PostpartumDeliveryRecord(models.Model):
 class PostpartumAssessment(models.Model):
     ppa_id = models.BigAutoField(primary_key=True)
     ppa_date_of_visit = models.DateField()
-    ppa_systolic = models.PositiveIntegerField()
-    ppa_diastolic = models.PositiveIntegerField()
     ppa_feeding = models.CharField(max_length=50)
     ppa_findings = models.TextField()
     ppa_nurses_notes = models.TextField()

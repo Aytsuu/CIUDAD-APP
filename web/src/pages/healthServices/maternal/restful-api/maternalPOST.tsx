@@ -1,4 +1,4 @@
-import { api2 } from "@/pages/api/api"
+import { api2 } from "@/api/api"
 import axios from "axios";
 
 interface PrenatalRecord {

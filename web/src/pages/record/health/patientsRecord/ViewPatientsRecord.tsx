@@ -7,15 +7,16 @@ import { Button } from "@/components/ui/button/button";
 import {
   ChevronLeft,
   Edit,
-  Printer,
-  Share2,
+  // Printer,
+  // Share2,
   AlertCircle,
   SyringeIcon,
   Pill,
   CheckCircle,
   Clock,
   Calendar,
-  MapPin,
+  // MapPin,
+  RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,6 +55,7 @@ import { toast } from "sonner";
 import { useUpdatePatient } from "./queries/patientsUpdateQueries";
 
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 
@@ -318,11 +320,14 @@ export default function ViewPatientRecord() {
 
   if (isLoading) {
       return (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-lg">Loading patient details...</p>
-        </div>
-      );
-    }
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
 
   if (isError) {
     return (

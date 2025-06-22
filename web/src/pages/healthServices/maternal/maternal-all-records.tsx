@@ -2,39 +2,21 @@ import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-// import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
 // import { Link } from "react-router";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// import PrenatalForm from "../prenatal/prenatal-form";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
+import { ArrowUpDown, Search } from "lucide-react";
 import { Link } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 // import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { Label } from "@/components/ui/label";
 
 export default function MaternalAllRecords() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const handleDialogOpen = () => {
-    setIsDialogOpen(true);
-  }
-  const handleDialogCLose = () => {
-    setIsDialogOpen(true);
-  }
-
   type maternalRecords = {
     id: number;
-    // patientName: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -47,10 +29,11 @@ export default function MaternalAllRecords() {
     sitio: "Logarta" | "Bolinawan";
     type: "Transient" | "Resident";
   };
+
   const columns: ColumnDef<maternalRecords>[] = [
     {
       accessorKey: "id",
-      header: "#",
+      header: "Patient ID",
       cell: ({ row }) => (
         <div className="flex justify-center">
           <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
@@ -128,34 +111,13 @@ export default function MaternalAllRecords() {
       cell: ({}) => (
         <>
           <div className="flex justify-center gap-2 ">
-            <TooltipLayout
+            <TooltipLayout 
               trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to="/maternalindividualrecords">
-                    <Eye size={15} />
-                  </Link>
+                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer ">  
+                  <Link to="/maternalindividualrecords"><p className="font-semibold">View</p></Link>
                 </div>
-              }
-              content="View"
-            />
-
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                      {" "}
-                      <Trash size={16} />
-                    </div>
-                  }
-                  className=""
-                  title="Delete Record"
-                  description="Are you sure you want to delete this record?"
-                  mainContent={<></>}
-                />
-              }
-              content="Delete"
-            />
+                } 
+              content="View Record"/>
           </div>
         </>
       ),
@@ -165,7 +127,6 @@ export default function MaternalAllRecords() {
   const sampleData: maternalRecords[] = [
     {
       id: 1,
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina Shin",
@@ -181,7 +142,6 @@ export default function MaternalAllRecords() {
 
     {
       id: 2,
-
       patient: {
         lastName: "Siddiqui",
         firstName: "Katrina",
@@ -190,14 +150,13 @@ export default function MaternalAllRecords() {
         age: 25,
         ageTime: "yrs",
       },
-      address: "Bonsai Bolinawan Carcar City",
+      address: "Ka Juan Pajac Lapu-Lapu City",
       sitio: "Bolinawan",
       type: "Transient",
     },
 
     {
       id: 3,
-
       patient: {
         lastName: "Smith",
         firstName: "Loewe",
@@ -217,9 +176,9 @@ export default function MaternalAllRecords() {
   const data = sampleData;
 
   const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Transient" },
-    { id: "2", name: "Logarta" },
+    { id: "All", name: "All" },
+    { id: "Resident", name: "Resident" },
+    { id: "Transient", name: "Transient" },
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
@@ -231,28 +190,27 @@ export default function MaternalAllRecords() {
             item.type === selectedFilter || item.sitio === selectedFilter
         );
 
-  // const [value, setValue] = useState("");
   return (
     <LayoutWithBack 
       title="Maternal Health Records  "
       description="Manage and view mother's information"
     >
       <div className="w-full h-full flex flex-col">
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+        <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}
           <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="flex gap-x-2">
+            <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
                 <Search
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                   size={17}
                 />
-                <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+                <Input placeholder="Search..." className="pl-10 w-full bg-white" />
               </div>
               <SelectLayout
-                className="w-full md:w-[200px] bg-white"
-                label="Filter"
-                placeholder="Select"
+                placeholder="Select filter"
+                label=""
+                className="w-full md:w-[200px] bg-white text-black"
                 options={filter}
                 value={selectedFilter}
                 onChange={setSelectedFilter}

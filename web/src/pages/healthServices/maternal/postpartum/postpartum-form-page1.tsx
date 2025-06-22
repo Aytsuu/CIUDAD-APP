@@ -16,16 +16,22 @@ import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { DataTable } from "@/components/ui/table/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { Label } from "@/components/ui/label"
-import { Combobox } from "@/components/ui/combobox"
+import { PatientSearch } from "@/components/ui/patientSearch"
 
 import { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
 import { usePatients } from "../queries/maternalFetchQueries"
+import { toast } from "sonner"
 
 interface PatientRecord {
     pat_id: string;
+    trans_id:string;
     pat_type: string;
     pat_status: string;
-
+    family?: {
+        fam_id: string;
+        fc_id: string;
+        fc_role: string;
+    };
     personal_info: {
         per_fname: string;
         per_lname: string;
@@ -40,6 +46,18 @@ interface PatientRecord {
         add_province: string
         sitio?: string
     };
+    family_head_info?: {
+        family_heads?:{
+            father: {
+                personal_info?:{
+                    per_fname?: string;
+                    per_mname?: string;
+                    per_lname?: string;
+                    per_dob?: string;
+                }
+            }
+        }
+    }
     
     // spouse?: {
     //     spouse_lname: string;
@@ -79,38 +97,32 @@ export default function PostpartumFormFirstPg(
     const { setValue, getValues } = useFormContext()
 
     const [selectedPatientId, setSelectedPatientId] = useState<string>("")
-    const { data: patientData, isLoading: patientLoading } = usePatients();
 
-    const patients = {
-        default: patientData || [],
-        formatted: 
-            patientData?.map((patient: any) => ({
-                id: patient.pat_id.toString(),
-                // id: `${patient.pat_id.toString()}, ${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim(),
-                name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
-            })) || []
-    };
-    // console.log("pat_id = ", selectedPatientId)
-
-     const handlePatientSelection = (id: string) => {
+    const handlePatientSelection = ( patient: any, id: string) => {
         setSelectedPatientId(id)
-        const selectedPatient: PatientRecord | undefined = patients.default.find((p: PatientRecord) => p.pat_id.toString() === id)
 
-        if (selectedPatient && selectedPatient.personal_info) {
-          console.log("Selected Patient:", selectedPatient)
-          setSelectedPatientId(selectedPatient.pat_id.toString());
 
-          const personalInfo = selectedPatient.personal_info;
-          const address = selectedPatient.address;
+        if (patient && patient.personal_info) {
+          console.log("Selected Patient:", patient)
+          setSelectedPatientId(patient.pat_id.toString());
+
+
+
+          const personalInfo = patient.personal_info;
+          const address = patient.address;
+          const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info;
         //   const spouse = selectedPatient.spouse;
 
-            setValue("mothersPersonalInfo.familyNo", selectedPatient.pat_id)
+            setValue("mothersPersonalInfo.familyNo", patient.family.fam_id)
             setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname) 
             setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname)
             setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname)
             setValue("mothersPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
             setValue("mothersPersonalInfo.motherDOB", personalInfo?.per_dob)
-
+            setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
+            setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
+            setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
+            setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
             // if(spouse){
             //     setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
             //     setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
@@ -275,32 +287,13 @@ export default function PostpartumFormFirstPg(
         }        
     }
 
-
     return (
         <LayoutWithBack
             title="Postpartum Form"
             description="Fill out the postpartum form with the mother's information."
         >
         <div> 
-            <Combobox
-                options={patients.formatted}
-                value={selectedPatientId}
-                onChange={handlePatientSelection}
-                placeholder={patientLoading ? "Loading patients..." : "Select a patient"}
-                triggerClassName="font-normal w-[30rem]"
-                emptyMessage={
-                    <div className="flex gap-2 justify-center items-center">
-                        <Label className="font-normal text-[13px]">
-                            {patientLoading ? "Loading..." : "No patient found."}
-                        </Label>
-                        <Link to="/patient-records/new">
-                            <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                            Register New Patient
-                            </Label>
-                        </Link>
-                    </div>
-                }
-            />
+            <PatientSearch onPatientSelect={handlePatientSelection}/>
         </div>
         <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
             <div className="pb-4">
@@ -313,20 +306,8 @@ export default function PostpartumFormFirstPg(
                     submit();
                 }}
                 >
-                    <div className="flex justify-between mt-10">
+                    <div className="flex mt-10">
                         <FormInput control={form.control} label="Family No." name="mothersPersonalInfo.familyNo" placeholder="Family No." />
-                        <FormField
-                            control={form.control}
-                            name="mothersPersonalInfo.isTransient"
-                            render={({ field }) => (
-                                <FormItem className="mt-8">
-                                        <FormControl>
-                                            <Checkbox {...field}></Checkbox>
-                                        </FormControl>
-                                        <FormLabel className="ml-1">Transient</FormLabel>
-                                </FormItem>   
-                            )}
-                        />
                     </div>
                     <div className="mt-10 mb-3">
                         <Label className="text-lg ">Personal Information</Label>
@@ -338,12 +319,11 @@ export default function PostpartumFormFirstPg(
                         <FormInput control={form.control} label="Middle Name" name="mothersPersonalInfo.motherMName" placeholder="Middle Name"/>
                         <FormInput control={form.control} label="Age" name="mothersPersonalInfo.motherAge" placeholder="Age"/>
 
-                        <FormInput control={form.control} label="Husband's Last Name" name="mothersPersonalInfo.husbandLName" placeholder="Husbands Last Name"/>
-                        <FormInput control={form.control} label="Husband's First Name" name="mothersPersonalInfo.husbandFName" placeholder="Husbands First Name"/>
-                        <FormInput control={form.control} label="Husband's Middle Name" name="mothersPersonalInfo.husbandMName" placeholder="Husbands Middle Name"/>
+                        <FormInput control={form.control} label="Husband's Last Name" name="mothersPersonalInfo.husbandLName" placeholder="Last Name (optional)"/>
+                        <FormInput control={form.control} label="Husband's First Name" name="mothersPersonalInfo.husbandFName" placeholder="First Name (optional)"/>
+                        <FormInput control={form.control} label="Husband's Middle Name" name="mothersPersonalInfo.husbandMName" placeholder="Middle Name (optional)"/>
                         <FormDateTimeInput control={form.control} type="date" label="Husband's Date of Birth" name="mothersPersonalInfo.husbandDob"/>
                     </div>
-
                     <div className="grid grid-cols-5 gap-4 mt-4">
                         <FormInput control={form.control} label="Street" name="mothersPersonalInfo.address.street" placeholder="Street"/>
                         <FormInput control={form.control} label="Sitio" name="mothersPersonalInfo.address.sitio" placeholder="Sitio"/>
@@ -352,11 +332,11 @@ export default function PostpartumFormFirstPg(
                         <FormInput control={form.control} label="Province" name="mothersPersonalInfo.address.province" placeholder="Province"/>
                     </div>
                         
+
                     <div className="mt-10 mb-3">
                         <Label className="text-lg ">Delivery and Other Information</Label>
                         <Separator className="mt-2"/>
                     </div>
-                  
                     <div className="grid grid-cols-3 gap-4">
                         <FormDateTimeInput control={form.control} label="Date of Delivery" name="postpartumInfo.dateOfDelivery" type="date" />
                         <FormDateTimeInput control={form.control} label="Time of Delivery" name="postpartumInfo.timeOfDelivery" type="time" />
@@ -383,6 +363,15 @@ export default function PostpartumFormFirstPg(
                         <FormDateTimeInput control={form.control} label="Time Breastfeeding Initiated" name="postpartumInfo.timeBfInitiated" type="time" />
                     
                     </div>
+                    
+                    <div className="mt-10 mb-3">
+                        <Label className="text-lg ">Schedule</Label>
+                        <Separator className="mt-2"/>
+                    </div>
+                    <div className="flex mt-4">
+                        <FormDateTimeInput control={form.control} label="Date of next visit" name="postpartumInfo.nextVisitDate" type="date" />
+                    </div>
+
 
                     {/* postpartum table fields */}
                     <Separator className="my-10" />
