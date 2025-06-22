@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 
 interface Patient {
-  pat_id: number;
+  pat_id: string;
   pat_type: string;
   name?: string;
   personal_info?: {

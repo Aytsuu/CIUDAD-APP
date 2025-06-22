@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getResident, getPatients, getPatientDetails } from "../restful-api/patientsGetAPI";
+import { getResident, getPatients, getPatientDetails, getAllFollowUpVisits } from "../restful-api/patientsGetAPI";
 
 // resident query keys
 export const residentQueryKey = {
@@ -51,4 +51,21 @@ export const usePatientDetails = (patientId: string, options = {}) => {
 		enabled: !!patientId,
 		...options,
 	})
+}
+
+
+// follow-up visit query keys
+export const followUpVisitQueryKey = {
+  allFollowUpVisits: ["followUpVisits"],
+  lists: () => [...followUpVisitQueryKey.allFollowUpVisits, "list"],
+}
+
+export const useAllFollowUpVisits = (options = {}) => {
+  return useQuery({
+    queryKey: followUpVisitQueryKey.lists(),
+    queryFn: getAllFollowUpVisits,
+    staleTime: 60 * 30, // 30 minutes
+    retry: 2,
+    ...options,
+  })
 }

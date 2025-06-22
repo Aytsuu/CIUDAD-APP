@@ -393,7 +393,52 @@ class FollowUpVisitView(generics.ListCreateAPIView):
         def create(self, request, *args, **kwargs):
             return super().create(request, *args, **kwargs)
 
-        
+class AllFollowUpVisitsView(APIView):
+    """
+    API endpoint to get all follow-up visits with patient details
+    """
+    def get(self, request):
+        try:
+            # Fetch all follow-up visits with related patient data
+            visits = FollowUpVisit.objects.select_related(
+                'patrec_id__pat_id__rp_id__per',
+                'patrec_id__pat_id__trans_id__tradd_id'
+            ).prefetch_related(
+                'patrec_id__pat_id__rp_id__per__personaladdress_set__add__sitio',
+                'patrec_id__pat_id__rp_id__household_set__add__sitio'
+            ).order_by('-followv_date')
+            
+            # Serialize the data with patient information
+            serialized_visits = []
+            for visit in visits:
+                patient = visit.patrec_id.pat_id
+                
+                # Get patient serializer data
+                patient_serializer = PatientSerializer(patient, context={'request': request})
+                patient_data = patient_serializer.data
+                
+                visit_data = {
+                    'followv_id': visit.followv_id,
+                    'followv_date': visit.followv_date,
+                    'followv_description': visit.followv_description,
+                    'followv_status': visit.followv_status,
+                    'patrec_id': visit.patrec_id.patrec_id,
+                    'created_at': visit.created_at,
+                    'updated_at': visit.updated_at,
+                    'patient': patient_data,  # Include full patient data
+                }
+                serialized_visits.append(visit_data)
+            
+            response_data = {
+                'count': len(serialized_visits),
+                'results': serialized_visits
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class DeleteUpdateFollowUpVisitView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FollowUpVisitSerializer
     queryset = FollowUpVisit.objects.all()

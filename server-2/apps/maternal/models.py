@@ -132,7 +132,7 @@ class Checklist(models.Model):
 # ************** postpartum **************
 class PostpartumRecord(models.Model):
     ppr_id = models.CharField(primary_key=True, max_length=20, unique=True, editable=False)
-    ppr_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
+    # ppr_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
     ppr_lochial_discharges = models.CharField(max_length=100)
     ppr_vit_a_date_given = models.DateField()
     ppr_num_of_pads = models.PositiveIntegerField()

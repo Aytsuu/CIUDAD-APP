@@ -1,19 +1,102 @@
 from django.shortcuts import render
 from rest_framework import generics, status
+from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializer import *
 from datetime import datetime
+import logging
 
 # Create your views here.
 
-# **Prenatal Record**
-# class PrenatalFormView(generics.ListCreateAPIView):
-#     serializer_class = PrenatalFormSerializer
-#     queryset = Prenatal_Form.objects.all()
+logger = logging.getLogger(__name__)
 
-#     def create(self, request, *args, **kwargs):
-#         return super().create(request, *args, **kwargs)
+class PostpartumRecordCreateView(generics.CreateAPIView):
+    serializer_class = PostpartumCompleteSerializer
+    queryset = PostpartumRecord.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        logger.info(f"Creating postpartum record with data: {request.data}")
+        
+        try:
+            serializer = self.get_serializer(data=request.data)
+            
+            # Add detailed validation error logging
+            if not serializer.is_valid():
+                logger.error(f"Serializer validation errors: {serializer.errors}")
+                return Response(
+                    {
+                        'error': 'Validation failed',
+                        'details': serializer.errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            postpartum_record = serializer.save()
+            logger.info(f"Successfully created postpartum record: {postpartum_record.ppr_id}")
+            
+            return Response(
+                {
+                    'message': 'Postpartum record created successfully',
+                    'ppr_id': postpartum_record.ppr_id,
+                    'patrec_id': postpartum_record.patrec_id.patrec_id if postpartum_record.patrec_id else None,
+                    'data': serializer.data
+                },
+                status=status.HTTP_201_CREATED
+            )
+                
+        except Exception as e:
+            logger.error(f"Error creating postpartum record: {str(e)}")
+            return Response(
+                {'error': f'Failed to create postpartum record: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+@api_view(['GET'])
+def get_postpartum_records(request):
+    """Get all postpartum records with related data"""
+    try:
+        records = PostpartumRecord.objects.select_related(
+            'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
+        ).prefetch_related(
+            'postpartum_delivery_record', 'postpartum_assessment'
+        ).all()
+        
+        serializer = PostpartumCompleteSerializer(records, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error fetching postpartum records: {str(e)}")
+        return Response(
+            {'error': f'Failed to fetch postpartum records: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_postpartum_record_detail(request, ppr_id):
+    """Get specific postpartum record with all related data"""
+    try:
+        record = PostpartumRecord.objects.select_related(
+            'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
+        ).prefetch_related(
+            'postpartum_delivery_record', 'postpartum_assessment'
+        ).get(ppr_id=ppr_id)
+        
+        serializer = PostpartumCompleteSerializer(record)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except PostpartumRecord.DoesNotExist:
+        return Response(
+            {'error': f'Postpartum record with ID {ppr_id} does not exist'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error fetching postpartum record: {str(e)}")
+        return Response(
+            {'error': f'Failed to fetch postpartum record: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
 class PrenatalRecordCreateView(generics.CreateAPIView):
     serializer_class = PrenatalFormSerializer

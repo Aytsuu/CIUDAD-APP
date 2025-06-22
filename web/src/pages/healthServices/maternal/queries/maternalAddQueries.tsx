@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPrenatalRecord, addSpouse } from "../restful-api/maternalPOST";
+import { addPrenatalRecord, addPostpartumRecord } from "../restful-api/maternalPOST";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -32,19 +32,56 @@ export const useAddPrenatalRecord = () => {
     })
 }
 
-export const useAddSpouse = () => {
-    const queryClient = useQueryClient()
+// export const useAddSpouse = () => {
+//     const queryClient = useQueryClient()
 
-    return useMutation({
-        mutationFn: addSpouse,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ['spouses']
-            })
+//     return useMutation({
+//         mutationFn: addSpouse,
+//         onSuccess: () => {
+//             queryClient.invalidateQueries({
+//                 queryKey: ['spouses']
+//             })
+//         },
+//         onError: (error: Error) => {
+//             console.error('Spouse creation error: ', error.message)
+//             toast.error("Failed to add spouse: " + error.message)
+//         }
+//     })
+// }
+
+
+export const useAddPostpartumRecord = () => {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: addPostpartumRecord,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["postpartumRecords"],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["vitalSigns"],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["followUpVisits"],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["spouses"],
+      })
+
+      toast("Postpartum record created successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        action: {
+          label: "View",
+          onClick: () => navigate(-1),
         },
-        onError: (error: Error) => {
-            console.error('Spouse creation error: ', error.message)
-            toast.error("Failed to add spouse: " + error.message)
-        }
-    })
+      })
+      console.log("Successfully added postpartum record ID: ", data.ppr_id)
+    },
+    onError: (error: Error) => {
+      console.error("Postpartum record error: ", error.message)
+      toast.error("Failed to add postpartum record: " + error.message)
+    },
+  })
 }

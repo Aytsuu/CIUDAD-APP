@@ -46,3 +46,15 @@ export const getPatientDetails = async (patientId: string) => {
 		throw error
 	}
 }
+
+
+
+export const getAllFollowUpVisits = async () => {
+  try {
+    const res = await api2.get("patientrecords/follow-up-visits-all/")
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching all follow-up visits:", error)
+    return []
+  }
+}
