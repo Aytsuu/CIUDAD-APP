@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "./AuthContext";
 import supabase from "@/supabase/supabase";
 import { api } from "@/api/api";
 
@@ -45,7 +45,8 @@ export const NotificationProvider = ({children}: {children: React.ReactNode}) =>
             
         if (error || !supabaseData?.length) {
             // Fallback to Django API
-            const response = await api.get('/notification/list/');
+            const response = await api.get('notification/list/');
+            console.log("Error data: ",response.data)
             setNotifications(response.data);
         } else {
             setNotifications(supabaseData);
@@ -65,7 +66,7 @@ export const NotificationProvider = ({children}: {children: React.ReactNode}) =>
                 {
                     event: '*',
                     schema: 'public',
-                    table: 'notifications',
+                    table: 'notification',
                     filter: `recipient_id=eq.${user.id}`,
                 },
                 (payload) => {
@@ -108,6 +109,7 @@ export const NotificationProvider = ({children}: {children: React.ReactNode}) =>
             const notification = notifications.find(n => n.id === id);
             if (notification?.django_id) {
                 await api.patch(`/notification/${notification.django_id}/mark_read/`);
+                console.log("SYNC!!s")
             }
         } catch (error) {
             console.error('Failed to sync read status with Django:', error);

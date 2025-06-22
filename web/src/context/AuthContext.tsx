@@ -10,10 +10,27 @@ import { Session } from "@supabase/supabase-js";
 import supabase from "@/supabase/supabase";
 import { api } from "@/api/api";
 
+// Constants
+const STAFF_TYPES = {
+  BARANGAY: 'Barangay Staff',
+  HEALTH: 'Health Staff'
+} as const;
+
+// Interfaces
+interface Assignment {
+  id: string;
+  [key: string]: any; // Replace with actual assignment fields
+}
+
 interface StaffProfile {
   staff_id: string;
-  staff_type: 'Barangay Staff' | 'Health Staff' | string;
-  assignments: Record<string,any>[];
+  staff_type: typeof STAFF_TYPES[keyof typeof STAFF_TYPES] | string;
+  assignments: Assignment[];
+}
+
+interface ResidentProfile {
+  rp_id: string;
+  staff?: StaffProfile;
 }
 
 interface DjangoUser {
@@ -22,10 +39,7 @@ interface DjangoUser {
   username: string;
   email: string;
   profile_image?: string | null;
-  resident_profile?: {
-    rp_id: string;
-    staff?: StaffProfile;
-  };
+  resident_profile?: ResidentProfile;
 }
 
 interface User {
@@ -62,11 +76,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const clearError = () => setError(null);
 
   const isBarangayStaff = () => {
-    return user?.djangoUser?.resident_profile?.staff?.staff_type === "Barangay Staff";
+    return user?.djangoUser?.resident_profile?.staff?.staff_type === STAFF_TYPES.BARANGAY;
   };
 
   const isHealthStaff = () => {
-    return user?.djangoUser?.resident_profile?.staff?.staff_type === "Health Staff";
+    return user?.djangoUser?.resident_profile?.staff?.staff_type === STAFF_TYPES.HEALTH;
+  };
+
+  const handleError = (error: unknown, defaultMessage: string) => {
+    const message = error instanceof Error ? error.message : 
+                  (error as any)?.response?.data?.error || defaultMessage;
+    setError(message);
+    throw new Error(message);
   };
 
   const syncWithDjango = async (session: Session | null): Promise<DjangoUser | null> => {
@@ -82,9 +103,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Django sync error:', error);
-      throw new Error(error.response?.data?.error || 'Failed to sync with Django');
+      throw error;
     }
   };
 
@@ -106,8 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error("Session error:", error);
-      setError(error instanceof Error ? error.message : "Authentication error");
+      handleError(error, "Session error");
     } finally {
       setIsLoading(false);
     }
@@ -117,8 +137,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let mounted = true;
 
     const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted) await handleSessionChange(session);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (mounted) await handleSessionChange(session);
+      } catch (error) {
+        if (mounted) handleError(error, "Initialization error");
+      }
     };
 
     initializeAuth();
@@ -133,44 +158,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [handleSessionChange]);
 
-const login = async (email: string, password: string) => {
-  setIsLoading(true);
-  clearError();
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    clearError();
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) throw error;
-    if (!data?.session) throw new Error("No session returned");
+      if (error) throw error;
+      if (!data?.session) throw new Error("No session returned");
 
-    // Get full user data from Django
-    const djangoUser = await syncWithDjango(data.session);
-    
-    // Check staff permissions
-    const staffType = djangoUser?.resident_profile?.staff?.staff_type;
-    if (!staffType || !['Barangay Staff', 'Health Staff'].includes(staffType)) {
-      await supabase.auth.signOut();
-      throw new Error("Only authorized staff can access this system");
+      const djangoUser = await syncWithDjango(data.session);
+      
+      const staffType = djangoUser?.resident_profile?.staff?.staff_type;
+      if (!staffType || !Object.values(STAFF_TYPES).includes(staffType as any)) {
+        await supabase.auth.signOut();
+        throw new Error("Only authorized staff can access this system");
+      }
+
+      await handleSessionChange(data.session);
+    } catch (error) {
+      handleError(error, "Login failed");
+    } finally {
+      setIsLoading(false);
     }
-
-    setUser({
-      id: data.session.user.id,
-      email: data.session.user.email || "",
-      username: djangoUser?.username,
-      profile_image: djangoUser?.profile_image,
-      djangoUser
-    });
-    setIsAuthenticated(true);
-    
-  } catch (error) {
-    setError(error instanceof Error ? error.message : "Login failed");
-    throw error;
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const signUp = async (email: string, password: string, username?: string) => {
     setIsLoading(true);
@@ -200,8 +214,8 @@ const login = async (email: string, password: string) => {
 
       await handleSessionChange(data.session);
       return { requiresConfirmation: false };
-    } catch (error: any) {
-      setError(error.response?.data?.error || error.message || "Signup failed");
+    } catch (error) {
+      handleError(error, "Signup failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -224,7 +238,7 @@ const login = async (email: string, password: string) => {
       });
       if (error) throw error;
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Google login failed");
+      handleError(error, "Google login failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -239,7 +253,7 @@ const login = async (email: string, password: string) => {
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Logout failed");
+      handleError(error, "Logout failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -249,10 +263,11 @@ const login = async (email: string, password: string) => {
   const refreshSession = async () => {
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
       await handleSessionChange(session);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Session refresh failed");
+      handleError(error, "Session refresh failed");
       throw error;
     } finally {
       setIsLoading(false);

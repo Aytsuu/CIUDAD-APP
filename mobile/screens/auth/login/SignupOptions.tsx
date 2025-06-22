@@ -2,7 +2,7 @@ import React from "react"
 import { useRouter } from "expo-router";
 import { Animated, Dimensions, Modal, ScrollView, TouchableOpacity, View, Text } from "react-native"
 import { useToastContext } from "@/components/ui/toast";
-import { Ionicons } from '@expo/vector-icons'; // or your preferred icon library
+import { Ionicons } from '@expo/vector-icons'; 
 
 export const SignupOptions = ({
   visible,
