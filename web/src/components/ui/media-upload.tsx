@@ -10,6 +10,7 @@ export const MediaUpload = ({
   activeVideoId,
   setMediaFiles,
   setActiveVideoId,
+  onFileRemoved, // Add optional prop
 }: {
   title: string;
   description: string;
@@ -17,6 +18,7 @@ export const MediaUpload = ({
   activeVideoId: string;
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>;
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
+  onFileRemoved?: (id: string) => void; // Optional callback
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -124,6 +126,7 @@ export const MediaUpload = ({
       if (mediaToRemove.previewUrl) {
         URL.revokeObjectURL(mediaToRemove.previewUrl);
       }
+      onFileRemoved?.(id);
     } catch (error) {
       console.error("Failed to delete file:", error);
     }

@@ -1,8 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash, Eye, Search, FileInput, ChevronLeft, Calendar, ArrowUpDown } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Eye,
+  Search,
+  FileInput,
+  ChevronLeft,
+  Calendar,
+  ArrowUpDown,
+  Trash,
+} from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -12,80 +22,111 @@ import GADEditEntryForm from "./budget-tracker-edit-form";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { useParams } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type GADBudgetEntry, useDeleteGADBudget } from "./queries/BTDeleteQueries";
-import { useGetGADBudgets } from "./queries/BTFetchQueries";
+import {
+  useArchiveGADBudget,
+  useRestoreGADBudget,
+  usePermanentDeleteGADBudget,
+} from "./queries/BTDeleteQueries";
+import { useGADBudgets } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
+import { GADBudgetEntry } from "./requestAPI/BTGetRequest";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 function BudgetTracker() {
-  const [budget_item, setTotalBalance] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState("All Entry Types");
+  const [selectedMonth, setSelectedMonth] = useState("All");
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [activeTab, setActiveTab] = useState("active");
   const { year: gbudy_year } = useParams<{ year: string }>();
   const { data: yearBudgets } = useGetGADYearBudgets();
-  
+  const { mutate: archiveEntry } = useArchiveGADBudget();
+  const { mutate: restoreEntry } = useRestoreGADBudget();
+  const { mutate: permanentDeleteEntry } = usePermanentDeleteGADBudget();
 
-  const { 
-      data: budgetEntries = [], 
-      isLoading, 
-      error,
-      refetch 
-    } = useGetGADBudgets(gbudy_year||''); 
+  const handleArchive = (gbud_num: number) => {
+    archiveEntry(gbud_num);
+  };
+
+  const handleRestore = (gbud_num: number) => {
+    restoreEntry(gbud_num);
+  };
+
+  const handlePermanentDelete = (gbud_num: number) => {
+    permanentDeleteEntry(gbud_num);
+  };
+
+  const {
+    data: budgetEntries = [],
+    isLoading,
+    error,
+    refetch,
+  } = useGADBudgets(gbudy_year || "");
 
   const currentYearBudget = yearBudgets?.find(
     (budget) => budget.gbudy_year === gbudy_year
   )?.gbudy_budget;
 
-  const formattedBudget = currentYearBudget 
-  ? Number(currentYearBudget).toFixed(2) 
-  : '0.00';
+  const formattedBudget = currentYearBudget
+    ? Number(currentYearBudget).toFixed(2)
+    : "0.00";
 
-  const { mutate: deleteEntry } = useDeleteGADBudget();
-  const handleDelete = async (gbud_num: number) => {
-    deleteEntry(gbud_num);
-  };
+  const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
+  const [selectedRowFiles, setSelectedRowFiles] = useState<Array<{
+    gbf_id: number;
+    gbf_name: string;
+    gbf_type: string;
+    gbf_path: string;
+    gbf_url: string;
+  }> | null>(null);
 
-  
-  // useEffect(() => {
-  //   if (budgetEntries.length > 0) {
-  //     const income = budgetEntries
-  //       .filter((entry) => entry.gbud_type === "Income")
-  //       .reduce((sum, entry) => sum + (Number(entry.gbud_amount) || 0), 0);
-
-  //     const expenses = budgetEntries
-  //       .filter((entry) => entry.gbud_type === "Expense")
-  //       .reduce((sum, entry) => sum + (Number(entry.gbud_amount) || 0), 0);
-
-  //     setTotalBalance(income - expenses);
-  //     // setAmountUsed(expenses);
-  //   }
-  // }, [budgetEntries]);
+  const monthOptions = [
+    { id: "All", name: "All" },
+    { id: "01", name: "January" },
+    { id: "02", name: "February" },
+    { id: "03", name: "March" },
+    { id: "04", name: "April" },
+    { id: "05", name: "May" },
+    { id: "06", name: "June" },
+    { id: "07", name: "July" },
+    { id: "08", name: "August" },
+    { id: "09", name: "September" },
+    { id: "10", name: "October" },
+    { id: "11", name: "November" },
+    { id: "12", name: "December" },
+  ];
 
   const filterOptions = [
-    { id: "All Entry Types", name: "All Entry Types" },
+    { id: "All", name: "All" },
     { id: "Income", name: "Income" },
     { id: "Expense", name: "Expense" },
   ];
 
-  // Filter data based on search query and selected filter
-  const filteredData = budgetEntries.filter((entry) => {
-    const matchesFilter = selectedFilter === "All Entry Types" || 
-                         entry.gbud_type === selectedFilter;
-    
-    const matchesSearch = `${entry.gbud_particulars} ${entry.gbud_type} ${entry.gbud_amount} ${entry.gbud_add_notes}`
+  const filteredData = budgetEntries.filter((entry: GADBudgetEntry) => {
+    if (activeTab === "active" && entry.gbud_is_archive) return false;
+    if (activeTab === "archive" && !entry.gbud_is_archive) return false;
+
+    const month = entry.gbud_datetime?.slice(5, 7);
+    const matchesMonth = selectedMonth === "All" || month === selectedMonth;
+    const matchesFilter =
+      selectedFilter === "All" || entry.gbud_type === selectedFilter;
+
+    const matchesSearch = `${entry.gbud_inc_particulars} ${entry.gbud_type} ${
+      entry.gbud_inc_amt ||
+      entry.gbud_proposed_budget ||
+      entry.gbud_actual_expense
+    } ${entry.gbud_add_notes}`
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    
-    return matchesFilter && matchesSearch;
+
+    return matchesMonth && matchesFilter && matchesSearch;
   });
 
-  // Calculate pagination values
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
@@ -94,45 +135,93 @@ function BudgetTracker() {
 
   const columns: ColumnDef<GADBudgetEntry>[] = [
     {
-      accessorKey: "gbud_date",
+      accessorKey: "gbud_datetime",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Date
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          DATETIME
           <ArrowUpDown size={14} />
         </div>
       ),
-      cell: ({ row }) => <div className="">{row.getValue("gbud_date")}</div>,
-    },
-    {
-      accessorKey: "gbud_particulars",
-      header: "Particulars",
-    },
-    {
-      accessorKey: "gbud_type",
-      header: "Type",
-    },
-    {
-      accessorKey: "gbud_amount",
-      header: "Amount",
       cell: ({ row }) => (
-        <div>Php {Number(row.getValue("gbud_amount")).toFixed(2)}</div>
+        <div className="">
+          {new Date(row.getValue("gbud_datetime")).toLocaleString()}
+        </div>
       ),
     },
     {
-        accessorKey: "gbud_remaining_bal",
-        header: "Remaining Balance",
-        cell: ({ row }) => (
-          <div>Php {Number(row.getValue("gbud_remaining_bal")).toFixed(2)}</div>
-        ),
-      },
+      accessorKey: "gbud_type",
+      header: "TYPE",
+    },
     {
-      accessorKey: "gbud_add_notes",
-      header: "Additional Notes",
+      accessorKey: "gbud_inc_particulars",
+      header: "PARTICULAR",
+    },
+    {
+      accessorKey: "gbud_amount",
+      header: "AMOUNT",
+      cell: ({ row }) => {
+        const type = row.getValue("gbud_type") as string;
+        const incAmt = row.original.gbud_inc_amt;
+        const proposedBudget = row.original.gbud_proposed_budget;
+        const actualExpense = row.original.gbud_actual_expense;
+
+        let amountToShow;
+        if (type === "Income" && incAmt !== undefined) {
+          amountToShow = incAmt;
+        } else if (type === "Expense") {
+          amountToShow =
+            actualExpense !== undefined && actualExpense !== null
+              ? actualExpense
+              : proposedBudget;
+        } else {
+          amountToShow = 0;
+        }
+
+        return <div>Php {Number(amountToShow).toFixed(2)}</div>;
+      },
+    },
+    {
+      accessorKey: "files",
+      header: "SUPPORTING DOCS",
+      cell: ({ row }) => {
+        const entry = row.original;
+        const files = entry.files || [];
+        const hasReferenceNum = !!entry.gbud_reference_num;
+        const hasFiles = files.length > 0;
+
+        return (
+          <div className="flex justify-center gap-2">
+            {entry.gbud_type === "Expense" &&
+            (!hasReferenceNum || !hasFiles) ? (
+              <span className="text-red-500">
+                Missing
+                {!hasReferenceNum && " Reference Number"}
+                {!hasReferenceNum && !hasFiles && " and"}
+                {!hasFiles && " Supporting Docs"}
+              </span>
+            ) : files.length > 0 ? (
+              <div
+                className="text-sky-500 underline cursor-pointer"
+                onClick={() => {
+                  setSelectedRowFiles(files);
+                  setIsSuppDocDialogOpen(true);
+                }}
+              >
+                View All Docs ({files.length})
+              </div>
+            ) : (
+              <span>No docs</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "action",
-      header: "Action",
+      header: "ACTION",
       cell: ({ row }) => (
         <div className="flex justify-center gap-1">
           <TooltipLayout
@@ -160,17 +249,63 @@ function BudgetTracker() {
           />
           <TooltipLayout
             trigger={
-              <div className="flex items-center h-8">
-                <ConfirmationModal
-                  trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"><Trash size={16} /></div>}
-                  title="Confirm Delete"
-                  description="Are you sure you want to delete this entry?"
-                  actionLabel="Confirm"
-                  onClick={() => handleDelete(row.original.gbud_num!)} 
-                />                    
-              </div>   
+              <ConfirmationModal
+                trigger={
+                  <Button variant="destructive">
+                    <Archive size={16} />
+                  </Button>
+                }
+                title="Archive Entry"
+                description="This will move the entry to archive. Continue?"
+                actionLabel="Archive"
+                onClick={() => handleArchive(row.original.gbud_num!)}
+              />
             }
-            content="Delete"
+            content="Archive"
+          />
+        </div>
+      ),
+    },
+  ];
+
+  const archiveColumns: ColumnDef<GADBudgetEntry>[] = [
+    ...columns.filter((col) => col.accessorKey !== "action"),
+    {
+      accessorKey: "action",
+      header: "ACTION",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-1">
+          <TooltipLayout
+            trigger={
+              <ConfirmationModal
+                trigger={
+                  <Button variant="secondary">
+                    <ArchiveRestore size={16} />
+                  </Button>
+                }
+                title="Restore Entry"
+                description="This will move the entry back to active. Continue?"
+                actionLabel="Restore"
+                onClick={() => handleRestore(row.original.gbud_num!)}
+              />
+            }
+            content="Restore"
+          />
+          <TooltipLayout
+            trigger={
+              <ConfirmationModal
+                trigger={
+                  <Button variant="destructive">
+                    <Trash size={16} />
+                  </Button>
+                }
+                title="Permanently Delete"
+                description="This cannot be undone. The entry will be permanently deleted."
+                actionLabel="Delete"
+                onClick={() => handlePermanentDelete(row.original.gbud_num!)}
+              />
+            }
+            content="Delete Permanently"
           />
         </div>
       ),
@@ -204,7 +339,6 @@ function BudgetTracker() {
 
   return (
     <div className="bg-snow w-full h-full">
-      {/* Header and Summary Section */}
       <div className="flex flex-col gap-3 mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
           <Link to="/gad-budget-tracker-main">
@@ -213,7 +347,7 @@ function BudgetTracker() {
           <div className="rounded-full border-2 border-solid border-darkBlue2 p-2 flex items-center">
             <Calendar />
           </div>
-          <div className="ml-2">{gbudy_year || 'N/A'}</div> 
+          <div className="ml-2">{gbudy_year || "N/A"}</div>
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
           Manage and view income and expense records for year {gbudy_year}.
@@ -221,21 +355,57 @@ function BudgetTracker() {
       </div>
       <hr className="border-gray mb-6 sm:mb-6" />
 
-      {/* Budget Summary */}
       <div className="flex flex-row gap-5 mb-5">
         <div className="flex flex-row gap-2">
-          {/* here is where I must display the budget from budget_plan_detail of the year selected */}
-          <Label className="w-35 text-md">Budget:</Label> 
+          <Label className="w-35 text-md">Budget:</Label>
           <Label className="text-red-500 text-md font-bold">
-          Php {formattedBudget}
+            Php {formattedBudget}
           </Label>
         </div>
-    </div>
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      </div>
+
+      <div className="flex justify-center mb-9">
+        <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
+          <button
+            onClick={() => setSelectedFilter("All")}
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+              selectedFilter === "All"
+                ? "bg-primary text-white shadow"
+                : "text-gray-700 hover:bg-white"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setSelectedFilter("Income")}
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+              selectedFilter === "Income"
+                ? "bg-primary text-white shadow"
+                : "text-gray-700 hover:bg-white"
+            }`}
+          >
+            Income
+          </button>
+          <button
+            onClick={() => setSelectedFilter("Expense")}
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+              selectedFilter === "Expense"
+                ? "bg-primary text-white shadow"
+                : "text-gray-700 hover:bg-white"
+            }`}
+          >
+            Expense
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-5">
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+              size={17}
+            />
             <Input
               placeholder="Search..."
               className="pl-10 w-full bg-white text-sm"
@@ -250,12 +420,12 @@ function BudgetTracker() {
             <Label>Filter: </Label>
             <SelectLayout
               className="bg-white"
-              options={filterOptions}
-              placeholder="Filter"
-              value={selectedFilter}
-              label="Entry Type"
+              options={monthOptions}
+              placeholder="Month"
+              value={selectedMonth}
+              label="Month"
               onChange={(value) => {
-                setSelectedFilter(value);
+                setSelectedMonth(value);
                 setCurrentPage(1);
               }}
             />
@@ -273,7 +443,7 @@ function BudgetTracker() {
             description="Fill in the details for your entry."
             mainContent={
               <div className="w-full h-full">
-                <GADAddEntryForm 
+                <GADAddEntryForm
                   onSuccess={() => {
                     setIsDialogOpen(false);
                     refetch();
@@ -287,14 +457,13 @@ function BudgetTracker() {
         </div>
       </div>
 
-      {/* Data Table */}
       <div className="bg-white">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input 
-              type="number" 
-              className="w-14 h-8" 
+            <Input
+              type="number"
+              className="w-14 h-8"
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
@@ -304,27 +473,36 @@ function BudgetTracker() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+          <div className="flex items-center">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-2 max-w-xs">
+                <TabsTrigger value="active">Active</TabsTrigger>
+                <TabsTrigger value="archive">
+                  <div className="flex items-center gap-2">
+                    <Archive size={16} /> Archive
+                  </div>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </div>
 
-        <DataTable columns={columns} data={paginatedData} />
+        <div className="px-6 pb-6">
+          {activeTab === "active" ? (
+            <DataTable
+              columns={columns}
+              data={paginatedData.filter((entry) => !entry.gbud_is_archive)}
+            />
+          ) : (
+            <DataTable
+              columns={archiveColumns}
+              data={paginatedData.filter((entry) => entry.gbud_is_archive)}
+            />
+          )}
+        </div>
       </div>
 
-      {/* Pagination */}
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
           Showing {(currentPage - 1) * pageSize + 1}-
@@ -339,6 +517,52 @@ function BudgetTracker() {
           />
         </div>
       </div>
+
+      <DialogLayout
+        isOpen={isSuppDocDialogOpen}
+        onOpenChange={setIsSuppDocDialogOpen}
+        trigger={null}
+        className="max-w-[90vw] w-[90vw] max-h-[90vh] p-4 flex flex-col"
+        title="Supporting Documents"
+        description="View all supporting documents for this entry."
+        mainContent={
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {selectedRowFiles && selectedRowFiles.length > 0 ? (
+              selectedRowFiles.map((file, index) => (
+                <div key={file.gbf_id} className="flex flex-col items-center">
+                  {file.gbf_type?.startsWith("image/") && file.gbf_url ? (
+                    <img
+                      src={file.gbf_url}
+                      alt={file.gbf_name || `Document ${index + 1}`}
+                      className="max-h-[70vh] max-w-full object-contain mx-auto"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "/placeholder-image.png";
+                      }}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg text-center">
+                      <p className="mt-2 text-sm text-gray-600">
+                        {file.gbf_name || "No file name"}
+                      </p>
+                      <p className="mt-2 text-sm text-red-500">
+                        Image preview not available
+                      </p>
+                    </div>
+                  )}
+                  <p className="mt-2 text-sm text-gray-500">
+                    {file.gbf_name || `Document ${index + 1}`}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-8">
+                No supporting documents available.
+              </p>
+            )}
+          </div>
+        }
+      />
     </div>
   );
 }
