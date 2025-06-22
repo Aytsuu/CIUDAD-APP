@@ -87,7 +87,7 @@ function IndividualFamPlanningTable() {
             }
             content="View"
           />
-          <TooltipLayout
+          {/* <TooltipLayout
             trigger={
               <DialogLayout
                 trigger={
@@ -100,7 +100,7 @@ function IndividualFamPlanningTable() {
               />
             }
             content="Delete"
-          />
+          /> */}
         </div>
       ),
     },

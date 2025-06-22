@@ -28,8 +28,8 @@ def get_patient_details(request, patient_id):
             'pat_id': patient_data.get('pat_id', ''),
             'clientID': patient_data.get('clientID', ''),  # Use pat_id as clientID if no specific clientID
             'philhealthNo': patient_data.get('philhealthNo',''),
-            'nhts_status': "",
-            'pantawid_4ps': "",
+            'nhts_status': patient_data.get('nhts_status'),
+            'pantawid_4ps': patient_data.get('fourps'),
             'lastName': '',
             'givenName': '',
             'middleInitial': '',
@@ -55,8 +55,8 @@ def get_patient_details(request, patient_id):
             'numOfLivingChildren': 0,
             'planToHaveMoreChildren': False,
             'averageMonthlyIncome': '',
-            'weight': 0,
-            'height': 0,
+            'weight': patient_data.get('weight'),
+            'height': patient_data.get('height'),
             'bmi': 0,
             'bmi_category': '',
             'obstetricalHistory': {
@@ -169,9 +169,6 @@ def get_patient_details(request, patient_id):
 
 @api_view(['GET'])
 def get_complete_fp_record(request, patient_id):
-    """
-    Get complete patient details for Family Planning form, including existing FP records if any
-    """
     try:
         # First get the basic patient details
         patient_details_response = get_patient_details(request, patient_id)
@@ -636,12 +633,6 @@ def get_fp_records_for_patient(request, patient_id):
 
 # --- NEW VIEW FOR OVERALL TABLE: Get unique patients with FP records and conditional details ---
 class PatientListForOverallTable(generics.ListAPIView):
-    """
-    API view to list unique patients who have family planning records.
-    - If a patient has exactly one FP record, its details (method, date) are included.
-    - If a patient has multiple FP records, only basic patient info is shown,
-      and a flag indicates multiple records exist.
-    """
     serializer_class = FPRecordSerializer # Using FPRecordSerializer to represent the main record
     
     def get_queryset(self):
@@ -651,7 +642,7 @@ class PatientListForOverallTable(generics.ListAPIView):
             'pat', 
             'pat__rp_id__per', # For resident patient personal info
             'pat__trans_id',   # For transient patient info
-            'fpt'              # For FP_type details
+            'patrec'              # For FP_type details
         ).order_by('-created_at') # Order by latest for easy retrieval of the "latest" record
 
     def list(self, request, *args, **kwargs):
@@ -663,10 +654,9 @@ class PatientListForOverallTable(generics.ListAPIView):
             patient_id = record.pat.pat_id
             
             if patient_id not in patient_data_map:
-                # If this is the first record for this patient, store it
                 patient_data_map[patient_id] = {
                     'patient_id': patient_id,
-                    'patient_name': "", # Will be filled below
+                    'patient_name': "",
                     'patient_age': None,
                     'sex': "",
                     'client_type': "",
@@ -689,7 +679,7 @@ class PatientListForOverallTable(generics.ListAPIView):
             if record.pat.pat_type == 'Resident' and record.pat.rp_id and record.pat.rp_id.per:
                 personal = record.pat.rp_id.per
                 patient_data_map[patient_id]['patient_name'] = f"{personal.per_lname}, {personal.per_fname} {personal.per_mname or ''}".strip()
-                patient_data_map[patient_id]['patient_age'] = personal.per_age
+                # patient_data_map[patient_id]['patient_age'] = personal.age
                 patient_data_map[patient_id]['sex'] = personal.per_sex
             elif record.pat.pat_type == 'Transient' and record.pat.trans_id:
                 transient = record.pat.trans_id

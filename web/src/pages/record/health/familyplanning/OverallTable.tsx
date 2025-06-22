@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
@@ -86,9 +85,9 @@ export default function FamPlanningTable() {
             {record.patient_name || 'No name available'}
           </div>
           <div className="text-sm text-gray-600">
-            {record.patient_age ? `${record.patient_age} years` : 'Age not available'} • 
-            {record.sex || 'Gender not available'} • 
-            {record.client_type || 'Type not available'}
+            {record.patient_age ? `${record.patient_age} years` : 'Age not available'}• 
+            {record.sex || 'Gender not available'}  
+            {/* {record.client_type || 'Type not available' */}
           </div>
         </div>
       );
@@ -113,68 +112,7 @@ export default function FamPlanningTable() {
         day: 'numeric'
       })
     )},
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          {/* View Record Button */}
-          <TooltipLayout
-            trigger={
-              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                <Link to={`/FamPlanning_individual/${row.original.fprecord_id}`}>
-                  <Eye size={15} />
-                </Link>
-              </div>
-            }
-            content="View"
-          />
-          {/* Edit Record Button */}
-          <TooltipLayout
-            trigger={
-              <div className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
-                <Link to={`/FamPlanning_edit/${row.original.fprecord_id}`}>
-                  <Edit size={15} />
-                </Link>
-              </div>
-            }
-            content="Edit"
-          />
-          {/* Delete Record Button with Dialog confirmation */}
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
-                }
-                className=""
-                mainContent={
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold mb-2">Delete Record</h3>
-                    <p className="mb-4">Are you sure you want to delete this Family Planning record for <strong>{row.original.patient_name}</strong>? This action cannot be undone.</p>
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="outline" onClick={() => (document.body.click())}>Cancel</Button> {/* Close dialog on cancel */}
-                      <Button
-                        variant="destructive"
-                        onClick={() => {
-                          handleDelete(row.original.fprecord_id);
-                          (document.body.click()); // Close dialog after deletion
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                }
-              />
-            }
-            content="Delete"
-          />
-        </div>
-      ),
-    },
+    
   ]
 
   // Function to handle search input change

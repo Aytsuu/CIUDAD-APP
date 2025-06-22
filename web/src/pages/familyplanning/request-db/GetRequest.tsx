@@ -54,13 +54,14 @@ export const getFPRecordsList = async () => {
       return {
         fprecord_id: record.fprecord_id,
         client_id: record.clientID || "N/A",
-        patient_name: personal ? `${personal.per_lname || ''}, ${personal.per_fname || ''}`.trim() : "N/A",
-        patient_age: personal ? personal.age : "N/A", // Age should now be calculated by the serializer
+        patient_name: record.patient_name,
+        patient_age: record.patient_age || "N/A", 
         client_type: record.typeOfClient || "N/A",
-        method_used: record.methodUsed || "N/A", // Directly from the comprehensive record
+        method_used: record?.method_use || "N/A", // Directly from the comprehensive record
         created_at: record.created_at || "N/A",
         updated_at: record.updated_at || "N/A",
-        sex: personal ? personal.per_sex || "Unknown" : "Unknown",
+        sex: record.sex || "Unknown",
+        record_count: record?.record_count,
       };
     });
 

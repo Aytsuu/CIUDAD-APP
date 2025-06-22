@@ -34,7 +34,7 @@ urlpatterns = [
     # Risk VAW CRUD
     path('risk_vaw/', RiskVawListCreateView.as_view(), name='risk_vaw_list_create'),
     path('risk_vaw/<int:vaw_id>/', RiskVawDetailView.as_view(), name='risk_vaw_detail'),
-    # path('overall-records/',FamilyPlanninOverallListView.as_view(), name='fp-overall-list'),
+    path('overall-records/',PatientListForOverallTable.as_view(), name='fp-overall-list'),
     # Physical Exam CRUD
     path('physical_exam/', PhysicalExamListCreateView.as_view(), name='physical_exam_list_create'),
     path('physical_exam/<int:fp_pe_id>/', PhysicalExamDetailView.as_view(), name='physical_exam_detail'),
