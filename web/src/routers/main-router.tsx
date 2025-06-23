@@ -27,12 +27,9 @@ import { announcement_route } from './Announcement-router';
 import { famplanning_route } from './FamilyPlanning-router';
 import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
-<<<<<<< HEAD
-=======
 import { reports_router } from './reports-router';
 import { summon_router } from './summon-router';
 
->>>>>>> master
 
 export const main_router: RouteObject[] = [
     {

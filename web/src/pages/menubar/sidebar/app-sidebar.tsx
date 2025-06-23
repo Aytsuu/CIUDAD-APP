@@ -281,13 +281,10 @@ const items: MenuItem[] = [
     title: "Report",
     url: "/report",
   },
-<<<<<<< HEAD:web/src/pages/menubar/sidebar/app-sidebar.tsx
-=======
   {
     title: "Summon & Case Tracker",
     url: "/summon-and-case-tracking"
   },
->>>>>>> master:web/src/components/ui/menubar/app-sidebar.tsx
   {
     title: "GAD",
     subItems: true,

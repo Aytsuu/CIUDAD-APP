@@ -43,35 +43,6 @@ export const MediaUpload = ({
     setActiveVideoId(activeVideoId === id ? "" : id);
   };
 
-<<<<<<< HEAD
-=======
-  const handleRemoveMedia = async (id: string) => {
-    const mediaToRemove = mediaFiles.find((media) => media.id === id);
-    if (!mediaToRemove) return;
-
-    try {
-      // Remove from Supabase if already uploaded
-      if (mediaToRemove.storagePath) {
-        await deleteFile(mediaToRemove.storagePath);
-      }
-
-      // Remove from local state
-      setMediaFiles((prev) => prev.filter((media) => media.id !== id));
-      
-      // Clean up video playback if needed
-      if (activeVideoId === id) setActiveVideoId("");
-      
-      // Clean up object URL
-      if (mediaToRemove.previewUrl) {
-        URL.revokeObjectURL(mediaToRemove.previewUrl);
-      }
-      onFileRemoved?.(id);
-    } catch (error) {
-      console.error("Failed to delete file:", error);
-    }
-  };
-
->>>>>>> master
   const handleAddMediaClick = () => {
     fileInputRef.current?.click();
   };
