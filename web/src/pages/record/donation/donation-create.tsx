@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -6,57 +7,68 @@ import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { FormField } from "@/components/ui/form/form";
 import { useAddDonation } from "./queries/donationAddQueries";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useGetPersonalList } from "./queries/donationFetchQueries";
+import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
 
 interface ClerkDonateCreateFormProps {
-  onSuccess?: () => void; // Add this prop type
+  onSuccess?: () => void;
 }
 
-function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
+function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
     resolver: zodResolver(ClerkDonateCreateSchema),
     defaultValues: {
-      // don_num: 0,
-      don_donorfname: "",
-      don_donorlname: "",
+      don_donor: "",
+      per_id: null,
       don_item_name: "",
-      don_qty: 1,
+      don_qty: '',
       don_description: "",
       don_category: "",
-      don_receiver: "",
       don_date: new Date().toISOString().split("T")[0],
     },
   });
-  
+
   const { mutate: addDonation, isPending } = useAddDonation();
+  const { data: personalList = [], isLoading: isPersonalLoading } = useGetPersonalList();
+  const [openCombobox, setOpenCombobox] = useState<boolean>(false);
+  const [isMonetary, setIsMonetary] = useState<boolean>(false);
+
+  const categoryWatch = form.watch("don_category");
+
+  useEffect(() => {
+    setIsMonetary(categoryWatch === "Monetary Donations");
+    if (categoryWatch === "Monetary Donations") {
+      form.setValue("don_item_name", "");
+    }
+  }, [categoryWatch, form]);
 
   const onSubmit = (values: z.infer<typeof ClerkDonateCreateSchema>) => {
-    const toastId = toast.loading('Submitting entry...', {
-      duration: Infinity  
-    });
+    const payload = {
+      ...values,
+    };
 
-    addDonation(values, {
+    addDonation(payload, {
       onSuccess: () => {
-        toast.success('Donation entry recorded successfully', {
-          id: toastId, 
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000,
-          onAutoClose: () => {
-            if (onSuccess) onSuccess();
-          }
-        });
+        onSuccess?.();
       },
       onError: (error) => {
-        toast.error(
-          "Failed to submit donation. Please check the input data and try again.",
-          {
-            id: toastId,
-            duration: 2000
-          }
-        );
         console.error("Error submitting donation", error);
       }
     });
@@ -74,49 +86,96 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-4"
           >
-            {/* Reference Number*/}
-            {/* <FormInput
+            <FormField
               control={form.control}
-              name="don_num"
-              label="Reference Number"
-              placeholder="Please enter reference number"
-              readOnly={false}
-            /> */}
-
-            {/* Donor First Name */}
-            <FormInput
-              control={form.control}
-              name="don_donorfname"
-              label="Donor First Name"
-              placeholder="Enter donor's first name"
-              readOnly={false}
-            />
-
-            {/* Donor Last Name */}
-            <FormInput
-              control={form.control}
-              name="don_donorlname"
-              label="Donor Last Name"
-              placeholder="Enter donor's last name"
-              readOnly={false}
-            />
-
-            {/* Item Name */}
-            <FormInput
-              control={form.control}
-              name="don_item_name"
-              label="Item Name"
-              placeholder="Enter item name"
-              readOnly={false}
-            />
-
-            {/* Quantity */}
-            <FormInput
-              control={form.control}
-              name="don_qty"
-              label="Quantity"
-              placeholder="Enter quantity"
-              readOnly={false}
+              name="don_donor"
+              render={({ field }) => (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Donor Name</label>
+                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openCombobox}
+                        className="w-full h-10 justify-between truncate"
+                        disabled={isPersonalLoading}
+                      >
+                        <span className="truncate">
+                          {isPersonalLoading
+                            ? "Loading donors..."
+                            : field.value || "Select donor..."}
+                        </span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search donor..."
+                          onValueChange={(value) => {
+                            if (
+                              !personalList.some((person) =>
+                                person.full_name
+                                  .toLowerCase()
+                                  .includes(value.toLowerCase())
+                              ) && value !== "Anonymous"
+                            ) {
+                              form.setValue("don_donor", value);
+                              form.setValue("per_id", null);
+                            }
+                          }}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            No donor found. Enter name manually or select Anonymous.
+                          </CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="Anonymous"
+                              onSelect={() => {
+                                form.setValue("don_donor", "Anonymous");
+                                form.setValue("per_id", null);
+                                setOpenCombobox(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value === "Anonymous"
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              Anonymous
+                            </CommandItem>
+                            {personalList.map((person) => (
+                              <CommandItem
+                                key={person.per_id}
+                                value={person.full_name}
+                                onSelect={() => {
+                                  form.setValue("don_donor", person.full_name);
+                                  form.setValue("per_id", person.per_id);
+                                  setOpenCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === person.full_name
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {person.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             />
 
             {/* Category */}
@@ -130,23 +189,43 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
                 { id: "Medical Supplies", name: "Medical Supplies" },
                 { id: "Household Items", name: "Household Items" },
                 { id: "Educational Supplies", name: "Educational Supplies" },
-                { id: "Baby & Childcare Items", name: "Baby & Childcare Items"},
+                { id: "Baby & Childcare Items", name: "Baby & Childcare Items" },
                 { id: "Animal Welfare Items", name: "Animal Welfare Items" },
-                { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid"},
-                { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies"},
+                { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid" },
+                { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies" },
               ]}
               readOnly={false}
             />
+            
+            {/* Item Name - Changes to select when category is Monetary Donations */}
+            {isMonetary ? (
+              <FormSelect
+                control={form.control}
+                name="don_item_name"
+                label="Money Type"
+                options={[
+                  { id: "Cash", name: "Cash" },
+                  { id: "Cheque", name: "Cheque" },
+                  { id: "E-Money", name: "E-Money" },
+                ]}
+                readOnly={false}
+              />
+            ) : (
+              <FormInput
+                control={form.control}
+                name="don_item_name"
+                label="Item Name"
+                placeholder="Enter item name"
+                readOnly={false}
+              />
+            )}
 
-            {/* Receiver */}
-            <FormSelect
+            {/* Quantity */}
+            <FormInput
               control={form.control}
-              name="don_receiver"
-              label="Received by"
-              options={[
-                { id: "Employee 1", name: "Employee 1" },
-                { id: "Employee 2", name: "Employee 2" },
-              ]}
+              name="don_qty"
+              label={isMonetary ? "Amount" : "Quantity"}
+              placeholder={isMonetary ? "Enter amount" : "Enter quantity"}
               readOnly={false}
             />
 
@@ -154,8 +233,8 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
             <FormInput
               control={form.control}
               name="don_description"
-              label="Item Description"
-              placeholder="Enter item description"
+              label="Description"
+              placeholder="Enter description"
               readOnly={false}
             />
 
@@ -170,10 +249,10 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
 
             {/* Submit Button */}
             <div className="mt-8 flex justify-end gap-3">
-            <Button
+              <Button
                 type="submit"
-                className="bg-blue hover:bg-blue/90"
-                disabled={isPending} // Disable button during submission
+                className=""
+                disabled={isPending}
               >
                 {isPending ? "Saving..." : "Save"}
               </Button>

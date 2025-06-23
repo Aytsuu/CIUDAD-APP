@@ -42,6 +42,7 @@ export const updateCommodityStock = async (formData: any,initialData: CommodityS
     {
       cinv_qty: qty,
       cinv_qty_avail: newQtyAvail,
+      
     }
   );
   

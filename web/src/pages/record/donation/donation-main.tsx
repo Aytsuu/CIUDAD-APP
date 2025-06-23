@@ -2,17 +2,17 @@ import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash, Plus, Search, Eye } from "lucide-react";
+import { Plus, Search, Eye } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ClerkDonateCreate from "./donation-create";
 import ClerkDonateView from "./donation-view";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type Donation, useDeleteDonation } from "./queries/donationDeleteQueries";
+import { type Donation } from "./queries/donationFetchQueries";
 import { useGetDonations } from "./queries/donationFetchQueries";
+import { Button } from "@/components/ui/button/button";
 
 
 function DonationTracker() {
@@ -30,15 +30,15 @@ function DonationTracker() {
     refetch 
   } = useGetDonations();
 
-  const { mutate: deleteEntry} = useDeleteDonation();
+  // const { mutate: deleteEntry} = useDeleteDonation();
 
-  const handleDelete = async (don_num: number) => {
-    deleteEntry(don_num);
-  };
+  // const handleDelete = async (don_num: number) => {
+  //   deleteEntry(don_num);
+  // };
 
   // Filter data based on search query
   const filteredData = donations.filter((donation) => {
-    const searchString = `${donation.don_num} ${donation.don_donorfname} ${donation.don_donorlname} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_receiver} ${donation.don_date}`.toLowerCase();
+    const searchString = `${donation.don_num} ${donation.don_donor} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_date}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
 
@@ -54,7 +54,7 @@ function DonationTracker() {
       accessorKey: "don_num",
       header: ({ column }) => (
         <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          className="flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Reference No.
@@ -62,38 +62,49 @@ function DonationTracker() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("don_num")}</div>
+        <div className="text-center">{row.getValue("don_num")}</div>
       ),
     },
     {
-      accessorKey: "don_donorfname",
-      header: "Donor First Name",
-    },
-    {
-      accessorKey: "don_donorlname", 
-      header: "Donor Last Name",
+      accessorKey: "don_donor", 
+      header: "Donor",
+      cell: ({ row }) => (
+        <div className="text-left">{row.getValue("don_donor")}</div>
+      ),
     },
     {
       accessorKey: "don_item_name", 
       header: "Item Name",
+      cell: ({ row }) => (
+        <div className="text-left">{row.getValue("don_item_name")}</div>
+      ),
     },
     {
       accessorKey: "don_category", 
       header: "Item Category",
+      cell: ({ row }) => (
+        <div className="text-left">{row.getValue("don_category")}</div>
+      ),
     },
     {
       accessorKey: "don_qty", 
-      header: "Quantity",
+      header: "Quantity/Amount",
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("don_qty")}</div>
+      ),
     },
     {
       accessorKey: "don_date", 
       header: "Date",
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("don_date")}</div>
+      ),
     },
     {
       accessorKey: "action",
-      header: "Action",
+      header: () => <div className="text-center">Action</div>,
       cell: ({ row }) => (
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex justify-center gap-2">
           <TooltipLayout
             trigger={
               <DialogLayout
@@ -108,8 +119,8 @@ function DonationTracker() {
                 mainContent={
                   <div className="w-full h-full">
                     <ClerkDonateView
-                       don_num={row.original.don_num}
-                       onSaveSuccess={refetch}            
+                      don_num={row.original.don_num}
+                      onSaveSuccess={refetch}            
                     />
                   </div>
                 }
@@ -117,7 +128,7 @@ function DonationTracker() {
             }
             content="View"
           />
-          <TooltipLayout
+          {/* <TooltipLayout
             trigger={
               <div className="flex items-center h-8">
                 <ConfirmationModal
@@ -125,12 +136,12 @@ function DonationTracker() {
                   title="Confirm Delete"
                   description="Are you sure you want to delete this entry?"
                   actionLabel="Confirm"
-                  onClick={() => handleDelete(row.original.don_num)} 
-                />                    
-              </div>   
-            }
-            content="Delete"
-          />
+                  // onClick={() => handleDelete(row.original.don_num)} 
+                />                     */}
+              {/* </div>   
+            } */}
+            {/* content="Delete"
+          /> */}
         </div>
       ),
     },
@@ -179,9 +190,9 @@ function DonationTracker() {
         </div>
         <DialogLayout
           trigger={
-            <div className="flex items-center bg-blue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-blue/90">
+            <Button>
               <Plus size={15} /> Create
-            </div>
+            </Button>
           }
           className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
           title=""

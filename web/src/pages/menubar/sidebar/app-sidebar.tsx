@@ -281,6 +281,13 @@ const items: MenuItem[] = [
     title: "Report",
     url: "/report",
   },
+<<<<<<< HEAD:web/src/pages/menubar/sidebar/app-sidebar.tsx
+=======
+  {
+    title: "Summon & Case Tracker",
+    url: "/summon-and-case-tracking"
+  },
+>>>>>>> master:web/src/components/ui/menubar/app-sidebar.tsx
   {
     title: "GAD",
     subItems: true,
@@ -288,6 +295,7 @@ const items: MenuItem[] = [
     items: [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposals", url: "/gad-project-proposal"},
+      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
     ],
   },
@@ -338,6 +346,10 @@ const items: MenuItem[] = [
     url: "/waste-illegaldumping-report",
   },
   {
+    title: "Waste Personnel & Collection Vehicle",
+    url: "/waste-personnel"
+  },
+  {
     title: "Announcement",
     url: "/announcement",
   },
@@ -359,6 +371,7 @@ const items: MenuItem[] = [
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
+          {title: "Transactions List", url: "/transactionMainInventoryList" },
         ],
       },
       {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -132,13 +132,17 @@ export const getCombinedStock = async () => {
         imzStck_per_pcs: pcsPerBox,
       };
     });
-
+console.log("Vaccine Data:", vaccineData);
+    console.log("Supply Data:", supplyData);
+  
     return [...vaccineData, ...supplyData].sort((a, b) => b.id - a.id);
   } catch (err) {
     console.error("Error fetching combined stock data:", err);
     throw err;
   }
 };
+
+    
 
 export type StockRecords = {
   id: number;
@@ -231,6 +235,7 @@ export default function CombinedStockTable() {
     }
   };
 
+  
   const columns = getStockColumns(handleArchiveInventory, setIsDialog);
 
   if (isLoading) {

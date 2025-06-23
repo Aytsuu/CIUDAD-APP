@@ -141,9 +141,6 @@ function AnimalBites() {
     return searchString.includes(searchQuery.toLowerCase());
   });
 
-  function handleAddPatient(patient: any): void {
-    throw new Error("Function not implemented.");
-  }
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -199,7 +196,6 @@ function AnimalBites() {
             className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
             mainContent={
               <ReferralFormModal
-                onAddPatient={handleAddPatient}
                 onClose={() => console.log("Closing modal")} // Ensure onClose is passed
               />
             }

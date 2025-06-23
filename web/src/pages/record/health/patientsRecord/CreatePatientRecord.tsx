@@ -105,7 +105,7 @@ export default function CreatePatientRecord() {
         title="Patients Information"
         description="Fill in the required fields to create a new patient record"
         content={
-          <div className="w-full mx-auto border-none ">
+          <div className="w-full mx-auto border-none  ">
             <Separator className="w-full bg-gray" />
             <div className="pt-4">
               <Form {...form}>
@@ -183,7 +183,7 @@ export default function CreatePatientRecord() {
               </Form>
             </div>
           </div>
-        }
+        {/* }
         cardClassName="border-none pb-2 p-3 rounded-lg"
         headerClassName="pb-2 bt-2 text-xl"
         contentClassName="pt-0"

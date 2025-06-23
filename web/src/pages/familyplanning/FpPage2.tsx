@@ -37,13 +37,13 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
     { name: "hematomaBruisingBleeding", label: "Non-traumatic hematoma / frequent bruising or gum bleeding" },
     { name: "breastCancerHistory", label: "Current or history of breast cancer / breast mass" },
     { name: "severeChestPain", label: "Severe chest pain" },
-    { name: "coughMoreThan14Days", label: "Cough for more than 14 days" },
+    { name: "cough", label: "Cough for more than 14 days" },
     { name: "jaundice", label: "Jaundice" },
     { name: "unexplainedVaginalBleeding", label: "Unexplained vaginal bleeding" },
     { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
     { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
     { name: "smoker", label: "Is this client a SMOKER?" },
-    { name: "disability", label: "With Disability?" },
+    { name: "disability", label: "With Disability/Others" },
   ]
 
   const onSubmit = async (data: FormData) => {
@@ -66,7 +66,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-6">
               {/* Medical History Section */}
-              <div>
+              <div className="p-1">
                 <Label className="text-lg font-bold mb-3">I. MEDICAL HISTORY</Label>
                 <p className="text-sm mb-3">Does the client have any of the following?</p>
 
@@ -77,8 +77,8 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                     name={`medicalHistory.${item.name}`}
                     render={({ field }) => (
                       <FormItem className="flex justify-between items-center">
-                        <Label className="mt-2">■ {item.label}</Label>
-                        <div className="flex space-x-4">
+                        <Label className="mt-6">■  {item.label}</Label>
+                        <div className="flex space-x-7">
                           <div className="flex items-center space-x-2">
                             <FormControl>
                               <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
@@ -101,7 +101,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                 {form.watch("medicalHistory.disability") && (
                   <FormField control={form.control} name="medicalHistory.disabilityDetails"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="mt-5">
                         <Label>If YES, please specify:</Label>
                         <FormControl>
                           <Input {...field} className="border border-black w-full mt-2" />

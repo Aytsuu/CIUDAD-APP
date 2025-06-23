@@ -16,13 +16,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useAddFamily, useAddFamilyComposition } from "@/pages/record/profiling/queries/profilingAddQueries"; 
 import { LoadButton } from "@/components/ui/button/load-button";
 
-export default function DependentsInfoLayout({
-  form,
-  residents,
-  selectedParents,
-  dependentsList,
-  setDependentsList,
-  defaultValues,
+// export default function DependentsInfoLayout({
+//   form,
+//   residents,
+//   selectedParents,
+//   dependentsList,
+//   setDependentsList,
+//   defaultValues,
 
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -41,75 +41,75 @@ export default function DependentsInfoLayout({
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
-  React.useEffect(() => {
-    const dependents = form.getValues("dependentsInfo.list");
+//   React.useEffect(() => {
+//     const dependents = form.getValues("dependentsInfo.list");
 
-    if (Array.isArray(dependents)) {
-      // Transform the list into an array of Dependent objects
-      const transformedData = dependents.map((value) => ({
-        id: value.id.split(" ")[0],
-        lname: value.lastName,
-        fname: value.firstName,
-        mname: value.middleName,
-        suffix: value.suffix,
-        sex: value.sex,
-        dateOfBirth: value.dateOfBirth,
-      }));
+//     if (Array.isArray(dependents)) {
+//       // Transform the list into an array of Dependent objects
+//       const transformedData = dependents.map((value) => ({
+//         id: value.id.split(" ")[0],
+//         lname: value.lastName,
+//         fname: value.firstName,
+//         mname: value.middleName,
+//         suffix: value.suffix,
+//         sex: value.sex,
+//         dateOfBirth: value.dateOfBirth,
+//       }));
 
-      // Update the state with the transformed data
-      setDependentsList(transformedData);
-    }
-  }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
+//       // Update the state with the transformed data
+//       setDependentsList(transformedData);
+//     }
+//   }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
 
-  const dependentColumns: ColumnDef<DependentRecord>[] = [
-    { accessorKey: "id", header: "#" },
-    { accessorKey: "lname", header: "Last Name" },
-    { accessorKey: "fname", header: "First Name" },
-    { accessorKey: "mname", header: "Middle Name" },
-    { accessorKey: "suffix", header: "Suffix" },
-    { accessorKey: "sex", header: "Sex" },
-    { accessorKey: "dateOfBirth", header: "Birthday" },
-    {
-      accessorKey: "action",
-      header: "",
-      cell: ({ row }) => (
-        <TooltipLayout
-          trigger={
-            <Trash
-              size={17}
-              className="fill-red-500 stroke-red-500 cursor-pointer"
-              onClick={() => {
-                handleDelete(row.original.id);
-              }}
-            />
-          }
-          content={"Remove"}
-        />
-      ),
-    },
-  ];
+//   const dependentColumns: ColumnDef<DependentRecord>[] = [
+//     { accessorKey: "id", header: "#" },
+//     { accessorKey: "lname", header: "Last Name" },
+//     { accessorKey: "fname", header: "First Name" },
+//     { accessorKey: "mname", header: "Middle Name" },
+//     { accessorKey: "suffix", header: "Suffix" },
+//     { accessorKey: "sex", header: "Sex" },
+//     { accessorKey: "dateOfBirth", header: "Birthday" },
+//     {
+//       accessorKey: "action",
+//       header: "",
+//       cell: ({ row }) => (
+//         <TooltipLayout
+//           trigger={
+//             <Trash
+//               size={17}
+//               className="fill-red-500 stroke-red-500 cursor-pointer"
+//               onClick={() => {
+//                 handleDelete(row.original.id);
+//               }}
+//             />
+//           }
+//           content={"Remove"}
+//         />
+//       ),
+//     },
+//   ];
 
-  const handleDelete = (id: string) => {
-    setDependentsList((prevData) => {
-      const newData = prevData.filter((dependent) => dependent.id !== id);
+//   const handleDelete = (id: string) => {
+//     setDependentsList((prevData) => {
+//       const newData = prevData.filter((dependent) => dependent.id !== id);
 
-      // Update the form state with the new list of dependents
-      form.setValue(
-        "dependentsInfo.list",
-        newData.map((dependent) => ({
-          id: dependent.id,
-          lastName: dependent.lname,
-          firstName: dependent.fname,
-          middleName: dependent.mname,
-          suffix: dependent.suffix,
-          sex: dependent.sex,
-          dateOfBirth: dependent.dateOfBirth,
-        }))
-      );
+//       // Update the form state with the new list of dependents
+//       form.setValue(
+//         "dependentsInfo.list",
+//         newData.map((dependent) => ({
+//           id: dependent.id,
+//           lastName: dependent.lname,
+//           firstName: dependent.fname,
+//           middleName: dependent.mname,
+//           suffix: dependent.suffix,
+//           sex: dependent.sex,
+//           dateOfBirth: dependent.dateOfBirth,
+//         }))
+//       );
 
-      return newData;
-    });
-  };
+//       return newData;
+//     });
+//   };
 
   // const submit = async () => { 
   //   setIsSubmitting(true);

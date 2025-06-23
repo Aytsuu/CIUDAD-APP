@@ -1,12 +1,20 @@
 import {api} from "@/api/api"
 
-export const getFP = async() => {
+export const getFPprofiling = async() => {
     try{
-        const res = await api.get('familyplanning/fp_type');
-        const data = res.data?.data ?? res.data ?? [];
-        return Array.isArray(data) ? data : [];
+        const response = await api.get('family-planning/fp_type');
+        const patientData = response.data
+    
     } catch (err) {
         console.error("Error fetching data:", err);
         return [];
+    }
+    return patientData;
+}
+
+export const getRiskSti = async() => {
+    try{
+        const response = await api.get('family-planning/risk_sti');
+        return response.data;
     }
 }
