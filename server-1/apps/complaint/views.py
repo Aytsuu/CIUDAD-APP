@@ -6,7 +6,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Complainant, Accused, Complaint, Complaint_File, ComplaintAccused
+from .models import *
+from apps.notification.models import Notification
 import json
 import logging
 from rest_framework.decorators import api_view, permission_classes
@@ -135,6 +136,17 @@ class ComplaintCreateView(APIView):
                     file=new_file
                 )
             
+            try:
+                Notification.objects.create(
+                    recipient=request.user,
+                    title="Complaint Submitted",
+                    message=f"Your complaint #{complaint.comp_id} has been registered",
+                    notification_type="success",
+                    content_object=complaint
+                )
+            except Exception as e:
+                logger.error(f"Notification creation failed: {str(e)}")
+                
             return Response({
                 'comp_id': complaint.comp_id,
                 'status': 'success',
@@ -247,3 +259,4 @@ def restore_complaint(request, pk):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+        

@@ -28,7 +28,7 @@ import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 
 export default function SignIn() {
-  const { login, signInWithGoogleOAuth } = useAuth();
+  const { login, signInWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -66,7 +66,7 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      await signInWithGoogleOAuth();
+      await signInWithGoogle();
     } catch (error) {
       console.error("Google login error:", error);
       setErrorMessage("Failed to sign in with Google. Please try again.");

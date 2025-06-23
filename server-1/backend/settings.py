@@ -28,8 +28,8 @@ DEBUG=True
 # SUPABASE CONFIGURATION
 # ========================
 SUPABASE_CONFIG = {
-    'URL': config('SUPABASE_URL'),
-    'ANON_KEY': config('SUPABASE_ANON_KEY'),
+    'SUPABASE_URL': config('SUPABASE_URL'),
+    'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY'),
     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
     'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
@@ -37,7 +37,10 @@ SUPABASE_CONFIG = {
     'JWT_AUDIENCE': 'authenticated',
 }
 
-SUPABASE_JWT_SECRET = SUPABASE_CONFIG['JWT_SECRET']
+SUPABASE_URL = config('SUPABASE_URL')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
+SUPABASE_KEY = config('SUPABASE_ANON_KEY')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
 
 # ========================
 # FIREBASE CONFIGURATION
@@ -184,9 +187,11 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://192.168.1.6:8000",
     config('FRONTEND_URL', default='http://localhost:3000'),
 ]
-
+ALLOWED_HOSTS = ['*'] 
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [

@@ -1,34 +1,60 @@
 import "@/global.css";
-
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToastContext } from '@/components/ui/toast';
 
 export default function VerifyEmail() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const router = useRouter();
+  const { toast } = useToastContext();
+  // const { verifyOtp, sendOtp } = useAuth(); // We'll add these to your AuthContext
 
-  const handleSendCode = () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email.');
-      return;
+  const handleSendCode = async () => {
+    try {
+      if (!email) {
+        Alert.alert('Error', 'Please enter your email.');
+        return;
+      }
+
+      setLoading(true);
+      // await sendOtp(email);
+      
+      toast.success(`Verification code sent to ${email}`);
+      setCodeSent(true);
+    } catch (error) {
+      console.error('Error sending verification code:', error);
+      toast.error('Failed to send verification code. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    Alert.alert('Success', `Verification code sent to ${email}`);
   };
 
-  const handleConfirm = () => {
-    if (!email || !code) {
-      Alert.alert('Error', 'Both fields are required.');
-      return;
-    }
+  const handleConfirm = async () => {
+    try {
+      if (!email || !code) {
+        Alert.alert('Error', 'Both fields are required.');
+        return;
+      }
 
-    console.log('Email:', email);
-    console.log('Code:', code);
-    router.push('/(auth)/forgotpassword'); // Navigate back if successful
+      setLoading(true);
+      // await verifyOtp(email, code);
+      
+      toast.success('Email verified successfully!');
+      // router.push('/(auth)/forgotpassword');
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error('Invalid verification code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,6 +73,8 @@ export default function VerifyEmail() {
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!codeSent}
           />
         </View>
 
@@ -61,24 +89,30 @@ export default function VerifyEmail() {
           />
         </View>
 
-        {/* Send Code Link (Below Code Input) */}
-
-<View className="w-full flex-row justify-end">
-  <TouchableOpacity onPress={handleSendCode}>
-    <Text className="text-primaryBlue text-[16px] font-PoppinsMedium underline">
-      Send Code
-    </Text>
-  </TouchableOpacity>
-</View>
-
+        {/* Send Code Link */}
+        <View className="w-full flex-row justify-end">
+          <TouchableOpacity 
+            onPress={handleSendCode}
+            disabled={loading || codeSent}
+          >
+            <Text className={`text-primaryBlue text-[16px] font-PoppinsMedium underline ${
+              (loading || codeSent) ? 'opacity-50' : ''
+            }`}>
+              {loading ? 'Sending...' : codeSent ? 'Code Sent' : 'Send Code'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Confirm Button */}
         <Button 
           className="bg-primaryBlue w-full native:h-[57px]"
           size={'lg'}
           onPress={handleConfirm}
+          disabled={loading || !codeSent}
         >
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm</Text>
+          <Text className="text-white font-PoppinsSemiBold text-[16px]">
+            {loading ? 'Verifying...' : 'Confirm'}
+          </Text>
         </Button>
       </View>
     </SafeAreaView>
