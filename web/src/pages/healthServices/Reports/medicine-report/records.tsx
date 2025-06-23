@@ -82,40 +82,11 @@ export default function MonthlyMedicineDetails() {
     },
   ];
 
-  if (!records.length) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center">
-        <p className="text-gray-500 mb-4">
-          No records found for {monthName || "this month"}
-        </p>
-        <Button onClick={() => navigate(-1)}>
-          <ArrowLeft size={16} className="mr-2" />
-          Go Back
-        </Button>
-      </div>
-    );
-  }
+ 
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="flex items-center gap-4 mb-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </Button>
-        <div>
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Medicine Records for {monthName}
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            {recordCount} records
-          </p>
-        </div>
-      </div>
+    
 
       <hr className="border-gray-300 mb-4" />
 

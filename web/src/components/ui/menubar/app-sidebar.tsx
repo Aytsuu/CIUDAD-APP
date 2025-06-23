@@ -137,18 +137,20 @@ const items: MenuItem[] = [
     items: [
       { title: "Administration", url: "/health-administration" },
       { title: "Doctor", url: "/mainMedicalForm" },
+      { title: "Patients Record", url: "/patients-record-main" },
+
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },
       { title: "Maternal Services", url: "/maternalrecords" },
       { title: "Family Planning", url: "/FamPlanning_table" },
-      { title: "Medical Consultation", url: "/allMedRecords" },
-      { title: "Vaccination", url: "/VaccinationManagement" },
-      { title: "Patients Record", url: "/patients-record-main" },
+      { title: "Medical Consultation Services", url: "/allMedRecords" },
+      { title: "Vaccination Services", url: "/VaccinationManagement" },
       { title: "Family Profiling", url: "/family-profiling-main" },
-      {title: "Medicine", url:"/AllMedicineRecords"},
-      { title: "Firstaid", url: "/all-firstaid-records" },
+      {title: "Medicine Request", url:"/AllMedicineRecords"},
+      { title: "Firstaid Request ", url: "/all-firstaid-records" },
       {title:"Forwarded Records", url: "/forwarded-vaccination-records"},
       {title:"Archive", url: "/archiveMainInventoryStocks"},
+      {title:"Reports", url: "/healthcare-reports" }, 
 
       
       {

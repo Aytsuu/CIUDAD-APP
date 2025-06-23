@@ -352,6 +352,7 @@ export default function ViewPatientRecord() {
           vaccinationCount={vaccinationCount}
           medicineCount={medicineCount}
           firstAidCount={firstAidCount}
+          postpartumCount={undefined}
           patientLinkData={patientLinkData}
         />
         <VisitHistoryTab completedData={completedData} pendingData={pendingData} />

@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Search,ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { getFirstaidRecords, MonthlyRecord } from "../firstaid-report/restful-api/getAPI";
+import {
+  getFirstaidRecords,
+  MonthlyRecord,
+} from "../firstaid-report/restful-api/getAPI";
 
 export default function MonthlyFirstAidRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,9 +24,14 @@ export default function MonthlyFirstAidRecords() {
   const [yearFilter, setYearFilter] = useState<string>("all");
   const navigate = useNavigate();
 
-  const { data: apiResponse, isLoading, error } = useQuery({
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["firstAidRecords", yearFilter],
-    queryFn: () => getFirstaidRecords(yearFilter === "all" ? undefined : yearFilter),
+    queryFn: () =>
+      getFirstaidRecords(yearFilter === "all" ? undefined : yearFilter),
   });
 
   useEffect(() => {
@@ -34,35 +42,48 @@ export default function MonthlyFirstAidRecords() {
 
   const monthlyData = useMemo(() => {
     if (!apiResponse?.data) return [];
-    return apiResponse.data.map(month => ({
+    return apiResponse.data.map((month) => ({
       ...month,
-      records: month.records.map(record => ({
+      records: month.records.map((record) => ({
         ...record,
         created_at: new Date(record.created_at).toISOString(),
         finv_details: {
           ...record.finv_details,
           inv_detail: {
             ...record.finv_details.inv_detail,
-            expiry_date: new Date(record.finv_details.inv_detail.expiry_date).toISOString(),
-            created_at: new Date(record.finv_details.inv_detail.created_at).toISOString(),
-            updated_at: new Date(record.finv_details.inv_detail.updated_at).toISOString(),
+            expiry_date: new Date(
+              record.finv_details.inv_detail.expiry_date
+            ).toISOString(),
+            created_at: new Date(
+              record.finv_details.inv_detail.created_at
+            ).toISOString(),
+            updated_at: new Date(
+              record.finv_details.inv_detail.updated_at
+            ).toISOString(),
           },
           fa_detail: {
             ...record.finv_details.fa_detail,
-            created_at: new Date(record.finv_details.fa_detail.created_at).toISOString(),
-            updated_at: new Date(record.finv_details.fa_detail.updated_at).toISOString(),
-          }
-        }
-      }))
+            created_at: new Date(
+              record.finv_details.fa_detail.created_at
+            ).toISOString(),
+            updated_at: new Date(
+              record.finv_details.fa_detail.updated_at
+            ).toISOString(),
+          },
+        },
+      })),
     }));
   }, [apiResponse]);
 
   const filteredData = useMemo(() => {
-    return monthlyData.filter(monthData => {
-      const monthName = new Date(monthData.month + "-01").toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
+    return monthlyData.filter((monthData) => {
+      const monthName = new Date(monthData.month + "-01").toLocaleString(
+        "default",
+        {
+          month: "long",
+          year: "numeric",
+        }
+      );
       const searchText = `${monthData.month} ${monthName}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
@@ -94,24 +115,31 @@ export default function MonthlyFirstAidRecords() {
     {
       accessorKey: "record_count",
       header: "Records",
-      cell: ({ row }) => <div className="text-center">{row.original.record_count}</div>,
+      cell: ({ row }) => (
+        <div className="text-center">{row.original.record_count}</div>
+      ),
     },
-    
+
     {
       id: "actions",
       cell: ({ row }) => (
         <Button
-          onClick={() => navigate("/monthly-firstaid-details", {
-            state: {
-              month: row.original.month,
-              monthName: new Date(row.original.month + "-01").toLocaleString("default", {
-                month: "long",
-                year: "numeric",
-              }),
-              records: row.original.records,
-              recordCount: row.original.record_count,
-            },
-          })}
+          onClick={() =>
+            navigate("/monthly-firstaid-details", {
+              state: {
+                month: row.original.month,
+                monthName: new Date(row.original.month + "-01").toLocaleString(
+                  "default",
+                  {
+                    month: "long",
+                    year: "numeric",
+                  }
+                ),
+                records: row.original.records,
+                recordCount: row.original.record_count,
+              },
+            })
+          }
         >
           View Details
         </Button>
@@ -132,24 +160,34 @@ export default function MonthlyFirstAidRecords() {
 
   return (
     <>
-      <Toaster />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-col items-center">
+          <Button
+            className="text-black p-2 mb-2 self-start"
+            variant={"outline"}
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft />
+          </Button>
+          <div className="flex-col items-center ">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Monthly First Aid Records
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              View first aid records grouped by month ({monthlyData.length} months found)
+              View first aid records grouped by month ({monthlyData.length}{" "}
+              months found)
             </p>
           </div>
         </div>
-        <hr className="border-gray-300 mb-4" />
+        <hr className="border-gray mb-5 sm:mb-8" />
 
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={17} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                size={17}
+              />
               <Input
                 placeholder="Search by month..."
                 className="pl-10 bg-white w-full"
@@ -157,9 +195,7 @@ export default function MonthlyFirstAidRecords() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
           </div>
-         
         </div>
 
         <div className="h-full w-full rounded-md">
@@ -178,19 +214,16 @@ export default function MonthlyFirstAidRecords() {
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
-            {paginatedData.length > 0 ? (
               <DataTable columns={columns} data={paginatedData} />
-            ) : (
-              <div className="p-8 text-center text-gray-500">
-                {isLoading ? "Loading..." : "No monthly records found"}
-              </div>
-            )}
+            
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray">
-              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} months
+              Showing{" "}
+              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+              {filteredData.length} months
             </p>
             <PaginationLayout
               currentPage={currentPage}
