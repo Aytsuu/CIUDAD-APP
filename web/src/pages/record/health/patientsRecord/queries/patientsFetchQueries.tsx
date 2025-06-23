@@ -1,5 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { getResident, getPatients, getPatientDetails, getAllFollowUpVisits } from "../restful-api/patientsGetAPI";
+import { 
+	getResident, 
+	getPatients, 
+	getPatientDetails, 
+	getAllFollowUpVisits,
+  	getPatientPostpartumCount, 
+	getPatientPostpartumRecords
+ } from "../restful-api/patientsGetAPI";
 
 // resident query keys
 export const residentQueryKey = {
@@ -69,3 +76,43 @@ export const useAllFollowUpVisits = (options = {}) => {
     ...options,
   })
 }
+
+
+export const usePatientPostpartumCount = (patientId: string) => {
+  return useQuery({
+    queryKey: ["patientPostpartumCount", patientId],
+    queryFn: () => getPatientPostpartumCount(patientId),
+    enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1, // Only retry once on failure
+  })
+}
+
+// Hook to get all postpartum records for a specific patient
+export const usePatientPostpartumRecords = (patientId: string) => {
+  return useQuery({
+    queryKey: ["patientPostpartumRecords", patientId],
+    queryFn: () => getPatientPostpartumCount(patientId),
+    enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+// Hook to get all postpartum records
+// export const useAllPostpartumRecords = () => {
+//   return useQuery({
+//     queryKey: ["allPostpartumRecords"],
+//     queryFn: getAllPostpartumRecords,
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//   })
+// }
+
+// // Hook to get specific postpartum record detail
+// export const usePostpartumRecordDetail = (pprId: string) => {
+//   return useQuery({
+//     queryKey: ["postpartumRecordDetail", pprId],
+//     queryFn: () => getPostpartumRecordDetail(pprId),
+//     enabled: !!pprId,
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//   })
+// }
