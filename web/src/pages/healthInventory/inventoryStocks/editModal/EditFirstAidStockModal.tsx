@@ -3,30 +3,26 @@ import { Button } from "@/components/ui/button/button";
 import { Form, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FirstAidStocksRecord } from "../tables/FirstAidStocks";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import {
   AddFirstAidSchema,
   AddFirstAidStockType,
-} from "@/form-schema/inventory/addStocksSchema";
+} from "@/form-schema/inventory/stocks/RestockStocksSchema";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
-import { handleEditFirstAidStock } from "../REQUEST/FirstAid/EditFirstAidSubmit";
+import { CircleCheck, Pill,Loader2 } from "lucide-react";
+import { useEditFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidUpdateQueries"; // adjust import path
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { FirstAidStocksRecord } from "../tables/type";
+import { Label } from "@/components/ui/label";
+import { Link, useLocation, useNavigate } from "react-router";
 
-interface EditFirstAidStockFormProps {
-  initialData: FirstAidStocksRecord;
-  setIsDialog: (isOpen: boolean) => void;
-}
+export default function EditFirstAidStock() {
+  const location = useLocation();
+  const initialData = location.state?.params
+    ?.initialData as FirstAidStocksRecord;
 
-export default function EditFirstAidStockForm({
-  initialData,
-  setIsDialog,
-}: EditFirstAidStockFormProps) {
-  UseHideScrollbar();
   const form = useForm<AddFirstAidStockType>({
     resolver: zodResolver(AddFirstAidSchema),
     defaultValues: {
@@ -37,71 +33,88 @@ export default function EditFirstAidStockForm({
   });
 
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { mutate: submit, isPending } = useEditFirstAidStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [submissionData, setSubmissionData] =
-    useState<AddFirstAidStockType | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-
-
-  const handleSubmit = async (data: AddFirstAidStockType) => {
-    setIsSubmitting(true);
-
-    try {
-      await handleEditFirstAidStock(data, initialData.finv_id, queryClient);
-
-      toast.success("First aid item updated successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 3000,
-        onAutoClose: () => {
-          setIsDialog(false);
-        },
-      });
-
-      // Wait for toast to complete before closing dialog
-      setTimeout(() => setIsDialog(false), 3000);
-    } catch (error: any) {
-      console.error("Error in handleSubmit:", error);
-      toast.error(error.message || "Failed to update first aid item", {
-        duration: 5000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  
-
-  const onSubmit = (data: AddFirstAidStockType) => {
-    setSubmissionData(data);
-    setIsAddConfirmationOpen(true);
-  };
-
-  const confirmAdd = () => {
-    if (submissionData) {
-      setIsAddConfirmationOpen(false);
-      setIsSubmitting(true); // Set submitting state here
-      handleSubmit(submissionData);
-    }
-  };
-
+  const [formData, setformData] = useState<AddFirstAidStockType | null>(null);
   const currentUnit = form.watch("finv_qty_unit");
   const qty = form.watch("finv_qty") || 0;
   const pcs = form.watch("finv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
-  return ( 
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
+
+  const onSubmit = (data: AddFirstAidStockType) => {
+    setformData(data);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmAdd = () => {
+    if (!formData) return;
+    setIsAddConfirmationOpen(false);
+    submit({ data: formData, finv_id: initialData.finv_id }, {
+      onSuccess: () => {
+        navigate("/mainInventoryStocks");
+        toast.success("First aid item added successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+        });
+      },
+      onError: (error: Error) => {
+        console.error("Error adding first aid item:", error);
+        toast.error("Failed to add first aid item");
+      },
+    });
+  };
+
+  
+  return (
+    <div className="w-full flex items-center justify-center p-4 sm:p-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={(e)=> e.preventDefault()}
+
+          className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5"
+        >
+          <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
+            <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+            Add FirstAid Stocks
+          </Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm text-darkGray font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Commodity Name
+              </label>
+              <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {initialData.firstAidInfo.fa_name}
+              </div>
+            </div>
+
+            {/* Commodity Category */}
+            <div className="space-y-2">
+              <label className="text-sm text-darkGray font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Category
+              </label>
+              <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {initialData.category}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm text-darkGray font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Available Qty
+              </label>
+              <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {initialData.availQty}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormInput
               control={form.control}
               name="finv_qty"
-              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
+              label={currentUnit === "boxes" ? "Add new boxes" : "Add new quantity"}
               type="number"
-              placeholder="Quantity"
-
+              placeholder="Enter quantity"
             />
 
             <FormSelect
@@ -131,21 +144,25 @@ export default function EditFirstAidStockForm({
               <div className="sm:col-span-2">
                 <FormLabel>Total Pieces</FormLabel>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalPieces.toLocaleString()} pieces
+                  {totalPieces.toLocaleString()} pc/s
                   <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
+                    ({qty} boxes × {pcs} pc/s)
                   </span>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <span className="flex items-center">
-                  <span className="loader mr-2"></span> Saving...
-                </span>
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
+            <Button variant="outline" className="w-full" onClick={form.handleSubmit(onSubmit)}>
+              <Link to="/mainInventoryStocks">Cancel</Link>
+            </Button>
+            <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
               ) : (
                 "Save"
               )}

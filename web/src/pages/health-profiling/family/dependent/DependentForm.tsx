@@ -9,7 +9,8 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
-import { DependentRecord } from '../../profilingTypes';
+import { DependentRecord } from '@/pages/record/health-family-profiling/profilingTypes';
+import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -100,7 +101,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
                 { id: 'male', name: 'Male' },
                 { id: 'female', name: 'Female' },
               ]} readOnly/>
-            <FormDateInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" readOnly />
+            <FormDateTimeInput type='date' control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" readOnly />
             <div className="flex items-end">
               <Button type="button" onClick={handleAddDependent} className="bg-green-600 hover:bg-green-700 text-white">
                 <Plus /> Dependent

@@ -1,13 +1,13 @@
 import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
-import { DependentRecord } from "../../profilingTypes";
+import { DependentRecord } from "@/pages/record/health-family-profiling/profilingTypes";
 
 export default function ParentsForm({ residents, form, dependentsList, selectedParents, onSelect, prefix, title }: {
   residents: any;
@@ -91,7 +91,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
             <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.suffix`} label="Suffix" readOnly />
-            <FormDateInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" readOnly />
+            <FormDateTimeInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" type="date" readOnly />
             <FormSelect control={form.control} name={`${prefix}.status`} label="Marital Status" options={[
               { id: 'single', name: 'Single' },
               { id: 'married', name: 'Married' },

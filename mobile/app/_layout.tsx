@@ -44,7 +44,7 @@ export default function RootLayout() {
         <StatusBar backgroundColor="#FFF" style="dark" />
         <Stack initialRouteName='(auth)'>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name='(health' options={{headerShown: false}} />
+          <Stack.Screen name='(health)' options={{headerShown: false}} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>

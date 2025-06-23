@@ -2,40 +2,22 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Search, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { handleDeleteCommodityList } from "../requests/DeleteRequest";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { CommodityColumns } from "./MedicineListColumsn";
-import { CommodityRecords} from "./MedicineListColumsn";
-import { getTransactionCommodity } from "../requests/GetRequest";
-
-
-
+import { CommodityColumns } from "./columns/CommodityCol";
+import { CommodityRecords} from "./type";
+import { useCommodities } from "../queries/FetchQueries";
+import { ExportButton } from "@/components/ui/export";
 
 export default function CommodityList() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    React.useState(false);
-  const [comToDelete, setComToDelete] = React.useState<number | null>(null);
-  const [isDialog, setIsDialog] = React.useState(false);
-  const queryClient = useQueryClient();
-
-  // Fetch commodity data using useQuery
-  const { data: commodities, isLoading: isLoadingCommodities } = useQuery({
-    queryKey: ["commodities"],
-    queryFn: getTransactionCommodity,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  // Format commodity data
+  const {data: commodities, isLoading: isLoadingCommodities} = useCommodities();
+  
   const formatCommodityData = React.useCallback((): CommodityRecords[] => {
     if (!commodities) return [];
     return commodities.map((commodity: any) => ({
@@ -67,16 +49,20 @@ export default function CommodityList() {
     currentPage * pageSize
   );
 
-  // Handle delete operation
-  const handleDelete = async () => {
-    if (comToDelete !== null) {
-      await handleDeleteCommodityList(comToDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["commodities"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setComToDelete(null);
-    }
-  };
+  // Define export columns
+  const exportColumns = [
+    { key: "comt_id", header: "ID" },
+    { key: "com_name", header: "Commodity Name" },
+    { 
+      key: "comt_qty", 
+      header: "Quantity",
+      format: (value: number) => value || 0
+    },
+    { key: "comt_action", header: "Action" },
+    { key: "staff", header: "Staff" },
+    { key: "created_at", header: "Date" },
+  ];
+ 
   // Generate columns using CommodityColumns
   const columns = CommodityColumns();
   if (isLoadingCommodities) {
@@ -107,7 +93,6 @@ export default function CommodityList() {
             />
           </div>
         </div>
-      
       </div>
 
       <div className="bg-white rounded-md">
@@ -130,17 +115,10 @@ export default function CommodityList() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
+          <ExportButton
+            data={filteredCommodities}
+            filename="commodity-transactions"
+            columns={exportColumns}
           />
         </div>
         <div className="overflow-x-auto">
@@ -161,14 +139,6 @@ export default function CommodityList() {
           )}
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={handleDelete}
-        title="Delete Commodity"
-        description="Are you sure you want to delete this commodity? This action cannot be undone."
-      />
     </div>
   );
 }

@@ -2,36 +2,21 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput } from "lucide-react";
+import { Search, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { handleDeleteMedicineList } from "../requests/DeleteRequest";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { MedicineRecords } from "./MedicineListColumsn";
-import { Medcolumns } from "./MedicineListColumsn";
-import { getTransactionMedicines } from "../requests/GetRequest";
+import { MedicineRecords } from "./type";
+import { Medcolumns } from "./columns/MedicineListColumsn";
+import { useMedicine } from "../queries/FetchQueries";
+
 export default function MedicineList() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    React.useState(false);
-  const [medToDelete, setMedToDelete] = React.useState<number | null>(null);
-  const queryClient = useQueryClient();
-
-  // Pass the necessary functions to Medcolumns
   const columns = Medcolumns();
-
-  // Fetch medicines using useQuery
-  const { data: medicines, isLoading: isLoadingMedicines } = useQuery({
-    queryKey: ["transactionmedicines"],
-    queryFn: getTransactionMedicines,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const {data: medicines, isLoading: isLoadingMedicines} = useMedicine();
 
   const formatMedicineData = React.useCallback((): MedicineRecords[] => {
     if (!medicines) return [];
@@ -65,16 +50,7 @@ export default function MedicineList() {
     currentPage * pageSize
   );
 
-  const handleDelete = () => {
-    if (medToDelete !== null) {
-      handleDeleteMedicineList(medToDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["medicines"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setMedToDelete(null);
-    }
-  };
-
+ 
   if (isLoadingMedicines) {
     return (
       <div className="w-full h-full">
@@ -157,13 +133,7 @@ export default function MedicineList() {
         </div>
       </div>
 
-      <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={handleDelete}
-        title="Delete Medicine"
-        description="Are you sure you want to delete this medicine? This action cannot be undone."
-      />
+  
     </div>
   );
 }

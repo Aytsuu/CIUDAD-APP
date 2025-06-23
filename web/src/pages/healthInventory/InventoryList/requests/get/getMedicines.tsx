@@ -1,8 +1,8 @@
-import api from "@/pages/api/api";
+import { api2 } from "@/api/api";
 
 export const getMedicines = async () => {
     try {
-      const res = await api.get("inventory/medicinelist/");
+      const res = await api2.get("inventory/medicinelist/");
       if (res.status === 200) { 
         return res.data;
       }

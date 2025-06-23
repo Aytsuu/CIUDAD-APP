@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form"
@@ -7,47 +5,85 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import SignatureCanvas from "react-signature-canvas"
-import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page5Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 type FamilyPlanningMethod =
-  | "coc"
-  | "iud-interval"
-  | "iud-postpartum"
-  | "bom/cmm"
-  | "lam"
-  | "pop"
-  | "bbt"
-  | "sdm"
-  | "injectable"
-  | "stm"
-  | "implant"
-  | "condom"
-  | "others"
+  | "COC"
+  | "IUD-Interval"
+  | "IUD-Post Partum"
+  | "BOM/CMM"
+  | "LAM"
+  | "POP"
+  | "BBT"
+  | "SDM"
+  | "Injectable"
+  | "STM"
+  | "Implant"
+  | "Condom"
+  | "Pills"
+  | "Others"
+  | "DMPA"
+  | "Lactating Amenorrhea"
+  | "Bilateral Tubal Ligation"
+  | "Vasectomy"
 
-  const methodLabels: Record<FamilyPlanningMethod, string> = {
-    coc: "Combined Oral Contraceptives (COC)",
-    "iud-interval": "Intrauterine Device - Interval (IUD)",
-    "iud-postpartum": "Intrauterine Device - Post Partum (IUD)",
-    "bom/cmm": "Billings Ovulation Method/Cervical Mucus Method",
-    lam: "Lactational Amenorrhea Method",
-    pop: "Progestin-only Pills",
-    bbt: "Basal Body Temperature",
-    sdm: "Standard Days Method",
-    injectable: "Injectable Contraceptives",
-    stm: "Symptothermal Method",
-    implant: "Contraceptive Implant",
-    condom: "Condom",
+
+const methodLabels: Record<string, string> = {
+  coc: "COC",
+  "iud-interval": "IUD-Interval",
+  "iud-postpartum": "IUD-Post Partum",
+  "bom/cmm": "BOM/CMM",
+  lam: "LAM",
+  BBT: "BBT",
+  pop: "POP",
+  SDM: "SDM",
+  injectable: "Injectable",
+  STM: "STM",
+  implant: "Implant",
+  condom: "Condom",
+  Others: "Others",
+  pills: "Pills",
+  dmpa: "DMPA",
+  lactating: "Lactating Amenorrhea",
+  bilateral: "Bilateral Tubal Ligation",
+  vasectomy: "Vasectomy",
+}
+
+// Helper function to map method values between pages
+const mapMethodFromPage1 = (methodFromPage1: string): string => {
+  const methodMapping: Record<string, string> = {
+    // From FpPage1 to FpPage5 mapping
+    Pills: "Pills",
+    DMPA: "DMPA",
+    "IUD-Interval": "IUD-Interval",
+    "IUD-Post Partum": "IUD-Post Partum",
+    Implant: "Implant",
+    Condom: "Condom",
+    "Lactating Amenorrhea": "Lactating Amenorrhea",
+    "Bilateral Tubal Ligation": "Bilateral Tubal Ligation",
+    Vasectomy: "Vasectomy",
+    COC: "COC",
+    POP: "POP",
+    Injectable: "Injectable",
+    "BOM/CMM": "BOM/CMM",
+    bbt: "BBT",
+    stm: "STM",
+    sdm: "SDM",
+    LAM: "LAM",
     others: "Others",
   }
-  
-// Fix the props type
+
+  return methodMapping[methodFromPage1] || methodFromPage1
+}
+
 interface AcknowledgementFormProps {
   onPrevious4: () => void
   onNext6: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
+  mode?: "create" | "edit" | "view"
 }
 
 export default function FamilyPlanningForm5({
@@ -55,30 +91,63 @@ export default function FamilyPlanningForm5({
   onNext6,
   updateFormData,
   formData,
+  mode = "create",
 }: AcknowledgementFormProps) {
-  // Initialize with empty strings for signatures to avoid validation errors
+  const isReadOnly = mode === "view"
+
+  // Get the method from FpPage1 and map it appropriately
+  const getSelectedMethodFromPage1 = (): string => {
+    if (formData?.methodCurrentlyUsed) {
+      return mapMethodFromPage1(formData.methodCurrentlyUsed)
+    }
+    return formData?.acknowledgement?.selectedMethod || ""
+  }
+
+  // Initialize with method from Page 1 if available
   const defaultValues = {
     acknowledgement: {
-      selectedMethod: formData?.acknowledgement?.selectedMethod || "",
+      selectedMethod: getSelectedMethodFromPage1(),
       clientSignature: formData?.acknowledgement?.clientSignature || "",
       clientSignatureDate: formData?.acknowledgement?.clientSignatureDate || new Date().toISOString().split("T")[0],
-      clientName: formData?.acknowledgement?.clientName || "",
+      clientName: formData?.acknowledgement?.clientName || "", // This will now be auto-populated
       guardianSignature: formData?.acknowledgement?.guardianSignature || "",
       guardianSignatureDate: formData?.acknowledgement?.guardianSignatureDate || new Date().toISOString().split("T")[0],
     },
   }
-
   const form = useForm({
-    // resolver: zodResolver(page5Schema),
     defaultValues,
     mode: "onChange",
+    // resolver: zodResolver(page5Schema),
   })
+  useEffect(() => {
+    if (formData?.acknowledgement?.clientName) {
+      form.setValue("acknowledgement.clientName", formData.acknowledgement.clientName)
+    }
+  }, [formData?.acknowledgement?.clientName, form])
 
   const [clientSignature, setClientSignature] = useState<string>(formData?.acknowledgement?.clientSignature || "")
   const [guardianSignature, setGuardianSignature] = useState<string>(formData?.acknowledgement?.guardianSignature || "")
 
   let clientSignatureRef: SignatureCanvas | null = null
   let guardianSignatureRef: SignatureCanvas | null = null
+
+  // Auto-populate the selected method when component mounts or formData changes
+  useEffect(() => {
+    const methodFromPage1 = getSelectedMethodFromPage1()
+    if (methodFromPage1 && methodFromPage1 !== form.getValues("acknowledgement.selectedMethod")) {
+      form.setValue("acknowledgement.selectedMethod", methodFromPage1)
+
+      // Update form data immediately
+      const updatedData = {
+        ...formData,
+        acknowledgement: {
+          ...formData?.acknowledgement,
+          selectedMethod: methodFromPage1,
+        },
+      }
+      updateFormData(updatedData)
+    }
+  }, [formData, form]) // Updated dependency array
 
   // Set form values for signatures when they change
   useEffect(() => {
@@ -91,7 +160,6 @@ export default function FamilyPlanningForm5({
       clientSignatureRef.clear()
       setClientSignature("")
 
-      // Update form data to remove signature
       const updatedData = {
         ...formData,
         acknowledgement: {
@@ -109,7 +177,6 @@ export default function FamilyPlanningForm5({
       guardianSignatureRef.clear()
       setGuardianSignature("")
 
-      // Update form data to remove signature
       const updatedData = {
         ...formData,
         acknowledgement: {
@@ -127,7 +194,6 @@ export default function FamilyPlanningForm5({
       const signatureData = clientSignatureRef.toDataURL()
       setClientSignature(signatureData)
 
-      // Update form data with signature
       const updatedData = {
         ...formData,
         acknowledgement: {
@@ -145,7 +211,6 @@ export default function FamilyPlanningForm5({
       const signatureData = guardianSignatureRef.toDataURL()
       setGuardianSignature(signatureData)
 
-      // Update form data with signature
       const updatedData = {
         ...formData,
         acknowledgement: {
@@ -159,16 +224,6 @@ export default function FamilyPlanningForm5({
   }
 
   const handleFormSubmit = (data: any) => {
-    // Skip validation for signatures - they're optional
-    if (!data.acknowledgement?.selectedMethod) {
-      form.setError("acknowledgement.selectedMethod", {
-        type: "manual",
-        message: "Please select a method",
-      })
-      return
-    }
-
-    // Create updated form data with all acknowledgement fields
     const updatedData = {
       ...formData,
       acknowledgement: {
@@ -180,10 +235,9 @@ export default function FamilyPlanningForm5({
         guardianSignatureDate: data.acknowledgement?.guardianSignatureDate || "",
       },
     }
-    // Update parent form data
+
     updateFormData(updatedData)
 
-    // Call onSubmit if provided
     if (onNext6) {
       onNext6()
     }
@@ -192,6 +246,7 @@ export default function FamilyPlanningForm5({
   return (
     <Card className="w-full">
       <CardHeader>
+        <h5 className="text-lg text-right font-semibold mb-2">Page 5</h5>
         <CardTitle className="text-center text-xl font-bold">ACKNOWLEDGEMENT</CardTitle>
       </CardHeader>
       <CardContent>
@@ -208,7 +263,6 @@ export default function FamilyPlanningForm5({
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value)
-                        // Update form data
                         const updatedData = {
                           ...formData,
                           acknowledgement: {
@@ -218,7 +272,8 @@ export default function FamilyPlanningForm5({
                         }
                         updateFormData(updatedData)
                       }}
-                      defaultValue={field.value}
+                      value={field.value} // Use value instead of defaultValue for controlled component
+                      disabled={isReadOnly}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -240,6 +295,14 @@ export default function FamilyPlanningForm5({
               method.
             </div>
 
+            {/* Display info about auto-populated method */}
+            {formData?.methodCurrentlyUsed && (
+              <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
+                <strong>Note:</strong> Method automatically selected based on your choice from Page 1:{" "}
+                {formData.methodCurrentlyUsed}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-6 mt-6">
               <div className="space-y-2">
                 <div className="border border-gray-300 rounded p-2 h-32 bg-white">
@@ -248,13 +311,28 @@ export default function FamilyPlanningForm5({
                     canvasProps={{
                       className: "w-full h-full",
                     }}
+                    penColor="black"
+                    backgroundColor="white"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="flex gap-2 justify-between">
-                  <Button type="button" variant="outline" size="sm" onClick={clearClientSignature}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={clearClientSignature}
+                    disabled={isReadOnly}
+                  >
                     Clear
                   </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={saveClientSignature}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={saveClientSignature}
+                    disabled={isReadOnly}
+                  >
                     Save Signature
                   </Button>
                 </div>
@@ -276,7 +354,6 @@ export default function FamilyPlanningForm5({
                           {...field}
                           onChange={(e) => {
                             field.onChange(e)
-                            // Update form data
                             const updatedData = {
                               ...formData,
                               acknowledgement: {
@@ -286,6 +363,7 @@ export default function FamilyPlanningForm5({
                             }
                             updateFormData(updatedData)
                           }}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
                       <FormMessage />
@@ -308,9 +386,9 @@ export default function FamilyPlanningForm5({
                           placeholder="Client's name"
                           className="border-b border-t-0 border-l-0 border-r-0 rounded-none px-2"
                           {...field}
+                          readOnly
                           onChange={(e) => {
                             field.onChange(e)
-                            // Update form data
                             const updatedData = {
                               ...formData,
                               acknowledgement: {
@@ -320,6 +398,7 @@ export default function FamilyPlanningForm5({
                             }
                             updateFormData(updatedData)
                           }}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
                       <FormMessage />
@@ -337,13 +416,28 @@ export default function FamilyPlanningForm5({
                       canvasProps={{
                         className: "w-full h-full",
                       }}
+                      penColor="black"
+                      backgroundColor="white"
+                      disabled={isReadOnly}
                     />
                   </div>
                   <div className="flex gap-2 justify-between">
-                    <Button type="button" variant="outline" size="sm" onClick={clearGuardianSignature}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={clearGuardianSignature}
+                      disabled={isReadOnly}
+                    >
                       Clear
                     </Button>
-                    <Button type="button" variant="secondary" size="sm" onClick={saveGuardianSignature}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={saveGuardianSignature}
+                      disabled={isReadOnly}
+                    >
                       Save Signature
                     </Button>
                   </div>
@@ -365,7 +459,6 @@ export default function FamilyPlanningForm5({
                             {...field}
                             onChange={(e) => {
                               field.onChange(e)
-                              // Update form data
                               const updatedData = {
                                 ...formData,
                                 acknowledgement: {
@@ -375,6 +468,7 @@ export default function FamilyPlanningForm5({
                               }
                               updateFormData(updatedData)
                             }}
+                            disabled={isReadOnly}
                           />
                         </FormControl>
                         <FormMessage />
@@ -386,10 +480,12 @@ export default function FamilyPlanningForm5({
             </div>
 
             <div className="flex justify-end mt-6 space-x-4">
-              <Button variant="outline" type="button" onClick={onPrevious4}>
+              <Button variant="outline" type="button" onClick={onPrevious4} disabled={isReadOnly}>
                 Previous
               </Button>
-              <Button type="submit">Next</Button>
+              <Button type="submit" disabled={isReadOnly}>
+                Next
+              </Button>
             </div>
           </form>
         </Form>
@@ -397,4 +493,3 @@ export default function FamilyPlanningForm5({
     </Card>
   )
 }
-

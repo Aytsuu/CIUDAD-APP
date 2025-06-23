@@ -1,7 +1,7 @@
 import  FamilyProfilingMain  from "@/pages/health-profiling/FamilyProfilingMain"
-import { FamilyProfileForm } from "@/pages/health-profiling/form-pages/FamilyProfileForm"
+// import { FamilyProfileForm } from "@/pages/health-profiling/form-pages/FamilyProfileForm"
 import  FamilyProfileView from "@/pages/health-profiling/FamilyProfileView"
-import HealthFamilyForm from "@/pages/record/health-family-profiling/family-profling/HealthFamilyForm"
+import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm"
 
 export const familyProfilingRoute = [
 
@@ -9,10 +9,10 @@ export const familyProfilingRoute = [
         path: 'family-profiling-main',
         element: <FamilyProfilingMain />
     },
-    {
-        path: 'family-profile-form',
-        element: <FamilyProfileForm />
-    },
+    // {
+    //     path: 'family-profile-form',
+    //     element: <FamilyProfileForm />
+    // },
     {
         path: 'family-profile-view',
         element: <FamilyProfileView></FamilyProfileView>
@@ -23,4 +23,4 @@ export const familyProfilingRoute = [
     }
     
    
- ]
+]

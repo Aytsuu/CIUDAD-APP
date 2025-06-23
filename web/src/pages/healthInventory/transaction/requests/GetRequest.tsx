@@ -1,9 +1,9 @@
-import api from "@/pages/api/api";
+import { api2 } from "@/api/api";
 
 // Fetches the list of medicines from the API
 export const getTransactionMedicines = async () => {
   try {
-    const res = await api.get("inventory/medicinetransaction/");
+    const res = await api2.get("inventory/medicinetransaction/");
     if (res.status === 200) { 
       return res.data;
     }
@@ -17,7 +17,7 @@ export const getTransactionMedicines = async () => {
 
 export const getTransactionFirstAid = async () => {
   try {
-    const res= await api.get("inventory/firstaidtransaction/");
+    const res= await api2.get("inventory/firstaidtransaction/");
     if (res.status === 200) {
       return res.data;
     }
@@ -32,7 +32,7 @@ export const getTransactionFirstAid = async () => {
 export const getTransactionCommodity = async() =>{
   try{
 
-    const res = await api.get("inventory/commoditytransaction/");
+    const res = await api2.get("inventory/commoditytransaction/");
 
 
     if(res.status==200){

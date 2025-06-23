@@ -14,8 +14,8 @@ export const patientsRecordRouter = [
         element: <CreatePatientRecord />
     },
     {
-        path: 'view-patients-record',
+        path: 'view-patients-record/:patientId',
         element: <ViewPatientsRecord />
     },
-   
  ]
+ 

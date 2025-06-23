@@ -1,11 +1,11 @@
-import api from "@/pages/api/api";
+import { api2 } from "@/api/api";
 
 export const handleDeleteFirstAidList = async (
     fa_id: number,
     setData: React.Dispatch<React.SetStateAction<any[]>>
   ) => {
     try {
-      const res = await api.delete(`inventory/firstaidlist/${fa_id}/`);
+      const res = await api2.delete(`inventory/firstaidlist/${fa_id}/`);
   
       if (res.status === 200 || res.status === 204) {
         console.log("✅ Medicine deleted successfully!");

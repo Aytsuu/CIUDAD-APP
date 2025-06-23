@@ -32,6 +32,7 @@ export default function ResidentRecords() {
   )
 
   const residents = residentsTableData?.results || [];
+  const residentsHealth = residentsTableHealthData?.results || [];
   const totalCount = residentsTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 

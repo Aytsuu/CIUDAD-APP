@@ -13,8 +13,8 @@ import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { formatHouseholds, formatResidents } from "../profilingFormats";
-import { DependentRecord } from "../profilingTypes";
+import { formatHouseholds, formatResidents } from "@/pages/record/health-family-profiling/profilingFormats";
+import { DependentRecord } from "@/pages/record/health-family-profiling/profilingTypes";
 
 export default function FamilyProfileForm() {
 
@@ -121,7 +121,7 @@ export default function FamilyProfileForm() {
               back={()=>prevStep()}
             />
           )}
-          {currentStep === 3 && (
+          {/* {currentStep === 3 && (
             <DependentsInfoLayout
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
@@ -131,7 +131,7 @@ export default function FamilyProfileForm() {
               defaultValues={defaultValues}
               back={()=>prevStep()}
             />
-          )}
+          )} */}
         </Card>
       </div>
     </>

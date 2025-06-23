@@ -1,47 +1,43 @@
-import { z } from "zod"
+import { z } from "zod";
 
-// Define the service provision record schema separately for reuse
 const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().nonempty("Date of visit is required"),
-  methodAccepted: z.string().nonempty("Method is required"),
+  methodAccepted: z.string().optional(),
   nameOfServiceProvider: z.string().nonempty("Service provider name is required"),
   dateOfFollowUp: z.string().nonempty("Follow-up date is required"),
-  methodQuantity: z.string().nonempty("Method quantity is required"),
+  methodQuantity: z.string().optional(),
   methodUnit: z.string().nonempty("Method unit is required"),
   serviceProviderSignature: z.string().optional(),
   medicalFindings: z.string().optional(),
-  weight: z.number().min(1, "Weight is required"),
-  bp_systolic: z.number().min(1, "Systolic BP is required"),
-  bp_diastolic: z.number().min(1, "Diastolic BP is required"),
-})
+  weight: z.coerce.number().min(1, "Weight must be at least 1 kg"),
+  bp_systolic: z.coerce.number().min(1, "Systolic BP must be at least 1"),
+  bp_diastolic: z.coerce.number().min(1, "Diastolic BP must be at least 1"),
+});
 
-// Define the pregnancy check schema
-const pregnancyCheck = z.object({
-  bf_no_menses: z.boolean().default(false),
-  abstained_last_period: z.boolean().default(false),
-  had_baby: z.boolean().default(false),
-  period_within: z.boolean().default(false),
-  miscarriage_or_abortion: z.boolean().default(false),
+const PregnancyCheckSchema = z.object({
+  breastfeeding: z.boolean().default(false),
+  abstained: z.boolean().default(false),
+  recent_baby: z.boolean().default(false),
+  recent_period: z.boolean().default(false),
+  recent_abortion: z.boolean().default(false),
   using_contraceptive: z.boolean().default(false),
 });
 
-
-// Define the complete schema for all pages
-export const FamilyPlanningSchema = z.object({
-  // Page 1 fields
-  clientID: z.string().nonempty("Client ID is required"),
+const FamilyPlanningBaseSchema = z.object({
+  pat_id: z.string().optional(),
+  fpt_id: z.string().optional(),
+  clientID: z.string().optional(),
   philhealthNo: z.string().optional(),
-  nhts_status: z.boolean(),
+  nhts_status: z.boolean({ required_error: "You must choose Yes or No" }),
   pantawid_4ps: z.boolean(),
 
   lastName: z.string().nonempty("Last name is required"),
   givenName: z.string().nonempty("Given name is required"),
   middleInitial: z.string().max(1, "Middle Initial must be 1 character only").optional(),
   dateOfBirth: z.string().nonempty("Birthdate is required"),
-  age: z.number().min(1, "Age is required and must be a positive number"),
+  age: z.coerce.number().min(1, "Age is required and must be a positive number"),
   educationalAttainment: z.string().nonempty("Educational Attainment is required"),
   occupation: z.string().optional(),
-  isTransient: z.string().default("Resident"),
 
   address: z.object({
     houseNumber: z.string().optional(),
@@ -49,72 +45,40 @@ export const FamilyPlanningSchema = z.object({
     barangay: z.string().nonempty("Barangay is required"),
     municipality: z.string().nonempty("Municipality/City is required"),
     province: z.string().nonempty("Province is required"),
-  }), 
+  }),
 
   spouse: z.object({
-    s_lastName: z.string().nonempty("Last name is required"),
-    s_givenName: z.string().nonempty("Given name is required"),
-    s_middleInitial: z.string().max(1, "Middle Initial must be 1 character only").optional(),
-    s_dateOfBirth: z.string().nonempty("Birthdate is required"),
-    s_age: z.number().min(1, "Age is required and must be a positive number"),
+    s_lastName: z.string().optional(),
+    s_givenName: z.string().optional(),
+    s_middleInitial: z.string().max(1).optional(),
+    s_dateOfBirth: z.string().optional(),
+    s_age: z.coerce.number().optional(),
     s_occupation: z.string().optional(),
   }),
 
-  // pregnancyCheck: z.object({
-  //   bf_no_menses: z.boolean().default(false),
-  //   abstained_last_period: z.boolean().default(false),
-  //   had_baby: z.boolean().default(false),
-  //   period_within: z.boolean().default(false),
-  //   miscarriage_or_abortion: z.boolean().default(false),
-  //   using_contraceptive: z.boolean().default(false),
-  // }),
-  
-  numOfLivingChildren: z.number().min(0, "Number of living children is required"),
+  numOfLivingChildren: z.coerce.number().min(0).optional(),
   planToHaveMoreChildren: z.boolean(),
   averageMonthlyIncome: z.string().nonempty("Average monthly income is required"),
 
   typeOfClient: z.string().nonempty("Type of client is required"),
-  subTypeOfClient: z.string().optional(),
+  // Make subTypeOfClient, reasonForFP, methodCurrentlyUsed optional by default
+  // Their requirement will be handled in superRefine
+  subTypeOfClient: z.string().optional(), 
+  reasonForFP: z.string().optional(), 
+  otherReasonForFP: z.string().optional(),
+  reason: z.string().optional(), // For "Current User" reasons
+  fpt_other_reason_fp: z.string().optional(), // This seems to be a typo and should be consolidated with otherReasonForFP or reason. Let's assume it maps to otherReason for 'Side Effects' for now.
+  
+  methodCurrentlyUsed: z.string().optional(),
+  otherMethod: z.string().optional(),
 
-  reasonForFP: z.string().optional(),
-
-  reason: z.string().optional(),
-  otherReason: z.string().optional(),
-  methodCurrentlyUsed: z
-    .enum([
-      "COC",
-      "POP",
-      "Injectable",
-      "Implant",
-      "IUD-Interval",
-      "IUD-Post Partum",
-      "Condom",
-      "BOM/CMM",
-      "BBT",
-      "STM",
-      "SDM",
-      "LAM",
-      "Others",
- 
-      "Pills",
-      "DMPA",
-      "Lactating Amenorrhea",
-      "Bilateral Tubal Ligation",
-      "Vasectomy",
-      "Source",
-    ])
-    .optional(),
-
-  otherMethod: z.string().optional(), // For 'Others' input field
-
-  // Page 2 fields
   medicalHistory: z.object({
     severeHeadaches: z.boolean(),
     strokeHeartAttackHypertension: z.boolean(),
     hematomaBruisingBleeding: z.boolean(),
     breastCancerHistory: z.boolean(),
     severeChestPain: z.boolean(),
-    coughMoreThan14Days: z.boolean(),
+    cough: z.boolean(),
     jaundice: z.boolean(),
     unexplainedVaginalBleeding: z.boolean(),
     abnormalVaginalDischarge: z.boolean(),
@@ -124,32 +88,26 @@ export const FamilyPlanningSchema = z.object({
     disabilityDetails: z.string().optional(),
   }),
 
-  // Obstetrical History
   obstetricalHistory: z.object({
-    g_pregnancies: z.number().min(0, "Put 0 if none").default(0),
-    p_pregnancies: z.number().min(0, "Put 0 if none").default(0),
-    fullTerm: z.number().min(0, "Put 0 if none"),
-    premature: z.number().min(0, "Number of premature births is required"),
-    abortion: z.number().min(0, "Number of abortions is required"),
-    livingChildren: z.number().min(0, "Number of living children is required"),
-
+    g_pregnancies: z.coerce.number().min(0).default(0),
+    p_pregnancies: z.coerce.number().min(0).default(0),
+    fullTerm: z.coerce.number().min(0),
+    premature: z.coerce.number().min(0),
+    abortion: z.coerce.number().min(0),
+    livingChildren: z.coerce.number().min(0),
     lastDeliveryDate: z.string().optional(),
     typeOfLastDelivery: z.enum(["Vaginal", "Cesarean"]).optional(),
-
     lastMenstrualPeriod: z.string().nonempty("Enter date of last menstrual period"),
     previousMenstrualPeriod: z.string().nonempty("Enter date of previous menstrual period"),
-
-    // Changed from array to string for radio button selection
     menstrualFlow: z.enum(["Scanty", "Moderate", "Heavy"]),
     dysmenorrhea: z.boolean().default(false),
     hydatidiformMole: z.boolean().default(false),
     ectopicPregnancyHistory: z.boolean().default(false),
   }),
 
-  // Page 3 fields
   sexuallyTransmittedInfections: z.object({
     abnormalDischarge: z.boolean(),
-    dischargeFrom: z.enum(["Vagina", "Penis"]).optional(),
+    dischargeFrom: z.string().optional(),
     sores: z.boolean(),
     pain: z.boolean(),
     history: z.boolean(),
@@ -160,103 +118,52 @@ export const FamilyPlanningSchema = z.object({
     unpleasantRelationship: z.boolean(),
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
-    referredTo: z
-    .enum(["DSWD", "WCPU", "NGOs", "Others"])
-    .refine((val) => val !== undefined, { message: "Please choose referral" }),
-
+    referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]).optional(),
   }),
 
-  // Physical Examination Fields
-  weight: z.string().nonempty("Weight is required"),
-  height: z.string().nonempty("Height is required"),
-  bloodPressure: z.string().nonempty("Blood pressure is required"),
-  pulseRate: z.string().nonempty("Pulse rate is required"),
+  weight: z.coerce.number().min(1),
+  height: z.coerce.number().min(1),
+  bloodPressure: z.string().nonempty("Blood pressure is required (e.g., 120/80)"),
+  pulseRate: z.coerce.number().min(1).optional(),
 
-  // Updated examination fields with required selections
-  skinExamination: z
-    .enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select skin examination result" }),
-  conjunctivaExamination: z
-    .enum(["normal", "pale", "yellowish", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select conjunctiva examination result" }),
-  neckExamination: z
-    .enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select neck examination result" }),
-  breastExamination: z
-    .enum(["normal", "mass", "nipple_discharge", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select breast examination result" }),
-  abdomenExamination: z
-    .enum(["normal", "abdominal_mass", "varicosities", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select abdomen examination result" }),
-  extremitiesExamination: z
-    .enum(["normal", "edema", "varicosities", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select extremities examination result" }),
+  skinExamination: z.enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"]),
+  conjunctivaExamination: z.enum(["normal", "pale", "yellowish", "not_applicable"]),
+  neckExamination: z.enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"]),
+  breastExamination: z.enum(["normal", "mass", "nipple_discharge", "not_applicable"]),
+  abdomenExamination: z.enum(["normal", "abdominal_mass", "varicosities", "not_applicable"]),
+  extremitiesExamination: z.enum(["normal", "edema", "varicosities", "not_applicable"]),
 
-  // Pelvic Examination (for IUD Acceptors)
-  pelvicExamination: z
-    .enum([
-      "normal",
-      "mass",
-      "abnormal_discharge",
-      "cervical_abnormalities",
-      "warts",
-      "polyp_or_cyst",
-      "inflammation_or_erosion",
-      "bloody_discharge",
-      "not_applicable",
-    ])
-    .refine((val) => val !== undefined, { message: "Please select pelvic examination result" }),
+  pelvicExamination: z.enum([
+    "normal",
+    "mass",
+    "abnormal_discharge",
+    "cervical_abnormalities",
+    "warts",
+    "polyp_or_cyst",
+    "inflammation_or_erosion",
+    "bloody_discharge",
+    "not_applicable",
+  ]).optional(),
 
-  // Cervical Examination
-  cervicalConsistency: z
-    .enum(["firm", "soft", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select cervical consistency" }),
-  cervicalTenderness: z.boolean(),
-  cervicalAdnexalMassTenderness: z.boolean(),
-
-  // Uterine Examination
-  uterinePosition: z
-    .enum(["mid", "anteflexed", "retroflexed", "not_applicable"])
-    .refine((val) => val !== undefined, { message: "Please select uterine position" }),
+  cervicalConsistency: z.enum(["firm", "soft", "not_applicable"]).optional(),
+  cervicalTenderness: z.boolean().optional(),
+  cervicalAdnexalMassTenderness: z.boolean().optional(),
+  uterinePosition: z.enum(["mid", "anteflexed", "retroflexed", "not_applicable"]).optional(),
   uterineDepth: z.string().optional(),
-
-  // Page 5 fields
+  
   acknowledgement: z.object({
-    selectedMethod: z
-      .enum([
-        "coc",
-        "bom/cmm",
-        "lam",
-        "pop",
-        "iud-interval",
-        "iud-postpartum",
-        "bbt",
-        "sdm",
-        "injectable",
-        "stm",
-        "implant",
-        "condom",
-        "others",
-      ])
-      .refine((val) => val !== undefined, { message: "Please select a method" }),
     clientSignature: z.string().optional(),
-    clientName: z.string().optional(),
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
     guardianName: z.string().optional(),
     guardianSignature: z.string().optional(),
     guardianSignatureDate: z.string().optional(),
   }),
-
-  // Page 6 fields
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
+  pregnancyCheck: PregnancyCheckSchema.optional(),
+});
 
-  // Pregnancy Check fields
-  pregnancy_check: pregnancyCheck.optional(),
-})
-
-// Create page-specific schemas by picking fields from the main schema
-// This avoids duplication of field definitions
-export const page1Schema = FamilyPlanningSchema.pick({
+export const page1Schema = FamilyPlanningBaseSchema.pick({
+  pat_id: true,
   clientID: true,
   philhealthNo: true,
   nhts_status: true,
@@ -276,23 +183,25 @@ export const page1Schema = FamilyPlanningSchema.pick({
   typeOfClient: true,
   subTypeOfClient: true,
   reasonForFP: true,
-  reason: true,
+  otherReasonForFP: true,
+  reason: true, // For current user reason
+  fpt_other_reason_fp: true, // For current user reason specify
   methodCurrentlyUsed: true,
   otherMethod: true,
-  isTransient: true,
-})
+});
 
-export const page2Schema = FamilyPlanningSchema.pick({
+
+export const page2Schema = FamilyPlanningBaseSchema.pick({
   medicalHistory: true,
   obstetricalHistory: true,
-})
+});
 
-export const page3Schema = FamilyPlanningSchema.pick({
+export const page3Schema = FamilyPlanningBaseSchema.pick({
   sexuallyTransmittedInfections: true,
   violenceAgainstWomen: true,
-})
+});
 
-export const page4Schema = FamilyPlanningSchema.pick({
+export const page4Schema = FamilyPlanningBaseSchema.pick({
   weight: true,
   height: true,
   bloodPressure: true,
@@ -309,20 +218,102 @@ export const page4Schema = FamilyPlanningSchema.pick({
   cervicalAdnexalMassTenderness: true,
   uterinePosition: true,
   uterineDepth: true,
-})
+});
 
-export const page5Schema = FamilyPlanningSchema.pick({
-  acknowledgement: true,
-})
+export const page5Schema = FamilyPlanningBaseSchema.pick({
+    acknowledgement: true,
+});
 
-export const page6Schema = FamilyPlanningSchema.pick({
+export const page6Schema = FamilyPlanningBaseSchema.pick({
   serviceProvisionRecords: true,
 }).extend({
-  pregnancyCheck: pregnancyCheck.optional(),
-})
+  pregnancyCheck: PregnancyCheckSchema.optional(),
+});
 
-// Exporting the schemas properly
-export default FamilyPlanningSchema
-export type FormData = z.infer<typeof FamilyPlanningSchema>
-export type ServiceProvisionRecord = z.infer<typeof ServiceProvisionRecordSchema>
-export type PregnancyCheck = z.infer<typeof pregnancyCheck>
+export const FamilyPlanningSchema = FamilyPlanningBaseSchema.superRefine((data, ctx) => {
+
+  if (data.medicalHistory?.disability && !data.medicalHistory.disabilityDetails) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify disability details", path: ["medicalHistory", "disabilityDetails"] });
+  }
+
+  // Common validation for IUD
+  const isIUD = data.methodCurrentlyUsed?.includes("IUD");
+  if (isIUD) {
+    if (!data.pelvicExamination || !data.cervicalConsistency || !data.uterinePosition) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Pelvic exam details (Pelvic Examination, Cervical Consistency, Uterine Position) are required for IUD method", path: ["pelvicExamination"] });
+    }
+  }
+
+
+  // --- Conditional Logic for Type of Client ---
+
+  if (data.typeOfClient === "newacceptor") {
+    // For "New Acceptor", reasonForFP and methodCurrentlyUsed are required
+    if (!data.reasonForFP) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason for family planning is required for new acceptors", path: ["reasonForFP"] });
+    }
+    if (!data.methodCurrentlyUsed) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Method currently used is required for new acceptors", path: ["methodCurrentlyUsed"] });
+    }
+    if (data.reasonForFP === "fp_others" && !data.otherReasonForFP) { // Corrected from "Others (Specify)" to "fp_others" based on your options
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify the reason for FP", path: ["otherReasonForFP"] });
+    }
+
+    if (data.subTypeOfClient) { // If subTypeOfClient is present when it shouldn't be
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Sub-type of client is not applicable for new acceptors", path: ["subTypeOfClient"] });
+    }
+    if (data.reason) { // If reason (for Current User) is present
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason for current user is not applicable for new acceptors", path: ["reason"] });
+    }
+    if (data.fpt_other_reason_fp) { // If other reason (for Current User side effects) is present
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Specific reason for current user is not applicable for new acceptors", path: ["fpt_other_reason_fp"] });
+    }
+
+
+  } else if (data.typeOfClient === "currentuser") { // Corrected from "Current User" to "currentuser" based on your options
+    // For "Current User", subTypeOfClient is always required
+    if (!data.subTypeOfClient) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Sub-type of client is required for current users", path: ["subTypeOfClient"] });
+    }
+
+    // Conditional logic based on subTypeOfClient
+    if (data.subTypeOfClient === "changingmethod") { // Corrected from "Changing Method" to "changingmethod"
+      if (!data.reason) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason is required for changing method", path: ["reason"] });
+      }
+      if (!data.methodCurrentlyUsed) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Method currently used is required for changing method", path: ["methodCurrentlyUsed"] });
+      }
+      if (data.reason === "Side Effects" && !data.fpt_other_reason_fp) { // Assuming fpt_other_reason_fp maps to specifying side effects
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify the side effects", path: ["fpt_other_reason_fp"] });
+      }
+    } else if (data.subTypeOfClient === "changingclinic" || data.subTypeOfClient === "dropoutrestart") {
+      // For "Changing Clinic" or "Dropout/Restart", no methods/reasons are needed
+      if (data.reasonForFP) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason for FP is not applicable for this sub-type", path: ["reasonForFP"] });
+      }
+      if (data.otherReasonForFP) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Other reason for FP is not applicable for this sub-type", path: ["otherReasonForFP"] });
+      }
+      if (data.reason) { // Reason for Current User is not needed
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason is not applicable for this sub-type", path: ["reason"] });
+      }
+      if (data.fpt_other_reason_fp) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Specific reason is not applicable for this sub-type", path: ["fpt_other_reason_fp"] });
+      }
+      if (data.methodCurrentlyUsed) { // Method currently used is not needed
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Method currently used is not applicable for this sub-type", path: ["methodCurrentlyUsed"] });
+      }
+      if (data.otherMethod) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Other method is not applicable for this sub-type", path: ["otherMethod"] });
+      }
+    }
+
+  }
+});
+
+export type FormData = z.infer<typeof FamilyPlanningSchema>;
+export type ServiceProvisionRecord = z.infer<typeof ServiceProvisionRecordSchema>;
+export type PregnancyCheck = z.infer<typeof PregnancyCheckSchema>;
+
+export default FamilyPlanningSchema;

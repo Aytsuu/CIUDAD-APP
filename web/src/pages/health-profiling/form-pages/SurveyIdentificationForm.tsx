@@ -249,4 +249,3 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
     </div>
   )
 }
-

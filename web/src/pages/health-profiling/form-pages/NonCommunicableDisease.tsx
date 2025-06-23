@@ -596,4 +596,3 @@ export default function NonCommunicableDiseaseForm({ onSubmit, initialData }: No
     </Form>
   )
 }
-

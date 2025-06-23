@@ -2,7 +2,8 @@ import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { FamilyRecord, DependentRecord} from "../profilingTypes";
+// import { FamilyRecord, DependentRecord} from "../profilingTypes";
+import { FamilyRecord, DependentRecord } from "@/pages/record/health-family-profiling/profilingTypes";
 
 // Define the columns for family data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------

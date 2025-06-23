@@ -585,4 +585,3 @@ export default function DependentsForm({ onSubmit, initialData }: DependentsForm
     </div>
   )
 }
-
