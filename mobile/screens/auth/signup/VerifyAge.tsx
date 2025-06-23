@@ -9,25 +9,41 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { X } from "@/lib/icons/X";
 import { Calendar } from "@/lib/icons/Calendar";
+import { useToastContext } from "@/components/ui/toast";
 
 export default function VerifyAge() {
+  const { toast } = useToastContext();
   const router = useRouter();
-  const { control, trigger, formState: { errors } } = useRegistrationFormContext();
+  const { control, trigger, getValues } = useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    try {
       setIsSubmitting(true);
       const formIsValid = await trigger(["verificationSchema.dob"]);
 
       if (formIsValid) {
+        const yearNow = new Date().getFullYear();
+        const monthNow = new Date().getMonth();
+        const dayNow = new Date().getDate();
+
+        const dob = getValues("verificationSchema.dob")
+        const dobYear = new Date(dob).getFullYear();
+        const dobMonth = new Date(dob).getMonth();
+        const dobDay = new Date(dob).getDate();
+        
+        const age = yearNow - dobYear -
+          (monthNow < dobMonth || (monthNow === dobMonth && dayNow < dobDay) 
+          ? 1 : 0
+        );
+
+        if(age < 13){
+          toast.error("Your age is not eligible for registration.");
+          setIsSubmitting(false);
+          return;
+        }
+
         router.push("/(auth)/personal-information");
       }
-    } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleClose = () => {
