@@ -18,32 +18,33 @@ export default function VerifyAge() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-      setIsSubmitting(true);
-      const formIsValid = await trigger(["verificationSchema.dob"]);
+    setIsSubmitting(true);
+    const formIsValid = await trigger(["verificationSchema.dob"]);
 
-      if (formIsValid) {
-        const yearNow = new Date().getFullYear();
-        const monthNow = new Date().getMonth();
-        const dayNow = new Date().getDate();
+    if (formIsValid) {
+      const yearNow = new Date().getFullYear();
+      const monthNow = new Date().getMonth();
+      const dayNow = new Date().getDate();
 
-        const dob = getValues("verificationSchema.dob")
-        const dobYear = new Date(dob).getFullYear();
-        const dobMonth = new Date(dob).getMonth();
-        const dobDay = new Date(dob).getDate();
-        
-        const age = yearNow - dobYear -
-          (monthNow < dobMonth || (monthNow === dobMonth && dayNow < dobDay) 
-          ? 1 : 0
-        );
+      const dob = getValues("verificationSchema.dob")
+      const dobYear = new Date(dob).getFullYear();
+      const dobMonth = new Date(dob).getMonth();
+      const dobDay = new Date(dob).getDate();
+      
+      const age = yearNow - dobYear -
+        (monthNow < dobMonth || (monthNow === dobMonth && dayNow < dobDay) 
+        ? 1 : 0
+      );
 
-        if(age < 13){
-          toast.error("Your age is not eligible for registration.");
-          setIsSubmitting(false);
-          return;
-        }
-
-        router.push("/(auth)/personal-information");
+      if(age < 13){
+        toast.error("Your age is not eligible for registration.");
+        setIsSubmitting(false);
+        return;
       }
+
+      router.push("/(auth)/personal-information");
+    }
+    setIsSubmitting(false);
   };
 
   const handleClose = () => {
