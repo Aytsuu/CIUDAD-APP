@@ -171,7 +171,7 @@ export default function AdministrationRecords() {
           {isLoadingStaffs && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Loading residents...</span>
+              <span className="ml-2 text-gray-600">Loading staffs...</span>
             </div>
           )}
 
@@ -181,12 +181,12 @@ export default function AdministrationRecords() {
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchQuery ? "No residents found" : "No residents yet"}
+                {searchQuery ? "No staffs found" : "No staffs yet"}
               </h3>
               <p className="text-gray-500 mb-4">
                 {searchQuery
                   ? `No staffs match "${searchQuery}". Try adjusting your search.`
-                  : "Get started by registering your first resident."}
+                  : "Get started by registering your first staff."}
               </p>
               {!searchQuery && (
                 <Link
