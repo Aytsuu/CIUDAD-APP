@@ -31,7 +31,7 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         return resident_profile
     
     def get_staff(self, obj):
-        from apps.administration.serializers.staff_serializers import StaffFullSerializer
+        from apps.administration.serializers.full import StaffFullSerializer
         return StaffFullSerializer(obj.staff).data
 
     def get_is_staff(self, obj):

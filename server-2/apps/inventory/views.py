@@ -4,19 +4,34 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import * 
 from datetime import datetime
- 
+from django.db.models import ProtectedError
+
 
 
 # ----------------------CATEGORY---VIEW------------------------------------
 
 class CategoryView(generics.ListCreateAPIView):
     serializer_class = CategorySerializers
-    queryset  =Category.objects.all()
+    queryset  = Category.objects.all()
     
     def create(self , request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
-
+    def delete(self, request, pk):
+        try:
+            category = Category.objects.get(pk=pk)
+            category.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response(
+                {"detail": "Cannot delete - this category has medicines assigned"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Category.DoesNotExist:
+            return Response(
+                {"detail": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 # ----------------------CATEGORY---DELETE------------------------------------
 class DeleteCategoryView(generics.DestroyAPIView):
     serializer_class = CategorySerializers    
@@ -51,9 +66,11 @@ class FirstAidListView(generics.ListCreateAPIView):
 class DeleteMedicineListView(generics.DestroyAPIView):
     serializer_class = MedicineListSerializers    
     queryset = Medicinelist.objects.all()
+    
     def get_object(self):
         med_id = self.kwargs.get('med_id')
         return get_object_or_404(Medicinelist, med_id=med_id) 
+    
 class DeleteFirstAidView(generics.DestroyAPIView):
     serializer_class = FirstAidListSerializers    
     queryset = FirstAidList.objects.all()
@@ -299,14 +316,6 @@ class FirstAidTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
      
 
-
-class VaccineCategoryView(generics.ListCreateAPIView):
-    serializer_class=VaccineCategorySerializer
-    queryset=VaccineCategory.objects.all()
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
 class ImmunizationSuppliesView(generics.ListCreateAPIView):
     serializer_class=ImmunizationSuppliesSerializer
     queryset=ImmunizationSupplies.objects.all()
@@ -317,9 +326,7 @@ class ImmunizationSuppliesView(generics.ListCreateAPIView):
 # views.py
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class = VacccinationListSerializer
-    def get_queryset(self):
-        # Filter by vaccat_id = 1
-        return VaccineList.objects.filter(vaccat_id=1)   
+    queryset=VaccineList.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
@@ -341,15 +348,15 @@ class RoutineFrequencyView(generics.ListCreateAPIView):
      
     
 # Vaccine Category Views
-class VaccineCategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = VaccineCategorySerializer
-    queryset = VaccineCategory.objects.all()
-    lookup_field = 'vaccat_id'
+# class VaccineCategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = VaccineCategorySerializer
+#     queryset = AntigenCategory.objects.all()
+#     lookup_field = 'vaccat_id'
     
-    def get_object(self):
-        vaccat_id = self.kwargs.get('vaccat_id')
-        obj = get_object_or_404(VaccineCategory, vaccat_id=vaccat_id)
-        return obj
+#     def get_object(self):
+#         vaccat_id = self.kwargs.get('vaccat_id')
+#         obj = get_object_or_404(AntigenCategory, vaccat_id=vaccat_id)
+#         return obj
 
 
 # Immunization Supplies Views
@@ -358,10 +365,10 @@ class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestr
     queryset = ImmunizationSupplies.objects.all()
     lookup_field = 'imz_id'
     
-    def get_object(self):
-        imz_id = self.kwargs.get('imz_id')
-        obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
-        return obj
+    # def get_object(self):
+    #     imz_id = self.kwargs.get('imz_id')
+    #     obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
+    #     return obj
     
     
 # Vaccine List Views
@@ -369,6 +376,7 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
     lookup_field = 'vac_id'
+    
     
 # Vaccine Interval Views
 class VaccineIntervalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -413,6 +421,15 @@ class VaccineStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVie
         vacStck_id = self.kwargs.get('vacStck_id')
         obj = get_object_or_404(VaccineStock, vacStck_id=vacStck_id)
         return obj
+    
+# class VaccineStockVacRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = VaccineStockSerializer
+#     queryset = VaccineStock.objects.all()
+#     lookup_field = 'vac_id'
+#     def get_object(self):
+#         vac_id = self.kwargs.get('vac_id')
+#         obj = get_object_or_404(VaccineStock, vac_id=vac_id)
+#         return obj
     
     
     

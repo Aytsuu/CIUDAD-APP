@@ -16,16 +16,13 @@ urlpatterns = [
     path("category/<int:cat_id>/", DeleteCategoryView.as_view(), name="delete_category"),
     
     #DELETE LIST
-    path("medicinelist/<int:med_id>/", DeleteMedicineListView.as_view(), name="delete_medicinelist"),
-    path("firstaidlist/<int:fa_id>/", DeleteFirstAidView.as_view(), name="delete_firstaid"),
-    path("commoditylist/<int:com_id>/", DeleteCommodityView.as_view(), name="delete_commodity"),
-
-    
-     
+    path("medicinelist/<str:med_id>/", DeleteMedicineListView.as_view(), name="delete_medicinelist"),
+    path("firstaidlist/<str:fa_id>/", DeleteFirstAidView.as_view(), name="delete_firstaid"),
+    path("commoditylist/<str:com_id>/", DeleteCommodityView.as_view(), name="delete_commodity"),
     #UPDATE LIST
-    path("update_medicinelist/<int:med_id>/", MedicineListUpdateView.as_view(), name="update_medicinelist"),
-    path("update_firstaidlist/<int:fa_id>/", FirstAidListUpdateView.as_view(), name="update_firstaidlist"),
-    path("update_commoditylist/<int:com_id>/", CommodityListUpdateView.as_view(), name="update_commoditylist"),
+    path("update_medicinelist/<str:med_id>/", MedicineListUpdateView.as_view(), name="update_medicinelist"),
+    path("update_firstaidlist/<str:fa_id>/", FirstAidListUpdateView.as_view(), name="update_firstaidlist"),
+    path("update_commoditylist/<str:com_id>/", CommodityListUpdateView.as_view(), name="update_commoditylist"),
     
      
     # INVENTORY  
@@ -56,15 +53,15 @@ urlpatterns = [
     path("vac_list/", VaccineListView.as_view(), name="vaccination-list"),
     path("vac_intervals/", VaccineIntervalView.as_view(), name="vaccination-interval"), 
     path("routine_freq/", RoutineFrequencyView.as_view(), name="RoutineFrequency"),
-    path("vac_categ/", VaccineCategoryView.as_view(), name="vac_cat"),
+    # path("vac_categ/", VaccineCategoryView.as_view(), name="vac_cat"),
     path("imz_supplies/", ImmunizationSuppliesView.as_view(), name="imz_supplies"),
     
      # Vaccination - Retrieve/Update endpoints
-    path("vac_list/<int:inv_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
+    path("vac_list/<int:vac_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
     path("vac_intervals/<int:vacInt_id>/", VaccineIntervalRetrieveUpdateDestroyView.as_view(), name="vaccination-interval-detail"),
     path("routine_freq/<int:routineF_id>/", RoutineFrequencyRetrieveUpdateDestroyView.as_view(), name="RoutineFrequency-detail"),
-    path("vac_categ/<int:vaccat_id>/", VaccineCategoryRetrieveUpdateDestroyView.as_view(), name="vac_cat-detail"),
-    path("imz_supplies/<int:inv_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
+    # path("vac_categ/<int:vaccat_id>/", VaccineCategoryRetrieveUpdateDestroyView.as_view(), name="vac_cat-detail"),
+    path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
     
     
     # VACCINE STOCKS 

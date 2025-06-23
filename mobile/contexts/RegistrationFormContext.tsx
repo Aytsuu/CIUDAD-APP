@@ -6,7 +6,7 @@ import { z } from 'zod';
 type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
 const FormContext = createContext<UseFormReturn<RegistrationForm> | null>(null);
 
-export const RegistationFormProvider = ({
+export const FormProvider = ({
   children,
   methods,
 }: {

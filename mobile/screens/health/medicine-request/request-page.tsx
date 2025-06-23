@@ -1,17 +1,16 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from "react-native"
 import { router } from "expo-router"
-import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill } from "lucide-react-native"
+import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill, Filter, X } from "lucide-react-native"
 import { globalCartState } from "./cart-state"
 
-// Define the Medicine type
 export type Medicine = {
   id: number
   name: string
   category: string
   description?: string
+  inStock?: boolean
+  dosage?: string
 }
 
 export default function MedicineRequestScreen() {
@@ -22,14 +21,16 @@ export default function MedicineRequestScreen() {
   const [filteredMedicines, setFilteredMedicines] = useState<Medicine[]>([])
   const [cartItems, setCartItems] = useState<Medicine[]>([])
 
-  // Mock data for medicines
+  // Enhanced mock data for medicines
   const mockMedicines: Medicine[] = [
-    { id: 1, name: "Biogesic", category: "Paracetamol", description: "Relieves mild pain and fever." },
-    { id: 2, name: "Panadol", category: "Paracetamol", description: "Pain reliever and fever reducer." },
-    { id: 3, name: "Calpol", category: "Paracetamol", description: "Pain relief for children and infants." },
-    { id: 4, name: "Neozep", category: "Paracetamol", description: "Treats cold and flu symptoms." },
-    { id: 5, name: "Amoxicillin", category: "Antibiotics", description: "Treats bacterial infections." },
-    { id: 6, name: "Cefalexin", category: "Antibiotics", description: "Used to treat bacterial infections." },
+    { id: 1, name: "Biogesic", category: "Paracetamol", description: "Relieves mild pain and fever.", inStock: true, dosage: "500mg" },
+    { id: 2, name: "Panadol", category: "Paracetamol", description: "Pain reliever and fever reducer.", inStock: true, dosage: "500mg" },
+    { id: 3, name: "Calpol", category: "Paracetamol", description: "Pain relief for children and infants.", inStock: false, dosage: "250mg" },
+    { id: 4, name: "Neozep", category: "Paracetamol", description: "Treats cold and flu symptoms.", inStock: true, dosage: "500mg" },
+    { id: 5, name: "Amoxicillin", category: "Antibiotics", description: "Treats bacterial infections.", inStock: true, dosage: "250mg" },
+    { id: 6, name: "Cefalexin", category: "Antibiotics", description: "Used to treat bacterial infections.", inStock: true, dosage: "500mg" },
+    { id: 7, name: "Vitamin C", category: "Vitamins", description: "Boosts immune system.", inStock: true, dosage: "500mg" },
+    { id: 8, name: "Multivitamins", category: "Vitamins", description: "Daily nutritional supplement.", inStock: true, dosage: "1 tablet" },
   ]
 
   const categories = ["All", "Paracetamol", "Antibiotics", "Vitamins"]
@@ -45,7 +46,10 @@ export default function MedicineRequestScreen() {
     let filtered = medicines
 
     if (searchQuery) {
-      filtered = filtered.filter((medicine) => medicine.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      filtered = filtered.filter((medicine) =>
+        medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        medicine.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     }
 
     if (selectedCategory !== "All") {
@@ -64,104 +68,174 @@ export default function MedicineRequestScreen() {
     return () => clearInterval(interval)
   }, [])
 
-  return (
-    <SafeAreaView className="flex-1 bg-[#ECF8FF]">
-      <View className="flex-1 p-4">
-        {/* Header */}
-        <View className="flex-row justify-between items-center mb-2">
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000" />
-          </TouchableOpacity>
+  const clearSearch = () => {
+    setSearchQuery("")
+  }
 
-          <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="relative">
-            <ShoppingBag size={24} color="#263D67" />
-            {cartItems.length > 0 && (
-              <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
-                <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
+
+
+  return (
+    <SafeAreaView className="flex-1  bg-gray-100">
+      <View className="flex-1">
+        {/* Header with gradient background */}
+        <View className="bg-blue-900 px-4 pt-4 pb-6 rounded-b-3xl ">
+          <View className="flex-row justify-between items-center mt-5 mb-4">
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="bg-white/20 p-2 rounded-full"
+            >
+              <ArrowLeft size={24} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/medicine-request/cart")}
+              className="relative bg-white/20 p-2 rounded-full"
+            >
+              <ShoppingBag size={24} color="#fff" />
+              {cartItems.length > 0 && (
+                <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                  <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Title */}
+          <View className="mb-4">
+            <Text className="text-3xl font-bold text-white">Request Medicine</Text>
+            <Text className="text-blue-100 text-base mt-1">Get the medicines you need with ease</Text>
+          </View>
+
+          {/* Search Bar */}
+          <View className="flex-row items-center bg-white rounded-full px-4 py-3 ">
+            <Search size={20} color="#6B7280" />
+            <TextInput
+              placeholder="Search medicines"
+              className="flex-1 ml-3 text-gray-700"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#9CA3AF"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} className="ml-2">
+                <X size={18} color="#6B7280" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <View className="flex-1 px-4 pt-6">
+          {/* Categories Filter */}
+          <View className="mb-6 relative z-20">
+            <TouchableOpacity
+              className="flex-row justify-between items-center bg-white rounded-xl px-4 py-4 shadow-sm border border-gray-100"
+              onPress={() => setShowCategories(!showCategories)}
+            >
+              <View className="flex-row items-center">
+                <Filter size={18} color="#4F46E5" />
+                <Text className="text-gray-700 font-medium ml-2">
+                  {selectedCategory === "All" ? "All Categories" : selectedCategory}
+                </Text>
+              </View>
+              <ChevronDown
+                size={20}
+                color="#4F46E5"
+                style={{ transform: [{ rotate: showCategories ? "180deg" : "0deg" }] }}
+              />
+            </TouchableOpacity>
+
+            {showCategories && (
+              <View className="absolute top-16 left-0 right-0 bg-white rounded-xl shadow-lg border border-gray-100 z-30">
+                {categories.map((category, index) => (
+                  <TouchableOpacity
+                    key={category}
+                    className={`px-4 py-4 ${index !== categories.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    onPress={() => {
+                      setSelectedCategory(category)
+                      setShowCategories(false)
+                    }}
+                  >
+                    <Text className={`${selectedCategory === category ? "text-indigo-600 font-semibold" : "text-gray-700"}`}>
+                      {category === "All" ? "All Categories" : category}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             )}
-          </TouchableOpacity>
-        </View>
+          </View>
 
-        {/* Title */}
-        <View className="mb-6">
-          <Text className="text-3xl font-bold text-[#263D67]">Request Medicine</Text>
-          <Text className="text-sm text-gray-600">Get the medicines you need with ease.</Text>
-        </View>
+          {/* Results Summary */}
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-gray-600 font-medium">
+              {filteredMedicines.length} medicine{filteredMedicines.length !== 1 ? 's' : ''} found
+            </Text>
 
-        {/* Search Bar */}
-        <View className="flex-row items-center bg-white rounded-lg px-3 py-2 mb-4 shadow-sm">
-          <Search size={20} color="#263D67" />
-          <TextInput
-            placeholder="Search medicine"
-            className="flex-1 ml-2"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+          </View>
 
-        {/* Categories Dropdown */}
-        <View className="mb-4 relative">
-          <TouchableOpacity
-            className="flex-row justify-between items-center bg-white rounded-lg px-3 py-3 shadow-sm"
-            onPress={() => setShowCategories(!showCategories)}
-          >
-            <Text className="text-[#263D67]">{selectedCategory}</Text>
-            <ChevronDown size={20} color="#263D67" />
-          </TouchableOpacity>
+          {/* Medicine List */}
+          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            {filteredMedicines.length > 0 ? (
+              <View className="pb-6">
+                {filteredMedicines.map((medicine, index) => (
+                  <TouchableOpacity
+                    key={medicine.id}
+                    className="bg-white p-5 mb-4 rounded-2xl shadow-sm border border-gray-100"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/medicine-request/details",
+                        params: { id: medicine.id.toString() },
+                      })
+                    }
+                  >
+                    <View className="flex-row justify-between items-start">
+                      <View className="flex-1">
+                        <View className="flex-row items-center mb-2">
+                          <View className="bg-indigo-100 p-2 rounded-full mr-3">
+                            <Pill size={20} color="#4F46E5" />
+                          </View>
+                          <View className="flex-1">
+                            <Text className="text-lg font-bold text-gray-800">{medicine.name}</Text>
+                            <Text className="text-gray-500 text-sm">{medicine.dosage}</Text>
+                          </View>
+                        </View>
 
-          {showCategories && (
-            <View className="absolute top-14 left-0 right-0 bg-white rounded-lg shadow-md z-10">
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category}
-                  className="px-3 py-3 border-b border-gray-100"
-                  onPress={() => {
-                    setSelectedCategory(category)
-                    setShowCategories(false)
-                  }}
-                >
-                  <Text className={selectedCategory === category ? "text-blue-500 font-bold" : "text-[#263D67]"}>
-                    {category}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+                        <View className="flex-row items-center justify-between mt-2">
 
-        {/* Medicine List */}
-        <ScrollView className="flex-1">
-          {filteredMedicines.length > 0 ? (
-            filteredMedicines.map((medicine) => (
-              <TouchableOpacity
-                key={medicine.id}
-                className="flex-row justify-between items-center bg-white p-4 mb-3 rounded-lg shadow-sm"
-                onPress={() =>
-                  router.push({
-                    pathname: "/medicine-request/details",
-                    params: { id: medicine.id.toString() },
-                  })
-                }
-              >
-                <View className="flex-row items-center">
-                  <Pill size={20} color="#263D67" className="mr-2" />
-                  <View>
-                    <Text className="text-lg font-semibold text-[#263D67]">{medicine.name}</Text>
-                    <Text className="text-sm text-gray-500">{medicine.category}</Text>
-                  </View>
+                          <Text className="text-xs font-medium">{medicine.category}</Text>
+
+                        </View>
+
+                        {medicine.description && (
+                          <Text className="text-gray-600 text-sm mt-2 leading-5">{medicine.description}</Text>
+                        )}
+                      </View>
+
+                      <View className="ml-4">
+                        <ChevronDown
+                          size={20}
+                          color="#9CA3AF"
+                          style={{ transform: [{ rotate: "-90deg" }] }}
+                        />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View className="flex-1 justify-center items-center mt-20">
+                <View className="bg-gray-100 p-6 rounded-full mb-4">
+                  <Search size={32} color="#9CA3AF" />
                 </View>
-                <ChevronDown size={20} color="#263D67" style={{ transform: [{ rotate: "-90deg" }] }} />
-              </TouchableOpacity>
-            ))
-          ) : (
-            <View className="flex-1 justify-center items-center mt-10">
-              <Text className="text-lg text-[#263D67]">No medicines found.</Text>
-            </View>
-          )}
-        </ScrollView>
+                <Text className="text-xl font-semibold text-gray-700 mb-2">No medicines found</Text>
+                <Text className="text-gray-500 text-center px-8">
+                  Try adjusting your search terms to find what medicine you're looking for.
+                </Text>
+
+              </View>
+            )}
+          </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   )
 }
-

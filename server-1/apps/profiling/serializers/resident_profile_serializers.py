@@ -53,12 +53,9 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
         model = ResidentProfile
         fields = ['per', 'staff', 'rp_id', 'rp_date_registered']
         read_only_fields = ['rp_id', 'rp_date_registered']
-        extra_kwargs = {
-            'staff': {'required': False}
-        }
 
     @transaction.atomic
-    def create(self, validated_data):   
+    def create(self, validated_data):
         # Extract personal data
         personal_data = validated_data.pop('per')
         
@@ -72,7 +69,7 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
             rp_id = self.generate_resident_no(),
             rp_date_registered = timezone.now().date(),
             per = personal,
-            staff_id = validated_data.get('staff', None)
+            staff_id = validated_data['staff']
         )
         
         return resident_profile

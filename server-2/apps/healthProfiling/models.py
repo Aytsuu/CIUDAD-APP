@@ -1,8 +1,3 @@
-# from django.db import models
-
-# # Create your models here.
-# from django.db import models
-
 from django.db import models
 from django.conf import settings
 from datetime import date
@@ -17,6 +12,21 @@ class Sitio(models.Model):
     def __str__(self):
         return self.sitio_name
 
+class Address(models.Model):
+    add_id = models.BigAutoField(primary_key=True)  
+    add_province = models.CharField(max_length=50)
+    add_city = models.CharField(max_length=50)
+    add_barangay = models.CharField(max_length=50)
+    add_street = models.CharField(max_length=50)
+    add_external_sitio = models.CharField(max_length=50, null=True, blank=True)
+    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        db_table = 'address'
+
+    def __str__(self):
+        return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
+
 class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
@@ -26,13 +36,12 @@ class Personal(models.Model):
     per_dob = models.DateField()
     per_sex = models.CharField(max_length=100)
     per_status = models.CharField(max_length=100)
-    per_address = models.CharField(max_length=100)
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=100)  
-
     class Meta:
         db_table = 'personal'
+
 
     def __str__(self):
         name_parts = [self.per_lname, self.per_fname]
@@ -42,6 +51,13 @@ class Personal(models.Model):
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
 
+class PersonalAddress(models.Model):
+    pa_id = models.BigAutoField(primary_key=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'personal_address'
 
 class ResidentProfile(models.Model):
     rp_id = models.CharField(max_length=50, primary_key=True)
@@ -58,20 +74,16 @@ class ResidentProfile(models.Model):
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
-    hh_province = models.CharField(max_length=50)
-    hh_city = models.CharField(max_length=50)       
-    hh_barangay = models.CharField(max_length=50)
-    hh_street = models.CharField(max_length=50)
     hh_date_registered = models.DateField(default=date.today)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
 
     class Meta:
         db_table = 'household'
 
     def __str__(self):
-        return f"Household {self.hh_id} - {self.rp} in {self.sitio}"
+        return f"Household {self.hh_id} - {self.rp} in {self.add}"
 
 class Family(models.Model):
     fam_id = models.CharField(max_length=50, primary_key=True)
@@ -112,14 +124,13 @@ class RequestRegistration(models.Model):
         return f"Request #{self.req_id} by {self.per} on {self.req_date}"
 
 class HealthRelatedDetails(models.Model):
-    hrd_id = models.CharField(max_length=50, primary_key=True)
+    hrd_id = models.BigAutoField(primary_key=True)
     hrd_blood_type = models.CharField(max_length=5)
     hrd_philhealth_id = models.CharField(max_length=50)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     
-
-#     class Meta:
-#         db_table = 'health_related_details'
+    class Meta:
+        db_table = 'health_related_details'
 
 class Dependents_Over_Five(models.Model):
     dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
@@ -137,17 +148,17 @@ class Dependents_Under_Five(models.Model):
     duf_exclusive_bf= models.CharField(max_length=50 )
     fc = models.ForeignKey(FamilyComposition, on_delete=models.CASCADE)
 
-#     class Meta:
-#         db_table = 'dependents_under_five'
+    class Meta:
+        db_table = 'dep_under_five'
 
-# class WaterSupply(models.Model):
-#     water_sup_id = models.CharField(max_length=50, primary_key=True)
-#     water_sup_type = models.CharField(max_length=50)
-#     water_sup_desc = models.TextField(max_length=1000)
-#     # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+class WaterSupply(models.Model):
+    water_sup_id = models.CharField(max_length=50, primary_key=True)
+    water_sup_type = models.CharField(max_length=50)
+    water_sup_desc = models.TextField(max_length=1000)
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 
-#     class Meta:
-#         db_table = 'water_supply'
+    class Meta:
+        db_table = 'water_supply'
 #     class Meta:
 #         db_table = 'water_supply'
 
@@ -155,33 +166,61 @@ class Dependents_Under_Five(models.Model):
 #     sf_id = models.CharField(max_length=50, primary_key=True)
 #     sf_type = models.CharField(max_length=50)
 #     sf_toilet_type = models.CharField(max_length=50)
-# class SanitaryFacility(models.Model):
-#     sf_id = models.CharField(max_length=50, primary_key=True)
-#     sf_type = models.CharField(max_length=50)
-#     sf_toilet_type = models.CharField(max_length=50)
 
-#     # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+class SanitaryFacility(models.Model):
+    sf_id = models.CharField(max_length=50, primary_key=True)
+    sf_type = models.CharField(max_length=50)
+    sf_toilet_type = models.CharField(max_length=50)
 
-#     class Meta:
-#         db_table = 'sanitary_facility'
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 
-# class Facility_Details(models.Model):
-#     fd_id = models.CharField(max_length=50, primary_key=True)
-#     fd_description = models.CharField(max_length=200)
-#     sf = models.ForeignKey(SanitaryFacility, on_delete=models.CASCADE)
+    class Meta:
+        db_table = 'sanitary_facility'
 
-class Solid_Waste_Mgmt(models.Model):
+class FacilityDetails(models.Model):
+    fd_id = models.CharField(max_length=50, primary_key=True)
+    fd_description = models.CharField(max_length=200)
+
+    sf = models.ForeignKey(SanitaryFacility, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'facility_details'
+
+class SolidWasteMgmt(models.Model):
     swm_id = models.CharField(max_length=50, primary_key=True)
     swn_desposal_type = models.CharField(max_length=50)
     swm_desc = models.TextField(max_length=1000)
-    # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
     
-#     class Meta:
-#         db_table = 'solid_waste_mgmt'
+    class Meta:
+        db_table = 'solid_waste_mgmt'
+        
+class TBsurveilance(models.Model):
+    tb_id = models.CharField(max_length=50, primary_key=True)
+    tb_meds_source = models.CharField(max_length=100)
+    tb_days_taking_meds = models.IntegerField()
+    tb_status = models.CharField(max_length=100)
+
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'tb_surveillance_records'
+
+class NonCommunicableDisease(models.Model):
+    ncd_id = models.CharField(max_length=50, primary_key=True)
+    ncd_riskclass_age = models.CharField(max_length=100)
+    ncd_comorbidities = models.CharField(max_length=100)
+    ncd_lifestyle_risk = models.CharField(max_length=100)
+    ncd_maintenance_status = models.CharField(max_length=100)
+
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'non_communicable_disease'
 
 
-class Patient(models.Model):
-    pat_id = models.CharField(max_length=50, primary_key=True)
+# class Patient(models.Model):
+#     pat_id = models.CharField(max_length=50, primary_key=True)
     # per = models.ForeignKey(Personal, on_depete=models.CASCADE)
 
 #     class Meta:
@@ -215,6 +254,3 @@ class Patient(models.Model):
 
 #     class Meta:
 #         db_table = 'illness'
-
-# class TB_Surveilance(models.Model):
-#     pass

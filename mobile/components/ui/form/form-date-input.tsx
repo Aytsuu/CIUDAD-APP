@@ -21,7 +21,7 @@ export const FormDateInput = ({ control, name, label }: DatePickerProps) => {
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View className="mb-4">
           {label && (
-            <Text className="text-[12px] font-PoppinsRegular mb-2">
+            <Text className="text-[16px] font-PoppinsRegular mb-2">
               {label}
             </Text>
           )}
@@ -29,9 +29,9 @@ export const FormDateInput = ({ control, name, label }: DatePickerProps) => {
           <View className="flex relative">
             <Button
               onPress={() => setShowPicker(true)}
-              className="bg-white border border-gray-300 native:h-[45px] items-start"
+              className="bg-white border border-gray-300 native:h-[57px] items-start"
             >
-              <Text className="text-[12px]">
+              <Text className="text-[16px]">
                 {value ? new Date(value).toLocaleDateString() : "Select Date"}
               </Text>
             </Button>
@@ -53,12 +53,12 @@ export const FormDateInput = ({ control, name, label }: DatePickerProps) => {
             )}
             
             <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
-              <Calendar size={20} className="text-gray-700" />
+              <Calendar className="text-gray-700" />
             </View>
           </View>
           
           {error && (
-            <Text className="text-red-500 text-xs mt-1">
+            <Text className="text-red-500 text-sm mt-1">
               {error.message}
             </Text>
           )}

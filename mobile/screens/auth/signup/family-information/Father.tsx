@@ -5,8 +5,8 @@ import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import _ScreenLayout from "@/screens/_ScreenLayout";
-import SelectLayout from "@/components/ui/select-layout";
+import Layout from "../_layout";
+import SelectLayout from "@/components/ui/select/select-layout";
 import { Option } from "@rn-primitives/select";
 import RNDateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Calendar } from '@/lib/icons/Calendar';
@@ -44,7 +44,7 @@ export default function Mother (){
   };
 
   return (
-    <_ScreenLayout
+    <Layout
         header={'Father Information'}
         description={'Optional Fields'}
     >
@@ -93,6 +93,6 @@ export default function Mother (){
             <Text className="text-white font-PoppinsMedium text-[16px]">Next</Text>
           </Button>
         </View>
-    </_ScreenLayout>
+    </Layout>
   );
 };

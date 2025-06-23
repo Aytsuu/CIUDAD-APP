@@ -8,7 +8,8 @@ import 'react-native-reanimated';
 import { NAV_THEME } from '@/lib/constants';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '@/components/ui/toast';
+import 'global.css'
+
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -38,21 +39,17 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={LIGHT_THEME}>
-      <StatusBar backgroundColor="white" style="dark" />
-      <ToastProvider>
-        <QueryClientProvider client={queryClient}>
-          <Stack initialRouteName='(auth)'>
-            <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(health)" options={{ headerShown: false }} />
-            <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </QueryClientProvider>
-      </ToastProvider>
-      <PortalHost />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={LIGHT_THEME}>
+        <StatusBar backgroundColor="#FFF" style="dark" />
+        <Stack initialRouteName='(auth)'>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name='(health' options={{headerShown: false}} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <PortalHost />
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

@@ -1,245 +1,55 @@
 import React from "react";
-import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
+import Layout from "./_layout";
+import "react-native-get-random-values";
+import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { FaceDetectionCam, FaceDetectionCamHandle } from "./FaceDetectionCam";
 import RegisterCompletion from "./RegisterCompletion";
-import { FaceDetection, FaceDetectionCamHandle } from "./FaceDetection";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useFieldArray } from "react-hook-form";
-import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
 export default function TakeAPhoto() {
-  const {control} = useRegistrationFormContext();
-  const [photo, setPhoto] = React.useState<Record<string, any>>();
-  const [isDetecting, setIsDetecting] = React.useState(false);
-  const [detectionStatus, setDetectionStatus] = React.useState<string>("");
-  const [retryCount, setRetryCount] = React.useState(0);
-  const [timerActive, setTimerActive] = React.useState(false);
-  const [timeRemaining, setTimeRemaining] = React.useState(30);
+  const [isValid, setIsValid] = React.useState<boolean>(false);
+  const [photo, setPhoto] = React.useState<Uint8Array | null>(null);
   const cameraRef = React.useRef<FaceDetectionCamHandle>(null);
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const router = useRouter();
 
-  const { append } = useFieldArray({
-    control: control,
-    name: "photoSchema.list",
-  });
-
-  // Cleanup timer on unmount
   React.useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
+    const capture = async () => {
+      if(!cameraRef.current || !isValid) return;
 
-  const startTimer = React.useCallback(() => {
-    setTimerActive(true);
-    setTimeRemaining(30);
-    
-    timerRef.current = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          setTimerActive(false);
-          setRetryCount(0);
-          setDetectionStatus("You can try again now!");
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
-
-  const attemptFaceDetection = React.useCallback(async () => {
-    if (!cameraRef.current || isDetecting || timerActive) {
-      return;
+      const photo = await cameraRef.current.capturePhoto();
+      setPhoto(photo);
     }
 
-    setIsDetecting(true);
-    setDetectionStatus("Looking for your face...");
-
-    try {
-      const photoData = await cameraRef.current.capturePhoto();
-      
-      if (photoData) {
-        setPhoto(photoData);
-        append(photoData as any)
-        setRetryCount(0);
-        // Clear timer if active
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          setTimerActive(false);
-        }
-      } else {
-        const newRetryCount = retryCount + 1;
-        setRetryCount(newRetryCount);
-        
-        const maxAttempts = 3;
-        
-        if (newRetryCount >= maxAttempts) {
-          // Start waiting timer
-          setDetectionStatus("Unable to detect face after all attempts.");
-          startTimer();
-        } else {
-          setDetectionStatus(`Detection failed. Attempt ${newRetryCount}/3`);
-        }
-      }
-    } finally {
-      setIsDetecting(false);
-    }
-  }, [isDetecting, retryCount, timerActive, startTimer]);
-
-  const handleManualCapture = () => {
-    if (timerActive) return;
-    
-    // Reset retry count when starting a new round
-    if (retryCount >= 3) {
-      setRetryCount(0);
-    }
-    
-    attemptFaceDetection();
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const isButtonDisabled = isDetecting || timerActive;
-  const showTimerStatus = timerActive && timeRemaining > 0;
+    capture();
+  }, [isValid])
 
   return (
     <>
       {photo ? (
-        <RegisterCompletion
-          photo={photo.rf_url}
+        <RegisterCompletion 
+          photo={photo}
           setPhoto={setPhoto}
-          setDetectionStatus={setDetectionStatus}
         />
       ) : (
-        <SafeAreaView className="flex-1 bg-white">
-          <View className="flex-1">
-            {/* Header */}
-            <View className="px-6 py-4">
-              <Text className="text-2xl font-bold text-gray-800 text-center">
-                Take Your Photo
-              </Text>
-              <Text className="text-gray-600 text-center mt-2">
-                Position your face in the frame
-              </Text>
-            </View>
-
-            {/* Camera View */}
-            <View className="flex-1 relative">
-              <FaceDetection ref={cameraRef} />
-              
-              {/* Face Detection Overlay */}
-              <View className="absolute inset-0 pointer-events-none">
-                {/* Face Guide Frame */}
-                <View className="flex-1 items-center justify-center">
-                  <View className="w-64 h-80 border-2 border-white border-dashed rounded-3xl opacity-80">
-                    <View className="absolute -top-2 -left-2 w-6 h-6 border-l-4 border-t-4 border-blue-500 rounded-tl-lg" />
-                    <View className="absolute -top-2 -right-2 w-6 h-6 border-r-4 border-t-4 border-blue-500 rounded-tr-lg" />
-                    <View className="absolute -bottom-2 -left-2 w-6 h-6 border-l-4 border-b-4 border-blue-500 rounded-bl-lg" />
-                    <View className="absolute -bottom-2 -right-2 w-6 h-6 border-r-4 border-b-4 border-blue-500 rounded-br-lg" />
-                  </View>
-                </View>
-              </View>
-
-              {/* Status Overlay */}
-              {(isDetecting || detectionStatus || showTimerStatus) && (
-                <View className="absolute bottom-32 left-0 right-0 items-center px-6">
-                  <View className="bg-black bg-opacity-75 rounded-2xl px-6 py-4 max-w-sm">
-                    {isDetecting && (
-                      <View className="flex-row items-center justify-center mb-2">
-                        <ActivityIndicator size="small" color="white" />
-                        <Text className="text-white ml-2 font-medium">
-                          Detecting...
-                        </Text>
-                      </View>
-                    )}
-                    
-                    {showTimerStatus && (
-                      <View className="items-center mb-2">
-                        <Text className="text-yellow-400 font-bold text-lg">
-                          {formatTime(timeRemaining)}
-                        </Text>
-                        <Text className="text-white text-xs">
-                          Please wait before trying again
-                        </Text>
-                      </View>
-                    )}
-                    
-                    <Text className="text-white text-center text-sm">
-                      {detectionStatus}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-
-            {/* Bottom Controls */}
-            <View className="px-6 pb-8 pt-4 bg-white">
-              <View className="flex-row justify-center items-center space-x-4">
-                {/* Manual Capture Button */}
-                <TouchableOpacity
-                  onPress={handleManualCapture}
-                  disabled={isButtonDisabled}
-                  className={`flex-1 max-w-xs py-4 rounded-2xl ${
-                    isButtonDisabled 
-                      ? 'bg-gray-300' 
-                      : 'bg-blue-600 active:bg-blue-700'
-                  }`}
-                >
-                  <View className="flex-row items-center justify-center">
-                    {isDetecting ? (
-                      <ActivityIndicator size="small" color="gray" />
-                    ) : timerActive ? (
-                      <Text className="text-gray-600 font-semibold text-lg">
-                        Wait {formatTime(timeRemaining)}
-                      </Text>
-                    ) : (
-                      <Text className="text-white font-semibold text-lg">
-                        Capture Face
-                      </Text>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              {/* Attempt Counter */}
-              {(retryCount > 0) && !timerActive && (
-                <View className="mt-4 items-center">
-                  <Text className="text-gray-500 text-sm">
-                    Attempt {retryCount}/3
-                  </Text>
-                </View>
-              )}
-
-              {/* Tips */}
-              <View className="mt-6 px-4">
-                <Text className="text-gray-500 text-center text-sm font-medium mb-2">
-                  Tips for better detection:
+        <Layout header={""} description={""}>
+          <View className="flex-1 justify-between gap-7">
+            <View className="flex-1 items-center justify-center bg-lightBlue-2 rounded-md gap-3 p-4">
+              <FaceDetectionCam
+                ref={cameraRef}
+                setIsValid={setIsValid}
+                isValid={isValid}
+              />
+              {isValid ? (
+                <Text className="text-green-600 text-center">
+                  Valid face detected
                 </Text>
-                <View className="space-y-1">
-                  <Text className="text-gray-400 text-center text-xs">
-                    • Ensure good lighting on your face
-                  </Text>
-                  <Text className="text-gray-400 text-center text-xs">
-                    • Position your face within the frame
-                  </Text>
-                  <Text className="text-gray-400 text-center text-xs">
-                    • Keep your device steady
-                  </Text>
-                </View>
-              </View>
+              ) : (
+                <Text className="text-red-600 text-center">
+                  Please show your full face
+                </Text>
+              )}
             </View>
           </View>
-        </SafeAreaView>
+        </Layout>
       )}
     </>
   );

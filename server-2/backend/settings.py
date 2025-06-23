@@ -19,7 +19,6 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import sys, os
-from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +37,8 @@ ALLOWED_HOSTS = ['localhost', '*']
 ALLOWED_HOSTS = ['localhost', '*']
 
 
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -52,12 +53,26 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.healthProfiling',
     'apps.inventory',
+    'apps.maternal',
     'apps.vaccination',
+    # 'apps.profiling',
     'apps.administration',
+    # 'apps.account',
+    # 'apps.waste',
+    # 'apps.profiling',
     'apps.familyplanning',
     'apps.animalbites',
+    'apps.patientrecords',
+    # 'apps.gad'
+    'apps.account',
+    'apps.medicalConsultation',
+    'apps.medicine',
+    'apps.firstaid',
 
 ]
+
+print("INSTALLED_APPS:", INSTALLED_APPS)
+
 
 MIDDLEWARE = [
    'corsheaders.middleware.CorsMiddleware', 
@@ -106,7 +121,7 @@ DATABASES = {
 
     },
     'brgyDB': {
-
+        
     }
    
 }
@@ -155,6 +170,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
@@ -188,5 +204,5 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE","PATCH"]
 CORS_ALLOW_HEADERS = ["*"]

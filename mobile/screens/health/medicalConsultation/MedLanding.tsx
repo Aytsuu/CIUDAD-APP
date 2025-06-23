@@ -21,9 +21,9 @@ const MedConsultationLanding = () => {
         <Text className='font-light text-md mt-2 mb-5'>Manage your health, connect with care.</Text>
 
       </View>
-      <Button className='justify-center bg-[#263D67] items-center flex mt-4'>
+      <TouchableOpacity onPress={() => router.push("/medconsultation/consultation")} className='justify-center p-3 rounded-2xl bg-[#263D67] items-center flex mt-4'>
         <Text className='color-white font-PoppinsSemiBold text-lg'>BOOK APPOINTMENT</Text>
-      </Button>
+      </TouchableOpacity>
 
       
       </View>
