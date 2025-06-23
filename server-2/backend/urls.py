@@ -23,7 +23,7 @@ urlpatterns = [
     path('health-profiling/', include("apps.healthProfiling.urls")),
     path('vaccination/', include("apps.vaccination.urls")),
     path('administration/', include("apps.administration.urls")),
-    path('user/', include('apps.account.urls')),
+    # path('user/', include('apps.account.urls')),
     
 ]
 

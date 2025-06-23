@@ -5,7 +5,7 @@ import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 
 // Updating
-export const useEditPosition = () => {
+export const useEditPositionHealth = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
@@ -15,7 +15,7 @@ export const useEditPosition = () => {
     }) => updatePositionHealth(positionId, values),
     onSuccess: (updatedPosition) => {
       // Final update with actual server data
-      queryClient.setQueryData(['positions'], (old: any[] = []) => 
+      queryClient.setQueryData(['positionsHealth'], (old: any[] = []) => 
         old.map(position => 
           position.pos_id === updatedPosition.pos_id 
             ? updatedPosition 
@@ -32,7 +32,7 @@ export const useEditPosition = () => {
   })
 }
 
-export const useUpdatePermission = () => {
+export const useUpdatePermissionHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({assignmentId, option, permission} : {
@@ -40,17 +40,17 @@ export const useUpdatePermission = () => {
       option: string,
       permission: boolean
     }) => updatePermissionHealth(assignmentId, option, permission),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeaturesHealth']})
   })
 }
 
-export const useBatchPermissionUpdate = () => {
+export const useBatchPermissionUpdateHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({assignmentId, checked} : {
       assignmentId: string,
       checked: boolean
     }) => batchPermissionUpdateHealth(assignmentId, checked),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeaturesHealth']})
   })
 }

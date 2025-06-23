@@ -16,10 +16,10 @@ export const useResidents = () => {
   });
 };
 
-export const useStaffs = () => {
+export const useStaffs = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
-    queryKey: ["staffs"],
-    queryFn: getStaffs,
+    queryKey: ["staffs", page, pageSize, searchQuery],
+    queryFn: () => getStaffs(page, pageSize, searchQuery),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

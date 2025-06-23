@@ -7,12 +7,8 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { NAV_THEME } from '@/lib/constants';
 import { PortalHost } from '@rn-primitives/portal';
-<<<<<<< HEAD
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-=======
-import 'global.css'
-
->>>>>>> master
+import { ToastProvider } from '@/components/ui/toast';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -42,32 +38,21 @@ export default function RootLayout() {
   }
 
   return (
-<<<<<<< HEAD
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={LIGHT_THEME}>
-        <StatusBar backgroundColor="#FFF" style="dark" />
-        <Stack initialRouteName='(auth)'>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <PortalHost />
-      </ThemeProvider>
-    </QueryClientProvider>
-=======
     <ThemeProvider value={LIGHT_THEME}>
-      <StatusBar backgroundColor="#ECF8FF" style="dark" />
-
-
-      <Stack initialRouteName='(auth)'>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(health)" options={{ headerShown: false }} />
-        <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
-        <Stack.Screen name="+not-found" />
-      </Stack>
-
+      <StatusBar backgroundColor="white" style="dark" />
+      <ToastProvider>
+        <QueryClientProvider client={queryClient}>
+          <Stack initialRouteName='(complaint)'>
+            <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(health)" options={{ headerShown: false }} />
+            <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </QueryClientProvider>
+      </ToastProvider>
       <PortalHost />
     </ThemeProvider>
->>>>>>> master
   );
 }

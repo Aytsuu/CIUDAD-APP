@@ -32,10 +32,12 @@ class FamilyMinimalSerializer(serializers.ModelSerializer):
 class RequestRegistrationSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
     per_id = serializers.PrimaryKeyRelatedField(queryset=Personal.objects.all(), write_only=True, source='per')
+    files = RequestFileMinimalSerializer(many=True, read_only=True)
 
     class Meta:
         model = RequestRegistration
         fields = '__all__'
+
 
 class FCWithProfileDataSerializer(serializers.ModelSerializer):
     rp = ResidentProfileMinimalSerializer(read_only=True)

@@ -2,74 +2,259 @@ import React from "react";
 import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
-import {
-  useAddPersonal,
-  useAddResidentProfile,
-} from "../../queries/profilingAddQueries";
 import { useAuth } from "@/context/AuthContext";
 import { Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import { formatResidents } from "../../profilingFormats";
 import { capitalizeAllFields } from "@/helpers/capitalize";
+import {
+  useAddAddress,
+  useAddPerAddress,
+  useAddResidentAndPersonal,
+} from "../../queries/profilingAddQueries";
+import { 
+  useAddResidentAndPersonalHealth,
+  useAddAddressHealth,
+  useAddPerAddressHealth,
+} from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
+import {
+  useResidentsList,
+  useSitioList,
+} from "../../queries/profilingFetchQueries";
+import { 
+  useResidentsListHealth, 
+  useSitioListHealth 
+} from "../../../health-family-profiling/family-profling/queries/profilingFetchQueries";
+import { formatResidents, formatSitio } from "../../profilingFormats";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function ResidentCreateForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const { user } = useAuth();
-  const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('',params.origin);
-  const { mutateAsync: addPersonal } = useAddPersonal();
-  const { mutateAsync: addResidentProfile, isPending: isCreating } = useAddResidentProfile(params);
+  const { showLoading, hideLoading } = useLoading();
+  const {
+    form,
+    defaultValues,
+    handleSubmitSuccess,
+    handleSubmitError,
+    populateFields,
+    checkDefaultValues,
+  } = useResidentForm("", params.origin);
+  
+  const [addresses, setAddresses] = React.useState<any[]>([
+    {
+      add_province: "",
+      add_city: "",
+      add_barangay: "",
+      sitio: "",
+      add_external_sitio: "",
+      add_street: "",
+    },
+  ]);
+  
+  // Main database mutations
+  const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
+  const { mutateAsync: addAddress } = useAddAddress();
+  const { mutateAsync: addPersonalAddress } = useAddPerAddress();
+  
+  // Health database mutations
+  const { mutateAsync: addResidentAndPersonalHealth } = useAddResidentAndPersonalHealth();
+  const { mutateAsync: addAddressHealth } = useAddAddressHealth();
+  const { mutateAsync: addPersonalAddressHealth } = useAddPerAddressHealth();
+  
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
-  const formattedResidents = React.useMemo(() => {
-    return formatResidents(params);
-  }, [params.residents]);
+  const [validAddresses, setValidAddresses] = React.useState<boolean[]>([]);
+  
+  // Data fetching
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const { data: residentsListHealth, isLoading: isLoadingResidentsHealth } = useResidentsListHealth();
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+  const { data: sitioListHealth, isLoading: isLoadingSitioHealth } = useSitioListHealth();
+
+  // Formatted data
+  const formattedSitio = React.useMemo(
+    () => formatSitio(sitioList) || [],
+    [sitioList]
+  );
+  const formattedSitioHealth = React.useMemo(
+    () => formatSitio(sitioListHealth) || [],
+    [sitioListHealth]
+  );
+  const formattedResidents = React.useMemo(
+    () => formatResidents(residentsList),
+    [residentsList]
+  );
+  const formattedResidentsHealth = React.useMemo(
+    () => formatResidents(residentsListHealth),
+    [residentsListHealth]
+  );
 
   // ================== SIDE EFFECTS ==================
-    React.useEffect(() => {
-      // Change submit button state based on form values
-      if(!checkDefaultValues(form.getValues(), defaultValues)) {
-        setIsAllowSubmit(true);
-      } else {
-        setIsAllowSubmit(false);
-      }
-    }, [form.watch()])
+  React.useEffect(() => {
+    if (isLoadingResidents || isLoadingSitio || isLoadingResidentsHealth || isLoadingSitioHealth) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoadingResidents, isLoadingSitio, isLoadingResidentsHealth, isLoadingSitioHealth, showLoading, hideLoading]);
+
+  React.useEffect(() => {
+    const subscription = form.watch((value) => {
+      setIsAllowSubmit(!checkDefaultValues(value, defaultValues));
+    });
+    return () => subscription.unsubscribe();
+  }, [form, checkDefaultValues, defaultValues]);
 
   // ==================== HANDLERS ====================
-  const handleComboboxChange = React.useCallback(() => { 
-    const data = params.residents.find(
+  const validateAddresses = React.useCallback(
+    (addresses: any[]) => {
+      const validity = addresses.map(
+        (address: any) =>
+          address.add_province !== "" &&
+          address.add_city !== "" &&
+          address.add_barangay !== "" &&
+          (address.add_barangay === "San Roque"
+            ? address.sitio !== ""
+            : address.add_external_sitio !== "")
+      );
+
+      setValidAddresses(validity);
+      const isValidAll = validity.every((valid: any) => valid === true);
+      return isValidAll;
+    },
+    [setValidAddresses]
+  );
+
+  const handleComboboxChange = React.useCallback(() => {
+    const data = residentsList?.find(
+      (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
+    );
+    const healthData = residentsListHealth?.find(
       (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
     );
 
-    populateFields(data?.per);
-  }, [form.watch("per_id")]);
+    populateFields(healthData?.personal_info);
+    populateFields(data?.personal_info);
+  }, [form, residentsList, residentsListHealth, populateFields]);
 
   const submit = async () => {
     setIsSubmitting(true);
-    const isValid = await form.trigger();
-    if (!isValid) {
+
+    if (!(await form.trigger())) {
       setIsSubmitting(false);
       handleSubmitError("Please fill out all required fields");
       return;
     }
 
-    const personalInfo = capitalizeAllFields(form.getValues());
-    const personalId = await addPersonal(personalInfo);
-    const resident = await addResidentProfile({
-      personalId,
-      staffId: user?.staff.staff_id,
-    });
-
-    if (!isCreating) {
-      handleSubmitSuccess(
-        "New record created successfully",
-        `/account/create`,
-        {params: {residentId: resident.rp_id}}
-      );
-
+    if (!validateAddresses(addresses)) {
       setIsSubmitting(false);
-      form.reset(defaultValues);
+      handleSubmitError("Please fill out all required fields");
+      return;
+    }
+
+    try {
+      const personalInfo = capitalizeAllFields(form.getValues());
+      
+      // First insertion - Main database
+      addResidentAndPersonal(
+        {
+          personalInfo: personalInfo,
+          staffId: user?.staff.staff_id,
+        },
+        {
+          onSuccess: (resident) => {
+            // Second insertion - Health database
+            addResidentAndPersonalHealth(
+              {
+                personalInfo: personalInfo,
+                staffId: user?.staff.staff_id,
+              },
+              {
+                onSuccess: (healthResident) => {
+                  // Third - Insert addresses to main database
+                  addAddress(addresses, {
+                    onSuccess: (new_addresses) => {
+                      // Fourth - Insert addresses to health database
+                      addAddressHealth(addresses, {
+                        onSuccess: (new_addresses_health) => {
+                          // Fifth - Link addresses to resident in main database
+                          const per_address = new_addresses?.map((address: any) => ({
+                            add: address.add_id,
+                            per: resident.per.per_id,
+                          }));
+
+                          addPersonalAddress(per_address, {
+                            onSuccess: () => {
+                              // Sixth - Link addresses to resident in health database
+                              const per_address_health = new_addresses_health?.map((address: any) => ({
+                                add: address.add_id,
+                                per: healthResident.per.per_id,
+                              }));
+
+                              addPersonalAddressHealth(per_address_health, {
+                                onSuccess: () => {
+                                  handleSubmitSuccess(
+                                    "New record created successfully in both main and health databases",
+                                    `/resident/additional-registration`,
+                                    {
+                                      params: {
+                                        residentId: resident.rp_id,
+                                      },
+                                    }
+                                  );
+
+                                  setIsSubmitting(false);
+                                  form.reset(defaultValues);
+                                },
+                                onError: (error) => {
+                                  setIsSubmitting(false);
+                                  handleSubmitError("Failed to link address to resident in health database. Please try again.");
+                                  console.error("Health address linking error:", error);
+                                }
+                              });
+                            },
+                            onError: (error) => {
+                              setIsSubmitting(false);
+                              handleSubmitError("Failed to link address to resident in main database. Please try again.");
+                              console.error("Main address linking error:", error);
+                            }
+                          });
+                        },
+                        onError: (error) => {
+                          setIsSubmitting(false);
+                          handleSubmitError("Failed to create address in health database. Please try again.");
+                          console.error("Health address creation error:", error);
+                        }
+                      });
+                    },
+                    onError: (error) => {
+                      setIsSubmitting(false);
+                      handleSubmitError("Failed to create address in main database. Please try again.");
+                      console.error("Main address creation error:", error);
+                    }
+                  });
+                },
+                onError: (error) => {
+                  setIsSubmitting(false);
+                  handleSubmitError("Failed to create health database record. Please try again.");
+                  console.error("Health database insertion error:", error);
+                }
+              }
+            );
+          },
+          onError: (error) => {
+            setIsSubmitting(false);
+            handleSubmitError("Failed to create main database record. Please try again.");
+            console.error("Main database insertion error:", error);
+          }
+        }
+      );
+    } catch (err) {
+      setIsSubmitting(false);
+      handleSubmitError("An unexpected error occurred. Please try again.");
+      console.error("Submit error:", err);
     }
   };
 
@@ -82,7 +267,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
           <p className="text-xs text-black/50">Fill out all necessary fields</p>
         </div>
         <Form {...form}>
-        <form
+          <form
             onSubmit={(e) => {
               e.preventDefault();
               submit();
@@ -90,17 +275,22 @@ export default function ResidentCreateForm({ params }: { params: any }) {
             className="flex flex-col gap-4"
           >
             <PersonalInfoForm
-              formattedResidents={formattedResidents} // For combobox
+              formattedSitio={formattedSitio}
+              formattedResidents={formattedResidents}
+              addresses={addresses}
+              validAddresses={validAddresses}
               form={form}
               formType={Type.Create}
               isSubmitting={isSubmitting}
               submit={submit}
+              origin={params.origin ? params.origin : ""}
               isReadOnly={false}
               isAllowSubmit={isAllowSubmit}
-              isAssignmentOpen={isAssignmentOpen} 
-              setIsAssignmentOpen={setIsAssignmentOpen}
-              origin={params.origin}
+              setAddresses={setAddresses}
+              setValidAddresses={setValidAddresses}
               onComboboxChange={handleComboboxChange}
+              isAssignmentOpen={isAssignmentOpen}
+              setIsAssignmentOpen={setIsAssignmentOpen}
             />
           </form>
         </Form>

@@ -1,7 +1,7 @@
 import React from "react";
 import AdministrationPositions from "./AdministrationPositions";
 import FeatureSelection from "./FeatureSelection";
-import SettingPermissions from "./SettingPermissions";
+// import SettingPermissions from "./SettingPermissions";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -111,7 +111,7 @@ export default function RoleLayout() {
         </div>
 
         {/* Permissions Section */}
-        <div className="w-full border-l flex flex-col gap-4">
+        {/* <div className="w-full border-l flex flex-col gap-4">
           <div className="w-full px-5 pt-5 text-darkBlue1">
             <Label>Set feature permissions</Label>
           </div>
@@ -125,13 +125,13 @@ export default function RoleLayout() {
                 No feature selected
               </Label>
             ) : (
-              <SettingPermissions
-                selectedPosition={selectedPosition}
-                assignedFeatures={assignedFeatures}
-              />
+              // <SettingPermissions
+              //   selectedPosition={selectedPosition}
+              //   assignedFeatures={assignedFeatures}
+              // />
             )}
           </ScrollArea>
-        </div>
+        </div> */}
       </Card>
     </LayoutWithBack>
   );

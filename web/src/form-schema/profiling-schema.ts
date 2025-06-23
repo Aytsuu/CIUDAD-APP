@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const demographicInfoSchema = z.object({
-  id: z.string(), // For residents living independently
+  id: z.string().optional(), 
   building: z.string().min(1, "Building is required"),
   householdNo: z.string(),
   indigenous: z.string().min(1, "Indigenous is required"),
@@ -134,6 +134,16 @@ export const businessFormSchema = z.object({
   bus_respondentMname: z.string()
     .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
     .optional(),
+  bus_respondentContact: z.string()
+    .min(1, "Contact is required")
+    .regex(
+      /^09\d{9}$/,
+      "Must be a valid mobile number (e.g., 09171234567)"
+    )
+    .refine((val) => val.length === 11, {
+      message: "Must be 11 digits (e.g., 09171234567)",
+    }),
+  bus_respondentAddress: z.string().min(1, 'Address is required'),
   bus_respondentSex: z.string().min(1, 'Sex is required'),
   bus_respondentDob: z.string().min(1, 'Date of Birth is required'),
   bus_name: z.string().min(1, 'Business Name is required'),

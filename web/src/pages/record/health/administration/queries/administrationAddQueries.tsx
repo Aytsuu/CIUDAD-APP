@@ -5,14 +5,14 @@ import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 
 // Adding
-export const useAddPosition = () => {
+export const useAddPositionHealth = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ data, staffId }: { data: any; staffId: string }) =>
       addPositionHealth(data, staffId),
     onSuccess: (newPosition) => {
-      queryClient.setQueryData(["positions"], (old: any[] = []) => [
+      queryClient.setQueryData(["positionsHealth"], (old: any[] = []) => [
         ...old,
         newPosition,
       ]);
@@ -27,7 +27,7 @@ export const useAddPosition = () => {
   });
 };
 
-export const useAssignFeature = () => {
+export const useAssignFeatureHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({positionId, featureId, staffId} : {
@@ -35,15 +35,15 @@ export const useAssignFeature = () => {
       featureId: string;
       staffId: string;
     }) => assignFeatureHealth(positionId, featureId, staffId),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeaturesHealth']})
   })
 }
 
-export const useSetPermission = () => {
+export const useSetPermissionHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({assi_id} : {assi_id: string}) => setPermissionHealth(assi_id),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeaturesHealth']})
   })
 }
 
@@ -60,12 +60,12 @@ export const useAddStaffHealth = () => {
 
       if(!newData) return;
       
-      queryClient.setQueryData(["staffs"], (old: any[] = []) => [ 
+      queryClient.setQueryData(["staffsHealth"], (old: any[] = []) => [ 
         ...old,
         newData,
       ]);
 
-      queryClient.invalidateQueries({queryKey: ['staffs']})
+      queryClient.invalidateQueries({queryKey: ['staffsHealth']})
 
       // Deliver feedback
       toast("Record added successfully", {

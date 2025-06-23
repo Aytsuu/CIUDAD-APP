@@ -1,27 +1,12 @@
-import { z } from "zod"
+import { z } from "zod";
 
-export const passwordFormat = z.string()
-  .min(8, { message: "Password must be at least 8 characters long" })
-  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
-  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
-  .regex(/[0-9]/, { message: "Password must contain at least one number" })
+export const SignInSchema = z.object({
+  usernameOrEmail: z.string().min(1, { message: "" }),
+  password: z.string().min(1, { message: "" }),
+});
 
-export const accountFormSchema = z.object({
-  username: z.string()
-    .min(1, "Username is required")
-    .min(6, "Username must be atleast 6 letters"),
-  email: z.string()
-    .email({ message: "Invalid email address" }),
-  password: passwordFormat,
-  confirmPassword: z.string()
-    .min(1, "Confirm Password is required")
-})
-.refine((data) => data.password === data.confirmPassword, {
-  message: "Password does not match",
-  path: ["confirmPassowrd"]
-})
 
-export const accountUpdateSchema = z.object({
+export const AccountUpdateSchema = z.object({
   email: z
     .string()
     .email({ message: "Invalid email address" })
@@ -34,7 +19,7 @@ export const accountUpdateSchema = z.object({
     .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
     .regex(/[0-9]/, { message: "Password must contain at least one number" })
     .optional(),
-
+  
   profile_image: z
     .instanceof(File, { message: "Please upload a file" })
     .refine(
@@ -50,3 +35,36 @@ export const accountUpdateSchema = z.object({
   message: "Either password or profile image must be provided",
   path: ["form"]
 });
+
+export const accountFormSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
+});
+
+export const passwordFormSchema = z
+  .object({
+    old_password: z
+      .string()
+      .min(1, { message: "Current password is required" }),
+    new_password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" })
+      .regex(/[A-Z]/, {
+        message: "Password must contain at least one uppercase letter",
+      })
+      .regex(/[a-z]/, {
+        message: "Password must contain at least one lowercase letter",
+      })
+      .regex(/[0-9]/, { message: "Password must contain at least one number" })
+      .regex(/[^A-Za-z0-9]/, {
+        message: "Password must contain at least one special character",
+      }),
+    confirm_password: z
+      .string()
+      .min(1, { message: "Please confirm your password" }),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });

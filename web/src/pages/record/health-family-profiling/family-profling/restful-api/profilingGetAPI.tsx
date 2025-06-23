@@ -19,7 +19,7 @@ export const getResidentsListHealth = async () => {
   }
 };
 
-export const getResidentsWithFamExclusion = async (familyId: string) => {
+export const getResidentsWithFamExclusionHealth = async (familyId: string) => {
   try {
     const res = await api2.get(`health-profiling/resident/exclude/fam/${familyId}/`);
     return res.data;
@@ -28,7 +28,7 @@ export const getResidentsWithFamExclusion = async (familyId: string) => {
   }
 }
 
-export const getResidentsFamSpecificList = async (familyId: string) => {
+export const getResidentsFamSpecificListHealth = async (familyId: string) => {
   try {
     const res = await api2.get(`health-profiling/resident/fam/${familyId}/list/`);
     return res.data;
@@ -63,7 +63,7 @@ export const getPersonalInfo = async (residentId: string) => {
 }
 
 // ==================== FETCH FAMILY ==================== (Status: Optimizing....)
-export const getFamilies = async () => {
+export const getFamiliesHealth = async () => {
   try {
     const res = await api2.get("health-profiling/family/");
     return res.data;
@@ -72,7 +72,7 @@ export const getFamilies = async () => {
   }
 };
 
-export const getFamiliesTable = async (page: number, pageSize: number, searchQuery: string) => {
+export const getFamiliesTableHealth = async (page: number, pageSize: number, searchQuery: string) => {
   try {
     const res = await api2.get("health-profiling/family/list/table/", {
       params: {
@@ -88,7 +88,7 @@ export const getFamiliesTable = async (page: number, pageSize: number, searchQue
   }
 }
 
-export const getFamilyData = async (familyId: string) => {
+export const getFamilyDataHealth = async (familyId: string) => {
   try {
     const res = await api2.get(`health-profiling/family/${familyId}/data/`)
     return res.data
@@ -106,7 +106,7 @@ export const getFamilyID = async (residentId: string) => {
   }
 }
 
-export const getFamilyMembers = async (familyId: string) => {
+export const getFamilyMembersHealth = async (familyId: string) => {
   if(!familyId) return;
 
   try { 
@@ -117,7 +117,7 @@ export const getFamilyMembers = async (familyId: string) => {
   }
 }
 
-export const getFamFilteredByHouse = async (householdId: string) => {
+export const getFamFilteredByHouseHealth = async (householdId: string) => {
   try {
     const res = await api2.get(`health-profiling/family/list/filter/${householdId}/`)
     return res.data
@@ -127,7 +127,7 @@ export const getFamFilteredByHouse = async (householdId: string) => {
 }
 
 // Fetch family composition
-export const getFamilyComposition = async () => {
+export const getFamilyCompositionHealth = async () => {
   try {
     const res = await api2.get("health-profiling/family-composition/");
     return res.data;
@@ -137,7 +137,7 @@ export const getFamilyComposition = async () => {
 }
 
 // ==================== FETCH HOUSEHOLD ==================== (Status: Optimizing....)
-export const getHouseholdTable = async (page: number, pageSize: number, searchQuery: string) => {
+export const getHouseholdTableHealth = async (page: number, pageSize: number, searchQuery: string) => {
   try {
     const res = await api2.get("health-profiling/household/list/table/", {
       params: {
@@ -172,7 +172,7 @@ export const getHouseholdDataHealth = async (householdId: string) => {
 
 
 // ==================== FETCH SITIO ==================== (Status: Optimizing....)
-export const getSitioList = async () => {
+export const getSitioListHealth = async () => {
   try {
     const res = await api2.get("health-profiling/sitio/list/");
     return res.data;

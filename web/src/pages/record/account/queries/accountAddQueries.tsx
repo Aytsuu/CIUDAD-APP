@@ -48,9 +48,16 @@ export const useAddAccount = () => {
     onSuccess: (data) => {
       console.log('Account creation successful:', data);
       queryClient.invalidateQueries({queryKey: ["residents"]});
-      toast("Account created successfully", {
+      toast.success("Account created successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
       });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  })
+}
+
     },
     onError: (error: any) => {
       console.error('Account creation failed:', error);

@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Save, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
+
 import CardLayout from "@/components/ui/card/card-layout";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -40,28 +40,28 @@ export default function CreatePatientRecord() {
       form.setValue('houseNo', value);
   }, [form]);
 
-  const submit = async () => {
-    setIsSubmitting(true);
-    try {
-      const res = await personal(form.getValues());
+  // const submit = async () => {
+  //   setIsSubmitting(true);
+  //   try {
+  //     const res = await personal(form.getValues());
 
-      if (res) {
-        toast({
-          title: "Success",
-          description: "Patient record has been created successfully",
-        });
-        form.reset(defaultValues);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create patient record. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  //     if (res) {
+  //       toast({
+  //         title: "Success",
+  //         description: "Patient record has been created successfully",
+  //       });
+  //       form.reset(defaultValues);
+  //     }
+  //   } catch (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to create patient record. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   return (
     <div className="w-full">
@@ -112,7 +112,7 @@ export default function CreatePatientRecord() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    submit();
+                    // submit();
                   }}
                   className="space-y-6"
                 >

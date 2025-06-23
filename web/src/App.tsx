@@ -44,20 +44,15 @@ import { AnimatePresence } from "framer-motion";
 
 import { main_router } from "./routers/main-router";
 import { landing_router } from "./routers/landing-router";
-import { settings_router } from "./routers/settings";
 import { user_account } from "./routers/profile-router";
 import { LoadingProvider } from "./context/LoadingContext";
 import { LinearLoader } from "./components/ui/linear-loader";
 
-// Simple not found component
-function NotFound() {
-  return <div>Page not found</div>;
-}
+import { NotFound } from "./not-found";
 
 const router = createBrowserRouter([
   ...main_router,         
   ...landing_router,
-  ...settings_router,
   ...user_account,
   { path: "*", element: <NotFound /> },
 ]);

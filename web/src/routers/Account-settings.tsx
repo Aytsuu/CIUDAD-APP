@@ -1,4 +1,4 @@
-import AccountSettings from "@/pages/viewprofile/profilesettings"
+import AccountSettings from "@/pages/acc-profile/user-account"
 
 export const viewprofile_router = [
     {

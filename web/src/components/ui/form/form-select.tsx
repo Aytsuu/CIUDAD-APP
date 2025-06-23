@@ -8,6 +8,7 @@ import {
   } from "@/components/ui/form/form";
 import { SelectLayout } from "../select/select-layout";
 import { Input } from "@/components/ui/input";
+import { capitalize } from "@/helpers/capitalize";
 
 // Reusable Form Select Component
 export const FormSelect = React.memo(({ control, name, label, options, readOnly }: 
@@ -29,7 +30,7 @@ export const FormSelect = React.memo(({ control, name, label, options, readOnly 
                 onChange={field.onChange}
               />
             ) : (
-              <Input {...field} readOnly />
+              <Input {...field} value={capitalize(field.value) || ""} readOnly />
             )}
           </FormControl>
           <FormMessage />

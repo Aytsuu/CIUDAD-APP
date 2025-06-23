@@ -7,7 +7,7 @@ export const useDeletePosition = () => {
   return useMutation({
     mutationFn: deletePositionHealth,
     onSuccess: (_, positionId) => {
-      queryClient.setQueryData(["positions"], (old: any[] = []) =>
+      queryClient.setQueryData(["positionsHealth"], (old: any[] = []) =>
         old.filter((position) => position.pos_id !== positionId)
       );
     },
@@ -21,6 +21,6 @@ export const useDeleteAssignedFeature = () => {
       positionId: string,
       featureId: string
     }) => deleteAssignedFeatureHealth(positionId, featureId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allAssignedFeatures']})
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allAssignedFeaturesHealth']})
   })
 }

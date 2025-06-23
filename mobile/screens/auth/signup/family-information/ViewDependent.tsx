@@ -5,8 +5,8 @@ import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Layout from "../_layout";
-import SelectLayout from "@/components/ui/select/select-layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
+import SelectLayout from "@/components/ui/select-layout";
 import RNDateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Calendar } from '@/lib/icons/Calendar';
 import { Pen } from '@/lib/icons/Pen';
@@ -55,7 +55,7 @@ export default function ViewDependent() {
 
 
   return (
-    <Layout
+    <_ScreenLayout
       header={'Dependent'}
       description={''}
     >
@@ -149,6 +149,6 @@ export default function ViewDependent() {
             </View>
         }
       </View>
-    </Layout>
+    </_ScreenLayout>
   );
 };
