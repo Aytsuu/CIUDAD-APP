@@ -34,13 +34,13 @@ export const NotificationProvider = ({children}: {children: React.ReactNode}) =>
     const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
     const fetchNotifications = async () => {
-        if (!user?.id) return;
+        if (!user?.supabase_id) return;
         
         // First try Supabase
         const { data: supabaseData, error } = await supabase
             .from('notification')
             .select('*')
-            .eq('recipient_id', user.id)
+            .eq('recipient_id', user.supabase_id)
             .order('created_at', { ascending: false });
             
         if (error || !supabaseData?.length) {
@@ -53,44 +53,44 @@ export const NotificationProvider = ({children}: {children: React.ReactNode}) =>
         }
     };
 
-    useEffect(() => {
-        if (!user?.id) return;
+    // useEffect(() => {
+    //     if (!user?.id) return;
 
-        fetchNotifications();
+    //     fetchNotifications();
 
-        // Setup realtime listener
-        const newChannel = supabase
-            .channel(`notification_${user.id}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'notification',
-                    filter: `recipient_id=eq.${user.id}`,
-                },
-                (payload) => {
-                    if (payload.eventType === 'INSERT') {
-                        setNotifications(prev => [payload.new as Notification, ...prev]);
-                        // Play sound for new notifications
-                        new Audio('/sounds/notification.mp3').play();
-                    } else if (payload.eventType === 'UPDATE') {
-                        setNotifications(prev => 
-                            prev.map(n => n.id === payload.new.id ? payload.new as Notification : n)
-                        );
-                    } else if (payload.eventType === 'DELETE') {
-                        setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
-                    }
-                }
-            )
-            .subscribe();
+    //     // Setup realtime listener
+    //     const newChannel = supabase
+    //         .channel(`notification_${user.id}`)
+    //         .on(
+    //             'postgres_changes',
+    //             {
+    //                 event: '*',
+    //                 schema: 'public',
+    //                 table: 'notification',
+    //                 filter: `recipient_id=eq.${user.id}`,
+    //             },
+    //             (payload) => {
+    //                 if (payload.eventType === 'INSERT') {
+    //                     setNotifications(prev => [payload.new as Notification, ...prev]);
+    //                     // Play sound for new notifications
+    //                     new Audio('/sounds/notification.mp3').play();
+    //                 } else if (payload.eventType === 'UPDATE') {
+    //                     setNotifications(prev => 
+    //                         prev.map(n => n.id === payload.new.id ? payload.new as Notification : n)
+    //                     );
+    //                 } else if (payload.eventType === 'DELETE') {
+    //                     setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
+    //                 }
+    //             }
+    //         )
+    //         .subscribe();
 
-        setChannel(newChannel);
+    //     setChannel(newChannel);
 
-        return () => {
-            channel?.unsubscribe();
-        };
-    }, [user?.id]);
+    //     return () => {
+    //         channel?.unsubscribe();
+    //     };
+    // }, [user?.id]);
 
     const markAsRead = async (id: string) => {
         // Optimistic update

@@ -188,7 +188,6 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://192.168.1.6:8000",
     config('FRONTEND_URL', default='http://localhost:3000'),
 ]
 ALLOWED_HOSTS = ['*'] 

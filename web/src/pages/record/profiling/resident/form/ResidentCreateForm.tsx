@@ -125,7 +125,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       const personalInfo = capitalizeAllFields(form.getValues());
       
       // // Safely get staff_id with proper type checking
-      const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
+      const staffId = user?.staff?.staff_id;
       
       if (!staffId) {
         throw new Error("Staff information not available");

@@ -69,13 +69,13 @@ export default function AccountProfile(): JSX.Element {
   const profilePopOverHeaderDesc = (
     <div className="flex items-center gap-x-2">
       <img
-        src={user?.djangoUser?.profile_image || sanRoqueLogo}
+        src={user?.profile_image || sanRoqueLogo}
         alt="Profile Picture"
         className="h-10 w-10 rounded-full flex-shrink-0 object-cover"
       />
       <div className="flex flex-col max-w-[180px]">
-        <p className="font-medium truncate">{user?.djangoUser?.username}</p>
-        <p className="text-sm text-muted-foreground truncate">{user?.djangoUser?.email}</p>
+        <p className="font-medium truncate">{user?.username}</p>
+        <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
       </div>
     </div>
   );
