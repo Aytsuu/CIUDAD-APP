@@ -2,10 +2,11 @@ from rest_framework import serializers
 from apps.account.models import Account
 from apps.administration.models import *
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
-from apps.administration.serializers.staff_serializers import StaffFullSerializer
+from apps.administration.serializers.staff_serializers import StaffFullSerializer, StaffBaseSerializer
+from apps.administration.models import Staff
 
 class UserAccountSerializer(serializers.ModelSerializer):
-    resident_profile = ResidentProfileFullSerializer(source='rp', read_only=True)
+    resident = ResidentProfileFullSerializer(source='rp', read_only=True)
     staff = serializers.SerializerMethodField()
 
     class Meta:
@@ -16,7 +17,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
             'username',
             'email',
             'profile_image',
-            'resident_profile',
+            'resident',
             'staff'
         ]
         read_only_fields = ['acc_id', 'supabase_id']
@@ -25,13 +26,15 @@ class UserAccountSerializer(serializers.ModelSerializer):
         """
         Get staff profile information through the resident profile.
         """
+
         # Check if account has a resident profile
-        if hasattr(obj, 'rp') or obj.rp:     
+        if hasattr(obj, 'rp') or obj.rp:
             # Check if resident profile has staff relationship
             is_staff = Staff.objects.filter(staff_id=obj.rp.rp_id).first()
+
             if is_staff:
-                return is_staff
-        return None
+                return StaffFullSerializer(is_staff).data
+        
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()
     supabase_id = serializers.CharField()

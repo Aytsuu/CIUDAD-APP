@@ -9,61 +9,7 @@ import {
 import { Session } from "@supabase/supabase-js";
 import supabase from "@/supabase/supabase";
 import { api } from "@/api/api";
-
-// Constants
-const STAFF_TYPES = {
-  BARANGAY: 'Barangay Staff',
-  HEALTH: 'Health Staff'
-} as const;
-
-// Interfaces
-interface Assignment {
-  id: string;
-  [key: string]: any; // Replace with actual assignment fields
-}
-
-interface StaffProfile {
-  staff_id: string;
-  staff_type: typeof STAFF_TYPES[keyof typeof STAFF_TYPES] | string;
-  assignments: Assignment[];
-}
-
-interface ResidentProfile {
-  rp_id: string;
-  staff?: StaffProfile;
-}
-
-interface DjangoUser {
-  acc_id: number;
-  supabase_id: string;
-  username: string;
-  email: string;
-  profile_image?: string | null;
-  resident_profile?: ResidentProfile;
-}
-
-interface User {
-  id: string;
-  email: string;
-  username?: string;
-  profile_image?: string | null;
-  djangoUser: DjangoUser | null;
-}
-
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  signUp: (email: string, password: string, username?: string) => Promise<{ requiresConfirmation?: boolean }>;
-  signInWithGoogle: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-  clearError: () => void;
-  isBarangayStaff: () => boolean;
-  isHealthStaff: () => boolean;
-}
+import { AuthContextType, User} from "./auth-types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -75,14 +21,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearError = () => setError(null);
 
-  const isBarangayStaff = () => {
-    return user?.djangoUser?.resident_profile?.staff?.staff_type === STAFF_TYPES.BARANGAY;
-  };
-
-  const isHealthStaff = () => {
-    return user?.djangoUser?.resident_profile?.staff?.staff_type === STAFF_TYPES.HEALTH;
-  };
-
   const handleError = (error: unknown, defaultMessage: string) => {
     const message = error instanceof Error ? error.message : 
                   (error as any)?.response?.data?.error || defaultMessage;
@@ -90,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     throw new Error(message);
   };
 
-  const syncWithDjango = async (session: Session | null): Promise<DjangoUser | null> => {
+  const syncWithDjango = async (session: Session | null): Promise<User | null> => {
     if (!session?.user) return null;
     
     try {
@@ -99,9 +37,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: session.user.email,
         username: session.user.user_metadata?.username || session.user.email?.split('@')[0],
         profile_image: session.user.user_metadata?.avatar_url || 
-                     'https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg'
+                     'https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg',
       });
-      
       return response.data;
     } catch (error) {
       console.error('Django sync error:', error);
@@ -113,13 +50,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       if (session?.user) {
-        const djangoUser = await syncWithDjango(session);
+        const user = await syncWithDjango(session);
         setUser({
-          id: session.user.id,
+          supabase_id: session.user.id,
           email: session.user.email || "",
-          username: djangoUser?.username || session.user.user_metadata?.username,
-          profile_image: djangoUser?.profile_image || session.user.user_metadata?.avatar_url,
-          djangoUser
+          username: user?.username || session.user.user_metadata?.username,
+          profile_image: user?.profile_image || session.user.user_metadata?.avatar_url,
         });
         setIsAuthenticated(true);
       } else {
@@ -170,15 +106,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       if (!data?.session) throw new Error("No session returned");
 
-      const djangoUser = await syncWithDjango(data.session);
-      
-      const staffType = djangoUser?.resident_profile?.staff?.staff_type;
-      if (!staffType || !Object.values(STAFF_TYPES).includes(staffType as any)) {
+      const user = await syncWithDjango(data.session);
+      if (!user?.staff){
         await supabase.auth.signOut();
         throw new Error("Only authorized staff can access this system");
       }
 
       await handleSessionChange(data.session);
+      
     } catch (error) {
       handleError(error, "Login failed");
     } finally {
@@ -287,8 +222,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signInWithGoogle,
         refreshSession,
         clearError,
-        isBarangayStaff,
-        isHealthStaff,
       }}
     >
       {children}

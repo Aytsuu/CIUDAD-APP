@@ -58,7 +58,7 @@ export default function AssignPosition({
       addStaff({
         residentId: residentId, 
         positionId: positionId,
-        staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
+        staffId: user?.staff?.staff_id || ""
       }, {
         onSuccess: () => {
           deliverFeedback()
@@ -73,13 +73,13 @@ export default function AssignPosition({
       
       addResidentAndPersonal({
         personalInfo: personalInfo,
-        staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
+        staffId: user?.staff?.staff_id || ""
       }, {
         onSuccess: (resident) => {
           addStaff({
             residentId: resident.rp_id, 
             positionId: positionId,
-            staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
+            staffId: user?.staff?.staff_id || ""
           }, {
             onSuccess: () => deliverFeedback()
           });
