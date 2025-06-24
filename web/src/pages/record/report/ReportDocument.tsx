@@ -11,7 +11,6 @@ import { useLocation } from "react-router"
 import { getDateTimeFormat } from "@/helpers/dateFormatter"
 import { useAddARFile, useAddWARFile } from "./queries/reportAdd"
 import { useAuth } from "@/context/AuthContext"
-import { a } from "node_modules/framer-motion/dist/types.d-B50aGbjN"
 
 export default function ReportDocument() {
   const { user } = useAuth();
@@ -69,7 +68,7 @@ export default function ReportDocument() {
           'arf_path': storagePath,
           'arf_url': publicUrl,
           'ar': data.id,
-          'staff': user?.staff.staff_id
+          'staff': user?.djangoUser?.resident_profile?.staff?.staff_id
         }], {
           onSuccess: () => {
             
@@ -83,7 +82,7 @@ export default function ReportDocument() {
           'warf_path': storagePath,
           'warf_url': publicUrl,
           'war': data.id,
-          'staff': user?.staff.staff_id
+          'staff': user?.djangoUser?.resident_profile?.staff?.staff_id
         }], {
           onSuccess: () => {
 

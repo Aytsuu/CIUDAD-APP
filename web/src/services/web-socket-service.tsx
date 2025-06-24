@@ -9,6 +9,9 @@ export type Notification = {
 export type WebSocketStatus = "connecting" | "connected" | "disconnected" | "error";
 
 class WebSocketService {
+  status<T>(status: any): [any, any] {
+      throw new Error('Method not implemented.');
+  }
   private socket: WebSocket | null = null;
   private token: string | null = null;
   private reconnectAttempts = 0;
@@ -34,7 +37,7 @@ class WebSocketService {
 
     // Create new WebSocket connection with auth token
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/notifications/?token=${token}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/notification/?token=${token}`;
 
     this.socket = new WebSocket(wsUrl);
 

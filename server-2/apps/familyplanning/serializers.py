@@ -12,19 +12,19 @@ class FP_TypeSerializer(serializers.ModelSerializer):
         model = FP_type
         fields = '__all__'
         
-class ObstetricalSerializer(serializers.ModelSerializer):
+class Illness_Serializer(serializers.ModelSerializer):
     class Meta:
-        model = FP_Obstetrical_History
+        model = Illness
         fields = '__all__'
 
-class PregnancySerializer(serializers.ModelSerializer):
+class MedicalHistorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = PregnancyCheck
+        model = FP_Medical_history
         fields = '__all__'
-        
+
 class RiskStiSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RiskSti
+        model = FP_RiskSti
         fields = '__all__'
 
     # def validate(self, data):
@@ -40,19 +40,12 @@ class RiskStiSerializer(serializers.ModelSerializer):
         
 class RiskVawSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RiskVaw
+        model = FP_RiskVaw
         fields = '__all__'
     
 class PhysicalExamSerializer(serializers.ModelSerializer):
-    # pelvicExamination = serializers.CharField(required=False, allow_null=True)
-    # cervicalConsistency = serializers.CharField(required=False, allow_null=True)
-    # cervicalTenderness = serializers.BooleanField(required=False, allow_null=True)
-    # cervicalAdnexalMassTenderness = serializers.BooleanField(required=False, allow_null=True)
-    # uterinePosition = serializers.CharField(required=False, allow_null=True)
-    # uterineDepth = serializers.CharField(required=False, allow_null=True)
-    
-    class Meta:
-        model = Physical_Exam
+       class Meta:
+        model = FP_Physical_Exam
         fields = '__all__'
 
     # def validate(self, data):
@@ -72,26 +65,31 @@ class PhysicalExamSerializer(serializers.ModelSerializer):
 
 class PelvicExamSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Pelvic_Exam
-        fields = '__all__'
-       
-class AssessmentSerializer(serializers.ModelSerializer): 
-    class Meta:
-        model = Assessment_Record
+        model = FP_Pelvic_Exam
         fields = '__all__'
         
 class AcknowledgementSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Acknowledgement
+        model = FP_Acknowledgement
         fields = '__all__'
-        
-        
+       
 class FP_ObstetricalSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_Obstetrical_History
         fields = '__all__'
-
-class FP_FindingsSerializer(serializers.ModelSerializer):
+        
+class AssessmentSerializer(serializers.ModelSerializer): 
     class Meta:
-        model = FP_finding
+        model = FP_Assessment_Record
+        fields = '__all__'
+        
+
+class ObstetricalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_Obstetrical_History
+        fields = '__all__'     
+
+class FP_PregnancyCheckSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_pregnancy_check
         fields = '__all__'

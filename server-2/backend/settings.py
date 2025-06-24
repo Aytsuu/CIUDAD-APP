@@ -75,12 +75,18 @@ INSTALLED_APPS = [
 
     'apps.healthProfiling',
     'apps.inventory',
+    'apps.maternal',
     'apps.vaccination',
+    # 'apps.profiling',
     'apps.administration',
+    # 'apps.account',
+    # 'apps.waste',
+    # 'apps.profiling',
     'apps.familyplanning',
     'apps.animalbites',
     # 'apps.account',
     'apps.authentication',
+    'apps.patientrecords',
 
     'backend.firebase.notifications',
     'detection',

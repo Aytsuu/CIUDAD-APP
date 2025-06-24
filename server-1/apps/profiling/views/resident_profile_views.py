@@ -61,8 +61,22 @@ class ResidentProfileListExcludeFamView(generics.ListAPIView):
     
     def get_queryset(self):
         excluded_fam_id = self.kwargs.get('fam_id', None)
+        is_staff = self.request.query_params.get('is_staff', False).lower() == "true"
         if excluded_fam_id:
             return ResidentProfile.objects.filter(~Q(family_compositions__fam_id=excluded_fam_id))
+        
+        if is_staff:
+            from apps.administration.models import Staff
+            staffs = Staff.objects.all()
+            residents = ResidentProfile.objects.all()
+            
+            filtered_residents = [
+                res for res in residents 
+                if res.rp_id not in
+                [staff.staff_id for staff in staffs]
+            ]
+
+            return filtered_residents
         
         return ResidentProfile.objects.all()
     

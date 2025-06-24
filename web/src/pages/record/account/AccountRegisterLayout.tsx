@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card/card";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
-import { useAddAccount } from "./queries/accountAddQueries";
+// import { useAddAccount } from "./queries/accountAddQueries";
 // import { useAddAccountHealth } from "./queries/accountAddQueries";
 import { useLocation } from "react-router";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
@@ -23,7 +23,7 @@ export default function AccountRegistrationLayout() {
   const dispatch = useDispatch();
   const params = React.useMemo(()=> location.state?.params, [location.state])
   const residentId = React.useMemo(()=> params.residentId, [params]);
-  const { mutateAsync: addAccount } = useAddAccount();
+  // const { mutateAsync: addAccount } = useAddAccount();
   // const { mutateAsync: addAccountHealth } = useAddAccountHealth();
   
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -48,10 +48,10 @@ export default function AccountRegistrationLayout() {
   
     try {
       // First, add to the main account DB
-      await addAccount({
-        accountInfo,
-        residentId
-      });
+      // await addAccount({
+      //   accountInfo,
+      //   residentId
+      // });
   
       // // Then, add to the health DB
       // await addAccountHealth({

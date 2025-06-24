@@ -142,12 +142,12 @@ import { positionAssignmentSchema } from "@/form-schema/administration-schema";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { CircleCheck, Loader2 } from "lucide-react";
+import { Loader2, CircleCheck } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { toast } from "sonner";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 // Import hooks for both main and health databases
 import { usePositions } from "./queries/administrationFetchQueries";
@@ -179,14 +179,8 @@ export default function AssignPosition({
   const { mutateAsync: addStaffHealth } = useAddStaffHealth();
   
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const personalDefaults = React.useRef(
-    generateDefaultValues(personalInfoSchema)
-  ).current;
-  const defaultValues = React.useRef(
-    generateDefaultValues(positionAssignmentSchema)
-  ).current;
-
+  const personalDefaults = generateDefaultValues(personalInfoSchema)
+  const defaultValues = generateDefaultValues(positionAssignmentSchema)
   const form = useForm<z.infer<typeof positionAssignmentSchema>>({
     resolver: zodResolver(positionAssignmentSchema),
     defaultValues,
@@ -203,14 +197,14 @@ export default function AssignPosition({
     }
 
     // Guard: ensure staff_id exists
-    const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
+    const staffId = user?.staff?.staff_id || "";
     if (!staffId) {
       toast.error("Cannot assign position. Staff ID is missing.");
       setIsSubmitting(false);
       return;
     }
-
-    const residentId = personalInfoform.getValues().per_id.split(" ")[0];
+    
+    const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
     const positionId = form.getValues().assignPosition;
 
     try {

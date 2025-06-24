@@ -12,9 +12,11 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
+import { useLoading } from "@/context/LoadingContext"
 
 export default function RegistrationRequests() {
-  // Initialize states
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
@@ -31,7 +33,15 @@ export default function RegistrationRequests() {
   const totalCount = requests?.count || 0
   const totalPages = Math.ceil(totalCount / pageSize)
 
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoadingRequests) showLoading();
+    else hideLoading();
+  }, [isLoadingRequests])
+
+
   return (
+    // ----------------- RENDER --------------------
     <LayoutWithBack title="Awaiting Approval" description="Submissions under review and pending authorization">
       <div className="space-y-6">
         {/* Summary Card */}
@@ -118,7 +128,7 @@ export default function RegistrationRequests() {
 
           {/* Data Table */}
           {!isLoadingRequests && requestList.length > 0 && (
-            <DataTable columns={requestColumns(requests)} data={requestList} />
+            <DataTable columns={requestColumns} data={requestList} />
           )}
 
           {/* Pagination */}

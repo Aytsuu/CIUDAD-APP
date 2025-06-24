@@ -256,8 +256,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     handleSubmitError,
     populateFields,
     checkDefaultValues,
-  } = useResidentForm("", params.origin);
-  
+  } = useResidentForm("", params?.origin);
   const [addresses, setAddresses] = React.useState<any[]>([
     {
       add_province: "",
@@ -283,9 +282,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
   const [validAddresses, setValidAddresses] = React.useState<boolean[]>([]);
-  
-  // Data fetching for both databases
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const { data: residentsList, isLoading: isLoadingResidents } =
+    useResidentsList(params?.origin === Origin.Administration);
   const { data: residentsListHealth, isLoading: isLoadingResidentsHealth } = useResidentsListHealth();
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
   const { data: sitioListHealth, isLoading: isLoadingSitioHealth } = useSitioListHealth();
@@ -376,8 +374,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
       
-      // Safely get staff_id with proper type checking
-      const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
+      // // Safely get staff_id with proper type checking
+      const staffId = user?.staff?.staff_id;
       
       if (!staffId) {
         throw new Error("Staff information not available");
@@ -484,7 +482,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   };
 
   return (
-    <LayoutWithBack title={params.title} description={params.description}>
+    <LayoutWithBack title={params?.title} description={params?.description}>
       <Card className="w-full p-10">
         <div className="pb-4">
           <h2 className="text-lg font-semibold">Personal Information</h2>
@@ -507,8 +505,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
               formType={Type.Create}
               isSubmitting={isSubmitting}
               submit={submit}
-              origin={params.origin ? params.origin : ""}
-              isReadOnly={form.watch("per_id") && params.origin == Origin.Administration 
+              origin={params?.origin ? params.origin : ""}
+              isReadOnly={form.watch("per_id") && params?.origin == Origin.Administration 
                 ? true : false
               }
               isAllowSubmit={isAllowSubmit}

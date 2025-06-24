@@ -8,7 +8,6 @@ import {
   } from "@/components/ui/form/form";
 import { SelectLayout } from "../select/select-layout";
 import { Input } from "@/components/ui/input";
-import { capitalize } from "@/helpers/capitalize";
 
 // Reusable Form Select Component
 export const FormSelect = React.memo(({ control, name, label, options, readOnly }: 
@@ -26,11 +25,11 @@ export const FormSelect = React.memo(({ control, name, label, options, readOnly 
                 placeholder="Select"
                 className="w-full"
                 options={options}
-                value={field.value ? field.value.toLowerCase() : ""}
+                value={field.value}
                 onChange={field.onChange}
               />
             ) : (
-              <Input {...field} value={capitalize(field.value) || ""} readOnly />
+              <Input {...field} readOnly />
             )}
           </FormControl>
           <FormMessage />

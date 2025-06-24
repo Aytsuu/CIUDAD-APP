@@ -197,9 +197,9 @@ export default function PositionForm() {
     form.setValue("pos_max", String(position.pos_max));
   }, [params.data]);
 
-  // Validate staff ID
+  // Validate staff ID staffId: user?.staff?.staff_id || ""
   const getValidatedStaffId = React.useCallback(() => {
-    const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
+    const staffId = user?.staff?.staff_id || "";
     if (!staffId) {
       console.error('Staff ID is missing from user context');
       toast("Error: Staff ID not found. Please log in again.", {
@@ -333,11 +333,19 @@ export default function PositionForm() {
       return;
     }
     
-    const values = form.getValues();
-    console.log('Form submission started with values:', values);
-    
-    if (formType === Type.Add) {
-      await handleAddPosition(values);
+    const values = form.getValues()
+    if(formType === Type.Add) {
+      addPosition(
+        {
+          data: values, 
+          staffId: user?.staff?.staff_id || ""
+        }, {
+          onSuccess: () => {
+            form.setValue('pos_title', '');
+            form.setValue('pos_max', '1');
+          },
+        }
+      )    
     } else {
       const positionId = params.data.pos_id;
       if (!positionId) {

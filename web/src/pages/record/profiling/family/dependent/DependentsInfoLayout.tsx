@@ -15,7 +15,6 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   useAddFamily, 
   useAddFamilyComposition,
-
 } from "../../queries/profilingAddQueries";
 import {
   useAddFamilyHealth,
@@ -61,7 +60,7 @@ export default function DependentsInfoLayout({
     if (Array.isArray(dependents)) {
       // Transform the list into an array of Dependent objects
       const transformedData = dependents.map((value) => ({
-        id: value.id.split(" ")[0],
+        id: value.id?.split(" ")[0] as string,
         lname: value.lastName,
         fname: value.firstName,
         mname: value.middleName,
@@ -132,8 +131,7 @@ export default function DependentsInfoLayout({
 
     if(dependentsList.length === 0){
       setIsSubmitting(false);
-      toast('Family Registration', {
-        description: "Must have atleast one dependent.",
+      toast('Must have atleast one dependent.', {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
         style: {
           border: '1px solid rgb(225, 193, 193)',
@@ -153,13 +151,13 @@ export default function DependentsInfoLayout({
       // Store information to the main database
       const family = await addFamily({
         demographicInfo: demographicInfo, 
-        staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
+        staffId: user?.staff?.staff_id || ""
       });
 
       // Store information to the health database
       const familyHealth = await addFamilyHealth({
         demographicInfo: demographicInfo, 
-        staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
+        staffId: user?.staff?.staff_id || ""
       });
 
       let bulk_composition: {
@@ -173,8 +171,9 @@ export default function DependentsInfoLayout({
         rp: string}[] = [];
 
       // Prepare composition data for both databases
-      selectedParents.map((parentId, index) => {
+      selectedParents.forEach((parentId, index) => {
         if(!parentId) return;
+        
         const compositionData = {
           fam: family.fam_id,
           fc_role: PARENT_ROLES[index],
@@ -186,24 +185,26 @@ export default function DependentsInfoLayout({
           rp: parentId
         };
         
-        bulk_composition = [...bulk_composition, compositionData];
-        bulk_composition_health = [...bulk_composition_health, compositionHealthData];
+        bulk_composition.push(compositionData);
+        bulk_composition_health.push(compositionHealthData);
       });
 
-      dependentsInfo.map((dependent) => {
+      dependentsInfo.forEach((dependent) => {
+        const dependentId = dependent.id?.split(" ")[0] as string;
+        
         const compositionData = {
           fam: family.fam_id,
           fc_role: 'Dependent',
-          rp: dependent.id.split(" ")[0]
+          rp: dependentId
         };
         const compositionHealthData = {
           fam: familyHealth.fam_id,
           fc_role: 'Dependent',
-          rp: dependent.id.split(" ")[0]
+          rp: dependentId
         };
         
-        bulk_composition = [...bulk_composition, compositionData];
-        bulk_composition_health = [...bulk_composition_health, compositionHealthData];
+        bulk_composition.push(compositionData);
+        bulk_composition_health.push(compositionHealthData);
       });
 
       // Insert into main database
@@ -218,7 +219,7 @@ export default function DependentsInfoLayout({
     } catch (error) {
       console.error('Family registration failed:', error);
       setIsSubmitting(false);
-      toast('Family Registration', {
+      toast('Family Registration Failed', {
         description: "Registration failed. Please try again.",
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
         style: {

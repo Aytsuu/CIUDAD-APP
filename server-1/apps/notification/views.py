@@ -1,70 +1,61 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import generics, status
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import Notification, FCMToken
-from .serializers import NotificationSerializer, FCMTokenSerializer
-from firebase_admin import messaging
-
-class SaveTokenView(APIView):
-    # permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        token = request.data.get('token')
-        if not token:
-            return Response({'error': 'Token required'}, status=400)
-
-        FCMToken.objects.update_or_create(user=request.user, defaults={'token': token})
-        return Response({'status': 'Token saved'})
+from .models import Notification
+from .serializers import NotificationSerializer
+from rest_framework.decorators import api_view
 
 class NotificationListCreateView(generics.ListCreateAPIView):
-    # permission_classes = [IsAuthenticated]
     serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+        return Notification.objects.filter(recipient=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        notification = serializer.save(user=self.request.user)
-        try:
-            fcm = FCMToken.objects.get(user=self.request.user)
-            message = messaging.Message(
-                notification=messaging.Notification(
-                    title=notification.sender,
-                    body=notification.message,
-                ),
-                token=fcm.token,
-            )
-            messaging.send(message)
-        except Exception as e:
-            print(f"Error sending FCM notification: {e}")
+        serializer.save(recipient=self.request.user)
 
-class MarkNotificationReadView(APIView):
-    # permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-        return Response({'status': 'Marked as read'})
-    
-class NotificationListView(generics.ListAPIView):
-    serializer_class = NotificationSerializer
-
-    def get_queryset(self):
-        return Notification.objects.all().order_by('-created_at')
-    
-class MarkAsReadView(generics.UpdateAPIView):
+class NotificationMarkAsReadView(generics.UpdateAPIView):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-    def patch(self, request, *args, **kwargs):
-        # Mark single notification as read
-        if 'pk' in kwargs:
-            notification = self.get_object()
-            notification.is_read = True
-            notification.save()
-            return Response({'status': 'marked as read'})
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.recipient != request.user:
+            return Response(
+                {"error": "You can't mark this notification as read"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        instance.mark_as_read()
+        return Response(self.get_serializer(instance).data)
+    
+class SendNotificationAPI(generics.CreateAPIView):
+    serializer_class = NotificationSerializer
+    
+    def perform_create(self, serializer):
+        notification = serializer.save()
         
-        # Mark all notifications as read
-        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-        return Response({'status': 'all marked as read'})
+        # Trigger Supabase realtime event
+        supabase.table('notification').insert({
+            'id' : str(notification.id),
+            'recipient_id' : str(notification.recipient.supabase_id),
+            'title' : notification.title,
+            'message' : notification.message,
+            'notification_type' : notification.notification_type,
+            'created_at' : notification.created_at.isoformat()
+        }).execute
+        
+@api_view(['PATCH'])
+def mark_notification_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(id=notification_id, recipient=request.user)
+        notification.is_read = True
+        notification.save()
+        
+        # Sync read status to Supabase
+        supabase.table('notification').update({'is_read': True}).eq('django_id', notification_id).execute()
+        
+        return Response({'status': 'success'})
+    except Notification.DoesNotExist:
+        return Response({'status': 'error'}, status=404)

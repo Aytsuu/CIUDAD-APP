@@ -1,14 +1,15 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useInstantFileUpload } from "@/hooks/use-file-upload";
-import { Upload } from "lucide-react";
+import { Loader2, Printer, Upload } from "lucide-react";
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { cn } from "@/lib/utils";
-import { PDFViewer } from "@react-pdf/renderer";
+import { pdf, PDFViewer } from "@react-pdf/renderer";
 import { WARTemplatePDF } from "./WARTemplatePDF";
 import { useUpdateTemplate } from "../queries/reportUpdate";
 import { useGetSpecificTemplate } from "../queries/reportFetch";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
 const header = [
   {
@@ -40,9 +41,42 @@ export const WARDocTemplate = ({
 }) => {
   const { uploadFile } = useInstantFileUpload({});
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
-    const { data: reportTemplate, isLoading } = useGetSpecificTemplate('WAR');  
+  const { data: reportTemplate, isLoading } = useGetSpecificTemplate('WAR');  
+  const [pdfBlob, setPdfBlob] = React.useState<string>(''); 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const handlePrintClick = async () => {
+    // Generate PDF blob
+    const blob = await pdf(
+      <WARTemplatePDF
+        logo1={reportTemplate?.rte_logoLeft}
+        logo2={reportTemplate?.rte_logoRight}
+        reportPeriod=""
+        data={data}
+        preparedBy={"JUNO"}
+        recommendedBy={"JUNO"}
+        approvedBy={"JUNO"}
+      />
+    ).toBlob();
+
+    // Create object URL
+    const pdfUrl = URL.createObjectURL(blob);
+    
+    // Open in new tab
+    window.open(pdfUrl, '_blank');
+    
+    // Store blob to revoke URL later
+    setPdfBlob(pdfUrl);
+  }
+
+  React.useEffect(() => {
+    return (() => {
+      if(pdfBlob) {
+        URL.revokeObjectURL(pdfBlob);
+      }
+    })
+  }, [])
+    
   const handleLeftLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     try {
@@ -98,28 +132,27 @@ export const WARDocTemplate = ({
     return null;
   }, []);
 
-  if(isLoading){
-    return;
+  if(isLoading) {
+    return (
+      <div className="w-full h-[700px] flex justify-center items-center bg-white border">
+        <Loader2 size={30} className="animate-spin text-black/40" />
+      </div>
+    )
   }
 
   return (
     <div className="w-full h-[700px]">
-      <div className="mb-4">
-        <PDFViewer
-          className="w-full h-[700px] bg-blue-500 text-black hover:bg-blue-600"
-        >
-          <WARTemplatePDF
-                logo1={reportTemplate?.rte_logoLeft}
-                logo2={reportTemplate?.rte_logoRight}
-                reportPeriod=""
-                data={data}
-                preparedBy={"JUNO"}
-                recommendedBy={"JUNO"}
-                approvedBy={"JUNO"}
-              />
-        </PDFViewer>
-      </div>
-      <section className="w-full h-full bg-white mb-5 shadow-sm border flex flex-col items-center p-[30px]">
+      <section className="relative w-full h-full bg-white mb-5 shadow-sm border flex flex-col items-center p-[30px]">
+        <TooltipLayout
+          trigger={
+            <div className="absolute top-2 right-2 bg-black/50 p-2 rounded-sm cursor-pointer"
+              onClick={handlePrintClick}
+            >
+              <Printer size={20} className="text-white" />
+            </div>
+          }
+          content={"Print/Pdf"}
+        />
         <div className="w-full h-full flex flex-col items-center gap-2">
           <div className="w-[50%] flex justify-between ">
             <div className="flex flex-col items-center relative">

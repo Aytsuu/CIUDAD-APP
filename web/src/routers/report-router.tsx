@@ -1,4 +1,4 @@
-import WeeklyAR from '@/pages/record/report/acknowledgement/WeeklyAR';
+import WeeklyAR from '@/pages/record/report/weekly/WeeklyAR';
 import IRRecords from '@/pages/record/report/incident/IRRecords';
 import IRFormLayout from '@/pages/record/report/incident/IRFormLayout';
 import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';

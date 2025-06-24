@@ -12,8 +12,8 @@ export const VitalSignsSchema = z.object({
 }); 
 
 // Schema for vaccine details
-export const VaccineSchema = z.object({
-  pat_id : z.string().min(1, "Patient ID is required"),
+export const VaccineSchema = z.object({ 
+  pat_id :positiveNumberSchema,
   vaccinetype: z.string().min(1, "Vaccine is required"),
   datevaccinated: z.string().min(1, "Date is required"),
   lname: z.string().min(1, "Last name is Required"),
@@ -40,6 +40,6 @@ export const CombinedSchema = VaccineSchema.merge(VitalSignsSchema);
 // Define TypeScript types from schemas
 export type VaccineSchemaType = z.infer<typeof VaccineSchema>;
 export type VitalSignsType = z.infer<typeof VitalSignsSchema>; 
-export type VaccineFormData = z.infer<typeof CombinedSchema>;
+export type CombineVaccineType = z.infer<typeof CombinedSchema>;
 
 export default CombinedSchema;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -6,12 +6,13 @@ import {
   DropdownMenuContent
 } from "./dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ConfirmationModal } from "../confirmation-modal";
 
 interface Option {
   id: string;
   name: React.ReactNode;
   icon?: React.ReactNode;
-  variant?: string
+  variant?: string;
 }
 
 interface DropdownProps {
@@ -27,28 +28,61 @@ export const variant: Record<string, string> = {
   default: "focus:text-buttonBlue"
 };
 
-export default function DropdownLayout({ 
-  trigger, 
-  className, 
-  contentClassName, 
-  options, 
-  onSelect 
+export default function DropdownLayout({
+  trigger,
+  className,
+  contentClassName,
+  options,
+  onSelect
 }: DropdownProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleDeleteAction = (optionId: string) => {
+    if (onSelect) {
+      onSelect(optionId);
+    }
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild className={cn("border-white focus:outline-none", className)}>
         {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent className={cn("", contentClassName)}>
         {options.map((option, index) => (
-          <DropdownMenuItem 
-            className={cn("cursor-pointer flex items-center gap-x-2", variant[option.variant ?? ""])}
-            key={option.id || index} 
-            onSelect={() => option.id && onSelect && onSelect(option.id)}
-          >
-            {option.icon}
-            {option.name}
-          </DropdownMenuItem>
+          option.variant === "delete" ? (
+            <ConfirmationModal
+              key={option.id || index}
+              trigger={
+                <DropdownMenuItem
+                  className={cn("cursor-pointer flex items-center gap-x-2", variant[option.variant ?? ""])}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                  }}
+                >
+                  {option.icon}
+                  {option.name}
+                </DropdownMenuItem>
+              }
+              title="Confirm Removal"
+              description="Are you sure you want to remove this staff?"
+              actionLabel="Confirm"
+              variant="destructive"
+              onClick={() => {
+                setDropdownOpen(false);
+                handleDeleteAction(option.id);
+              }}
+            />
+          ) : (
+            <DropdownMenuItem
+              className={cn("cursor-pointer flex items-center gap-x-2", variant[option.variant ?? ""])}
+              key={option.id || index}
+              onSelect={() => option.id && onSelect && onSelect(option.id)}
+            >
+              {option.icon}
+              {option.name}
+            </DropdownMenuItem>
+          )
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

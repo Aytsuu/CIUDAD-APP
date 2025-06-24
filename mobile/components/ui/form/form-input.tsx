@@ -32,7 +32,7 @@ export const FormInput = ({
         <View className="mb-4">
           <Text className="text-[12px] font-PoppinsRegular">{label}</Text>
           <Input
-            className={`h-[45px] font-PoppinsRegular bg-white ${
+            className={`h-[45px] font-PoppinsRegular bg-white border ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}

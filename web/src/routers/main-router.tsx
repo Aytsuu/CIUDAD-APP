@@ -30,6 +30,9 @@ import { doctorRouting } from './doctor-router';
 import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { health_administration_router } from './administration-health-router';
+import { reports_router } from './reports-router';
+import { summon_router } from './summon-router';
+
 
 export const main_router: RouteObject[] = [
     {
@@ -65,12 +68,14 @@ export const main_router: RouteObject[] = [
             ...childHealthServices,
             ...gad_router,
             ...bites_route,
+            ...reports_router,
             ...announcement_route,
             ...famplanning_route,
             ...healthinventory,
             ...medicalConsultation,
             ...patientQueue,
             ...doctorRouting,
+            ...summon_router,
             ...familyProfilingRoute,
             ...patientsRecordRouter,
             ...health_administration_router,

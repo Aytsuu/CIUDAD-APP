@@ -13,10 +13,10 @@ export type IRReport = {
 }
 
 export type ARReport = {
-  ar_id: string;
+  id: string;
   ar_title: string;
   ar_sitio: string;
   ar_street: string;
   ar_date: string;
-  ar_status: string;
+  status: string;
 }

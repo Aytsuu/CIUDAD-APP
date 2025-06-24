@@ -52,7 +52,7 @@ export const accountUpdateSchema = z.object({
 });
 
 export const verificationSchema = z.object({
-  dob: z.string().date()
+  dob: z.string().date("Date of birth must be a valid date")
 });
 
 export const fileSchema = z.object({

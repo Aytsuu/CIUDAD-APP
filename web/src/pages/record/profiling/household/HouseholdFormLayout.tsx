@@ -240,7 +240,7 @@ export default function HouseholdFormLayout() {
     const householdInfo = form.getValues();
     addHousehold({
       householdInfo: householdInfo, 
-      staffId: user?.staff.staff_id
+      staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
     }, {
       onSuccess: (household) => {
         dispatch(householdRegistered({reg: true, hh_id: household.hh_id}));
