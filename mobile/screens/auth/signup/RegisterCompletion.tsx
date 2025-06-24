@@ -21,6 +21,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useToastContext } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
 
 const { width } = Dimensions.get('window');
 
@@ -171,36 +172,34 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
       {/* Bottom Action Buttons */}
       <View className="px-6 py-4 bg-white border-t border-gray-200">
         <View className="flex-row gap-4">
-          <TouchableOpacity
+          <Button 
+            variant={"secondary"}
             onPress={cancel}
             disabled={isSubmitting}
-            className={`flex-1 py-4 rounded-2xl border-2 border-gray-300 ${
+            className={`flex-1 py-4 rounded-2xl ${
               isSubmitting ? 'opacity-50' : 'active:bg-gray-50'
             }`}
           >
             <Text className="text-gray-700 font-semibold text-center text-sm">
               Cancel
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
+          </Button>
+          
+          <Button
             onPress={submit}
-            disabled={isSubmitting}
             className={`flex-1 py-4 rounded-2xl ${
               isSubmitting 
                 ? 'bg-blue-400' 
                 : 'bg-blue-600 active:bg-blue-700'
             }`}
           >
-            <View className="flex-row items-center justify-center">
-              {isSubmitting && (
+             {isSubmitting && (
                 <ActivityIndicator size="small" color="white" className="mr-2" />
               )}
               <Text className="text-white font-semibold text-sm">
                 {isSubmitting ? 'Submitting...' : 'Confirm & Submit'}
               </Text>
-            </View>
-          </TouchableOpacity>
+          </Button>
         </View>
       </View>
     </SafeAreaView>

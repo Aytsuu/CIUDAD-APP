@@ -58,7 +58,7 @@ export default function UploadID() {
       return;
     }
 
-    if(!selectedImage.rf_type) {
+    if(!selectedImage.type) {
       toast.error("Upload a photo of your valid ID")
       return;
     }
