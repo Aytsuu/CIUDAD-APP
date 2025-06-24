@@ -61,12 +61,16 @@ export const formatAddresses = (addresses: any) => {
       add: string,
       add_sitio: string,
       add_street: string,
-    }, idx: number) => ({
-      per_id: item.per,
-      add_id: item.add,
-      id: `address ${idx+1} - ${item.add_sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
-      name: `Address ${idx+1} - ${capitalize(item.add_sitio)}, ${item.add_street}`, 
-    })
+    }, idx: number) => {
+      if(item.add_sitio) {
+        return {
+          per_id: item.per,
+          add_id: item.add,
+          id: `address ${idx+1} - ${item.add_sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
+          name: `Address ${idx+1} - ${capitalize(item.add_sitio)}, ${item.add_street}`, 
+        }
+      }
+    }
   )
 }
 
