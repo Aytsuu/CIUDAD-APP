@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email || "",
           username: user?.username || session.user.user_metadata?.username,
           profile_image: user?.profile_image || session.user.user_metadata?.avatar_url,
+          staff: user?.staff || undefined, // Change null to undefined for compatibility
         });
         setIsAuthenticated(true);
       } else {
