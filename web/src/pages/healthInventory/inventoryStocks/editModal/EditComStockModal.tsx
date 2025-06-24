@@ -17,7 +17,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Pill, Loader2 } from "lucide-react";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useUpdateCommodityStock } from "../REQUEST/Commodity/queries/CommodityPutQueries";
 
 export default function EditCommodityStock() {

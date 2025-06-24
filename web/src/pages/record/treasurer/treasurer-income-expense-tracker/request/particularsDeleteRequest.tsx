@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {api} from "@/api/api";
 import { useQueryClient } from '@tanstack/react-query';
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 interface Option {
     id: string;

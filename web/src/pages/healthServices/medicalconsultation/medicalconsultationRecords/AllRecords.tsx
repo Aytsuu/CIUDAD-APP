@@ -21,7 +21,7 @@ import { getMedicalRecord } from "../restful-api/GetMedicalRecord"; // import { 
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 export interface MedicalRecord {
   pat_id: number;

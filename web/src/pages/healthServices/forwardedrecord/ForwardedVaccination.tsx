@@ -36,7 +36,7 @@ import {
   updateFollowUpVisit,
 } from "@/pages/healthServices/vaccination/restful-api/PostAPI";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 export interface Patient {
   pat_id: number;

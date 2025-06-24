@@ -13,7 +13,7 @@ import {
   AddMedicineStocksSchema,
   addMedicineStocksType,
 } from "@/form-schema/inventory/stocks/RestockStocksSchema";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { FormInput } from "@/components/ui/form/form-input";
 import { toast } from "sonner";

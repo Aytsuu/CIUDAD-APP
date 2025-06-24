@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getMedconRecordById } from "../restful-api/GetMedicalRecord";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
 import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 

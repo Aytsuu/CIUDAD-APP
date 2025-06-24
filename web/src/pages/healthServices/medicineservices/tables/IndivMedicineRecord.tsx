@@ -27,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui//patientInfoCard";
 import { Label } from "@/components/ui/label";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useMedicineCount } from "../queries/MedCountQueries";

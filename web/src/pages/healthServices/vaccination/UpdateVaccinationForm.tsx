@@ -27,7 +27,7 @@ import {
   useSubmitStep2,
 } from "./queries/UpdateVaccinationQueries";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 export default function UpdateVaccinationForm() {
   const navigate = useNavigate();
