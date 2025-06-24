@@ -1,8 +1,9 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from ..serializers.resident_profile_serializers import *
 from django.db.models import Prefetch, Q
-from pagination import *
+from apps.pagination import *
 from apps.account.models import *
 
 class ResidentProfileCreateView(generics.CreateAPIView):
@@ -40,7 +41,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                 Q(per__per_fname__icontains=search_query) |
                 Q(per__per_mname__icontains=search_query) |
                 Q(rp_id__icontains=search_query) |
-                Q(family_compositions__fam__hh__hh_id__icontains=search_query)            ).distinct()
+                Q(family_compositions__fam__hh__hh_id__icontains=search_query)).distinct()
 
         return queryset
     
@@ -72,4 +73,20 @@ class ResidentProfileFamSpecificListView(generics.ListAPIView):
         fam_id = self.kwargs['fam']
         return ResidentProfile.objects.filter(family_compositions__fam_id=fam_id)
 
-   
+# For verification in link registration
+class LinkRegVerificationView(APIView):
+
+    def post(self, request):
+        residentId = request.data.get('resident_id')
+        profile = ResidentProfile.objects.filter(rp_id=residentId).first()
+        if not profile:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        dob = profile.per.per_dob
+        today = date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        if age < 13:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        
+        return Response(status=status.HTTP_200_OK, data=profile)
+        

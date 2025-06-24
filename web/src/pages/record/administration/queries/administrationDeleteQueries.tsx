@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteAssignedFeature, deletePosition } from "../restful-api/administrationDeleteAPI";
+import { api } from "@/api/api";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
 
 // Deleting
 export const useDeletePosition = () => {
@@ -22,5 +25,24 @@ export const useDeleteAssignedFeature = () => {
       featureId: string
     }) => deleteAssignedFeature(positionId, featureId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allAssignedFeatures']})
+  })
+}
+
+export const useDeleteStaff = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (staffId: string) => {
+      try {
+        const res = await api.delete(`administration/staff/${staffId}/delete/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    onSuccess: (_, staffId) => {
+      queryClient.setQueryData(["staffs"], (old: any[] = []) => 
+        old.filter((staff) => staff.staff_id !== staffId)
+      )
+    }
   })
 }

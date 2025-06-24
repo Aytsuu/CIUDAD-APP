@@ -36,7 +36,7 @@ export const useResidentsList = () => {
   })
 }
 
-export const useResidentsTable = (page: number, pageSize: number, searchQuery?: string) => {
+export const useResidentsTable = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ['residentsTableData', page, pageSize, searchQuery],
     queryFn: () => getResidentsTable(page, pageSize, searchQuery),
@@ -60,10 +60,10 @@ export const useResidentsFamSpecificList = (familyId: string) => {
   })
 }
 
-export const useRequests = () => {
+export const useRequests = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
-    queryKey: ["requests"],
-    queryFn: getRequests,
+    queryKey: ["requests", page, pageSize, searchQuery],
+    queryFn: () => getRequests(page, pageSize, searchQuery),
     staleTime: 5000,
   });
 }
@@ -120,10 +120,10 @@ export const useFamilyComposition = () => {
 
 
 // ================ BUSINESS ================
-export const useBusinesses = () => {
+export const useBusinesses = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
-    queryKey: ["businesses"],
-    queryFn: getBusinesses,
+    queryKey: ["businesses", page, pageSize, searchQuery],
+    queryFn: () => getBusinesses (page, pageSize, searchQuery),
     staleTime: 5000,
   })
 }

@@ -403,7 +403,7 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_p
 
                 {selectedParticular && (
                     <div className="pb-5">
-                        <div className="flex w-full h-9 bg-buttonBlue justify-center items-center rounded-md text-white">
+                        <div className="flex w-full h-9 bg-primary justify-center items-center rounded-md text-white">
                             <Label>Accumulated Budget: P{selectedParticular.proposedBudget.toFixed(2)}</Label>
                         </div>
                     </div>

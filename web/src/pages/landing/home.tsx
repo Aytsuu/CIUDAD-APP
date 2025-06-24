@@ -1,17 +1,14 @@
 
-export default function Home(){
-    return (
-        <div className='w-full flex flex-col items-center gap-10'>
-            <div className="w-[90%] h-[40rem] flex">
-                <img className="w-full h-full bg-gray"></img>
-                <div className="w-1/2 grid">
-                    <img className="w-full h-full bg-gray"></img>
-                    <img className="w-full h-full bg-gray"></img>
-                </div>
-            </div>
-            <div className="w-[90%] h-[10rem] bg-blue">
-
-            </div>
+export default function Home() {
+  return (
+    <main className="flex-1 space-y-5 bg-[#17294A]">
+      <section className="w-full h-full flex">
+        <div>
+          <img
+            className="bg-black w-[150px] h-[150px]"
+          />
         </div>
-    );
+      </section>
+    </main>
+  );
 }

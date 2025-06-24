@@ -3,7 +3,7 @@ import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
 import { useAuth } from "@/context/AuthContext";
-import { Type } from "../../profilingEnums";
+import { Origin, Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { capitalizeAllFields } from "@/helpers/capitalize";
@@ -83,7 +83,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     } else {
       hideLoading();
     }
-  }, [isLoadingResidents, isLoadingSitio, isLoadingResidentsHealth, isLoadingSitioHealth, showLoading, hideLoading]);
+  }, [isLoadingResidents, isLoadingSitio]);
 
   React.useEffect(() => {
     const subscription = form.watch((value) => {
@@ -121,8 +121,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     );
 
     populateFields(data?.personal_info);
-    // You can also use healthData here if needed for health-related fields
-  }, [form, residentsList, residentsListHealth, populateFields]);
+    setAddresses(data?.personal_info.per_addresses)
+  }, [form.watch("per_id")]);
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -142,11 +142,17 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
       
-      // First insertion - Main database
+      // // Safely get staff_id with proper type checking
+      const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
+      
+      if (!staffId) {
+        throw new Error("Staff information not available");
+      }
+
       addResidentAndPersonal(
         {
           personalInfo: personalInfo,
-          staffId: user?.staff.staff_id,
+          staffId: staffId,
         },
         {
           onSuccess: (resident) => {
@@ -212,13 +218,11 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       );
     } catch (err) {
       setIsSubmitting(false);
-      handleSubmitError("An unexpected error occurred. Please try again.");
-      console.error("Submit error:", err);
+      handleSubmitError(err instanceof Error ? err.message : "An error occurred");
     }
   };
 
   return (
-    // ==================== RENDER ====================
     <LayoutWithBack title={params.title} description={params.description}>
       <Card className="w-full p-10">
         <div className="pb-4">
@@ -243,7 +247,9 @@ export default function ResidentCreateForm({ params }: { params: any }) {
               isSubmitting={isSubmitting}
               submit={submit}
               origin={params.origin ? params.origin : ""}
-              isReadOnly={false}
+              isReadOnly={form.watch("per_id") && params.origin == Origin.Administration 
+                ? true : false
+              }
               isAllowSubmit={isAllowSubmit}
               setAddresses={setAddresses}
               setValidAddresses={setValidAddresses}

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateFamily, updateFamilyRole, updateHousehold, updateProfile } from "../restful-api/profilingPutAPI";
+import { updateBusiness, updateFamily, updateFamilyRole, updateHousehold, updateProfile } from "../restful-api/profilingPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 
@@ -94,6 +94,15 @@ export const useUpdateFamily = () => {
       queryClient.invalidateQueries({queryKey: ['households']});
       queryClient.invalidateQueries({queryKey: ['families']});
     }
+  })
+}
+
+export const useUpdateBusiness = () => {
+  return useMutation({
+    mutationFn: ({data, businessId} : {
+      data: Record<string, any>;
+      businessId: string;
+    }) => updateBusiness(data, businessId)
   })
 }
 

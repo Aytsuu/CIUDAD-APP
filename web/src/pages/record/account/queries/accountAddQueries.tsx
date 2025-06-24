@@ -12,9 +12,12 @@ export const useAddAccount = () => {
     }) => addAccount(accountInfo, residentId),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ["residents"]});
-      toast("Account created successfully", {
+      toast.success("Account created successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
       });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     }
   })
 }

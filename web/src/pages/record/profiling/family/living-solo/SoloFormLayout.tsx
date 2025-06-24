@@ -110,7 +110,7 @@ export default function SoloFormLayout() {
 
     const family = await addFamily({ 
       demographicInfo: form.getValues(),
-      staffId: user?.staff.staff_id 
+      staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
     });
 
     addFamilyComposition([

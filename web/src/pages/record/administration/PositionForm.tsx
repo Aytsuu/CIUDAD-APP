@@ -18,7 +18,7 @@ import { Type } from "./administrationEnums";
 
 export default function PositionForm() {
   const  navigate = useNavigate();
-  const { user }  = React.useRef(useAuth()).current;
+  const { user }  = useAuth();
   const { mutate: addPosition, isPending: isAdding } = useAddPosition();
   const { mutate: editPosition, isPending: isUpdating } = useEditPosition();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -76,7 +76,10 @@ export default function PositionForm() {
     const values = form.getValues()
     if(formType === Type.Add) {
       addPosition(
-        {data: values, staffId: user?.staff.staff_id}, {
+        {
+          data: values, 
+          staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
+        }, {
           onSuccess: () => {
             form.setValue('pos_title', '');
             form.setValue('pos_max', '1');

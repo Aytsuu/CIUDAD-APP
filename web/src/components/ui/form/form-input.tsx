@@ -7,6 +7,7 @@ import {
     FormMessage,
   } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
+import { Control, FieldValues, Path } from "react-hook-form";
 
 // Reusable Form Input Component
 export const FormInput = React.memo(({ control, name, label, placeholder, type="text", readOnly, className }: 

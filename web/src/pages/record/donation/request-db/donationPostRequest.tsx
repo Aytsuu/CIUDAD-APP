@@ -6,30 +6,22 @@ export const postdonationreq= async (donationInfo: Record<string, any>) => {
 
         console.log({
             don_num: donationInfo.don_num,
-            don_donorfname: donationInfo.don_donorfname,
-            don_donorlname: donationInfo.don_donorlname,
+            don_donor: donationInfo.don_donor,
             don_item_name: donationInfo.don_item_name,
-            don_qty: parseInt(donationInfo.don_qty),
+            don_qty: donationInfo.don_qty,
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
-            don_receiver: donationInfo.don_receiver,
-            don_date: formatDate(donationInfo.don_date),  // Use the formatted date
-            // ra_id,
-            // feat_id,
+            don_date: formatDate(donationInfo.don_date),  
         });
 
         const res = await api.post('donation/donation-record/', {
             don_num: donationInfo.don_num,
-            don_donorfname: donationInfo.don_donorfname,
-            don_donorlname: donationInfo.don_donorlname,
+            don_donor: donationInfo.don_donor,
             don_item_name: donationInfo.don_item_name,
-            don_qty: parseInt(donationInfo.don_qty),
+            don_qty: donationInfo.don_qty,
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
-            don_receiver: donationInfo.don_receiver,
-            don_date: formatDate(donationInfo.don_date),  // Use the formatted date
-            // ra_id,
-            // feat_id,
+            don_date: formatDate(donationInfo.don_date), 
         });
 
         return res.data.don_num;

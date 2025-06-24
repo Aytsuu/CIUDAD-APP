@@ -4,10 +4,11 @@ import { api } from '@/api/api';
 export const getbudgetyearreq = async () => {
     try {
         const res = await api.get('gad/gad-budget-tracker-main/');
-        
-        // Handle empty/undefined responses
         const data = res.data?.data ?? res.data ?? [];
-        return Array.isArray(data) ? data : [];
+        const filteredData = Array.isArray(data) 
+            ? data.filter(item => item.gbudy_is_archive === false) 
+            : [];
+        return filteredData;
     } catch (err) {
         console.error("API Error:", err);
         return [];  // Always return an array

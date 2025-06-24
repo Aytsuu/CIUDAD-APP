@@ -1,5 +1,4 @@
 import "@/global.css";
-
 import React, { useState } from 'react';
 import { View, Text, TouchableWithoutFeedback, Alert } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,28 +7,47 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Eye } from '@/lib/icons/Eye';  
 import { EyeOff } from '@/lib/icons/EyeOff';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToastContext } from '@/components/ui/toast';
 
 export default function ForgetPassword() {
   const [password, setPassword] = useState('');
   const [rePassword, setRePassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showRePassword, setShowRePassword] = useState(false);  
+  const [showRePassword, setShowRePassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToastContext();
+  const { resetPassword } = useAuth();
 
-  const handleConfirm = () => {
-    if (!password || !rePassword) {
-      Alert.alert('Error', 'Both fields are required.');
-      return;
+  const handleConfirm = async () => {
+    try {
+      if (!password || !rePassword) {
+        Alert.alert('Error', 'Both fields are required.');
+        return;
+      }
+
+      if (password !== rePassword) {
+        Alert.alert('Error', 'Passwords do not match.');
+        return;
+      }
+
+      if (password.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters.');
+        return;
+      }
+
+      setLoading(true);
+      await resetPassword(password);
+      
+      toast.success('Password updated successfully!');
+      router.push('/home'); // Navigate back to login
+    } catch (error) {
+      console.error('Password reset error:', error);
+      Alert.alert('Error', 'Failed to update password. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    if (password !== rePassword) {
-      Alert.alert('Error', 'Passwords do not match.');
-      return;
-    }
-
-    console.log('Password:', password);
-    console.log('Re-Password:', rePassword);
-    router.push('/'); // Navigate back if successful
   };
 
   return (
@@ -44,7 +62,7 @@ export default function ForgetPassword() {
         <View className="relative w-full">
           <Input
             className="h-[57px] font-PoppinsRegular"
-            placeholder="Password"
+            placeholder="New Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -62,7 +80,7 @@ export default function ForgetPassword() {
         <View className="relative w-full">
           <Input
             className="h-[57px] font-PoppinsRegular"
-            placeholder="Re-Password"
+            placeholder="Confirm New Password"
             value={rePassword}
             onChangeText={setRePassword}
             secureTextEntry={!showRePassword}
@@ -81,8 +99,11 @@ export default function ForgetPassword() {
           className="bg-primaryBlue w-full native:h-[57px]"
           size={'lg'}
           onPress={handleConfirm}
+          disabled={loading}
         >
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm</Text>
+          <Text className="text-white font-PoppinsSemiBold text-[16px]">
+            {loading ? 'Updating...' : 'Update Password'}
+          </Text>
         </Button>
       </View>
     </SafeAreaView>
