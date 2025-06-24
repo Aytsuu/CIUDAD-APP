@@ -136,7 +136,7 @@ export default function DependentsInfoLayout({
     // Store information to the database
     const family = await addFamily({
       demographicInfo: demographicInfo, 
-      staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
+      staffId: user?.staff?.staff_id || ""
     });
 
     let bulk_composition: {

@@ -2,7 +2,7 @@ import React from "react"
 import { Animated, Dimensions, Modal, ScrollView, TouchableOpacity, View, Text } from "react-native"
 import { Ionicons } from '@expo/vector-icons'; 
 
-export const SignupOptions = ({
+export const Drawer = ({
   children,
   header,
   description,
@@ -69,7 +69,7 @@ export const SignupOptions = ({
             </View>
 
             {/* Drawer Header */}
-            <View className="px-6 pb-6">
+            <View className="px-6 mb-4">
               <View className="flex-row justify-between items-center mb-2">
                 <Text className="text-lg font-PoppinsSemiBold text-gray-900">
                   {header}
@@ -87,13 +87,7 @@ export const SignupOptions = ({
             </View>
 
             {/* Drawer Content */}
-            <ScrollView
-              className="flex-1 px-6"
-              showsVerticalScrollIndicator={false}
-              style={{ maxHeight: screenHeight * 0.55 }}
-            >
-              {children}
-            </ScrollView>
+            {children}
           </TouchableOpacity>
         </Animated.View>
       </TouchableOpacity>

@@ -131,7 +131,7 @@ export default function BusinessFormLayout() {
     if(formType === Type.Create) {
       addBusiness({
         ...businessInfo,
-        staff: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
+        staff: user?.staff?.staff_id || "",
         files: files 
       }, {
         onSuccess: () => {
@@ -156,7 +156,7 @@ export default function BusinessFormLayout() {
           ...businessInfo,
           sitio: businessInfo.sitio.toLowerCase(),
           files: files,
-          staff: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
+          staff: user?.staff?.staff_id || "",
         },
         businessId: params?.business?.bus_id
       }, {
