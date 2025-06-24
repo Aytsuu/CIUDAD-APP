@@ -4,7 +4,7 @@ from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
 from django.core.validators import MinValueValidator
 
-
+# kene,e
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
