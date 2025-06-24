@@ -145,7 +145,6 @@ export const AddressDrawer = ({
               label="Sitio"
               name="personalInfoSchema.per_addresses.new.sitio"
               options={formattedSitio}
-              isInModal={true}
             />
           ) : (
             <FormInput
