@@ -149,14 +149,14 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
-// Import hooks for both main and health databases
+// Import hooks for both databases
 import { usePositions } from "./queries/administrationFetchQueries";
 import { usePositionsHealth } from "../health/administration/queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddStaffHealth } from "../../record/health/administration/queries/administrationAddQueries";
+import { useAddStaffHealth } from "../health/administration/queries/administrationAddQueries";
 import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
-import { useAddResidentAndPersonalHealth } from "../../record/health-family-profiling/family-profling/queries/profilingAddQueries";
+import { useAddResidentAndPersonalHealth } from "../health-family-profiling/family-profling/queries/profilingAddQueries";
 
 export default function AssignPosition({
   personalInfoform,
@@ -167,8 +167,6 @@ export default function AssignPosition({
 }) {
   // ============= STATE INITIALIZATION ===============
   const { user } = useAuth();
-  
-  // Fetch positions from both databases
   const { data: positions, isLoading: isLoadingPositions } = usePositions();
   const { data: positionsHealth, isLoading: isLoadingPositionsHealth } = usePositionsHealth();
   
@@ -179,8 +177,9 @@ export default function AssignPosition({
   const { mutateAsync: addStaffHealth } = useAddStaffHealth();
   
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const personalDefaults = generateDefaultValues(personalInfoSchema)
-  const defaultValues = generateDefaultValues(positionAssignmentSchema)
+  const personalDefaults = generateDefaultValues(personalInfoSchema);
+  const defaultValues = generateDefaultValues(positionAssignmentSchema);
+  
   const form = useForm<z.infer<typeof positionAssignmentSchema>>({
     resolver: zodResolver(positionAssignmentSchema),
     defaultValues,
@@ -195,8 +194,7 @@ export default function AssignPosition({
       setIsSubmitting(false);
       return;
     }
-
-    // Guard: ensure staff_id exists
+    
     const staffId = user?.staff?.staff_id || "";
     if (!staffId) {
       toast.error("Cannot assign position. Staff ID is missing.");
@@ -207,146 +205,93 @@ export default function AssignPosition({
     const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
     const positionId = form.getValues().assignPosition;
 
-    try {
-      if (residentId) {
-        // If resident exists, assign position to both databases
-        await handleExistingResidentAssignment(residentId, positionId, staffId);
-      } else {
-        // Register resident in both databases, then assign position
-        await handleNewResidentRegistrationAndAssignment(positionId, staffId);
-      }
-    } catch (error) {
-      console.error("Assignment failed:", error);
-      toast.error("Failed to assign position. Please try again.");
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleExistingResidentAssignment = async (
-    residentId: string,
-    positionId: string,
-    staffId: string
-  ) => {
-    try {
-      // Execute both database insertions in parallel
-      const [mainResult, healthResult] = await Promise.allSettled([
-        addStaff({
+    // If resident exists, assign to both databases
+    if (residentId) {
+      try {
+        // Main database assignment
+        await addStaff({
           residentId,
           positionId,
           staffId,
-        }),
-        addStaffHealth({
-          residentId,
-          positionId,
-          staffId,
-        }),
-      ]);
-
-      // Check if both operations succeeded
-      if (mainResult.status === "fulfilled" && healthResult.status === "fulfilled") {
-        deliverFeedback("Position successfully assigned to both databases!");
-      } else {
-        // Handle partial failures
-        const failedOperations = [];
-        if (mainResult.status === "rejected") failedOperations.push("main database");
-        if (healthResult.status === "rejected") failedOperations.push("health database");
+        });
         
-        toast.error(`Assignment failed for: ${failedOperations.join(", ")}`);
+        // Health database assignment
+        await addStaffHealth({
+          residentId,
+          positionId,
+          staffId,
+        });
+        
+        deliverFeedback("Position assigned successfully to both databases!");
+      } catch (error) {
+        console.error("Assignment error:", error);
+        toast.error("Failed to assign position to both databases");
         setIsSubmitting(false);
       }
-    } catch (error) {
-      toast.error("Failed to assign position to existing resident.");
-      setIsSubmitting(false);
-      throw error;
-    }
-  };
-
-  const handleNewResidentRegistrationAndAssignment = async (
-    positionId: string,
-    staffId: string
-  ) => {
-    const personalInfo = personalInfoform.getValues();
-    if (!personalInfo) {
-      toast.error("Missing personal information.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      // Register resident in both databases in parallel
-      const [mainResidentResult, healthResidentResult] = await Promise.allSettled([
-        addResidentAndPersonal({
-          personalInfo,
-          staffId,
-        }),
-        addResidentAndPersonalHealth({
-          personalInfo,
-          staffId,
-        }),
-      ]);
-
-      // Check if both registrations succeeded
-      if (mainResidentResult.status === "fulfilled" && healthResidentResult.status === "fulfilled") {
-        const mainResident = mainResidentResult.value;
-        const healthResident = healthResidentResult.value;
-
-        // Now assign positions in both databases
-        const [mainStaffResult, healthStaffResult] = await Promise.allSettled([
-          addStaff({
-            residentId: mainResident.rp_id,
-            positionId,
-            staffId,
-          }),
-          addStaffHealth({
-            residentId: healthResident.rp_id,
-            positionId,
-            staffId,
-          }),
-        ]);
-
-        // Check if both staff assignments succeeded
-        if (mainStaffResult.status === "fulfilled" && healthStaffResult.status === "fulfilled") {
-          deliverFeedback("Resident registered and position assigned in both databases!");
-        } else {
-          const failedAssignments = [];
-          if (mainStaffResult.status === "rejected") failedAssignments.push("main database");
-          if (healthStaffResult.status === "rejected") failedAssignments.push("health database");
-          
-          toast.error(`Staff assignment failed for: ${failedAssignments.join(", ")}`);
+    } else {
+      // Register resident in both databases before assignment
+      try {
+        const personalInfo = personalInfoform.getValues();
+        if (!personalInfo) {
+          toast.error("Missing personal information.");
           setIsSubmitting(false);
+          return;
         }
-      } else {
-        // Handle registration failures
-        const failedRegistrations = [];
-        if (mainResidentResult.status === "rejected") failedRegistrations.push("main database");
-        if (healthResidentResult.status === "rejected") failedRegistrations.push("health database");
+
+        // Register in main database
+        const mainResident = await addResidentAndPersonal({
+          personalInfo,
+          staffId,
+        });
         
-        toast.error(`Resident registration failed for: ${failedRegistrations.join(", ")}`);
+        // Register in health database
+        const healthResident = await addResidentAndPersonalHealth({
+          personalInfo,
+          staffId,
+        });
+
+        // Assign position in main database
+        await addStaff({
+          residentId: mainResident.rp_id,
+          positionId,
+          staffId,
+        });
+        
+        // Assign position in health database
+        await addStaffHealth({
+          residentId: healthResident.rp_id,
+          positionId,
+          staffId,
+        });
+        
+        deliverFeedback("Resident registered and position assigned in both databases!");
+      } catch (error) {
+        console.error("Registration/assignment error:", error);
+        toast.error("Failed to register resident or assign position");
         setIsSubmitting(false);
       }
-    } catch (error) {
-      toast.error("Failed to register new resident.");
-      setIsSubmitting(false);
-      throw error;
     }
   };
 
-  const deliverFeedback = (message: string = "Operation completed successfully!") => {
+  const deliverFeedback = (message?: string) => {
     form.setValue("assignPosition", "");
     personalInfoform.reset(personalDefaults);
     close();
     setIsSubmitting(false);
-    toast.success(message, {
-      icon: <CircleCheck size={18} />,
-    });
+    
+    if (message) {
+      toast.success(message, {
+        icon: <CircleCheck size={18} />,
+      });
+    }
   };
 
-  // Show loading state if either database is loading
+  // Show loading state if positions are loading
   if (isLoadingPositions || isLoadingPositionsHealth) {
     return <Loader2 className="h-5 w-5 animate-spin" />;
   }
 
-  // Use positions from main database (you can modify this logic as needed)
+  // Use positions from main database as primary, fallback to health database
   const availablePositions = positions || positionsHealth;
 
   return (
@@ -376,7 +321,6 @@ export default function AssignPosition({
     </Form>
   );
 }
-
 
 
 

@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email || "",
           username: user?.username || session.user.user_metadata?.username,
           profile_image: user?.profile_image || session.user.user_metadata?.avatar_url,
+          staff: user?.staff || undefined, // Change null to undefined for compatibility
         });
         setIsAuthenticated(true);
       } else {
@@ -110,9 +111,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!user?.staff){
         await supabase.auth.signOut();
         throw new Error("Only authorized staff can access this system");
+        
       }
-
+      console.log(user);
       await handleSessionChange(data.session);
+      
       
     } catch (error) {
       handleError(error, "Login failed");

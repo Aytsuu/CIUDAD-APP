@@ -319,7 +319,6 @@ export default function PositionForm() {
     );
   }, [editPosition, editPositionHealth, navigate]);
 
-  // Main submit function
   const submit = React.useCallback(async () => {
     const formIsValid = await form.trigger();
     if (!formIsValid) {
@@ -333,19 +332,9 @@ export default function PositionForm() {
       return;
     }
     
-    const values = form.getValues()
-    if(formType === Type.Add) {
-      addPosition(
-        {
-          data: values, 
-          staffId: user?.staff?.staff_id || ""
-        }, {
-          onSuccess: () => {
-            form.setValue('pos_title', '');
-            form.setValue('pos_max', '1');
-          },
-        }
-      )    
+    const values = form.getValues();
+    if (formType === Type.Add) {
+      await handleAddPosition(values); // Use handleAddPosition instead of direct addPosition
     } else {
       const positionId = params.data.pos_id;
       if (!positionId) {
