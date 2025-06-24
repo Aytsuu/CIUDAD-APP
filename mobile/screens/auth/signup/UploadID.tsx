@@ -37,7 +37,7 @@ export default function UploadID() {
   });
 
   React.useEffect(() => {
-    if(selectedImage.rf_type) {
+    if(selectedImage.type) {
       append({
         rf_name: selectedImage.name,
         rf_type: selectedImage.type,
@@ -63,10 +63,11 @@ export default function UploadID() {
       return;
     }
 
+    console.log(getValues('photoSchema.list'))
+
     router.push("/(auth)/take-a-photo")
   };
 
-  console.log("Selected Image:", selectedImage);
 
   return (
     <_ScreenLayout

@@ -24,36 +24,22 @@ export const addPersonalAddress = async (data: Record<string, any>[]) => {
   }
 }
 
-// POST request for resident_profile model 
-export const addResidentProfile = async (personalId: string, staffId: string) => {
-  try {
-    const res = await api.post("profiling/resident/create/", {
-      rp_date_registered: formatDate(new Date()),
-      per: personalId,
-      staff: staffId,
-    });
-
-    return res.data;
-  } catch (err) {
-    throw err;
-  }
-}; 
-
 // POST request for resident_profile combined with personal model 
 export const addResidentAndPersonal = async (personalInfo: Record<string, any>, staffId: string) => {
   try {
     const res = await api.post("profiling/resident/create/combined/", {
       per: {
-        per_lname: personalInfo.per_lname,
-        per_fname: personalInfo.per_fname,
+        per_id: personalInfo.per_id || null,
+        per_lname: personalInfo.per_lname || null,
+        per_fname: personalInfo.per_fname || null,
         per_mname: personalInfo.per_mname || null,
         per_suffix: personalInfo.per_suffix || null,
-        per_dob: formatDate(personalInfo.per_dob),
-        per_sex: personalInfo.per_sex,
-        per_status: personalInfo.per_status,
+        per_dob: formatDate(personalInfo.per_dob) || null,
+        per_sex: personalInfo.per_sex || null,
+        per_status: personalInfo.per_status || null,
         per_edAttainment: personalInfo.per_edAttainment || null,
-        per_religion: personalInfo.per_religion,
-        per_contact: personalInfo.per_contact,
+        per_religion: personalInfo.per_religion || null,
+        per_contact: personalInfo.per_contact || null,
       },
       staff: staffId || null
     })

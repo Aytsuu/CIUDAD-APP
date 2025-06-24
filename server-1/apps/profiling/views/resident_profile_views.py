@@ -6,13 +6,6 @@ from django.db.models import Prefetch, Q
 from apps.pagination import *
 from apps.account.models import *
 
-class ResidentProfileCreateView(generics.CreateAPIView):
-    serializer_class = ResidentProfileBaseSerializer
-    queryset=ResidentProfile.objects.all()
-    
-    def perform_create(self, serializer):
-        serializer.save()
-
 class ResidentProfileTableView(generics.ListCreateAPIView):
     serializer_class = ResidentProfileTableSerializer
     pagination_class = StandardResultsPagination
@@ -47,9 +40,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
     serializer_class = ResidentPersonalCreateSerializer
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs) 
+    queryset = ResidentProfile.objects.all()
 
 class ResidentPersonalInfoView(generics.RetrieveAPIView):
     serializer_class = ResidentPersonalInfoSerializer

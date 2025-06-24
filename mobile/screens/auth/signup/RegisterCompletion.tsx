@@ -15,13 +15,13 @@ import {
   TouchableOpacity, 
   Image, 
   ScrollView, 
-  ActivityIndicator,
   Dimensions 
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useToastContext } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 const { width } = Dimensions.get('window');
 
@@ -73,10 +73,13 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
               const data = photoList.map((photo: any) => ({
                 ...photo,
                 req: request.req_id,
-              }))
+              }));
+
+              console.log('file data:', data)
               addRequestFile(data, {
                 onSuccess: () => {
                   setStatus("success");
+                  setIsSubmitting(false);
                   setShowFeedback(true);
                 }
               });
@@ -86,9 +89,8 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
       });
     } catch (error) {
       setStatus("failure");
-      setShowFeedback(true);
-    } finally {
       setIsSubmitting(false);
+      setShowFeedback(true);
     }
   };
 
@@ -109,7 +111,7 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100">
+    <SafeAreaView className="flex-1">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-6 pb-6 mt-10">
           {/* Success Icon */}
@@ -193,15 +195,17 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
                 : 'bg-blue-600 active:bg-blue-700'
             }`}
           >
-             {isSubmitting && (
-                <ActivityIndicator size="small" color="white" className="mr-2" />
-              )}
-              <Text className="text-white font-semibold text-sm">
-                {isSubmitting ? 'Submitting...' : 'Confirm & Submit'}
-              </Text>
+            <Text className="text-white font-semibold text-sm">
+              Confirm & Submit
+            </Text>
           </Button>
         </View>
       </View>
+ 
+      <LoadingModal 
+        visible={isSubmitting}
+      />
+
     </SafeAreaView>
   );
 }
