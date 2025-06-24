@@ -8,7 +8,7 @@ export const useUpdateVaccineStock = () => {
     return useMutation({
       mutationFn: (data: {
         vacStck_id: number;
-        inv_id: number;
+        inv_id: string;
         qty: number;
         vacStck_qty_avail: number;
       }) => updateVaccineStock(data.vacStck_id, data.inv_id, data.qty, data.vacStck_qty_avail),
@@ -82,7 +82,7 @@ export const useSubmitUpdateVaccineStock = () => {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vaccineStockList"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
     },
     onError: (error: any) => {
       console.error("Update vaccine stock error:", error.message || error);

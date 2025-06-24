@@ -15,7 +15,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import LaboratoryResults, { createInitialLabResults, getLabResultsSummary, type LabResults } from "@/components/ui/lab-result";
+import LaboratoryResults, { createInitialLabResults, getLabResultsSummary, type LabResults } from "@/pages/healthServices/maternal/maternal-components/lab-result";
 
 
 export default function PrenatalFormSecPg({form, onSubmit, back}: {
@@ -66,34 +66,8 @@ export default function PrenatalFormSecPg({form, onSubmit, back}: {
         form.setValue("prenatalVaccineInfo.ttDateGiven", "");
     }
 
-    // lab result
-    const [urinalysisFiles, setUrinalysisFiles] = useState<MediaUploadType>([]);
-    const [cbcFiles, setCbcFiles] = useState<MediaUploadType>([]);
-    const [sgotSgptFiles, setSgotSgptFiles] = useState<MediaUploadType>([]);
-    const [creatinineFiles, setCreatinineFiles] = useState<MediaUploadType>([]);
-    const [buaBunFiles, setBuaBunFiles] = useState<MediaUploadType>([]);
-    const [syphillisFiles, setSyphillisFiles] = useState<MediaUploadType>([]);
-    const [hivTestFiles, setHivTestFiles] = useState<MediaUploadType>([]);
-    const [hepaBFiles, setHepaBFiles] = useState<MediaUploadType>([]);
-    const [bloodTypingFiles, setBloodTypingFiles] = useState<MediaUploadType>([]);
-    const [ogct50Files, setOgct50Files] = useState<MediaUploadType>([]);
-    const [ogct100Files, setOgct100Files] = useState<MediaUploadType>([]);
-    const [activeVideoId, setActiveVideoId] = useState<string>("");
-
+    // lab result - only need the main state, component handles its own media files
     const [ labResults, setLabResults ] = useState<LabResults>(createInitialLabResults());
-    // const [labResults, setLabResults] = useState({
-    //     urinalysis: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     cbc: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     sgotSgpt: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     creatinineSerum: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     buaBun: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     syphilis: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     hivTest: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     hepaB: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     bloodTyping: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     ogct50: {checked: false, date: "", files: null, toBeFollowed: false},
-    //     ogct100: {checked: false, date: "", files: null, toBeFollowed: false},
-    // })
 
      
     return(

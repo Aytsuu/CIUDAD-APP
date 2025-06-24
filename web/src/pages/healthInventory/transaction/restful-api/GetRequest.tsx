@@ -1,9 +1,9 @@
-import {api2} from "@/api/api";
+import { api2 } from "@/api/api";
 
 export const getTransactionMedicines = async () => {
   try {
     const res = await api2.get("inventory/medicinetransaction/");
-    if (res.status === 200) { 
+    if (res.status === 200) {
       return res.data;
     }
     console.error(res.status);
@@ -16,7 +16,7 @@ export const getTransactionMedicines = async () => {
 
 export const getTransactionFirstAid = async () => {
   try {
-    const res= await api2.get("inventory/firstaidtransaction/");
+    const res = await api2.get("inventory/firstaidtransaction/");
     if (res.status === 200) {
       return res.data;
     }
@@ -24,49 +24,61 @@ export const getTransactionFirstAid = async () => {
     return [];
   } catch (err) {
     console.log(err);
-    return[]
+    return [];
   }
 };
 
-export const getTransactionCommodity = async() =>{
-  try{
+export const getTransactionCommodity = async () => {
+  try {
     const res = await api2.get("inventory/commoditytransaction/");
-    if(res.status==200){ return res.data;}
-    console.error(res.status)
-    return[]
-  }catch(err){
-    console.log(err)
-    return[]
+    if (res.status == 200) {
+      return res.data;
+    }
+    console.error(res.status);
+    return [];
+  } catch (err) {
+    console.log(err);
+    return [];
   }
-  
-}
+};
 
-
-
-
-export const getVaccineTransactions = async() =>{
-  try{
+export const getVaccineTransactions = async () => {
+  try {
     const res = await api2.get("inventory/antigens_stocks/");
-    if(res.status==200){return res.data;}
-    console.error(res.status)
-    return[]
-  }catch(err){
-    console.log(err)
-    return[]
+    if (res.status == 200) {
+      return res.data;
+    }
+    console.error(res.status);
+    return [];
+  } catch (err) {
+    console.log(err);
+    return [];
   }
-  
-}
+};
 
-
-export const getImmunizationTransactions = async() =>{
-  try{
+export const getImmunizationTransactions = async () => {
+  try {
     const res = await api2.get("inventory/imz_transaction/");
-    if(res.status==200){ return res.data; }
-    console.error(res.status)
-    return[]
-  }catch(err){
-    console.log(err)
-    return[]
+    if (res.status == 200) {
+      return res.data;
+    }
+    console.error(res.status);
+    return [];
+  } catch (err) {
+    console.log(err);
+    return [];
   }
-  
-}
+};
+
+
+
+export const getAntigenTransactions = async () => {
+  try {
+    const res = await api2.get("inventory/antigens_stocks/transaction/");
+
+    return res.data;
+  } catch (err) {
+    console.log(err);
+    return [];
+  }
+};

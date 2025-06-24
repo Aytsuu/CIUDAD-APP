@@ -31,7 +31,7 @@ export default function MaternalIndivRecords() {
   const columns: ColumnDef<maternalIndivRecords>[] = [
     {
       accessorKey: "id",
-      header: "#",
+      header: "Record ID",
       cell: ({ row }) => (
         <div className="flex justify-center">
           <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
@@ -119,24 +119,6 @@ export default function MaternalIndivRecords() {
               }
               content="View history"
             />
-
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                      {" "}
-                      <Trash size={16} />
-                    </div>
-                  }
-                  className=""
-                  title="Delete Record"
-                  description="Are you sure you want to delete this record?"
-                  mainContent={<></>}
-                />
-              }
-              content="Delete"
-            />
           </div>
         )
       },
@@ -177,9 +159,9 @@ export default function MaternalIndivRecords() {
   const data = sampleData;
 
   const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Transient" },
-    { id: "2", name: "Logarta" },
+    { id: "All", name: "All" },
+    { id: "Resident", name: "Resident" },
+    { id: "Transient", name: "Transient" },
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
@@ -202,16 +184,16 @@ export default function MaternalIndivRecords() {
           <MotherInfo />
         </div>
 
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+        <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}
           <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="flex gap-x-2">
+            <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
                 <Search
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                   size={17}
                 />
-                <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+                <Input placeholder="Search..." className="pl-10 w-full bg-white" />
               </div>
               <SelectLayout
                 className="w-full md:w-[200px] bg-white"

@@ -22,12 +22,13 @@ export const useSubmitMedicineStock = () => {
       try {
         const inv_type = "Medicine";
         const inventoryResponse = await addInventory(data, inv_type);
-
+        console.log("Inventory Response:", inventoryResponse);
         if (!inventoryResponse?.inv_id) {
           throw new Error("Failed to create inventory record");
         }
-        const inv_id = parseInt(inventoryResponse.inv_id, 10);
-
+        const inv_id = inventoryResponse.inv_id;
+        console.log("Inventory ID:", inv_id);
+        
         if (!data.medicineID) {
           throw new Error("Medicine ID is required");
         }

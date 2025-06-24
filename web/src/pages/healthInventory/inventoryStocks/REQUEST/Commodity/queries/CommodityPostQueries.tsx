@@ -11,7 +11,7 @@ export const useAddCommodityInventory = () => {
       data,
     }: {
       data: Record<string, any>;
-      inv_id: number;
+      inv_id: string;
     }) => addCommodityInventory(data),
     onError: (error: Error) => {
       console.error(error.message);
@@ -55,7 +55,7 @@ export const useSubmitCommodityStock = () => {
         throw new Error("Failed to generate inventory ID.");
       }
 
-      const inv_id = parseInt(inventoryResponse.inv_id, 10);
+      const inv_id = inventoryResponse.inv_id;
       const qty = Number(data.cinv_qty) || 0;
       const pcs = Number(data.cinv_pcs) || 0;
       const cinv_qty_avail = data.cinv_qty_unit === "boxes" ? qty * pcs : qty;

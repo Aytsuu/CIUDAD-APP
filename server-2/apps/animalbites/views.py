@@ -1,4 +1,5 @@
 import datetime
+from venv import logger
 from django.shortcuts import render, get_object_or_404
 from django.db import transaction, connection
 from rest_framework import generics, status
@@ -6,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 # Import serializers and models from current app (animalbites)
 from .serializers import *
+from rest_framework.decorators import api_view
 from .models import *
 # Import Patient and PatientRecord from patientrecords app
 from apps.patientrecords.models import Patient, PatientRecord 
@@ -14,6 +16,35 @@ from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposi
 
 from django.db.models import F 
 
+
+
+@api_view(['GET'])
+def animalbite_count(request, pat_id):
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+        
+        count = AnimalBite_Referral.objects.filter(
+            patrec_id__pat_id=patient
+        ).count()
+        
+        return Response({
+            'pat_id': pat_id,
+            'animalbite_count': count,
+            'patient_name': f"{patient.personal_info.per_fname} {patient.personal_info.per_lname}" if hasattr(patient, 'personal_info') else "Unknown"
+        }, status=status.HTTP_200_OK)
+        
+    except Patient.DoesNotExist:
+        return Response(
+            {'error': f'Patient with ID {pat_id} does not exist'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error fetching postpartum count for patient {pat_id}: {str(e)}")
+        return Response(
+            {'error': f'Failed to fetch postpartum count: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
 class AnimalbitePatientDetailsView(generics.ListAPIView):
     """
     API view to list all animal bite records, including comprehensive patient details.
@@ -346,3 +377,5 @@ class AnimalbiteDetailsDeleteView(generics.DestroyAPIView):
                 {"error": str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+

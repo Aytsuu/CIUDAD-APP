@@ -24,7 +24,7 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { FirstAidDisplay } from "@/components/ui/first-aid-display";
 import { RequestSummary } from "@/components/ui/firstaid-summary";
 import { useFirstRequestMutation } from "./queries/postQueries";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"; // Import the ConfirmationDialog
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"; // Import the ConfirmationDialog
 
 interface Patient {
   pat_id: number;
@@ -218,17 +218,7 @@ export default function IndivPatNewFirstAidRecForm() {
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
                   />
-                  {firstAidStocksOptions.length === 0 && (
-                    <div className="text-center py-12 mx-3">
-                      <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                      <h3 className="text-base font-medium text-gray-900 mb-2">
-                        No first aid items available
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        There are currently no first aid items in stock.
-                      </p>
-                    </div>
-                  )}
+                 
                 </div>
               )}
             </div>

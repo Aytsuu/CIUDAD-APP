@@ -9,14 +9,17 @@ import {
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FirstAidType, FirstAidSchema } from "@/form-schema/inventory/lists/inventoryListSchema";
+import {
+  FirstAidType,
+  FirstAidSchema,
+} from "@/form-schema/inventory/lists/inventoryListSchema";
 import { useAddFirstAid } from "../queries/firstAid/FirstAidPostQueries";
 import { getFirstAid } from "../restful-api/firstAid/FirstAidFetchAPI";
 import { FormInput } from "@/components/ui/form/form-input";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
 import { toast } from "sonner";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { CircleCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
@@ -56,31 +59,7 @@ export default function FirstAidModal() {
   const confirmAdd = async () => {
     const formData = form.getValues();
     setIsAddConfirmationOpen(false);
-
-    if (formData.fa_name.trim()) {
-      addFirstAidMutation(formData, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["firstAid"] });
-          toast.success("First Aid item added successfully", {
-            icon: (
-              <CircleCheck size={18} className="fill-green-500 stroke-white" />
-            ),
-            duration: 2000,
-          });
-          form.reset();
-          navigate("/mainInventoryList");
-        },
-        onError: (error: unknown) => {
-          console.error("Failed to add first aid item:", error);
-          toast.error("Failed to add first aid item");
-        },
-      });
-    } else {
-      form.setError("fa_name", {
-        type: "manual",
-        message: "First Aid item name is required",
-      });
-    }
+    addFirstAidMutation(formData);
   };
 
   const isDuplicateFirstAid = (
@@ -90,7 +69,8 @@ export default function FirstAidModal() {
   ) => {
     return firstAidItems.some(
       (item) =>
-        item.fa_name.trim().toLowerCase() === newFirstAid.trim().toLowerCase() &&
+        item.fa_name.trim().toLowerCase() ===
+          newFirstAid.trim().toLowerCase() &&
         String(item.cat_id) === String(catId)
     );
   };

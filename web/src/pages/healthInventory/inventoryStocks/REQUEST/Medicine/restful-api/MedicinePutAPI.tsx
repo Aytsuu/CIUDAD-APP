@@ -11,7 +11,7 @@ export const updateMedicineStocks = async (id: number, data: Record<string, any>
     }
   };
   
-  export const updateInventoryTimestamp = async (inv_id: number) => {
+  export const updateInventoryTimestamp = async (inv_id: string) => {
     try {
       const res = await api2.put(`inventory/update_inventorylist/${inv_id}/`, {
         updated_at: new Date().toISOString(),

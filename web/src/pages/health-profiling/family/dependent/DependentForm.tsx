@@ -4,21 +4,13 @@ import { useFieldArray, UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button/button';
 import { Form } from '@/components/ui/form/form';
 import { FormInput } from '@/components/ui/form/form-input';
-<<<<<<< HEAD
-import { FormDateInput } from '@/components/ui/form/form-date-input';
-=======
 // If the correct file is 'form-date-input.tsx', update as follows:
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
->>>>>>> frontend/feature/maternal-services
 import { FormSelect } from '@/components/ui/form/form-select';
 import { Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
-<<<<<<< HEAD
-import { DependentRecord } from '../../profilingTypes';
-=======
 import { DependentRecord } from '@/pages/record/health-family-profiling/profilingTypes';
->>>>>>> frontend/feature/maternal-services
 
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -109,11 +101,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
                 { id: 'male', name: 'Male' },
                 { id: 'female', name: 'Female' },
               ]} readOnly/>
-<<<<<<< HEAD
-            <FormDateInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" readOnly />
-=======
             <FormDateTimeInput type='date' control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" readOnly />
->>>>>>> frontend/feature/maternal-services
             <div className="flex items-end">
               <Button type="button" onClick={handleAddDependent} className="bg-green-600 hover:bg-green-700 text-white">
                 <Plus /> Dependent

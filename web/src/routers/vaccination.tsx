@@ -7,7 +7,8 @@ import VaccinationView from "@/pages/healthServices/vaccination/DisplayVaccineIn
 import UpdateVaccinationForm from "@/pages/healthServices/vaccination/UpdateVaccinationForm";
 import UnvaccinaResident from "@/pages/healthServices/vaccination/tables/UnvaccineResidents";
 import VaccinationManagement from "@/pages/healthServices/vaccination/tables/MainTable";
-
+import AgeGroupForm from "@/pages/healthServices/agegroup/AgeGroup";
+import { AddAgeGroupForm } from "@/pages/healthServices/agegroup/AddAgeGroupForm";
 export const vaccination = [
   {
     path: "invVaccinationRecord",
@@ -42,6 +43,14 @@ export const vaccination = [
     path:"VaccinationManagement",
     element:<VaccinationManagement/>
   }
-
+  ,
+  {
+    path:"agegroup",
+    element:<AgeGroupForm/>
+  },
+  {
+    path:"addAgeGroupForm",
+    element:<AddAgeGroupForm/>
+  }
 
 ];

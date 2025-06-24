@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +13,12 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CommodityStockForm from "../addstocksModal/ComStockModal";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCommodityStocks } from "../REQUEST/Commodity/restful-api/CommodityGetAPI";
 import { archiveInventory } from "../REQUEST/Archive/ArchivePutAPI";
 import { CommodityStocksColumns } from "./columns/CommodityCol";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { Link } from "react-router";
 import { CommodityStocksRecord } from "./type";
 import { useCommodityStocks } from "../REQUEST/Commodity/queries/CommodityFetchQueries";
@@ -72,67 +70,75 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 export default function CommodityStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
-  const [commodityToArchive, setCommodityToArchive] = useState<number | null>(
+  const [commodityToArchive, setCommodityToArchive] = useState<string | null>(
     null
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const queryClient = useQueryClient();
 
   const { data: commodityStocks, isLoading, error } = useCommodityStocks();
 
-  const formatCommodityStocksData =
-    React.useCallback((): CommodityStocksRecord[] => {
-      if (!commodityStocks) return [];
-      return commodityStocks
-        .filter((stock: any) => !stock.inv_detail?.is_Archived)
-        .map((commodityStock: any) => ({
-          cinv_id: commodityStock.cinv_id,
-          commodityInfo: {
-            com_name: commodityStock.com_detail?.com_name,
-          },
-          expiryDate: commodityStock.inv_detail?.expiry_date,
-          category: commodityStock.com_detail?.catlist,
-          qty: {
-            cinv_qty: commodityStock.cinv_qty,
-            cinv_pcs: commodityStock.cinv_pcs,
-          },
-          cinv_qty_unit: commodityStock.cinv_qty_unit,
-          availQty: commodityStock.cinv_qty_avail,
-          dispensed: commodityStock.cinv_dispensed,
-          recevFrom: commodityStock.cinv_recevFrom,
-          inv_id: commodityStock.inv_id,
-        }));
-    }, [commodityStocks]);
+  const formatCommodityStocksData = useCallback((): CommodityStocksRecord[] => {
+    if (!commodityStocks) return [];
+    return commodityStocks
+      .filter((stock: any) => !stock.inv_detail?.is_Archived)
+      .map((commodityStock: any) => ({
+        cinv_id: commodityStock.cinv_id,
+        commodityInfo: {
+          com_name: commodityStock.com_detail?.com_name,
+        },
+        expiryDate: commodityStock.inv_detail?.expiry_date,
+        category: commodityStock.com_detail?.catlist,
+        qty: {
+          cinv_qty: commodityStock.cinv_qty,
+          cinv_pcs: commodityStock.cinv_pcs,
+        },
+        cinv_qty_unit: commodityStock.cinv_qty_unit,
+        availQty: commodityStock.cinv_qty_avail,
+        dispensed: commodityStock.cinv_dispensed,
+        recevFrom: commodityStock.cinv_recevFrom,
+        inv_id: commodityStock.inv_id,
+      }));
+  }, [commodityStocks]);
 
-  const formatMedicineStocksData =
-    React.useCallback((): CommodityStocksRecord[] => {
-      if (!commodityStocks) return [];
-      return commodityStocks
-        .filter((stock: any) => !stock.inv_detail?.is_Archived)
-        .map((medicineStock: any) => ({
-          cinv_id: medicineStock.cinv_id,
-          commodityInfo: {
-            com_name: medicineStock.med_detail?.med_name,
-          },
-          expiryDate: medicineStock.inv_detail?.expiry_date,
-          category: medicineStock.med_detail?.category,
-          qty: {
-            cinv_qty: medicineStock.cinv_qty,
-            cinv_pcs: medicineStock.cinv_pcs,
-          },
-          cinv_qty_unit: medicineStock.cinv_qty_unit,
-          availQty: medicineStock.cinv_qty_avail,
-          dispensed: medicineStock.cinv_dispensed,
-          recevFrom: medicineStock.cinv_recevFrom,
-          inv_id: medicineStock.inv_id,
-        }));
-    }, [commodityStocks]);
+  // Auto-archive expired commodities after 10 days
+  useEffect(() => {
+    if (!commodityStocks) return;
 
-  const filteredData = React.useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    formatCommodityStocksData().forEach((commodity) => {
+      if (!commodity.expiryDate) return;
+
+      const expiryDate = new Date(commodity.expiryDate);
+      expiryDate.setHours(0, 0, 0, 0);
+
+      const archiveDate = new Date(expiryDate);
+      archiveDate.setDate(expiryDate.getDate() + 10);
+      archiveDate.setHours(0, 0, 0, 0);
+
+      if (now >= archiveDate) {
+        archiveInventory(commodity.inv_id)
+          .then(() => {
+            queryClient.invalidateQueries({ 
+              queryKey: ["commodityinventorylist"] 
+            });
+            queryClient.invalidateQueries({ 
+              queryKey: ["combinedStocks"] 
+            });
+          })
+          .catch((error) => {
+            console.error("Auto-archive failed:", error);
+          });
+      }
+    });
+  }, [commodityStocks, formatCommodityStocksData, queryClient]);
+
+  const filteredData = useMemo(() => {
     const data = formatCommodityStocksData();
     // First filter by search query
     const searchFiltered = data.filter((record) =>
@@ -163,12 +169,7 @@ export default function CommodityStocks() {
           return true;
       }
     });
-  }, [
-    searchQuery,
-    formatCommodityStocksData,
-    formatMedicineStocksData,
-    stockFilter,
-  ]);
+  }, [searchQuery, formatCommodityStocksData, stockFilter]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -180,74 +181,36 @@ export default function CommodityStocks() {
     if (commodityToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
 
+      const toastId = toast.loading(
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Archiving commodity...
+        </div>,
+        { duration: Infinity }
+      );
+
       try {
         await archiveInventory(commodityToArchive);
         queryClient.invalidateQueries({
           queryKey: ["commodityinventorylist"],
         });
         queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
-        toast.success(` archived successfully`, {
+        
+        toast.success("Commodity archived successfully", {
+          id: toastId,
           icon: <CircleCheck size={20} className="text-green-500" />,
           duration: 2000,
         });
       } catch (error) {
-        toast.error(`Failed to archive`, {
+        toast.error("Failed to archive commodity", {
+          id: toastId,
           duration: 5000,
         });
-        setIsArchiveConfirmationOpen(false);
+      } finally {
         setCommodityToArchive(null);
       }
     }
   };
-
-  // const confirmArchiveInventory = async () => {
-  //   if (commodityToArchive !== null) {
-  //     setIsArchiveConfirmationOpen(false);
-
-  //     const toastId = toast.loading(
-  //       <div className="flex items-center gap-2">
-  //         <Loader2 className="h-4 w-4 animate-spin" />
-  //         Archiving {activeTab === "commodity" ? "commodity" : "medicine"}...
-  //       </div>,
-  //       { duration: Infinity }
-  //     );
-
-  //     try {
-  //       await archiveInventory(commodityToArchive);
-  //       queryClient.invalidateQueries({
-  //         queryKey: [
-  //           activeTab === "commodity"
-  //             ? "commodityinventorylist"
-  //             : "medicineinventorylist",
-  //         ],
-  //       });
-
-  //       toast.success(
-  //         `${
-  //           activeTab === "commodity" ? "Commodity" : "Medicine"
-  //         } item archived successfully`,
-  //         {
-  //           id: toastId,
-  //           icon: <CircleCheck size={20} className="text-green-500" />,
-  //           duration: 2000,
-  //         }
-  //       );
-  //     } catch (error) {
-  //       console.error("Failed to archive inventory:", error);
-  //       toast.error(
-  //         `Failed to archive ${
-  //           activeTab === "commodity" ? "commodity" : "medicine"
-  //         } item`,
-  //         {
-  //           id: toastId,
-  //           duration: 5000,
-  //         }
-  //       );
-  //     } finally {
-  //       setCommodityToArchive(null);
-  //     }
-  //   }
-  // };
 
   if (isLoading) {
     return (
@@ -371,7 +334,7 @@ export default function CommodityStocks() {
         isOpen={isArchiveConfirmationOpen}
         onOpenChange={setIsArchiveConfirmationOpen}
         onConfirm={confirmArchiveInventory}
-        title={`ArchiveCommodity`}
+        title="Archive Commodity"
         description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
       />
     </>

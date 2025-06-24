@@ -249,7 +249,3 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
     </div>
   )
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> frontend/feature/maternal-services

@@ -1,26 +1,35 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-    updateVaccineDetails,
-    deleteRoutineFrequencies,
-    deleteVaccineIntervals,
-    updateRoutineFrequency,
-    updateVaccineIntervals
-  } from '../../restful-api/Antigen/VaccinePutAPI';
+  updateVaccineDetails,
+  deleteRoutineFrequencies,
+  deleteVaccineIntervals,
+  updateRoutineFrequency,
+  updateVaccineIntervals,
+  deleteConditionalVacinne,
+} from "../../restful-api/Antigen/VaccinePutAPI";
 import { VaccineData } from "../../editListModal/EditVaccineModal";
-import {
-    VaccineType,
-  } from "@/form-schema/inventory/lists/inventoryListSchema";
-  
-
+import { VaccineType } from "@/form-schema/inventory/lists/inventoryListSchema";
+import { addconvaccine } from "../../restful-api/Antigen/VaccinePostAPI";
+import { toast } from "sonner";
+import { CircleCheck, CircleX } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export const useUpdateVaccineDetails = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ vaccineId, formData }: { vaccineId: number; formData: any }) => 
-      updateVaccineDetails(vaccineId, formData),
+    mutationFn: ({
+      vaccineId,
+      formData,
+    }: {
+      vaccineId: number;
+      formData: any;
+    }) => updateVaccineDetails(vaccineId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+    },
+    onError: (error) => {
+      console.error("Error updating vaccine details:", error);
     },
   });
 };
@@ -33,6 +42,9 @@ export const useDeleteRoutineFrequencies = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines"] });
     },
+    onError: (error) => {
+      console.error("Error deleting routine frequencies:", error);
+    },
   });
 };
 
@@ -44,6 +56,9 @@ export const useDeleteVaccineIntervals = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines"] });
     },
+    onError: (error) => {
+      console.error("Error deleting vaccine intervals:", error);
+    },
   });
 };
 
@@ -51,109 +66,143 @@ export const useUpdateRoutineFrequency = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ vaccineId, formData }: { vaccineId: number; formData: any }) => 
-      updateRoutineFrequency(vaccineId, formData),
+    mutationFn: ({
+      vaccineId,
+      formData,
+    }: {
+      vaccineId: number;
+      formData: any;
+    }) => updateRoutineFrequency(vaccineId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+    },
+    onError: (error) => {
+      console.error("Error updating routine frequency:", error);
     },
   });
 };
 
 export const useUpdateVaccineIntervals = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: ({ vaccineId, formData }: { vaccineId: number; formData: any }) => 
-      updateVaccineIntervals(vaccineId, formData),
+    mutationFn: ({
+      vaccineId,
+      formData,
+    }: {
+      vaccineId: number;
+      formData: any;
+    }) => updateVaccineIntervals(vaccineId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+    },
+    onError: (error) => {
+      console.error("Error updating vaccine intervals:", error);
     },
   });
 };
 
+export const useDeleteConditionalVacinne = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (vaccineId: number) => deleteConditionalVacinne(vaccineId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting conditional vaccine:", error);
+    },
+  });
+};
+
+// export const useUpdateConditionalVaccine = () => {
+//   const queryClient = useQueryClient();
+
+//   return useMutation({
+//     mutationFn: (vaccineId: number) => updateConditionalVaccine(vaccineId),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+//     },
+//     onError: (error) => {
+//       console.error("Error updating conditional vaccine:", error);
+//     },
+//   });
+// };
 
 interface UpdateVaccineParams {
-    formData: VaccineType;
-    vaccineData: VaccineData;
-  }
-  
-  export const useUpdateVaccine = () => {
-    const queryClient = useQueryClient();
-    const updateDetailsMutation = useUpdateVaccineDetails();
-    const deleteRoutineMutation = useDeleteRoutineFrequencies();
-    const deleteIntervalsMutation = useDeleteVaccineIntervals();
-    const updateRoutineMutation = useUpdateRoutineFrequency();
-    const updateIntervalsMutation = useUpdateVaccineIntervals();
-  
-    const updateVaccine = async ({ formData, vaccineData }: UpdateVaccineParams) => {
-      try {
-        const hasTypeChanged = formData.type !== vaccineData.vaccineType.toLowerCase();
-        const hasDosesChanged = 
-          Number(formData.noOfDoses) !== 
-          Number(vaccineData.noOfDoses === "N/A" ? 1 : vaccineData.noOfDoses);
-        const hasSpecifyAgeChanged = formData.specifyAge !== vaccineData.specifyAge;
-        const hasRoutineIntervalChanged = 
-          formData.type === "routine" &&
-          (Number(formData.routineFrequency?.interval) !== vaccineData.doseDetails[0]?.interval ||
-           formData.routineFrequency?.unit !== vaccineData.doseDetails[0]?.unit);
-  
-        const shouldUpdateIntervals = 
-          hasTypeChanged || 
-          hasDosesChanged || 
-          hasSpecifyAgeChanged || 
-          hasRoutineIntervalChanged;
-  
-        // First update the main vaccine details
-        await updateDetailsMutation.mutateAsync({ 
-          vaccineId: vaccineData.id, 
-          formData 
-        });
-  
-        if (shouldUpdateIntervals) {
-          // If type changed, we need to clean up the old intervals
-          if (hasTypeChanged) {
-            if (vaccineData.vaccineType.toLowerCase() === "routine") {
-              // Delete all existing routine frequencies
-              await deleteRoutineMutation.mutateAsync(vaccineData.id);
-            } else {
-              // Delete all existing vaccine intervals
-              await deleteIntervalsMutation.mutateAsync(vaccineData.id);
-            }
-          }
-  
-          // Now create/update the new intervals based on current type
-          if (formData.type === "routine") {
-            // For routine vaccines, update/create the single frequency
-            await updateRoutineMutation.mutateAsync({ 
-              vaccineId: vaccineData.id, 
-              formData 
-            });
-          } else {
-            // For non-routine vaccines, update/create all dose intervals
-            await updateIntervalsMutation.mutateAsync({ 
-              vaccineId: vaccineData.id, 
-              formData 
-            });
-          }
+  formData: VaccineType;
+  vaccineData: VaccineData;
+}
+
+export const useUpdateVaccine = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const updateDetailsMutation = useUpdateVaccineDetails();
+  const deleteRoutineMutation = useDeleteRoutineFrequencies();
+  const deleteIntervalsMutation = useDeleteVaccineIntervals();
+  const updateRoutineMutation = useUpdateRoutineFrequency();
+  const updateIntervalsMutation = useUpdateVaccineIntervals();
+  const deleteConvaccinationMutation = useDeleteConditionalVacinne();
+
+  return useMutation({
+    mutationFn: async ({ formData, vaccineData }: UpdateVaccineParams) => {
+      const hasTypeChanged =
+        formData.type !== vaccineData.vaccineType.toLowerCase();
+      const hasDosesChanged =
+        Number(formData.noOfDoses) !==
+        Number(vaccineData.noOfDoses === "N/A" ? 1 : vaccineData.noOfDoses);
+
+      // First update the main vaccine details
+      await updateDetailsMutation.mutateAsync({
+        vaccineId: vaccineData.id,
+        formData,
+      });
+
+      // Handle interval updates based on type change or dose change
+      if (hasTypeChanged || hasDosesChanged) {
+        if (vaccineData.vaccineType.toLowerCase() === "conditional") {
+          await deleteConvaccinationMutation.mutateAsync(vaccineData.id);
+        } else if (vaccineData.vaccineType.toLowerCase() === "routine") {
+          await deleteRoutineMutation.mutateAsync(vaccineData.id);
+        } else {
+          await deleteIntervalsMutation.mutateAsync(vaccineData.id);
         }
-  
-        // Invalidate queries to refresh the data
-        queryClient.invalidateQueries({ queryKey: ["vaccines"] });
-        
-        return { success: true };
-      } catch (error: any) {
-        console.error("Update error:", error);
-        throw new Error(error.message || "Failed to update vaccine");
       }
-    };
-  
-    return {
-      updateVaccine,
-      isUpdating: 
-        updateDetailsMutation.isPending || 
-        deleteRoutineMutation.isPending || 
-        deleteIntervalsMutation.isPending || 
-        updateRoutineMutation.isPending || 
-        updateIntervalsMutation.isPending
-    };
-  };
+
+      // Handle new intervals based on updated type
+      if (formData.type === "conditional") {
+        const res = await addconvaccine(vaccineData.id);
+        if (!res?.vac_id) {
+          throw new Error("Failed to create conditional vaccine record");
+        }
+      } else if (formData.type === "routine") {
+        await updateRoutineMutation.mutateAsync({
+          vaccineId: vaccineData.id,
+          formData,
+        });
+      } else {
+        await updateIntervalsMutation.mutateAsync({
+          vaccineId: vaccineData.id,
+          formData,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["immunizationsupplies"] });
+      queryClient.invalidateQueries({ queryKey: ["Antigen"] });
+
+      return;
+    },
+    onSuccess: () => {
+      navigate(-1);
+      toast("Vaccine updated successfully!", {
+        icon: <CircleCheck className="text-green-500" />,
+      });
+    },
+    onError: (error: Error) => {
+      toast("Failed to update vaccine", {
+        icon: <CircleX className="text-red-500" />,
+        description: error.message,
+      });
+    },
+  });
+};

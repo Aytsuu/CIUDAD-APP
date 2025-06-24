@@ -596,7 +596,3 @@ export default function NonCommunicableDiseaseForm({ onSubmit, initialData }: No
     </Form>
   )
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> frontend/feature/maternal-services

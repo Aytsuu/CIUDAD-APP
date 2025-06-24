@@ -11,7 +11,7 @@ import {
   ImmunizationSuppliesSchema,
   ImmunizationSuppliesType,
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
@@ -103,7 +103,7 @@ export default function AddImzSupplyStock() {
           duration: 2000,
         });
         form.reset();
-        navigate("/mainInventoryStocks");
+        navigate(-1);
       },
       onError: (error: Error) => {
         console.error("Error in handleSubmit:", error);

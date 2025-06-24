@@ -1,3 +1,4 @@
+from venv import logger
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -793,7 +794,9 @@ class PatientListAPIView(generics.ListAPIView):
         queryset = super().get_queryset()
         return queryset
 
-
+            
+            
+            
 # from rest_framework import generics, status
 # from rest_framework.response import Response
 # from rest_framework.decorators import api_view

@@ -36,16 +36,18 @@ export const createVaccineWasteTransaction = async (
   wastedAmount: number,
   unit: 'doses' | 'containers'
 ) => {
-  const payload = {
+  try {
+    const res = await api2.post("inventory/antigens_stocks/transaction/", {
     antt_qty: `${wastedAmount} ${unit}`,
     antt_action: "Wasted",
-    staff: 0, // Assuming staff ID 0 for system-generated transactions
-    vacStck_id,
-    created_at: new Date().toISOString()
-  };
-
-  const response = await api2.post("inventory/antigens_stocks/", payload);
-  return response.data;
+    vacStck_id: vacStck_id,
+      staff: 0,
+    });
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 };
 
 
@@ -77,6 +79,7 @@ export const updateImmunizationStockQuantity = async (
   );
   return response.data;
 };
+
 
 export const createImmunizationWasteTransaction = async (
   imzStck_id: number,

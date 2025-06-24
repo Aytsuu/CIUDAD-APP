@@ -24,8 +24,6 @@ export const getMedicineRecords = async () => {
 export const getMedicineStocks = async () => {
   try {
     const response = await api2.get("/inventory/medicineinventorylist/");
-    console.log(response.data)
-
     return response.data;
   } catch (error) {
     console.error("Error fetching medicine stocks:", error);

@@ -8,12 +8,6 @@ from apps.patientrecords.serializers import *
 # serializers.py
 
 
-class MedicineRecordSerialzer(serializers.ModelSerializer):
-    minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
-    class Meta:
-        model = MedicineRecord
-        fields = '__all__'
-
 
 # ALL  medicine RECORD 
 class PatientMedicineRecordSerializer(serializers.ModelSerializer):
@@ -31,4 +25,10 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
         print(f"medicine count for patient {obj.pat_id} with status RECORDED: {count}")
         return count
 
-  
+class MedicineRecordSerialzer(serializers.ModelSerializer):
+    minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
+    patrec_details = PatientRecordSerializer(source='patrec_id', read_only=True)
+    class Meta:
+        model = MedicineRecord
+        fields = '__all__'
+

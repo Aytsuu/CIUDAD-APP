@@ -14,7 +14,7 @@ export interface MedicineTransactionType {
 export const useAddMedicineInventory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data, inv_id }: { data: Record<string, any>, inv_id: number }) => 
+    mutationFn: ({ data, inv_id }: { data: Record<string, any>, inv_id: string }) => 
       addMedicineInventory(data, inv_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] }); // Update with your query key

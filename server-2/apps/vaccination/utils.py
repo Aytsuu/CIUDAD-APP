@@ -139,19 +139,24 @@ def get_all_residents_not_vaccinated():
     return result
 
 def count_vaccinated_by_patient_type():
-    counts = (
-        Patient.objects.filter(
-            patient_records__vaccination_records__vaccination_histories__vachist_status="completed"
+    try:
+        counts = (
+            Patient.objects.filter(
+                patient_records__vaccination_records__vaccination_histories__vachist_status="completed"
+            )
+            .distinct()  # Ensure unique patients
+            .values('pat_type')
+            .annotate(total=Count('pat_id', distinct=True))
         )
-        .values('pat_type')
-        .annotate(total=Count('pat_id'))
-    )
 
-    result = {"resident_vaccinated": 0, "transient_vaccinated": 0}
-    for entry in counts:
-        if entry["pat_type"] == "Resident":
-            result["resident_vaccinated"] = entry["total"]
-        elif entry["pat_type"] == "Transient":
-            result["transient_vaccinated"] = entry["total"]
+        result = {"resident_vaccinated": 0, "transient_vaccinated": 0}
+        for entry in counts:
+            if entry["pat_type"] == "Resident":
+                result["resident_vaccinated"] = entry["total"]
+            elif entry["pat_type"] == "Transient":
+                result["transient_vaccinated"] = entry["total"]
 
-    return result
+        return result
+    except Exception as e:
+        print(f"Error counting vaccinated patients: {str(e)}")
+        return {"resident_vaccinated": 0, "transient_vaccinated": 0}

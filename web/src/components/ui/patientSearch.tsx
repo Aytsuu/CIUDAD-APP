@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 
 interface Patient {
-  pat_id: number;
+  pat_id: string;
   pat_type: string;
   name?: string;
   personal_info?: {
@@ -20,6 +20,11 @@ interface Patient {
     per_sex?: string;
   };
   households?: { hh_id: string }[];
+  family?: {
+    fam_id: string;
+    fc_id: string;
+    fc_role:string;
+  };
   address?: {
     add_street?: string;
     add_barangay?: string;
@@ -27,6 +32,21 @@ interface Patient {
     add_province?: string;
     add_external_sitio?: string;
   };
+  family_head_info?: {
+    family_heads?:{
+      father: {
+        personal_info?:{
+          per_fname?: string;
+          per_mname?: string;
+          per_lname?: string;
+          per_dob?: string;
+        }
+      }
+    }
+  }
+  spouse_info?: {
+
+  }
 }
 
 interface PatientSearchProps {

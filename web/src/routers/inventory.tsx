@@ -24,7 +24,7 @@ import EditMedicineStock from "@/pages/healthInventory/inventoryStocks/editModal
 import EditImzSupplyStock from "@/pages/healthInventory/inventoryStocks/editModal/EditImzSupply";
 import UsedFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/UsedFAModal";
 import WastedAntigen from "@/pages/healthInventory/inventoryStocks/addstocksModal/WastedDoseModal";
-
+import ArchiveMainInventoryStocks from "@/pages/healthServices/Archive/Inventory/tables/MainArchiveInventoryStocks";
 
 export const healthinventory = [
 {path: "/mainInventoryList",element: <MainInventoryList />,},
@@ -58,6 +58,6 @@ export const healthinventory = [
 {path: "/wastedAntigen", element: <WastedAntigen />},
 
 
-
+{path: "/archiveMainInventoryStocks", element: <ArchiveMainInventoryStocks />},
 
 ];

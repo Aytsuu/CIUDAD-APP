@@ -538,8 +538,4 @@ export function DemographicData({
       />
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> frontend/feature/maternal-services

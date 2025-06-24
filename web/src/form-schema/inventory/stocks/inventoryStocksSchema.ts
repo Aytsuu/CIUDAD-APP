@@ -37,7 +37,6 @@ export const MedicineStocksSchema = withPiecesValidation(z.object({
 
 export const CommodityStocksSchema = withPiecesValidation(z.object({
   com_id: z.string().min(1, "Commodity name is required"),
-  category: z.string().min(1, "Category is required"),
   cinv_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   cinv_qty_unit: z.string().min(1, "Unit is required").default(""),
   cinv_pcs: positiveNumberSchema.optional(),

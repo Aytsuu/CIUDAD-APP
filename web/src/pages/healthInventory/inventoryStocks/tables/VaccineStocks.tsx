@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import {
   Minus,
   Edit,
   CircleCheck,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,7 +30,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/api/api";
 import EditImmunizationForm from "../editModal/EditImzSupply";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { archiveInventory } from "../REQUEST/Archive/ArchivePutAPI";
 import { getStockColumns } from "./columns/AntigenCol";
 import { Link, useNavigate } from "react-router";
@@ -65,7 +66,7 @@ export default function CombinedStockTable() {
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
-  const [inventoryToArchive, setInventoryToArchive] = useState<number | null>(
+  const [inventoryToArchive, setInventoryToArchive] = useState<string | null>(
     null
   );
   const queryClient = useQueryClient();
@@ -97,6 +98,41 @@ export default function CombinedStockTable() {
     const expiry = new Date(expiryDate);
     return expiry < today;
   };
+
+  // Auto-archive expired vaccines and supplies after 10 days
+  useEffect(() => {
+    if (!stockData) return;
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    stockData.forEach((record: StockRecords) => {
+      if (!record.expiryDate) return;
+
+      const expiryDate = new Date(record.expiryDate);
+      expiryDate.setHours(0, 0, 0, 0);
+
+      const archiveDate = new Date(expiryDate);
+      archiveDate.setDate(expiryDate.getDate() + 10);
+      archiveDate.setHours(0, 0, 0, 0);
+
+      console.log("Record ID:", record.inv_id);
+      console.log("Expiry Date:", expiryDate);
+      console.log("Archive Date:", archiveDate);
+      console.log("is Archived:", record.isArchived);
+      if (now >= archiveDate && !record.isArchived) {
+        archiveInventory(record.inv_id)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+          })
+          .catch((error) => {
+            console.error("Auto-archive failed:", error);
+          });
+      }
+    });
+  }, [stockData, queryClient]);
+
+
   const filteredStocks = useMemo(() => {
     if (!stockData) return [];
 
@@ -146,33 +182,46 @@ export default function CombinedStockTable() {
       }
     });
   }, [searchQuery, stockData, stockFilter]);
+
   const totalPages = Math.ceil(filteredStocks.length / pageSize);
   const paginatedStocks = filteredStocks.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const handleArchiveInventory = (inv_id: number) => {
+  const handleArchiveInventory = (inv_id: string) => {
     setInventoryToArchive(inv_id);
     setIsArchiveConfirmationOpen(true);
   };
 
   const confirmArchiveInventory = async () => {
     if (inventoryToArchive !== null) {
+      setIsArchiveConfirmationOpen(false);
+      
+      const toastId = toast.loading(
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Archiving inventory item...
+        </div>,
+        { duration: Infinity }
+      );
+
       try {
         await archiveInventory(inventoryToArchive);
         queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
-        toast.success(` archived successfully`, {
+        
+        toast.success("Inventory item archived successfully", {
+          id: toastId,
           icon: <CircleCheck size={20} className="text-green-500" />,
           duration: 2000,
         });
       } catch (error) {
         console.error("Failed to archive inventory:", error);
-        toast.error(`Failed to archive`, {
+        toast.error("Failed to archive inventory item", {
+          id: toastId,
           duration: 5000,
         });
       } finally {
-        setIsArchiveConfirmationOpen(false);
         setInventoryToArchive(null);
       }
     }

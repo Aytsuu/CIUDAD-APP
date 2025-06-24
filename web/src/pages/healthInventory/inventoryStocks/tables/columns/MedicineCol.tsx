@@ -1,12 +1,12 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
-import { Trash, Plus } from "lucide-react";
+import { Archive , Plus } from "lucide-react";
 import { Link } from "react-router";
 import { MedicineStocksRecord } from "../type";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert";
 
 export const getColumns = (
-  handleArchiveInventory: (inv_id: number) => void
+  handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<MedicineStocksRecord>[] => [
   {
     accessorKey: "medicineInfo",
@@ -85,7 +85,7 @@ export const getColumns = (
   },
   {
     accessorKey: "distributed",
-    header: "Distributed",
+    header: "Quantity used",
     cell: ({ row }) => {
       const expired = isExpired(row.original.expiryDate);
       return (
@@ -213,7 +213,7 @@ export const getColumns = (
             size="sm"
             onClick={() => handleArchiveInventory(row.original.inv_id)}
           >
-            <Trash />
+            <Archive  />
           </Button>
         </div>
       );
