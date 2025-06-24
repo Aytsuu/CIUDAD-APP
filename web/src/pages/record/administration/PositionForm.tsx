@@ -78,12 +78,12 @@ export default function PositionForm() {
       addPosition(
         {
           data: values, 
-          staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
+          staffId: user?.staff?.staff_id || ""
         }, {
           onSuccess: () => {
             form.setValue('pos_title', '');
             form.setValue('pos_max', '1');
-          }
+          },
         }
       )    
     } else {

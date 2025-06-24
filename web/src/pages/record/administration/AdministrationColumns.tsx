@@ -209,6 +209,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
               <AlertCircle size={24} className="fill-red-500 stroke-white" />
             ),
           });
+          setIsEditModalOpen(false);
           setIsSubmitting(false);
         }
       };

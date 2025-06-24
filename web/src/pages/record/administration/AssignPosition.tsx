@@ -49,7 +49,7 @@ export default function AssignPosition({
       return;
     }
     
-    const residentId = personalInfoform.getValues().per_id.split(" ")[0];
+    const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
     const positionId = form.getValues().assignPosition;
 
     // If resident exists, assign

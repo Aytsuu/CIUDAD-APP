@@ -2,6 +2,7 @@ import { Type } from "./administrationEnums";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { Check } from "lucide-react";
 
 export const buttonConfig = (
   submit: () => void
@@ -17,7 +18,10 @@ export const buttonConfig = (
   ),
   [Type.Edit]: (
     <ConfirmationModal
-      trigger={<Button>Save</Button>}
+      trigger={<Button>
+        <Check/>
+        Save
+      </Button>}
       title="Confirm Save"
       description="Are you sure you want to save your changes?"
       actionLabel="Confirm"

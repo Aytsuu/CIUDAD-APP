@@ -183,7 +183,7 @@ export default function ResidentRecords() {
                       params: {
                         origin: "create",
                         title: "Resident Registration",
-                        Description: "Provide the necessary details, and complete the registration.",
+                        description: "Provide the necessary details, and complete the registration.",
                       },
                     }}
                   >
