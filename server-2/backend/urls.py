@@ -27,7 +27,7 @@ urlpatterns = [
     path('health-profiling/', include("apps.healthProfiling.urls")),
     path('maternal/', include('apps.maternal.urls')),
     path('animalbites/', include("apps.animalbites.urls")),
-    path('patientrecords/', include('apps.patientrecords.urls')),
+    # path('patientrecords/', include('apps.patientrecords.urls')),
     path('vaccination/', include("apps.vaccination.urls")),
     path('administration/', include("apps.administration.urls")),
     path('user/', include('apps.account.urls')),

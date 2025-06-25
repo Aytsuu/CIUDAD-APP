@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import React, { useState} from "react"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, Eye, Plus, RefreshCw, Search, Trash } from "lucide-react"
-import { toast } from "sonner"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import { deleteFPCompleteRecord, getFamilyPlanningPatients, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
+import {  RefreshCw, Search } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { SelectLayout } from "@/components/ui/select/select-layout"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
 
 // Type definition for a Family Planning Record, including patient details
 interface FPRecord {
@@ -22,7 +20,8 @@ interface FPRecord {
   method_used: string
   created_at: string
   updated_at: string
-  sex: string // Added 'sex' field to the interface
+  sex: string 
+  record_count?: number
 }
 
 export default function FamPlanningTable() {
@@ -30,44 +29,25 @@ export default function FamPlanningTable() {
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFilter, setSelectedFilter] = useState("all")
-  const [fpRecords, setFpRecords] = useState<FPRecord[]>([])
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
+  // const [fpRecords, setFpRecords] = useState<FPRecord[]>([])
+  // const [loading, setLoading] = useState(false)
+  // const navigate = useNavigate()  
+  const queryClient = useQueryClient();
 
-  // Fetch FP records on component mount
-  useEffect(() => {
-    fetchFPRecords()
-  }, [])
+  const {
+    data: fpRecords = [], isLoading,isError,error,refetch } = useQuery<FPRecord[], Error>({
+    queryKey: ["fpRecords", selectedFilter], // Query key for caching, depends on filter
+    queryFn: () => getFPRecordsList(), // Your existing data fetching function
+    });
 
-  // Function to fetch family planning records from the API
-  const fetchFPRecords = async () => {
-    setLoading(true) // Set loading state to true
-    try {
-      const records = await getFPRecordsList() // Call the API function to get records
-      setFpRecords(records) // Update the state with fetched records
-      console.log("✅ FP Records loaded:", records)
-      toast.success(`Loaded ${records.length} FP records`) // Show success toast
-    } catch (error) {
-      console.error("❌ Error fetching FP records:", error)
-      toast.error("Failed to load FP records") // Show error toast
-    } finally {
-      setLoading(false) // Set loading state to false
-    }
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading family planning records...</div>;
   }
 
-  // Handle delete record confirmation and deletion
-  const handleDelete = async (fprecord_id: number) => {
-    try {
-      await deleteFPCompleteRecord(fprecord_id) // Call the API to delete the record
-      toast.success("FP record deleted successfully") // Show success toast
-      fetchFPRecords() // Refresh the list after deletion
-    } catch (error) {
-      console.error("❌ Error deleting FP record:", error)
-      toast.error("Failed to delete FP record") // Show error toast
-    }
+  if (isError) {
+    return <div className="p-8 text-center text-red-600">Error loading records: {error?.message}</div>;
   }
-
-  // Define the columns for the data table
+  
   const columns: ColumnDef<FPRecord>[] = [
   { 
     accessorKey: "fprecord_id", 
@@ -154,15 +134,6 @@ export default function FamPlanningTable() {
     setCurrentPage(1) // Reset to first page when filtering
   }
 
-  // Show loading indicator while data is being fetched
-  if (loading) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center">
-        <RefreshCw className="animate-spin mb-2" size={24} />
-        <p>Loading Family Planning records...</p>
-      </div>
-    )
-  }
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -210,17 +181,6 @@ export default function FamPlanningTable() {
               value={selectedFilter}
               onChange={handleFilterChange}
             />
-
-            {/* Refresh Button */}
-            <Button
-              variant="outline"
-              onClick={fetchFPRecords}
-              disabled={loading}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className={loading ? "animate-spin" : ""} size={16} />
-              Refresh
-            </Button>
           </div>
         </div>
 

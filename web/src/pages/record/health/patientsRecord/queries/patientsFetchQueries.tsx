@@ -5,7 +5,8 @@ import {
 	getPatientDetails, 
 	getAllFollowUpVisits,
   	getPatientPostpartumCount, 
-	getPatientPostpartumRecords
+	getPatientPostpartumRecords,
+	getAnimalBiteCount
  } from "../restful-api/patientsGetAPI";
 
 // resident query keys
@@ -81,10 +82,10 @@ export const useAllFollowUpVisits = (options = {}) => {
 export const useAnimalBiteCount = (patientId: string) => {
   return useQuery({
     queryKey: ["animalbiteCount", patientId],
-    queryFn: () => getPatientPostpartumCount(patientId),
+    queryFn: () => getAnimalBiteCount(patientId),
     enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1, // Only retry once on failure
+    staleTime: 5 * 60 * 1000,
+    retry: 1, 
   })
 }
 
@@ -93,8 +94,8 @@ export const usePatientPostpartumCount = (patientId: string) => {
     queryKey: ["patientPostpartumCount", patientId],
     queryFn: () => getPatientPostpartumCount(patientId),
     enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1, // Only retry once on failure
+    staleTime: 5 * 60 * 1000,
+    retry: 1
   })
 }
 

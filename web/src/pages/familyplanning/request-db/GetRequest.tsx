@@ -1,46 +1,5 @@
 import { api2 } from "@/api/api"
 
-// export const getFPRecordsList = async () => {
-//   try {
-//     const [fpResponse, patientResponse] = await Promise.all([
-//       api2.get("familyplanning/fp_record/"),
-//       api2.get("patientrecords/patient/")
-//     ]);
-
-//     const fpRecords = fpResponse.data;
-//     const patients = patientResponse.data;
-
-//     const transformedData = fpRecords.map((fp: any) => {
-//       // Find the corresponding patient data for the current FP record
-//       // Assumes patrec_id in fpRecord corresponds to pat_id in patient data
-//       const patient = patients.find((p: any) => p.pat_id === fp.patrec_id);
-
-//       const personal = patient?.personal_info;
-
-//       // Extract personal information, providing "N/A" or "Unknown" as fallbacks
-//       const fname = personal?.per_fname || "N/A";
-//       const lname = personal?.per_lname || "N/A";
-//       const dob = personal?.per_dob; // Date of birth for age calculation
-//       const sex = personal?.per_sex || "Unknown"; // Patient's sex
-
-//       return {
-//         fprecord_id: fp.fprecord_id,
-//         patient_name: `${lname}, ${fname}`, // Combine last name and first name for display
-//         patient_age: dob ? calculateAge(dob) : "N/A", // Calculate age from DOB
-//         client_type: patient?.pat_type || "Unknown", // Type of client (e.g., Resident, Non-Resident)
-//         method_used: "N/A", // Placeholder: Update this if method_used comes from fp record
-//         created_at: fp.created_at,
-//         sex: sex // Include sex in the transformed data
-//       };
-//     });
-
-//     return transformedData;
-//   } catch (err) {
-//     console.error("❌ Error fetching FP records list:", err);
-//     return [];
-//   }
-// };
-
 export const getFPRecordsList = async () => {
   try {
     // Call the new comprehensive API endpoint
@@ -210,16 +169,6 @@ export const getPregnancyCheck = async (pregnancy_id: number) => {
   }
 }
 
-// Delete complete FP record
-export const deleteFPCompleteRecord = async (fprecord_id: number) => {
-  try {
-    const response = await api2.delete(`familyplanning/delete_complete/${fprecord_id}/`)
-    return response.data
-  } catch (err) {
-    console.error("Error deleting FP record:", err)
-    throw err
-  }
-}
 
 // Legacy functions (keeping for compatibility)
 export const getFPprofiling = async () => {

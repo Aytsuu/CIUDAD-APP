@@ -65,7 +65,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       receiver: "Cebu City Health Department",
       sender: "Brgy. San Roque Health Center",
       date: todayDate,
-      // transient: false,
       p_lname: "",
       p_fname: "",
       p_mname: "",
@@ -336,8 +335,8 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
         >
           {/* Header Information */}
           <div className="grid md:grid-cols-2 gap-4">
-            <FormInput control={form.control} name="receiver" label="Receiver" readOnly />
-            <FormInput control={form.control} name="sender" label="Sender" readOnly />
+            <FormInput control={form.control} name="receiver" label="Receiver"  />
+            <FormInput control={form.control} name="sender" label="Sender"  />
 
             <FormField
               control={form.control}
@@ -358,18 +357,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               )}
             />
 
-            {/* <FormField
-              control={form.control}
-              name="transient"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2 mt-8">
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <Label>Transient</Label>
-                </FormItem>
-              )}
-            /> */}
           </div>
 
           {/* Patient Information */}

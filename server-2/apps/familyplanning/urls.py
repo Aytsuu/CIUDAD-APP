@@ -15,7 +15,6 @@ urlpatterns = [
     # path('patients-with-fp-records/', get_patients_with_fp_records, name='patients_with_fp_records'),
     path('fp-records-by-patient/<str:patient_id>/', get_fp_records_for_patient, name='get_fp_records_by_patient'),
 
-
     # FP Record CRUD (Individual FP_Record, if needed separately from composite)
     path('fp_record/', FP_RecordListCreateView.as_view(), name='fp_record_list_create'),
     path('fp_record/<int:fprecord_id>/', FP_RecordDetailView.as_view(), name='fp_record_detail'),
@@ -58,11 +57,8 @@ urlpatterns = [
     # Pregnancy Check CRUD
     path('fp_pregnancycheck/', FP_PregnancyCheckListCreateView.as_view(), name='fp_pregnancycheck_list_create'),
     path('fp_pregnancycheck/<int:fp_pc_id>/', FP_PregnancyCheckDetailView.as_view(), name='fp_pregnancycheck_detail'),
+    
+    
+    
 
-    # Special endpoints
-    # path('complete_record/<int:fprecord_id>/', get_complete_fp_record, name='get_complete_fp_record'), # Replaced by new get_complete_fp_record
-    path('delete_complete/<int:fprecord_id>/', delete_complete_fp_record, name='delete_complete_fp_record'),
-
-    # Patient list for overall table - assuming this is distinct patients, not FP_Records
-    # path('patients-for-overall-table/', PatientListForOverallTable.as_view(), name='patients_for_overall_table'), # Replaced by get_patients_with_fp_records
 ]

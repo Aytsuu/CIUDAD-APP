@@ -6,7 +6,6 @@ const ServiceProvisionRecordSchema = z.object({
   nameOfServiceProvider: z.string().nonempty("Service provider name is required"),
   dateOfFollowUp: z.string().nonempty("Follow-up date is required"),
   methodQuantity: z.string().optional(),
-  methodUnit: z.string().nonempty("Method unit is required"),
   serviceProviderSignature: z.string().optional(),
   medicalFindings: z.string().optional(),
   weight: z.coerce.number().min(1, "Weight must be at least 1 kg"),
@@ -61,13 +60,11 @@ const FamilyPlanningBaseSchema = z.object({
   averageMonthlyIncome: z.string().nonempty("Average monthly income is required"),
 
   typeOfClient: z.string().nonempty("Type of client is required"),
-  // Make subTypeOfClient, reasonForFP, methodCurrentlyUsed optional by default
-  // Their requirement will be handled in superRefine
   subTypeOfClient: z.string().optional(), 
   reasonForFP: z.string().optional(), 
   otherReasonForFP: z.string().optional(),
   reason: z.string().optional(), // For "Current User" reasons
-  fpt_other_reason_fp: z.string().optional(), // This seems to be a typo and should be consolidated with otherReasonForFP or reason. Let's assume it maps to otherReason for 'Side Effects' for now.
+  otherReason: z.string().optional(),
   
   methodCurrentlyUsed: z.string().optional(),
   otherMethod: z.string().optional(),
@@ -119,6 +116,7 @@ const FamilyPlanningBaseSchema = z.object({
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
     referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]).optional(),
+    otherReferral: z.string().optional()
   }),
 
   weight: z.coerce.number().min(1),
@@ -152,11 +150,13 @@ const FamilyPlanningBaseSchema = z.object({
   uterineDepth: z.string().optional(),
   
   acknowledgement: z.object({
+    selectedMethod: z.string().optional(),
     clientSignature: z.string().optional(),
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
     guardianName: z.string().optional(),
     guardianSignature: z.string().optional(),
     guardianSignatureDate: z.string().optional(),
+    clientName: z.string()
   }),
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
   pregnancyCheck: PregnancyCheckSchema.optional(),
@@ -185,7 +185,7 @@ export const page1Schema = FamilyPlanningBaseSchema.pick({
   reasonForFP: true,
   otherReasonForFP: true,
   reason: true, // For current user reason
-  fpt_other_reason_fp: true, // For current user reason specify
+  otherReason: true, // For current user reason specify
   methodCurrentlyUsed: true,
   otherMethod: true,
 });

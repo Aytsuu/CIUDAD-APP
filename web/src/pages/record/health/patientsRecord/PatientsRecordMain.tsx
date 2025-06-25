@@ -330,13 +330,13 @@ export default function PatientsRecord() {
   }
 
   // Show empty state if no data
-  if (!patientData || patientData.length === 0) {
-    return (
-      <div className="w-full flex justify-center items-center h-64">
-        <div className="text-lg text-gray-500">No patients found</div>
-      </div>
-    );
-  }
+  // if (!patientData || patientData.length === 0) {
+  //   return (
+  //     <div className="w-full flex justify-center items-center h-64">
+  //       <div className="text-lg text-gray-500">No patients found</div>
+  //     </div>
+  //   );
+  // }
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)

@@ -1,5 +1,5 @@
 import { api2 } from "@/api/api"
-import { patient } from "@/pages/animalbites/db-request/postrequest";
+// import { patient } from "@/pages/animalbites/db-request/postrequest";
 
 // fetch residents
 export const getResident = async () => {
@@ -58,18 +58,19 @@ export const getAllFollowUpVisits = async () => {
     return []
   }
 }
+
+
 export const getAnimalBiteCount = async (patientId: string): Promise<number> => {
   try {
     console.log("Fetching animalbite count for patient:", patientId)
-    const res = await api2.get(`maternal/patient/${patientId}/postpartum_count/`)
+    const res = await api2.get(`animalbites/patient/${patientId}/animalbite_count/`)
 
-    console.log("Postpartum count response:", res.data)
-    return res.data.postpartum_count || 0
+    console.log("Animal bite count response:", res.data)
+    return res.data.animalbite_count || 0
   } catch (error) {
     if (error) {
-      console.error("Get Patient Postpartum Count Error:", (error as any)?.data || (error as any)?.message)
+      console.error("Error:", (error as any)?.data || (error as any)?.message)
 
-      // If patient not found or no records, return 0
       if (
         typeof error === "object" &&
         error !== null &&
@@ -82,8 +83,6 @@ export const getAnimalBiteCount = async (patientId: string): Promise<number> => 
     } else {
       console.error("Unexpected Error:", error)
     }
-
-    // Return 0 on error to prevent UI issues
     return 0
   }
 }
@@ -133,6 +132,28 @@ export const getPatientPostpartumRecords = async (patientId: string) => {
         console.error("Get Patient Postpartum Records Error:", err.response?.data || err.message);
       } else {
         console.error("Get Patient Postpartum Records Error:", (error as any)?.message || error);
+      }
+    } else {
+      console.error("Unexpected Error:", error)
+    }
+    throw error
+  }
+}
+
+export const getPatientAnimalbiteRecords = async (patientId: string) => {
+  try {
+    console.log("Fetching postpartum records for patient:", patientId)
+    const res = await api2.get(`maternal/patient/${patientId}/postpartum_count/`)
+
+    console.log("Patient animal bite records response:", res.data)
+    return res.data
+  } catch (error) {
+    if (error) {
+      if (typeof error === "object" && error !== null && "response" in error) {
+        const err = error as { response?: { data?: any }; message?: string };
+        console.error("Get Patient Animal bite Records Error:", err.response?.data || err.message);
+      } else {
+        console.error("Get Patient Animal bite Records Error:", (error as any)?.message || error);
       }
     } else {
       console.error("Unexpected Error:", error)

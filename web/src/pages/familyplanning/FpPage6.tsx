@@ -17,33 +17,13 @@ import { page6Schema, type FormData, type ServiceProvisionRecord } from "@/form-
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
 
 const methods = [
-  "COC",
-  "POP",
-  "Injectable",
-  "Implant",
-  "IUD",
-  "Interval",
-  "Post Partum",
-  "Condom",
-  "BOM/CMM",
-  "BBT",
-  "STM",
-  "DMPA",
-  "SDM",
-  "Pills",
-  "LAM",
-  "IUD-Interval",
-  "Lactating Amenorrhea",
-  "IUD-Post Partum",
-  "Bilateral Tubal Ligation",
-  "Vasectomy",
-  "Others",
-]
+  "COC", "POP", "Injectable", "Implant", "IUD", "Interval", "Post Partum", "Condom",
+  "BOM/CMM", "BBT", "STM", "DMPA", "SDM", "Pills", "LAM", "IUD-Interval",
+  "Lactating Amenorrhea", "IUD-Post Partum", "Bilateral Tubal Ligation", "Vasectomy", "Others",
+];
 
-// Helper function to map method values from Page 1 to Page 6
 const mapMethodFromPage1ToPage6 = (methodFromPage1: string): string => {
   const methodMapping: Record<string, string> = {
-    // From FpPage1 to FpPage6 mapping
     pills: "Pills",
     DMPA: "DMPA",
     "iud-interval": "IUD-Interval",
@@ -62,16 +42,11 @@ const mapMethodFromPage1ToPage6 = (methodFromPage1: string): string => {
     sdm: "SDM",
     lam: "LAM",
     others: "Others",
-  }
-
-  return methodMapping[methodFromPage1] || methodFromPage1.toUpperCase()
-}
+  } 
+  return methodMapping[methodFromPage1] || methodFromPage1.toUpperCase() }
 
 const pregnancyQuestions = [
-  {
-    id: "breastfeeding",
-    q: "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?",
-  },
+  { id: "breastfeeding", q: "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?"},
   { id: "abstained", q: "Have you abstained from sexual intercourse since your last menstrual period or delivery?" },
   { id: "recent_baby", q: "Have you had a baby in the last four (4) weeks?" },
   { id: "recent_period", q: "Did your last menstrual period start within the past seven (7) days?" },
@@ -85,8 +60,7 @@ const parseBloodPressure = (bp: string | undefined) => {
   return {
     systolic: isNaN(systolic) ? 0 : systolic,
     diastolic: isNaN(diastolic) ? 0 : diastolic,
-  };
-};
+  }; };
 
 type Props = {
   onPrevious5: () => void
@@ -118,11 +92,10 @@ export default function FamilyPlanningForm6({
 
   const [record, setRecord] = useState<ServiceProvisionRecord>({
     dateOfVisit: new Date().toISOString().split("T")[0],
-    methodAccepted: getMethodFromPage1(), // Auto-populate with method from Page 1
+    methodAccepted: getMethodFromPage1(),
     nameOfServiceProvider: "",
     dateOfFollowUp: "",
     methodQuantity: "",
-    methodUnit: "",
     serviceProviderSignature: "",
     medicalFindings: "",
     weight: formData?.weight || 0,
@@ -144,8 +117,12 @@ export default function FamilyPlanningForm6({
     },
     mode: "onBlur",
   })
+  const pregnancyCheckValues = form.watch("pregnancyCheck");
 
-  // Auto-populate method when component mounts or formData changes
+  useEffect(() => {
+    updateFormData({ pregnancyCheck: pregnancyCheckValues });
+  }, [pregnancyCheckValues, updateFormData]);
+
   useEffect(() => {
     const methodFromPage1 = getMethodFromPage1()
     if (methodFromPage1 && methodFromPage1 !== record.methodAccepted) {
@@ -171,11 +148,10 @@ export default function FamilyPlanningForm6({
     setRecords((prev) => [...prev, record])
     setRecord({
       dateOfVisit: new Date().toISOString().split("T")[0],
-      methodAccepted: getMethodFromPage1(), // Keep auto-populating for new records
+      methodAccepted: getMethodFromPage1(),
       nameOfServiceProvider: "",
       dateOfFollowUp: "",
       methodQuantity: "",
-      methodUnit: "",
       serviceProviderSignature: "",
       medicalFindings: "",
       weight: 0,
@@ -197,13 +173,11 @@ const onConfirmSubmit = form.handleSubmit((data) => {
     ? finalRecords[finalRecords.length - 1].dateOfFollowUp 
     : "";
 
-     updateFormData({
-    serviceProvisionRecords: finalRecords, // <-- Make sure this is correctly spelled
+    updateFormData({
+    serviceProvisionRecords: finalRecords,
     pregnancyCheck: data.pregnancyCheck,
     latestFollowUpDate: latestFollowUpDate
-  })
-  
-  
+  });
     onSubmitFinal()
     navigate("/FamPlanning_table")
   })
@@ -352,9 +326,7 @@ const onConfirmSubmit = form.handleSubmit((data) => {
                         Wt: {r.weight}
                       </TableCell>
                       <TableCell>{r.methodAccepted}</TableCell>
-                      <TableCell>
-                        {r.methodQuantity} {r.methodUnit}
-                      </TableCell>
+                      <TableCell>{r.methodQuantity}</TableCell>
                       <TableCell>{r.medicalFindings || "-"}</TableCell>
                       <TableCell>{r.nameOfServiceProvider}</TableCell>
                       <TableCell>{r.serviceProviderSignature ? "✔" : "—"}</TableCell>

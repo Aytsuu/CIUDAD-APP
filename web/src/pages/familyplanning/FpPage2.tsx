@@ -17,13 +17,7 @@ type Page2Props = {
   mode?: "create" | "edit" | "view"
 }
 
-export default function FamilyPlanningForm2({
-  onPrevious1,
-  onNext3,
-  updateFormData,
-  formData,
-  mode = "create",
-}: Page2Props) {
+export default function FamilyPlanningForm2({ onPrevious1,onNext3,updateFormData,formData,mode = "create",}: Page2Props) {
   const isReadOnly = mode === "view"
 
   const form = useForm<FormData>({
@@ -54,11 +48,10 @@ export default function FamilyPlanningForm2({
 
   const onSubmit = async (data: FormData) => {
     console.log("PAGE 2 Data:", data)
-    updateFormData(data) // Save form data
-    onNext3() // Move to the next page
+    updateFormData(data)
+    onNext3()
   }
 
-  // Add a function to save data without navigating
   const saveFormData = () => {
     const currentValues = form.getValues()
     console.log("Saving current form data:", currentValues)

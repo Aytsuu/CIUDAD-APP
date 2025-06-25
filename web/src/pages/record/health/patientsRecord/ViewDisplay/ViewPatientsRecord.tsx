@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePatientDetails } from "../queries/patientsFetchQueries";
+import { useAnimalBiteCount, usePatientDetails } from "../queries/patientsFetchQueries";
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
@@ -23,6 +23,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import PersonalInfoTab from "./PersonalInfoTab";
 import Records from "./Records";
 import VisitHistoryTab from "./VisitHistoryTab";
+import { getAnimalBiteCount } from "../restful-api/patientsGetAPI";
 
 interface PatientData {
   pat_id: string;
@@ -62,6 +63,10 @@ export default function ViewPatientRecord() {
   const vaccinationCount = vaccinationCountData?.vaccination_count;
   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
   const firstAidCount = firstAidCountData?.firstaidrecord_count;
+
+  // const { data: animalbiteCountData } = useAnimalBiteCount(patientId ?? "");
+  // const animalbiteCount = animalbiteCountData?.animalbiteCount;
+  
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
   const updatePatientData = useUpdatePatient();
@@ -353,6 +358,7 @@ export default function ViewPatientRecord() {
           medicineCount={medicineCount}
           firstAidCount={firstAidCount}
           patientLinkData={patientLinkData}
+          
         />
         <VisitHistoryTab completedData={completedData} pendingData={pendingData} />
       </Tabs>

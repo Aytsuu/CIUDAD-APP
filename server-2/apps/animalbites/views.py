@@ -5,28 +5,34 @@ from django.db import transaction, connection
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-# Import serializers and models from current app (animalbites)
 from .serializers import *
 from rest_framework.decorators import api_view
 from .models import *
-# Import Patient and PatientRecord from patientrecords app
 from apps.patientrecords.models import Patient, PatientRecord 
-# Import other models from healthProfiling if needed for specific operations (e.g., getting ResidentProfile or Personal)
-from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposition, Household, PersonalAddress, Address
+# from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposition, Household, PersonalAddress, Address
 
 from django.db.models import F 
 
-
-
+class AnimalBitePatientRecordCountView(APIView):
+    def get(self, request):
+        # Get the serialized data
+        serialized_data = AnimalBitePatientRecordCountSerializer.get_patient_record_counts()
+        
+        # Validate and return the data
+        serializer = AnimalBitePatientRecordCountSerializer(data=serialized_data, many=True)
+        serializer.is_valid(raise_exception=True)
+        
+        return Response(serializer.data)
+    
 @api_view(['GET'])
-def animalbite_count(request, pat_id):
+def get_animalbite_count(request, pat_id):
     try:
         patient = Patient.objects.get(pat_id=pat_id)
         
         count = AnimalBite_Referral.objects.filter(
-            patrec_id__pat_id=patient
+            patrec__pat_id=patient 
         ).count()
-        
+
         return Response({
             'pat_id': pat_id,
             'animalbite_count': count,
@@ -39,25 +45,21 @@ def animalbite_count(request, pat_id):
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
-        logger.error(f"Error fetching postpartum count for patient {pat_id}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        print(f"Error fetching animalbite count for patient {pat_id}: {str(e)}")
         return Response(
-            {'error': f'Failed to fetch postpartum count: {str(e)}'},
+            {'error': f'Failed to fetch animalbite count: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         
 class AnimalbitePatientDetailsView(generics.ListAPIView):
-    """
-    API view to list all animal bite records, including comprehensive patient details.
-    Supports filtering by patient_id and orders results by the latest referral date.
-    """
     serializer_class = AnimalBitePatientDetailsSerializer
     
     def get_queryset(self):
         patient_id = self.kwargs.get('patient_id') 
         if not patient_id:
             patient_id = self.request.query_params.get('patient_id', None)
-
-        print(f"DEBUG VIEWS: get_queryset called. Received patient_id: '{patient_id}'")
 
         if patient_id:
             print(f"DEBUG VIEWS: Filtering by specific patient_id: '{patient_id}'.")
@@ -93,10 +95,6 @@ class AnimalbitePatientDetailsView(generics.ListAPIView):
         return final_queryset
 
 class CreateAnimalBiteRecordView(APIView):
-    """
-    API view to handle the creation of a new Animal Bite record.
-    It orchestrates the creation of PatientRecord, AnimalBite_Referral, and AnimalBite_Details.
-    """
     def post(self, request):
         print("🔄 Received request data:", request.data)
         
@@ -235,147 +233,5 @@ class AnimalbiteDetailsView(generics.ListCreateAPIView):
         return super().get_queryset() 
 
 class AnimalbiteReferralView(generics.ListCreateAPIView):
-    """
-    API view for listing and creating AnimalBite_Referral objects.
-    """
     serializer_class = AnimalBiteReferralSerializer
     queryset = AnimalBite_Referral.objects.all()
-
-class UpdateAnimalBiteRecordView(APIView):
-    def put(self, request, bite_id):
-        try:
-            bite_detail = get_object_or_404(AnimalBite_Details, bite_id=bite_id)
-            referral = bite_detail.referral 
-            
-            bite_detail.exposure_type = request.data.get('exposure_type', bite_detail.exposure_type)
-            bite_detail.exposure_site = request.data.get('exposure_site', bite_detail.exposure_site)
-            bite_detail.biting_animal = request.data.get('biting_animal', bite_detail.biting_animal)
-            bite_detail.actions_taken = request.data.get('actions_taken', bite_detail.actions_taken)
-            bite_detail.referredby = request.data.get('referredby', bite_detail.referredby)
-            bite_detail.save() 
-            
-            if 'receiver' in request.data:
-                referral.receiver = request.data['receiver']
-            if 'sender' in request.data:
-                referral.sender = request.data['sender']
-            if 'date' in request.data:
-                referral.date = request.data['date']
-            # if 'transient' in request.data: # REMOVED THIS LINE
-            #     referral.transient = request.data['transient'] # REMOVED THIS LINE
-            referral.save() 
-            
-            serializer = AnimalBiteDetailsSerializer(bite_detail)
-            return Response({
-                'message': 'Animal bite record updated successfully',
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response(
-                {'error': f'Failed to update animal bite record: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-class DeleteAnimalBitePatientView(APIView):
-    """
-    API view to delete all animal bite records associated with a specific patient.
-    Deletes PatientRecord, which cascades to AnimalBite_Referral and AnimalBite_Details.
-    """
-    def delete(self, request, patient_id): 
-        try:
-            with transaction.atomic(): 
-                patient_id_str = str(patient_id).strip() 
-                
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        """
-                        SELECT pr.patrec_id 
-                        FROM patient_record pr
-                        JOIN patient p ON pr.pat_id = p.pat_id
-                        WHERE CAST(p.pat_id AS TEXT) = %s AND pr.patrec_type = 'Animal Bites'
-                        """, 
-                        [patient_id_str]
-                    )
-                    patient_record_ids = [row[0] for row in cursor.fetchall()]
-                
-                if not patient_record_ids:
-                    return Response(
-                        {"detail": "No animal bite records found for this patient to delete."}, 
-                        status=status.HTTP_404_NOT_FOUND
-                    )
-                
-                for patrec_id in patient_record_ids:
-                    PatientRecord.objects.filter(patrec_id=patrec_id).delete()
-                
-                return Response({
-                    "message": f"Successfully deleted {len(patient_record_ids)} animal bite record(s) for patient {patient_id_str}",
-                    "deleted_records": len(patient_record_ids)
-                }, status=status.HTTP_200_OK)
-                
-        except Exception as e:
-            return Response(
-                {"detail": f"Error deleting patient records: {str(e)}"}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-class DeleteAnimalBiteRecordView(APIView):
-    """
-    API view to delete a single Animal Bite record by its bite_id.
-    It deletes the AnimalBite_Details, its associated AnimalBite_Referral,
-    and the PatientRecord if it's the only one for that patient and type.
-    """
-    def delete(self, request, bite_id):
-        try:
-            with transaction.atomic():
-                bite_detail = get_object_or_404(AnimalBite_Details, bite_id=bite_id)
-                referral = bite_detail.referral
-                patient_record = referral.patrec
-                
-                bite_detail.delete()
-                referral.delete()
-                
-                if not AnimalBite_Referral.objects.filter(patrec=patient_record).exists():
-                    patient_record.delete()
-                
-                return Response({
-                    "message": f"Successfully deleted bite record {bite_id}",
-                    "deleted_bite_id": bite_id
-                }, status=status.HTTP_200_OK)
-                
-        except Exception as e:
-            return Response(
-                {"detail": f"Error deleting bite record: {str(e)}"}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-class AnimalbiteDetailsDeleteView(generics.DestroyAPIView):
-    """
-    Alternative API view for deleting a single AnimalBite_Details record.
-    This one uses Django REST Framework's DestroyAPIView for standard behavior.
-    """
-    serializer_class = AnimalBiteDetailsSerializer
-    queryset = AnimalBite_Details.objects.all()
-    lookup_field = 'bite_id'
-    
-    def destroy(self, request, *args, **kwargs):
-        try:
-            with transaction.atomic():
-                instance = self.get_object() 
-                referral = instance.referral
-                patient_record = referral.patrec
-                
-                instance.delete() 
-                referral.delete() 
-                patient_record.delete() 
-                
-                return Response(
-                    {"message": "Record deleted successfully"}, 
-                    status=status.HTTP_204_NO_CONTENT
-                )
-        except Exception as e:
-            return Response(
-                {"error": str(e)}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-

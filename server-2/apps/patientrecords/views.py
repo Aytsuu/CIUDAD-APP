@@ -1,3 +1,4 @@
+import traceback
 from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -622,5 +623,47 @@ class GetPendingFollowUpVisits(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-  
-  
+
+#FOR FAM PLANNING MODULE  
+
+class ObstetricalHistoryByPatientView(generics.RetrieveAPIView):
+    serializer_class = ObstetricalHistorySerializer
+    lookup_field = 'pat_id'
+
+    def get_object(self):
+        pat_id = self.kwargs['pat_id']
+        try:
+            patient_record = PatientRecord.objects.get(pat_id=pat_id, patrec_type="Obstetrical")
+            
+            patrec_pk_value = patient_record.pk 
+            obstetrical_history_instance = Obstetrical_History.objects.filter(patrec_id=patrec_pk_value).first()
+
+            if not obstetrical_history_instance:
+                # If filter().first() returns None, it means no record was found.
+                raise status.HTTP_404_NOT_FOUND("Obstetrical History not found for the associated PatientRecord.")
+
+            return obstetrical_history_instance
+            
+        except PatientRecord.DoesNotExist:
+            raise status.HTTP_404_NOT_FOUND("PatientRecord of type Obstetrical not found for this patient.")
+        except Exception as e:
+            import traceback
+            traceback.print_exc() # Print full traceback to console for any other unexpected errors
+            raise status.HTTP_500_INTERNAL_SERVER_ERROR(f"An unexpected error occurred: {str(e)}")
+
+class LatestBodyMeasurementView(generics.RetrieveAPIView):
+    serializer_class = BodyMeasurementSerializer
+    lookup_field = 'pat_id'
+
+    def get_object(self):
+        patient_id_from_url = self.kwargs['pat_id']
+        try:
+            # We assume pat__pat_id=patient_id_from_url is now correct based on previous discussion
+            latest_measurement = BodyMeasurement.objects.filter(pat__pat_id=patient_id_from_url).latest('created_at')
+            return latest_measurement
+        except BodyMeasurement.DoesNotExist:
+            # For 404s, raise NotFound or Http404 (DRF's generics handle Http404 correctly)
+            raise NotFound(detail="Body Measurement not found for this patient.")
+        except Patient.DoesNotExist:
+            raise NotFound(detail=f"Patient with ID {patient_id_from_url} not found.")
+        
