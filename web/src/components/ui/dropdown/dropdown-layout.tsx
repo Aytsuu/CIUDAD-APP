@@ -13,6 +13,7 @@ interface Option {
   name: React.ReactNode;
   icon?: React.ReactNode;
   variant?: string;
+  disabled?: boolean
 }
 
 interface DropdownProps {
@@ -50,7 +51,7 @@ export default function DropdownLayout({
       </DropdownMenuTrigger>
       <DropdownMenuContent className={cn("", contentClassName)}>
         {options.map((option, index) => (
-          option.variant === "delete" ? (
+          !option.disabled && (option.variant === "delete" ? (
             <ConfirmationModal
               key={option.id || index}
               trigger={
@@ -82,7 +83,7 @@ export default function DropdownLayout({
               {option.icon}
               {option.name}
             </DropdownMenuItem>
-          )
+          ))
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

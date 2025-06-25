@@ -270,24 +270,6 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         return selectedPosition?.pos_title || "";
       };
 
-      if(row.original.position.toLowerCase() === "admin") {
-        return (
-          <div className="w-full flex justify-center py-2">
-            <Button variant={"outline"} className="border-none"
-              onClick={() => {
-                toast("Cannot modify protected admin", {
-                  icon: (
-                    <Lock size={16} className="text-orange-500" />
-                  ),
-                });
-              }}
-            >
-              <Lock className="text-black/70 cursor-not-allowed"/>
-            </Button>
-          </div>
-        )
-      }
-
       return (
         <div className="py-2">
           <DropdownLayout
@@ -308,13 +290,15 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                 name: "Change Role",
                 icon: <Pen className="w-4 h-4" />,
                 variant: "default",
+                disabled: row.original.position.toLowerCase() === "admin"
               },
               {
                 id: "delete",
                 name: "Remove Staff",
                 icon: <Trash className="w-4 h-4" />,
                 variant: "delete",
-              },
+                disabled: row.original.position.toLowerCase() === "admin"
+              }
             ]}
             onSelect={handleAction}
           />
