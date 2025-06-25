@@ -9,6 +9,7 @@ import {
   Lock,
   Pen,
   Trash,
+  User,
   UserRoundCheck,
 } from "lucide-react";
 import { AdministrationRecord } from "./administrationTypes";
@@ -31,6 +32,9 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { toast } from "sonner";
+import { useNavigate } from "react-router";
+import { useLoading } from "@/context/LoadingContext";
+import { getPersonalInfo } from "../profiling/restful-api/profilingGetAPI";
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
   {
@@ -109,6 +113,8 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { showLoading, hideLoading } = useLoading();
       const [isEditModalOpen, setIsEditModalOpen] =
         React.useState<boolean>(false);
       const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -134,21 +140,6 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         }
       }, [positions, isEditModalOpen, row.original.position, form]);
 
-      const handleAction = (action: string) => {
-        if (action === Action.Edit) {
-          handleEdit();
-        } else {
-          handleDelete();
-        }
-      };
-
-      const handleEdit = () => {
-        setIsEditModalOpen(true);
-        // Reset form state when opening
-        setIsSubmitting(false);
-        form.clearErrors();
-      };
-
       const handleCloseModal = () => {
         setIsEditModalOpen(false);
         setIsSubmitting(false);
@@ -159,6 +150,44 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         if (currentPosition) {
           form.setValue("assignPosition", String(currentPosition.pos_id));
         }
+        form.clearErrors();
+      };
+
+      const handleAction = (action: string) => {
+        if (action === Action.Edit) {
+          handleEdit();
+        } else if (action === Action.Delete) {
+          handleDelete();
+        } else {
+          handleView();
+        }
+      };
+
+      const handleView = async () => {
+        showLoading();
+        try {
+          const personalInfo = await getPersonalInfo(row.original.staff_id);
+          navigate("/resident/view", {
+            state: {
+              params: {
+                type: 'viewing',
+                data: {
+                  personalInfo: personalInfo,
+                  residentId: row.original.staff_id,
+                  familyId: row.original.fam
+                },
+              }
+            },
+          });
+        } finally {
+          hideLoading();
+        }
+      }
+
+      const handleEdit = () => {
+        setIsEditModalOpen(true);
+        // Reset form state when opening
+        setIsSubmitting(false);
         form.clearErrors();
       };
 
@@ -268,6 +297,12 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
               </Button>
             }
             options={[
+              {
+                id: "view",
+                name: "View Profile",
+                icon: <User className="w-4 h-4" />,
+                variant: "default",
+              },
               {
                 id: "edit",
                 name: "Change Role",

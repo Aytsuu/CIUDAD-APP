@@ -6,4 +6,5 @@ export enum Type {
 export enum Action {
   Delete = 'delete',
   Edit = 'edit',
+  View = 'view'
 }
