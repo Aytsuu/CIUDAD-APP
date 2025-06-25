@@ -29,7 +29,7 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
   try {
     const res = await api.post("profiling/resident/create/combined/", {
       per: {
-        per_id: personalInfo.per_id || null,
+        per_id: +personalInfo.per_id || null,
         per_lname: personalInfo.per_lname || null,
         per_fname: personalInfo.per_fname || null,
         per_mname: personalInfo.per_mname || null,
