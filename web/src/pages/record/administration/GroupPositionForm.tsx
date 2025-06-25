@@ -11,7 +11,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { CircleAlert, CircleCheck, Plus, Users, Building2, Trash2 } from "lucide-react"
+import { CircleAlert, CircleCheck, Plus, Users, Trash2, Badge as Position } from "lucide-react"
 import { useLocation } from "react-router"
 import { useAuth } from "@/context/AuthContext"
 import { useAddPositionBulk } from "./queries/administrationAddQueries"
@@ -145,6 +145,7 @@ export default function GroupPositionForm() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5"/>
                     Group Information
                   </CardTitle>
                   <CardDescription>Create a new position group and add positions to it</CardDescription>
@@ -227,7 +228,7 @@ export default function GroupPositionForm() {
               <Card className="sticky top-6">
                 <CardHeader className="mb-4">
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
+                    <Position className="h-5 w-5" />
                     Positions Preview
                     {positions.length > 0 && (
                       <Badge variant="secondary" className="ml-auto">
@@ -240,7 +241,7 @@ export default function GroupPositionForm() {
                 <CardContent>
                   {positions.length === 0 ? (
                     <div className="text-center py-8">
-                      <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <Position className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-sm text-muted-foreground">No positions added yet</p>
                       <p className="text-xs text-muted-foreground mt-1">Add positions using the form on the left</p>
                     </div>

@@ -39,9 +39,6 @@ export default function NewPositionForm() {
     }
   });
 
-  const watchedValues = form.watch();
-  const isFormValid = watchedValues.pos_group && watchedValues.pos_title && watchedValues.pos_max;
-
   React.useEffect(() => {
     if (isAdding || isUpdating) setIsSubmitting(true);
     else setIsSubmitting(false);
@@ -178,7 +175,7 @@ export default function NewPositionForm() {
                       </p>
                     </div>
                   </div>
-                  
+
                   {/* Help Text */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
