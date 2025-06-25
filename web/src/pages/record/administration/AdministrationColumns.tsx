@@ -30,7 +30,7 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Form } from "@/components/ui/form/form";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { usePositions } from "./queries/administrationFetchQueries";
-import { formatPositions } from "./AdministrationFormats";
+import { formatPositions } from "./administrationFormats";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { useLoading } from "@/context/LoadingContext";

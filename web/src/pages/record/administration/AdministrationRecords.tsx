@@ -106,7 +106,7 @@ export default function AdministrationRecords() {
                 </DropdownMenu>
 
                 <Link 
-                  to="/administration/role"
+                  to="role"
                   state={{
                     params: {
                       features: features,

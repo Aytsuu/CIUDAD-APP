@@ -12,7 +12,7 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "./queries/administrationFetchQueries";
-import { formatPositions } from "./AdministrationFormats";
+import { formatPositions } from "./administrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
 import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
 
