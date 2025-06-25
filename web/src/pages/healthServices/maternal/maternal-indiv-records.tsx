@@ -1,25 +1,60 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 
-import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
+import { ArrowUpDown, Eye, Search } from "lucide-react";
 import { FileInput } from "lucide-react";
 
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
+// import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 
-import MotherInfo from "./maternal-indiv-info";
+import { MaternalInfoCard } from "@/pages/healthServices/maternal/maternal-components/maternal-info-card";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 
 
+interface Patient {
+  pat_id: string;
+    patients: {
+      firstName: string;
+      lastName: string;
+      middleName: string;
+      sex: string;
+      dateOfBirth?: string
+      age: number;
+      ageTime: string;
+    };
+    address?: {
+      add_street?: string;
+      add_barangay?: string;
+      add_city?: string;
+      add_province?: string;
+      add_external_sitio?: string;
+    }
+    sitio?: string;
+    pat_type: string;
+    patrec_type?: string;
+}
+
 export default function MaternalIndivRecords() {
+
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.params?.patientData) {
+      const patientData = location.state.params.patientData;
+      setSelectedPatient(patientData);
+    }
+  }, [location.state]);
+
+
   type maternalIndivRecords = {
     id: number;
     dateCreated: string;
@@ -28,6 +63,7 @@ export default function MaternalIndivRecords() {
     type: "Transient" | "Resident";
     recordType: "Prenatal" | "Postpartum";
   };
+
   const columns: ColumnDef<maternalIndivRecords>[] = [
     {
       accessorKey: "id",
@@ -112,7 +148,7 @@ export default function MaternalIndivRecords() {
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to={viewPath}>
+                  <Link to={viewPath} state={{ params: { patientData: selectedPatient, recordId: row.original.id } }}>
                     <Eye size={15} />
                   </Link>
                 </div>
@@ -180,9 +216,16 @@ export default function MaternalIndivRecords() {
       description="Manage mother's individual record"
     >
       <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-        <div className="mb-5">
-          <MotherInfo />
-        </div>
+        {selectedPatient ? (
+          <div className="mb-5">
+            <MaternalInfoCard patient={selectedPatient} />  
+          </div>
+        ) : (
+          <div className="mb-5 rounded">
+            <p className="text-center text-gray-500">No patient selected</p>
+          </div>
+        )}
+        
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}

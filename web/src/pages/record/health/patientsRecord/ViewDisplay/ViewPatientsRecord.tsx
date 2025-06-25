@@ -23,6 +23,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import PersonalInfoTab from "./PersonalInfoTab";
 import Records from "./Records";
 import VisitHistoryTab from "./VisitHistoryTab";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PatientData {
   pat_id: string;
@@ -43,7 +44,7 @@ interface PatientData {
     add_city: string;
     add_province: string;
     sitio: string;
-  };
+  } | null;
   bloodType?: string;
   allergies?: string;
   chronicConditions?: string;
@@ -89,11 +90,11 @@ export default function ViewPatientRecord() {
       patientType: currentPatient.pat_type,
       houseNo: currentPatient.households[0]?.hh_id ?? "N/A",
       address: {
-        street: currentPatient.address.add_street || "",
-        sitio: currentPatient.address.sitio,
-        barangay: currentPatient.address.add_barangay,
-        city: currentPatient.address.add_city,
-        province: currentPatient.address.add_province,
+        street: currentPatient.address?.add_street || "",
+        sitio: currentPatient.address?.sitio,
+        barangay: currentPatient.address?.add_barangay,
+        city: currentPatient.address?.add_city,
+        province: currentPatient.address?.add_province,
       },
       bloodType: currentPatient.bloodType ?? "N/A",
       allergies: currentPatient.allergies ?? "N/A",
@@ -137,11 +138,11 @@ export default function ViewPatientRecord() {
   const getFullAddress = () =>
     patientData
       ? [
-          currentPatient.address.add_street,
-          currentPatient.address.sitio,
-          currentPatient.address.add_barangay,
-          currentPatient.address.add_city,
-          currentPatient.address.add_province,
+          currentPatient.address?.add_street,
+          currentPatient.address?.sitio,
+          currentPatient.address?.add_barangay,
+          currentPatient.address?.add_city,
+          currentPatient.address?.add_province,
         ]
           .filter(Boolean)
           .join(", ")
@@ -154,11 +155,11 @@ export default function ViewPatientRecord() {
       age: patientData ? calculateAge(patientData.dateOfBirth) : 0,
       addressFull: getFullAddress(),
       address: {
-        add_street: currentPatient?.address.add_street ?? "",
-        add_barangay: currentPatient?.address.add_barangay ?? "",
-        add_city: currentPatient?.address.add_city ?? "",
-        add_province: currentPatient?.address.add_province ?? "",
-        add_external_sitio: currentPatient?.address.sitio ?? "",
+        add_street: currentPatient?.address?.add_street ?? "",
+        add_barangay: currentPatient?.address?.add_barangay ?? "",
+        add_city: currentPatient?.address?.add_city ?? "",
+        add_province: currentPatient?.address?.add_province ?? "",
+        add_external_sitio: currentPatient?.address?.sitio ?? "",
       },
       households: [
         {
@@ -227,8 +228,11 @@ export default function ViewPatientRecord() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-lg">Loading patient details...</p>
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
       </div>
     );
   }
@@ -352,6 +356,7 @@ export default function ViewPatientRecord() {
           vaccinationCount={vaccinationCount}
           medicineCount={medicineCount}
           firstAidCount={firstAidCount}
+          postpartumCount={undefined}
           patientLinkData={patientLinkData}
         />
         <VisitHistoryTab completedData={completedData} pendingData={pendingData} />

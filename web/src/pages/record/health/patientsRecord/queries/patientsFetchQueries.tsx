@@ -5,7 +5,6 @@ import {
 	getPatientDetails, 
 	getAllFollowUpVisits,
   	getPatientPostpartumCount, 
-	getPatientPostpartumRecords
  } from "../restful-api/patientsGetAPI";
 
 // resident query keys
@@ -97,22 +96,3 @@ export const usePatientPostpartumRecords = (patientId: string) => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
-
-// Hook to get all postpartum records
-// export const useAllPostpartumRecords = () => {
-//   return useQuery({
-//     queryKey: ["allPostpartumRecords"],
-//     queryFn: getAllPostpartumRecords,
-//     staleTime: 5 * 60 * 1000, // 5 minutes
-//   })
-// }
-
-// // Hook to get specific postpartum record detail
-// export const usePostpartumRecordDetail = (pprId: string) => {
-//   return useQuery({
-//     queryKey: ["postpartumRecordDetail", pprId],
-//     queryFn: () => getPostpartumRecordDetail(pprId),
-//     enabled: !!pprId,
-//     staleTime: 5 * 60 * 1000, // 5 minutes
-//   })
-// }

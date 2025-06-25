@@ -149,7 +149,7 @@ const items: MenuItem[] = [
       { title: "Firstaid", url: "/all-firstaid-records" },
       {title:"Forwarded Records", url: "/forwarded-vaccination-records"},
       {title:"Archive", url: "/archiveMainInventoryStocks"},
-
+      {title: "Schedules", url: "/health-schedules"},
       
       {
         title: "Inventory",

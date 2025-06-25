@@ -2,7 +2,6 @@ import { UseFormReturn } from "react-hook-form"
 import { useState } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { z } from "zod"
-import { IoDocumentTextOutline } from "react-icons/io5";
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 

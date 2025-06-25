@@ -212,24 +212,6 @@ export default function PersonalInfoTab({
                         Address Information
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* <FormField
-                          control={form.control}
-                          name="houseNo"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                House Number
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditable}
-                                  className={!isEditable ? "bg-muted/30" : ""}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        /> */}
                         <FormField
                           control={form.control}
                           name="address.street"

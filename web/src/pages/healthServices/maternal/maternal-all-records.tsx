@@ -12,32 +12,101 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 // import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { Label } from "@/components/ui/label";
+import { useMaternalRecords } from "./queries/maternalFetchQueries";
+import { Skeleton } from "@/components/ui/skeleton";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+
 
 export default function MaternalAllRecords() {
-  type maternalRecords = {
-    id: number;
-    patient: {
+  interface maternalRecords  {
+    pat_id: string;
+    patients: {
       firstName: string;
       lastName: string;
       middleName: string;
-      gender: string;
+      sex: string;
+      dateOfBirth?: string
       age: number;
       ageTime: string;
     };
-    address: string;
-    sitio: "Logarta" | "Bolinawan";
-    type: "Transient" | "Resident";
+    address?: {
+      add_street?: string;
+      add_barangay?: string;
+      add_city?: string;
+      add_province?: string;
+      add_external_sitio?: string;
+    }
+    sitio?: string;
+    pat_type: "Transient" | "Resident";
+    patrec_type?: string;
   };
+
+
+  const { data: maternalRecordsData, isLoading } = useMaternalRecords();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [entriesCount, setEntriesCount] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const calculateAge = (dob: string): number => {
+    const birthDate = new Date(dob)
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
+  }
+
+
+  const transformData = (maternalData: any[]) : maternalRecords[] => {
+    if(!maternalData || !Array.isArray(maternalData)) return [];
+    
+    return maternalData.map((record) => {
+      const personalInfo = record.personal_info;
+      const dateOfBirth = personalInfo?.per_dob || "";
+
+      let age = 0;
+      if (dateOfBirth) {
+        age = Number.isNaN(calculateAge(dateOfBirth)) ? 0 : calculateAge(dateOfBirth);
+      }
+
+      const address = record.address;
+      console.log('Pat type:', record.pat_type);
+
+      return {
+        pat_id: record.pat_id,
+        patients: {
+          firstName: personalInfo?.per_fname || "",
+          lastName: personalInfo?.per_lname || "",
+          middleName: personalInfo?.per_mname || "",
+          sex: personalInfo?.per_sex || "",
+          age: age,
+          ageTime: "yrs",
+          dateOfBirth: dateOfBirth || "",
+        },
+        address: {
+          add_street: address?.add_street,
+          add_barangay: address?.add_barangay,
+          add_city: address?.add_city,
+          add_province: address?.add_province,
+          add_external_sitio: address?.add_external_sitio,
+        },
+        sitio: address?.sitio || "N/A",
+        pat_type: record.pat_type || "N/A",
+      };
+    });
+  }   
 
   const columns: ColumnDef<maternalRecords>[] = [
     {
-      accessorKey: "id",
+      accessorKey: "pat_id",
       header: "Patient ID",
       cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
+        <div className="flex w-full justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+            {row.original.pat_id}
           </div>
         </div>
       ),
@@ -53,7 +122,7 @@ export default function MaternalAllRecords() {
         </div>
       ),
       cell: ({ row }) => {
-        const patient = row.original.patient;
+        const patient = row.original.patients;
         const fullName =
           `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
 
@@ -62,7 +131,7 @@ export default function MaternalAllRecords() {
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-darkGray">
-                {patient.gender}, {patient.age} {patient.ageTime} old
+                {patient.sex}, {patient.age} {patient.ageTime} old
               </div>
             </div>
           </div>
@@ -79,11 +148,19 @@ export default function MaternalAllRecords() {
           Address <ArrowUpDown size={15} />
         </div>
       ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const addressObj = row.original.address;
+        const fullAddress = addressObj
+          ? [addressObj.add_street, addressObj.add_barangay, addressObj.add_city, addressObj.add_province]
+              .filter(Boolean)
+              .join(', ') || "N/A"
+          : "N/A";
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="w-full truncate">{fullAddress}</div>
+          </div>
+        );
+      },
     },
 
     {
@@ -100,80 +177,55 @@ export default function MaternalAllRecords() {
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.type}</div>
+          <div className="text-center w-full">{row.original.pat_type}</div>
         </div>
       ),
     },
-
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({}) => (
+      cell: ({row}) => (
         <>
           <div className="flex justify-center gap-2 ">
             <TooltipLayout 
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer ">  
-                  <Link to="/maternalindividualrecords"><p className="font-semibold">View</p></Link>
+                  <Link 
+                    to="/maternalindividualrecords"
+                    state={{
+                      params: { 
+                        patientData: {
+                          pat_id: row.original.pat_id,
+                          pat_type: row.original.pat_type, 
+                          address: row.original.address,
+                          patients: {
+                            firstName: row.original.patients.firstName,
+                            lastName: row.original.patients.lastName,
+                            middleName: row.original.patients.middleName,
+                            sex: row.original.patients.sex,
+                            dateOfBirth: row.original.patients.dateOfBirth,
+                            age: row.original.patients.age,
+                            ageTime: row.original.patients.ageTime, 
+                          },
+                          sitio: row.original.sitio,
+                          patrec_type: row.original.patrec_type,
+                        }
+                      }
+                    }}
+                    >
+                    <p className="font-semibold">View</p></Link>
                 </div>
                 } 
-              content="View Record"/>
+              content="View Record"
+              />
+              
           </div>
         </>
       ),
     },
   ];
-
-  const sampleData: maternalRecords[] = [
-    {
-      id: 1,
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 20,
-        ageTime: "yrs",
-      },
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Transient",
-    },
-
-    {
-      id: 2,
-      patient: {
-        lastName: "Siddiqui",
-        firstName: "Katrina",
-        middleName: "Sheen",
-        gender: "Female",
-        age: 25,
-        ageTime: "yrs",
-      },
-      address: "Ka Juan Pajac Lapu-Lapu City",
-      sitio: "Bolinawan",
-      type: "Transient",
-    },
-
-    {
-      id: 3,
-      patient: {
-        lastName: "Smith",
-        firstName: "Loewe",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 16,
-        ageTime: "yrs",
-      },
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Logarta",
-      type: "Resident",
-    },
-  ];
-
-  // const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // const [searchTerm, setSearchTerm] = useState("");
-  const data = sampleData;
+ 
+  const data = transformData(maternalRecordsData);
 
   const filter = [
     { id: "All", name: "All" },
@@ -182,13 +234,35 @@ export default function MaternalAllRecords() {
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter(
-          (item) =>
-            item.type === selectedFilter || item.sitio === selectedFilter
-        );
+  const filteredData = data.filter((item) => {
+    const matchesSearchTerm = searchTerm === "" ||
+      `${item.patients.firstName} ${item.patients.lastName} ${item.patients.middleName}`
+        .toLowerCase().includes(searchTerm.toLowerCase()) || 
+      item.pat_id.toLowerCase().includes(searchTerm.toLowerCase()); 
+
+    const matchesFilter = selectedFilter === "All" || item.pat_type === selectedFilter;
+
+    return matchesSearchTerm && matchesFilter;
+  })
+
+  const totalEntries = Math.ceil(filteredData.length / entriesCount);
+  const maternalPagination = filteredData.slice(
+    (currentPage - 1) * entriesCount,
+    currentPage * entriesCount
+  )
+
+
+  if(isLoading){
+     return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
+
 
   return (
     <LayoutWithBack 
@@ -205,7 +279,7 @@ export default function MaternalAllRecords() {
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                   size={17}
                 />
-                <Input placeholder="Search..." className="pl-10 w-full bg-white" />
+                <Input placeholder="Search..." className="pl-10 w-full bg-white"  value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/>
               </div>
               <SelectLayout
                 placeholder="Select filter"
@@ -242,7 +316,7 @@ export default function MaternalAllRecords() {
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-8" defaultValue="10" />
+              <Input type="number" className="w-14 h-8" defaultValue={entriesCount} onChange={(e) => setEntriesCount(Number(e.target.value))} />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
@@ -268,12 +342,14 @@ export default function MaternalAllRecords() {
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing 1-10 of 150 rows
+              Showing 1-{Math.min((entriesCount) || 10 , filteredData.length)} of {filteredData.length} rows
             </p>
 
             {/* Pagination */}
             <div className="w-full sm:w-auto flex justify-center">
-              {/* <PaginationLayout className="" /> */}
+              {maternalPagination.length > 0 && (
+                <PaginationLayout currentPage={currentPage} totalPages={totalEntries} onPageChange={setCurrentPage} />
+              )}
             </div>
           </div>
         </div>

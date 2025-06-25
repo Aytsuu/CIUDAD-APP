@@ -72,7 +72,7 @@ export default function Records({
                       </div>
                     </div>
                   </div>
-                  <Link to="/invVaccinationRecord" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                  <Link to="/ " state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
                     <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium">
                       View Details
                     </Button>
