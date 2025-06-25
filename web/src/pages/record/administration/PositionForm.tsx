@@ -320,33 +320,33 @@ export default function PositionForm() {
   }, [editPosition, editPositionHealth, navigate]);
 
   const submit = React.useCallback(async () => {
-    const formIsValid = await form.trigger();
-    if (!formIsValid) {
-      const missingFields = [];
-      if (!form.watch('pos_title')) missingFields.push('Title');
-      if (!form.watch('pos_max')) missingFields.push('Maximum Holders');
-      
-      toast(`Please fill out all required fields: ${missingFields.join(', ')}`, {
+  const formIsValid = await form.trigger();
+  if (!formIsValid) {
+    const missingFields = [];
+    if (!form.watch('pos_title')) missingFields.push('Title');
+    if (!form.watch('pos_max')) missingFields.push('Maximum Holders');
+    
+    toast(`Please fill out all required fields: ${missingFields.join(', ')}`, {
+      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+    });
+    return;
+  }
+  
+  const values = form.getValues();
+  if (formType === Type.Add) {
+    await handleAddPosition(values); // Use handleAddPosition instead of direct addPosition
+  } else {
+    const positionId = params.data.pos_id;
+    if (!positionId) {
+      console.error('Position ID is missing for edit operation');
+      toast("Error: Position ID not found for update", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
       });
       return;
     }
-    
-    const values = form.getValues();
-    if (formType === Type.Add) {
-      await handleAddPosition(values); // Use handleAddPosition instead of direct addPosition
-    } else {
-      const positionId = params.data.pos_id;
-      if (!positionId) {
-        console.error('Position ID is missing for edit operation');
-        toast("Error: Position ID not found for update", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-        });
-        return;
-      }
-      await handleEditPosition(positionId, values);
-    }
-  }, [form, formType, params.data, handleAddPosition, handleEditPosition]);
+    await handleEditPosition(positionId, values);
+  }
+}, [form, formType, params.data, handleAddPosition, handleEditPosition]);
 
   return (
     <main className="flex justify-center">

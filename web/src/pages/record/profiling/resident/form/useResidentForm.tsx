@@ -71,7 +71,6 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
       }
     });
 
-    console.log(isDefault)
     return isDefault;
   };
 

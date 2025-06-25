@@ -57,8 +57,7 @@ class StaffCreateSerializer(serializers.ModelSerializer):
   
   def create(self, validated_data):
     pos = validated_data.get('pos', None)
-    pos_data = Position.objects.filter(pos_id=pos).first()
-    max_holders = pos_data.pos_max
+    max_holders = pos.pos_max
     holders = Staff.objects.filter(pos=pos)
 
     if len(holders) < max_holders:

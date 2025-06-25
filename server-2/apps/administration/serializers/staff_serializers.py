@@ -48,3 +48,26 @@ class StaffFullSerializer(serializers.ModelSerializer):
   def get_rp(self, obj):
       from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer  # Lazy import inside the method
       return ResidentProfileMinimalSerializer(obj.rp).data
+  
+
+class StaffCreateSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Staff
+    fields = '__all__'
+  
+  def create(self, validated_data):
+    pos = validated_data.get('pos', None)
+    pos_data = Position.objects.filter(pos_id=pos).first()
+    max_holders = pos_data.pos_max
+    holders = Staff.objects.filter(pos=pos)
+
+    if len(holders) < max_holders:
+      register = Staff(**validated_data)
+      register.save()
+      return register
+    
+    return None
+  
+  
+
+  
