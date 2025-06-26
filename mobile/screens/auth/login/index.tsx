@@ -56,7 +56,7 @@ export default () => {
     <ScreenLayout
       showExitButton={false}
       customLeftAction={<Text className="text-[13px] ml-2"></Text>}
-    >
+    > 
       <View className="flex-1 flex-col">
         <View className="items-center justify-center mt-7">
           <Image

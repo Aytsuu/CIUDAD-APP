@@ -1,5 +1,6 @@
 // Format date (YYYY-MM-DD)
 export const formatDate = (date: string | Date) => {
+  if(!date) return null;
   return new Date(date).toISOString().split('T')[0]
 }
 

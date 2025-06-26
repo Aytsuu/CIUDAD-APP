@@ -6,7 +6,7 @@ class Position(models.Model):
     pos_id = models.BigAutoField(primary_key=True)    
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
-    pos_category = models.CharField(max_length=100, null=True)
+    pos_group = models.CharField(max_length=100, null=True, default="Non-Grouped")
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions', null=True)
 
     class Meta:
@@ -44,7 +44,7 @@ class Permission(models.Model):
         db_table = 'permission'
 
 class Staff(models.Model):
-    staff_id = models.CharField(primary_key=True,max_length=100)
+    staff_id = models.CharField(primary_key=True,max_length=50)
     staff_assign_date = models.DateField(default=date.today)
     staff_type = models.CharField(max_length=20, default="Health Staff")
     rp = models.ForeignKey('healthProfiling.ResidentProfile', on_delete=models.CASCADE, related_name="staff_assignments")

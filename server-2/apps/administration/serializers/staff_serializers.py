@@ -2,7 +2,7 @@ from rest_framework import serializers
 from ..models import *
 from ..serializers.position_serializers import PositionBaseSerializer
 from ..serializers.assignment_serializers import AssignmentMinimalSerializer
-from apps.healthProfiling.models import ResidentProfile
+from apps.healthProfiling.models import ResidentProfile, FamilyComposition
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -28,11 +28,19 @@ class StaffTableSerializer(serializers.ModelSerializer):
   dob = serializers.CharField(source='rp.per.per_dob')
   contact = serializers.CharField(source='rp.per.per_contact')
   position = serializers.CharField(source='pos.pos_title')
+  fam = serializers.SerializerMethodField()
 
   class Meta:
     model = Staff
     fields = ['staff_id', 'lname', 'fname', 'mname', 'dob', 
-              'contact', 'position', 'staff_assign_date']
+              'contact', 'position', 'staff_assign_date', 'fam']
+  
+  def get_fam(self, obj):
+     family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam')
+
+     if family_comp:
+        return family_comp.fam.fam_id 
+     return None
   
 class StaffFullSerializer(serializers.ModelSerializer):
   pos = PositionBaseSerializer(read_only=True)
@@ -57,8 +65,7 @@ class StaffCreateSerializer(serializers.ModelSerializer):
   
   def create(self, validated_data):
     pos = validated_data.get('pos', None)
-    pos_data = Position.objects.filter(pos_id=pos).first()
-    max_holders = pos_data.pos_max
+    max_holders = pos.pos_max
     holders = Staff.objects.filter(pos=pos)
 
     if len(holders) < max_holders:

@@ -73,7 +73,7 @@ export default function HouseholdFormLayout() {
     if(head) {
       const resident = residents.find((res: any) => res.id === head);
       if(resident) {
-        const addresses = formattedAddresses.filter((add: any) => add.per_id === resident.per_id);
+        const addresses = formattedAddresses.filter((add: any) => add?.per_id === resident.per_id);
         console.log(addresses)
         setAddresses(addresses);
       }
@@ -105,7 +105,7 @@ export default function HouseholdFormLayout() {
     const householdInfo = form.getValues();
     addHousehold({
       householdInfo: householdInfo, 
-      staffId: user?.staff.staff_id
+      staffId: user?.staff?.staff_id
     }, {
       onSuccess: (household) => {
         dispatch(householdRegistered({reg: true, hh_id: household.hh_id}));

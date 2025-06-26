@@ -56,3 +56,8 @@ class RequestFileCreateView(generics.CreateAPIView):
     created_instances = RequestFile.objects.bulk_create(instances)
     return (Response(status=status.HTTP_200_OK) if len(created_instances) > 0 
             else Response(status=status.HTTP_400_BAD_REQUEST))
+
+class RequestDeleteView(generics.DestroyAPIView):
+  serializer_class = RequestBaseSerializer
+  queryset = RequestRegistration.objects.all()
+  lookup_field = 'req_id'
