@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleAlert, MoveRight } from "lucide-react";
+import { ArrowUpDown, Bookmark, Check, CircleAlert, MoveRight } from "lucide-react";
 import { IRReport, ARReport } from "./ReportTypes";
 import { Button } from "@/components/ui/button/button";
 import ViewButton from "@/components/ui/view-button";
@@ -7,6 +7,8 @@ import { useNavigate } from "react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import React from "react";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Badge } from "@/components/ui/badge";
 
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [
@@ -66,7 +68,8 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
 ];
 
 export const ARColumns = (
-  isCreatingWeeklyAR: boolean
+  isCreatingWeeklyAR: boolean,
+  compositions: any
 ): ColumnDef<ARReport>[] => [
   {
     accessorKey: "select",
@@ -79,7 +82,6 @@ export const ARColumns = (
               (table.getIsSomePageRowsSelected() && "indeterminate")
             }
             onCheckedChange={(value) => {
-
               table.toggleAllPageRowsSelected(!!value)
             }}
             aria-label="Select all"
@@ -96,8 +98,8 @@ export const ARColumns = (
         }, [isCreatingWeeklyAR, row.getIsSelected()])
 
         const selectionValidator = React.useCallback(() => {
-          if(row.getIsSelected() && row.original.ar_status === 'Unsigned') {
-            toast(`Report No. ${row.original.ar_id} is Unsigned`, {
+          if(row.getIsSelected() && row.original.status === 'Unsigned') {
+            toast(`Report No. ${row.original.id} is Unsigned`, {
               icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
               style: {
                 border: "1px solid rgb(225, 193, 193)",
@@ -109,12 +111,27 @@ export const ARColumns = (
             row.toggleSelected(false);
           }
         },[isCreatingWeeklyAR, row.getIsSelected()])
-      
+
+        const isInWeeklyAR = compositions.some((comp: any) => comp.ar.id === row.original.id)
+        
+        if(isInWeeklyAR) {
+          return (
+            <TooltipLayout 
+              trigger={
+                <div className="w-full flex justify-center items-end">
+                  <Bookmark size={22} className="stroke-none fill-green-500 cursor-pointer"/>
+                </div>
+              }
+              content="Already in weekly AR"
+            />
+          )
+        }
+
         return (
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(value) => {
-              if(row.original.ar_status === 'Unsigned') {
+              if(row.original.status === 'Unsigned') {
                 toast("Cannot add unsigned reports", {
                   icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
                   style: {

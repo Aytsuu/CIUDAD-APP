@@ -1,6 +1,5 @@
-"use client"
-import { fp_record, fp_type, pregnancyCheck, risk_sti, risk_vaw } from "./request-db/PostRequest"
 
+import { fp_obstetrical, fp_record, physical_exam, fp_type, risk_sti, risk_vaw, acknowledgement, pelvic_exam, pregnancy_check } from "./request-db/PostRequest"
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
 import FamilyPlanningForm2 from "./FpPage2"
@@ -9,8 +8,14 @@ import FamilyPlanningForm4 from "./FpPage4"
 import FamilyPlanningForm5 from "./FpPage5"
 import FamilyPlanningForm6 from "./FpPage6"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { data } from "react-router"
 
+
+
+// Initial form data structure
 const initialFormData: FormData = {
+  pat_id: "",
+  fpt_id: "",
   clientID: "",
   philhealthNo: "",
   nhts_status: false,
@@ -45,6 +50,7 @@ const initialFormData: FormData = {
   reasonForFP: "",
   otherReasonForFP: "",
   reason: "",
+  otherReason: "",
   methodCurrentlyUsed: undefined,
   otherMethod: "",
   medicalHistory: {
@@ -73,7 +79,7 @@ const initialFormData: FormData = {
     typeOfLastDelivery: undefined,
     lastMenstrualPeriod: "",
     previousMenstrualPeriod: "",
-    menstrualFlow: undefined,
+    menstrualFlow: "Scanty",
     dysmenorrhea: false,
     hydatidiformMole: false,
     ectopicPregnancyHistory: false,
@@ -91,7 +97,33 @@ const initialFormData: FormData = {
     partnerDisapproval: false,
     domesticViolence: false,
     referredTo: undefined,
+    otherReferral: "",
   },
+  weight: "",
+  height: "",
+  bloodPressure: "",
+  pulseRate: "",
+  skinExamination: "normal",
+  conjunctivaExamination: "normal",
+  neckExamination: "normal",
+  breastExamination: "normal",
+  abdomenExamination: "normal",
+  extremitiesExamination: "normal",
+  pelvicExamination: "normal",
+  cervicalConsistency: "firm",
+  cervicalTenderness: false,
+  cervicalAdnexalMassTenderness: false,
+  uterinePosition: "mid",
+  uterineDepth: "",
+  acknowledgement: {
+    selectedMethod: "coc",
+    clientSignature: "",
+    clientSignatureDate: new Date().toISOString().split("T")[0],
+    guardianName: "",
+    guardianSignature: "",
+    guardianSignatureDate: new Date().toISOString().split("T")[0],
+  },
+  serviceProvisionRecords: [],
   pregnancyCheck: {
     breastfeeding: false,
     abstained: false,
@@ -100,68 +132,18 @@ const initialFormData: FormData = {
     recent_abortion: false,
     using_contraceptive: false,
   },
-  weight: "",
-  height: "",
-  bloodPressure: "",
-  pulseRate: "",
-  skinNormal: false,
-  skinPale: false,
-  skinYellowish: false,
-  skinHematoma: false,
-  conjunctivaNormal: false,
-  conjunctivaPale: false,
-  conjunctivaYellowish: false,
-  neckNormal: false,
-  neckMass: false,
-  neckEnlargedLymphNodes: false,
-  breastNormal: false,
-  breastMass: false,
-  breastNippleDischarge: false,
-  abdomenNormal: false,
-  abdomenMass: false,
-  abdomenVaricosities: false,
-  extremitiesNormal: false,
-  extremitiesEdema: false,
-  extremitiesVaricosities: false,
-  pelvicNormal: false,
-  pelvicMass: false,
-  pelvicAbnormalDischarge: false,
-  pelvicCervicalAbnormalities: false,
-  pelvicWarts: false,
-  pelvicPolypOrCyst: false,
-  pelvicInflammationOrErosion: false,
-  pelvicBloodyDischarge: false,
-  cervicalConsistencyFirm: false,
-  cervicalConsistencySoft: false,
-  cervicalTenderness: false,
-  cervicalAdnexalMassTenderness: false,
-  uterinePositionMid: false,
-  uterinePositionAnteflexed: false,
-  uterinePositionRetroflexed: false,
-  uterineDepth: "",
-  acknowledgement: {
-    selectedMethod: "coc",
-    clientSignature: "",
-    clientSignatureDate: "",
-    guardianName: "",
-    guardianSignature: "",
-    guardianSignatureDate: "",
-  },
-  serviceProvisionRecords: [],
+  isTransient: "Resident",
+  patientId: undefined,
 }
 
 export default function FamilyPlanningMain() {
   const [currentPage, setCurrentPage] = useState(1)
   const [formData, setFormData] = useState<FormData>(initialFormData)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleNext = () => {
-    try {
-      console.log("Moving to next page, current data:", formData)
-      setCurrentPage((prev) => prev + 1)
-    } catch (error) {
-      console.error("Validation Error:", error)
-      setCurrentPage((prev) => prev + 1)
-    }
+    console.log("Moving to next page, current data:", formData)
+    setCurrentPage((prev) => prev + 1)
   }
 
   const handlePrevious = () => {
@@ -172,22 +154,46 @@ export default function FamilyPlanningMain() {
     setFormData((prev) => ({ ...prev, ...data }))
   }
 
-  const handleSubmit = () => {
-    // obstetrical(formData)
-    risk_sti(formData)
-    risk_vaw(formData)
+  const handleSubmit = async () => {
+    console.log("All datas submitted: ", formData)
+    try{
+      const fprecord_id = await fp_record(formData)
+      const fpt_id = await fp_type(formData,fprecord_id)
+      formData.fpt_id = fpt_id
+
+      await fp_type(formData,fprecord_id)
+      await fp_obstetrical(formData,fprecord_id)
+      await risk_sti(formData,fprecord_id)
+      await risk_vaw(formData,fprecord_id)
+      await fp_obstetrical(formData,fprecord_id)
+      await physical_exam(formData,fprecord_id)
+      await pregnancy_check(formData,fprecord_id)
+      await pelvic_exam(formData,fprecord_id)
+      await acknowledgement(formData,fprecord_id)
+
+      console.log("All datas submitted: ", formData)
+
+    // risk_sti(formData)
+    // risk_vaw(formData)
     // physical_exam(formData)
-    // acknowledgement(formData)
-    fp_type(formData)
-    fp_record(formData)
+    // fp_type(formData)
+    // fp_record(formData)
     // fp_obstetrical(formData)
-    pregnancyCheck(formData)
-    console.log("Submitting data: ", formData)
+    // fp_findings(formData)
+    console.log("📌 Submitting with pat_id:", formData.pat_id)
+   
     alert("Form submitted successfully!")
+  } catch (err) {
+    console.error("Error submitting form:", err)
+    alert("Something went wrong while submitting the form.")
   }
+}
+
 
   return (
     <>
+     
+
       {currentPage === 1 && (
         <FamilyPlanningForm onNext2={handleNext} updateFormData={updateFormData} formData={formData} />
       )}
@@ -229,6 +235,7 @@ export default function FamilyPlanningMain() {
           onSubmitFinal={handleSubmit}
           updateFormData={updateFormData}
           formData={formData}
+         
         />
       )}
     </>

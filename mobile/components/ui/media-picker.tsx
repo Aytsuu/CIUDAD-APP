@@ -79,7 +79,7 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
 
   const handleSelectedImage = async (imageUri: string) => {
     setSelectedImage({
-      rf_url: imageUri,
+      url: imageUri,
     });
     setIsLoading(true);
     const compressedImage = await ImageManipulator.manipulateAsync(
@@ -125,12 +125,10 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
     console.log("Upload successful!", publicUrl);
     setIsLoading(false);
     setSelectedImage({
-      rf_name: fileName,
-      rf_type: "image/jpeg",
-      rf_path: filePath,
-      rf_url: publicUrl,
-      rf_is_id: false,
-      rf_id_type: "",
+      name: fileName,
+      type: "image/jpeg",
+      path: filePath,
+      url: publicUrl,
     });
   }
 
@@ -181,9 +179,9 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
         onPress={openGallery}
         disabled={isLoading}
       >
-        {selectedImage.rf_url ? (
+        {selectedImage.url ? (
           <Image 
-            source={{ uri: selectedImage.rf_url }} 
+            source={{ uri: selectedImage.url }} 
             className="w-full h-full" 
             resizeMode="cover"
           />

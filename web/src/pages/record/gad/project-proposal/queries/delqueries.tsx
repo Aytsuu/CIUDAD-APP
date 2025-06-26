@@ -1,0 +1,176 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { CircleCheck, CircleX } from "lucide-react";
+import { archiveProjectProposal, 
+  restoreProjectProposal,
+  permanentDeleteProjectProposal, deleteSupportDocument } from "../api/delreq";
+import { ProjectProposal } from "./fetchqueries";
+
+
+export const useArchiveProjectProposal = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: archiveProjectProposal,
+    onMutate: async (gprId) => {
+      await queryClient.cancelQueries({ queryKey: ["projectProposals"] });
+      const previousProposals = queryClient.getQueryData<ProjectProposal[]>(["projectProposals"]);
+      
+      queryClient.setQueryData<ProjectProposal[]>(["projectProposals"], (old = []) =>
+        old.map(proposal => 
+          proposal.gprId === gprId 
+            ? { ...proposal, gprIsArchive: true } 
+            : proposal
+        )
+      );
+      
+      return { previousProposals };
+    },
+    onError: (error: Error, gprId, context) => {
+      if (context?.previousProposals) {
+        queryClient.setQueryData(["projectProposals"], context.previousProposals);
+      }
+      toast.error("Failed to archive project proposal", {
+        description: error.message,
+        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+      toast.success("Project proposal archived successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
+    }
+  });
+};
+
+export const useRestoreProjectProposal = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: restoreProjectProposal,
+    onMutate: async (gprId) => {
+      await queryClient.cancelQueries({ queryKey: ["projectProposals"] });
+      const previousProposals = queryClient.getQueryData<ProjectProposal[]>(["projectProposals"]);
+      
+      queryClient.setQueryData<ProjectProposal[]>(["projectProposals"], (old = []) =>
+        old.map(proposal => 
+          proposal.gprId === gprId 
+            ? { ...proposal, gprIsArchive: false } 
+            : proposal
+        )
+      );
+      
+      return { previousProposals };
+    },
+    onError: (error: Error, gprId, context) => {
+      if (context?.previousProposals) {
+        queryClient.setQueryData(["projectProposals"], context.previousProposals);
+      }
+      toast.error("Failed to restore project proposal", {
+        description: error.message,
+        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+      toast.success("Project proposal restored successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
+    }
+  });
+};
+
+export const usePermanentDeleteProjectProposal = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: permanentDeleteProjectProposal,
+    onMutate: async (gprId) => {
+      await queryClient.cancelQueries({ queryKey: ["projectProposals"] });
+      const previousProposals = queryClient.getQueryData<ProjectProposal[]>(["projectProposals"]);
+      
+      queryClient.setQueryData<ProjectProposal[]>(["projectProposals"], (old = []) =>
+        old.filter(proposal => proposal.gprId !== gprId)
+      );
+      
+      return { previousProposals };
+    },
+    onError: (error: Error, gprId, context) => {
+      if (context?.previousProposals) {
+        queryClient.setQueryData(["projectProposals"], context.previousProposals);
+      }
+      toast.error("Failed to permanently delete project proposal", {
+        description: error.message,
+        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+      toast.success("Project proposal permanently deleted", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
+    }
+  });
+};
+
+// export const useDeleteProjectProposal = () => {
+//   const queryClient = useQueryClient();
+
+//   return useMutation({
+//     mutationFn: (gprId: number) => delProjectProposal(gprId),
+//     onMutate: async (gprId) => {
+//       await queryClient.cancelQueries({ queryKey: ["projectProposals"] });
+//       const previousProposals = queryClient.getQueryData<ProjectProposal[]>(["projectProposals"]);
+//       queryClient.setQueryData<ProjectProposal[]>(["projectProposals"], (old = []) =>
+//         old.filter((proposal) => proposal.gprId !== gprId)
+//       );
+//       return { previousProposals };
+//     },
+//     onError: (error: Error, gprId, context) => {
+//       if (context?.previousProposals) {
+//         queryClient.setQueryData(["projectProposals"], context.previousProposals);
+//       }
+//       toast.error("Failed to delete project proposal", {
+//         description: error.message,
+//         duration: 2000,
+//       });
+//     },
+//     onSuccess: () => {
+//       toast.success("Project proposal deleted successfully", {
+//         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+//         duration: 2000,
+//       });
+//     },
+//     onSettled: () => {
+//       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+//     },
+//   });
+// };
+
+export const useDeleteSupportDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (psdId: number) => deleteSupportDocument(psdId),
+    onSuccess: (data, psdId) => {
+      queryClient.invalidateQueries({ queryKey: ["supportDocs"] });
+      // toast.success("Support document deleted successfully", {
+      //   icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      //   duration: 2000,
+      // });
+    },
+    onError: (error: Error) => {
+      // toast.error("Failed to delete support document", {
+      //   description: error.message,
+      //   duration: 2000,
+      // });
+    },
+  });
+};

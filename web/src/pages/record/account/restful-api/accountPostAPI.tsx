@@ -20,6 +20,7 @@ import supabase from "@/supabase/supabase";
 
 export const addAccount = async (accountInfo: Record<string, string>, residentId: string) => {
   try {
+    console.log(residentId)
     // 1. First register with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: accountInfo.email,
@@ -27,7 +28,7 @@ export const addAccount = async (accountInfo: Record<string, string>, residentId
       options: {
         data: {
           username: accountInfo.username,
-          resident_id: residentId
+          rp: residentId
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`
       }

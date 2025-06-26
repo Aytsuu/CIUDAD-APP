@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from django.db import transaction
+from django.db.models import Q
 from apps.pagination import StandardResultsPagination
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
@@ -10,9 +11,27 @@ class RequestTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = RequestRegistration.objects.all()
-    
+    queryset = RequestRegistration.objects.select_related(
+      'per'
+    ).prefetch_related(
+      'per__personaladdress_set__add'
+    ).only(
+      'req_id',
+      'req_date',
+      'per__per_lname',
+      'per__per_fname',
+      'per__per_mname'
+    )
 
+    search_query = self.request.query_params.get('search', '').strip()
+    if search_query:
+      queryset = queryset.filter(
+        Q(req_id__icontains=search_query) |
+        Q(req_date__icontains=search_query) |
+        Q(per__per_lname__icontains=search_query) |
+        Q(per__per_fname__icontains=search_query) |
+        Q(per__per_mname__icontains=search_query) 
+      ).distinct()
     return queryset
 
 class RequestCreateView(generics.CreateAPIView):
@@ -37,3 +56,8 @@ class RequestFileCreateView(generics.CreateAPIView):
     created_instances = RequestFile.objects.bulk_create(instances)
     return (Response(status=status.HTTP_200_OK) if len(created_instances) > 0 
             else Response(status=status.HTTP_400_BAD_REQUEST))
+
+class RequestDeleteView(generics.DestroyAPIView):
+  serializer_class = RequestBaseSerializer
+  queryset = RequestRegistration.objects.all()
+  lookup_field = 'req_id'

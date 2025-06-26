@@ -3,7 +3,7 @@ import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
 import { useAuth } from "@/context/AuthContext";
-import { Type } from "../../profilingEnums";
+import { Origin, Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { capitalizeAllFields } from "@/helpers/capitalize";
@@ -30,7 +30,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     handleSubmitError,
     populateFields,
     checkDefaultValues,
-  } = useResidentForm("", params.origin);
+  } = useResidentForm("", params?.origin);
   const [addresses, setAddresses] = React.useState<any[]>([
     {
       add_province: "",
@@ -50,13 +50,14 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
   const [validAddresses, setValidAddresses] = React.useState<boolean[]>([]);
   const { data: residentsList, isLoading: isLoadingResidents } =
-    useResidentsList();
+    useResidentsList(params?.origin === Origin.Administration);
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
 
   const formattedSitio = React.useMemo(
     () => formatSitio(sitioList) || [],
     [sitioList]
   );
+
   const formattedResidents = React.useMemo(
     () => formatResidents(residentsList),
     [residentsList]
@@ -100,10 +101,11 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
   const handleComboboxChange = React.useCallback(() => {
     const data = residentsList.find(
-      (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
+      (resident: any) => resident.rp_id === form.watch("per_id")?.split(" ")[0]
     );
 
     populateFields(data?.personal_info);
+    setAddresses(data?.personal_info.per_addresses)
   }, [form.watch("per_id")]);
 
   const submit = async () => {
@@ -125,7 +127,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       const personalInfo = capitalizeAllFields(form.getValues());
       
       // // Safely get staff_id with proper type checking
-      const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
+      const staffId = user?.staff?.staff_id;
       
       if (!staffId) {
         throw new Error("Staff information not available");
@@ -173,7 +175,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   };
 
   return (
-    <LayoutWithBack title={params.title} description={params.description}>
+    <LayoutWithBack title={params?.title} description={params?.description}>
       <Card className="w-full p-10">
         <div className="pb-4">
           <h2 className="text-lg font-semibold">Personal Information</h2>
@@ -196,8 +198,10 @@ export default function ResidentCreateForm({ params }: { params: any }) {
               formType={Type.Create}
               isSubmitting={isSubmitting}
               submit={submit}
-              origin={params.origin ? params.origin : ""}
-              isReadOnly={false}
+              origin={params?.origin ? params.origin : ""}
+              isReadOnly={form.watch("per_id") && params?.origin == Origin.Administration 
+                ? true : false
+              }
               isAllowSubmit={isAllowSubmit}
               setAddresses={setAddresses}
               setValidAddresses={setValidAddresses}

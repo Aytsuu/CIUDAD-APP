@@ -80,6 +80,7 @@ export default function FirstAidStocks() {
           inv_id: firstAidStock.inv_id,
         }));
     }, [firstAidStocks]);
+    
 
   const filteredData = React.useMemo(() => {
     return formatFirstAidStocksData().filter((record) =>
@@ -171,9 +172,9 @@ export default function FirstAidStocks() {
         </div>
         <DialogLayout
           trigger={
-            <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+            <Button>
               <Plus size={15} /> New
-            </div>
+            </Button>
           }
           title="First Aid Items"
           description="Add New First Aid Item"

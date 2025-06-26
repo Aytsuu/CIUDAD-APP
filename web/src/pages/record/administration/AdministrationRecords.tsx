@@ -4,18 +4,19 @@ import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-import { Search, UserRoundCog, Plus, Download, Users, FileDown, ClockArrowUp, Loader2 } from "lucide-react";
+import { Search, UserRoundCog, Plus, Download, Users, FileDown, Loader2, CircleAlert } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { useFeatures, useStaffs } from "./queries/administrationFetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
-import { Card, CardContent } from "@/components/ui/card/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card/card";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function AdministrationRecords() {
-  // Initializing states
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -31,8 +32,15 @@ export default function AdministrationRecords() {
 
   const staffList = staffs?.results || [];
   const totalCount = staffs?.count || 0;
-  const totalPages = Math.ceil(totalCount.length / pageSize);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoadingStaffs) showLoading();
+    else hideLoading();
+  }, [isLoadingStaffs])
   
+  // ----------------- HANDLERS --------------------
   const handleExport = (type: "csv" | "excel" | "pdf") => {
     switch (type) {
       case "csv":
@@ -47,56 +55,14 @@ export default function AdministrationRecords() {
     }
   }
 
-  const totalStaff = staffList.length;
-
   return (
+    // ----------------- RENDER --------------------
     <MainLayoutComponent
       title="Administrative Records"
       description="Manage and view staff information"
     >
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Residents</p>
-                  <p className="text-2xl font-bold">{totalStaff}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <ClockArrowUp className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Active
-                </Badge>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold">+{Math.max(0, totalStaff - 50)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        
-
+      
         <Card>
           {/* Search and Actions Bar */}
           <div className="bg-white rounded-xl p-6">
@@ -140,7 +106,7 @@ export default function AdministrationRecords() {
                 </DropdownMenu>
 
                 <Link 
-                  to="/administration/role"
+                  to="role"
                   state={{
                     params: {
                       features: features,
@@ -204,7 +170,7 @@ export default function AdministrationRecords() {
           {isLoadingStaffs && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Loading residents...</span>
+              <span className="ml-2 text-gray-600">Loading staffs...</span>
             </div>
           )}
 
@@ -214,12 +180,12 @@ export default function AdministrationRecords() {
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchQuery ? "No residents found" : "No residents yet"}
+                {searchQuery ? "No staffs found" : "No staffs yet"}
               </h3>
               <p className="text-gray-500 mb-4">
                 {searchQuery
                   ? `No staffs match "${searchQuery}". Try adjusting your search.`
-                  : "Get started by registering your first resident."}
+                  : "Get started by registering your first staff."}
               </p>
               {!searchQuery && (
                 <Link
@@ -252,7 +218,7 @@ export default function AdministrationRecords() {
             <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-                  Showing <span className="font-medium">{(currentPage - 1) * (pageSize + 1)}</span> -{" "}
+                  Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
                   <span className="font-medium">{totalCount}</span> staffs
                 </p>
@@ -264,6 +230,12 @@ export default function AdministrationRecords() {
             </div>
           )}
         </Card>
+        <div className="flex items-center gap-2">
+        <CircleAlert size={18}/>
+        <p className="text-sm">
+          Staff with admin position cannot be modified.
+        </p>
+      </div>
       </div>
     </MainLayoutComponent>
   );

@@ -39,7 +39,7 @@ export default function SoloFormLayout() {
   const { showLoading, hideLoading } = useLoading();
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(false);
   const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
@@ -69,7 +69,7 @@ export default function SoloFormLayout() {
 
   React.useEffect(() => {
     const householdNo = form.watch('householdNo').split(" ")[0];
-    const residentId = form.watch('id').split(" ")[0];
+    const residentId = form.watch('id')?.split(" ")[0];
     let building = '';
     if(householdNo && residentId) {
       const ownedHouseholds = householdsList.filter((household: any) => {
@@ -89,7 +89,7 @@ export default function SoloFormLayout() {
   const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
-    const residentId = form.watch("id").split(" ")[0];
+    const residentId = form.watch("id")?.split(" ")[0];
     const householdId = form.watch("householdNo");
 
     if (!formIsValid && !residentId && !householdId) {
@@ -110,7 +110,7 @@ export default function SoloFormLayout() {
 
     const family = await addFamily({ 
       demographicInfo: form.getValues(),
-      staffId: user?.staff.staff_id 
+      staffId: user?.staff?.staff_id || ""
     });
 
     addFamilyComposition([

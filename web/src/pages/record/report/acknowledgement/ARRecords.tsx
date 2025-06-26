@@ -18,8 +18,10 @@ import { formatDate, getWeekNumber } from "@/helpers/dateFormatter"
 import { useNavigate } from "react-router"
 import { getSitioList } from "../../profiling/restful-api/profilingGetAPI"
 import { useLoading } from "@/context/LoadingContext"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 
 export default function ARRecords() {
+  // ----------------- STATE INITIALIZATION --------------------
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
@@ -52,6 +54,18 @@ export default function ARRecords() {
       }
     })
   ), [weeklyAR]);
+
+  const compositions = React.useMemo(() => (
+    weeklyAR?.reduce((acc: any[], war: any) => 
+      acc.concat(war.war_composition)
+    , [])
+  ), [weeklyAR])
+
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoadingArReports) showLoading();
+    else hideLoading();
+  }, [isLoadingArReports])
   
   React.useEffect(() => {
     if(warThisMonth) {
@@ -85,7 +99,7 @@ export default function ARRecords() {
 
     // Proceed to creation
     try {
-      addWAR(user?.staff.staff_id, {
+      addWAR(user?.djangoUser?.resident_profile?.staff?.staff_id as string, {
         onSuccess: (data) => {
           const compositions = selectedRows.map((row) => ({
             ar: row.id,
@@ -227,10 +241,6 @@ export default function ARRecords() {
                     className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                <Button variant="outline" className="gap-2 whitespace-nowrap">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                </Button>
               </div>
 
               <div className="flex items-center gap-2">
@@ -257,22 +267,20 @@ export default function ARRecords() {
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span>Show</span>
-                <Input
-                  type="number"
-                  min="1"
-                  max="100"
-                  className="w-16 h-8 text-center border-gray-200"
-                  value={pageSize}
-                  onChange={(e) => {
-                    const value = Number.parseInt(e.target.value)
-                    if (value >= 1 && value <= 100) {
-                      setPageSize(value)
-                      setCurrentPage(1) // Reset to first page
-                    }
-                  }}
-                />
-                <span>entries</span>
+                <span className="text-sm font-medium text-gray-700">Show</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">entries</span>
               </div>
 
               <div className="text-sm text-gray-600">
@@ -292,7 +300,7 @@ export default function ARRecords() {
             <div className="border-t overflow-hidden">
               <div className="overflow-x-auto">
                 <DataTable
-                  columns={ARColumns(isCreatingWeeklyAR)}
+                  columns={ARColumns(isCreatingWeeklyAR, compositions)}
                   data={ARList}
                   onSelectedRowsChange={onSelectedRowsChange}
                   isLoading={isLoadingArReports || isLoadingWeeklyAR}

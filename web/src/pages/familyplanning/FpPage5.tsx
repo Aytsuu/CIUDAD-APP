@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/c
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import SignatureCanvas from "react-signature-canvas"
-import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page5Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 
 type FamilyPlanningMethod =
   | "coc"

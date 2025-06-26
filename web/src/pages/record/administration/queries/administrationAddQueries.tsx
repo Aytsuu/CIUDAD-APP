@@ -3,6 +3,7 @@ import { addPosition, addStaff, assignFeature, setPermission } from "../restful-
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
+import { api } from "@/api/api";
 
 // Adding
 export const useAddPosition = () => {
@@ -75,4 +76,22 @@ export const useAddStaff = () => {
       navigate(-1)
     }
   });
+}
+
+export const useAddPositionBulk = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post('administration/position/bulk/create/', data);
+        return res.data;
+      } catch(err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['positions']})
+    }
+  })
 }

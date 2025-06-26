@@ -46,7 +46,7 @@ export default function DependentsInfoLayout({
     if (Array.isArray(dependents)) {
       // Transform the list into an array of Dependent objects
       const transformedData = dependents.map((value) => ({
-        id: value.id.split(" ")[0],
+        id: value.id?.split(" ")[0] as string,
         lname: value.lastName,
         fname: value.firstName,
         mname: value.middleName,
@@ -117,8 +117,7 @@ export default function DependentsInfoLayout({
 
     if(dependentsList.length === 0){
       setIsSubmitting(false);
-      toast('Family Registration', {
-        description: "Must have atleast one dependent.",
+      toast('Must have atleast one dependent.', {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
         style: {
           border: '1px solid rgb(225, 193, 193)',
@@ -137,7 +136,7 @@ export default function DependentsInfoLayout({
     // Store information to the database
     const family = await addFamily({
       demographicInfo: demographicInfo, 
-      staffId: user?.staff.staff_id
+      staffId: user?.staff?.staff_id || ""
     });
 
     let bulk_composition: {
@@ -163,7 +162,7 @@ export default function DependentsInfoLayout({
         {
           fam: family.fam_id,
           fc_role: 'Dependent',
-          rp: dependent.id.split(" ")[0]
+          rp: dependent.id?.split(" ")[0] as string
         }
       ]
     })

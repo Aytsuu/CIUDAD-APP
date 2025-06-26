@@ -1,7 +1,6 @@
 from django.db import models
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
@@ -11,60 +10,64 @@ class Notification(models.Model):
         ('error', 'Error'),
     )
     
-    DELIVERY_CHANNELS = (
-        ('web', 'Web Notification'),
-        ('mobile', 'Mobile Notification'),
-        ('both', 'Mobile and Web Notification'),
-    )
-    
-    RECIPIENT_TYPES = (
-        ('user', "All Authenticated Users"),
-        ('staff', "Staff Users Only"),
-        ('specific', "Specific User"),
-    )
-    
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
-    
-    notif_recipient_type = models.CharField(max_length=20, choices=RECIPIENT_TYPES, default='specific')
-    
-    notif_title = models.CharField(max_length=255)
-    notif_message = models.TextField()
-    notif_type = models.CharField(
-        max_length=20,
-        choices=NOTIFICATION_TYPES,
-        default='info'
-    )
-    notif_delivery_channel = models.CharField(
-        max_length=20,
-        choices=DELIVERY_CHANNELS,
-        default='both'
-    )
-    
-    # Status Tracking
-    notif_is_read = models.BooleanField(default=False)
-    notif_sent_web = models.BooleanField(default=False)
-    notif_sent_mobile = models.BooleanField(default=False)
-    
-    # Timestamps
+    recipient = models.ForeignKey('account.Account', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='info')
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     
+    # Generic relation to link to any model
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     class Meta:
         ordering = ['-created_at']
-        db_table = 'notifications'
+        db_table = 'notification'
         
-    def __str__(self):
-        if self.recipient:
-            return f"{self.title} to {self.recipient.username}"
-        return f"{self.title} ({self.get_recipient_type_display()})"
-
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.push_to_supabase()
+        
+    def push_to_supabase(self):
+        """Sync notification to Supabase for realtime updates"""
+        from supabase import create_client
+        from django.conf import settings
+        
+        supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+        
+        supabase.table('notification').insert({
+            'django_id': self.id,
+            'recipient_id': self.recipient.supabase_id,  # Store Supabase ID in your Account model
+            'title': self.title,
+            'message': self.message,
+            'type': self.notification_type,
+            'is_read': self.is_read,
+            'created_at': self.created_at.isoformat(),
+            'related_object_type': self.content_type.model if self.content_type else None,
+            'related_object_id': self.object_id
+        }).execute()
 
 class FCMToken(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fcm_tokens')
+    acc = models.OneToOneField('account.Account', on_delete=models.CASCADE, related_name="fcm_token")
     fcm_token = models.CharField(max_length=255, unique=True)
     fcm_device_id = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        db_table = 'fcm_tokens'
-        unique_together = [['user_id', 'fcm_device_id']]  
+        db_table = 'fcm_token'
+        unique_together = [['acc', 'fcm_device_id']]  
+        
+class Recipient(models.Model):
+    rec_id = models.BigAutoField(primary_key=True)
+    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name="received_notification")
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta: 
+        db_table = 'recipient'
+        
+    def __str__(self):
+        return f"Recipient {self.rec_id} - {self.acc.username}"
+        

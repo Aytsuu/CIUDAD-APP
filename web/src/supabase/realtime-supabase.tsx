@@ -1,5 +1,3 @@
-
-
 import { RealtimeChannel } from "@supabase/supabase-js";
 import supabase from "./supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -18,14 +16,14 @@ export const manageNotificationChannel = (user_id: string) => {
     // creates a channel if it does not exists
     if (!activeChannels.has(user_id)) {
     const channel = supabase
-      .channel(`Account_Notification-${user_id}`)
+      .channel(`notification_${user_id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notification",
-          filter: `user_id=eq.${user_id}`,
+          filter: `supabase_id=eq.${user_id}`,
         },
         (payload) => console.log("Changes: ", payload)
       )
@@ -47,10 +45,10 @@ export const AuthAwareNotifier = () => {
     const { user } = useAuth();
 
     useEffect(() => {
-        if(!user?.id) return;
-
-        const cleanup = manageNotificationChannel(user.id);
+        if(!user?.supabase_id) return;
+        console.log(user?.email)
+        const cleanup = manageNotificationChannel(user.supabase_id);
 
         return cleanup;
-    }, [user?.id])
+    }, [user?.supabase_id])
 }

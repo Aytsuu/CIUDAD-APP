@@ -14,15 +14,15 @@ import { useToastContext } from "@/components/ui/toast";
 import { useFieldArray } from "react-hook-form";
 
 const idOptions: {label: string, value: string}[] = [
-  {label: "Driver's License", value: "driverLicense"},
-  {label: "UMID", value: "umid"},
-  {label: "Philhealth ID", value: "philhealthID"},
-  {label: "Passport", value: "passportID"},
-  {label: "SSS ID", value: "sssID"},
-  {label: "Voter's ID", value: "votersID"},
-  {label: "National ID", value: "nationalID"},
-  {label: "HDMF (Pag-ibig ID)", value: "pagibigID"},
-  {label: "Other", value: "other"}
+  {label: "Driver's License", value: "Driver's License"},
+  {label: "UMID", value: "UMID"},
+  {label: "Philhealth ID", value: "Philhealth ID"},
+  {label: "Passport", value: "Passport"},
+  {label: "SSS ID", value: "SSS ID"},
+  {label: "Voter's ID", value: "Voter's ID"},
+  {label: "National ID", value: "National ID"},
+  {label: "HDMF (Pag-ibig ID)", value: "HDMF (Pag-ibig ID)"},
+  {label: "Other", value: "Other"}
 ];
 
 export default function UploadID() {
@@ -37,12 +37,12 @@ export default function UploadID() {
   });
 
   React.useEffect(() => {
-    if(selectedImage.rf_type) {
+    if(selectedImage.type) {
       append({
-        rf_name: selectedImage.rf_name,
-        rf_type: selectedImage.rf_type,
-        rf_path: selectedImage.rf_path,
-        rf_url: selectedImage.rf_url,
+        rf_name: selectedImage.name,
+        rf_type: selectedImage.type,
+        rf_path: selectedImage.path,
+        rf_url: selectedImage.url,
         rf_is_id: true,
         rf_id_type: getValues("uploadIdSchema.selected")
       })
@@ -58,15 +58,16 @@ export default function UploadID() {
       return;
     }
 
-    if(!selectedImage.rf_type) {
+    if(!selectedImage.type) {
       toast.error("Upload a photo of your valid ID")
       return;
     }
 
+    console.log(getValues('photoSchema.list'))
+
     router.push("/(auth)/take-a-photo")
   };
 
-  console.log("Selected Image:", selectedImage);
 
   return (
     <_ScreenLayout

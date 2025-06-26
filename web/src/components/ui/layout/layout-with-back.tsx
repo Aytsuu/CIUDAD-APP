@@ -2,6 +2,7 @@ import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "../button/button";
 import { useNavigate } from "react-router";
 import React from "react";
+import { useLoading } from "@/context/LoadingContext";
 
 export const LayoutWithBack = ({
   title,
@@ -13,7 +14,7 @@ export const LayoutWithBack = ({
   children: React.ReactNode;
 }) => {
   const navigate = useNavigate();
-
+  const { hideLoading } = useLoading();
   return (
     <div className="w-full">
       <div className="flex gap-2 justify-between pb-4">
@@ -22,7 +23,10 @@ export const LayoutWithBack = ({
           <Button
             className="text-black p-2 self-start"
             variant={"outline"}
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              hideLoading();
+              navigate(-1)
+            }}
           >
             <BsChevronLeft />
           </Button>
