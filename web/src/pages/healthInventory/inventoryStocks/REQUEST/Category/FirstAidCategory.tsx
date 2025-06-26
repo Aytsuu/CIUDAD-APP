@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {api2} from "@/api/api";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
 import { toTitleCase } from "@/helpers/ToTitleCase";

@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from "@/components/ui/button";
-import Layout from "../_layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import { Plus } from '@/lib/icons/Plus'
 
 export default function Dependent() {
@@ -19,7 +19,7 @@ export default function Dependent() {
   };
 
   return (
-    <Layout
+    <_ScreenLayout
         header={'Dependents'}
         description={'Optional'}
     >
@@ -47,6 +47,6 @@ export default function Dependent() {
                 </Button>
             </View>
         </View>
-    </Layout>
+    </_ScreenLayout>
   );
 };

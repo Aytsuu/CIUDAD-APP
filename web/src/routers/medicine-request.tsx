@@ -4,8 +4,6 @@ import IndivMedicineRecord from "@/pages/healthServices/medicineservices/tables/
 import PatNewMedRecForm from "@/pages/healthServices/medicineservices/PatnewMedRecord";
 // import PatNewMedRecForm from "@/pages/healthServices/medicineservices/backupPat";
 import IndivPatNewMedRecForm from "@/pages/healthServices/medicineservices/IndivnewMedrecord";
-import MonthlyMedicineRecords from "@/pages/healthServices/Reports/medicine-report/monthly";
-import MonthlyMedicineDetails from "@/pages/healthServices/Reports/medicine-report/records";
 
 export const medicineRequest = [
   {
@@ -25,9 +23,5 @@ export const medicineRequest = [
     path: "/IndivPatNewMedRecForm",
     element: <IndivPatNewMedRecForm />,
   },
-  {
-    path: "/monthly-medicine-records",
-    element: <MonthlyMedicineRecords />,
-  },
-  { path: "/monthly-medicine-details", element: <MonthlyMedicineDetails /> },
+  
 ];

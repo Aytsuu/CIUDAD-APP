@@ -1,9 +1,22 @@
 import { useMutation } from "@tanstack/react-query";
-import { addFile, addPersonal, addRequest, addRequestFile } from "../restful-api/signupPostAPI";
+import { addAddress, addPersonal, addPersonalAddress, addRequest, addRequestFile } from "../restful-api/signupPostAPI";
+import { api } from "@/api/api";
+
+export const useAddAddress = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>[]) => addAddress(data)
+  })
+}
+
+export const useAddPerAddress = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>[]) => addPersonalAddress(data)
+  })
+}
 
 export const useAddPersonal = () => {
   return useMutation({
-    mutationFn: (values: Record<string, any>) => addPersonal(values),
+    mutationFn: (data: Record<string, any>) => addPersonal(data),
     onSuccess: () => {}
   })
 }
@@ -15,24 +28,24 @@ export const useAddRequest = () => {
   })
 }
 
-export const useAddFile = () => {
+export const useAddRequestFile = () => {
   return useMutation({
-    mutationFn: ({name, type, path,url} : {
-      name: string;
-      type: string;
-      path: string;
-      url: string;
-    }) => addFile(name, type, path, url),
+    mutationFn: (data: Record<string, any>[]) => addRequestFile(data),
     onSuccess: () => {}
   })
 }
 
-export const useAddRequestFile = () => {
+export const useValidateResidentId = () => {
   return useMutation({
-    mutationFn: ({requestId, fileId} : {
-      requestId: string;
-      fileId: string;
-    }) => addRequestFile(requestId, fileId),
-    onSuccess: () => {}
+    mutationFn: async (residentId: string) => {
+      try {
+        const res = await api.post('profiling/request/link/registration/', {
+          resident_id: residentId
+        });
+        return res;
+      } catch (err) {
+        throw err;
+      }
+    }
   })
 }

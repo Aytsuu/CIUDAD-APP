@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
@@ -140,10 +140,16 @@ export default function MonthlyMedicineRecords() {
 
   return (
     <>
-      <Toaster />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-col items-center">
+          <Button
+            className="text-black p-2 mb-2 self-start"
+            variant={"outline"}
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft />
+          </Button>
+          <div className="flex-col items-center ">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Monthly Medicine Records
             </h1>
@@ -153,7 +159,7 @@ export default function MonthlyMedicineRecords() {
             </p>
           </div>
         </div>
-        <hr className="border-gray-300 mb-4" />
+        <hr className="border-gray mb-5 sm:mb-8" />
 
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
@@ -188,13 +194,7 @@ export default function MonthlyMedicineRecords() {
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
-            {paginatedData.length > 0 ? (
-              <DataTable columns={columns} data={paginatedData} />
-            ) : (
-              <div className="p-8 text-center text-gray-500">
-                {isLoading ? "Loading..." : "No monthly records found"}
-              </div>
-            )}
+            <DataTable columns={columns} data={paginatedData} />
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

@@ -1,172 +1,201 @@
-import { Search, Plus, FileInput } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button/button";
-import { Link } from "react-router";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { DataTable } from "@/components/ui/table/data-table";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { businessColumns } from "./BusinessColumns";
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import { Skeleton } from "@/components/ui/skeleton";
-import React from "react";
-import { useBusinesses, useSitioList } from "../queries/profilingFetchQueries";
+import React from "react"
+import { Search, Plus, Download, Building2, FileDown, Loader2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button/button"
+import { Link } from "react-router"
+import { DataTable } from "@/components/ui/table/data-table"
+import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { businessColumns } from "./BusinessColumns"
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
+import { useBusinesses } from "../queries/profilingFetchQueries"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Card } from "@/components/ui/card/card"
+import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext"
 
 export default function BusinessRecords() {
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading();
+  const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const [pageSize, setPageSize] = React.useState<number>(10)
+  const [currentPage, setCurrentPage] = React.useState<number>(1)
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const debouncedPageSize = useDebounce(pageSize, 100)
+  const { data: businesses, isLoading} = useBusinesses(
+    currentPage, 
+    debouncedPageSize,
+    debouncedSearchQuery
+  )
 
-  const { data: businesses, isLoading: isLoadingBusinesses } = useBusinesses();
-  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+  const businessList = businesses?.results || [];
+  const totalCount = businesses?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading])
 
-  // Formatting business data (for table)
-  const formatBusinessData = React.useCallback(() => {
-    if (!businesses) return [];
-
-    return businesses.map((business: any) => {
-      // Respondent Name
-      const lname = business.bus_respondentLname;
-      const fname = business.bus_respondentFname;
-      const mname = business.bus_respondentMname;
-      const fullName = `${lname}, ${fname} ${
-        mname ? mname.slice(0, 1) + "." : ""
-      }`;
-
-      const staff = business?.staff?.rp?.per;
-
-      return {
-        id: business.bus_id || "-",
-        name: business.bus_name || "-",
-        grossSales: String(business.bus_gross_sales) || "-",
-        sitio: business.sitio.sitio_name || "-",
-        street: business.bus_street || "-",
-        respondent: fullName || "-",
-        dateRegistered: business.bus_date_registered || "-",
-        registeredBy: 
-          (staff ? `${staff.per_lname}, 
-          ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
-      };
-    });
-  }, [businesses]);
-
-
-  // Filtering business data (for searching)
-  const filteredBusinesses = React.useMemo(() => {
-    const formattedData = formatBusinessData();
-    if (!formattedData.length) return [];
-
-    return formattedData.filter((record: any) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, businesses]);
-
-  // Total pages 
-  const totalPages = Math.ceil(filteredBusinesses.length / pageSize);
-
-  // Slicing the data for pagination
-  const paginatedBusinesses = filteredBusinesses.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  if (isLoadingBusinesses || isLoadingSitio) {
-    return (
-      <div className="w-full h-full"> 
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
+  // ----------------- HANDLERS --------------------
+  const handleExport = (type: "csv" | "excel" | "pdf") => {
+    switch (type) {
+      case "csv":
+        // exportToCSV(filteredBusinesses)
+        break
+      case "excel":
+        // exportToExcel(filteredBusinesses)
+        break
+      case "pdf":
+        // exportToPDF(filteredBusinesses)
+        break
+    }
   }
 
   return (
+    // ----------------- RENDER --------------------
     <MainLayoutComponent
       title="Business Records"
-      description="View and manage registered businesses, 
-              including their details, location, and registration information."
+      description="View and manage registered businesses, including their details, location, and registration information."
     >
-      <div className="hidden lg:flex justify-between items-center gap-2 mb-4">
-        <div className="relative flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-            size={17}
-          />
-          <Input
-            placeholder="Search..."
-            className="pl-10 bg-white"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Link
-          to="/business/form"
-          state={{
-            params: {
-               
-              type: "registration",
-              sitio: sitioList
-            },
-          }}
-        >
-          <Button>
-            <Plus size={15} /> Register
-          </Button>
-        </Link>
-      </div>
+      <div className="space-y-6">
+        <Card>
+          {/* Search and Actions Bar */}
+          <div className="bg-white rounded-xl p-6">
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                  placeholder="Search by business name, owner, location, sales..."
+                  className="pl-11"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
 
-      <div className="bg-white rounded-md">
-        <div className="flex justify-between p-3">
-          <div className="flex items-center gap-2">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-6"
-              value={pageSize}
-              onChange={(e) => {
-                if (+e.target.value < 0) {
-                  setPageSize(1);
-                } else {
-                  setPageSize(+e.target.value);
-                }
-              }}
-              min="1"
-            />
-            <p className="text-xs sm:text-sm">Entries</p>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex-1 sm:flex-none">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleExport("csv")}>
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport("excel")}>
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Export as Excel
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Export as PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Link
+                  to="/business/form"
+                  state={{
+                    params: {
+                      type: "create",
+                    },
+                  }}
+                >
+                  <Button className="px-4">
+                    <Plus size={16} className="mr-2" />
+                    Register Business
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline">
-                <FileInput className="mr-2" /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
-          />
-        </div>
-        <div className="overflow-x-auto">
-          <DataTable columns={businessColumns(businesses, sitioList)} data={paginatedBusinesses} />
-        </div>
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredBusinesses.length)} of{" "}
-            {filteredBusinesses.length} rows
-          </p>
-          {paginatedBusinesses.length > 0 && <PaginationLayout
-            totalPages={totalPages}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />}
-        </div>
+
+          <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">Show</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">entries</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Loading businesses...</span>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && businessList.length === 0 && (
+            <div className="text-center py-12">
+              <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {searchQuery ? "No businesses found" : "No businesses yet"}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {searchQuery
+                  ? `No businesses match "${searchQuery}". Try adjusting your search.`
+                  : "Get started by registering your first business."}
+              </p>
+              {!searchQuery && (
+                <Link
+                  to="/business/form"
+                  state={{
+                    params: {
+                      type: "create",
+                    },
+                  }}
+                >
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Register First Business
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* Data Table */}
+          {!isLoading && businessList.length > 0 && (
+            <DataTable columns={businessColumns} data={businessList} />
+          )}
+
+          {/* Pagination */}
+            {!isLoading && businessList.length > 0 && (
+              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
+                <p className="text-sm text-gray-600 mb-2 sm:mb-0">
+                  Showing <span className="font-medium">{totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> -{" "}
+                  <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
+                  <span className="font-medium">{totalCount}</span> residents
+                </p>
+
+                {totalPages > 0 && (
+                  <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                )}
+              </div>
+            )}
+        </Card>
       </div>
     </MainLayoutComponent>
-  );
+  )
 }

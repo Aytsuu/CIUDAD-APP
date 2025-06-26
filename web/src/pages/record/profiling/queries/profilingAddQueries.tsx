@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { useNavigate } from "react-router";
 import {
   addAddress,
   addBusiness,
@@ -14,7 +13,6 @@ import {
   addResidentAndPersonal,
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
-import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export const useAddAddress = () => {
   return useMutation({
@@ -169,13 +167,7 @@ export const useAddHousehold = () => {
 export const useAddBusiness = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      businessInfo,
-      staffId,
-    }: {
-      businessInfo: Record<string, string>;
-      staffId: string;
-    }) => addBusiness(businessInfo, staffId),
+    mutationFn: (data: Record<string, any>) => addBusiness(data),
     onSuccess: (newData) => {
       queryClient.setQueryData(["businesses"], (old: any[] = []) => [
         ...old,
@@ -189,10 +181,7 @@ export const useAddBusiness = () => {
 
 export const useAddBusinessFile = () => {
   return useMutation({
-    mutationFn: ({businessId, fileId} : {
-      businessId: string;
-      fileId: string;
-    }) => addBusinessFile(businessId, fileId),
+    mutationFn: (data: Record<string, any>[]) => addBusinessFile(data),
   })
 }
 

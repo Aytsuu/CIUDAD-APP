@@ -7,7 +7,7 @@ import {
   MedicineStocksSchema,
   MedicineStockType,
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { toast } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { fetchMedicines } from "../REQUEST/Medicine/restful-api/MedicineFetchAPI";

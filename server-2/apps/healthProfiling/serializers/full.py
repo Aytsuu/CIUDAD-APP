@@ -21,7 +21,7 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_staff(self, obj):
-        from apps.administration.serializers.full import StaffFullSerializer
+        from apps.administration.staff_serializers import StaffFullSerializer
         return StaffFullSerializer(obj.staff).data
 
 class HouseholdFullSerializer(serializers.ModelSerializer):

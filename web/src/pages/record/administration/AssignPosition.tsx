@@ -31,12 +31,8 @@ export default function AssignPosition({
   const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
   const {mutateAsync: addStaff} = useAddStaff();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const personalDefaults = React.useRef(
-    generateDefaultValues(personalInfoSchema)
-  ).current;
-  const defaultValues = React.useRef(
-    generateDefaultValues(positionAssignmentSchema)
-  ).current;
+  const personalDefaults = generateDefaultValues(personalInfoSchema)
+  const defaultValues = generateDefaultValues(positionAssignmentSchema)
   const form = useForm<z.infer<typeof positionAssignmentSchema>>({
     resolver: zodResolver(positionAssignmentSchema),
     defaultValues,
@@ -58,10 +54,11 @@ export default function AssignPosition({
 
     // If resident exists, assign
     if (residentId) {
+      console.log(residentId, positionId)
       addStaff({
         residentId: residentId, 
         positionId: positionId,
-        staffId: user?.staff.staff_id
+        staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
       }, {
         onSuccess: () => {
           deliverFeedback()
@@ -76,13 +73,13 @@ export default function AssignPosition({
       
       addResidentAndPersonal({
         personalInfo: personalInfo,
-        staffId: user?.staff.staff_id
+        staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
       }, {
         onSuccess: (resident) => {
           addStaff({
             residentId: resident.rp_id, 
             positionId: positionId,
-            staffId: user?.staff.staff_id
+            staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
           }, {
             onSuccess: () => deliverFeedback()
           });

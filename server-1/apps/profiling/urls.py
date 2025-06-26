@@ -1,5 +1,4 @@
 from django.urls import path
-from .views import *
 from .views.resident_profile_views import *
 from .views.personal_views import *
 from .views.family_views import *
@@ -7,6 +6,8 @@ from .views.family_composition_views import *
 from .views.household_views import *
 from .views.sitio_views import *
 from .views.address_views import *
+from .views.request_registration_views import *
+from .views.business_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -56,12 +57,18 @@ urlpatterns = [
     path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
 
     # Request Urls
-    # path("request/", RequestRegistrationView.as_view(), name="request-details"),
+    path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
+    path("request/create/", RequestCreateView.as_view(), name="request-create"),
+    path("request/file/create/", RequestFileCreateView.as_view(), name="request-file-create"),
+    path("request/link/registration/", LinkRegVerificationView.as_view(), name="link-registration-verification"),
     # path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
     # path("request/file/", RequestFileView.as_view(), name="request-files"),
 
     # # Business Urls
-    # path("business/", BusinessView.as_view(), name="business-details"),
+    path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),
+    path("business/create/", BusinessCreateView.as_view(), name="business-create"),
+    path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
+    path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
     # path("business/file/", BusinessFileView.as_view(), name="business-files"),
 
 ]
