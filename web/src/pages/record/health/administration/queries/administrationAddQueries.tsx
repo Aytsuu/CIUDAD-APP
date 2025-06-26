@@ -3,6 +3,7 @@ import { addPositionHealth, addStaffHealth, assignFeatureHealth, setPermissionHe
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
+import { api2 } from "@/api/api";
 
 // Adding
 export const useAddPositionHealth = () => {
@@ -75,4 +76,21 @@ export const useAddStaffHealth = () => {
       navigate(-1)
     }
   });
+}
+export const useAddPositionBulkHealth = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api2.post('administration/position/bulk/create/', data);
+        return res.data;
+      } catch(err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['positionsHealth']})
+    }
+  })
 }

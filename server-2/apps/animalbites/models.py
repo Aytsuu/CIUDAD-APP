@@ -27,11 +27,7 @@ class AnimalBite_Details(models.Model):
     biting_animal = models.CharField(max_length=50)
     actions_taken = models.CharField(max_length=50)
     referredby = models.CharField(max_length=50)
-    referral = models.ForeignKey(
-        AnimalBite_Referral, 
-        on_delete=models.CASCADE, 
-        related_name="bite_details"
-    )
+    referral = models.ForeignKey(AnimalBite_Referral, on_delete=models.CASCADE, related_name="bite_details")
 
     class Meta:
         db_table = "animalbite_detail"

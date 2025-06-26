@@ -30,12 +30,13 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         resident_profile = ResidentProfile.objects.create(per=per, staff=staff,**validated_data)
         return resident_profile
     
-    # def get_staff(self, obj):
-    #     # from apps.administration.serializers.full import StaffFullSerializer
-    #     return StaffFullSerializer(obj.staff).data
+    def get_staff(self, obj):
+        from apps.administration.serializers.staff_serializers import StaffFullSerializer
+        return StaffFullSerializer(obj.staff).data
 
     def get_is_staff(self, obj):
         return hasattr(obj, 'staff_assignments') and bool(obj.staff_assignments.all())    
+
 
 
 class HouseholdFullSerializer(serializers.ModelSerializer):
@@ -52,9 +53,9 @@ class HouseholdFullSerializer(serializers.ModelSerializer):
         model = Household
         fields = '__all__'
 
-    # def get_staff(self, obj):
-    #     from apps.administration.serializers.minimal import StaffMinimalSerializer
-    #     return StaffMinimalSerializer(obj.staff, context=self.context).data
+    def get_staff(self, obj):
+        from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
+        return StaffMinimalSerializer(obj.staff, context=self.context).data
     
     def get_family(self, obj):
         return FamilyFullSerializer(obj.family_set.all(), many=True).data
@@ -71,9 +72,9 @@ class FamilyFullSerializer(serializers.ModelSerializer):
         model = Family
         fields = '__all__'
     
-    # def get_staff(self, obj):
-    #     from apps.administration.serializers.minimal import StaffMinimalSerializer
-    #     return StaffMinimalSerializer(obj.staff).data
+    def get_staff(self, obj):
+        from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
+        return StaffMinimalSerializer(obj.staff).data
 
 class FamilyCompositionFullSerializer(serializers.ModelSerializer):
     fam = FamilyFullSerializer(read_only=True)

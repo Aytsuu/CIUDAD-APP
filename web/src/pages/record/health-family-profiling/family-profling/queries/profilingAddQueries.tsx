@@ -108,12 +108,15 @@ export const useAddHouseholdHealth = () => {
       staffId: string;
     }) => addHouseholdHealth(householdInfo, staffId),
     onSuccess: (newData) => {
-      queryClient.setQueryData(["households"], (old: any) => [
-        ...old,
-        newData,
-      ]);
+      queryClient.setQueryData(["householdsHealth"], (old: any) => {
+        // Handle case where old data doesn't exist or is not an array
+        if (!old || !Array.isArray(old)) {
+          return [newData];
+        }
+        return [...old, newData];
+      });
 
-      queryClient.invalidateQueries({ queryKey: ["households"] });
+      queryClient.invalidateQueries({ queryKey: ["householdsHealth"] });
 
       toast("Record added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -121,4 +124,3 @@ export const useAddHouseholdHealth = () => {
     },
   });
 };
-

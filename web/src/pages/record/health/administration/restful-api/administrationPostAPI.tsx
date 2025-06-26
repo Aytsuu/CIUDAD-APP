@@ -7,8 +7,8 @@ export const addStaffHealth = async (residentId: string, positionId: string, sta
     const res = await api2.post("administration/staff/", {
       staff_id: residentId,
       staff_assign_date: formatDate(new Date()),
-      rp_id: residentId,
-      pos_id: positionId,
+      rp: residentId,
+      pos: positionId,
       manager: staffId,
     });
 
@@ -41,8 +41,8 @@ export const assignFeatureHealth = async (
   staffId: string
 ) => {
   try {
-    const res = await api2.post(`administration/assignment/`, {
-      feat_id: featureId,
+    const res = await api2.post(`administration/assignment/create`, {
+      feat: featureId,
       pos: selectedPositionId,
       assi_date: formatDate(new Date()),
       staff: staffId

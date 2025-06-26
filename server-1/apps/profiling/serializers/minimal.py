@@ -21,7 +21,7 @@ class HouseholdMinimalSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_staff(self, obj):
-        from apps.administration.serializers.minimal import StaffMinimalSerializer
+        from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff, context=self.context).data
 
 class FamilyMinimalSerializer(serializers.ModelSerializer):
@@ -59,7 +59,7 @@ class BusinessSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_staff(self,obj):
-        from apps.administration.serializers.minimal import StaffMinimalSerializer
+        from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff).data
 
 class FCWithProfileDataSerializer(serializers.ModelSerializer):

@@ -6,6 +6,7 @@ import {
   getStaffsHealth,
   getAllAssignedFeaturesHealth,
 } from "../restful-api/administrationGetAPI";
+import { api2 } from "@/api/api";
 
 // Fetching
 export const useResidentsHealth = () => {
@@ -16,10 +17,10 @@ export const useResidentsHealth = () => {
   });
 };
 
-export const useStaffsHealth = () => {
+export const useStaffsHealth = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
-    queryKey: ["staffsHealth"],
-    queryFn: getStaffsHealth,
+    queryKey: ["staffsHealth", page, pageSize, searchQuery],
+    queryFn: () => getStaffsHealth(page, pageSize, searchQuery),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
@@ -40,10 +41,25 @@ export const useFeaturesHealth = () => {
   });
 };
 
-export const useAllAssignedFeatures = () => {
+export const useAllAssignedFeaturesHealth = () => {
   return useQuery({
     queryKey: ["allAssignedFeaturesHealth"],
     queryFn: getAllAssignedFeaturesHealth,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
+
+export const usePositionGroupsHealth = () => {
+  return useQuery({
+    queryKey: ['positionGroupsHealth'],
+    queryFn: async () => {
+      try {
+        const res = await api2.get('administration/position/group/list/');
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}

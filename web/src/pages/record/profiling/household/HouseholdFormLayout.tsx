@@ -44,9 +44,6 @@ export default function HouseholdFormLayout() {
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
   const { data: perAddressList, isLoading: isLoadingPerAddress } = usePerAddressesList();
 
-  const { data: residentsListHealth, isLoading: isLoadingResidentsHealth } = useResidentsListHealth();
-  const { data: perAddressListHealth, isLoading: isLoadingPerAddressHealth } = usePerAddressesListHealth();
-
   const formattedAddresses = React.useMemo(() => formatAddresses(perAddressList), [perAddressList])
   const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList])
 
@@ -103,15 +100,38 @@ export default function HouseholdFormLayout() {
     }
 
     const householdInfo = form.getValues();
-    addHousehold({
-      householdInfo: householdInfo, 
-      staffId: user?.staff?.staff_id
-    }, {
-      onSuccess: (household) => {
-        dispatch(householdRegistered({reg: true, hh_id: household.hh_id}));
-        safeNavigate.back();
-      }
-    });
+    
+    try {
+      // Add to main household database
+      const household = await addHousehold({
+        householdInfo: householdInfo, 
+        staffId: user?.staff?.staff_id
+      });
+
+      // Add to health database
+      await addHouseholdHealth({
+        householdInfo: householdInfo,
+        staffId: user?.staff?.staff_id
+      });
+
+      // Update redux state and navigate back
+      dispatch(householdRegistered({reg: true, hh_id: household.hh_id}));
+      safeNavigate.back();
+      
+    } catch (error) {
+      console.error('Error adding household:', error);
+      toast("Failed to add household", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   // ==================== RENDER ======================

@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Assigned, Feature } from "./administrationTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import { useAllAssignedFeatures, usePositionsHealth } from "./queries/administrationFetchQueries";
+import { useAllAssignedFeaturesHealth, usePositionsHealth } from "./queries/administrationFetchQueries";
 
 export default function RoleLayout() {
   const location = useLocation();
@@ -17,7 +17,7 @@ export default function RoleLayout() {
     [location.state]
   );
   const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures } =
-    useAllAssignedFeatures();
+    useAllAssignedFeaturesHealth();
   const { data: positionsHealth, isLoading: isLoadingPositions } = usePositionsHealth();
   const [selectedPosition, setSelectedPosition] = React.useState<string>("");
   const [positionFeaturesMap, setPositionFeaturesMap] = React.useState<
