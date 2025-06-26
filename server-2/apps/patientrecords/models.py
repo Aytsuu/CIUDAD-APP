@@ -196,10 +196,9 @@ class BodyMeasurement(models.Model):
     height = models.IntegerField()
     weight = models.IntegerField()
     bmi = models.DecimalField(max_digits=5, decimal_places=2)
-    bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', null=True)
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
     
     class Meta:
         db_table = 'body_measurement'

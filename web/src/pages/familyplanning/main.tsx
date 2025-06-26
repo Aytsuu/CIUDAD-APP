@@ -1,6 +1,6 @@
-import { fp_obstetrical,fp_record,physical_exam,fp_type,risk_sti,risk_vaw,acknowledgement,pelvic_exam,pregnancy_check,updateFPRecord,updateFPType,updateObstetricalHistory,updateRiskSti,updateRiskVaw,updatePhysicalExam,updatePelvicExam,updateAcknowledgement,updatePregnancyCheck, assessment, useFamilyPlanningFormSubmission} from "./request-db/PostRequest"
+import { useFamilyPlanningFormSubmission} from "./request-db/PostRequest"
 import { getFPCompleteRecord } from "./request-db/GetRequest"
-import { useState, useEffect } from "react"
+import { useState, } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import FamilyPlanningForm2 from "./FpPage2"

@@ -27,7 +27,7 @@ urlpatterns = [
 	path('follow-up-visits-all/', AllFollowUpVisitsView.as_view(), name='follow-up-visits-all'),
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
-    path('body-measurements/<int:body_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
+    path('body-measurements/<int:bm_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
     path("findings/", FindingView.as_view(), name="findings"),
     path('findings/<int:find_id>/', DeleteUpdateFindingView.as_view(), name='findings-detail'),
     path("physial-examination/", PhysicalExaminationView.as_view(), name="physical-examination"),

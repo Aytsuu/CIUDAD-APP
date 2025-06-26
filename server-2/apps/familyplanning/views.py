@@ -10,9 +10,8 @@ from .serializers import *
 from .models import *
 from apps.patientrecords.models import  *
 from apps.healthProfiling.models import *
-from apps.patientrecords.serializers import PatientRecordSerializer, PatientSerializer
+from apps.patientrecords.serializers import *
 from apps.healthProfiling.serializers import *
-
 
 @api_view(['GET'])
 def get_patient_details(request, patient_id):
@@ -259,204 +258,354 @@ def map_education_attainment(education):
     else:
         return ''
 
+
 @api_view(['GET'])
-def get_complete_fp_record(request, patient_id):
+def get_complete_fp_record(request, fprecord_id): # CRITICAL FIX: fprecord_id parameter
     try:
-        # First, get the patient
-        patient = get_object_or_404(Patient, pat_id=patient_id)
-        
-        # Initialize response data with patient basic info
-        data = {
-            'pat_id': patient.pat_id,
-            'clientID': "",
-            'philhealthNo': '',
-            'nhts_status': False,
-            'pantawid_4ps': False,
-            'lastName': "",
-            'givenName': "",
-            'middleInitial': "",
-            'dateOfBirth': "",
-            'age': 0,
-            'educationalAttainment': "",
-            'occupation': "",
-            'address': {
-                'houseNumber':"",
-                'street': "",
-                'barangay': "",
-                'municipality': "",
-                'province': "",
-            },
-            'spouse': {
-                's_lastName': "",
-                's_givenName': "",
-                's_middleInitial': "",
-                's_dateOfBirth': "",
-                's_age': 0,
-                's_occupation': "",
-            },
-            'numOfLivingChildren': 0,
-            'planToHaveMoreChildren': False,
-            'averageMonthlyIncome': "",
-            'typeOfClient': "",
-            'subTypeOfClient': "",
-            'reasonForFP': "",
-            'otherReasonForFP': "",
-            'methodCurrentlyUsed': "",
-            'otherMethod': "",
-            'weight': 0,
-            'height': 0,
-            'bmi': 0,
-            'bmi_category': "",
-            'obstetricalHistory': {
-                'g_pregnancies': 0,
-                'p_pregnancies': 0,
-                'fullTerm': 0,
-                'premature': 0,
-                'abortion': 0,
-                'livingChildren': 0,
-                'lastDeliveryDate': "",
-                'typeOfLastDelivery': "",
-                'lastMenstrualPeriod': "",
-                'previousMenstrualPeriod': "",
-                'menstrualFlow': "Scanty",
-                'dysmenorrhea': False,
-                'hydatidiformMole': False,
-                'ectopicPregnancyHistory': False,
-            }
-        }
+        # 1. Fetch the main FP_Record
+        fprecord_id = get_object_or_404(FP_Record, fprecord_id=fprecord_id)
 
-        # Get personal information if patient is a resident
-        if patient.pat_type == 'Resident' and patient.rp_id and patient.rp_id.per:
-            personal = patient.rp_id.per
-            data.update({
-                'lastName': personal.per_lname or "",
-                'givenName': personal.per_fname or "",
-                'middleInitial': (personal.per_mname[0] if personal.per_mname else "") or "",
-                'dateOfBirth': personal.per_dob.isoformat() if personal.per_dob else "",
-                'age': calculate_age_from_dob(personal.per_dob) if personal.per_dob else 0,
-                'educationalAttainment': map_education_attainment(personal.per_edAttainment) if personal.per_edAttainment else "",
-                'occupation': personal.per_occupation or "",
-            })
+        # Initialize a dictionary to hold all combined data
+        complete_data = FPRecordSerializer(fprecord_id).data # Start with main FP record data
 
-            # Get address information
-            try:
-                personal_address = PersonalAddress.objects.filter(per=personal).first()
-                if personal_address and personal_address.add:
-                    address = personal_address.add
-                    data['address'] = {
-                        'houseNumber': getattr(address, 'add_houseno', "") or "",
-                        'street': address.add_street or "",
-                        'barangay': address.add_barangay or "",
-                        'municipality': address.add_city or "",
-                        'province': address.add_province or "",
-                    }
-            except Exception as e:
-                print(f"Error fetching address: {e}")
-
-            # Get spouse information
-            try:
-                spouse = Spouse.objects.filter(rp_id=patient.rp_id).first()
-                if spouse:
-                    data['spouse'] = {
-                        's_lastName': spouse.spouse_lname or "",
-                        's_givenName': spouse.spouse_fname or "",
-                        's_middleInitial': (spouse.spouse_mname[0] if spouse.spouse_mname else "") or "",
-                        's_dateOfBirth': spouse.spouse_dob.isoformat() if spouse.spouse_dob else "",
-                        's_age': calculate_age_from_dob(spouse.spouse_dob) if spouse.spouse_dob else 0,
-                        's_occupation': spouse.spouse_occupation or "",
-                    }
-                    print(spouse)
-            except Exception as e:
-                print(f"Error fetching spouse: {e}")
-
-            # Get health related details
-            try:
-                hrd = HealthRelatedDetails.objects.filter(per=personal).first()
-                if hrd:
-                    data.update({
-                        'philhealthNo': hrd.hrd_philhealth_id or "",
-                        'numOfLivingChildren': getattr(hrd, 'hrd_no_living_children', 0) or 0,
-                    })
-            except Exception as e:
-                print(f"Error fetching health details: {e}")
-
-            # Get NHTS status from household
-            try:
-                household = Household.objects.filter(rp=patient.rp_id).first()
-                if household:
-                    data['nhts_status'] = household.hh_nhts == 'Yes' if hasattr(household, 'hh_nhts') else False
-            except Exception as e:
-                print(f"Error fetching household: {e}")
-
-        # Get body measurements
+        # 2. Fetch related FP_Type data (assuming one-to-one or one per FP_Record)
         try:
-            body_measurement = BodyMeasurement.objects.filter(pat=patient).first()
-            if body_measurement:
-                data.update({
-                    'weight': float(body_measurement.weight) if body_measurement.weight else 0,
-                    'height': float(body_measurement.height) if body_measurement.height else 0,
-                    'bmi': float(body_measurement.bmi) if body_measurement.bmi else 0,
-                    'bmi_category': body_measurement.bmi_category or "",
-                })
-        except Exception as e:
-            print(f"Error fetching body measurements: {e}")
+            fp_type = FP_type.objects.get(fprecord_id=fprecord_id)
+            complete_data['fp_type'] = FPTypeSerializer(fp_type).data
+        except FP_type.DoesNotExist:
+            complete_data['fp_type'] = None
 
-        # Get obstetrical history
+        # 3. Fetch Patient and Personal Info (via PatientRecord and Patient)
         try:
-            # Get patient records for this patient
-            patient_records = PatientRecord.objects.filter(pat_id=patient)
-            for patient_record in patient_records:
-                obs_history = Obstetrical_History.objects.filter(patrec_id=patient_record).first()
-                if obs_history:
-                    data['obstetricalHistory'] = {
-                        'g_pregnancies': obs_history.obs_gravida or 0,
-                        'p_pregnancies': obs_history.obs_para or 0,
-                        'fullTerm': obs_history.obs_fullterm or 0,
-                        'premature': obs_history.obs_preterm or 0,
-                        'abortion': obs_history.obs_abortion or 0,
-                        'livingChildren': obs_history.obs_living_ch or 0,
-                        'lastDeliveryDate': "",
-                        'typeOfLastDelivery': "",
-                        'lastMenstrualPeriod': "",
-                        'previousMenstrualPeriod': "",
-                        'menstrualFlow': "Scanty",
-                        'dysmenorrhea': False,
-                        'hydatidiformMole': False,
-                        'ectopicPregnancyHistory': False,
-                    }
-                    break
-        except Exception as e:
-            print(f"Error fetching obstetrical history: {e}")
+            patient_record_main_fp = fprecord_id.patrec # Get the PatientRecord linked to FP_Record
+            patient = patient_record_main_fp.pat_id # Get the Patient linked to that PatientRecord
+            complete_data['patient_info'] = PatientSerializer(patient).data # Use PatientSerializer
+            
+            # Additional Personal Info (if needed directly from Personal model, via ResidentProfile)
+            # This depends on your PatientSerializer and how it exposes personal info.
+            # If PatientSerializer already includes personal_info, this might be redundant.
+            if patient.pat_type == 'Resident' and hasattr(patient.rp_id, 'per'):
+                personal_info = patient.rp_id.per
+                complete_data['personal_info_details'] = PersonalSerializer(personal_info).data
+                # Also fetch address if available via Personal
+                if hasattr(personal_info, 'peradd') and personal_info.peradd:
+                    complete_data['address_details'] = AddressForFpSerializer(personal_info.peradd.add).data
+            elif patient.pat_type == 'Transient' and hasattr(patient, 'trans_id'):
+                 # Manually populate transient address/info if needed
+                 complete_data['personal_info_details'] = {
+                     'per_fname': patient.trans_id.tran_fname,
+                     'per_lname': patient.trans_id.tran_lname,
+                     'per_mname': patient.trans_id.tran_mname,
+                     'per_dob': patient.trans_id.tran_dob,
+                     'per_sex': patient.trans_id.tran_sex,
+                     'per_age': (timezone.now().year - patient.trans_id.tran_dob.year),
+                 }
+                 complete_data['address_details'] = { # Assuming transient has tradd_id linked
+                    'tradd_province': patient.trans_id.tradd_id.tradd_province,
+                    'tradd_city': patient.trans_id.tradd_id.tradd_city,
+                    'tradd_barangay': patient.trans_id.tradd_id.tradd_barangay,
+                    'tradd_street': patient.trans_id.tradd_id.tradd_street,
+                    'tradd_sitio': patient.trans_id.tradd_id.tradd_sitio,
+                 }
 
-        # Check if patient has existing FP records
+
+            # Spouse Info
+            if fprecord_id.spouse: # Check if spouse FK exists on FP_Record
+                complete_data['spouse_info'] = SpouseSerializer(fprecord_id.spouse).data
+            else:
+                complete_data['spouse_info'] = None
+
+        except (PatientRecord.DoesNotExist, Patient.DoesNotExist):
+            complete_data['patient_info'] = None
+            complete_data['personal_info_details'] = None
+            complete_data['address_details'] = None
+            complete_data['spouse_info'] = None # Clear if patient info missing
+
+        # 4. Fetch FP_Obstetrical_History (linked to this FP_Record)
         try:
-            fp_record = FP_Record.objects.filter(pat=patient).first()
-            if fp_record:
-                data.update({
-                    'pantawid_4ps': fp_record.fourps,
-                    'planToHaveMoreChildren': fp_record.plan_more_children,
-                    'averageMonthlyIncome': fp_record.avg_monthly_income or "",
-                })
-                
-                # Get FP type information
-                fp_type = FP_type.objects.filter(fprecord_id=fp_record).first()
-                if fp_type:
-                    data.update({
-                        'typeOfClient': fp_type.fpt_client_type or "",
-                        'subTypeOfClient': fp_type.fpt_subtype or "",
-                        'reasonForFP': fp_type.fpt_reason_fp or "",
-                        'methodCurrentlyUsed': fp_type.fpt_method_used or "",
-                    })
+            fp_obstetrical_history = fprecord_id.fp_obstetrical_histories.first() # Use related_name
+            if fp_obstetrical_history:
+                complete_data['fp_obstetrical_history'] = FP_ObstetricalHistorySerializer(fp_obstetrical_history).data
+                # Also fetch the main Obstetrical_History linked to it
+                if fp_obstetrical_history.obs:
+                    complete_data['main_obstetrical_history'] = ObstetricalHistorySerializer(fp_obstetrical_history.obs).data
+                else:
+                    complete_data['main_obstetrical_history'] = None
+            else:
+                complete_data['fp_obstetrical_history'] = None
+                complete_data['main_obstetrical_history'] = None # Ensure consistent output even if no FP_OH
         except Exception as e:
-            print(f"Error fetching FP records: {e}")
+            # Log this specific error for debugging during development
+            print(f"Error fetching FP Obstetrical History or main Obstetrical History: {e}")
+            complete_data['fp_obstetrical_history'] = None
+            complete_data['main_obstetrical_history'] = None
 
-        return Response(data, status=status.HTTP_200_OK)
 
-    except Patient.DoesNotExist:
-        return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+        # 5. Fetch Risk STI
+        try:
+            risk_sti = FP_RiskSti.objects.get(fprecord_id=fprecord_id)
+            complete_data['risk_sti'] = FPRiskStiSerializer(risk_sti).data
+        except FP_RiskSti.DoesNotExist:
+            complete_data['risk_sti'] = None
+
+        # 6. Fetch Risk VAW
+        try:
+            risk_vaw = FP_RiskVaw.objects.get(fprecord_id=fprecord_id)
+            complete_data['risk_vaw'] = FPRiskVawSerializer(risk_vaw).data
+        except FP_RiskVaw.DoesNotExist:
+            complete_data['risk_vaw'] = None
+
+        # 7. Fetch FP_Physical_Exam and associated BodyMeasurement
+        try:
+            fp_physical_exam = FP_Physical_Exam.objects.get(fprecord_id=fprecord_id)
+            complete_data['fp_physical_exam'] = FPPhysicalExamSerializer(fp_physical_exam).data
+            if fp_physical_exam.bm: # Check if bm FK exists and is populated
+                complete_data['body_measurement'] = BodyMeasurementSerializer(fp_physical_exam.bm).data
+            else:
+                complete_data['body_measurement'] = None
+        except FP_Physical_Exam.DoesNotExist:
+            complete_data['fp_physical_exam'] = None
+            complete_data['body_measurement'] = None
+
+        # 8. Fetch FP_Pelvic_Exam
+        try:
+            fp_pelvic_exam = FP_Pelvic_Exam.objects.get(fprecord_id=fprecord_id)
+            complete_data['fp_pelvic_exam'] = PelvicExamSerializer(fp_pelvic_exam).data
+        except FP_Pelvic_Exam.DoesNotExist:
+            complete_data['fp_pelvic_exam'] = None
+
+        # 9. Fetch FP_Acknowledgement
+        try:
+            fp_acknowledgement = FP_Acknowledgement.objects.get(fprecord_id=fprecord_id)
+            complete_data['fp_acknowledgement'] = AcknowledgementSerializer(fp_acknowledgement).data
+        except FP_Acknowledgement.DoesNotExist:
+            complete_data['fp_acknowledgement'] = None
+
+        # 10. Fetch FP_PregnancyCheck
+        try:
+            fp_pregnancy_check = FP_pregnancy_check.objects.get(fprecord_id=fprecord_id)
+            complete_data['fp_pregnancy_check'] = FP_PregnancyCheckSerializer(fp_pregnancy_check).data
+        except FP_pregnancy_check.DoesNotExist:
+            complete_data['fp_pregnancy_check'] = None
+
+        # 11. Fetch FP_Assessment_Record and associated FollowUpVisit
+        try:
+            fp_assessment = FP_Assessment_Record.objects.get(fprecord_id=fprecord_id)
+            complete_data['fp_assessment'] = FPAssessmentSerializer(fp_assessment).data
+            if fp_assessment.followv: # Check if followv FK exists and is populated
+                complete_data['follow_up_visit'] = FollowUpVisitSerializer(fp_assessment.followv).data
+            else:
+                complete_data['follow_up_visit'] = None
+        except FP_Assessment_Record.DoesNotExist:
+            complete_data['fp_assessment'] = None
+            complete_data['follow_up_visit'] = None
+
+
+        return Response(complete_data, status=status.HTTP_200_OK)
+
     except Exception as e:
-        print(f"Error in get_complete_fp_record: {e}")
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        import traceback
+        traceback.print_exc() # Print full traceback for debugging
+        return Response({'error': f"Error fetching complete FP record: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+# @api_view(['GET'])
+# def get_complete_fp_record(request, patient_id):
+#     try:
+#         # First, get the patient
+#         patient = get_object_or_404(Patient, pat_id=patient_id)
+        
+#         # Initialize response data with patient basic info
+#         data = {
+#             'pat_id': patient.pat_id,
+#             'clientID': "",
+#             'philhealthNo': '',
+#             'nhts_status': False,
+#             'pantawid_4ps': False,
+#             'lastName': "",
+#             'givenName': "",
+#             'middleInitial': "",
+#             'dateOfBirth': "",
+#             'age': 0,
+#             'educationalAttainment': "",
+#             'occupation': "",
+#             'address': {
+#                 'houseNumber':"",
+#                 'street': "",
+#                 'barangay': "",
+#                 'municipality': "",
+#                 'province': "",
+#             },
+#             'spouse': {
+#                 's_lastName': "",
+#                 's_givenName': "",
+#                 's_middleInitial': "",
+#                 's_dateOfBirth': "",
+#                 's_age': 0,
+#                 's_occupation': "",
+#             },
+#             'numOfLivingChildren': 0,
+#             'planToHaveMoreChildren': False,
+#             'averageMonthlyIncome': "",
+#             'typeOfClient': "",
+#             'subTypeOfClient': "",
+#             'reasonForFP': "",
+#             'otherReasonForFP': "",
+#             'methodCurrentlyUsed': "",
+#             'otherMethod': "",
+#             'weight': 0,
+#             'height': 0,
+#             'bmi': 0,
+#             'bmi_category': "",
+#             'obstetricalHistory': {
+#                 'g_pregnancies': 0,
+#                 'p_pregnancies': 0,
+#                 'fullTerm': 0,
+#                 'premature': 0,
+#                 'abortion': 0,
+#                 'livingChildren': 0,
+#                 'lastDeliveryDate': "",
+#                 'typeOfLastDelivery': "",
+#                 'lastMenstrualPeriod': "",
+#                 'previousMenstrualPeriod': "",
+#                 'menstrualFlow': "Scanty",
+#                 'dysmenorrhea': False,
+#                 'hydatidiformMole': False,
+#                 'ectopicPregnancyHistory': False,
+#             }
+#         }
+
+#         # Get personal information if patient is a resident
+#         if patient.pat_type == 'Resident' and patient.rp_id and patient.rp_id.per:
+#             personal = patient.rp_id.per
+#             data.update({
+#                 'lastName': personal.per_lname or "",
+#                 'givenName': personal.per_fname or "",
+#                 'middleInitial': (personal.per_mname[0] if personal.per_mname else "") or "",
+#                 'dateOfBirth': personal.per_dob.isoformat() if personal.per_dob else "",
+#                 'age': calculate_age_from_dob(personal.per_dob) if personal.per_dob else 0,
+#                 'educationalAttainment': map_education_attainment(personal.per_edAttainment) if personal.per_edAttainment else "",
+#                 'occupation': personal.per_occupation or "",
+#             })
+
+#             # Get address information
+#             try:
+#                 personal_address = PersonalAddress.objects.filter(per=personal).first()
+#                 if personal_address and personal_address.add:
+#                     address = personal_address.add
+#                     data['address'] = {
+#                         'houseNumber': getattr(address, 'add_houseno', "") or "",
+#                         'street': address.add_street or "",
+#                         'barangay': address.add_barangay or "",
+#                         'municipality': address.add_city or "",
+#                         'province': address.add_province or "",
+#                     }
+#             except Exception as e:
+#                 print(f"Error fetching address: {e}")
+
+#             # Get spouse information
+#             try:
+#                 spouse = Spouse.objects.filter(rp_id=patient.rp_id).first()
+#                 if spouse:
+#                     data['spouse'] = {
+#                         's_lastName': spouse.spouse_lname or "",
+#                         's_givenName': spouse.spouse_fname or "",
+#                         's_middleInitial': (spouse.spouse_mname[0] if spouse.spouse_mname else "") or "",
+#                         's_dateOfBirth': spouse.spouse_dob.isoformat() if spouse.spouse_dob else "",
+#                         's_age': calculate_age_from_dob(spouse.spouse_dob) if spouse.spouse_dob else 0,
+#                         's_occupation': spouse.spouse_occupation or "",
+#                     }
+#                     print(spouse)
+#             except Exception as e:
+#                 print(f"Error fetching spouse: {e}")
+
+#             # Get health related details
+#             try:
+#                 hrd = HealthRelatedDetails.objects.filter(per=personal).first()
+#                 if hrd:
+#                     data.update({
+#                         'philhealthNo': hrd.hrd_philhealth_id or "",
+#                         'numOfLivingChildren': getattr(hrd, 'hrd_no_living_children', 0) or 0,
+#                     })
+#             except Exception as e:
+#                 print(f"Error fetching health details: {e}")
+
+#             # Get NHTS status from household
+#             try:
+#                 household = Household.objects.filter(rp=patient.rp_id).first()
+#                 if household:
+#                     data['nhts_status'] = household.hh_nhts == 'Yes' if hasattr(household, 'hh_nhts') else False
+#             except Exception as e:
+#                 print(f"Error fetching household: {e}")
+
+#         # Get body measurements
+#         try:
+#             body_measurement = BodyMeasurement.objects.filter(pat=patient).first()
+#             if body_measurement:
+#                 data.update({
+#                     'weight': float(body_measurement.weight) if body_measurement.weight else 0,
+#                     'height': float(body_measurement.height) if body_measurement.height else 0,
+#                     'bmi': float(body_measurement.bmi) if body_measurement.bmi else 0,
+#                     'bmi_category': body_measurement.bmi_category or "",
+#                 })
+#         except Exception as e:
+#             print(f"Error fetching body measurements: {e}")
+
+#         # Get obstetrical history
+#         try:
+#             # Get patient records for this patient
+#             patient_records = PatientRecord.objects.filter(pat_id=patient)
+#             for patient_record in patient_records:
+#                 obs_history = Obstetrical_History.objects.filter(patrec_id=patient_record).first()
+#                 if obs_history:
+#                     data['obstetricalHistory'] = {
+#                         'g_pregnancies': obs_history.obs_gravida or 0,
+#                         'p_pregnancies': obs_history.obs_para or 0,
+#                         'fullTerm': obs_history.obs_fullterm or 0,
+#                         'premature': obs_history.obs_preterm or 0,
+#                         'abortion': obs_history.obs_abortion or 0,
+#                         'livingChildren': obs_history.obs_living_ch or 0,
+#                         'lastDeliveryDate': "",
+#                         'typeOfLastDelivery': "",
+#                         'lastMenstrualPeriod': "",
+#                         'previousMenstrualPeriod': "",
+#                         'menstrualFlow': "Scanty",
+#                         'dysmenorrhea': False,
+#                         'hydatidiformMole': False,
+#                         'ectopicPregnancyHistory': False,
+#                     }
+#                     break
+#         except Exception as e:
+#             print(f"Error fetching obstetrical history: {e}")
+
+#         # Check if patient has existing FP records
+#         try:
+#             fp_record = FP_Record.objects.filter(pat=patient).first()
+#             if fp_record:
+#                 data.update({
+#                     'pantawid_4ps': fp_record.fourps,
+#                     'planToHaveMoreChildren': fp_record.plan_more_children,
+#                     'averageMonthlyIncome': fp_record.avg_monthly_income or "",
+#                 })
+                
+#                 # Get FP type information
+#                 fp_type = FP_type.objects.filter(fprecord_id=fp_record).first()
+#                 if fp_type:
+#                     data.update({
+#                         'typeOfClient': fp_type.fpt_client_type or "",
+#                         'subTypeOfClient': fp_type.fpt_subtype or "",
+#                         'reasonForFP': fp_type.fpt_reason_fp or "",
+#                         'methodCurrentlyUsed': fp_type.fpt_method_used or "",
+#                     })
+#         except Exception as e:
+#             print(f"Error fetching FP records: {e}")
+
+#         return Response(data, status=status.HTTP_200_OK)
+
+#     except Patient.DoesNotExist:
+#         return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+#     except Exception as e:
+#         print(f"Error in get_complete_fp_record: {e}")
+#         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class FamilyPlanningCreateUpdateView(generics.CreateAPIView):
     serializer_class = FamilyPlanningRecordCompositeSerializer
