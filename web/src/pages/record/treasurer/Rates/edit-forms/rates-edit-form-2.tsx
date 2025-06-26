@@ -1,24 +1,36 @@
 import { Input } from "@/components/ui/input"
 import { Form, FormLabel, FormItem, FormField, FormControl, FormMessage } from "@/components/ui/form/form"
 import { Button } from "@/components/ui/button/button"
-import { PersonalClearanceSchema, FormData } from "@/form-schema/rates-form-schema"
 import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
+import { PurposeAndRatesEditSchema } from "@/form-schema/treasurer/rates-edit-form-schema"
+import { useEditPurposeAndRate } from "../queries/RatesUpdateQueries"
 
+function RatesEditFormPage2({pr_id, pr_purpose, pr_rate, onSuccess}: {
+    pr_id: string;
+    pr_purpose: string;
+    pr_rate: number;
+    onSuccess?: () => void;
+}){
 
-function RatesFormPage2(){
-
-    const form = useForm<z.infer<typeof PersonalClearanceSchema>>({
-        resolver: zodResolver(PersonalClearanceSchema),
+    const form = useForm<z.infer<typeof PurposeAndRatesEditSchema>>({
+        resolver: zodResolver(PurposeAndRatesEditSchema),
         defaultValues: {
-            purpose: "",
-            amount: ""
+            purpose: pr_purpose,
+            amount: pr_rate.toString(),
+            category: "Personal And Others"
         }
     });
 
-    const onSubmit = (value: z.infer<typeof PersonalClearanceSchema>) => {
+    const {mutate: editPurposeRate} = useEditPurposeAndRate(onSuccess)
+
+    const onSubmit = (value: z.infer<typeof PurposeAndRatesEditSchema>) => {
         console.log(value); 
+        editPurposeRate({
+            ...value,
+            pr_id: pr_id,
+        })
     };
 
     return(
@@ -32,7 +44,7 @@ function RatesFormPage2(){
                         <FormItem>
                             <FormLabel>Purpose</FormLabel>
                             <FormControl>
-                                <Input {...field} type='text' placeholder="e.g. Employment"></Input>
+                                <Input {...field} type='text' placeholder="e.g. Employment" readOnly></Input>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
@@ -60,4 +72,4 @@ function RatesFormPage2(){
     )
 }
 
-export default RatesFormPage2
+export default RatesEditFormPage2

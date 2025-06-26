@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'apps.announcement',
     'apps.authentication',
     'apps.gad',
+    'apps.clerk',
     'backend.firebase.notifications',
     'detection'
 ]

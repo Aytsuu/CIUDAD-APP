@@ -1,25 +1,29 @@
 import { Input } from "@/components/ui/input"
 import { Form, FormLabel, FormItem, FormField, FormControl, FormMessage } from "@/components/ui/form/form"
 import { Button } from "@/components/ui/button/button"
-import { ClearanceForPermitRatesSchema } from "@/form-schema/rates-form-schema"
+import { PurposeAndRatesSchema } from "@/form-schema/treasurer/rates-form-schema"
 import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
+import { useAddPurposeAndRate } from "../queries/RatesInsertQueries"
 
 
-function RatesFormPage1(){
+function RatesFormPage2({onSuccess}: {onSuccess?: () => void}){
 
-    const form = useForm<z.infer<typeof ClearanceForPermitRatesSchema>>({
-        resolver: zodResolver(ClearanceForPermitRatesSchema),
-        defaultValues:{
-            maxRange: "",
-            minRange: "",
-            amount: ""
+    const form = useForm<z.infer<typeof PurposeAndRatesSchema>>({
+        resolver: zodResolver(PurposeAndRatesSchema),
+        defaultValues: {
+            purpose: "",
+            amount: "",
+            category: "Personal and Others"
         }
-    })
+    });
 
-    const onSubmit = (value: z.infer<typeof ClearanceForPermitRatesSchema>) => {
+    const {mutate: addPurposeRate} = useAddPurposeAndRate(onSuccess);
+
+    const onSubmit = (value: z.infer<typeof PurposeAndRatesSchema>) => {
         console.log(value); 
+        addPurposeRate(value);
     };
 
     return(
@@ -28,25 +32,12 @@ function RatesFormPage1(){
                 <div>
                     <FormField
                     control={form.control}
-                    name="minRange"
+                    name="purpose"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Minimum Annual Gross Sales</FormLabel>
+                            <FormLabel>Purpose</FormLabel>
                             <FormControl>
-                                <Input {...field} type='number' placeholder="0.00"></Input>
-                            </FormControl>
-                            <FormMessage/>
-                        </FormItem>
-                    )}></FormField>
-
-                    <FormField
-                    control={form.control}
-                    name = "maxRange"
-                    render = {({field}) => (
-                        <FormItem>
-                            <FormLabel>Maximum Annual Gross Sales</FormLabel>
-                            <FormControl>
-                                <Input {...field} type='number' placeholder="0.00"></Input>
+                                <Input {...field} type='text' placeholder="e.g. Employment"></Input>
                             </FormControl>
                             <FormMessage/>
                         </FormItem>
@@ -65,7 +56,7 @@ function RatesFormPage1(){
                         </FormItem>
                     )}></FormField>
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-end mt-6">
                         <Button type="submit" className="w-[100px]">Save</Button>
                     </div>
                 </div>
@@ -74,4 +65,4 @@ function RatesFormPage1(){
     )
 }
 
-export default RatesFormPage1
+export default RatesFormPage2

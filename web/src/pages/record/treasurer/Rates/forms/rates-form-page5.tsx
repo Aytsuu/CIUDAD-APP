@@ -1,23 +1,28 @@
 import { Input } from "@/components/ui/input"
 import { Form, FormLabel, FormItem, FormField, FormControl, FormMessage } from "@/components/ui/form/form"
 import { Button } from "@/components/ui/button/button"
-import { ServiceChargesSchema, FormData } from "@/form-schema/rates-form-schema"
+import { PurposeAndRatesSchema } from "@/form-schema/treasurer/rates-form-schema"
 import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
+import { useAddPurposeAndRate } from "../queries/RatesInsertQueries"
 
-function RatesFormPage3(){
+function RatesFormPage5({onSuccess}: {onSuccess?: () => void}){
 
-    const form = useForm<z.infer<typeof ServiceChargesSchema>>({
-        resolver: zodResolver(ServiceChargesSchema),
+    const form = useForm<z.infer<typeof PurposeAndRatesSchema>>({
+        resolver: zodResolver(PurposeAndRatesSchema),
         defaultValues: {
             purpose: "",
-            amount: ""
+            amount:"",
+            category: "Barangay Service"
         }
     })
 
-    const onSubmit = (value: z.infer<typeof ServiceChargesSchema>) => {
+    const {mutate: addPurposeRate} = useAddPurposeAndRate(onSuccess)
+
+    const onSubmit = (value: z.infer<typeof PurposeAndRatesSchema> ) => {
         console.log(value); 
+        addPurposeRate(value)
     };
 
     return(
@@ -50,7 +55,7 @@ function RatesFormPage3(){
                         </FormItem>
                     )}></FormField>
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-end mt-[20px]">
                         <Button type="submit" className="w-[100px]">Save</Button>
                     </div>
                 </div>
@@ -59,4 +64,4 @@ function RatesFormPage3(){
     )
 }
 
-export default RatesFormPage3
+export default RatesFormPage5
