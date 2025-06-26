@@ -114,7 +114,7 @@ export default function NewPositionForm() {
           description={params.description}
         >
           <div className="mt-8">
-            <Card className="p-8 shadow-lg border-0 bg-white">
+            <Card className="p-8 bg-white">
               <Form {...form}>
                 <form
                   onSubmit={(e) => {
