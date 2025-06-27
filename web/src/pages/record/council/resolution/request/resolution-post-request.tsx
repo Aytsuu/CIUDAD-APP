@@ -9,7 +9,7 @@ import { useState } from "react";
 
 export const resolution_create = async (resolutionInfo: Record<string, any>) => {
     try{
-        let staff = "00002250609";
+        let staff = "00004250624";
 
         console.log({
             res_title: resolutionInfo.res_title,
@@ -24,7 +24,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
-            staff_id: Number(staff),
+            staff_id: staff,
         })
 
         return res.data.res_num;
