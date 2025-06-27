@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card/card";
-import { getWeekNumber, getMonthName } from "@/helpers/dateFormatter";
+import { getWeekNumber, getMonthName } from "@/helpers/dateHelper";
 import { Clock, FileText } from "lucide-react";
 
 export default function RecentWeeklyAR({

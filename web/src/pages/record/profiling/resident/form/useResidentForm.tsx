@@ -70,8 +70,6 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
         return String(initialValues[key]) == String(currentValues[key]) ? true : false;
       }
     });
-
-    console.log(isDefault)
     return isDefault;
   };
 

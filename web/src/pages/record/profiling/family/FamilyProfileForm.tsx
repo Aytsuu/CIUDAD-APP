@@ -34,6 +34,7 @@ export default function FamilyProfileForm() {
   });
   const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList]);
+  
 
   React.useEffect(() => {
       if(isLoadingHouseholds || isLoadingResidents) {

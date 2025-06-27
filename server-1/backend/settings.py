@@ -136,7 +136,7 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
-    }
+    },
 }
 
 # Password validation
@@ -165,6 +165,7 @@ USE_TZ = True
 
 # Static files 
 STATIC_URL = 'static/'
+DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -190,7 +191,6 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://192.168.1.6:8000",
     config('FRONTEND_URL', default='http://localhost:3000'),
 ]
 ALLOWED_HOSTS = ['*'] 

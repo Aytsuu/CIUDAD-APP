@@ -1,20 +1,12 @@
 import { useQuery} from "@tanstack/react-query";
-import { getResidentsList } from "../../profiling/restful-api/profilingGetAPI";
+
 import {
   getFeatures,
   getPositions,
   getStaffs,
   getAllAssignedFeatures,
 } from "../restful-api/administrationGetAPI";
-
-// Fetching
-export const useResidents = () => {
-  return useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidentsList,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-};
+import { api } from "@/api/api";
 
 export const useStaffs = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
@@ -47,3 +39,38 @@ export const useAllAssignedFeatures = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
+
+export const usePositionGroups = () => {
+  return useQuery({
+    queryKey: ['positionGroups'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('administration/position/group/list/');
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}
+
+export const useGetStaffByTitle = (position: string) => {
+  return useQuery({
+    queryKey: ['staffByTitle', position]  ,
+    queryFn: async () => {
+      try {
+        const res = await api.get('administration/staff/by-title/', {
+          params: {
+            pos_title: position
+          }
+        });
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}

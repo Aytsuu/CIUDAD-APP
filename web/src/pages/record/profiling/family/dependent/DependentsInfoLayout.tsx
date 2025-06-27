@@ -12,7 +12,14 @@ import { CircleAlert, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
-import { useAddFamily, useAddFamilyComposition } from "../../queries/profilingAddQueries";
+import { 
+  useAddFamily, 
+  useAddFamilyComposition,
+} from "../../queries/profilingAddQueries";
+import {
+  useAddFamilyHealth,
+  useAddFamilyCompositionHealth 
+} from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
@@ -36,8 +43,15 @@ export default function DependentsInfoLayout({
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const { user } = useAuth();
   const { safeNavigate } = useSafeNavigate(); 
+  
+  // Main database hooks
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
+  
+  // Health database hooks
+  const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
+  const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
+  
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   React.useEffect(() => {
@@ -129,49 +143,93 @@ export default function DependentsInfoLayout({
       return;
     }
 
-    // Get form values
-    const demographicInfo = form.getValues().demographicInfo;
-    const dependentsInfo = form.getValues().dependentsInfo.list;
+    try {
+      // Get form values
+      const demographicInfo = form.getValues().demographicInfo;
+      const dependentsInfo = form.getValues().dependentsInfo.list;
 
-    // Store information to the database
-    const family = await addFamily({
-      demographicInfo: demographicInfo, 
-      staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || ""
-    });
+      // Store information to the main database
+      const family = await addFamily({
+        demographicInfo: demographicInfo, 
+        staffId: user?.staff?.staff_id || ""
+      });
 
-    let bulk_composition: {
-      fam: string, 
-      fc_role: string, 
-      rp: string}[] = [];
+      // Store information to the health database
+      const familyHealth = await addFamilyHealth({
+        demographicInfo: demographicInfo, 
+        staffId: user?.staff?.staff_id || ""
+      });
 
-    selectedParents.map((parentId, index) => {
-      if(!parentId) return;
-      bulk_composition = [
-        ...bulk_composition,
-        {
+      let bulk_composition: {
+        fam: string, 
+        fc_role: string, 
+        rp: string}[] = [];
+
+      let bulk_composition_health: {
+        fam: string, 
+        fc_role: string, 
+        rp: string}[] = [];
+
+      // Prepare composition data for both databases
+      selectedParents.forEach((parentId, index) => {
+        if(!parentId) return;
+        
+        const compositionData = {
           fam: family.fam_id,
           fc_role: PARENT_ROLES[index],
           rp: parentId
-        }
-      ]
-    });
+        };
+        const compositionHealthData = {
+          fam: familyHealth.fam_id,
+          fc_role: PARENT_ROLES[index],
+          rp: parentId
+        };
+        
+        bulk_composition.push(compositionData);
+        bulk_composition_health.push(compositionHealthData);
+      });
 
-    dependentsInfo.map((dependent) => {
-      bulk_composition = [
-        ...bulk_composition,
-        {
+      dependentsInfo.forEach((dependent) => {
+        const dependentId = dependent.id?.split(" ")[0] as string;
+        
+        const compositionData = {
           fam: family.fam_id,
           fc_role: 'Dependent',
-          rp: dependent.id?.split(" ")[0] as string
-        }
-      ]
-    })
+          rp: dependentId
+        };
+        const compositionHealthData = {
+          fam: familyHealth.fam_id,
+          fc_role: 'Dependent',
+          rp: dependentId
+        };
+        
+        bulk_composition.push(compositionData);
+        bulk_composition_health.push(compositionHealthData);
+      });
 
-    addFamilyComposition(bulk_composition,{
-      onSuccess: () => {
-        safeNavigate.back();
-      }
-    });
+      // Insert into main database
+      await addFamilyComposition(bulk_composition);
+      
+      // Insert into health database
+      await addFamilyCompositionHealth(bulk_composition_health);
+
+      // Success - navigate back
+      safeNavigate.back();
+      
+    } catch (error) {
+      console.error('Family registration failed:', error);
+      setIsSubmitting(false);
+      toast('Family Registration Failed', {
+        description: "Registration failed. Please try again.",
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
+      });
+    }
   }
 
   return (

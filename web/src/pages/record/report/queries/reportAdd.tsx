@@ -25,7 +25,7 @@ export const useAddARFile = () => {
       } catch (err) {
         throw err;
       }
-    }
+    },
   })
 }
 
@@ -67,6 +67,6 @@ export const useAddWARFile = () => {
       } catch (err) {
         throw err;
       }
-    }
+    },
   })
 }

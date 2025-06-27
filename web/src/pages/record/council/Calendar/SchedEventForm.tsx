@@ -14,7 +14,7 @@ import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAddCouncilEvent, useAddAttendee } from "./queries/addqueries";
 import { useGetStaffList } from "./queries/fetchqueries";
-import { formatDate } from '@/helpers/dateFormatter';
+import { formatDate } from '@/helpers/dateHelper';
 
 interface SchedEventFormProps {
   onSuccess?: () => void;

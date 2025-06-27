@@ -88,12 +88,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 25,
   },
+  signatureBlock: {
+    alignItems: "center",
+  },
   signatureTitle: {
     fontSize: 12,
     fontWeight: "bold",
     marginBottom: 25,
   },
   signatureName: {
+    textAlign: 'center',
     fontSize: 12,
     marginBottom: 5,
   },
@@ -187,20 +191,26 @@ export const ARTemplatePDF: React.FC<ARTemplatePDFProps> = ({
         <View style={styles.signaturesContainer}>
           <View>
             <Text style={styles.signatureTitle}>PREPARED BY:</Text>
-            <Text style={styles.signatureName}>{preparedBy}</Text>
-            <Text style={styles.signaturePosition}>TEAM LEADER</Text>
+            <View style={styles.signatureBlock}>
+              <Text style={styles.signatureName}>{preparedBy}</Text>
+              <Text style={styles.signaturePosition}>TEAM LEADER</Text>
+            </View>
           </View>
-
+          
           <View>
             <Text style={styles.signatureTitle}>RECOMMENDED BY:</Text>
-            <Text style={styles.signatureName}>{recommendedBy}</Text>
-            <Text style={styles.signaturePosition}>BARANGAY CAPTAIN</Text>
+            <View style={styles.signatureBlock}>
+              <Text style={styles.signatureName}>{recommendedBy}</Text>
+              <Text style={styles.signaturePosition}>BARANGAY CAPTAIN</Text>
+            </View>
           </View>
 
           <View>
             <Text style={styles.signatureTitle}>APPROVED BY:</Text>
-            <Text style={styles.signatureName}>{approvedBy}</Text>
-            <Text style={styles.signaturePosition}>ASST. DEPARTMENT HEAD</Text>
+            <View style={styles.signatureBlock}>
+              <Text style={styles.signatureName}>{approvedBy}</Text>
+              <Text style={styles.signaturePosition}>ASST. DEPARTMENT HEAD</Text>
+            </View>
           </View>
         </View>
       </View>

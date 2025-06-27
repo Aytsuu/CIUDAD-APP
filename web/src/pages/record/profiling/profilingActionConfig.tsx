@@ -20,7 +20,10 @@ export const buttonConfig = (
     [Type.Viewing]: null, // No button for viewing in administration
     default: (
       isAllowSubmit ? (<DialogLayout
-        trigger={<Button className="px-12">Finish</Button>}
+        trigger={<Button className="px-12">
+          <Check />
+          Finish
+        </Button>}
         title="Position Assignment"
         description="Assign a position to complete the registration"
         mainContent={

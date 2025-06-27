@@ -111,7 +111,7 @@ export default function Profile() {
     try {
       // First upload to Supabase storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${user.supabase_id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `profile-images/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -154,7 +154,7 @@ export default function Profile() {
     }
   };
 
-  if (!user?.djangoUser) {
+  if (!user?.supabase_id) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <p className="text-muted-foreground">Loading user profile...</p>
@@ -164,12 +164,12 @@ export default function Profile() {
 
   // Helper function to get display name
   const getDisplayName = () => {
-    return user.djangoUser?.username || user.username || user.email || "User";
+    return user?.username|| user.email || "User";
   };
 
   // Helper function to get profile image
   const getProfileImage = () => {
-    return user.djangoUser?.profile_image || user.profile_image || sanRoqueLogo;
+    return user?.profile_image || sanRoqueLogo;
   };
 
   return (
@@ -228,9 +228,9 @@ export default function Profile() {
               <h2 className="text-xl font-bold">
                 {getDisplayName()}
               </h2>
-              {user.djangoUser?.resident_profile?.staff && (
+              {user.staff && (
                 <p className="text-muted-foreground">
-                  {user.djangoUser.resident_profile.staff.staff_type || "Staff Member"}
+                  {user.staff.staff_type || "Staff Member"}
                 </p>
               )}
             </div>
@@ -247,13 +247,13 @@ export default function Profile() {
                   </p>
                 </div>
                 
-                {user.djangoUser?.resident_profile?.staff && (
+                {user.staff && (
                   <div>
                     <Label className="text-muted-foreground flex items-center gap-2 mb-1">
                       <Info size={14} /> Staff ID
                     </Label>
                     <p className="font-medium">
-                      {user.djangoUser.resident_profile.staff.staff_id || "N/A"}
+                      {user.staff.staff_id || "N/A"}
                     </p>
                   </div>
                 )}

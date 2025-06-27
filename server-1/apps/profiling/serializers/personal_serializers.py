@@ -3,14 +3,21 @@ from ..models import *
 from ..serializers.address_serializers import AddressBaseSerializer
 
 class PersonalBaseSerializer(serializers.ModelSerializer):
+    per_id = serializers.IntegerField(required=False, allow_null=True)
+    per_lname = serializers.CharField(required=False, allow_null=True)
+    per_fname = serializers.CharField(required=False, allow_null=True)
+    per_mname = serializers.CharField(required=False, allow_null=True)
+    per_suffix = serializers.CharField(required=False, allow_null=True)
+    per_dob = serializers.DateField(required=False, allow_null=True)
+    per_sex = serializers.CharField(required=False, allow_null=True)
+    per_status = serializers.CharField(required=False, allow_null=True)
+    per_edAttainment = serializers.CharField(required=False, allow_null=True)
+    per_religion = serializers.CharField(required=False, allow_null=True)
+    per_contact = serializers.CharField(required=False, allow_null=True)
+
     class Meta:
         model = Personal
         fields = '__all__'
-        extra_kwargs = {
-            'per_mname': {'required': False, 'allow_null': True, 'allow_blank': True},
-            'per_suffix': {'required': False, 'allow_null': True, 'allow_blank': True},
-            'per_edAttainment': {'required': False, 'allow_null': True, 'allow_blank': True},
-        }
 
 class PersonalUpdateSerializer(serializers.ModelSerializer):
     per_addresses = serializers.ListField(child=AddressBaseSerializer(), required=False)
@@ -18,9 +25,9 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
         model = Personal
         fields = '__all__'
         extra_kwargs = {
-            'per_mname': {'required': False, 'allow_null': True, 'allow_blank': True},
-            'per_suffix': {'required': False, 'allow_null': True, 'allow_blank': True},
-            'per_edAttainment': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'per_mname': {'required': False, 'allow_null': True},
+            'per_suffix': {'required': False, 'allow_null': True},
+            'per_edAttainment': {'required': False, 'allow_null': True},
         }
 
     def update(self, instance, validated_data): 

@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from django.db.models import Q
 from ..models import AcknowledgementReport
 from ..serializers.ar_serializers import *
 from apps.pagination import StandardResultsPagination
@@ -10,8 +11,36 @@ class ARCreateView(generics.CreateAPIView):
 
 class ARTableView(generics.ListAPIView):
   serializer_class = ARTableSerializer
-  queryset = AcknowledgementReport.objects.all()
   pagination_class = StandardResultsPagination
+
+  def get_queryset(self):
+    queryset = AcknowledgementReport.objects.select_related(
+      'add',
+    ).only(
+      'ar_id',
+      'ar_title',
+      'ar_date_started',
+      'ar_time_started',
+      'ar_date_completed',
+      'ar_time_completed',
+      'ar_created_at',
+      'ar_status',
+      'ar_result',
+      'add__sitio__sitio_name',
+      'add__add_street',
+    )
+
+    search = self.request.query_params.get('search', '').strip()
+    if search:
+      queryset = queryset.filter(
+          Q(ar_id__icontains=search) |
+          Q(ar_title__icontains=search) | 
+          Q(ar_created_at__icontains=search) |
+          Q(ar_status__icontains=search)
+      ).distinct()
+
+    return queryset
+
 
 class ARFileCreateView(generics.CreateAPIView):
   serializer_class = ARFileBaseSerializer
