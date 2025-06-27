@@ -32,7 +32,7 @@ export const getPEOptions = async () => {
 
 export const updatePEOption = async (pe_option_id: number, text: string) => {
     try {
-        const res = await api2.put(`patientrecords/update-pe-option/${pe_option_id}/`, { text });
+        const res = await api2.patch(`patientrecords/update-pe-option/${pe_option_id}/`, { text });
         if (res.data.error) {
             throw new Error(res.data.error);
         }
@@ -44,13 +44,28 @@ export const updatePEOption = async (pe_option_id: number, text: string) => {
 };
 
 
+export const createPEOption = async (pe_section_id: number, text: string) => {
+    try {
+        const res = await api2.post(`patientrecords/pe-option/`, { 
+            pe_section: pe_section_id,
+            text 
+        });
+        if (res.data.error) {
+            throw new Error(res.data.error);
+        }
+        return res.data;
+    } catch (err) {
+        console.error("Error creating PE option:", err);
+        throw err;
+    }
+};
 // api.ts
-export const createPEResults = async (selectedOptionIds: number[]) => {
+export const createPEResults = async (selectedOptionIds: number[],find:number) => {
     try {
         // Send the IDs directly as an array
         const res = await api2.post("patientrecords/pe-result/", { 
             pe_option: selectedOptionIds,
-            find: 1 
+            find: find
         });
         if (res.data.error) {
             throw new Error(res.data.error);

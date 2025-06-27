@@ -160,9 +160,16 @@ class MedicineRequestView(generics.ListCreateAPIView):
                 ))
 
             MedicineRequestItem.objects.bulk_create(request_items)
+            
 
-            serializer = self.get_serializer(medicine_request)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # serializer = self.get_serializer(medicine_request)
+            # return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({
+            "success": True,
+            "medreq_id": medicine_request.medreq_id,
+            "message": "Medicine request created successfully"
+             }, status=status.HTTP_201_CREATED)
+            
 
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

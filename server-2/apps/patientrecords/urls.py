@@ -39,7 +39,7 @@ urlpatterns = [
     path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
     path('pe-section/', PESectionView.as_view(), name='pe_section'),
     path('pe-option/', PEOptionView.as_view(), name='pe_option'),
-    path('update-pe-option/<int:pe_option_id>', PEOptionUpdateView.as_view(), name='update_pe_option'),
+    path('update-pe-option/<int:pe_option_id>/', PEOptionUpdateView.as_view(), name='update_pe_option'),
 
     
 ]

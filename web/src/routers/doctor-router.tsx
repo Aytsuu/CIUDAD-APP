@@ -4,7 +4,7 @@ import PendingMedicalConsultationRecords from "@/pages/healthServices/doctor/med
 import PendingDisplayMedicalConsultation from "@/pages/healthServices/doctor/medical-con/medcon-form";
 import PrescriptionMedicineStocks from "@/pages/healthServices/doctor/medical-con/med-presciption";
 import SoapForm from "@/pages/healthServices/doctor/medical-con/soap-form";
-import PhysicalExamForm from "@/pages/healthServices/doctor/medical-con/physical-exam";
+// import PhysicalExamForm from "@/pages/healthServices/doctor/medical-con/physical-exam";
 import path from "path";
 
 export const doctorRouting = [
@@ -24,10 +24,10 @@ export const doctorRouting = [
     path:"/soap-form",
     element:<SoapForm/>
   },
-  {
-    path:"/physical-examform",
-    element:<PhysicalExamForm/>
-  }
+  // {
+  //   path:"/physical-examform",
+  //   element:<PhysicalExamForm/>
+  // }
 
 
 ];
