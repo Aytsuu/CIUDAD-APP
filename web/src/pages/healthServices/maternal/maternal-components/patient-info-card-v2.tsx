@@ -1,8 +1,8 @@
 import { format } from "date-fns"
 import { Calendar, MapPin, User, Heart, Shield } from "lucide-react"
 
-// Updated interface to match maternalRecords
-interface maternalRecords {
+// Updated interface to match Patient
+interface Patient {
   pat_id: string;
   patients: {
     firstName: string;
@@ -25,19 +25,19 @@ interface maternalRecords {
   patrec_type?: string;
 }
 
-interface MaternalInfoCardProps {
-  patient: maternalRecords | null
+interface PatientInfoCardv2Props {
+  patient: Patient | null
 }
 
 // Helper functions
-const formatFullName = (patients?: maternalRecords["patients"]) => {
+const formatFullName = (patients?: Patient["patients"]) => {
   if (!patients) return "Not provided"
   const { firstName = "", middleName = "", lastName = "" } = patients
   const fullName = `${firstName} ${middleName} ${lastName}`.trim()
   return fullName || "Not provided"
 }
 
-const formatAddress = (patient: maternalRecords) => {
+const formatAddress = (patient: Patient) => {
   const addressParts = [
 	patient.address?.add_street,
 	patient.sitio,
@@ -77,7 +77,7 @@ const EmptyPatientState = () => (
   </div>
 )
 
-export const MaternalInfoCard = ({ patient }: MaternalInfoCardProps) => {
+export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
   if (!patient) {
     return <EmptyPatientState />
   }

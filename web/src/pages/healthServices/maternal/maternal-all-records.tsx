@@ -189,7 +189,7 @@ export default function MaternalAllRecords() {
           <div className="flex justify-center gap-2 ">
             <TooltipLayout 
               trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer ">  
+                <div className="bg-white hover:bg-[#f3f2f2] border border-gray text-black px-4 py-2 rounded-lg cursor-pointer ">  
                   <Link 
                     to="/maternalindividualrecords"
                     state={{

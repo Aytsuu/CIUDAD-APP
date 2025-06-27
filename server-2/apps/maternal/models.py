@@ -3,13 +3,28 @@ from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone
 from django.core.validators import MinValueValidator
-from apps.patientrecords.models import PatientRecord, Spouse, VitalSigns, FollowUpVisit
+from apps.patientrecords.models import Patient, PatientRecord, Spouse, VitalSigns, FollowUpVisit
 # from apps.healthProfiling.models import Staff
 
 # ************** prenatal **************
 today = datetime.now()
 month = str(today.month).zfill(2)  
 year = str(today.year)
+
+class Pregnancy(models.Model):
+    pregnancy_id = models.AutoField(primary_key=True)
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    pregnancy_number = models.IntegerField()
+    estimated_due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=[
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('terminated', 'Terminated')
+    ], default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['pat_id', 'pregnancy_number']
 
 class Prenatal_Form(models.Model):
     pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)

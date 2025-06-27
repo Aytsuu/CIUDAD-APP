@@ -160,10 +160,9 @@ def get_patient_postpartum_count(request, pat_id):
 def get_patient_postpartum_records(request, pat_id):
     """Get all postpartum records for a specific patient"""
     try:
-        # Verify patient exists
         patient = Patient.objects.get(pat_id=pat_id)
         
-        # Get postpartum records for this patient
+        # get postpartum records for this patient
         records = PostpartumRecord.objects.filter(
             patrec_id__pat_id=patient
         ).select_related(
