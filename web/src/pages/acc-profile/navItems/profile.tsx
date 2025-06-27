@@ -285,22 +285,6 @@ export default function Profile() {
             </div>
           </div>
 
-          <Separator />
-
-          {/* Account Statistics */}
-          {/* <div className="space-y-4">
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-muted-foreground">Profile Completion</span>
-              <span className="text-sm font-bold">100%</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-muted-foreground">Account Type</span>
-              <span className="text-sm font-medium">{user.staff ? "Staff" : "User"}</span>
-            </div>
-          </div> */}
-
-          <Separator />
-
           {/* Additional Info */}
           <div className="space-y-4">
             <div className="flex items-center justify-between py-2">

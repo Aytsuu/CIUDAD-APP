@@ -189,6 +189,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     config('FRONTEND_URL', default='http://localhost:3000'),
+    "http://192.168.62.81:8000",
 ]
 ALLOWED_HOSTS = ['*'] 
 CORS_ALLOW_ALL_ORIGINS = True

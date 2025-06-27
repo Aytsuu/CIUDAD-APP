@@ -11,6 +11,7 @@ import {
   EyeOff,
   Shield,
   Info,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -21,26 +22,17 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { api } from "@/api/api";
 import { passwordFormSchema } from "@/form-schema/account-schema";
-import supabase from "@/supabase/supabase";
-import { Switch } from "@radix-ui/react-switch";
+import { useMutation } from "@tanstack/react-query";
+import { Switch } from "@/components/ui/switch";
 
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
 export default function Security() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const passwordRequirements = [
-    { text: "At least 8 characters", regex: /.{8,}/ },
-    { text: "At least one uppercase letter", regex: /[A-Z]/ },
-    { text: "At least one lowercase letter", regex: /[a-z]/ },
-    { text: "At least one number", regex: /[0-9]/ },
-    { text: "At least one special character", regex: /[^A-Za-z0-9]/ },
-  ];
 
   const {
     register,
@@ -48,58 +40,78 @@ export default function Security() {
     formState: { errors },
     reset,
     watch,
+    trigger,
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordFormSchema),
+    mode: "onChange",
   });
 
-  const newPassword = watch("new_password");
+  const newPassword = watch("new_password", "");
+  const currentPassword = watch("old_password", "");
 
-  const onSubmit = async (data: PasswordFormData) => {
-    if (!isAuthenticated || !user) {
-      toast.error("You must be logged in to change your password");
-      return;
-    }
+  const passwordRequirements = [
+    { text: "Minimum 8 characters", regex: /.{8,}/ },
+    { text: "At least one uppercase letter", regex: /[A-Z]/ },
+    { text: "At least one lowercase letter", regex: /[a-z]/ },
+    { text: "At least one number", regex: /[0-9]/ },
+    { text: "At least one special character", regex: /[^A-Za-z0-9]/ },
+  ];
 
-    setIsSubmitting(true);
-
-    try {
-      const { error: supabaseError } = await supabase.auth.updateUser({
-        password: data.new_password,
-      });
-
-      if (supabaseError) throw supabaseError;
-
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: PasswordFormData) => {
       const response = await api.post("/api/account/change-password/", {
         old_password: data.old_password,
         new_password: data.new_password,
       });
-
-      if (response.status === 200) {
-        toast.success("✅ Your password has been updated successfully!");
-        reset();
-        setIsChangingPassword(false);
-      }
-    } catch (error: any) {
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Password updated successfully", {
+        description: "Your password has been changed.",
+        action: {
+          label: "Dismiss",
+          onClick: () => {},
+        },
+      });
+      reset();
+      setIsChangingPassword(false);
+    },
+    onError: (error: any) => {
       console.error("Password change error:", error);
-
-      if (error.response) {
-        // Handle Django validation errors
-        const errorData = error.response.data;
-        if (errorData.old_password) {
-          toast.error(errorData.old_password[0]);
-        } else if (errorData.new_password) {
-          toast.error(errorData.new_password[0]);
-        } else {
-          toast.error("Failed to update password in our system");
-        }
+      
+      let errorMessage = "Failed to update password";
+      if (error.response?.data?.old_password) {
+        errorMessage = error.response.data.old_password[0];
+      } else if (error.response?.data?.new_password) {
+        errorMessage = error.response.data.new_password[0];
       } else if (error.message) {
-        toast.error(error.message);
-      } else {
-        toast.error("An error occurred while updating password");
+        errorMessage = error.message;
       }
-    } finally {
-      setIsSubmitting(false);
+
+      toast.error("Password change failed", {
+        description: errorMessage,
+        action: {
+          label: "Try again",
+          onClick: () => {},
+        },
+      });
+    },
+  });
+
+  const onSubmit = async (data: PasswordFormData) => {
+    if (!user) {
+      toast.error("Authentication required", {
+        description: "You must be logged in to change your password",
+      });
+      return;
     }
+
+    await changePasswordMutation.mutateAsync(data);
+  };
+
+  const handleCancel = () => {
+    reset();
+    setIsChangingPassword(false);
   };
 
   return (
@@ -123,7 +135,10 @@ export default function Security() {
                   id="current_password"
                   type={showCurrentPassword ? "text" : "password"}
                   placeholder="Enter your current password"
-                  {...register("old_password")}
+                  autoComplete="current-password"
+                  {...register("old_password", {
+                    onChange: () => trigger("old_password"),
+                  })}
                 />
                 <Button
                   type="button"
@@ -131,6 +146,7 @@ export default function Security() {
                   size="icon"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  aria-label={showCurrentPassword ? "Hide password" : "Show password"}
                 >
                   {showCurrentPassword ? (
                     <EyeOff size={16} />
@@ -158,7 +174,13 @@ export default function Security() {
                   id="new_password"
                   type={showNewPassword ? "text" : "password"}
                   placeholder="Create a new password"
-                  {...register("new_password")}
+                  autoComplete="new-password"
+                  {...register("new_password", {
+                    onChange: () => {
+                      trigger("new_password");
+                      trigger("confirm_password");
+                    },
+                  })}
                 />
                 <Button
                   type="button"
@@ -166,6 +188,7 @@ export default function Security() {
                   size="icon"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowNewPassword(!showNewPassword)}
+                  aria-label={showNewPassword ? "Hide password" : "Show password"}
                 >
                   {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </Button>
@@ -174,6 +197,13 @@ export default function Security() {
                 <p className="text-destructive text-sm flex items-center gap-1 mt-1">
                   <AlertCircle size={14} /> {errors.new_password.message}
                 </p>
+              )}
+              
+              {/* Password Strength Meter */}
+              {newPassword && (
+                <div className="mt-2">
+                  <PasswordStrengthMeter password={newPassword} />
+                </div>
               )}
             </div>
 
@@ -187,7 +217,10 @@ export default function Security() {
                   id="confirm_password"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your new password"
-                  {...register("confirm_password")}
+                  autoComplete="new-password"
+                  {...register("confirm_password", {
+                    onChange: () => trigger("confirm_password"),
+                  })}
                 />
                 <Button
                   type="button"
@@ -195,6 +228,7 @@ export default function Security() {
                   size="icon"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? (
                     <EyeOff size={16} />
@@ -214,9 +248,7 @@ export default function Security() {
             <div className="rounded-md bg-muted p-3 space-y-1">
               <p className="text-sm font-medium mb-2">Password Requirements:</p>
               {passwordRequirements.map((req, index) => {
-                const isValid = newPassword
-                  ? req.regex.test(newPassword)
-                  : false;
+                const isValid = newPassword ? req.regex.test(newPassword) : false;
                 return (
                   <div key={index} className="flex items-center gap-2 text-sm">
                     <CheckCircle
@@ -234,16 +266,25 @@ export default function Security() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? "Updating..." : "Update Password"}
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={changePasswordMutation.isPending}
+              >
+                {changePasswordMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Password"
+                )}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  setIsChangingPassword(false);
-                  reset();
-                }}
+                onClick={handleCancel}
+                disabled={changePasswordMutation.isPending}
               >
                 Cancel
               </Button>
@@ -290,6 +331,60 @@ export default function Security() {
           For security reasons, some changes may require you to re-authenticate.
         </AlertDescription>
       </Alert>
+    </div>
+  );
+}
+
+// Password Strength Meter Component
+function PasswordStrengthMeter({ password }: { password: string }) {
+  const getStrength = (pass: string) => {
+    let score = 0;
+    if (!pass) return 0;
+    
+    // Length
+    if (pass.length >= 8) score++;
+    if (pass.length >= 12) score++;
+    
+    // Complexity
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+    
+    return Math.min(score, 4);
+  };
+
+  const strength = getStrength(password);
+  const strengthText = [
+    "Very Weak",
+    "Weak",
+    "Moderate",
+    "Strong",
+    "Very Strong",
+  ][strength];
+  
+  const strengthColor = [
+    "bg-red-500",
+    "bg-orange-500",
+    "bg-yellow-500",
+    "bg-blue-500",
+    "bg-green-500",
+  ][strength];
+
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-1 h-1.5">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className={`h-full rounded-full flex-1 ${
+              i <= strength ? strengthColor : "bg-gray-200"
+            }`}
+          />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Password strength: <span className="font-medium">{strengthText}</span>
+      </p>
     </div>
   );
 }

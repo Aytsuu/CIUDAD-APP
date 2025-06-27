@@ -2,7 +2,7 @@ import axios from "axios";
 import { supabase } from "@/lib/supabase";
 
 export const api = axios.create({
-  baseURL: "http://localhost:8000", 
+  baseURL: "http://192.168.62.81:8000", 
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -19,8 +19,8 @@ export const api2 = axios.create({
 api.interceptors.request.use(async (config) => {
   // Skip auth for login and signup endpoints
   if (
-    config.url?.includes("/authentication/login") ||
-    config.url?.includes("/authentication/signup")
+    config.url?.includes("authentication/login/") ||
+    config.url?.includes("authentication/signup/")
   ) {
     return config;
   }

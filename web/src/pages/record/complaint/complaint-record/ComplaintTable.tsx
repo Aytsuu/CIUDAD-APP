@@ -15,9 +15,9 @@ export default function ComplaintTable({ data, columns }: any) {
   const applyPageSize = () => {
     const newSize = parseInt(pageSizeInput, 10);
     if (!isNaN(newSize) && newSize > 0) {
-      setPageSize(Math.min(newSize, 100)); // cap to 100
+      setPageSize(Math.min(newSize, 100)); 
     } else {
-      setPageSizeInput(pageSize.toString()); // reset to current if invalid
+      setPageSizeInput(pageSize.toString()); 
     }
   };
 
