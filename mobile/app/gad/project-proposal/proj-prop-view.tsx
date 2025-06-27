@@ -1,5 +1,5 @@
-import ProjectProposalView from "@/screens/gad/project-proposal/view-projprop"
+// import ProjectProposalView from "@/screens/gad/project-proposal/view-projprop"
 
-export default () => {
-    return <ProjectProposalView />
-}
+// export default () => {
+//     return <ProjectProposalView />
+// }

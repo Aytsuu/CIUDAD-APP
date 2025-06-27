@@ -506,6 +506,8 @@ function ExpenseEdit() {
   const totBud = matchedYearData?.ie_main_tot_budget ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
 
+  console.log("EDIT EXP: ", totBud )
+
 
   const entrytypeSelector = [
     { label: "Income", value: "0" },
@@ -610,7 +612,6 @@ function ExpenseEdit() {
     // Calculate budget changes
     if (amount) {
       if (actualAmount) {
-        console.log("HEREEEEEEE FIRST")
         if (actualAmount != prevActualAmount && prevActualAmount != 0.00) {
           totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
           totalExpense = (totEXP - prevActualAmount) + actualAmount;
@@ -621,7 +622,6 @@ function ExpenseEdit() {
             totalExpense = (totEXP - prevAmount) + actualAmount;
             proposedBud = (propBudget + prevAmount) - actualAmount;
           } else {
-            console.log("HEREEEEEEE")
             totalBudget = (totBUDGET + amount) - actualAmount;
             totalExpense = (totEXP - amount) + actualAmount;
             proposedBud = (propBudget + amount) - actualAmount;

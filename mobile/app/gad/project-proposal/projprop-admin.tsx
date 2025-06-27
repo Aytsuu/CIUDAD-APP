@@ -1,5 +1,5 @@
-import AdminUpdateStatus from "@/screens/gad/project-proposal/admin-update-status"
+// import AdminUpdateStatus from "@/screens/gad/project-proposal/admin-update-status"
 
-export default () => {
-    return <AdminUpdateStatus />
-}
+// export default () => {
+//     return <AdminUpdateStatus />
+// }
