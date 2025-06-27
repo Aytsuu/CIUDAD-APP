@@ -228,44 +228,40 @@ class FP_Assessment_Record(models.Model):
     as_provider_name= models.CharField(max_length=35)
     as_findings = models.CharField(max_length=100,default="None")
     
-    # for method used
-    # fpt = models.ForeignKey(FP_type,on_delete=models.CASCADE) 
     fprecord = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
-    #for weight
-    # bm = models.ForeignKey(BodyMeasurement,on_delete=models.CASCADE)
-    # staff = models.ForeignKey(Staff,on_delete=models.CASCADE)
+
     followv = models.ForeignKey(FollowUpVisit,on_delete=models.CASCADE)
 
-    vital_signs = models.ForeignKey(
-        VitalSigns,
-        on_delete=models.CASCADE,
-        related_name='fp_assessments',
-        null=True, blank=True, 
-        verbose_name="Vital Signs Record for Assessment"
-    )
-    # Link to the master lists of inventory items
-    dispensed_commodity_item = models.ForeignKey(
-        CommodityList, # Explicit path to CommodityList
-        on_delete=models.SET_NULL, 
-        related_name='fp_dispensed_assessments_com', # Unique related_name
-        null=True, blank=True,
-        verbose_name="Dispensed Commodity Item"
-    )
-    dispensed_medicine_item = models.ForeignKey(
-        Medicinelist, # Explicit path to Medicinelist
-        on_delete=models.SET_NULL,
-        related_name='fp_dispensed_assessments_med', # Unique related_name
-        null=True, blank=True,
-        verbose_name="Dispensed Medicine Item"
-    )
-    dispensed_vaccine_item = models.ForeignKey(
-        VaccineList, # Explicit path to VaccineList
-        on_delete=models.SET_NULL,
-        related_name='fp_dispensed_assessments_vac', # Unique related_name
-        null=True, blank=True,
-        verbose_name="Dispensed Vaccine Item"
-    )
-    dispensed_item_name_for_report = models.CharField(max_length=255, null=True, blank=True, verbose_name="Dispensed Item Name (for report)")
+    # vital_signs = models.ForeignKey(
+    #     VitalSigns,
+    #     on_delete=models.CASCADE,
+    #     related_name='fp_assessments',
+    #     null=True, blank=True, 
+    #     verbose_name="Vital Signs Record for Assessment"
+    # )
+    # # Link to the master lists of inventory items
+    # dispensed_commodity_item = models.ForeignKey(
+    #     CommodityList, # Explicit path to CommodityList
+    #     on_delete=models.SET_NULL, 
+    #     related_name='fp_dispensed_assessments_com', # Unique related_name
+    #     null=True, blank=True,
+    #     verbose_name="Dispensed Commodity Item"
+    # )
+    # dispensed_medicine_item = models.ForeignKey(
+    #     Medicinelist, # Explicit path to Medicinelist
+    #     on_delete=models.SET_NULL,
+    #     related_name='fp_dispensed_assessments_med', # Unique related_name
+    #     null=True, blank=True,
+    #     verbose_name="Dispensed Medicine Item"
+    # )
+    # dispensed_vaccine_item = models.ForeignKey(
+    #     VaccineList, # Explicit path to VaccineList
+    #     on_delete=models.SET_NULL,
+    #     related_name='fp_dispensed_assessments_vac', # Unique related_name
+    #     null=True, blank=True,
+    #     verbose_name="Dispensed Vaccine Item"
+    # )
+    # dispensed_item_name_for_report = models.CharField(max_length=255, null=True, blank=True, verbose_name="Dispensed Item Name (for report)")
 
 
     class Meta:

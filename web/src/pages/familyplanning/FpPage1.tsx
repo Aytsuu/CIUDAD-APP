@@ -14,6 +14,7 @@ import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
 import { api2 } from "@/api/api"
 import { page1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { useObstetricalHistoryData } from "./queries/fpFetchQuery"
 
 type Page1Props = {
   onNext2: () => void
@@ -37,76 +38,93 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
   const isReadOnly = mode === "view"
   const navigate = useNavigate()
 
-  const getDefaultValues = (data: FormData) => ({
-    clientID: data.clientID || "",
-    philhealthNo: data.philhealthNo || "",
-    nhts_status: data.nhts_status ?? false,
-    pantawid_4ps: data.pantawid_4ps ?? false,
-    lastName: data.lastName || "",
-    givenName: data.givenName || "",
-    middleInitial: data.middleInitial || "",
-    dateOfBirth: data.dateOfBirth || "",
-    age: data.age || 0,
-    educationalAttainment: data.educationalAttainment || "",
-    occupation: data.occupation || "",
-    address: {
-      houseNumber: data.address?.houseNumber || "",
-      street: data.address?.street || "",
-      barangay: data.address?.barangay || "",
-      municipality: data.address?.municipality || "",
-      province: data.address?.province || "",
-    },
-    spouse: {
-      s_lastName: data.spouse?.s_lastName || "",
-      s_givenName: data.spouse?.s_givenName || "",
-      s_middleInitial: data.spouse?.s_middleInitial || "",
-      s_dateOfBirth: data.spouse?.s_dateOfBirth || "",
-      s_age: data.spouse?.s_age || 0,
-      s_occupation: data.spouse?.s_occupation || "",
-    },
-    numOfLivingChildren: data.numOfLivingChildren ?? 0,
-    planToHaveMoreChildren: data.planToHaveMoreChildren ?? false,
-    averageMonthlyIncome: data.averageMonthlyIncome || "",
-    typeOfClient: data.typeOfClient || "",
-    subTypeOfClient: data.subTypeOfClient || "",
-    reasonForFP: data.reasonForFP || "",
-    otherReasonForFP: data.otherReasonForFP || "",
-    reason: data.reason || "",
-    fpt_other_reason_fp: data.fpt_other_reason_fp || "",
-    methodCurrentlyUsed: data.methodCurrentlyUsed || "",
-    otherMethod: data.otherMethod || "",
-    acknowledgement: {
-      clientName: data.acknowledgement?.clientName || "",
-      clientSignature: data.acknowledgement?.clientSignature || "",
-      clientSignatureDate: data.acknowledgement?.clientSignatureDate || "",
-      guardianName: data.acknowledgement?.guardianName || "",
-      guardianSignature: data.acknowledgement?.guardianSignature || "",
-      guardianSignatureDate: data.acknowledgement?.guardianSignatureDate || "",
-    },
-    pat_id: data.pat_id || "",
-    weight: data.weight ?? 0,
-    height: data.height ?? 0,
-    obstetricalHistory: {
-      g_pregnancies: data.obstetricalHistory?.g_pregnancies ?? 0,
-      p_pregnancies: data.obstetricalHistory?.p_pregnancies ?? 0,
-      fullTerm: data.obstetricalHistory?.fullTerm ?? 0,
-      premature: data.obstetricalHistory?.premature ?? 0,
-      abortion: data.obstetricalHistory?.abortion ?? 0,
-      livingChildren: data.obstetricalHistory?.livingChildren ?? 0,
-      lastDeliveryDate: data.obstetricalHistory?.lastDeliveryDate || "",
-      typeOfLastDelivery: data.obstetricalHistory?.typeOfLastDelivery || "",
-      lastMenstrualPeriod: data.obstetricalHistory?.lastMenstrualPeriod || "",
-      previousMenstrualPeriod: data.obstetricalHistory?.previousMenstrualPeriod || "",
-      menstrualFlow: data.obstetricalHistory?.menstrualFlow || "Scanty",
-      dysmenorrhea: data.obstetricalHistory?.dysmenorrhea ?? false,
-      hydatidiformMole: data.obstetricalHistory?.hydatidiformMole ?? false,
-      ectopicPregnancyHistory: data.obstetricalHistory?.ectopicPregnancyHistory ?? false,
-    },
-  })
+  // const getDefaultValues = (data: FormData) => ({
+  //   clientID: data.clientID || "",
+  //   philhealthNo: data.philhealthNo || "",
+  //   nhts_status: data.nhts_status ?? false,
+  //   pantawid_4ps: data.pantawid_4ps ?? false,
+  //   lastName: data.lastName || "",
+  //   givenName: data.givenName || "",
+  //   middleInitial: data.middleInitial || "",
+  //   dateOfBirth: data.dateOfBirth || "",
+  //   age: data.age || 0,
+  //   educationalAttainment: data.educationalAttainment || "",
+  //   occupation: data.occupation || "",
+  //   address: {
+  //     houseNumber: data.address?.houseNumber || "",
+  //     street: data.address?.street || "",
+  //     barangay: data.address?.barangay || "",
+  //     municipality: data.address?.municipality || "",
+  //     province: data.address?.province || "",
+  //   },
+  //   spouse: {
+  //     s_lastName: data.spouse?.s_lastName || "",
+  //     s_givenName: data.spouse?.s_givenName || "",
+  //     s_middleInitial: data.spouse?.s_middleInitial || "",
+  //     s_dateOfBirth: data.spouse?.s_dateOfBirth || "",
+  //     s_age: data.spouse?.s_age || 0,
+  //     s_occupation: data.spouse?.s_occupation || "",
+  //   },
+  //   // numOfLivingChildren: data.numOfLivingChildren ?? 0,
+  //   planToHaveMoreChildren: data.planToHaveMoreChildren ?? false,
+  //   averageMonthlyIncome: data.averageMonthlyIncome || "",
+  //   typeOfClient: data.typeOfClient || "",
+  //   subTypeOfClient: data.subTypeOfClient || "",
+  //   reasonForFP: data.reasonForFP || "",
+  //   otherReasonForFP: data.otherReasonForFP || "",
+  //   reason: data.reason || "",
+  //   fpt_other_reason_fp: data.fpt_other_reason_fp || "",
+  //   methodCurrentlyUsed: data.methodCurrentlyUsed || "",
+  //   otherMethod: data.otherMethod || "",
+  //   acknowledgement: {
+  //     clientName: data.acknowledgement?.clientName || "",
+  //     clientSignature: data.acknowledgement?.clientSignature || "",
+  //     clientSignatureDate: data.acknowledgement?.clientSignatureDate || "",
+  //     guardianName: data.acknowledgement?.guardianName || "",
+  //     guardianSignature: data.acknowledgement?.guardianSignature || "",
+  //     guardianSignatureDate: data.acknowledgement?.guardianSignatureDate || "",
+  //   },
+  //   pat_id: data.pat_id || "",
+  //   weight: data.weight ?? 0,
+  //   height: data.height ?? 0,
+  //   obstetricalHistory: {
+  //     g_pregnancies: data.obstetricalHistory?.g_pregnancies ?? 0,
+  //     p_pregnancies: data.obstetricalHistory?.p_pregnancies ?? 0,
+  //     fullTerm: data.obstetricalHistory?.fullTerm ?? 0,
+  //     premature: data.obstetricalHistory?.premature ?? 0,
+  //     abortion: data.obstetricalHistory?.abortion ?? 0,
+  //     livingChildren: data.obstetricalHistory?.livingChildren ?? 0,
+  //     lastDeliveryDate: data.obstetricalHistory?.lastDeliveryDate || "",
+  //     typeOfLastDelivery: data.obstetricalHistory?.typeOfLastDelivery || "",
+  //     lastMenstrualPeriod: data.obstetricalHistory?.lastMenstrualPeriod || "",
+  //     previousMenstrualPeriod: data.obstetricalHistory?.previousMenstrualPeriod || "",
+  //     menstrualFlow: data.obstetricalHistory?.menstrualFlow || "Scanty",
+  //     dysmenorrhea: data.obstetricalHistory?.dysmenorrhea ?? false,
+  //     hydatidiformMole: data.obstetricalHistory?.hydatidiformMole ?? false,
+  //     ectopicPregnancyHistory: data.obstetricalHistory?.ectopicPregnancyHistory ?? false,
+  //   },
+  // })
+  const patientId = formData?.pat_id;
+  const { data: obstetricalData } = useObstetricalHistoryData(patientId);
+
+  useEffect(() => {
+    if (obstetricalData?.livingChildren !== undefined) {
+      form.setValue("numOfLivingChildren", obstetricalData.livingChildren);
+      updateFormData({
+        ...form.getValues(),
+        numOfLivingChildren: obstetricalData.livingChildren,
+        obstetricalHistory: {
+          ...form.getValues().obstetricalHistory,
+          livingChildren: obstetricalData.livingChildren
+        }
+      });
+    }
+  }, [obstetricalData, updateFormData]);
 
   const form = useForm<FormData>({
-    defaultValues: getDefaultValues(formData),
-    values: getDefaultValues(formData),
+    // defaultValues: getDefaultValues(formData),
+    // values: getDefaultValues(formData),
+    values: formData,
     mode: "onBlur",
   })
 
@@ -151,22 +169,25 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
 
       const fullName = `${patientData.lastName || ''}, ${patientData.givenName || ''} ${patientData.middleInitial || ''}`.trim()
       const newFormData = {
-      ...getDefaultValues(formData),
+      ...formData,
       ...patientData,
       acknowledgement: {
-        ...getDefaultValues(formData).acknowledgement,
-        clientName: fullName // Add the full name here
+        ...formData.acknowledgement,
+        clientName: fullName 
       }
     }
       form.reset(newFormData)
       updateFormData(newFormData)
-      
+      console.log("Patient data received:", patientData);
+      console.log("PhilHealth:", patientData.philhealthNo);
+      console.log("NHTS:", patientData.nhts_status);
       toast.success("Patient data loaded successfully")
     } catch (error) {
       console.error("Error fetching patient details:", error)
       toast.error("Failed to load patient details")
-      form.reset(getDefaultValues(formData))
-      updateFormData(getDefaultValues(formData))
+      // form.reset(getDefaultValues(formData))
+      // updateFormData(getDefaultValues(formData))
+      updateFormData(formData)
     }
   }
 
@@ -348,11 +369,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
                   emptyMessage={
                     <div className="flex gap-2 justify-center items-center">
                       <Label className="font-normal text-[13px]">{loading ? "Loading..." : "No patient found."}</Label>
-                      {/* <Link to="/patient-records/new">
-                        <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                          Register New Patient
-                        </Label>
-                      </Link> */}
+                     
                     </div>
                   }
                 />

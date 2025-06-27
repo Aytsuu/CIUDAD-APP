@@ -40,6 +40,7 @@ class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerialize
 
 class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
+    patient_record = PatientRecordSerializer(source='patrec_id', read_only=True)
     class Meta:
         model = VaccinationRecord
         fields = '__all__'

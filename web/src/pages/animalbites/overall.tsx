@@ -6,15 +6,12 @@ import { Button } from "@/components/ui/button/button"
 import ReferralFormModal from "./referralform"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Input } from "@/components/ui/input"
-import { Search, Trash } from "lucide-react"
+import { Search } from "lucide-react"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Link } from "react-router-dom"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { TooltipProvider } from "@radix-ui/react-tooltip"
 import { getAnimalBitePatientDetails } from "./api/get-api" 
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
 import { toast } from "sonner"
-import { deleteAnimalBitePatient } from "./db-request/postrequest"
+
 
 // Type definition for table display
 type UniquePatientDisplay = {
@@ -34,39 +31,22 @@ type UniquePatientDisplay = {
   recordCount: number
 }
 
-// Age calculation - remains the same, but data source will be more reliable from backend
-// const calculateAge = (dobString: string): string => {
-//   if (!dobString) return "N/A"
-//   const dob = new Date(dobString)
-//   if (isNaN(dob.getTime())) return "N/A"
-//   const today = new Date()
-//   let age = today.getFullYear() - dob.getFullYear()
-//   const m = today.getMonth() - dob.getMonth()
-//   if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
-//   return age >= 0 ? age.toString() : "N/A"
-// }
-
 const Overall: React.FC = () => {
   const [patients, setPatients] = useState<UniquePatientDisplay[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filterValue, setFilterValue] = useState("All")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedPatientForDeletion, setSelectedPatientForDeletion] = useState<UniquePatientDisplay | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+
   const [isReferralFormOpen, setIsReferralFormOpen] = useState(false)
 
   const fetchAnimalBiteRecords = async () => {
     setLoading(true)
     setError(null)
     try {
-      // Fetch all animal bite records (backend now sorts by latest)
-      // getAnimalBitePatientDetails now returns the comprehensive serialized data
       const allRecords = await getAnimalBitePatientDetails()
       console.log("Fetched records (from getAnimalBitePatientDetails):", allRecords)
 
-      // Group records by patient ID to get the latest record for each patient
       const patientGroups = new Map<string, any[]>()
 
       allRecords.forEach((record: any) => {
@@ -104,9 +84,6 @@ const Overall: React.FC = () => {
           })
         }
       })
-      // Optional: Sort uniquePatients by latest referral date if not already sorted by backend
-      // uniquePatients.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
       setPatients(uniquePatients)
     } catch (err) {
       console.error("Fetch error:", err)
@@ -120,27 +97,6 @@ const Overall: React.FC = () => {
   useEffect(() => {
     fetchAnimalBiteRecords()
   }, [])
-
-  const handleDeletePatient = (patient: UniquePatientDisplay) => {
-    setSelectedPatientForDeletion(patient)
-    setDeleteDialogOpen(true)
-  }
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedPatientForDeletion) return
-    setIsDeleting(true)
-    try {
-      await deleteAnimalBitePatient(selectedPatientForDeletion.id)
-      toast.success(`Deleted records for ${selectedPatientForDeletion.fname} ${selectedPatientForDeletion.lname}`)
-      fetchAnimalBiteRecords() // Refresh data after deletion
-    } catch (err) {
-      toast.error("Failed to delete patient records")
-    } finally {
-      setIsDeleting(false)
-      setDeleteDialogOpen(false)
-      setSelectedPatientForDeletion(null)
-    }
-  }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
@@ -216,41 +172,6 @@ const Overall: React.FC = () => {
       },
     },
     { accessorKey: "referredby", header: "Referred by" },
-    {
-      accessorKey: "button",
-      header: "",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          {/* <TooltipProvider>
-            <TooltipLayout
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to={`/Animalbite_individual/${row.original.id}`}>
-                    <Eye size={15} />
-                  </Link>
-                </div>
-              }
-              content="View Details"
-            />
-          </TooltipProvider> */}
-        
-            {/* Delete button */}
-          {/* <TooltipProvider>
-            <TooltipLayout
-              trigger={
-                <div
-                  className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
-                  onClick={() => handleDeletePatient(row.original)}
-                >
-                  <Trash size={16} />
-                </div>
-              }
-              content="Delete All Records"
-            />
-          </TooltipProvider> */}
-        </div>
-      ),
-    },
   ]
 
   return (
@@ -330,26 +251,6 @@ const Overall: React.FC = () => {
         }
       />
 
-      <ConfirmationDialog
-        isOpen={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Patient Records"
-        description={
-          selectedPatientForDeletion
-            ? `Are you sure you want to delete all records for ${selectedPatientForDeletion.fname} ${selectedPatientForDeletion.lname}?`
-            : "Are you sure you want to delete this patient's records?"
-        }
-      />
-
-      {isDeleting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span>Deleting patient records...</span>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

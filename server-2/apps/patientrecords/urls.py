@@ -24,9 +24,10 @@ urlpatterns = [
 
     path('follow-up-visit/', FollowUpVisitView.as_view(), name='follow-up-visit'),
     path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
+	path('follow-up-visits-all/', AllFollowUpVisitsView.as_view(), name='follow-up-visits-all'),
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
-    path('body-measurements/<int:body_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
+    path('body-measurements/<int:bm_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
     path("findings/", FindingView.as_view(), name="findings"),
     path('findings/<int:find_id>/', DeleteUpdateFindingView.as_view(), name='findings-detail'),
     path("physial-examination/", PhysicalExaminationView.as_view(), name="physical-examination"),
@@ -34,12 +35,11 @@ urlpatterns = [
     path("physical-exam-list/", PhysicalExamListView.as_view(), name="physical-examination-list"),
     path('physical-exam-list/<int:pel_id>/', DeleteUpdatePhysicalExamListView.as_view(), name='physical-examination-list-detail'),
     
-    
-    
-    
     path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
     path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
 
-
+    #For fam planning
+    path("obstetrical_history/by_patient/<str:pat_id>/", ObstetricalHistoryByPatientView.as_view(), name="obstetrical-history-by-patient"),
+    path('body-measurements/latest/<str:pat_id>/', LatestBodyMeasurementView.as_view(), name='latest-body-measurement'),
 
 ]

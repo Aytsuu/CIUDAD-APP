@@ -28,7 +28,7 @@ export const updateCommodityStockQuantity = async (
   );
 };
 
-export const updateInventoryTimestamp = async (inv_id: number) => {
+export const updateInventoryTimestamp = async (inv_id: string) => {
   return await api2.put(`inventory/update_inventorylist/${inv_id}/`, {
     updated_at: new Date().toISOString(),
   });

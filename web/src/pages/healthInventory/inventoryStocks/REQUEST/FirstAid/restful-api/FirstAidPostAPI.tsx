@@ -4,7 +4,7 @@ import {api2} from "@/api/api";
 // POST request for firstaidinventorylist model
 export const addFirstAidInventory = async (
   data: Record<string, any>,
-  inv_id: number,
+  inv_id: string,
   fa_id: string
 ) => {
   try {

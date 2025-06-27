@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import CardLayout from "@/components/ui/card/card-layout"
 import { Button } from "@/components/ui/button/button"
 
@@ -126,8 +126,7 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <RouterLink to={`/view-patients-record/${row.getValue("id")}`} state={{ patientId: row.getValue("id") }}
-      >
+      <RouterLink to={`/view-patients-record/${row.getValue("id")}`} state={{ patientId: row.getValue("id") }}>
         <Button variant="outline">View</Button>
       </RouterLink>
     ),
@@ -269,7 +268,7 @@ export default function PatientsRecord() {
   const [totalPages, setTotalPages] = useState(1)
   const [filterBy, setFilterBy] = useState("")
 
-  const { data: patientData, isLoading: patientLoading } = usePatients();
+  const { data: patientData, isLoading } = usePatients();
 
   const transformedPatients = useMemo(() => {
     if(!patientData) return [];
@@ -319,22 +318,25 @@ export default function PatientsRecord() {
   }, [currentPage, pageSize, filteredData])
 
   // Show loading state
-  if (patientLoading) {
+  if (isLoading) {
     return (
-      <div className="w-full flex justify-center items-center h-64">
-        <div className="text-lg">Loading patients...</div>
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
       </div>
     );
   }
 
   // Show empty state if no data
-  if (!patientData || patientData.length === 0) {
-    return (
-      <div className="w-full flex justify-center items-center h-64">
-        <div className="text-lg text-gray-500">No patients found</div>
-      </div>
-    );
-  }
+  // if (!patientData || patientData.length === 0) {
+  //   return (
+  //     <div className="w-full flex justify-center items-center h-64">
+  //       <div className="text-lg text-gray-500">No patients found</div>
+  //     </div>
+  //   );
+  // }
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)

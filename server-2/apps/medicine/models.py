@@ -33,8 +33,8 @@ class MedicineRecord(models.Model):
     signature = models.TextField(blank=True, null=True)
 
     # Foreign Keys (assume models named PatientRecord and MedicineInventory)
-    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, db_column='patrec_id')
-    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id')
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, db_column='patrec_id', related_name='medicine_records')
+    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_records')
 
     def __str__(self):
         return f"MedicineRecord #{self.medrec_id}"

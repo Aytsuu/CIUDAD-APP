@@ -17,71 +17,51 @@ class AnimalBiteDetailsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AnimalBiteCreateSerializer(serializers.Serializer):
-    """
-    Serializer for creating a new Animal Bite record, combining data
-    for PatientRecord, AnimalBite_Referral, and AnimalBite_Details.
-    """
     pat_id = serializers.CharField(max_length=255, help_text="Patient ID (e.g., P2023R0001)")
     
-    # Referral fields (removed 'transient' from here as well, as it's determined by Patient.pat_type)
     receiver = serializers.CharField(max_length=100)
     sender = serializers.CharField(max_length=100)
-    date = serializers.DateField() # This date now comes from auto_now_add in models
+    date = serializers.DateField()
 
-    # Bite Details fields - these will receive the actual string values, not IDs
     exposure_type = serializers.CharField(max_length=50)
     exposure_site = serializers.CharField(max_length=255, required=False, allow_blank=True)
     biting_animal = serializers.CharField(max_length=255, required=False, allow_blank=True)
     actions_taken = serializers.CharField(required=False, allow_blank=True)
     referredby = serializers.CharField(max_length=100, required=False, allow_blank=True)
     
-    # These fields are used by the frontend to send the *name* of custom options.
     exposure_site_name = serializers.CharField(max_length=255, required=False, allow_blank=True, write_only=True)
     biting_animal_name = serializers.CharField(max_length=255, required=False, allow_blank=True, write_only=True)
 
 
 class AnimalBitePatientDetailsSerializer(serializers.ModelSerializer):
-    """
-    Serializer to display comprehensive animal bite records, including
-    patient personal information by traversing relationships.
-    """
     patient_fname = serializers.SerializerMethodField()
     patient_lname = serializers.SerializerMethodField()
     patient_mname = serializers.SerializerMethodField()
     patient_sex = serializers.SerializerMethodField()
     patient_dob = serializers.SerializerMethodField()
     patient_address = serializers.SerializerMethodField()
-    patient_id = serializers.SerializerMethodField() # The pat_id from the Patient model
-    patient_type = serializers.SerializerMethodField() # New: to get 'Resident' or 'Transient'
-    patient_age = serializers.SerializerMethodField() # New: for calculated age
+    patient_id = serializers.SerializerMethodField()
+    patient_type = serializers.SerializerMethodField() 
+    patient_age = serializers.SerializerMethodField()
 
     # Referral information
     referral_id = serializers.IntegerField(source='referral.referral_id', read_only=True)
     referral_date = serializers.DateField(source='referral.date', read_only=True)
-    # referral_transient is now a SerializerMethodField, derived from Patient.pat_type
     referral_transient = serializers.SerializerMethodField() 
     referral_receiver = serializers.CharField(source='referral.receiver', read_only=True)
     referral_sender = serializers.CharField(source='referral.sender', read_only=True)
 
-    # Record creation date from AnimalBite_Details itself for more precise time
-    record_created_at = serializers.DateTimeField(source='created_at', read_only=True) # Changed source to AnimalBite_Details.created_at
+    record_created_at = serializers.DateTimeField(source='created_at', read_only=True) 
     patrec_id = serializers.IntegerField(source='referral.patrec.patrec_id', read_only=True)
 
     def _get_patient_instance(self, obj):
-        """Helper to safely get the Patient instance from AnimalBite_Details object."""
         try:
             return obj.referral.patrec.pat_id
         except AttributeError:
-            # This indicates referral, patrec, or pat_id is None
-            # Log this for debugging if it happens often in production
             print(f"DEBUG: Could not get patient instance for bite_id {obj.bite_id}. Missing referral, patrec, or pat_id.")
             return None
 
-    def _get_personal_field(self, patient_instance, field_name, default_value="Unknown"):
-        """
-        Helper to safely get a personal field (fname, lname, sex, dob)
-        from either Personal (for Resident) or Transient model.
-        """
+    def _get_personal_field(self, patient_instance, field_name, default_value="Unknown"): 
         if not patient_instance:
             return default_value
 
@@ -245,3 +225,45 @@ class AnimalBitePatientDetailsSerializer(serializers.ModelSerializer):
             'record_created_at',
             'patrec_id'
         ]
+
+
+class AnimalBitePatientRecordCountSerializer(serializers.Serializer):
+    patient_id = serializers.CharField(source='pat_id')
+    patient_fname = serializers.SerializerMethodField()
+    patient_lname = serializers.SerializerMethodField()
+    patient_type = serializers.CharField(source='pat_type')
+    record_count = serializers.IntegerField()
+    latest_record_date = serializers.DateField()
+
+    def get_patient_fname(self, obj):
+        if obj.pat_type == 'Resident' and hasattr(obj, 'rp_id') and hasattr(obj.rp_id, 'per'):
+            return obj.rp_id.per.per_fname
+        elif obj.pat_type == 'Transient' and hasattr(obj, 'trans_id'):
+            return obj.trans_id.tran_fname
+        return 'N/A'
+
+    def get_firstaid_record_count(pat_id):
+        return AnimalBite_Referral.objects.filter(patrec_id__pat_id=pat_id).count()
+
+    def get_patient_lname(self, obj):
+        if obj.pat_type == 'Resident' and hasattr(obj, 'rp_id') and hasattr(obj.rp_id, 'per'):
+            return obj.rp_id.per.per_lname
+        elif obj.pat_type == 'Transient' and hasattr(obj, 'trans_id'):
+            return obj.trans_id.tran_lname
+        return 'N/A'
+
+    @classmethod
+    def get_aggregated_data(cls):
+        from .models import AnimalBite_Details
+        from django.db.models import Count, Max, F
+        
+        # This query gets the count of records and latest date for each patient
+        aggregated_data = AnimalBite_Details.objects.values(
+            'referral__patrec__pat_id',
+            'referral__patrec__pat_id__pat_type',
+        ).annotate(
+            record_count=Count('id'),
+            latest_record_date=Max('referral__date')
+        ).order_by('-latest_record_date')
+        
+        return aggregated_data

@@ -41,6 +41,9 @@ export const getCombinedStock = async () => {
           volume: stock.volume,
           vacStck_id: stock.vacStck_id,
           vac_id: stock.vac_id,
+          qty_number: stock.qty,
+          isArchived: stock.inv_details?.is_Archived, // Added property
+
         };
       }
 
@@ -65,6 +68,9 @@ export const getCombinedStock = async () => {
         vacStck_id: stock.vacStck_id,
         dosesPerVial: dosesPerVial,
         vac_id: stock.vac_id,
+        qty_number: stock.qty,
+        isArchived: stock.inv_details?.is_Archived, // Added property
+
       };
     });
 
@@ -74,13 +80,13 @@ export const getCombinedStock = async () => {
         (i: any) => i.inv_id === stock.inv_id
       );
 
-      const totalPcs = stock.imzStck_qty * stock.imzStck_pcs;
+      const totalPcs = Number(stock.imzStck_qty) * Number(stock.imzStck_pcs);
 
       let qtyDisplay;
       if (stock.imzStck_unit === "pcs") {
-        qtyDisplay = `${totalPcs} pcs`;
+        qtyDisplay = `${stock.imzStck_qty} pc/s`;
       } else {
-        qtyDisplay = `${stock.imzStck_qty} ${stock.imzStck_unit} (${totalPcs} pcs)`;
+        qtyDisplay = `${stock.imzStck_qty} boxes ${totalPcs} /)`;
       }
 
       return {
@@ -104,6 +110,10 @@ export const getCombinedStock = async () => {
         imzStck_unit: stock.imzStck_unit,
         imzStck_used: stock.imzStck_used || 0,
         imzStck_pcs: stock.imzStck_pcs,
+        qty_number: stock.imzStck_qty,
+        isArchived: stock.inv_detail?.is_Archived, // Added property
+
+
       };
     });
     console.log("Vaccine Data:", vaccineData);

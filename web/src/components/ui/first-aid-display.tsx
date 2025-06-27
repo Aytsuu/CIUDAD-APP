@@ -155,6 +155,29 @@ export const FirstAidDisplay = ({
     }
   };
 
+  // Determine empty state type
+  const getEmptyStateContent = () => {
+    if (firstAids.length === 0) {
+      // No stock available at all
+      return {
+        title: "No first aid items available",
+        message: "There are currently no first aid items in stock."
+      };
+    } else if (filteredFirstAids.length === 0 && searchQuery.trim()) {
+      // No search results
+      return {
+        title: "No first aid items found",
+        message: "Try adjusting your search query."
+      };
+    } else {
+      // Default fallback
+      return {
+        title: "No first aid items found",
+        message: "Try adjusting your search query."
+      };
+    }
+  };
+
   const PaginationControls = () => (
     <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50">
       <div className="text-sm text-gray-500">
@@ -187,6 +210,8 @@ export const FirstAidDisplay = ({
       </div>
     </div>
   );
+
+  const emptyStateContent = getEmptyStateContent();
 
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200 mx-3">
@@ -232,7 +257,7 @@ export const FirstAidDisplay = ({
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Stock Status
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray- CESTER tracking-wider">
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Quantity
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -246,10 +271,10 @@ export const FirstAidDisplay = ({
                 <td colSpan={6} className="px-6 py-12 text-center">
                   <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                   <h3 className="text-base font-medium text-gray-900 mb-2">
-                    No first aid items found
+                    {emptyStateContent.title}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Try adjusting your search query.
+                    {emptyStateContent.message}
                   </p>
                 </td>
               </tr>

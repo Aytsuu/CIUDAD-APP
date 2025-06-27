@@ -15,7 +15,7 @@ import {
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { fetchCommodity } from "../REQUEST/Commodity/restful-api/CommodityFetchAPI";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
@@ -31,7 +31,6 @@ export default function AddCommodityStock() {
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
       com_id: "",
-      category: "",
       cinv_qty_unit: "boxes",
       cinv_qty: undefined,
       cinv_pcs: undefined,
@@ -40,39 +39,27 @@ export default function AddCommodityStock() {
     },
   });
 
-  const commodity = fetchCommodity();
+  const commodity: Array<{ id: string; name: string; category: string; user_type?: string }> = fetchCommodity();
   const { mutate: submit, isPending } = useSubmitCommodityStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<CommodityStockType | null>(null);
+  const [selectedUserType, setSelectedUserType] = useState<string>(""); // State to store user_type
   const navigate = useNavigate();
   const currentUnit = form.watch("cinv_qty_unit");
   const qty = form.watch("cinv_qty") || 0;
   const pcs = form.watch("cinv_pcs") || 0;
+  const comId = form.watch("com_id"); // Watch for com_id changes
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
-  // Watch for com_id changes and update category
+  // Update user_type when com_id changes
   useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "com_id" && value.com_id) {
-        const selectedCommodity = commodity.find(
-          (com) => com.id === value.com_id
-        );
-        if (selectedCommodity) {
-          form.setValue("category", selectedCommodity.category);
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, commodity]);
-
-  // useEffect(() => {
-  //   const subscription = form.watch((value, { name }) => {
-  //     if (name === "cinv_qty_unit" && value.cinv_qty_unit !== "boxes") {
-  //       form.setValue("cinv_pcs", 0);
-  //     }
-  //   });
-  //   return () => subscription.unsubscribe();
-  // }, [form]);
+    if (comId) {
+      const selectedCommodity = commodity.find((item) => item.id === comId);
+      setSelectedUserType(selectedCommodity?.user_type ?? "Unknown");
+    } else {
+      setSelectedUserType(""); // Reset when no commodity is selected
+    }
+  }, [comId, commodity]);
 
   const onSubmit = (data: CommodityStockType) => {
     console.log("Form submitted, opening confirmation dialog");
@@ -121,12 +108,12 @@ export default function AddCommodityStock() {
               options={commodity}
             />
 
-            <FormInput
-              control={form.control}
-              name="category"
-              label="Category"
-              readOnly
-            />
+            <div className="flex flex-col">
+              <FormLabel className="text-darkGray">User Type</FormLabel>
+              <div className="flex items-center mt-4 h-10 rounded-md border border-input bg-background px-3  text-sm">
+                {selectedUserType || "Select a commodity"}
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

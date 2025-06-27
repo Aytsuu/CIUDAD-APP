@@ -28,7 +28,7 @@ import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { ValidationAlert } from "./vac-required-alert";
 import { PatientSearch } from "@/components/ui/patientSearch";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 interface Patient {
   pat_id: number;

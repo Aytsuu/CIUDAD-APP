@@ -39,20 +39,6 @@ class Transient(models.Model):
     class Meta:
         db_table = 'transient'
 
-
-# class TransientSpouse(models.Model):
-#     trs_id = models.BigAutoField(primary_key=True)
-#     trs_type = models.CharField(max_length=100, null=True)
-#     trs_lname = models.CharField(max_length=100, null=True, blank=True)
-#     trs_fname = models.CharField(max_length=100, null=True, blank=True)
-#     trs_mname = models.CharField(max_length=100, null=True, blank=True)
-#     trs_occupation = models.CharField(max_length=100, null=True, blank=True)
-#     trans_id = models.ForeignKey(Transient, on_delete=models.CASCADE, related_name='transient_spouses', db_column='trans_id', null=True)
-    
-#     class Meta:
-#         db_table = "transient_spouse"
-      
-
 class Patient(models.Model):
     PATIENT_TYPES = [
         ("Resident", "Resident"),
@@ -199,9 +185,8 @@ class Spouse(models.Model):
     spouse_mname = models.CharField(max_length=50, default="")
     spouse_occupation = models.CharField(max_length=50)
     spouse_dob = models.DateField()
-    rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='spouse', db_column='rp_id', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         db_table = 'spouse'
         
@@ -211,10 +196,9 @@ class BodyMeasurement(models.Model):
     height = models.IntegerField()
     weight = models.IntegerField()
     bmi = models.DecimalField(max_digits=5, decimal_places=2)
-    bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', null=True)
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
     
     class Meta:
         db_table = 'body_measurement'

@@ -27,3 +27,4 @@ export function usePendingFollowUpVisits(patientId: string) {
     staleTime: 0,
   });
 }
+

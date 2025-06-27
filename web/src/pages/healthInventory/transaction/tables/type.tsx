@@ -45,3 +45,21 @@ export type CombinedTransactionRecords = {
   staff: number;
   created_at: string;
 };
+
+export type AntigenTransaction = {
+  antt_id: number;
+  vac_stock: {
+    vaccinelist: {
+      vac_name: string;
+    };
+  } | null;
+  imz_stock: {
+    imz_detail: {
+      imz_name: string;
+    };
+  } | null;
+  antt_qty: string;
+  antt_action: string;
+  staff: number;
+  created_at: string;
+};

@@ -1,6 +1,6 @@
 import {api2}  from "@/api/api";
 
-export const addMedicineInventory = async (data: Record<string, any>, inv_id: number) => {
+export const addMedicineInventory = async (data: Record<string, any>, inv_id: string) => {
   try {
     if (!data.medicineID) {
       throw new Error("Medicine ID is required.");
@@ -28,21 +28,9 @@ export const addMedicineInventory = async (data: Record<string, any>, inv_id: nu
     }
 
     return res.data;
-  } catch (err: any) {
-    let errorMessage = "Failed to add medicine inventory";
-    if (err.response?.data) {
-      // Handle the specific 400 error you're seeing
-      if (err.response.data.med_id) {
-        errorMessage = "Medicine ID is required";
-      } else if (err.response.data.cat_id) {
-        errorMessage = "Category is required";
-      } else {
-        errorMessage = JSON.stringify(err.response.data);
-      }
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-    throw new Error(errorMessage);
+  } catch (err) {
+    console.error(err);
+    throw err;
   }
 };
 

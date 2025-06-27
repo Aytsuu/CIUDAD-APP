@@ -4,13 +4,13 @@ import { useFieldArray, UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button/button';
 import { Form } from '@/components/ui/form/form';
 import { FormInput } from '@/components/ui/form/form-input';
-import { FormDateInput } from '@/components/ui/form/form-date-input';
+// If the correct file is 'form-date-input.tsx', update as follows:
+import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
 import { DependentRecord } from '@/pages/record/health-family-profiling/profilingTypes';
-import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;

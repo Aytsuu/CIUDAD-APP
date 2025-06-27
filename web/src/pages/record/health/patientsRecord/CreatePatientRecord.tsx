@@ -75,10 +75,7 @@ interface PatientCreationData {
 export default function CreatePatientRecord() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  // const [isReadOnly, setIsReadOnly] = React.useState<boolean>(true); // Changed to true since we're only selecting existing residents
   const defaultValues = generateDefaultValues(patientRecordSchema);
-  // const location = useLocation();
-  // const { params } = location.state || { params: {} };
 
   const form = useForm<z.infer<typeof patientRecordSchema>>({
     resolver: zodResolver(patientRecordSchema),
@@ -106,7 +103,6 @@ export default function CreatePatientRecord() {
 
     if(selectedPatient && selectedPatient.personal_info){
       console.log("Selected Patient:", selectedPatient);
-      // setSelectedResidentId(selectedPatient.rp_id.toString());
 
       const personalInfo = selectedPatient.personal_info;
       const sexLowercase = personalInfo.per_sex?.toLowerCase();
@@ -264,7 +260,7 @@ export default function CreatePatientRecord() {
       <div className="mb-4 max-w-lg">
         <div className="relative">
           <Combobox
-            options={persons.default}
+            options={persons.formatted}
             value={selectedResidentId}
             onChange={handlePatientSelection}
             placeholder={residentLoading ? "Loading residents..." : "Select a resident"}

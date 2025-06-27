@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAnimalBitePatientDetails } from "./api/get-api";
 import { ColumnDef } from "@tanstack/react-table";
@@ -10,6 +10,10 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
+// import { getAnimalBiteCount } from "../record/health/patientsRecord/restful-api/patientsGetAPI";
+
+// const { data: animalbite_count } = getAnimalBiteCount(patientData.pat_id);
+//   const firstAidCount = firstAidCountData?.firstaidrecord_count;
 
 // --- Type Definition ---
 type PatientRecordDetail = {
@@ -150,6 +154,7 @@ const IndividualPatientHistory: React.FC = () => {
     setPrintModalOpen(true);
   };
 
+  const navigate = useNavigate();
   const tableColumns = useMemo<ColumnDef<PatientRecordDetail>[]>(() => [
     { accessorKey: "referral_date", header: "Date", cell: ({row}) => new Date(row.original.referral_date).toLocaleDateString() },
     { accessorKey: "exposure_type", header: "Exposure Type" },
@@ -172,10 +177,6 @@ const IndividualPatientHistory: React.FC = () => {
       }
     ], []);
     
-    {/* <Button variant="destructive" size="sm"> {/* Added onClick handler */}
-        // <Archive size={16} className="mr-2"/> Archive {/* Added mr-2 for icon spacing */}
-    // </Button> 
-
   const historyFields = [
     { label: "Exposure Type", key: "exposure_type", icon: <ShieldCheck className="w-4 h-4 text-gray-500" /> },
     { label: "Site of Exposure", key: "exposure_site", icon: <MapPin className="w-4 h-4 text-gray-500" /> },
@@ -201,9 +202,9 @@ const IndividualPatientHistory: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/Animalbite_viewing">
-              <Button variant="outline" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
-            </Link>
+             <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-5 w-5" />
+            </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-800">Patient History</h1>
               <p className="text-gray-600">{patientName} (ID: {id})</p>

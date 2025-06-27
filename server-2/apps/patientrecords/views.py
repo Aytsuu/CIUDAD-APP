@@ -1,3 +1,4 @@
+import traceback
 from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -342,13 +343,6 @@ class ObstetricalHistoryView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
 
-# **Spouse**
-# class SpouseView(generics.ListCreateAPIView):
-#     serializer_class = SpouseSerializer
-#     queryset = Spouse.objects.all()
-
-#     def create(self, request, *args, **kwargs):
-#         return super().create(request, *args, **kwargs)
 
 class SpouseCreateView(generics.CreateAPIView):
     serializer_class = SpouseCreateSerializer
@@ -400,7 +394,52 @@ class FollowUpVisitView(generics.ListCreateAPIView):
         def create(self, request, *args, **kwargs):
             return super().create(request, *args, **kwargs)
 
-        
+class AllFollowUpVisitsView(APIView):
+    """
+    API endpoint to get all follow-up visits with patient details
+    """
+    def get(self, request):
+        try:
+            # Fetch all follow-up visits with related patient data
+            visits = FollowUpVisit.objects.select_related(
+                'patrec_id__pat_id__rp_id__per',
+                'patrec_id__pat_id__trans_id__tradd_id'
+            ).prefetch_related(
+                'patrec_id__pat_id__rp_id__per__personaladdress_set__add__sitio',
+                'patrec_id__pat_id__rp_id__household_set__add__sitio'
+            ).order_by('-followv_date')
+            
+            # Serialize the data with patient information
+            serialized_visits = []
+            for visit in visits:
+                patient = visit.patrec_id.pat_id
+                
+                # Get patient serializer data
+                patient_serializer = PatientSerializer(patient, context={'request': request})
+                patient_data = patient_serializer.data
+                
+                visit_data = {
+                    'followv_id': visit.followv_id,
+                    'followv_date': visit.followv_date,
+                    'followv_description': visit.followv_description,
+                    'followv_status': visit.followv_status,
+                    'patrec_id': visit.patrec_id.patrec_id,
+                    'created_at': visit.created_at,
+                    'updated_at': visit.updated_at,
+                    'patient': patient_data,  # Include full patient data
+                }
+                serialized_visits.append(visit_data)
+            
+            response_data = {
+                'count': len(serialized_visits),
+                'results': serialized_visits
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class DeleteUpdateFollowUpVisitView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FollowUpVisitSerializer
     queryset = FollowUpVisit.objects.all()
@@ -419,10 +458,11 @@ class BodyMeasurementView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
 class DeleteUpdateBodyMeasurementView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BodyMeasurementSerializer
     queryset = BodyMeasurement.objects.all()
-    lookup_field = 'bmi_id'
+    lookup_field = 'bm_id'
     
     def get_object(self):
         try:
@@ -584,5 +624,94 @@ class GetPendingFollowUpVisits(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-  
-  
+
+#FOR FAM PLANNING MODULE  
+
+# --- TEMPORARY AGGRESSIVE DEBUGGING VIEW FOR Obstetrical History ---
+class ObstetricalHistoryByPatientView(APIView): # Changed to APIView
+    def get(self, request, pat_id, *args, **kwargs): # Direct GET method, pat_id from URL
+        try:
+            # 1. Find the PatientRecord of type "Obstetrical" for the given pat_id (string)
+            patient_record = PatientRecord.objects.get(pat_id=pat_id, patrec_type="Obstetrical")
+            
+            # 2. Get the primary key of this PatientRecord instance
+            patrec_pk_value = patient_record.pk 
+            
+            # 3. Find the Obstetrical_History linked to this PatientRecord's PK
+            obstetrical_history_instance = Obstetrical_History.objects.filter(patrec_id=patrec_pk_value).first()
+
+            if not obstetrical_history_instance:
+                # Return a simple dict response for 404, no complex f-strings or implicit calls
+                return Response({"detail": "Obstetrical History not found for the associated PatientRecord."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Manually serialize the data to avoid issues with standard DRF serializers
+            # and potential __str__ methods of related objects.
+            data_to_return = {
+                "obs_id": obstetrical_history_instance.obs_id,
+                "obs_ch_born_alive": obstetrical_history_instance.obs_ch_born_alive,
+                "obs_living_ch": obstetrical_history_instance.obs_living_ch,
+                "obs_abortion": obstetrical_history_instance.obs_abortion,
+                "obs_still_birth": obstetrical_history_instance.obs_still_birth,
+                "obs_lg_babies": obstetrical_history_instance.obs_lg_babies,
+                "obs_gravida": obstetrical_history_instance.obs_gravida,
+                "obs_para": obstetrical_history_instance.obs_para,
+                "obs_fullterm": obstetrical_history_instance.obs_fullterm,
+                "obs_preterm": obstetrical_history_instance.obs_preterm,
+                "obs_record_from": obstetrical_history_instance.obs_record_from,
+                "patrec_id": obstetrical_history_instance.patrec_id.pk # Ensure we get the ID here
+            }
+            return Response(data_to_return, status=status.HTTP_200_OK)
+            
+        except PatientRecord.DoesNotExist:
+            # Provide simple string detail
+            return Response({"detail": f"PatientRecord of type Obstetrical not found for pat_id {pat_id}"}, status=status.HTTP_404_NOT_FOUND)
+        except Patient.DoesNotExist: # Catch if the initial patient lookup fails
+            return Response({"detail": f"Patient with ID {pat_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            import traceback
+            traceback.print_exc() # Print full traceback to console for actual error
+            # Return a simple, non-f-string error for 500. This is the crucial part to test.
+            return Response({"detail": "An unexpected server error occurred during obstetrical history retrieval."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# class ObstetricalHistoryByPatientView(generics.RetrieveAPIView):
+#     serializer_class = ObstetricalHistorySerializer
+#     lookup_field = 'pat_id'
+
+#     def get_object(self):
+#         pat_id = self.kwargs['pat_id']
+#         try:
+#             patient_record = PatientRecord.objects.get(pat_id=pat_id, patrec_type="Obstetrical")
+            
+#             patrec_pk_value = patient_record.pk 
+#             obstetrical_history_instance = Obstetrical_History.objects.filter(patrec_id=patrec_pk_value).first()
+#             if not obstetrical_history_instance:
+#                raise NotFound(detail="Obstetrical History not found for the associated PatientRecord.")
+
+#             return obstetrical_history_instance
+            
+#         except PatientRecord.DoesNotExist:
+#             raise status.HTTP_404_NOT_FOUND("PatientRecord of type Obstetrical not found for this patient.")
+#         except Exception as e:
+#             import traceback
+#             traceback.print_exc() # Print full traceback to console for any other unexpected errors
+#             raise status.HTTP_500_INTERNAL_SERVER_ERROR(f"An unexpected error occurred: {str(e)}")
+
+class LatestBodyMeasurementView(generics.RetrieveAPIView):
+    serializer_class = BodyMeasurementSerializer
+    lookup_field = 'pat_id'
+
+    def get_object(self):
+        patient_id_from_url = self.kwargs['pat_id']
+        try:
+            # We assume pat__pat_id=patient_id_from_url is now correct based on previous discussion
+            latest_measurement = BodyMeasurement.objects.filter(
+                patrec__pat_id=patient_id_from_url
+            ).latest('created_at')
+            return latest_measurement
+        except BodyMeasurement.DoesNotExist:
+            # For 404s, raise NotFound or Http404 (DRF's generics handle Http404 correctly)
+            raise NotFound(detail="Body Measurement not found for this patient.")
+        except Patient.DoesNotExist:
+            raise NotFound(detail=f"Patient with ID {patient_id_from_url} not found.")
+        

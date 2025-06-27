@@ -3,7 +3,7 @@ import { updateInventoryTimestamp } from "../../InventoryAPIQueries"; // Adjust 
 
 export const updateVaccineStock = async (
   vacStck_id: number,
-  inv_id: number,
+  inv_id: string,
   qty: number,
   vacStck_qty_avail: number
 ) => {

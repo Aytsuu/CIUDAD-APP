@@ -14,9 +14,17 @@ export const useRiskStiData = (patientId: string | number | undefined) => {
     });
 }
 
-
-
-
+export const useObstetricalHistoryData = (patientId: string | undefined) => {
+  return useQuery({
+    queryKey: ['obstetricalHistory', patientId],
+    queryFn: async () => {
+      if (!patientId) return null;
+      const response = await api2.get(`familyplanning/obstetrical-history/${patientId}/`);
+      return response.data;
+    },
+    enabled: !!patientId,
+  });
+};
 
 
 

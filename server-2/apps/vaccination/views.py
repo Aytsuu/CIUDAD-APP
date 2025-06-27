@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from .serializers import *
 from datetime import datetime
 from django.db.models import Count, Max, Subquery, OuterRef, Q, F
+from django.db.models.functions import TruncMonth
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer
 from apps.patientrecords.models import VitalSigns
@@ -191,3 +192,65 @@ class ForwardedVaccinationHistoryView(generics.ListAPIView):
         return VaccinationHistory.objects.filter(
             vachist_status__iexact='forwarded'
         ).order_by('-created_at')
+
+
+
+class MonthlyVaccinationRecordsAPIView(APIView):
+    def get(self, request):
+        try:
+            # Get base queryset with proper relationships
+            queryset = VaccinationHistory.objects.select_related(
+                'vachist',  # ForeignKey to FirstAidInventory
+                'vacStck_id__inv_id',  # OneToOne to Inventory
+                'vacStck_id__vac_id',  # ForeignKey to FirstAidList
+                'vital__vital_id'
+                'vacrec__patrec_id'  
+            ).order_by('-created_at')
+            
+            # Filter by year if provided
+            year = request.GET.get('year')
+            if year and year != 'all':
+                queryset = queryset.filter(created_at__year=year)
+            
+            # Group by month and get counts
+            monthly_data = queryset.annotate(
+                month=TruncMonth('created_at')
+            ).values('month').annotate(
+                record_count=Count('vachist_id')
+            ).order_by('-month')
+            
+            # Format the response
+            formatted_data = []
+            for item in monthly_data:
+                month_str = item['month'].strftime('%Y-%m')
+                month_records = queryset.filter(
+                    created_at__year=item['month'].year,
+                    created_at__month=item['month'].month
+                )
+                
+                # Serialize records
+                serialized_records = []
+                for record in month_records:
+                    # Serialize record
+                    serialized_record = VaccinationRecordSerializer(record).data
+                    serialized_records.append(serialized_record)
+                
+                formatted_data.append({
+                    'month': month_str,
+                    'record_count': item['record_count'],
+                    'records': serialized_records
+                })
+            
+            return Response({
+                'success': True,
+                'data': formatted_data,
+                'total_records': len(formatted_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        
