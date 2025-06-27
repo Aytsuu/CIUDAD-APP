@@ -40,7 +40,7 @@ export const report_router = [
     element: <ARFormLayout/>
   },
   {
-    path: '/report/acknowledgement/document/',
+    path: '/report/acknowledgement/document',
     element: <ReportDocument/>
   }
 ]

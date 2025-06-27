@@ -115,7 +115,7 @@ export default function GroupPositionForm() {
     const values = form.getValues()
     const data = positions.map((pos: any) => ({
       ...pos,
-      pos_group: values.pos_group,
+      pos_group: values.pos_group.toUpperCase(),
       staff: user?.staff?.staff_id,
     }))
 

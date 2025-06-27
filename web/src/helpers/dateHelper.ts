@@ -55,3 +55,38 @@ export const getAllWeeksInMonth = (monthName: string) => {
   
   return weeks;
 };
+
+// Helper function to check if a week has passed
+export const hasWeekPassed = (month: string, weekNo: number) => {
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+
+  // Get the month index (0-11)
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ]
+  const monthIndex = monthNames.indexOf(month)
+
+  if (monthIndex === -1) return false
+
+  // Calculate the end date of the given week
+  const firstDayOfMonth = new Date(currentYear, monthIndex, 1)
+  const firstDayOfWeek = firstDayOfMonth.getDay()
+  const daysToFirstMonday = firstDayOfWeek === 0 ? 1 : 8 - firstDayOfWeek
+
+  // Calculate the end of the specified week
+  const weekEndDate = new Date(currentYear, monthIndex, daysToFirstMonday + (weekNo - 1) * 7 + 6)
+
+  return weekEndDate < currentDate
+}

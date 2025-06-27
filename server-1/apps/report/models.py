@@ -98,6 +98,9 @@ class ReportTemplate(models.Model):
   rte_logoRight = models.URLField(null=True)
   rte_headerText = models.TextField(null=True)
   rte_type = models.CharField(max_length=50, null=True)
+  rte_prepared_by = models.CharField(max_length=100, null=True)
+  rte_recommended_by = models.CharField(max_length=100, null=True)
+  rte_approved_by = models.CharField(max_length=100, null=True)
   
   class Meta:
     db_table = "report_template"

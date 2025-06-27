@@ -19,8 +19,8 @@ class ARFileBaseSerializer(serializers.ModelSerializer):
 class ARTableSerializer(serializers.ModelSerializer):
   id = serializers.IntegerField(source='ar_id')
   status = serializers.CharField(source='ar_status')
-  ar_sitio = serializers.SerializerMethodField()
-  ar_street = serializers.SerializerMethodField()
+  ar_sitio = serializers.CharField(source="add.sitio.sitio_name")
+  ar_street = serializers.CharField(source="add.add_street")
   date = serializers.DateField(source='ar_created_at')
   ar_files = serializers.SerializerMethodField()
   ar_time_started = serializers.SerializerMethodField()
@@ -40,12 +40,6 @@ class ARTableSerializer(serializers.ModelSerializer):
     if obj.ar_time_completed:
       return obj.ar_time_completed.strftime("%I:%M %p")
     return None
-
-  def get_ar_sitio(self, obj):
-    return obj.add.sitio.sitio_name
-  
-  def get_ar_street(self, obj):
-    return obj.add.add_street
 
   def get_ar_files(self, obj):
     files = ARFile.objects.filter(ar=obj)

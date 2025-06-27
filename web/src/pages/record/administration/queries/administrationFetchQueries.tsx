@@ -54,3 +54,23 @@ export const usePositionGroups = () => {
     }
   })
 }
+
+export const useGetStaffByTitle = (position: string) => {
+  return useQuery({
+    queryKey: ['staffByTitle', position]  ,
+    queryFn: async () => {
+      try {
+        const res = await api.get('administration/staff/by-title/', {
+          params: {
+            pos_title: position
+          }
+        });
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
