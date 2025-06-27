@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.account.models import Account
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
-from apps.administration.serializers.staff_serializers import StaffFullSerializer, StaffBaseSerializer
+from apps.administration.serializers.staff_serializers import StaffFullSerializer
 from apps.administration.models import Staff
 
 class UserAccountSerializer(serializers.ModelSerializer):
@@ -25,7 +25,6 @@ class UserAccountSerializer(serializers.ModelSerializer):
         """
         Get staff profile information through the resident profile.
         """
-
         # Check if account has a resident profile
         if hasattr(obj, 'rp') or obj.rp:
             # Check if resident profile has staff relationship
@@ -33,6 +32,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
             if is_staff:
                 return StaffFullSerializer(is_staff).data
+        return None
         
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()
@@ -44,11 +44,11 @@ class AuthResponseSerializer(serializers.Serializer):
         required=False,
         default=None
     )
-    resident_profile = ResidentProfileFullSerializer(
+    resident = ResidentProfileFullSerializer(
         required=False,
         allow_null=True
     )
-    staff_profile = serializers.DictField(
+    staff = serializers.DictField(
         required=False,
         allow_null=True
     )

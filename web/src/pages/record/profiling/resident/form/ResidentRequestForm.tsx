@@ -24,10 +24,10 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const files = params.data?.files || [];
 
-  // ==================== HANDLERS ====================
-  const reject = async () => {
-    handleSubmitError("Rejected");
-  }
+  // ==================== =HANDLERS ====================
+  // const reject = async () > {
+  //   handleSubmitError("Rejected");
+  // }
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -40,7 +40,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
 
     addResidentProfile({
       personalId: params.data?.per.per_id,
-      staffId: user?.staff.staff_id,
+      staffId: user?.staff?.staff_id,
     }, {
       onSuccess: () => {
         deleteRequest(params.data.req_id, {
@@ -91,7 +91,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
                 isSubmitting={isSubmitting}
                 submit={submit}
                 isReadOnly={false}
-                reject={reject}
+                // reject={reject}
               />
             </div>
           </Form>

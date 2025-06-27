@@ -1,11 +1,11 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ComplaintRecord } from "./complaint-type";
+import { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export const complaintColumns = (data: ComplaintRecord[]): ColumnDef<ComplaintRecord>[] => [
+export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
     accessorKey: "comp_id",
     header: "Complaint ID",

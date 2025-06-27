@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { BsChevronLeft } from "react-icons/bs";
 import { Link, useLocation } from "react-router-dom";
-import { ComplaintRecord } from "./complaint-type";
+import { Complaint } from "./complaint-type";
 import {
   FileText,
   User,
@@ -74,7 +74,7 @@ function getFileType(file: any): string {
 
 export function ComplaintViewRecord() {
   const { state } = useLocation();
-  const complaintData = state?.complaint as ComplaintRecord;
+  const complaintData = state?.complaint as Complaint;
   const [isRaiseIssueDialogOpen, setIsRaiseIssueDialogOpen] = useState(false);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
