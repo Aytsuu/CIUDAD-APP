@@ -6,8 +6,10 @@ export const STAFF_TYPES = {
 // Interfaces
 export interface Assignment {
   id: string;
-  
-  [key: string]: any; // Replace with actual assignment fields
+  feat: string;
+  assi_date: string;
+  staff: Record<string, any>;
+  pos: string;
 }
 
 export interface Staff {
@@ -30,6 +32,8 @@ export interface User {
   resident?: Resident;
   staff?: Record<string, any>;
 }
+
+
 
 export interface AuthContextType {
   user: User | null;
