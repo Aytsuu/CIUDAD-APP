@@ -133,6 +133,14 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
+    },
+    'healthDB': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('SERVER2_DB_NAME'),
+        'USER': config('SERVER2_DB_USER'),
+        'PASSWORD': config('SERVER2_DB_PASSWORD'),
+        'HOST': config('SERVER2_DB_HOST'),
+        'PORT': config('SERVER2_DB_PORT'),
     }
 }
 
@@ -162,6 +170,7 @@ USE_TZ = True
 
 # Static files 
 STATIC_URL = 'static/'
+DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

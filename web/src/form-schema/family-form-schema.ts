@@ -6,9 +6,6 @@ export const demographicInfoSchema = z.object({
   building: z.string().min(1, "Building is required"),
   householdNo: z.string(),
   indigenous: z.string().min(1, "Indigenous is required"),
-  nhts: z.string().optional(),
-  sitio: z.string().optional(),
-  street: z.string().optional(),
 });
 
 export const personalInfoSchema = z.object({
@@ -180,21 +177,21 @@ export const familyFormSchema = z.object({
 });
 
 
-export const businessFormSchema = z.object({
-  bus_respondentLname: z.string()
-    .min(1, 'Last Name is required')
-    .min(2, 'Last Name must be atleast 2 letters'),
-  bus_respondentFname: z.string()
-    .min(1, 'First Name is required')
-    .min(2, 'First Name must be atleast 2 letters'),
-  bus_respondentMname: z.string()
-    .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
-    .optional(),
-  bus_respondentSex: z.string().min(1, 'Sex is required'),
-  bus_respondentDob: z.string().min(1, 'Date of Birth is required'),
-  bus_name: z.string().min(1, 'Business Name is required'),
-  bus_gross_sales: z.string().min(1, 'Gross Sales is required'),
-  bus_street: z.string().min(1, 'Street Address is required'),
-  sitio: z.string().min(1, 'Sitio is required')
-});
+// export const businessFormSchema = z.object({
+//   bus_respondentLname: z.string()
+//     .min(1, 'Last Name is required')
+//     .min(2, 'Last Name must be atleast 2 letters'),
+//   bus_respondentFname: z.string()
+//     .min(1, 'First Name is required')
+//     .min(2, 'First Name must be atleast 2 letters'),
+//   bus_respondentMname: z.string()
+//     .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
+//     .optional(),
+//   bus_respondentSex: z.string().min(1, 'Sex is required'),
+//   bus_respondentDob: z.string().min(1, 'Date of Birth is required'),
+//   bus_name: z.string().min(1, 'Business Name is required'),
+//   bus_gross_sales: z.string().min(1, 'Gross Sales is required'),
+//   bus_street: z.string().min(1, 'Street Address is required'),
+//   sitio: z.string().min(1, 'Sitio is required')
+// });
 

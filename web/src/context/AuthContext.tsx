@@ -111,9 +111,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!user?.staff){
         await supabase.auth.signOut();
         throw new Error("Only authorized staff can access this system");
+        
       }
-
+      console.log(user);
       await handleSessionChange(data.session);
+      
       
     } catch (error) {
       handleError(error, "Login failed");

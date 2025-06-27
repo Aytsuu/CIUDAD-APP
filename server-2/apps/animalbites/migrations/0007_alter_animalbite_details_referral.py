@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('animalbites', '0006_alter_animalbite_details_referral_and_more'),
+        # ('animalbites', '0006_alter_animalbite_details_referral_and_more'),
     ]
 
     operations = [

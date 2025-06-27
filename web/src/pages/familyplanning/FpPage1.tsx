@@ -13,7 +13,7 @@ import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
 import { toast } from "sonner"
-import api from "../api/api"
+import api  from "../api/api"
 
 type Page1Props = {
   onNext2: () => void
@@ -67,8 +67,8 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     const fetchPatients = async () => {
       setLoading(true)
       try {
-        const response = await api.get("/health-profiling/personal/")
-        const patientData = response.data
+        // const response = await api.get("/health-profiling/personal/")
+        // const patientData = response.data
 
         // Make sure we're mapping the data correctly based on the API response
         const formatted = patientData.map((patient: PatientRecord) => ({

@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const demographicInfoSchema = z.object({
-  id: z.string().optional(), // For residents living independently
+  id: z.string().optional(), 
   building: z.string().min(1, "Building is required"),
   householdNo: z.string(),
   indigenous: z.string().min(1, "Indigenous is required"),
@@ -44,18 +44,38 @@ export const personalInfoSchema = z.object({
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
 });
+export const perAddDetails = z.object({
+  bloodType: z.string().optional(),
+  philHealthId: z.string().optional(),
+  covidVaxStatus: z.string().optional(),
+});
 
-export const parentInfoSchema = z.object({
-  id: z.string().optional(),
+export const motherHealthInfo = z.object({
+  healthRiskClass: z.string().optional(),
+  immunizationStatus: z.string().optional(),
+  method: z.array(z.string()).optional(), 
+  source: z.string().optional(),
+});
+
+const parentInfoSchema = z.object({
+  id: z.string(),
   lastName: z.string(),
   firstName: z.string(),
   middleName: z.string(),
   suffix: z.string(),
-  dateOfBirth: z.string().date(),
+  dateOfBirth: z.string().min(1, "Date of Birth is required"),
   status: z.string(),
   religion: z.string(),
   edAttainment: z.string(),
   contact: z.string(),
+  perAddDetails: perAddDetails.optional(),
+
+});
+ 
+export const dependentUnderFiveSchema = z.object({
+    fic: z.string().optional(),
+    nutritionalStatus: z.string().optional(),
+    exclusiveBf: z.string().optional(),
 });
 
 export const dependentSchema = z.object({
@@ -66,11 +86,29 @@ export const dependentSchema = z.object({
   suffix: z.string(),
   dateOfBirth: z.string(),
   sex: z.string(),
+  dependentUnderFiveSchema: dependentUnderFiveSchema.optional(),
 });
+
+export const householdHeadSchema = z.object({
+  id: z.string(),
+  lastName: z.string(),
+  firstName: z.string(),
+  middleName: z.string(),
+  sex: z.string(),
+});
+
 
 export const familyFormSchema = z.object({
   demographicInfo: demographicInfoSchema,
-  motherInfo: parentInfoSchema,
+  householdHead: z.object({
+    per_lname: z.string().optional(),
+    per_fname: z.string().optional(),
+    per_mname: z.string().optional(),
+    per_sex: z.string().optional(),
+  }),
+  motherInfo: parentInfoSchema.extend({
+      motherHealthInfo: motherHealthInfo.optional(),
+  }),
   fatherInfo: parentInfoSchema,
   guardInfo: parentInfoSchema,
   dependentsInfo: z.object({
@@ -118,3 +156,4 @@ export const newMemberFormSchema = z.object({
   id: z.string(),
   role: z.string().min(1, "Role is required")
 })
+
