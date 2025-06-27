@@ -301,10 +301,12 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+      { title: "Council Events", url: "/calendar-page" },
+      { title: "Attendance", url: "/attendance-page" },
       { title: "Ordinance", url: "/ord-page" },
       { title: "Resolution", url: "/res-page" },
       { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Attendance", url: "/attendance-page" },
+      { title: "Document Template", url: "/templates-main"}
     ],
   },
   {

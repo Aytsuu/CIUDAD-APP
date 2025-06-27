@@ -225,7 +225,7 @@ import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Pencil, Trash, Eye, Plus, Search } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
-import AddEvent from '@/pages/record/council/Calendar/AddEvent-Modal';
+import AddEvent from '@/pages/record/council/Calendar/SchedEventForm';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -292,9 +292,9 @@ export const columns: ColumnDef<Resolution>[] = [
                     trigger={
                         <div className="flex items-center h-10">
                             <Link to="/update-res">
-                                <Button className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer shadow-none h-full flex items-center">
+                                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer shadow-none h-full flex items-center">
                                     <Pencil size={16} />
-                                </Button>
+                                </div>
                             </Link>
                         </div>
                     }
