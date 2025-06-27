@@ -28,10 +28,10 @@ export const usePerAddressesList = () => {
 }
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
-export const useResidentsList = () => {
+export const useResidentsList = (is_staff: boolean = false) => {
   return useQuery({
-    queryKey: ['residentsList'],
-    queryFn: getResidentsList,
+    queryKey: ['residentsList', is_staff],
+    queryFn: () => getResidentsList(is_staff),
     staleTime: 5000,
   })
 }

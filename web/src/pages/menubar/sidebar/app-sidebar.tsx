@@ -301,10 +301,12 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+      { title: "Council Events", url: "/calendar-page" },
+      { title: "Attendance", url: "/attendance-page" },
       { title: "Ordinance", url: "/ord-page" },
       { title: "Resolution", url: "/res-page" },
       { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Attendance", url: "/attendance-page" },
+      { title: "Document Template", url: "/templates-main"}
     ],
   },
   {
@@ -355,6 +357,7 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+      { title: "Administrations", url: "/health-administration" },
       { title: "Doctor", url: "/mainMedicalForm" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },
@@ -362,6 +365,10 @@ const items: MenuItem[] = [
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Vaccination", url: "/allRecordsForVaccine" },
+      { title: "Patients Record", url: "/patients-record-main" },
+      { title: "Family Profiling", url: "/family-profiling-main" },
+      
+      
       {
         title: "Inventory",
         url: "/",

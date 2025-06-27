@@ -100,14 +100,17 @@ const styles = StyleSheet.create({
   crewSection: {
     width: "60%",
     borderRight: "1px solid black",
+    flexDirection: "column",
+  },
+  crewHeader: {
     flexDirection: "row",
   },
   crewMemberCol: {
-    width: "70%",
+    width: "100%",
     padding: 20,
   },
   signatureCol: {
-    width: "50%",
+    width: "40%",
     padding: 20,
   },
   approvalSection: {
@@ -126,6 +129,7 @@ const styles = StyleSheet.create({
   },
   approvalName: {
     fontSize: 10,
+    fontWeight: 700,
     textAlign: "center",
     marginBottom: 5,
   },
@@ -136,7 +140,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 10,
-    fontWeight: "bold",
+    fontWeight: 700,
     textAlign: "center",
   },
 })
@@ -149,6 +153,7 @@ interface WARTemplatePDFProps {
   preparedBy?: string
   recommendedBy?: string
   approvedBy?: string
+  crew?: any
 }
 
 export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
@@ -159,7 +164,7 @@ export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
   preparedBy = "JUNO",
   recommendedBy = "JUNO",
   approvedBy = "JUNO",
-  
+  crew = []
 }) => (
   <Document>
     <Page size="LEGAL" style={styles.page} orientation="landscape">
@@ -213,11 +218,27 @@ export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
 
       <View style={styles.bottomSection}>
         <View style={styles.crewSection}>
-          <View style={styles.crewMemberCol}>
-            <Text style={styles.sectionTitle}>CREW MEMBER</Text>
+          <View style={styles.crewHeader}>
+            <View style={styles.crewMemberCol}>
+              <Text style={styles.sectionTitle}>CREW MEMBER</Text>
+            </View>
+            <View style={styles.signatureCol}>
+              <Text style={styles.sectionTitle}>SIGNATURE</Text>
+            </View>
           </View>
-          <View style={styles.signatureCol}>
-            <Text style={styles.sectionTitle}>SIGNATURE</Text>
+          <View style={{flexDirection: "column", marginTop: 5, lineHeight: 1}}>
+            {crew?.map((member: any, idx: number) => (
+              <View style={{width: '100%', flexDirection: 'row'}}>
+                <View style={{width: '100%', flexDirection: 'row', justifyContent: 'flex-start', paddingLeft: 30}}>
+                  <Text style={styles.sectionTitle}>
+                    {`${idx + 1}. ${member.lname.toUpperCase()}, ${member.fname.toUpperCase()} ${member.mname ? member.mname.toUpperCase() : ''}`}
+                  </Text>
+                </View>
+                <View style={{ width: '40%', flexDirection: 'row', justifyContent: 'center'}}>
+                  <Text style={{width: '100%', textAlign: 'center', fontSize: 10, fontWeight: "bold"}}>_______________________</Text>
+                </View>
+              </View>
+            ))}
           </View>
         </View>
 

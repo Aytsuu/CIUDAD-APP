@@ -11,9 +11,13 @@ export const getPerAddressesList = async () => {
 }
 
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
-export const getResidentsList = async () => {
+export const getResidentsList = async (is_staff: boolean = false) => {
   try {
-    const res = await api.get("profiling/resident/");
+    const res = await api.get("profiling/resident/", {
+      params: {
+        is_staff: is_staff
+      }
+    });
     return res.data;
   } catch (err) {
     throw err;

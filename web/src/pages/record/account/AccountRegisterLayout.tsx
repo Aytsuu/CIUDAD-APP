@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card/card";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
-import { useAddAccount } from "./queries/accountAddQueries";
+// import { useAddAccount } from "./queries/accountAddQueries";
+// import { useAddAccountHealth } from "./queries/accountAddQueries";
 import { useLocation } from "react-router";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 import { accountCreated } from "@/redux/addRegSlice";
@@ -22,7 +23,9 @@ export default function AccountRegistrationLayout() {
   const dispatch = useDispatch();
   const params = React.useMemo(()=> location.state?.params, [location.state])
   const residentId = React.useMemo(()=> params.residentId, [params]);
-  const { mutateAsync: addAccount } = useAddAccount();
+  // const { mutateAsync: addAccount } = useAddAccount();
+  // const { mutateAsync: addAccountHealth } = useAddAccountHealth();
+  
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(accountFormSchema)).current;
   const form = useForm<z.infer<typeof accountFormSchema>>({
@@ -31,27 +34,40 @@ export default function AccountRegistrationLayout() {
   });
 
   const submit = async () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     const formIsValid = await form.trigger();
-    if(!formIsValid) {
+    if (!formIsValid) {
       setIsSubmitting(false);
       toast("Please fill out all required fields", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
       });
       return;
-    };
-
+    }
+  
     const accountInfo = form.getValues();
-    addAccount({ 
-      accountInfo: accountInfo,
-      residentId: residentId
-    }, {
-      onSuccess: () => {
-        dispatch(accountCreated(true));
-        safeNavigate.back()
-      }
-    });
-    
+  
+    try {
+      // First, add to the main account DB
+      // await addAccount({
+      //   accountInfo,
+      //   residentId
+      // });
+  
+      // // Then, add to the health DB
+      // await addAccountHealth({
+      //   accountInfo,
+      //   residentId
+      // });
+  
+      dispatch(accountCreated(true));
+      safeNavigate.back();
+    } catch (error) {
+      toast("Failed to create account. Please try again.", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

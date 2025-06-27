@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { batchPermissionUpdate, updatePermission, updatePosition } from "../restful-api/administrationPutAPI";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
 
@@ -27,6 +27,11 @@ export const useEditPosition = () => {
         )
       })
       navigate(-1)
+    },
+    onError: () => {
+      toast("Failed to update position. Please try again.", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+      });
     } 
   })
 }

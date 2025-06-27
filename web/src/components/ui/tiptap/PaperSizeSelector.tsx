@@ -16,7 +16,7 @@ const PaperSizeSelector = ({ onPaperSizeChange }: Props) => {
 
   return (
     <Select onValueChange={handleChange}>
-      <SelectTrigger className="w-[150px]">
+      <SelectTrigger className="w-[150px] bg-white">
         <SelectValue placeholder="Paper Size" />
       </SelectTrigger>
       <SelectContent>

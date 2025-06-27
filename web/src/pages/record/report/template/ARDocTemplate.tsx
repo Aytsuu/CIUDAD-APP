@@ -1,14 +1,19 @@
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useInstantFileUpload } from "@/hooks/use-file-upload";
-import { PDFViewer, pdf } from "@react-pdf/renderer";
-import { Loader2, Printer, Upload } from "lucide-react";
+import { pdf } from "@react-pdf/renderer";
+import { CircleAlert, Loader2, Pen, Printer, Upload, X } from "lucide-react";
 import React from "react";
 import { ARTemplatePDF } from "./ARTemplatePDF";
 import { Label } from "@/components/ui/label";
 import { useUpdateTemplate } from "../queries/reportUpdate";
 import { useGetSpecificTemplate } from "../queries/reportFetch";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Card, CardContent } from "@/components/ui/card/card";
+import { Combobox } from "@/components/ui/combobox";
+import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
+import { formatStaffs } from "../../administration/administrationFormats";
+import { toast } from "sonner";
 
 export const ARDocTemplate = ({
   incident,
@@ -21,13 +26,25 @@ export const ARDocTemplate = ({
   dateTime: string;
   location: string;
   act_taken: string;
-  images: any[]
+  images: any[];
 }) => {
   const { uploadFile } = useInstantFileUpload({});
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
-  const { data: reportTemplate, isLoading } = useGetSpecificTemplate('AR'); 
+  const { data: reportTemplate, isLoading: isLoadingTemplate } = useGetSpecificTemplate('AR'); 
+  const { data: staffByTitle, isLoading: isLoadingStaffByTitle } = useGetStaffByTitle('all');
   const [pdfBlob, setPdfBlob] = React.useState<string>(''); 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const formattedStaffs = React.useMemo(() => formatStaffs(staffByTitle) ,[staffByTitle]);
+  const isLoading = React.useMemo(() => 
+    isLoadingTemplate || isLoadingStaffByTitle
+  , [isLoadingTemplate, isLoadingStaffByTitle])
+
+  const prepared_by = React.useMemo(() => 
+    reportTemplate?.rte_prepared_by || 'Not Added' ,[reportTemplate]);
+  const recommended_by = React.useMemo(() => 
+    reportTemplate?.rte_recommended_by || 'Not Added' ,[reportTemplate]);
+  const approved_by = React.useMemo(() => 
+    reportTemplate?.rte_approved_by || 'Not Added' ,[reportTemplate]);
 
   const handlePrintClick = async () => {
     // Generate PDF blob
@@ -39,9 +56,9 @@ export const ARDocTemplate = ({
         dateTime={dateTime}
         location={location}
         actionsTaken={act_taken}
-        preparedBy={"JUNO"}
-        recommendedBy={"JUNO"}
-        approvedBy={"JUNO"}
+        preparedBy={prepared_by}
+        recommendedBy={recommended_by}
+        approvedBy={approved_by}
         images={images}
       />
     ).toBlob();
@@ -98,6 +115,78 @@ export const ARDocTemplate = ({
     }
   }
 
+  const errorFeedback = () => {
+    toast("Failed to change signer. Please try again.", {
+      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      style: {
+        border: '1px solid rgb(225, 193, 193)',
+        padding: '16px',
+        color: '#b91c1c',
+        background: '#fef2f2',
+      },
+      action: {
+        label: <X size={14} className="bg-transparent"/>,
+        onClick: () => toast.dismiss(),
+      },
+    });
+  }
+
+  const getName = (value: string) => {
+    return value.split(" ").map((val, idx) => {
+      if(idx > 1) {
+        return val
+      }
+    }).filter(Boolean).join(", ");
+  }
+
+  const changePreparedBy = (value: string) => {
+    const name = getName(value);
+    if(name) {
+      updateTemplate({
+        data: {
+          rte_prepared_by: name.toUpperCase()
+        },
+        type: 'AR'
+      }, {
+        onError: ()  => {
+          errorFeedback();
+        }
+      })
+    }
+  } 
+
+  const changeRecommendedBy = (value: string) => {
+    const name = getName(value);
+    if(name) {
+      updateTemplate({
+        data: {
+          rte_recommended_by: name.toUpperCase()
+        },
+        type: 'AR'
+      }, {
+        onError: ()  => {
+          errorFeedback();
+        }
+      })
+    }
+  }
+
+  const changeApprovedBy = (value: string) => {
+    const name = getName(value);
+    if(name) {
+      updateTemplate({
+        data: {
+          rte_approved_by: name.toUpperCase()
+        },
+        type: 'AR'
+      }, {
+        onError: ()  => {
+          errorFeedback();
+        }
+      })
+    }
+  }
+
   const handleImageUpload = React.useCallback(async (files: any[]) => {
     if (files.length === 0) return;
 
@@ -119,11 +208,28 @@ export const ARDocTemplate = ({
     return null;
   }, []);
 
-
   if(isLoading) {
     return (
-      <div className="w-full h-[700px] flex justify-center items-center bg-white border">
-        <Loader2 size={30} className="animate-spin text-black/40" />
+      <div className="w-full flex flex-col gap-4">
+        <Card className="rounded-none">
+          <CardContent className="p-8">
+            <div className="flex flex-col items-center justify-center space-y-4 min-h-[400px]">
+              <Loader2 className="h-8 w-8 animate-spin text-buttonBlue" />
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-medium">Loading Document</h3>
+                <p className="text-sm text-muted-foreground">
+                  Please wait while we load the staff information and document details...
+                </p>
+              </div>
+              {/* Loading bars */}
+              <div className="w-full max-w-md space-y-2">
+                <div className="h-2 bg-gray-200 animate-pulse rounded-full"></div>
+                <div className="h-2 bg-gray-200 animate-pulse rounded-full w-3/4"></div>
+                <div className="h-2 bg-gray-200 animate-pulse rounded-full w-1/2"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -210,18 +316,48 @@ export const ARDocTemplate = ({
             <div className="w-[85%] flex justify-between mt-12">
               <div className="flex flex-col gap-2">
                 <Label className="mb-5">PREPARED BY:</Label>
-                <Label>Juno</Label>
-                <Label>TEAM LEADER</Label>
+                <div className="relative">
+                  <Combobox
+                    variant="modal"
+                    customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
+                    value=""
+                    onChange={(value) => changePreparedBy(value)}
+                    options={formattedStaffs}
+                    emptyMessage="No staff available"
+                  />
+                  <Label className="w-full text-center">{prepared_by}</Label>
+                </div>
+                <Label className="w-full text-center">TEAM LEADER</Label>
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="mb-5">RECOMMENDED BY:</Label>
-                <Label>Juno</Label>
-                <Label>BARANGAY CAPTAIN</Label>
+                <div className="relative">
+                  <Combobox
+                    variant="modal"
+                    customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
+                    value=""
+                    onChange={(value) => changeRecommendedBy(value)}
+                    options={formattedStaffs}
+                    emptyMessage="No staff available"
+                  />
+                  <Label className="w-full text-center">{recommended_by}</Label>
+                </div>
+                <Label className="w-full text-center">BARANGAY CAPTAIN</Label>
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="mb-5">APPROVED BY:</Label>
-                <Label>Juno</Label>
-                <Label>ASST. DEPARTMENT HEAD</Label>
+                <div className="relative">
+                  <Combobox
+                    variant="modal"
+                    customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
+                    value=""
+                    onChange={(value) => changeApprovedBy(value)}
+                    options={formattedStaffs}
+                    emptyMessage="No staff available"
+                  />
+                  <Label className="w-full text-center">{approved_by}</Label>
+                </div>
+                <Label className="w-full text-center">ASST. DEPARTMENT HEAD</Label>
               </div>
             </div>
           </div>

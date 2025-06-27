@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-import { Search, UserRoundCog, Plus, Download, Users, FileDown, Loader2 } from "lucide-react";
+import { Search, UserRoundCog, Plus, Download, Users, FileDown, Loader2, CircleAlert } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { useFeatures, useStaffs } from "./queries/administrationFetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
@@ -106,7 +106,7 @@ export default function AdministrationRecords() {
                 </DropdownMenu>
 
                 <Link 
-                  to="/administration/role"
+                  to="role"
                   state={{
                     params: {
                       features: features,
@@ -230,6 +230,12 @@ export default function AdministrationRecords() {
             </div>
           )}
         </Card>
+        <div className="flex items-center gap-2">
+        <CircleAlert size={18}/>
+        <p className="text-sm">
+          Staff with admin position cannot be modified.
+        </p>
+      </div>
       </div>
     </MainLayoutComponent>
   );

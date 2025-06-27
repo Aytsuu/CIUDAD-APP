@@ -11,15 +11,14 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 """
 
-
-
-
-
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import sys, os
-from decouple import config
+from corsheaders.defaults import default_headers
+import firebase_admin
+from firebase_admin import credentials
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,16 +28,36 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1'
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 # SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '*']
-ALLOWED_HOSTS = ['localhost', '*']
+# ALLOWED_HOSTS = ['localhost', '*']
+# ALLOWED_HOSTS = ['localhost', '*']
 
+SUPABASE_CONFIG = {
+    'URL': config('SUPABASE_URL'),
+    'ANON_KEY': config('SUPABASE_ANON_KEY'),
+    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
+    'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
+    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
+    'JWT_ALGORITHM': 'HS256',
+    'JWT_AUDIENCE': 'authenticated',
+}
+
+SUPABASE_JWT_SECRET = SUPABASE_CONFIG['JWT_SECRET']
 
 # Application definition
+
+# ========================
+# FIREBASE CONFIGURATION
+# ========================
+FIREBASE_CREDENTIAL_PATH = os.path.join(BASE_DIR, 'firebase', 'firebase-key.json')
+
+if not firebase_admin._apps and os.path.exists(FIREBASE_CREDENTIAL_PATH):
+    cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
+    firebase_admin.initialize_app(cred)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -47,9 +66,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
-    'rest_framework_simplejwt',
     'corsheaders',
+    
+    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
+
     'apps.healthProfiling',
     'apps.inventory',
     'apps.maternal',
@@ -61,8 +84,12 @@ INSTALLED_APPS = [
     # 'apps.profiling',
     'apps.familyplanning',
     'apps.animalbites',
+    # 'apps.account',
+    'apps.authentication',
     'apps.patientrecords',
-    # 'apps.gad'
+
+    'backend.firebase.notifications',
+    'detection',
 
 ]
 
@@ -76,6 +103,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.authentication.middleware.AccountMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'apps.authentication.backends.SupabaseAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -97,7 +130,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
+ASGI_APPLICATION = 'backend.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -113,7 +146,7 @@ DATABASES = {
 
     },
     'brgyDB': {
-
+        
     }
    
 }
@@ -162,27 +195,27 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ========================
+# REST FRAMEWORK
+# ========================
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.authentication.backends.SupabaseAuthBackend',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  
-    "http://localhost:3000",  
-    "http://127.0.0.1:8000",  
-    "http://localhost:8000",  
+    "http://localhost:3000",
+    "http://localhost:5173",
+    config('FRONTEND_URL', default='http://localhost:3000'),
 ]
-
-
 
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True
 
-# ---
-
-# Django REST Framework Settings
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ), 
-}
 
 # JWT Authentication Settings
 SIMPLE_JWT = {
@@ -193,7 +226,64 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'cache-control',
+    'pragma',
+]
+
+CORS_EXPOSE_HEADERS = ['Authorization']
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 CORS_ALLOW_HEADERS = ["*"]
+
+
+CORS_PREFLIGHT_MAX_AGE = 86400
+
+# ========================
+# SECURITY HEADERS
+# ========================
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+
+# ========================
+# LOGGING
+# ========================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
