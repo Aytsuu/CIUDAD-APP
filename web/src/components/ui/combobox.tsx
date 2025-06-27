@@ -16,20 +16,14 @@ export const Combobox = React.memo(
     contentClassName,
     triggerClassName,
     emptyMessage,
-    staticVal,
-    align,
-    size,
   }: {
     options: { id: string; name: React.ReactNode }[]
     value: string
-    onChange?: (value: string) => void
+    onChange: (value: string) => void
     placeholder: string
     contentClassName?: string
     triggerClassName?: string
     emptyMessage: React.ReactNode
-    staticVal?: boolean;
-    align?: "start" | "center" | "end"
-    size?: number
   }) => {
     const [open, setOpen] = React.useState(false)
     const triggerRef = React.useRef<HTMLButtonElement>(null)
@@ -40,7 +34,6 @@ export const Combobox = React.memo(
       const updateWidth = () => {
         if (triggerRef.current) {
           setWidth(triggerRef.current.getBoundingClientRect().width)
-          if (size) setWidth(size)
         }
       }
 
@@ -60,26 +53,17 @@ export const Combobox = React.memo(
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("h-15 justify-between text-black/80", triggerClassName)}
-          > 
-            {!staticVal ? (
-              <>
-                <div className="truncate text-left flex-1">
-                  {value ? options.find((option) => option.id === value)?.name : placeholder}
-                </div>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 flex-none" />
-              </>
-            ) : (
-              <div className="truncate text-left flex-1">
-                {value}
-              </div>
-            )}
-  
+            className={cn("w-full h-15 justify-between text-black/80", triggerClassName)}
+          >
+            <div className="truncate text-left flex-1">
+              {value ? options.find((option) => option.id === value)?.name : placeholder}
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 flex-none" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          align={align || "center"}
-          className={cn("p-0 w-full", contentClassName)}
+          align="start"
+          className={cn("p-0", contentClassName)}
           style={{
             width: width ? `${width}px` : "min(100vw - 16px, 30rem)",
             maxWidth: "calc(100vw - 16px)",
@@ -95,7 +79,7 @@ export const Combobox = React.memo(
                     key={option.id}
                     value={option.id}
                     onSelect={(currentValue) => {
-                      onChange && onChange(currentValue === value ? "" : currentValue)
+                      onChange(currentValue === value ? "" : currentValue)
                       setOpen(false)
                     }}
                     className="flex items-center"
@@ -123,4 +107,3 @@ export const Combobox = React.memo(
     )
   },
 )
-
