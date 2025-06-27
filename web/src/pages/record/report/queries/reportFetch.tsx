@@ -94,3 +94,22 @@ export const useGetSpecificTemplate = (type: string) => {
     }
   })
 }
+
+export const useGetARByDate = (year: number, month: number) => {
+  return useQuery({
+    queryKey: ['ARByDate', year, month],
+    queryFn: async () => {
+      try {
+        const res = await api.get('report/ar/list/by-date/', {
+          params: {
+            year: year,
+            month: month
+          }
+        });
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    }
+  })
+}

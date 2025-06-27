@@ -21,6 +21,16 @@ export const getMonthName = (dateString: string): string => {
   return date.toLocaleString('default', { month: 'long' });
 }
 
+// Get month in number based on a given month in text
+export const monthNameToNumber = (month: string) => {
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const idx = months.findIndex(m => m.toLowerCase() === month.toLowerCase());
+  return idx === -1 ? null : idx + 1;
+};
+
 // Get long date format and 12 hour time format 
 // Example: 2025-06-11 01:20:00 --> returns JUNE 11, 2025 (01:20 AM)
 export const getDateTimeFormat = (dateString: string) => {
@@ -35,58 +45,52 @@ export const getMonths = Array.from({ length: 12 }, (_, i) =>
   new Date(0, i).toLocaleString('default', { month: 'long' })
 );
 
-// Helper function to get all weeks in a month
-export const getAllWeeksInMonth = (monthName: string) => {
-  const currentYear = new Date().getFullYear();
-  const monthIndex = new Date(`${monthName} 1, ${currentYear}`).getMonth();
-  const weeks = [];
-  
+// Get all weeks in a month
+export const getAllWeeksInMonth = (monthName: string, year?: number) => {
+  const targetYear = year || new Date().getFullYear()
+  const monthIndex = new Date(`${monthName} 1, ${targetYear}`).getMonth()
+  const weeks = []
+
   // Get first day of month and last day of month
-  const firstDay = new Date(currentYear, monthIndex, 1);
-  const lastDay = new Date(currentYear, monthIndex + 1, 0);
-  
+  const firstDay = new Date(targetYear, monthIndex, 1)
+  const lastDay = new Date(targetYear, monthIndex + 1, 0)
+
   // Calculate weeks for the month
-  const firstWeek = getWeekNumber(firstDay.toISOString());
-  const lastWeek = getWeekNumber(lastDay.toISOString());
-  
+  const firstWeek = getWeekNumber(firstDay.toISOString())
+  const lastWeek = getWeekNumber(lastDay.toISOString())
+
   for (let week = firstWeek; week <= lastWeek; week++) {
-    weeks.push(week);
+    weeks.push(week)
   }
-  
-  return weeks;
-};
+
+  return weeks
+}
 
 // Helper function to check if a week has passed
-export const hasWeekPassed = (month: string, weekNo: number) => {
+export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
   const currentDate = new Date()
+  const targetYear = year || new Date().getFullYear()
   const currentYear = currentDate.getFullYear()
 
-  // Get the month index (0-11)
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ]
+  // If the target year is in the past, all weeks have passed
+  if (targetYear < currentYear) return true
+
+  // If the target year is in the future, no weeks have passed
+  if (targetYear > currentYear) return false
+
+  // For the current year, check if the specific week has passed
+  const monthNames = getMonths
   const monthIndex = monthNames.indexOf(month)
 
   if (monthIndex === -1) return false
 
   // Calculate the end date of the given week
-  const firstDayOfMonth = new Date(currentYear, monthIndex, 1)
+  const firstDayOfMonth = new Date(targetYear, monthIndex, 1)
   const firstDayOfWeek = firstDayOfMonth.getDay()
   const daysToFirstMonday = firstDayOfWeek === 0 ? 1 : 8 - firstDayOfWeek
 
   // Calculate the end of the specified week
-  const weekEndDate = new Date(currentYear, monthIndex, daysToFirstMonday + (weekNo - 1) * 7 + 6)
+  const weekEndDate = new Date(targetYear, monthIndex, daysToFirstMonday + (weekNo - 1) * 7 + 6)
 
   return weekEndDate < currentDate
 }

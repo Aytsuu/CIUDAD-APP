@@ -12,6 +12,7 @@ urlpatterns = [
   path('rt/create/', ReportTypeCreateView.as_view(), name="create-rt"),
   path('rt/list/<str:rt_category>/', ReportTypeListView.as_view(), name='rt-list'),
   path('ar/list/table/', ARTableView.as_view(), name='ar-list'),
+  path('ar/list/by-date/', ARByDateView.as_view(), name='ar-list-by-date'),
   path('ar/create/', ARCreateView.as_view(), name='create-ar'),
   path('ar/file/create/', ARFileCreateView.as_view(), name='ar-create'),
   path('war/create/', WARCreateView.as_view(), name='create-war'),

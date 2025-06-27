@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.db.models import Q
 from ..models import AcknowledgementReport
 from ..serializers.ar_serializers import *
@@ -74,3 +75,17 @@ class ARFileCreateView(generics.CreateAPIView):
           return Response(status=status.HTTP_201_CREATED)
       
       return Response(status=status.HTTP_201_CREATED)
+
+class ARByDateView(APIView):
+  def get(self, request, *args, **kwargs):
+    year = request.query_params.get('year')
+    month = request.query_params.get('month')
+    ar_reports = AcknowledgementReport.objects.filter(ar_status='Signed')
+
+    if year and month:
+        ar_reports = ar_reports.filter(
+            ar_created_at__year=year,
+            ar_created_at__month=month
+        ).distinct()
+
+    return Response(ARTableSerializer(ar_reports, many=True).data)

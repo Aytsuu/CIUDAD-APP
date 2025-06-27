@@ -6,6 +6,7 @@ import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
 import ReportLayout from '@/pages/record/report/ReportLayout';
 import { Navigate } from 'react-router';
 import ReportDocument from '@/pages/record/report/ReportDocument';
+import CreateMissingWeeks from '@/pages/record/report/weekly/CreateMissingWeeks';
 
 // Creating routes
 export const report_router = [
@@ -42,5 +43,9 @@ export const report_router = [
   {
     path: '/report/acknowledgement/document',
     element: <ReportDocument/>
+  },
+  {
+    path: '/report/weekly/missing-report/create',
+    element: <CreateMissingWeeks/>
   }
 ]
