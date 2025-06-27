@@ -33,7 +33,9 @@ export const MedicineStocksSchema = withPiecesValidation(z.object({
   pcs: positiveNumberSchema.optional(), // Truly optional now
   expiryDate: z.string().min(1, "Expiry date is required")
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
-}));
+})
+
+);
 
 export const CommodityStocksSchema = withPiecesValidation(z.object({
   com_id: z.string().min(1, "Commodity name is required"),
@@ -42,8 +44,8 @@ export const CommodityStocksSchema = withPiecesValidation(z.object({
   cinv_pcs: positiveNumberSchema.optional(),
   cinv_recevFrom: z.string().min(1, "Received from is required"),
   expiryDate: z.string().min(1, "Expiry date is required")
-    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
-}));
+    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")}
+));
 
 export const FirstAidStockSchema = withPiecesValidation(z.object({
   fa_id: z.string().min(1, "First aid item is required"),

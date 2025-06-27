@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -19,26 +19,29 @@ import { getMedconRecordById } from "../restful-api/GetMedicalRecord";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
-import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
+import {
+  UserRound,
+  Fingerprint,
+  Syringe,
+  MapPin,
+  AlertCircle,
+} from "lucide-react";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
+import { Label } from "@/components/ui/label";
 
-
-// Updated Medical Records Type
 export interface MedicalRecord {
   medrec_id: number;
   created_at: string;
-  
   vital_signs: {
     vital_id: number;
     vital_bp_systolic: string;
     vital_bp_diastolic: string;
     vital_temp: string;
     vital_RR: string;
-    vital_o2: string;
     vital_pulse: string;
     created_at: string;
   };
-
   bmi_details: {
     bm_id: number;
     age: string;
@@ -49,69 +52,83 @@ export interface MedicalRecord {
     created_at: string;
     pat: number | null;
   };
-
   find_details: any | null;
   patrec_details: {
-    pat_id: number;
+    pat_id: string | number;
     medicalrec_count: number;
+    patient_details?: any;
   };
 }
 
-// Updated React Component
+export interface Patient {
+  pat_id: string;
+  name: string;
+  pat_type: string;
+  [key: string]: any;
+}
+
 export default function InvMedicalConRecords() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData } = params || {};
-  
+
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  let currentAge = calculateAge(patientData.dob).toString();
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
+
+  useEffect(() => {
+    if (patientData) {
+      setSelectedPatientData(patientData);
+    }
+  }, [patientData]);
 
   const { data: medicalRecords, isLoading } = useQuery({
-    queryKey: ["patientMedicalDetails", patientData.pat_id],
-    queryFn: () => getMedconRecordById(patientData.pat_id),
+    queryKey: ["patientMedicalDetails", patientData?.pat_id],
+    queryFn: () => getMedconRecordById(patientData?.pat_id),
     refetchOnMount: true,
     staleTime: 0,
+    enabled: !!patientData?.pat_id,
   });
 
   const formatMedicalData = React.useCallback((): MedicalRecord[] => {
     if (!medicalRecords) return [];
 
     return medicalRecords.map((record: any) => {
+      const vitalSigns = record.vital_signs || {};
+      const bmiDetails = record.bmi_details || {};
+      const patrecDetails = record.patrec_details || {};
+
       return {
         medrec_id: record.medrec_id,
         created_at: record.created_at || "N/A",
-        
-        vital_signs: record.vital_signs || {
-          vital_id: 0,
-          vital_bp_systolic: "N/A",
-          vital_bp_diastolic: "N/A",
-          vital_temp: "N/A",
-          vital_RR: "N/A",
-          vital_o2: "N/A",
-          vital_pulse: "N/A",
-          created_at: "N/A"
+        vital_signs: {
+          vital_id: vitalSigns.vital_id || 0,
+          vital_bp_systolic: vitalSigns.vital_bp_systolic || "N/A",
+          vital_bp_diastolic: vitalSigns.vital_bp_diastolic || "N/A",
+          vital_temp: vitalSigns.vital_temp || "N/A",
+          vital_RR: vitalSigns.vital_RR || "N/A",
+          vital_pulse: vitalSigns.vital_pulse || "N/A",
+          created_at: vitalSigns.created_at || "N/A",
         },
-        
-        bmi_details: record.bmi_details || {
-          bm_id: 0,
-          age: "N/A",
-          height: 0,
-          weight: 0,
-          bmi: "N/A",
-          bmi_category: "N/A",
-          created_at: "N/A",
-          pat: null
+        bmi_details: {
+          bm_id: bmiDetails.bm_id || 0,
+          age: bmiDetails.age || "N/A",
+          height: bmiDetails.height || 0,
+          weight: bmiDetails.weight || 0,
+          bmi: bmiDetails.bmi || "N/A",
+          bmi_category: bmiDetails.bmi_category || "N/A",
+          created_at: bmiDetails.created_at || "N/A",
+          pat: bmiDetails.pat || null,
         },
-        
         find_details: record.find_details || null,
-        
-        patrec_details: record.patrec_details || {
-          pat_id: 0,
-          medicalrec_count: 0
-        }
+        patrec_details: {
+          pat_id: patrecDetails.pat_id || 0,
+          medicalrec_count: patrecDetails.medicalrec_count || 0,
+          patient_details: patrecDetails.patient_details || null,
+        },
       };
     });
   }, [medicalRecords]);
@@ -133,13 +150,6 @@ export default function InvMedicalConRecords() {
   );
 
   const columns: ColumnDef<MedicalRecord>[] = [
-    {
-      accessorKey: "medrec_id",
-      header: "Record ID",
-      cell: ({ row }) => (
-        <div className="font-medium">#{row.original.medrec_id}</div>
-      ),
-    },
     {
       accessorKey: "vital_signs",
       header: "Vital Signs",
@@ -164,8 +174,8 @@ export default function InvMedicalConRecords() {
                   <span>{vital.vital_pulse} bpm</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="font-medium mr-1">O2:</span>
-                  <span>{vital.vital_o2}%</span>
+                  <span className="font-medium mr-1">RR:</span>
+                  <span>{vital.vital_RR} cpm</span>
                 </div>
               </div>
             </div>
@@ -175,15 +185,13 @@ export default function InvMedicalConRecords() {
     },
     {
       accessorKey: "bmi_details",
-      header: "BMI Details",
+      header: "Height and Weight",
       cell: ({ row }) => {
         const bmi = row.original.bmi_details;
         return (
           <div className="flex flex-col">
-            <div className="font-medium">BMI: {bmi.bmi}</div>
-            <div className="text-sm">Category: {bmi.bmi_category}</div>
             <div className="text-sm">
-              Height: {bmi.height} ft | Weight: {bmi.weight} kg
+              Height: {bmi.height} cm | Weight: {bmi.weight} kg
             </div>
           </div>
         );
@@ -211,8 +219,8 @@ export default function InvMedicalConRecords() {
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
           <Link
-            to="/viewMedConRecord"
-            state={{ params: { MedicalRecord: row.original, patientData } }}
+            to="/DisplayMedicalConsultation"
+            state={{ params: { MedicalConsultation: row.original, patientData } }}
           >
             <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
               View
@@ -222,6 +230,22 @@ export default function InvMedicalConRecords() {
       ),
     },
   ];
+
+  if (!patientData?.pat_id) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <AlertCircle className="h-4 w-4 text-yellow-500" />
+          <Label className="text-base font-semibold text-yellow-500">
+            No patient selected
+          </Label>
+        </div>
+        <p className="text-sm text-gray-700">
+          Please select a patient from the medical records page first.
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -257,45 +281,23 @@ export default function InvMedicalConRecords() {
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center gap-2">
-            <UserRound className="h-5 w-5" />
-            Patient Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <UserRound className="h-4 w-4" />
-                Full Name
-              </p>
-              <p className="font-medium">{`${patientData.lname}, ${
-                patientData.fname
-              } ${patientData.mname || ""}`}</p>
-            </div>
+        {selectedPatientData && (
+          <div className="mb-4">
+            <PatientInfoCard patient={selectedPatientData} />
+          </div>
+        )}
 
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <UserRound className="h-4 w-4" />
-                BirthDate and Age
-              </p>
-              <p className="font-medium">{`${patientData.dob}, 
-              `} {currentAge} </p>
+        <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 border rounded-md flex items-center justify-center shadow-sm">
+              <Syringe className="h-5 w-5 text-blue-600" />
             </div>
-           
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                Address
+            <div>
+              <p className="text-sm font-medium text-gray-800">
+                Total Medical Consultations
               </p>
-              <p className="font-medium">{patientData.address}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <Syringe className="h-4 w-4" />
-                Total Consultations
-              </p>
-              <p className="font-medium">
-                {formatMedicalData().length} records
+              <p className="text-3xl font-bold text-gray-900">
+                {formatMedicalData().length}
               </p>
             </div>
           </div>
@@ -321,7 +323,7 @@ export default function InvMedicalConRecords() {
 
           <div>
             <Button className="w-full sm:w-auto">
-              <Link to="/medicalConsultationForm" state={{ params: { patientData } }}>
+              <Link to="/IndivMedicalForm" state={{ params: { patientData } }}>
                 New Consultation Record
               </Link>
             </Button>

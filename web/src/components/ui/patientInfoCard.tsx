@@ -4,7 +4,7 @@ import { calculateAge } from "@/helpers/ageCalculator"
 
 // Define Patient interface for type safety
 interface Patient {
-  pat_id: number
+  pat_id: string
   pat_type: string
   personal_info?: {
     per_fname?: string
@@ -91,7 +91,7 @@ export const PatientInfoCard = ({ patient }: PatientInfoCardProps) => {
   const GenderIcon = getGenderIcon(patient.personal_info?.per_sex)
 
   return (
-    <div className="p-6 bg-white rounded-sm shadow-md border border-gray-200">
+    <div className="p-6 bg-white rounded-sm  border border-gray-200">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-12 bg-slate-400 rounded-xl flex items-center justify-center text-white text-lg font-bold">

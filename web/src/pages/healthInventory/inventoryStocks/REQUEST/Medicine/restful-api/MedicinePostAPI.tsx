@@ -17,7 +17,7 @@ export const addMedicineInventory = async (data: Record<string, any>, inv_id: st
       minv_qty: qty,
       minv_qty_unit: data.unit,
       minv_pcs: pcs,
-      minv_distributed: 0, 
+      // minv_distributed: 0, 
       minv_qty_avail: minv_qty_avail,
       med_id:data.medicineID,
       inv_id,

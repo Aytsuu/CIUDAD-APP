@@ -1,6 +1,7 @@
 from django.db import models, transaction
 from django.db.models import Max
 from django.utils import timezone
+from decimal import Decimal
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
 
@@ -142,7 +143,8 @@ class VitalSigns(models.Model):
     vital_o2 = models.CharField(max_length=100,default="N/A")
     vital_pulse = models.CharField(max_length=100,default="N/A")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vital_signs',null=True)
+
     class Meta:
         db_table = 'vital_signs'
 
@@ -189,27 +191,37 @@ class Spouse(models.Model):
     # updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         db_table = 'spouse'
-        
+    
+    
 class BodyMeasurement(models.Model):
     bm_id = models.BigAutoField(primary_key=True)  
     age = models.CharField(max_length=100 ,default="")
-    height = models.IntegerField()
-    weight = models.IntegerField()
-    bmi = models.DecimalField(max_digits=5, decimal_places=2)
-    bmi_category = models.CharField(max_length=100)
+    height = models.DecimalField(max_digits=5, decimal_places=2,default=Decimal('0.00'))
+    weight = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
+    bmi = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
+    # bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
-    
-    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', null=True)
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
     
     class Meta:
         db_table = 'body_measurement'
            
 
+class NutritionalStatus(models.Model): 
+    nutstat_id = models.BigAutoField(primary_key=True)
+    nutstat_WFA = models.CharField(max_length=100, default="")
+    nutstat_HFA = models.CharField(max_length=100, default="")
+    nutstat_WFH = models.CharField(max_length=100, default="")
+    bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='nutritional_status', null=True, blank=True)
+    class Meta:
+        db_table = 'nutritional_status'
+    
+       
 class Illness(models.Model):
     ill_id = models.BigAutoField(primary_key=True)
-    illname = models.CharField(max_length=100,default="")
-    ill_description = models.CharField(max_length=200, default="N/A")
-    ill_code = models.CharField(max_length=100,default="N/A")
+    illname = models.CharField(max_length=100,default="",null=True,blank=True)
+    ill_description = models.CharField(max_length=200, default="",null=True,blank=True)
+    ill_code = models.CharField(max_length=100,default="",null=True,blank=True)
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'illness'
@@ -224,25 +236,7 @@ class Finding(models.Model):
     class Meta:
         db_table = 'finding'
 
-class PhysicalExamList(models.Model):
-    pel_id = models.BigAutoField(primary_key=True)
-    pel_system = models.CharField(max_length=100,default="")
-    pel_finding = models.TextField(default="")
-    is_other = models.BooleanField(default=False)
-    created_at= models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'physical_exam_list'   
-        
-class PhysicalExamination(models.Model):    
-    pe_id = models.BigAutoField(primary_key=True)
-    
-    find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='physical_examinations', null=True)
-    pel = models.ForeignKey(PhysicalExamList, on_delete=models.CASCADE, related_name='physical_examinations',null=True)
 
-    class Meta:
-        db_table = 'physical_examination'
-    
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='diagnosis', null=True)
@@ -250,3 +244,56 @@ class Diagnosis(models.Model):
     class Meta:
         db_table = 'diagnosis'
         
+        
+     
+     
+# Section of the physical exam (e.g., "Skin/Extremities", "HEENT")
+class PESection(models.Model):
+    pe_section_id = models.BigAutoField(primary_key=True)
+    title = models.CharField(max_length=255)  # Display name
+
+    class Meta:
+        db_table = 'physical_exam_section'
+
+
+# Option under a section (e.g., "Normal skin color and texture")
+class PEOption(models.Model):
+    pe_option_id = models.BigAutoField(primary_key=True)
+    pe_section = models.ForeignKey(PESection, on_delete=models.CASCADE, related_name='options')
+    text = models.TextField()
+    class Meta:
+        db_table = 'physical_exam_option'
+
+
+class PEResult(models.Model):
+    peres_id= models.BigAutoField(primary_key=True)
+    find = models.ForeignKey(Finding, on_delete=models.CASCADE,related_name="pe_result", null=True)
+    pe_option =models.ForeignKey(PEOption,on_delete=models.CASCADE, related_name="pe_result")
+    
+    class Meta:
+        db_table ='physical_exam_result'
+   
+class Appointment(models.Model):
+    app_id = models.CharField(max_length=15, primary_key=True)
+    app_date = models.DateField()
+    app_time = models.TimeField()
+    app_status = models.CharField(max_length=100, default="Pending")
+    app_reason = models.TextField(default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    res_id = models.ForeignKey(
+        ResidentProfile,
+        on_delete=models.CASCADE,
+        related_name='appointments',
+        null=True,
+        blank=True,
+        db_column='res_id'
+    )
+    pat_id = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name='appointments',
+        null=True,
+        blank=True,
+        db_column='pat_id'
+    )

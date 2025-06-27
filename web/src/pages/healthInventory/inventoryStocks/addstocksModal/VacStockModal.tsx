@@ -12,19 +12,14 @@ import { useEffect, useState } from "react";
 import { getVaccine } from "../REQUEST/Antigen/restful-api/VaccineGetAPI";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Link, useNavigate } from "react-router";
-import { Pill, CircleCheck,Loader2 } from "lucide-react";
+import { Pill, CircleCheck, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQueries";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/VaccineFetchAPI";
 
-
 export default function AddVaccineStock() {
-  const [vaccineOptions, setVaccineOptions] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
     defaultValues: {
@@ -37,7 +32,19 @@ export default function AddVaccineStock() {
     },
   });
 
+  const [vaccineOptions, setVaccineOptions] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
   const { mutate: submit, isPending } = useSubmitVaccineStock();
+  const navigate = useNavigate();
+  const solvent = form.watch("solvent");
+  const vialBoxCount = form.watch("qty") || 0;
+  const dosesPcsCount = form.watch("volume") || 0;
+  const totalDoses = solvent === "doses" ? vialBoxCount * dosesPcsCount : null;
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const batchNumbers = useBatchNumbers();
+  const [formData, setFormData] = useState<VaccineStockType | null>(null);
 
   useEffect(() => {
     const fetchVaccines = async () => {
@@ -53,44 +60,33 @@ export default function AddVaccineStock() {
     fetchVaccines();
   }, []);
 
-  const solvent = form.watch("solvent");
-  const vialBoxCount = form.watch("qty") || 0;
-  const dosesPcsCount = form.watch("volume") || 0;
-  const totalDoses = solvent === "doses" ? vialBoxCount * dosesPcsCount : null;
-  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const batchNumbers = useBatchNumbers();
+  const isDuplicateBatchNumber = (
+    stocks: { batchNumber: string }[],
+    newBatchNumber: string
+  ) => {
+    return stocks.some(
+      (stock) =>
+        stock.batchNumber.trim().toLowerCase() ===
+        newBatchNumber.trim().toLowerCase()
+    );
+  };
 
+  const onSubmit = (data: VaccineStockType) => {
+    setFormData(data);
+    if (isDuplicateBatchNumber(batchNumbers, data.batchNumber)) {
+      form.setError("batchNumber", {
+        type: "manual",
+        message: "Batch number already exists for this immunization supply",
+      });
+      return;
+    }
+    setIsAddConfirmationOpen(true);
+  };
 
-
-    const [formData, setFormData] = useState<VaccineStockType | null>(null);
-  
-
-    const isDuplicateBatchNumber = (stocks: { batchNumber: string }[],newBatchNumber: string ) => {
-      return stocks.some(
-        (stock) =>
-          stock.batchNumber.trim().toLowerCase() === newBatchNumber.trim().toLowerCase()
-      );
-    };
-    
-
-    const onSubmit = (data: VaccineStockType) => {
-        setFormData(data);
-        if (isDuplicateBatchNumber(batchNumbers, data.batchNumber)) {
-          form.setError("batchNumber", {
-            type: "manual",
-            message: "Batch number already exists for this immunization supply",
-          });
-          return;
-        }
-        setIsAddConfirmationOpen(true);
-      };
-
-
-  const confirmAdd =async () => {
+  const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit(formData)
-     
+    submit(formData);
   };
 
   return (
@@ -144,7 +140,11 @@ export default function AddVaccineStock() {
               <FormInput
                 control={form.control}
                 name="qty"
-                label={solvent === "doses" ? "Number of Vials" : "Number of Containers"}
+                label={
+                  solvent === "doses"
+                    ? "Number of Vials"
+                    : "Number of Containers"
+                }
                 type="number"
               />
               {solvent === "diluent" ? (
@@ -177,31 +177,23 @@ export default function AddVaccineStock() {
           </div>
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
-             Cancel
+            <Button variant="outline" className="w-full" onClick={() => navigate(-1)} >
+              Cancel
             </Button>
             <Button type="submit" className="w-full" disabled={isPending}>
-
-            {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}            </Button>
+              {isPending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving... </> ) : ( "Save")}
+            </Button>
           </div>
         </form>
       </Form>
 
-
       <ConfirmationDialog
-              isOpen={isAddConfirmationOpen}
-              onOpenChange={setIsAddConfirmationOpen}
-              onConfirm={confirmAdd}
-              title="Add Vaccine Stock"
-              description={`Are you sure you want to add new Stock for Vaccine?`}
-            />
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Vaccine Stock"
+        description={`Are you sure you want to add new Stock for Vaccine?`}
+      />
     </div>
   );
 }

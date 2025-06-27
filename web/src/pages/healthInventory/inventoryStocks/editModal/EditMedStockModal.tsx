@@ -28,11 +28,11 @@ export default function EditMedicineStock() {
   const location = useLocation();
   const initialData = location.state?.params
     ?.initialData as MedicineStocksRecord;
-  
+
   const form = useForm<addMedicineStocksType>({
     resolver: zodResolver(AddMedicineStocksSchema),
     defaultValues: {
-      minv_qty:  0, // Fixed: Use 0 instead of undefined
+      minv_qty: 0, // Fixed: Use 0 instead of undefined
       minv_qty_unit: initialData?.minv_qty_unit || "", // Added fallback
       minv_pcs: initialData?.qty?.pcs || 0,
     },
@@ -47,26 +47,14 @@ export default function EditMedicineStock() {
   const pcs = form.watch("minv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
-  const confirmAdd = async () => { // Added async
+  const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-
-    try {
-      await submit({ initialData: { id: initialData.id }, data: formData }); // Added await
-      navigate("/mainInventoryStocks");
-      toast.success("Medicine stock updated successfully!", {
-        icon: <CircleCheck size={20} className="text-green-500" />,
-        duration: 2000,
-      });
-    } catch (error: any) {
-      console.error("Error updating medicine stock:", error);
-      toast.error(error.message || "Failed to update medicine stock", {
-        duration: 5000,
-      });
-    }
+    await submit({ initialData: { id: initialData.id }, data: formData }); // Added await
   };
 
-  const onSubmit = (data: addMedicineStocksType) => { // Fixed: Accept form data
+  const onSubmit = (data: addMedicineStocksType) => {
+    // Fixed: Accept form data
     setFormData(data);
     setIsAddConfirmationOpen(true);
   };
@@ -86,9 +74,11 @@ export default function EditMedicineStock() {
             <FormInput
               control={form.control}
               name="minv_qty"
-              label={currentUnit === "boxes" ? "Enter Number of Boxes" : "Quantity"}
+              label={
+                currentUnit === "boxes" ? "Enter Number of Boxes" : "Quantity"
+              }
               type="number"
-              placeholder="Quantity" 
+              placeholder="Quantity"
             />
 
             <FormInput
@@ -124,15 +114,15 @@ export default function EditMedicineStock() {
             </div>
           )}
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full ">
-              <Link to="/mainInventoryStocks">Cancel</Link>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate(-1)}
+            >
+              Cancel
             </Button>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isPending}
-            >
+            <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

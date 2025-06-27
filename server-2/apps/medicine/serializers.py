@@ -5,6 +5,7 @@ from apps.inventory.serializers import *
 from apps.patientrecords.models import *
 from apps.patientrecords.serializers import *
 from apps.patientrecords.serializers import *
+from apps.healthProfiling.models import *
 # serializers.py
 
 
@@ -20,7 +21,7 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
 
     def get_medicine_count(self, obj):
         count = MedicineRecord.objects.filter(
-            patrec_id__pat_id=obj.pat_id, status__iexact='RECORDED'
+            patrec_id__pat_id=obj.pat_id
         ).count()
         print(f"medicine count for patient {obj.pat_id} with status RECORDED: {count}")
         return count
@@ -32,3 +33,83 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
         model = MedicineRecord
         fields = '__all__'
 
+class MedicineRequestSerializer(serializers.ModelSerializer):
+    address = serializers.SerializerMethodField()
+    personal_info = serializers.SerializerMethodField()
+    total_quantity = serializers.SerializerMethodField()  # Add this field
+
+    def get_total_quantity(self, obj):
+        """Calculate total quantity of all items in this request"""
+        return obj.items.aggregate(
+            total=models.Sum('medreqitem_qty')
+        )['total'] or 0
+        
+    def get_rp(self, obj):
+        # Try to get ResidentProfile through pat_id if it exists
+        try:
+            if obj.pat_id and hasattr(obj.pat_id, 'rp_id'):
+                return obj.pat_id.rp_id
+        except Exception as e:
+            print("⚠️ pat_id not available:", e)
+
+        # Fallback if rp_id is directly available
+        return getattr(obj, 'rp_id', None)
+
+    def get_personal_info(self, obj):
+        rp = self.get_rp(obj)
+        if rp and hasattr(rp, 'per'):
+            return PersonalSerializer(rp.per, context=self.context).data
+        return None
+
+    def get_address(self, obj):
+        rp = self.get_rp(obj)
+        if not rp or not hasattr(rp, 'per'):
+            print("❌ No ResidentProfile or personal info.")
+            return None
+
+        # Check PersonalAddress
+        personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=rp.per).first()
+        if personal_address and personal_address.add:
+            address = personal_address.add
+            sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+            return {
+                'add_street': address.add_street,
+                'add_barangay': address.add_barangay,
+                'add_city': address.add_city,
+                'add_province': address.add_province,
+                'sitio': sitio,
+                'full_address': f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
+            }
+
+        # Fallback to Household address
+        household = Household.objects.select_related('add', 'add__sitio').filter(rp=rp).first()
+        if household and household.add:
+            address = household.add
+            sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+            return {
+                'add_street': address.add_street,
+                'add_barangay': address.add_barangay,
+                'add_city': address.add_city,
+                'add_province': address.add_province,
+                'sitio': sitio,
+                'full_address': f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
+            }
+
+        print("❌ No address found (Personal or Household).")
+        return None
+    
+    
+
+    class Meta:
+        model = MedicineRequest
+        fields = '__all__'
+
+
+class MedicineRequestItemSerializer(serializers.ModelSerializer):
+    minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
+    medreq_details = MedicineRequestSerializer(source='medreq_id', read_only=True)
+    
+    class Meta:
+        model = MedicineRequestItem
+        fields = '__all__'
+    

@@ -6,6 +6,9 @@ import {
 } from "../restful-api/CommodityPutAPI";
 import { CommodityStocksRecord } from "../../../tables/type";
 import { useAddCommodityTransaction } from "./CommodityPostQueries";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
 
 export const useFetchCommodityStock = () => {
   return useMutation({
@@ -44,12 +47,14 @@ export const useUpdateInventoryTimestamp = () => {
 
 export const useUpdateCommodityStock = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate()
   const { mutateAsync: fetchStock } = useFetchCommodityStock();
   const { mutateAsync: updateQuantity } = useUpdateCommodityStockQuantity();
   const { mutateAsync: updateTimestamp } = useUpdateInventoryTimestamp();
   const { mutateAsync: addTransaction } = useAddCommodityTransaction();
 
   return useMutation({
+    
     mutationFn: async ({
       formData,
       initialData,
@@ -110,16 +115,24 @@ export const useUpdateCommodityStock = () => {
         cinv_id: initialData.cinv_id,
         action: "Added",
       });
-
-      return { success: true };
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["commodityinventorylist"],
       });
+      return;
     },
-    onError: (error: Error) => {
-      console.error(error.message);
+    onSuccess: () => {
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };

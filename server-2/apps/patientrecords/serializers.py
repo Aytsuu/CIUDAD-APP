@@ -472,22 +472,35 @@ class BodyMeasurementSerializer(serializers.ModelSerializer):
 class IllnessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Illness
+        fields= '__all__'
 class FindingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Finding
         fields = '__all__'
         
-class PhysicalExaminationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PhysicalExamination
-        fields = '__all__'
 
-class PhysicalExamListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PhysicalExamList
-        fields = '__all__'
-        
+
 class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:
         model = Diagnosis
+        fields = '__all__'
+        
+class PESectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PESection
+        fields = '__all__'
+        
+class PEOptionSerializer(serializers.ModelSerializer):
+    pe_section_details = PESectionSerializer(source="pe_section", read_only=True)
+    
+    class Meta:
+        model=PEOption
+        fields='__all__'
+        
+class PEResultSerializer(serializers.ModelSerializer):
+    pe_option_details = PEOptionSerializer(source="pe_option",read_only=True)
+    find_details = FindingSerializer(source="find", read_only = True)
+    
+    class Meta:
+        model = PEResult
         fields = '__all__'

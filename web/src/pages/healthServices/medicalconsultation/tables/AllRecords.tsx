@@ -17,12 +17,13 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMedicalRecord } from "../restful-api/GetMedicalRecord"; // import { archiveMedicalRecord} from "../REQUEST/archive"; // You'll need to create this
+import { getMedicalRecord } from "../restful-api/GetMedicalRecord";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
+import { calculateAge } from "@/helpers/ageCalculator";
+
 export interface MedicalRecord {
   pat_id: number;
   fname: string;
@@ -43,17 +44,17 @@ export interface MedicalRecord {
 }
 
 export default function AllMedicalConsRecord() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
   const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [value, setValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const queryClient = useQueryClient();
 
-  // Fetch vaccination records from API
+  // Fetch medical records from API
   const { data: MedicalRecord, isLoading } = useQuery<[MedicalRecord]>({
     queryKey: ["MedicalRecord"],
     queryFn: getMedicalRecord,
@@ -65,12 +66,13 @@ export default function AllMedicalConsRecord() {
     console.log(MedicalRecord);
   }, []);
 
-  const formatVaccinationData = React.useCallback((): MedicalRecord[] => {
+  const formatMedicalData = React.useCallback((): MedicalRecord[] => {
     if (!MedicalRecord) return [];
 
     return MedicalRecord.map((record: any) => {
       const details = record.patient_details || {};
       const info = details.personal_info || {};
+      const address = details.address || {};
 
       return {
         pat_id: record.pat_id,
@@ -80,29 +82,34 @@ export default function AllMedicalConsRecord() {
         sex: info.per_sex,
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob,
-        householdno: "12", // optional if not present
-        street: info.per_address,
-        sitio: "Keneme", // optional if not present
-        barangay: "KornDog", // optional if not present
-        city: "dsds", // optional if not present
-        province: "sdsds", // optional if not present
+        householdno: details.households?.[0]?.hh_id || "",
+        street: address.add_street || info.per_address || "",
+        sitio: address.add_external_sitio || "",
+        barangay: address.add_barangay || "",
+        city: address.add_city || "",
+        province: address.add_province || "",
         pat_type: details.pat_type,
-        address: `${info.per_address ?? ""}`,
+        address: `${address.add_street || info.per_address || ""}, ${address.add_barangay || ""}, ${address.add_city || ""}, ${address.add_province || ""}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
         medicalrec_count: record.medicalrec_count,
       };
     });
   }, [MedicalRecord]);
 
-  // Filter data based on search query
+  // Filter data based on search query and patient type
   const filteredData = React.useMemo(() => {
-    return formatVaccinationData().filter((record: MedicalRecord) => {
+    return formatMedicalData().filter((record: MedicalRecord) => {
       const searchText = `${record.pat_id} 
         ${record.lname} 
         ${record.fname} 
         ${record.sitio}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
+      
+      const typeMatches =
+        patientTypeFilter === "all" ||
+        record.pat_type.toLowerCase() === patientTypeFilter.toLowerCase();
+
+      return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
     });
-  }, [searchQuery, formatVaccinationData]);
+  }, [searchQuery, formatMedicalData, patientTypeFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -116,7 +123,7 @@ export default function AllMedicalConsRecord() {
     if (recordToArchive !== null) {
       try {
         // Add your archive logic here, e.g., API call to archive the record
-        // await archiveMedicalRecordrecordToArchive);
+        // await archiveMedicalRecord(recordToArchive);
 
         toast.success("Record archived successfully!");
         queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
@@ -208,16 +215,38 @@ export default function AllMedicalConsRecord() {
           <TooltipLayout
             content="View"
             trigger={
-              <Link
-                to="/invMedicalRecord"
-                state={{
-                  params: {
-                    patientData: row.original,
-                  },
-                }}
-              >
-                <Eye size={15} />
-              </Link>
+              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                <Link
+                  to="/invMedicalRecord"
+                  state={{
+                    params: {
+                      patientData: {
+                        pat_id: row.original.pat_id,
+                        pat_type: row.original.pat_type,
+                        age: row.original.age,
+                        addressFull: row.original.address,
+                        address: {
+                          add_street: row.original.street,
+                          add_barangay: row.original.barangay,
+                          add_city: row.original.city,
+                          add_province: row.original.province,
+                          add_external_sitio: row.original.sitio,
+                        },
+                        households: [{ hh_id: row.original.householdno }],
+                        personal_info: {
+                          per_fname: row.original.fname,
+                          per_mname: row.original.mname,
+                          per_lname: row.original.lname,
+                          per_dob: row.original.dob,
+                          per_sex: row.original.sex,
+                        },
+                      },
+                    },
+                  }}
+                >
+                  <Eye size={15} />
+                </Link>
+              </div>
             }
           />
         </div>
@@ -251,40 +280,37 @@ export default function AllMedicalConsRecord() {
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          {/* Search Input and Filter Dropdown */}
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="flex gap-x-2">
-              <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                  size={17}
-                />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 w-72 bg-white"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <SelectLayout
-                placeholder="Filter records"
-                label=""
-                className="bg-white"
-                options={[
-                  { id: "1", name: "All Types" },
-                  { id: "2", name: "Recent" },
-                  { id: "3", name: "Archived" },
-                ]}
-                value=""
-                onChange={() => {}}
+        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
+          <div className="w-full flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search..."
+                className="pl-10 bg-white w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <SelectLayout
+              placeholder="Filter records"
+              label=""
+              className="bg-white w-full sm:w-48"
+              options={[
+                { id: "all", name: "All Types" },
+                { id: "resident", name: "Resident" },
+                { id: "transient", name: "Transient" },
+              ]}
+              value={patientTypeFilter}
+              onChange={(value) => setPatientTypeFilter(value)}
+            />
           </div>
 
-          <div>
+          <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Link to={`/nonPHmedicalForm`}>New Record</Link>
+              <Link to={`/AllMedicalForm`}>New Record</Link>
             </Button>
           </div>
         </div>
@@ -348,7 +374,7 @@ export default function AllMedicalConsRecord() {
         isOpen={isArchiveConfirmationOpen}
         onOpenChange={setIsArchiveConfirmationOpen}
         onConfirm={confirmArchiveRecord}
-        title="Archive Vaccination Record"
+        title="Archive Medical Record"
         description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
       />
     </>

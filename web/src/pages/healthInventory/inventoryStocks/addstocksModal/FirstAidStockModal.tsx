@@ -62,21 +62,7 @@ export default function () {
   const confirmAdd = () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit(formData, {
-      onSuccess: () => {
-        navigate("/mainInventoryStocks");
-        toast.success("First aid item added successfully", {
-          icon: (
-            <CircleCheck size={24} className="fill-green-500 stroke-white" />
-          ),
-          duration: 2000,
-        });
-      },
-      onError: (error: Error) => {
-        console.error("Error adding first aid item:", error);
-        toast.error("Failed to add first aid item");
-      },
-    });
+    submit(formData);
   };
 
   return (

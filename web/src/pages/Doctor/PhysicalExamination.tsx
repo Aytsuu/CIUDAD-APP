@@ -268,7 +268,7 @@ export default function PEForm({ form }: PEFormProps) {
         {showMoreButton && (
           <div className="flex justify-center ">
             <Button
-              type="button"
+               type="button"
               variant="outline"
               className="w-full max-w-md flex items-center justify-center gap-2 bg-green-700 text-white hover:bg-green-100 hover:text-green-800"
               onClick={() => setShowAllTypes(!showAllTypes)}

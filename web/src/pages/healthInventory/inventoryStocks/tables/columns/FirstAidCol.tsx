@@ -7,7 +7,7 @@ import EditFirstAidStockForm from "../../editModal/EditFirstAidStockModal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Link } from "react-router";
 import { FirstAidStocksRecord } from "../type";
-import { isNearExpiry, isExpired, isLowStock } from "./Alert";
+import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";
 
 export const getColumns = (
   handleArchiveInventory: (inv_id: string) => void

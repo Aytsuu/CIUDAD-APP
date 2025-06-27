@@ -81,7 +81,7 @@ export const useSubmitVaccineStock = () => {
       );
       queryClient.invalidateQueries({ queryKey: ["combinedStocks"] }); // Adjust key if needed
 
-      return { success: true };
+      return;
     },
     onSuccess: () => {
       navigate(-1);

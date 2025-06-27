@@ -503,43 +503,7 @@ class DeleteUpdateFindingView(generics.RetrieveUpdateDestroyAPIView):
         except NotFound:
             return Response({"error": "Finding record not found."}, status=status.HTTP_404_NOT_FOUND)
 
-class PhysicalExaminationView(generics.ListCreateAPIView):
-    serializer_class = PhysicalExaminationSerializer
-    queryset = PhysicalExamination.objects.all()
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
 
-class DeleteUpdatePhysicalExaminationView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = PhysicalExaminationSerializer
-    queryset = PhysicalExamination.objects.all()
-    lookup_field = 'pe_id'
-    
-    def get_object(self):
-        try:
-            return super().get_object()
-        except NotFound:
-            return Response({"error": "Physical examination record not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-class PhysicalExamListView(generics.ListCreateAPIView):
-    serializer_class = PhysicalExamListSerializer
-    queryset = PhysicalExamList.objects.all()
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
-class DeleteUpdatePhysicalExamListView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = PhysicalExamListSerializer
-    queryset = PhysicalExamList.objects.all()
-    lookup_field = 'pel_id'
-    
-    def get_object(self):
-        try:
-            return super().get_object()
-        except NotFound:
-            return Response({"error": "Physical examination list record not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        
 class DiagnosisView(generics.ListCreateAPIView):
     serializer_class = DiagnosisSerializer
     queryset = Diagnosis.objects.all()
@@ -561,9 +525,7 @@ class  DeleteUpdateDiagnosisView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class GetCompletedFollowUpVisits(APIView):
-    """
-    API endpoint to get all completed follow-up visits for a specific patient
-    """
+  
     def get(self, request, pat_id):
         try:
             # Get completed visits using the utility function
@@ -594,9 +556,7 @@ class GetCompletedFollowUpVisits(APIView):
 
 
 class GetPendingFollowUpVisits(APIView):
-    """
-    API endpoint to get all completed follow-up visits for a specific patient
-    """
+   
     def get(self, request, pat_id):
         try:
             # Get completed visits using the utility function
@@ -622,5 +582,67 @@ class GetPendingFollowUpVisits(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-  
-  
+class GetPreviousHeightWeightAPIView(APIView):
+    def get(self, request, pat_id):
+        result = get_previous_height_weight(pat_id)
+
+        if result:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"detail": "No previous height/weight found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+            
+class PESectionView(generics.ListCreateAPIView):
+    serializer_class = PESectionSerializer
+    queryset = PESection.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+         
+class PEOptionView(generics.ListCreateAPIView):
+    serializer_class = PEOptionSerializer
+    queryset = PEOption.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+         
+
+class PEOptionUpdateView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PEOptionSerializer
+    queryset = PEOption.objects.all()
+    lookup_field = 'pe_option_id'
+
+    def get_object(self):
+        try:
+            return super().get_object()
+        except NotFound:
+            return Response({"error": "PE Option record not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+class PEResultCreateView(generics.ListCreateAPIView):
+    queryset = PEResult.objects.all()
+    serializer_class = PEResultSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Handle array of option IDs
+        option_ids = request.data.get('pe_option', [])
+        
+        # Create results for each option
+        results = []
+        for option_id in option_ids:
+            data = {
+                'pe_option': option_id,
+                'find': request.data.get('find', 1)
+            }
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            results.append(serializer.data)
+            
+        headers = self.get_success_headers(results)
+        return Response(results, status=status.HTTP_201_CREATED, headers=headers)

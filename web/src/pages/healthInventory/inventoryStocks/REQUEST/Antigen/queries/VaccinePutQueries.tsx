@@ -3,6 +3,9 @@ import { useMutation,useQueryClient } from "@tanstack/react-query"; // or 'react
 import { api2 } from "@/api/api";
 import {updateVaccineStock} from "../restful-api/VaccinePutAPI"; // Adjust the path if needed
 import { AntigenTransaction } from "../restful-api/VaccinePostAPI";
+import {toast}  from "sonner"
+import {CircleCheck} from "lucide-react"
+import { useNavigate } from "react-router";
 
 export const useUpdateVaccineStock = () => {
     return useMutation({
@@ -22,7 +25,7 @@ export const useUpdateVaccineStock = () => {
 
 export const useSubmitUpdateVaccineStock = () => {
   const queryClient = useQueryClient();
-
+const navigate= useNavigate()
   return useMutation({
     mutationFn: async ({
       vaccine,
@@ -79,13 +82,22 @@ export const useSubmitUpdateVaccineStock = () => {
         throw new Error("Failed to add vaccine transaction");
       }
 
-      return { success: true };
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+      return;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
     },
     onError: (error: any) => {
-      console.error("Update vaccine stock error:", error.message || error);
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };

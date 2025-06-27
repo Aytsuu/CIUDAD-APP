@@ -94,22 +94,7 @@ export default function AddImzSupplyStock() {
   const handleConfirm = () => {
     if (!formData) return;
     setIsConfirmationOpen(false);
-    submit(formData, {
-      onSuccess: () => {
-        toast.success("Successfully Added", {
-          icon: (
-            <CircleCheck size={24} className="fill-green-500 stroke-white" />
-          ),
-          duration: 2000,
-        });
-        form.reset();
-        navigate(-1);
-      },
-      onError: (error: Error) => {
-        console.error("Error in handleSubmit:", error);
-        toast.error("Failed to Add");
-      },
-    });
+    submit(formData);
   };
 
   return (
