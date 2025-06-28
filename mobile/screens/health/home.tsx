@@ -11,7 +11,7 @@ const Homepage = () => {
   const modules = [
     { name: 'Child Health Records', route: '/child-health-records', icon: Baby },
     { name: 'Family Planning', route: '/family-planning/famplanning', icon: Heart },
-    { name: 'Animal Bites', route: '/animal-bites', icon: Dog },
+    { name: 'Animal Bites', route: '/admin/animalbites/overall', icon: Dog },
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
     { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },
     { name: 'Medicine Requests', route: '/admin-medicinerequest/admin-medicinerequest', icon: Pill },

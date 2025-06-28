@@ -1,3 +1,4 @@
+from django.forms import CharField
 from rest_framework import serializers
 from .models import *
 # Import Patient, PatientRecord, Transient, TransientAddress from patientrecords app
@@ -5,6 +6,7 @@ from apps.patientrecords.models import PatientRecord, Patient, Transient, Transi
 # Import ResidentProfile, Personal, PersonalAddress, Household, Address from healthProfiling app
 from apps.healthProfiling.models import ResidentProfile, Personal, PersonalAddress, Household, Address 
 from datetime import date 
+from django.db.models import *
 
 class AnimalBiteReferralSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,7 +33,15 @@ class AnimalBiteCreateSerializer(serializers.Serializer):
     
     exposure_site_name = serializers.CharField(max_length=255, required=False, allow_blank=True, write_only=True)
     biting_animal_name = serializers.CharField(max_length=255, required=False, allow_blank=True, write_only=True)
+    
+    def create(self, validated_data):
+        # This method needs to be implemented to handle the creation logic
+        # as it's a Serializer, not a ModelSerializer.
+        # It would typically involve creating PatientRecord, AnimalBite_Referral, and AnimalBite_Details instances.
+        raise NotImplementedError("create() must be implemented for this Serializer")
 
+    def update(self, instance, validated_data):
+        raise NotImplementedError("update() must be implemented for this Serializer")
 
 class AnimalBitePatientDetailsSerializer(serializers.ModelSerializer):
     patient_fname = serializers.SerializerMethodField()
@@ -254,16 +264,63 @@ class AnimalBitePatientRecordCountSerializer(serializers.Serializer):
 
     @classmethod
     def get_aggregated_data(cls):
-        from .models import AnimalBite_Details
-        from django.db.models import Count, Max, F
-        
-        # This query gets the count of records and latest date for each patient
         aggregated_data = AnimalBite_Details.objects.values(
-            'referral__patrec__pat_id',
-            'referral__patrec__pat_id__pat_type',
+            'referral__patrec__pat_id__pat_id',
         ).annotate(
             record_count=Count('id'),
             latest_record_date=Max('referral__date')
         ).order_by('-latest_record_date')
         
         return aggregated_data
+    
+    @classmethod
+    def get_patient_record_counts(cls):
+        # Ensure AnimalBite_Details is imported
+        
+        aggregated_data = AnimalBite_Details.objects.annotate(
+            pat_id=F('referral__patrec__pat_id__pat_id'),
+            pat_type=Case(
+                When(referral__patrec__pat_id__rp__isnull=False, then=Value('Resident')),
+                When(referral__patrec__pat_id__trans__isnull=False, then=Value('Transient')),
+                default=Value('Unknown'),
+                output_field=CharField()
+            ),
+            patient_fname=Case(
+                When(referral__patrec__pat_id__rp__isnull=False, then=F('referral__patrec__pat_id__rp__per__per_fname')),
+                When(referral__patrec__pat_id__trans__isnull=False, then=F('referral__patrec__pat_id__trans__tran_fname')),
+                default=Value('N/A'),
+                output_field=CharField()
+            ),
+            patient_lname=Case(
+                When(referral__patrec__pat_id__rp__isnull=False, then=F('referral__patrec__pat_id__rp__per__per_lname')),
+                When(referral__patrec__pat_id__trans__isnull=False, then=F('referral__patrec__pat_id__trans__tran_lname')),
+                default=Value('N/A'),
+                output_field=CharField()
+            ),
+            patient_gender=Case(
+                When(referral__patrec__pat_id__rp__isnull=False, then=F('referral__patrec__pat_id__rp__per__per_gender')),
+                When(referral__patrec__pat_id__trans__isnull=False, then=F('referral__patrec__pat_id__trans__tran_sex')),
+                default=Value('N/A'),
+                output_field=CharField()
+            ),
+            patient_age=Case(
+                When(Q(referral__patrec__pat_id__rp__isnull=False) & Q(referral__patrec__pat_id__rp__per__per_bdate__isnull=False),
+                     then=Max(date.today().year - F('referral__patrec__pat_id__rp__per__per_bdate__year'))), # Corrected: Use 'date.today()'
+                When(Q(referral__patrec__pat_id__trans__isnull=False) & Q(referral__patrec__pat_id__trans__tran_dob__isnull=False),
+                     then=Max(date.today().year - F('referral__patrec__pat_id__trans__tran_dob__year'))), # Corrected: Use 'date.today()'
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+        ).values(
+            'pat_id',
+            'pat_type',
+            'patient_fname',
+            'patient_lname',
+            'patient_gender',
+            'patient_age'
+        ).annotate(
+            record_count=Count('bite_id'),
+            latest_record_date=Max('referral__date')
+        ).order_by('pat_id')
+
+        return list(aggregated_data)
