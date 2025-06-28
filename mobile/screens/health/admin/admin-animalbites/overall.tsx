@@ -1,182 +1,413 @@
-// overall.tsx
-import React, { useState, useMemo, useEffect } from "react";
-import { View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from "react-native";
-import { Search, PlusCircle, ChevronLeft, AlertCircle, Package, User, Badge } from "lucide-react-native";
-import { Text } from "@/components/ui/text";
-import { router } from "expo-router";
-import { format } from "date-fns";
-import { useUniqueAnimalbitePatientsData } from "../restful-api/animalbites/db-request/get-query"; // Correct import
+import React, { useState, useMemo } from "react"
+import { View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, FlatList } from "react-native"
+import {
+  Search,
+  ChevronLeft,
+  AlertCircle,
+  Package,
+  User,
+  Calendar,
+  FileText,
+  Users,
+  TrendingUp,
+  Filter,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react-native"
+import { Text } from "@/components/ui/text"
+import { router } from "expo-router"
+import { format } from "date-fns"
+import { useAnimalBitePatientSummary } from "../restful-api/animalbites/db-request/get-query"
 
-// Type definition for mobile display, adjusted to match AnimalBitePatientRecordCountSerializer
-type PatientDisplay = {
-  patient_id: string; // The ID to navigate by
-  patient_fname: string;
-  patient_lname: string;
-  patient_sex: string;
-  patient_age: number;
-  patient_type: string; // 'Resident' or 'Transient'
-  latest_record_date: string; // The latest referral date
-};
+type PatientSummary = {
+  patient_id: string
+  patient_fname: string
+  patient_lname: string
+  patient_mname?: string
+  patient_sex: string
+  patient_age: number
+  patient_type: string
+  patient_address: string
+  record_count: number
+  latest_record_date: string
+  first_record_date: string
+}
+
+type FilterType = 'all' | 'resident' | 'transient'
 
 export default function AnimalBiteOverallScreen() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all')
+  const [showFilters, setShowFilters] = useState(false)
+  const [page, setPage] = useState(1)
+  const patientsPerPage = 10
 
-  // Use the correct hook to fetch unique/aggregated patient data
-  const { data: patientData, isLoading, isError, error, refetch } = useUniqueAnimalbitePatientsData();
+  const { data: patientSummary, isLoading, isError, error, refetch } = useAnimalBitePatientSummary()
 
-  // Memoize the patients data to prevent unnecessary re-renders
-  const patients: PatientDisplay[] = useMemo(() => {
-    if (!patientData) return [];
+  // Memoized patient data
+  const patients: PatientSummary[] = useMemo(() => {
+    if (!patientSummary) return []
+    return patientSummary
+  }, [patientSummary])
 
-    // Map the incoming data to the PatientDisplay type
-    return patientData.map((patient: any) => ({
-      patient_id: patient.patient_id,
-      patient_fname: patient.patient_fname,
-      patient_lname: patient.patient_lname,
-      patient_sex: patient.patient_sex,
-      patient_age: patient.patient_age,
-      patient_type: patient.patient_type,
-      latest_record_date: patient.latest_record_date,
-    }));
-  }, [patientData]);
-
-  // Filter patients based on search query
+  // Filter patients based on search query and active filter
   const filteredPatients = useMemo(() => {
-    if (!searchQuery) {
-      return patients;
+    let result = patients
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase()
+      result = result.filter(
+        (patient) =>
+          patient.patient_fname.toLowerCase().includes(lowerCaseQuery) ||
+          patient.patient_lname.toLowerCase().includes(lowerCaseQuery) ||
+          patient.patient_id.toLowerCase().includes(lowerCaseQuery)
+  )}
+    if (activeFilter !== 'all') {
+      result = result.filter((patient) => 
+        patient.patient_type.toLowerCase() === activeFilter
+      )
     }
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    return patients.filter(
-      (patient) =>
-        patient.patient_fname.toLowerCase().includes(lowerCaseQuery) ||
-        patient.patient_lname.toLowerCase().includes(lowerCaseQuery) ||
-        patient.patient_id.toLowerCase().includes(lowerCaseQuery)
-    );
-  }, [patients, searchQuery]);
+    return result
+  }, [patients, searchQuery, activeFilter])
+
+  // Paginated patients
+  const paginatedPatients = useMemo(() => {
+    const startIndex = (page - 1) * patientsPerPage
+    return filteredPatients.slice(startIndex, startIndex + patientsPerPage)
+  }, [filteredPatients, page])
+
+  const totalPages = Math.ceil(filteredPatients.length / patientsPerPage)
+
+  // Statistics
+  const stats = useMemo(() => {
+    return {
+      totalPatients: patients.length,
+      residentPatients: patients.filter((p) => p.patient_type === "Resident").length,
+      transientPatients: patients.filter((p) => p.patient_type === "Transient").length,
+      totalRecords: patients.reduce((sum, p) => sum + p.record_count, 0),
+      showingPatients: `${Math.min(page * patientsPerPage, filteredPatients.length)} of ${filteredPatients.length}`
+    }
+  }, [patients, page, filteredPatients])
 
   const onRefresh = React.useCallback(async () => {
-    setRefreshing(true);
-    await refetch(); // Refetch the data
-    setRefreshing(false);
-  }, [refetch]);
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+    setPage(1) // Reset to first page on refresh
+  }, [refetch])
 
   const formatDateSafely = (dateString: string) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "N/A"
     try {
-      return format(new Date(dateString), "MMM dd, yyyy");
+      return format(new Date(dateString), "MMM dd, yyyy")
     } catch (e) {
-      console.error("Error formatting date:", dateString, e);
-      return "Invalid Date";
+      console.error("Error formatting date:", dateString, e)
+      return "Invalid Date"
     }
-  };
+  }
+
+  const getPatientInitials = (fname: string, lname: string) => {
+    return `${fname.charAt(0)}${lname.charAt(0)}`.toUpperCase()
+  }
+
+  const handleFilterPress = (filter: FilterType) => {
+    setActiveFilter(filter)
+    setShowFilters(false)
+    setPage(1) // Reset to first page when filter changes
+  }
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text className="mt-4 text-gray-600">Loading patient list...</Text>
+      <View className="flex-1 justify-center items-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <View className="bg-white p-8 rounded-2xl shadow-lg items-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="mt-4 text-gray-600 font-medium">Loading patient records...</Text>
+        </View>
       </View>
-    );
+    )
   }
 
   if (isError) {
     return (
-      <View className="flex-1 justify-center items-center p-4 bg-gray-50">
-        <AlertCircle className="text-red-500 mb-4" size={48} />
-        <Text className="text-red-500 text-lg font-bold mb-2">Error</Text>
-        <Text className="text-gray-700 text-center">
-          Failed to load patient data. {error?.message || "Please try again later."}
-        </Text>
+      <View className="flex-1 justify-center items-center p-4 bg-gradient-to-br from-red-50 to-pink-100">
+        <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
+          <AlertCircle size={48} color="#EF4444" />
+          <Text className="text-red-500 text-xl font-bold mb-2 mt-4">Error</Text>
+          <Text className="text-gray-700 text-center leading-6">
+            Failed to load patient data. {error?.message || "Please try again later."}
+          </Text>
+          <TouchableOpacity onPress={() => refetch()} className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
+            <Text className="text-white font-semibold">Retry</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    );
+    )
   }
 
   return (
-    <ScrollView
-      className="flex-1 bg-gray-50"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View className="flex-row items-center p-4 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
-          <ChevronLeft size={24} color="#333" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-800">Animal Bite Records</Text>
-      </View>
+    <View className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <View className="bg-white shadow-lg">
+        <View className="flex-row items-center mt-5 p-4 pt-12">
+          <TouchableOpacity onPress={() => router.back()} className="p-2 mr-3 bg-gray-100 rounded-full">
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <View className="flex-1">
+            <Text className="text-2xl font-bold text-gray-800">Animal Bite Records</Text>
 
-      <View className="p-4">
-        <View className="flex-row items-center bg-white rounded-lg shadow-sm px-4 py-3 mb-4 border border-gray-200">
-          <Search size={20} color="#888" className="mr-3" />
-          <TextInput
-            className="flex-1 text-base text-gray-800"
-            placeholder="Search patient by name or ID"
-            placeholderTextColor="#888"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+          </View>
         </View>
 
-        {filteredPatients.length === 0 && !isLoading && !isError ? (
-          <View className="flex-1 justify-center items-center py-16">
-            <Package className="text-gray-400 mb-4" size={48} />
-            <Text className="text-gray-600 text-lg font-bold mb-2">No Patients Found</Text>
-            <Text className="text-gray-500 text-center">
-              {searchQuery ? "No patients match your search criteria." : "There are no animal bite patients recorded yet."}
-            </Text>
-            <TouchableOpacity onPress={() => {/* Add navigation to create new record if applicable */}} className="mt-6 px-6 py-3 bg-blue-500 rounded-lg">
-              <Text className="text-white font-semibold">Add New Record</Text>
+        {/* Search and Filter Bar */}
+        <View className="px-4 pb-4">
+          <View className="flex-row items-center space-x-3">
+            <View className="flex-1 mt-4 flex-row items-center p-1  border border-gray-200 bg-gray-100 rounded-2xl  shadow-sm">
+              <Search size={20}  color="#6B7280" />
+              <TextInput
+                className="flex-1 ml-3 text-gray-800 font-medium"
+                placeholder="Search by name or patient ID..."
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+            
+            <TouchableOpacity 
+              onPress={() => setShowFilters(!showFilters)}
+              className="p-3 mt-4"
+            >
+              <Filter size={20} color="blue" />
             </TouchableOpacity>
           </View>
-        ) : (
-          <View className="space-y-4">
-            {filteredPatients.map((patient) => (
-              <TouchableOpacity
-                key={patient.patient_id}
-                onPress={() => {
-                  console.log("Navigating to patient ID:", patient.patient_id); // Log for debugging
-                  router.push("/(health)/admin/animalbites/individual/[patientId]");
-                }}
-                className="bg-white rounded-lg shadow-sm p-5 border border-gray-100"
+
+          {/* Filter Dropdown */}
+          {showFilters && (
+            <View className=" bg-white rounded-xl shadow-md p-3">
+              <TouchableOpacity 
+                onPress={() => handleFilterPress('all')}
+                className={`py-2 px-3 rounded-lg ${activeFilter === 'all' ? 'bg-blue-50' : ''}`}
               >
-                <View className="flex-row justify-between items-center mb-3">
-                  <View className="flex-row items-center">
-                    <User size={20} color="#3b82f6" className="mr-3" />
-                    <View>
-                      <Text className="font-bold text-lg text-gray-800">
-                        {patient.patient_fname} {patient.patient_lname}
-                      </Text>
-                      <Text className="text-sm text-gray-500">
-                        ID: {patient.patient_id}
-                      </Text>
+                <Text className={`font-medium ${activeFilter === 'all' ? 'text-blue-700' : 'text-gray-700'}`}>
+                  All Patients ({patients.length})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => handleFilterPress('resident')}
+                className={`py-2 px-3 rounded-lg ${activeFilter === 'resident' ? 'bg-blue-50' : ''}`}
+              >
+                <Text className={`font-medium ${activeFilter === 'resident' ? 'text-blue-700' : 'text-gray-700'}`}>
+                  Residents ({stats.residentPatients})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => handleFilterPress('transient')}
+                className={`py-2 px-3 rounded-lg ${activeFilter === 'transient' ? 'bg-blue-50' : ''}`}
+              >
+                <Text className={`font-medium ${activeFilter === 'transient' ? 'text-blue-700' : 'text-gray-700'}`}>
+                  Transients ({stats.transientPatients})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
+
+      <ScrollView
+        className="flex-1"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Statistics Cards */}
+        <View className="p-4 bg-white">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row gap-3">
+              <View className="bg-white p-4 rounded-2xl  shadow-lg border border-gray-300 min-w-[150px]">
+                <View className="flex-row items-center mb-2">
+                  <Users size={20} color="#3B82F6" />
+                  <Text className="ml-2 text-gray-600 font-medium">Total Patients</Text>
+                </View>
+                <Text className="text-3xl font-bold text-gray-800">{stats.totalPatients}</Text>
+              </View>
+
+              <View className="bg-white p-4 rounded-2xl shadow-lg border border-gray-300 min-w-[150px]">
+                <View className="flex-row items-center mb-2">
+                  <FileText size={20} color="#10B981" />
+                  <Text className="ml-2 text-gray-600 font-medium">Total Records</Text>
+                </View>
+                <Text className="text-3xl font-bold text-gray-800">{stats.totalRecords}</Text>
+              </View>
+
+              <View className="bg-white p-4 rounded-2xl shadow-lg border border-gray-300 min-w-[150px]">
+                <View className="flex-row items-center mb-2">
+                  <User size={20} color="#8B5CF6" />
+                  <Text className="ml-2 text-gray-600 font-medium">Residents</Text>
+                </View>
+                <Text className="text-3xl font-bold text-gray-800">{stats.residentPatients}</Text>
+              </View>
+
+              <View className="bg-white p-4 rounded-2xl shadow-lg border border-gray-300 min-w-[150px]">
+                <View className="flex-row items-center mb-2">
+                  <TrendingUp size={20} color="#F59E0B" />
+                  <Text className="ml-2 text-gray-600 font-medium">Transients</Text>
+                </View>
+                <Text className="text-3xl font-bold text-gray-800">{stats.transientPatients}</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Patient List Header */}
+        <View className="px-4 mb-2 mt-3 flex-row justify-between items-center">
+          <Text className="text-lg font-bold text-gray-800">
+            Patients ({filteredPatients.length})
+          </Text>
+          <Text className="text-gray-500 text-sm">
+            Showing {stats.showingPatients}
+          </Text>
+        </View>
+
+        {/* Patient List */}
+        <View className="px-4 pb-6 ">
+          {filteredPatients.length === 0 ? (
+            <View className="bg-white rounded-2xl  shadow-sm items-center">
+              <Package size={48} color="#D1D5DB" />
+              <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">No Patients Found</Text>
+              <Text className="text-gray-500 text-center leading-6">
+                {searchQuery
+                  ? "No patients match your search criteria."
+                  : "There are no animal bite patients recorded yet."}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={paginatedPatients}
+              keyExtractor={(item) => `patient-${item.patient_id}`}
+              scrollEnabled={false} // We're already in a ScrollView
+              renderItem={({ item: patient }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    router.push({
+                      pathname: `/admin/animalbites/individual`,
+                      params: { patientId: patient.patient_id }
+                    })
+                  }}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-300 overflow-hidden mb-3"
+                  activeOpacity={0.7}
+                >
+                  {/* Patient Header */}
+                  <View className="p-5">
+                    <View className="flex-row items-center mb-4">
+                      {/* Avatar */}
+                      <View className="w-14 h-14 bg-gray-400 rounded-full items-center justify-center mr-4 shadow-md">
+                        <User color="white"/>
+                          
+                      </View>
+
+                      {/* Patient Info */}
+                      <View className="flex-1">
+                        <Text className="font-bold text-lg text-gray-800 mb-1">
+                          {patient.patient_fname} {patient.patient_lname}
+                        </Text>
+                        <Text className="text-gray-500 text-sm mb-1">ID: {patient.patient_id}</Text>
+                        <View className="flex-row items-center">
+                          <View
+                            className={`px-3 py-1 rounded-full ${
+                              patient.patient_type === "Transient"
+                                ? "bg-orange-100 border border-orange-200"
+                                : "bg-green-100 border border-green-200"
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-semibold ${
+                                patient.patient_type === "Transient" ? "text-orange-700" : "text-green-700"
+                              }`}
+                            >
+                              {patient.patient_type}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Record Count Badge */}
+                      <View className="bg-blue-100 px-3 py-2 rounded-xl">
+                        <Text className="text-blue-700 font-bold text-sm">
+                          {patient.record_count} record{patient.record_count !== 1 ? "s" : ""}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Patient Details */}
+                    <View className="bg-gray-50 rounded-xl p-4">
+                      <View className="flex-row justify-between items-center mb-2">
+                        <View className="flex-row items-center">
+                          <User size={16} color="#6B7280" />
+                          <Text className="text-gray-600 text-sm ml-2">
+                            Age: <Text className="font-semibold text-gray-800">{patient.patient_age}</Text>
+                          </Text>
+                        </View>
+                        <Text className="text-gray-600 text-sm">
+                          Gender: <Text className="font-semibold text-gray-800">{patient.patient_sex}</Text>
+                        </Text>
+                      </View>
+
+                      <View className="flex-row items-center mb-2">
+                        <Calendar size={16} color="#6B7280" />
+                        <Text className="text-gray-600 text-sm ml-2">
+                          Latest Record:{" "}
+                          <Text className="font-semibold text-gray-800">
+                            {formatDateSafely(patient.latest_record_date)}
+                          </Text>
+                        </Text>
+                      </View>
+
+                      {patient.patient_address && patient.patient_address !== "Address Not Available" && (
+                        <View className="flex-row text-gray-800 items-start">
+                          <Package size={16} color="#6B7280" className="mt-0.5" />
+                          <Text className="text-gray-600 text-sm ml-2 flex-1" numberOfLines={2}>
+                            {patient.patient_address}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
-                  <Text className={`px-2 py-1 text-sm rounded-full ${patient.patient_type === 'Transient'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : 'border-green-200 bg-green-50 text-green-700'
-                      }`}
-                  >
-                    {patient.patient_type}
-                  </Text>
-                </View>
 
-                <View className="flex-row justify-between items-center border-t border-gray-100 pt-2 mt-2">
-                  <View className="flex-row items-center">
-                    <Text className="text-sm font-semibold text-gray-500">
-                      Age: <Text className="text-sm text-black font-normal">{patient.patient_age}</Text>
-                    </Text>
-                    <Text className="text-sm font-semibold text-gray-500 ml-4">
-                      Gender: <Text className="text-sm text-black font-normal">{patient.patient_sex}</Text>
-                    </Text>
+                  {/* Action Indicator */}
+                  <View className="bg-blue-600 px-5 py-3">
+                    <Text className="text-white font-semibold text-center">View Patient History →</Text>
                   </View>
-                  <Text className="text-xs font-semibold text-gray-500">
-                    Last Record: <Text className="text-xs text-black font-normal">{formatDateSafely(patient.latest_record_date)}</Text>
-                  </Text>
-                </View>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+
+        {/* Pagination Controls */}
+        {filteredPatients.length > patientsPerPage && (
+          <View className="px-4 pb-6">
+            <View className="bg-white rounded-2xl p-4 shadow-sm flex-row justify-between items-center">
+              <TouchableOpacity 
+                onPress={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-gray-100' : 'bg-blue-50'}`}
+              >
+                <Text className={`font-medium ${page === 1 ? 'text-gray-400' : 'text-blue-700'}`}>Previous</Text>
               </TouchableOpacity>
-            ))}
+              
+              <Text className="text-gray-600">
+                Page {page} of {totalPages}
+              </Text>
+              
+              <TouchableOpacity 
+                onPress={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className={`px-4 py-2 rounded-lg ${page === totalPages ? 'bg-gray-100' : 'bg-blue-50'}`}
+              >
+                <Text className={`font-medium ${page === totalPages ? 'text-gray-400' : 'text-blue-700'}`}>Next</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
-      </View>
-    </ScrollView>
-  );
+      </ScrollView>
+    </View>
+  )
 }

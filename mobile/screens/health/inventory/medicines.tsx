@@ -1,5 +1,5 @@
-import { View, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator } from "react-native"
-import { Search, Package, ChevronLeft, AlertTriangle } from "lucide-react-native"
+import { View, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator, FlatList } from "react-native"
+import { Search, Package, ChevronLeft, AlertTriangle, Filter, ChevronDown } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import * as React from "react"
 import { router } from "expo-router"
@@ -24,7 +24,10 @@ export default function InventoryAdmin() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
   const [inventoryData, setInventoryData] = React.useState<InventoryItem[]>([])
-  const [error, setError] = React.useState<string | null>(null)
+  const [isError, setError] = React.useState<string | null>(null)
+  const [showFilters, setShowFilters] = React.useState(false)
+  const [page, setPage] = React.useState(1)
+  const itemsPerPage = 10
 
   const fetchInventoryData = async () => {
     setIsLoading(true);
@@ -60,28 +63,18 @@ export default function InventoryAdmin() {
           category: 'medicine' as const,
           description: item.med_detail?.med_type || 'Medicine',
           stock: item.minv_qty_avail || 0,
-          minStock: 20, // Default minimum stock
+          minStock: 20,
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
           batchNumber: 'N/A',
           lastUpdated: item.inv_detail?.updated_at ?
             new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
-
         }));
-
         allInventory.push(...standardizedMedicines);
-
       }
 
-
-
-      // Process commodities
-
       const commoditiesResult = results.find(r => r.name === 'commodities');
-
       if (commoditiesResult?.success && commoditiesResult.data) {
-
         const standardizedCommodities: InventoryItem[] = commoditiesResult.data.map((item: any) => ({
-
           id: item.cinv_id,
           name: item.com_detail?.com_name || item.com_id?.com_name || 'Unknown Commodity',
           category: 'commodity' as const,
@@ -97,9 +90,7 @@ export default function InventoryAdmin() {
       }
 
       const firstaidResult = results.find(r => r.name === 'firstaid');
-
       if (firstaidResult?.success && firstaidResult.data) {
-
         const standardizedFirstAids: InventoryItem[] = firstaidResult.data.map((item: any) => ({
           id: item.finv_id,
           name: item.fa_detail?.fa_name || item.fa_id?.fa_name || 'Unknown First Aid',
@@ -113,15 +104,9 @@ export default function InventoryAdmin() {
           new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }));
         allInventory.push(...standardizedFirstAids);
-
       }
 
-
-
-      // Process vaccines
-
       const vaccinesResult = results.find(r => r.name === 'vaccines');
-
       if (vaccinesResult?.success && vaccinesResult.data) {
         const standardizedVaccines: InventoryItem[] = vaccinesResult.data.map((item: any) => ({
           id: item.vacStck_id,
@@ -134,19 +119,11 @@ export default function InventoryAdmin() {
           batchNumber: item.batch_number || 'N/A',
           lastUpdated: item.inv_details?.updated_at || item.updated_at ?
           new Date(item.inv_details?.updated_at || item.updated_at).toLocaleDateString() : 'N/A',
-
         }));
-
         allInventory.push(...standardizedVaccines);
-
       }
 
-
-
-      // Process immunization supplies
-
       const immunizationResult = results.find(r => r.name === 'immunization');
-
       if (immunizationResult?.success && immunizationResult.data) {
         const standardizedImmunization: InventoryItem[] = immunizationResult.data.map((item: any) => ({
           id: item.imzStck_id,
@@ -163,8 +140,6 @@ export default function InventoryAdmin() {
         allInventory.push(...standardizedImmunization);
       }
 
-
-
       setInventoryData(allInventory);
     } catch (error) {
       setError("Failed to load inventory data. Please check your connection and try again.");
@@ -177,6 +152,7 @@ export default function InventoryAdmin() {
     setRefreshing(true);
     await fetchInventoryData();
     setRefreshing(false);
+    setPage(1);
   };
 
   React.useEffect(() => {
@@ -200,9 +176,9 @@ export default function InventoryAdmin() {
   ];
 
   const getStockStatus = (stock: number, minStock: number) => {
-    if (stock <= 0) return { text: 'Out of Stock', color: '#FFC107', status: 'out_of_stock' };
-    if (stock <= minStock) return { text: 'Low Stock', color: '#DC3545', status: 'low_stock' };
-    return { text: 'In Stock', color: '#28A745', status: 'in_stock' };
+    if (stock <= 0) return { text: 'Out of Stock', color: '#EF4444', status: 'out_of_stock' };
+    if (stock <= minStock) return { text: 'Low Stock', color: '#F59E0B', status: 'low_stock' };
+    return { text: 'In Stock', color: '#10B981', status: 'in_stock' };
   };
 
   const filteredInventory = React.useMemo(() => {
@@ -220,212 +196,288 @@ export default function InventoryAdmin() {
       );
   }, [selectedCategory, selectedStockFilter, searchQuery, inventoryData]);
 
-  return (
-    <View className="flex-1 bg-[#F8F8F8]">
-      {/* Header Section */}
-      <View className="bg-white px-5 pt-14 pb-5 shadow-sm">
-        <TouchableOpacity onPress={() => router.back()} className="flex-row items-center rounded-full py-2">
-          <ChevronLeft size={20} color="#263D67" />
-          <Text className="text-[#263D67] text-[16px] font-PoppinsMedium ml-1">Back</Text>
-        </TouchableOpacity>
+  const paginatedInventory = React.useMemo(() => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return filteredInventory.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredInventory, page]);
 
-        <View className="pt-4">
-          <Text className="text-3xl font-PoppinsBold text-[#263D67]">Inventory</Text>
-          <Text className="text-md font-PoppinsRegular text-[#6B7280] mt-1">Manage your medical supplies efficiently</Text>
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+
+  const stats = React.useMemo(() => {
+    return {
+      totalItems: inventoryData.length,
+      lowStock: inventoryData.filter(item => item.stock > 0 && item.stock <= item.minStock).length,
+      outOfStock: inventoryData.filter(item => item.stock === 0).length,
+      inStock: inventoryData.filter(item => item.stock > item.minStock).length,
+      showingItems: `${Math.min(page * itemsPerPage, filteredInventory.length)} of ${filteredInventory.length}`
+    }
+  }, [inventoryData, page, filteredInventory]);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <View className="bg-white p-8 rounded-2xl items-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="mt-4 text-gray-600 font-medium">Loading inventory...</Text>
         </View>
-
-        {/* Search Bar */}
-        <View className="flex-row items-center bg-[#F0F0F0] rounded-xl px-1 p-2 my-5 border border-[#E0E0E0]">
-          <Search size={18} color="#6B7280" />
-          <TextInput
-            className="flex-1 ml-2 mt-1 text-[#263D67] font-PoppinsRegular text-base"
-            placeholder="Search inventory..."
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        {/* Category Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 2 }}>
-          <View className="flex-row gap-2">
-            {categories.map((category) => {
-              const isSelected = selectedCategory === category.id;
-              return (
-                <TouchableOpacity
-                  key={category.id}
-                  onPress={() => {
-                    setSelectedCategory(category.id);
-                    setSelectedStockFilter('all');
-                  }}
-                  className={`px-5 py-2.5 rounded-full ${isSelected ? 'bg-[#263D67]' : 'bg-white border border-[#E0E0E0]'}`}
-                >
-                  <Text className={`font-PoppinsMedium text-sm ${isSelected ? 'text-white' : 'text-[#263D67]'}`}>
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
       </View>
+    )
+  }
 
-     {/* Statistics Cards */}
-<View className="px-5 p-3 mb-2">
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    <View className="flex-row gap-2 bg-[#F8F8F8]">
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedStockFilter('all');
-          setSelectedCategory('all');
-        }}
-        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
-      >
-        <Text className="text-2xl font-PoppinsBold text-[#263D67]">
-          {inventoryData.length}
-        </Text>
-        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Total Items</Text>
-      </TouchableOpacity>
+  if (isError) {
+    return (
+      <View className="flex-1 justify-center items-center p-4 bg-gradient-to-br from-red-50 to-pink-100">
+        <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
+          <AlertTriangle size={48} color="#EF4444" />
+          <Text className="text-red-500 text-xl font-bold mb-2 mt-4">Error</Text>
+          <Text className="text-gray-700 text-center leading-6">
+            {error || "Failed to load inventory data. Please try again later."}
+          </Text>
+          <TouchableOpacity onPress={fetchInventoryData} className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
+            <Text className="text-white font-semibold">Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    )
+  }
 
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedStockFilter('low_stock');
-          setSelectedCategory('all');
-        }}
-        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
-      >
-        <Text className="text-2xl font-PoppinsBold text-[#DC3545]">
-          {inventoryData.filter(item => item.stock > 0 && item.stock <= item.minStock).length}
-        </Text>
-        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Low Stock</Text>
-      </TouchableOpacity>
+  return (
+    <View className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <View className="bg-white shadow-lg">
+        <View className="flex-row items-center p-4 pt-12">
+          <TouchableOpacity onPress={() => router.back()} className="p-2 mr-3 bg-gray-100 rounded-full">
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <View className="flex-1">
+            <Text className="text-2xl font-bold text-gray-800">Medical Inventory</Text>
+          </View>
+        </View>
 
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedStockFilter('out_of_stock');
-          setSelectedCategory('all');
-        }}
-        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
-      >
-        <Text className="text-2xl font-PoppinsBold text-[#FFC107]">
-          {inventoryData.filter(item => item.stock === 0).length}
-        </Text>
-        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Out of Stock</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedStockFilter('in_stock');
-          setSelectedCategory('all');
-        }}
-        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
-      >
-        <Text className="text-2xl font-PoppinsBold text-[#28A745]">
-          {inventoryData.filter(item => item.stock > item.minStock).length}
-        </Text>
-        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">In Stock</Text>
-      </TouchableOpacity>
-    </View>
-  </ScrollView>
-</View>
-
-
-      {/* Content */}
-      <ScrollView
-        className="flex-1 px-5"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#263D67" />}
-        showsVerticalScrollIndicator={false}
-      >
-        {error ? (
-          <View className="items-center justify-center py-20">
-            <AlertTriangle size={56} color="#DC3545" />
-            <Text className="text-xl font-PoppinsSemiBold text-[#DC3545] mt-4">Error Loading Data</Text>
-            <Text className="text-[#6B7280] font-PoppinsRegular mt-2 text-center px-4 text-base">{error}</Text>
-            <TouchableOpacity onPress={fetchInventoryData} className="mt-6 bg-[#263D67] px-8 py-3 rounded-lg shadow-sm">
-              <Text className="text-white font-PoppinsMedium text-base">Retry</Text>
+        {/* Search and Filter Bar */}
+        <View className="px-4 pb-4">
+          <View className="flex-row items-center space-x-3">
+            <View className="flex-1 flex-row items-center bg-gray-100 rounded-2xl px-4 py-3 shadow-sm">
+              <Search size={20} color="#6B7280" />
+              <TextInput
+                className="flex-1 ml-3 text-gray-800 font-medium"
+                placeholder="Search by name or description..."
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+            
+            <TouchableOpacity 
+              onPress={() => setShowFilters(!showFilters)}
+              className="bg-gray-100 p-3 rounded-2xl"
+            >
+              <Filter size={20} color="#6B7280" />
             </TouchableOpacity>
           </View>
-        ) : isLoading ? (
-          <View className="items-center justify-center py-20">
-            <ActivityIndicator size="large" color="#263D67" />
-            <Text className="text-[#6B7280] font-PoppinsRegular mt-4 text-base">Loading inventory...</Text>
-          </View>
-        ) : filteredInventory.length === 0 ? (
-          <View className="items-center justify-center py-20">
-            <Package size={56} color="#B0B0B0" />
-            <Text className="text-xl font-PoppinsSemiBold text-[#6B7280] mt-4">No items found</Text>
-            <Text className="text-[#9CA3AF] font-PoppinsRegular mt-2 text-center text-base">
-              Try adjusting your filters or search query.
-            </Text>
-          </View>
-        ) : (
-          <View className="pb-6">
-            {filteredInventory.map((item) => {
-              const stockStatus = getStockStatus(item.stock, item.minStock);
-              return (
-                <View key={`${item.category}-${item.id}`} className="bg-white rounded-xl p-5 mb-4 shadow-sm border border-[#E0E0E0]">
-                  <View className="flex-row items-start justify-between mb-3">
-                    <Text className="text-lg font-PoppinsSemiBold text-[#263D67] flex-1 pr-3">
-                      {item.name}
+
+          {/* Filter Dropdown */}
+          {showFilters && (
+            <View className="mt-2 bg-white rounded-xl shadow-md p-3">
+              <Text className="font-semibold text-gray-700 mb-2">Category</Text>
+              <View className="flex-row flex-wrap gap-2 mb-3">
+                {categories.map((category) => (
+                  <TouchableOpacity 
+                    key={category.id}
+                    onPress={() => {
+                      setSelectedCategory(category.id);
+                      setPage(1);
+                    }}
+                    className={`px-3 py-1.5 rounded-full ${selectedCategory === category.id ? 'bg-blue-100 border border-blue-200' : 'bg-gray-100'}`}
+                  >
+                    <Text className={`text-sm ${selectedCategory === category.id ? 'text-blue-700 font-semibold' : 'text-gray-700'}`}>
+                      {category.name}
                     </Text>
-                    <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: `${stockStatus.color}20` }}>
-                      <Text className="text-xs font-PoppinsMedium" style={{ color: stockStatus.color }}>
-                        {stockStatus.text}
-                      </Text>
-                    </View>
-                  </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-                  <Text className="text-sm font-PoppinsRegular text-[#6B7280] mb-3">
-                    {item.description}
-                  </Text>
-
-                  <View className="flex-row items-center justify-between mb-4">
-                    <View className="flex-row items-center">
-                      <Text className="text-3xl font-PoppinsBold text-[#263D67]">
-                        {item.stock}
-                      </Text>
-                      <Text className="text-base font-PoppinsRegular text-[#6B7280] ml-2">
-                        in stock
-                      </Text>
-                      {item.stock <= item.minStock && item.stock > 0 && (
-                        <View className="ml-2">
-                          <AlertTriangle size={20} color="#DC3545" />
-                        </View>
-                      )}
-                    </View>
-                    {/* <Text className="text-sm font-PoppinsRegular text-[#9CA3AF]">
-                      Min: {item.minStock}
-                    </Text> */}
-                  </View>
-
-                  {/* Progress Bar */}
-                  <View className="bg-[#E0E0E0] h-2.5 rounded-full mb-4">
-                    <View
-                      className="h-2.5 rounded-full"
-                      style={{
-                        width: `${Math.min((item.stock / (item.minStock * 2)) * 100, 100)}%`,
-                        backgroundColor: stockStatus.color
-                      }}
-                    />
-                  </View>
-
-                  <View className="flex-row justify-between items-center text-xs">
-                    <Text className="text-xs font-PoppinsRegular text-[#9CA3AF]">
-                      {item.batchNumber !== 'N/A' ? `Batch: ${item.batchNumber}` : ' '}
+              <Text className="font-semibold text-gray-700 mb-2">Stock Status</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {stockFilters.map((filter) => (
+                  <TouchableOpacity 
+                    key={filter.id}
+                    onPress={() => {
+                      setSelectedStockFilter(filter.id);
+                      setPage(1);
+                    }}
+                    className={`px-3 py-1.5 rounded-full ${selectedStockFilter === filter.id ? 'bg-blue-100 border border-blue-200' : 'bg-gray-100'}`}
+                  >
+                    <Text className={`text-sm ${selectedStockFilter === filter.id ? 'text-blue-700 font-semibold' : 'text-gray-700'}`}>
+                      {filter.name}
                     </Text>
-                    <Text className="text-xs font-PoppinsRegular text-[#9CA3AF]">
-                      {item.expiryDate !== 'N/A' ? `Expires: ${item.expiryDate}` : ' '}
-                    </Text>
-                  </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+      </View>
 
-                  {item.lastUpdated !== 'N/A' && (
-                    <Text className="text-xs font-PoppinsRegular text-[#9CA3AF] mt-1.5">
-                      Updated: {item.lastUpdated}
-                    </Text>
-                  )}
+      <ScrollView
+        className="flex-1"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Statistics Cards */}
+        <View className="p-4">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row gap-2">
+              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+                <View className="flex-row items-center mb-2">
+                  <Package size={20} color="#3B82F6" />
+                  <Text className="ml-2 text-gray-600 font-medium">Total Items</Text>
                 </View>
-              );
-            })}
+                <Text className="text-3xl font-bold text-gray-800">{stats.totalItems}</Text>
+              </View>
+
+              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+                <View className="flex-row items-center mb-2">
+                  <AlertTriangle size={20} color="#F59E0B" />
+                  <Text className="ml-2 text-gray-600 font-medium">Low Stock</Text>
+                </View>
+                <Text className="text-3xl font-bold text-gray-800">{stats.lowStock}</Text>
+              </View>
+
+              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+                <View className="flex-row items-center mb-2">
+                  <AlertTriangle size={20} color="#EF4444" />
+                  <Text className="ml-2 text-gray-600 font-medium">Out of Stock</Text>
+                </View>
+                <Text className="text-3xl font-bold text-gray-800">{stats.outOfStock}</Text>
+              </View>
+
+              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+                <View className="flex-row items-center mb-2">
+                  <Package size={20} color="#10B981" />
+                  <Text className="ml-2 text-gray-600 font-medium">In Stock</Text>
+                </View>
+                <Text className="text-3xl font-bold text-gray-800">{stats.inStock}</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Inventory List Header */}
+        <View className="px-4 mb-2 flex-row justify-between items-center">
+          <Text className="text-lg font-bold text-gray-800">
+            Inventory ({filteredInventory.length})
+          </Text>
+          <Text className="text-gray-500 text-sm">
+            Showing {stats.showingItems}
+          </Text>
+        </View>
+
+        {/* Inventory List */}
+        <View className="px-4 pb-6">
+          {filteredInventory.length === 0 ? (
+            <View className="bg-white rounded-2xl p-8 shadow-sm items-center">
+              <Package size={48} color="#D1D5DB" />
+              <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">No Items Found</Text>
+              <Text className="text-gray-500 text-center leading-6">
+                {searchQuery
+                  ? "No items match your search criteria."
+                  : "There are no inventory items recorded yet."}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={paginatedInventory}
+              keyExtractor={(item) => `item-${item.category}-${item.id}`}
+              scrollEnabled={false}
+              renderItem={({ item }) => {
+                const stockStatus = getStockStatus(item.stock, item.minStock);
+                return (
+                  <TouchableOpacity
+                    className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4"
+                  >
+                    <View className="p-5">
+                      <View className="flex-row justify-between items-start mb-3">
+                        <Text className="text-lg font-bold text-gray-800 flex-1 pr-2">
+                          {item.name}
+                        </Text>
+                        <View className={`px-3 py-1 rounded-full ${stockStatus.status === 'out_of_stock' ? 'bg-red-100 border border-red-200' : stockStatus.status === 'low_stock' ? 'bg-orange-100 border border-orange-200' : 'bg-green-100 border border-green-200'}`}>
+                          <Text className={`text-xs font-semibold ${stockStatus.status === 'out_of_stock' ? 'text-red-700' : stockStatus.status === 'low_stock' ? 'text-orange-700' : 'text-green-700'}`}>
+                            {stockStatus.text}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <Text className="text-gray-600 text-sm mb-4">
+                        {item.description}
+                      </Text>
+
+                      <View className="flex-row justify-between items-center mb-3">
+                        <View>
+                          <Text className="text-gray-500 text-sm">Current Stock</Text>
+                          <Text className="text-2xl font-bold text-gray-800">
+                            {item.stock}
+                          </Text>
+                        </View>
+                        <View className="items-end">
+                          <Text className="text-gray-500 text-sm">Minimum Stock</Text>
+                          <Text className="text-lg font-semibold text-gray-700">
+                            {item.minStock}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Progress Bar */}
+                      <View className="bg-gray-200 h-2 rounded-full mb-4">
+                        <View
+                          className="h-2 rounded-full"
+                          style={{
+                            width: `${Math.min((item.stock / (item.minStock * 2)) * 100, 100)}%`,
+                            backgroundColor: stockStatus.color
+                          }}
+                        />
+                      </View>
+
+                      <View className="flex-row justify-between">
+                        <Text className="text-gray-500 text-xs">
+                          {item.batchNumber !== 'N/A' ? `Batch: ${item.batchNumber}` : ' '}
+                        </Text>
+                        <Text className="text-gray-500 text-xs">
+                          {item.expiryDate !== 'N/A' ? `Expires: ${item.expiryDate}` : ' '}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )
+              }}
+            />
+          )}
+        </View>
+
+        {/* Pagination Controls */}
+        {filteredInventory.length > itemsPerPage && (
+          <View className="px-4 pb-6">
+            <View className="bg-white rounded-2xl p-4 shadow-sm flex-row justify-between items-center">
+              <TouchableOpacity 
+                onPress={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-gray-100' : 'bg-blue-50'}`}
+              >
+                <Text className={`font-medium ${page === 1 ? 'text-gray-400' : 'text-blue-700'}`}>Previous</Text>
+              </TouchableOpacity>
+              
+              <Text className="text-gray-600">
+                Page {page} of {totalPages}
+              </Text>
+              
+              <TouchableOpacity 
+                onPress={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className={`px-4 py-2 rounded-lg ${page === totalPages ? 'bg-gray-100' : 'bg-blue-50'}`}
+              >
+                <Text className={`font-medium ${page === totalPages ? 'text-gray-400' : 'text-blue-700'}`}>Next</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
