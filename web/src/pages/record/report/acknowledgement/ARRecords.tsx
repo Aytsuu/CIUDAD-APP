@@ -103,7 +103,7 @@ export default function ARRecords() {
 
     // Proceed to creation
     try {
-      addWAR(user?.staff?.staff_id as string, {
+      addWAR({staff: user?.staff?.staff_id}, {
         onSuccess: (data) => {
           const compositions = selectedRows.map((row) => ({
             ar: row.id,

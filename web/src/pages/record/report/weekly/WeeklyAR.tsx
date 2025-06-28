@@ -5,9 +5,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays } from "lucide-react"
+import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Loader2 } from "lucide-react"
 import { useGetWeeklyAR } from "../queries/reportFetch"
-import { getAllWeeksInMonth, getMonthName, getMonths, getWeekNumber, hasWeekPassed } from "@/helpers/dateHelper"
+import { getAllWeeksInMonth, getMonthName, getMonths, getRangeOfDaysInWeek, getWeekNumber, hasWeekPassed } from "@/helpers/dateHelper"
 import { useNavigate } from "react-router"
 import RecentWeeklyAR from "./RecentWeeklyAR"
 import MissedWeeklyAR from "./MissedWeeklyAR"
@@ -29,9 +29,9 @@ export default function WeeklyAR() {
 
     // Find the earliest year in the data
     const earliestDate = weeklyAR.reduce((earliest: any, war: any) => {
-      const warDate = new Date(war.date)
+      const warDate = new Date(war.created_for)
       return warDate < earliest ? warDate : earliest
-    }, new Date(weeklyAR[0].date))
+    }, new Date(weeklyAR[0].created_for))
 
     const earliestYear = earliestDate.getFullYear()
 
@@ -47,18 +47,18 @@ export default function WeeklyAR() {
   // Filter data by selected year
   const filteredWeeklyAR =
     weeklyAR?.filter((war: any) => {
-      const warYear = new Date(war.date).getFullYear()
+      const warYear = new Date(war.created_for).getFullYear()
       return warYear === selectedYear
     }) || []
 
   // Group data by month and week for better organization
   const organizedData = months
     .map((month) => {
-      const monthData = filteredWeeklyAR?.filter((war: any) => month === getMonthName(war.date)) || []
+      const monthData = filteredWeeklyAR?.filter((war: any) => month === getMonthName(war.created_for)) || []
 
       // Group by week within the month
       const weekGroups = monthData.reduce((acc: any, war: any) => {
-        const weekNo = getWeekNumber(war.date)
+        const weekNo = getWeekNumber(war.created_for)
         if (!acc[weekNo]) {
           acc[weekNo] = []
         }
@@ -101,7 +101,10 @@ export default function WeeklyAR() {
       <div className="min-h-screen bg-gray-50/50 p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Loading...</div>
+            <div className="text-muted-foreground">
+              <Loader2 className="w-full text-center animate-spin mb-2"/>
+              Please wait while we load the your report records...
+            </div>
           </div>
         </div>
       </div>
@@ -245,7 +248,10 @@ export default function WeeklyAR() {
                                                   state: {
                                                     params: {
                                                       type: "WAR",
-                                                      data: war,
+                                                      data: {
+                                                       ...war,
+                                                       reportPeriod: getRangeOfDaysInWeek(weekNo, month, selectedYear)
+                                                      },
                                                     },
                                                   },
                                                 })

@@ -21,6 +21,37 @@ export const getMonthName = (dateString: string): string => {
   return date.toLocaleString('default', { month: 'long' });
 }
 
+// Get the full date for the last day of the week
+export const lastDayOfTheWeek = (weekNo: number, month: number, year: number) => {
+  const monthIndex = month - 1;
+  const firstDay = new Date(year, monthIndex, 1);
+  const firstDayWeekDay = firstDay.getDay();
+  const lastDayDate = 7 * weekNo - firstDayWeekDay;
+  const lastDayOfMonth = new Date(year, month, 0).getDate();
+  const day = Math.min(lastDayDate, lastDayOfMonth);
+  return new Date(year, monthIndex, day).toISOString().split('T')[0];
+};
+
+// Get the range of days in a week (e.g September 01-05, 2025)
+export const getRangeOfDaysInWeek = (week: number, month: string, year: number) => {
+  const monthNum = monthNameToNumber(month); // 1-based
+  if (!monthNum) return null;
+
+  const monthIndex = monthNum - 1;
+  const firstDay = new Date(year, monthIndex, 1);
+  const firstDayWeekDay = firstDay.getDay();
+
+  // Calculate the first day of the week
+  const startDay = 1 + (week - 1) * 7 - firstDayWeekDay + 1;
+  const lastDayOfMonth = new Date(year, monthNum, 0).getDate();
+  const start = Math.max(1, startDay);
+  const end = Math.min(start + 6, lastDayOfMonth);
+
+  const startDate = new Date(year, monthIndex, start).getDate();
+  const endDate = new Date(year, monthIndex, end).getDate();
+
+  return `${month.toUpperCase()} ${startDate}-${endDate}, ${year}`;
+};
 // Get month in number based on a given month in text
 export const monthNameToNumber = (month: string) => {
   const months = [

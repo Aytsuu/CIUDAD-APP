@@ -10,7 +10,7 @@ import { Calendar, MapPin, FileText, CheckCircle2, Loader2, Plus, Check } from "
 import React from "react"
 import { useLocation } from "react-router"
 import { useGetARByDate } from "../queries/reportFetch"
-import { formatDate, monthNameToNumber } from "@/helpers/dateHelper"
+import { formatDate, lastDayOfTheWeek, monthNameToNumber } from "@/helpers/dateHelper"
 import { useAddWAR, useAddWARComp } from "../queries/reportAdd"
 import { toast } from "sonner"
 import { useAuth } from "@/context/AuthContext"
@@ -49,7 +49,12 @@ export default function CreateMissingWeeks() {
   const handleCreateWeeklyReport = async () => {
     if (selectedReports.length === 0) return
     setIsCreating(true);
-    addWAR(user?.staff?.staff_id as string, {
+    addWAR({
+      war_created_for: lastDayOfTheWeek(
+        week, monthNameToNumber(month) as number, 
+        year),
+      staff: user?.staff?.staff_id
+    }, {
       onSuccess: (data) => {
         const compositions = selectedReports.map((id) => ({
           ar: id,

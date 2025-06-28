@@ -56,6 +56,7 @@ class ARFile(models.Model):
 class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(default=date.today)
+  war_created_for = models.DateField(default=date.today)
   war_status = models.CharField(max_length=50, default='Unsigned')
   war_is_archive = models.BooleanField(default=False)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)

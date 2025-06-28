@@ -41,8 +41,10 @@ const header = [
 
 export const WARDocTemplate = ({
   data,
+  reportPeriod,
 } : {
   data: any;
+  reportPeriod: string;
 }) => {
   const { uploadFile } = useInstantFileUpload({});
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
@@ -77,7 +79,7 @@ export const WARDocTemplate = ({
       <WARTemplatePDF
         logo1={reportTemplate?.rte_logoLeft}
         logo2={reportTemplate?.rte_logoRight}
-        reportPeriod=""
+        reportPeriod={reportPeriod}
         data={data}
         preparedBy={prepared_by}
         recommendedBy={recommended_by}
@@ -301,7 +303,7 @@ export const WARDocTemplate = ({
               <Label>REPUBLIC OF THE PHILIPPINES</Label>
               <Label>CITY OF CEBU</Label>
               <Label>CEBU CITY DISASTER RISK REDUCTION MANAGEMENT OFFICE</Label>
-              <Label>Weekly Accomplishment Report September 01-05, 2024 </Label>
+              <Label>Weekly Accomplishment Report <span className="underline ml-1">{reportPeriod}</span></Label>
               <Label>BARANGAY SAN ROQUE (CIUDAD) </Label>
             </div>
             <div className="flex flex-col items-center relative">

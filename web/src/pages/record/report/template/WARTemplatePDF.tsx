@@ -154,6 +154,7 @@ interface WARTemplatePDFProps {
   recommendedBy?: string
   approvedBy?: string
   crew?: any
+  dateRange?: string;
 }
 
 export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
@@ -164,7 +165,7 @@ export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
   preparedBy = "JUNO",
   recommendedBy = "JUNO",
   approvedBy = "JUNO",
-  crew = []
+  crew = [],
 }) => (
   <Document>
     <Page size="LEGAL" style={styles.page} orientation="landscape">
@@ -181,7 +182,7 @@ export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
           <Text style={styles.headerText}>REPUBLIC OF THE PHILIPPINES</Text>
           <Text style={styles.headerText}>CITY OF CEBU</Text>
           <Text style={styles.headerText}>CEBU CITY DISASTER RISK REDUCTION MANAGEMENT OFFICE</Text>
-          <Text style={styles.headerText}>Weekly Accomplishment Report {reportPeriod}</Text>
+          <Text style={styles.headerText}>Weekly Accomplishment Report <Text style={{ textDecoration: 'underline'}}>{reportPeriod}</Text></Text>
           <Text style={styles.headerText}>BARANGAY SAN ROQUE (CIUDAD)</Text>
         </View>
 
