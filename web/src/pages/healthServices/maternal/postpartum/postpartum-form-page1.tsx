@@ -41,13 +41,13 @@ interface Patient {
     per_dob?: string
     per_sex?: string
   }
-    address?: {
-      add_street?: string
-      add_barangay?: string
-      add_city?: string
-      add_province?: string
-      sitio?: string
-    }
+  address?: {
+    add_street?: string
+    add_barangay?: string
+    add_city?: string
+    add_province?: string
+    sitio?: string
+  }
   family_head_info?: {
     family_heads?: {
       father?: {
@@ -58,6 +58,14 @@ interface Patient {
           per_dob?: string
         }
       }
+    }
+  }
+  spouse_info?: {
+    spouse_info?: {
+      spouse_fname?: string
+      spouse_lname?: string
+      spouse_mname?: string
+      spouse_dob?: string
     }
   }
 }
@@ -127,6 +135,7 @@ export default function PostpartumFormFirstPg({
       const personalInfo = patient.personal_info
       const address = patient.address
       const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info
+      const spouse = patient.spouse_info?.spouse_info
 
       setValue("mothersPersonalInfo.familyNo", patient.family?.fam_id || "")
       setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname)
@@ -145,6 +154,13 @@ export default function PostpartumFormFirstPg({
         setValue("mothersPersonalInfo.address.barangay", address.add_barangay)
         setValue("mothersPersonalInfo.address.city", address.add_city)
         setValue("mothersPersonalInfo.address.province", address.add_province)
+      }
+
+      if(spouse) {
+        setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+        setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+        setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+        setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
       }
     }
   }

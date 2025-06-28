@@ -195,7 +195,7 @@ export default function PrenatalFormThirdPg({
             <div className="grid grid-cols-1">
               <div className="grid m-2 pr-5">
                 <div className="flex flex-col m-5">
-                  <h3 className="text-md font-bold mb-4">SCHEDULE FOR FOLLOW-UP VISIT</h3>
+                  <h3 className="text-md font-semibold mb-4">SCHEDULE FOR FOLLOW-UP VISIT</h3>
                     <div className="mb-4 p-2 bg-green-100 border border-green-300 rounded text-green-700 text-sm">
                         <strong>📋 Prenatal Visit Guidelines:</strong>
                         <ul className="mt-1 ml-4 list-disc text-xs">
@@ -335,7 +335,7 @@ export default function PrenatalFormThirdPg({
             <Separator className="mt-10 mb-5" />
             <div className="grid grid-cols- gap-4 mt-3">
               <div className="flex flex-col w-full">
-                <h3 className="text-md font-bold p-5">GUIDE FOR 4ANC VISITS</h3>
+                <h3 className="text-md font-semibold p-5">GUIDE FOR 4ANC VISITS</h3>
                 <div>
                   <div className="grid grid-cols-3 gap-3 pl-5 pr-5 mb-5">
                     <FormInput control={form.control} name="ancVisits.aog.aogWeeks" label="AOG weeks" type="number" />
@@ -390,7 +390,7 @@ export default function PrenatalFormThirdPg({
 
               <Separator className="mt-10" />
               <div className="flex flex-col w-full">
-                <h3 className="text-md font-bold p-5">CHECKLIST</h3>
+                <h3 className="text-md font-semibold p-5">CHECKLIST</h3>
                 <Label className="ml-10 mb-5">()PRE-ECLAMPSIA</Label>
                 {preEclampsiaChecklistGroup.map((group, i) => (
                   <div className="grid grid-cols-2 ml-20" key={i}>
@@ -417,7 +417,7 @@ export default function PrenatalFormThirdPg({
             <Separator className="mt-10 mb-10" />
             <div className="grid grid-cols-2 mt-3 gap-3">
               <div className=" p-5 border-r-2 border-gray-300">
-                <h3 className="text-md font-bold">BIRTH PLANS</h3>
+                <h3 className="text-md font-semibold">BIRTH PLANS</h3>
                 <div className="grid grid-cols- gap-7 mt-5">
                   <FormInput
                     control={form.control}
@@ -461,7 +461,7 @@ export default function PrenatalFormThirdPg({
               </div>
 
               <div className="mt-3 ml-5 pr-5 pl-5">
-                <h3 className="text-md font-bold">MICRONUTRIENT SUPPLEMENTATION</h3>
+                <h3 className="text-md font-semibold">MICRONUTRIENT SUPPLEMENTATION</h3>
                 <div className="flex flex-col">
                   <Label className="mt-5">IRON W/ FOLIC ACID:</Label>
                   <div className="grid grid-cols-2 gap-4">
@@ -492,7 +492,7 @@ export default function PrenatalFormThirdPg({
 
             <Separator className="mt-10 mb-5" />
             <div className="flex flex-col mt-3 p-5 border-gray">
-              <h3 className="text-md font-bold">RISK CODES</h3>
+              <h3 className="text-md font-semibold">RISK CODES</h3>
               <div className="flex flex-row gap-[15rem] ml-5 mt-5">
                 <Label>HAS ONE OR MORE OF THE FF:</Label>
                 <Label>HAS ONE OR MORE 1 CONDITIONS:</Label>

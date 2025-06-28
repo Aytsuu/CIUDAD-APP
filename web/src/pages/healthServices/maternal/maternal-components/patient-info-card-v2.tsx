@@ -4,14 +4,14 @@ import { Calendar, MapPin, User, Heart, Shield } from "lucide-react"
 // Updated interface to match Patient
 interface Patient {
   pat_id: string;
-  patients: {
-    firstName: string;
-    lastName: string;
-    middleName: string;
-    sex: string;
-    dateOfBirth?: string
-    age: number;
-    ageTime: string;
+  age: number;
+  personal_info: {
+    per_fname: string;
+    per_lname: string;
+    per_mname: string;
+    per_sex: string;
+    per_dob?: string
+    ageTime?: "yrs";
   };
   address?: {
     add_street?: string;
@@ -30,10 +30,10 @@ interface PatientInfoCardv2Props {
 }
 
 // Helper functions
-const formatFullName = (patients?: Patient["patients"]) => {
+const formatFullName = (patients?: Patient["personal_info"]) => {
   if (!patients) return "Not provided"
-  const { firstName = "", middleName = "", lastName = "" } = patients
-  const fullName = `${firstName} ${middleName} ${lastName}`.trim()
+  const { per_fname = "", per_mname = "", per_lname = "" } = patients
+  const fullName = `${per_fname} ${per_mname} ${per_lname}`.trim()
   return fullName || "Not provided"
 }
 
@@ -82,11 +82,12 @@ export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
     return <EmptyPatientState />
   }
 
-  const fullName = formatFullName(patient.patients)
-  const age = formatAge({ age: patient.patients.age, ageTime: patient.patients.ageTime })
-  const dob = formatDateOfBirth(patient.patients.dateOfBirth)
+  const fullName = formatFullName(patient.personal_info)
+  const age = patient.personal_info ? formatAge({ age: patient.age, ageTime: patient.personal_info.ageTime ?? "yrs" }) : ""
+  const dob = patient.personal_info ? formatDateOfBirth(patient.personal_info.per_dob) : ""
+  const sex = patient.personal_info ? patient.personal_info.per_sex : "Not specified"
   const address = formatAddress(patient)
-  const GenderIcon = getGenderIcon(patient.patients.sex)
+  const GenderIcon = getGenderIcon(patient.personal_info?.per_sex)
 
   return (
     <div className="p-6 bg-white rounded-sm shadow-md border border-gray-200">
@@ -117,8 +118,8 @@ export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
           <div className="flex items-start gap-3">
             <GenderIcon className="w-5 h-5 text-purple-600 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-gray-900">{patient.patients.sex || "Not specified"}</p>
-              <p className="text-xs text-gray-500">Gender</p>
+              <p className="text-sm font-medium text-gray-900">{sex}</p>
+              <p className="text-xs text-gray-500">Sex</p>
             </div>
           </div>
         </div>

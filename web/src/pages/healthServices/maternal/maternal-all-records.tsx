@@ -1,34 +1,40 @@
 import { useState } from "react";
+import { Link } from "react-router";
+import { ColumnDef } from "@tanstack/react-table";
+
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-// import { Link } from "react-router";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search } from "lucide-react";
-import { Link } from "react-router";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
-// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { FileInput } from "lucide-react";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useMaternalRecords } from "./queries/maternalFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import CardLayout from "@/components/ui/card/card-layout";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+
+import { ArrowUpDown, Search } from "lucide-react";
+import { FileInput } from "lucide-react";
+import WomanRoundedIcon from '@mui/icons-material/WomanRounded';
+import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
+
+import { useMaternalRecords } from "./queries/maternalFetchQueries";
 
 
 export default function MaternalAllRecords() {
   interface maternalRecords  {
     pat_id: string;
-    patients: {
-      firstName: string;
-      lastName: string;
-      middleName: string;
-      sex: string;
-      dateOfBirth?: string
-      age: number;
+    age: number;
+
+    personal_info: {
+      per_fname: string;
+      per_lname: string;
+      per_mname: string;
+      per_sex: string;
+      per_dob?: string
       ageTime: string;
     };
+
     address?: {
       add_street?: string;
       add_barangay?: string;
@@ -36,6 +42,7 @@ export default function MaternalAllRecords() {
       add_province?: string;
       add_external_sitio?: string;
     }
+    
     sitio?: string;
     pat_type: "Transient" | "Resident";
     patrec_type?: string;
@@ -68,6 +75,8 @@ export default function MaternalAllRecords() {
       const dateOfBirth = personalInfo?.per_dob || "";
 
       let age = 0;
+      let ageTime = "yrs";
+
       if (dateOfBirth) {
         age = Number.isNaN(calculateAge(dateOfBirth)) ? 0 : calculateAge(dateOfBirth);
       }
@@ -77,14 +86,14 @@ export default function MaternalAllRecords() {
 
       return {
         pat_id: record.pat_id,
-        patients: {
-          firstName: personalInfo?.per_fname || "",
-          lastName: personalInfo?.per_lname || "",
-          middleName: personalInfo?.per_mname || "",
-          sex: personalInfo?.per_sex || "",
-          age: age,
-          ageTime: "yrs",
-          dateOfBirth: dateOfBirth || "",
+        age: age,
+        personal_info: {
+          per_fname: personalInfo?.per_fname || "",
+          per_lname: personalInfo?.per_lname || "",
+          per_mname: personalInfo?.per_mname || "",
+          per_sex: personalInfo?.per_sex || "",
+          ageTime: ageTime,
+          per_dob: dateOfBirth || "",
         },
         address: {
           add_street: address?.add_street,
@@ -98,6 +107,7 @@ export default function MaternalAllRecords() {
       };
     });
   }   
+
 
   const columns: ColumnDef<maternalRecords>[] = [
     {
@@ -122,16 +132,17 @@ export default function MaternalAllRecords() {
         </div>
       ),
       cell: ({ row }) => {
-        const patient = row.original.patients;
+        const patient = row.original.personal_info;
+        const age = row.original.age || 0;
         const fullName =
-          `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
+          `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname}`.trim();
 
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-darkGray">
-                {patient.sex}, {patient.age} {patient.ageTime} old
+                {patient.per_sex}, {age} {patient.ageTime} old
               </div>
             </div>
           </div>
@@ -197,15 +208,15 @@ export default function MaternalAllRecords() {
                         patientData: {
                           pat_id: row.original.pat_id,
                           pat_type: row.original.pat_type, 
+                          age: row.original.age,
                           address: row.original.address,
-                          patients: {
-                            firstName: row.original.patients.firstName,
-                            lastName: row.original.patients.lastName,
-                            middleName: row.original.patients.middleName,
-                            sex: row.original.patients.sex,
-                            dateOfBirth: row.original.patients.dateOfBirth,
-                            age: row.original.patients.age,
-                            ageTime: row.original.patients.ageTime, 
+                          personal_info: {
+                            per_fname: row.original.personal_info.per_fname,
+                            per_lname: row.original.personal_info.per_lname,
+                            per_mname: row.original.personal_info.per_mname,
+                            per_sex: row.original.personal_info.per_sex,
+                            per_dob: row.original.personal_info.per_dob,
+                            ageTime: row.original.personal_info.ageTime, 
                           },
                           sitio: row.original.sitio,
                           patrec_type: row.original.patrec_type,
@@ -236,7 +247,7 @@ export default function MaternalAllRecords() {
 
   const filteredData = data.filter((item) => {
     const matchesSearchTerm = searchTerm === "" ||
-      `${item.patients.firstName} ${item.patients.lastName} ${item.patients.middleName}`
+      `${item.personal_info.per_fname} ${item.personal_info.per_lname} ${item.personal_info.per_mname}`
         .toLowerCase().includes(searchTerm.toLowerCase()) || 
       item.pat_id.toLowerCase().includes(searchTerm.toLowerCase()); 
 
@@ -244,6 +255,8 @@ export default function MaternalAllRecords() {
 
     return matchesSearchTerm && matchesFilter;
   })
+
+  const totalRecords = filteredData.length;
 
   const totalEntries = Math.ceil(filteredData.length / entriesCount);
   const maternalPagination = filteredData.slice(
@@ -270,6 +283,49 @@ export default function MaternalAllRecords() {
       description="Manage and view mother's information"
     >
       <div className="w-full h-full flex flex-col">
+        <div className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <CardLayout
+              title='Total Maternal Patients'
+              description="Total number of patients with maternal records"
+              content={
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold">{totalRecords}</span>
+                    <span className="text-xs text-muted-foreground">Total patients</span>
+                  </div>
+                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                    <WomanRoundedIcon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              }
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
+
+            <CardLayout
+              title="Active Pregnancies"
+              description="Total patients with active pregnancies"
+              content={
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold">{}</span>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <span>{}% of total</span>
+                    </div>
+                  </div>
+                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                    <PregnantWomanIcon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              }
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
+          </div>
+        </div>
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}
           <div className="flex flex-col md:flex-row gap-4 w-full">

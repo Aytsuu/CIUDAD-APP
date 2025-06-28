@@ -82,17 +82,18 @@ export const usePatientPostpartumCount = (patientId: string) => {
     queryKey: ["patientPostpartumCount", patientId],
     queryFn: () => getPatientPostpartumCount(patientId),
     enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1, // Only retry once on failure
+    staleTime: 1 * 60 * 1000, 
+    retry: 1, 
+	 refetchOnMount: true,
   })
 }
 
 // Hook to get all postpartum records for a specific patient
-export const usePatientPostpartumRecords = (patientId: string) => {
-  return useQuery({
-    queryKey: ["patientPostpartumRecords", patientId],
-    queryFn: () => getPatientPostpartumCount(patientId),
-    enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  })
-}
+// export const usePatientPostpartumRecords = (patientId: string) => {
+//   return useQuery({
+//     queryKey: ["patientPostpartumRecords", patientId],
+//     queryFn: () => getPatientPostpartumCount(patientId),
+//     enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//   })
+// }

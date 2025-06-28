@@ -221,7 +221,7 @@ export default function LaboratoryResults({ labResults, onLabResultsChange }: La
   return (
     <>
       <Separator className="mt-8 mb-6" />
-      <h3 className="text-md font-bold">LABORATORY RESULTS</h3>
+      <h3 className="text-md font-semibold">LABORATORY RESULTS</h3>
       <div className="p-4 space-y-6">
         <div className="grid grid-cols-1 gap-6">
           {Object.entries(LAB_DISPLAY_NAMES).map(([labName, displayName]) => (

@@ -3,7 +3,6 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { SyringeIcon, Pill, Baby } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
-import { usePatientPostpartumCount } from "@/pages/record/health/patientsRecord/queries/patientsFetchQueries";
 
 interface PatientLinkData {
   pat_id: string;
@@ -24,6 +23,7 @@ interface PatientLinkData {
     per_lname: string;
     per_dob: string;
     per_sex: string;
+    ageTime: "yrs";
   };
 }
 
@@ -39,14 +39,11 @@ export default function Records({
   vaccinationCount,
   medicineCount,
   firstAidCount,
+  postpartumCount,
   patientLinkData,
 }: MedicalHistoryTabProps) {
 
-  const {
-    data: postpartumCount = 0,
-    isLoading: isLoadingPostpartum,
-    error: postpartumError,
-  } = usePatientPostpartumCount(patientLinkData.pat_id)
+  
 
   return (
     <TabsContent value="medical" className="mt-0">
@@ -131,33 +128,30 @@ export default function Records({
               </div>
             )}
 
-            {(isLoadingPostpartum || postpartumCount > 0) && (
-                <div className="p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
+            {(postpartumCount !==  0) && (
+                <div className="p-4 rounded-lg border border-pink-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-pink-100 rounded-lg">
+                      <div className="p-2 rounded-lg">
                         <Baby className="w-5 h-5 text-pink-600" />
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Postpartum Care</h3>
                         <div className="flex items-center space-x-4 mt-1">
                           <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">
-                            {isLoadingPostpartum ? "Loading..." : `${postpartumCount} Records`}
+                            {postpartumCount !== undefined ? postpartumCount : "0"} Records
                           </span>
-                          <span className="text-sm text-gray-500">Maternal health monitoring</span>
+                          <span className="text-sm text-gray-500">Maternal Services
+                            
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <Link
-                      to="/maternalindividualrecords"
-                      state={{ params: { patientData: patientLinkData } }}
-                      className="transition-transform hover:scale-105"
-                    >
+                    <Link to="/maternalindividualrecords" state={{ params: { patientData: patientLinkData } }}>
                       <Button
                         variant="outline"
                         size="sm"
                         className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-                        disabled={isLoadingPostpartum}
                       >
                         View Details
                       </Button>

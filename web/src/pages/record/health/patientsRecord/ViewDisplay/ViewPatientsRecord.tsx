@@ -16,6 +16,7 @@ import { usePatientDetails } from "../queries/patientsFetchQueries";
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
+import { usePatientPostpartumCount } from "@/pages/record/health/patientsRecord/queries/patientsFetchQueries";
 import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
 import { toast } from "sonner";
 import { useUpdatePatient } from "../queries/patientsUpdateQueries";
@@ -65,6 +66,9 @@ export default function ViewPatientRecord() {
   const firstAidCount = firstAidCountData?.firstaidrecord_count;
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "");
+  const postpartumCount = postpartumCountData;
+
   const updatePatientData = useUpdatePatient();
 
   const currentPatient = useMemo(() => {
@@ -356,7 +360,7 @@ export default function ViewPatientRecord() {
           vaccinationCount={vaccinationCount}
           medicineCount={medicineCount}
           firstAidCount={firstAidCount}
-          postpartumCount={undefined}
+          postpartumCount={postpartumCount}
           patientLinkData={patientLinkData}
         />
         <VisitHistoryTab completedData={completedData} pendingData={pendingData} />

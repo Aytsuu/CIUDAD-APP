@@ -61,7 +61,7 @@ export const transformPostpartumFormData = (
 
     // Follow-up visit data
     followup_date: formData.postpartumInfo?.nextVisitDate || new Date().toISOString().split("T")[0],
-    followup_description: "Postpartum follow-up visit",
+    followup_description: "Postpartum Follow-up Visit",
   }
 
   return transformedData

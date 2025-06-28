@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu"
-import { Link, Link as RouterLink } from "react-router"
+import { Link } from "react-router"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -56,7 +56,7 @@ interface Patients {
   }
 }
 
-// Define the columns for the data table
+// define the columns for the data table
 export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "id",
@@ -130,9 +130,9 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <RouterLink to={`/view-patients-record/${row.getValue("id")}`} state={{ patientId: row.getValue("id") }}>
+      <Link to={`/view-patients-record/${row.getValue("id")}`} state={{ patientId: row.getValue("id") }}>
         <Button variant="outline">View</Button>
-      </RouterLink>
+      </Link>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -278,7 +278,7 @@ export default function PatientsRecord() {
               </div>
             }
             cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
+            headerClassName="pb-2"  
             contentClassName="pt-0"
           />
         </div>

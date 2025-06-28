@@ -19,12 +19,15 @@ class Pregnancy(models.Model):
     status = models.CharField(max_length=20, choices=[
         ('active', 'Active'),
         ('completed', 'Completed'),
-        ('terminated', 'Terminated')
+        ('pregnancy loss', 'Pergnancy Loss')
     ], default='active')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
+        db_table = 'pregnancy'
+        ordering = ['created_at']
         unique_together = ['pat_id', 'pregnancy_number']
+
 
 class Prenatal_Form(models.Model):
     pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)
@@ -35,8 +38,8 @@ class Prenatal_Form(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True)  # TEMPORARY to handle existing records
+    spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id')
-    # patrec_id = models.OneToOneField(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True  # TEMPORARY to handle existing records)
 
     def save(self, *args, **kwargs):
         if not self.pf_id:
@@ -59,6 +62,7 @@ class Previous_Hospitalization(models.Model):
     class Meta:
         db_table = 'pf_previous_hospitalization'
 
+
 class Previous_Pregnancy(models.Model):
     pfpp_id = models.BigAutoField(primary_key=True)
     pfpp_date_of_delivery = models.DateField()
@@ -73,6 +77,7 @@ class Previous_Pregnancy(models.Model):
     class Meta:
         db_table = 'pf_previous_pregnancy'
 
+
 class TT_Status(models.Model):
     pfts_id = models.BigAutoField(primary_key=True)
     pfts_vaccine_type = models.CharField(max_length=100)
@@ -85,24 +90,6 @@ class TT_Status(models.Model):
     class Meta:
         db_table = 'pf_tt_status'
 
-# class Lab_Result_Dates(models.Model):
-#     pflr_id = models.BigAutoField(primary_key=True)
-#     pflr_urinalysis = models.DateField()
-#     pflr_cbc = models.DateField()   
-#     pflr_sgot_sgpt = models.DateField()
-#     pflr_creatinine_serum = models.DateField()
-#     pflr_bua_bun = models.DateField()
-#     pflr_syphillis = models.DateField()
-#     pflr_hiv_test = models.DateField()
-#     pflr_hepa_b = models.DateField()
-#     pflr_ogct_50 = models.DateField()
-#     pflr_ogct_100 = models.DateField()
-#     pflr_lab_remarks = models.CharField(max_length=250)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,  related_name='pf_lab_result_dates', db_column='pf_id')
-
-#     class Meta:
-#         db_table = 'pf_lab_result_dates'
 
 class Guide4ANCVisit(models.Model):
     pfav_id = models.BigAutoField(primary_key=True)
@@ -114,6 +101,7 @@ class Guide4ANCVisit(models.Model):
 
     class Meta:
         db_table = 'pf_anc_visit'
+
 
 class Checklist(models.Model):
     pfc_id = models.BigAutoField(primary_key=True)

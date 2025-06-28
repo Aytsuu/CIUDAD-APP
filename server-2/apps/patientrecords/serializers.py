@@ -5,7 +5,7 @@ from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer,HouseholdMinimalSerializer
 from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
-# serializers.py
+from apps.maternal.models import PostpartumRecord
 from apps.healthProfiling.serializers.minimal import *
 
 class PartialUpdateMixin:  
@@ -237,15 +237,13 @@ class PatientSerializer(serializers.ModelSerializer):
 
     def get_spouse_info(self, obj):
         try:
-            # Handle Resident patients
+            # handle Resident patients
             if obj.pat_type == 'Resident' and obj.rp_id:
-                # Use existing methods to get family information
                 family_heads_info = self.get_family_head_info(obj)
                 current_family_info = self.get_family(obj)
                 
-                # If no family composition found, allow spouse insertion
+                # if no family composition found, allow spouse insertion
                 if not family_heads_info or not current_family_info:
-                    # Check medical records first for residents without family composition
                     medical_spouse = self._check_medical_records_for_spouse(obj)
                     if not medical_spouse.get('spouse_exists', False):
                         return {
@@ -258,12 +256,11 @@ class PatientSerializer(serializers.ModelSerializer):
                 current_role = current_family_info['fc_role'].lower()
                 family_heads = family_heads_info['family_heads']
                 
-                # Only apply family composition spouse logic for Mother/Father roles
+                # only apply family composition spouse logic for Mother/Father roles
                 if current_role not in ['mother', 'father']:
-                    # For other roles (Son, Daughter, etc.) or no role yet, check medical records first
                     medical_spouse = self._check_medical_records_for_spouse(obj)
                     
-                    # If no spouse in medical records, allow spouse insertion
+                    # if no spouse in patient records, allow spouse insertion
                     if not medical_spouse.get('spouse_exists', False):
                         return {
                             'spouse_exists': False,
@@ -273,11 +270,11 @@ class PatientSerializer(serializers.ModelSerializer):
                     
                     return medical_spouse
                 
-                # Mother's spouse is Father, Father's spouse is Mother
+                # mother's spouse is Father, Father's spouse is Mother
                 spouse_role = 'father' if current_role == 'mother' else 'mother'
                 
                 if spouse_role in family_heads:
-                    # Spouse exists in family composition
+                    # spouse exists in family composition
                     spouse_info = family_heads[spouse_role]
                     personal_info = spouse_info['personal_info']
                     
@@ -296,7 +293,7 @@ class PatientSerializer(serializers.ModelSerializer):
                         }
                     }
                 else:
-                    # No spouse in family composition, allow insertion
+                    # no spouse in family composition, allow insertion
                     spouse_role_title = spouse_role.title()
                     return {
                         'spouse_exists': False,
@@ -304,12 +301,12 @@ class PatientSerializer(serializers.ModelSerializer):
                         'reason': f'{current_role.title()} role found but no {spouse_role_title} in family composition'
                     }
             
-            # Handle Transient patients
+            # handle transient patients
             elif obj.pat_type == 'Transient':
-                # Check medical records first for transients
+                # check patient records first for transients
                 medical_spouse = self._check_medical_records_for_spouse(obj)
                 
-                # If no spouse in medical records, allow spouse insertion
+                # ff no spouse in medical records, allow spouse insertion
                 if not medical_spouse.get('spouse_exists', False):
                     return {
                         'spouse_exists': False,
@@ -319,7 +316,6 @@ class PatientSerializer(serializers.ModelSerializer):
                 
                 return medical_spouse
             
-            # Unknown patient type
             else:
                 return {
                     'spouse_exists': False,
@@ -338,11 +334,26 @@ class PatientSerializer(serializers.ModelSerializer):
 
     def _check_medical_records_for_spouse(self, obj):
         try:
-            patient_records = PatientRecord.objects.filter(pat_id=obj)
-
-            # Check prenatal records
-            prenatal_records = patient_records.filter(patrec_type__icontains='Prenatal')
-            for pat_record in prenatal_records:
+            # Direct approach: Query PostpartumRecord with spouse
+            postpartum_with_spouse = PostpartumRecord.objects.filter(
+                patrec_id__pat_id=obj,
+                spouse_id__isnull=False
+            ).select_related('spouse_id').first()
+            
+            if postpartum_with_spouse and postpartum_with_spouse.spouse_id:
+                return {
+                    'spouse_exists': True,
+                    'spouse_source': 'postpartum_record',
+                    'spouse_info': SpouseSerializer(postpartum_with_spouse.spouse_id, context=self.context).data
+                }
+            
+            # Check prenatal records if no postpartum spouse found
+            patient_records = PatientRecord.objects.filter(
+                pat_id=obj,
+                patrec_type__icontains='Prenatal'
+            )
+            
+            for pat_record in patient_records:
                 if hasattr(pat_record, 'prenatal_form') and pat_record.prenatal_form:
                     prenatal = pat_record.prenatal_form
                     if hasattr(prenatal, 'spouse_id') and prenatal.spouse_id:
@@ -351,20 +362,8 @@ class PatientSerializer(serializers.ModelSerializer):
                             'spouse_source': 'prenatal_record',
                             'spouse_info': SpouseSerializer(prenatal.spouse_id, context=self.context).data
                         }
-
-            # Check postpartum records
-            postpartum_records = patient_records.filter(patrec_type__icontains='Postpartum')
-            for pat_record in postpartum_records:
-                if hasattr(pat_record, 'postpartum_record') and pat_record.postpartum_record:
-                    postpartum = pat_record.postpartum_record
-                    if hasattr(postpartum, 'spouse_id') and postpartum.spouse_id:
-                        return {
-                            'spouse_exists': True,
-                            'spouse_source': 'postpartum_record',
-                            'spouse_info': SpouseSerializer(postpartum.spouse_id, context=self.context).data
-                        }
             
-            # No spouse found in medical records either
+            # No spouse found in medical records
             return {
                 'spouse_exists': False,
                 'allow_spouse_insertion': True,
