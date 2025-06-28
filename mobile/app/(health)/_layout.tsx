@@ -21,7 +21,7 @@ export default () => {
             <Stack.Screen name="index" options={{ headerShown: false }} />
             
             <Stack.Screen name="admin/medicinerequest/medicinerequest" options={{ headerShown: false }} />
-            <Stack.Screen name="admin/animalbites/individual" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/animalbites/individual/[patientId]" options={{ headerShown: false }} />
             <Stack.Screen name="admin/animalbites/overall" options={{ headerShown: false }} />
         </Stack>
     );

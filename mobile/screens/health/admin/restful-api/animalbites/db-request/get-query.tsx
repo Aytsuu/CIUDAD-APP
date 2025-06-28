@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getAnimalbiteDetails, getAnimalBitePatientDetails, getAnimalbiteReferrals, getUniqueAnimalbitePatients, getPatientRecordsByPatId, getPatientRecordsByReferralId} from "../api/get-api" // Updated import
+import { getAnimalbiteDetails, getAnimalBitePatientDetails, getAnimalbiteReferrals, getUniqueAnimalbitePatients, getPatientRecordsByPatId, getPatientRecordsByReferralId, getAnimalBitePatientCounts} from "../api/get-api" // Updated import
 import { getAllPatients, getPatientById, createPatient } from "../api/get-api"
 
 import { toast } from "react-toastify";
@@ -40,7 +40,23 @@ export const useCreatePatient = () => {
   })
 }
 
+export const useAnimalBitePatientCounts = () => {
+  return useQuery({
+    queryKey: ["animalbite-patient-counts"],
+    queryFn: getAnimalBitePatientCounts,
+    staleTime: 1000 * 60 * 1, // Cache for 1 minute, adjust as needed
+  });
+};
 
+// Hook for individual patient's bite history
+export const useAnimalBitePatientHistory = (patId: string) => {
+  return useQuery({
+    queryKey: ["animalbite-patient-history", patId],
+    queryFn: () => getPatientRecordsByPatId(patId),
+    enabled: !!patId, // Only run query if patId is available
+    staleTime: 1000 * 60 * 1, // Cache for 1 minute
+  });
+};
 
 export const useAnimalbiteDetails = () => {
   return useQuery({
@@ -100,6 +116,23 @@ export const useSubmitAnimalBiteReferralMutation = () => {
   });
 };
 
+export const useSubmitAnimalBiteReferral = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: submitAnimalBiteReferral,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["animalbite-patient-counts"] }); // Invalidate aggregated counts
+      queryClient.invalidateQueries({ queryKey: ["animalbite-referrals"] }); // Invalidate all referrals
+      queryClient.invalidateQueries({ queryKey: ["animalbite-details"] }); // Invalidate all details
+      // If you were on an individual patient's page, you might want to invalidate their history too
+      queryClient.invalidateQueries({ queryKey: ["animalbite-patient-history"] }); // Invalidate all individual patient history queries
+      toast.success("Animal bite referral submitted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to submit referral: ${error.message || "Unknown error"}`);
+    },
+  });
+};
 
 export const useRefreshAllData = () => {
   const queryClient = useQueryClient()

@@ -15,15 +15,12 @@ from django.db.models import F
 
 class AnimalBitePatientRecordCountView(APIView):
     def get(self, request):
-        # Get the serialized data
-        serialized_data = AnimalBitePatientRecordCountSerializer.get_patient_record_counts()
-        
-        # Validate and return the data
-        serializer = AnimalBitePatientRecordCountSerializer(data=serialized_data, many=True)
+        aggregated_data = AnimalBitePatientRecordCountSerializer.get_aggregated_data()
+   
         serializer.is_valid(raise_exception=True)
-        
+        serializer = AnimalBitePatientRecordCountSerializer(aggregated_data, many=True)
         return Response(serializer.data)
-    
+        
 @api_view(['GET'])
 def get_animalbite_count(request, pat_id):
     try:

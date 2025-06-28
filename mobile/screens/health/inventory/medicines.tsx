@@ -83,63 +83,35 @@ export default function InventoryAdmin() {
         const standardizedCommodities: InventoryItem[] = commoditiesResult.data.map((item: any) => ({
 
           id: item.cinv_id,
-
           name: item.com_detail?.com_name || item.com_id?.com_name || 'Unknown Commodity',
-
           category: 'commodity' as const,
-
           description: `For ${item.com_detail?.user_type || 'all users'}`,
-
           stock: item.cinv_qty_avail || 0,
-
           minStock: 50,
-
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
-
           batchNumber: 'N/A',
-
           lastUpdated: item.inv_detail?.updated_at ?
-
-            new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
-
+          new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }));
-
         allInventory.push(...standardizedCommodities);
-
       }
-
-
-
-      // Process first aid
 
       const firstaidResult = results.find(r => r.name === 'firstaid');
 
       if (firstaidResult?.success && firstaidResult.data) {
 
         const standardizedFirstAids: InventoryItem[] = firstaidResult.data.map((item: any) => ({
-
           id: item.finv_id,
-
           name: item.fa_detail?.fa_name || item.fa_id?.fa_name || 'Unknown First Aid',
-
           category: 'first_aid' as const,
-
           description: item.fa_detail?.catlist || 'First aid item',
-
           stock: item.finv_qty_avail || 0,
-
           minStock: 10,
-
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
-
           batchNumber: 'N/A',
-
           lastUpdated: item.inv_detail?.updated_at ?
-
-            new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
-
+          new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }));
-
         allInventory.push(...standardizedFirstAids);
 
       }
@@ -151,28 +123,17 @@ export default function InventoryAdmin() {
       const vaccinesResult = results.find(r => r.name === 'vaccines');
 
       if (vaccinesResult?.success && vaccinesResult.data) {
-
         const standardizedVaccines: InventoryItem[] = vaccinesResult.data.map((item: any) => ({
-
           id: item.vacStck_id,
-
           name: item.vaccinelist?.vac_name || item.vac_id?.vac_name || 'Unknown Vaccine',
-
           category: 'vaccine' as const,
-
           description: item.vaccinelist?.vac_type_choices || 'Vaccine',
-
           stock: item.vacStck_qty_avail || 0,
-
           minStock: 5,
-
           expiryDate: item.inv_details?.expiry_date || item.inv_id?.expiry_date || 'N/A',
-
           batchNumber: item.batch_number || 'N/A',
-
           lastUpdated: item.inv_details?.updated_at || item.updated_at ?
-
-            new Date(item.inv_details?.updated_at || item.updated_at).toLocaleDateString() : 'N/A',
+          new Date(item.inv_details?.updated_at || item.updated_at).toLocaleDateString() : 'N/A',
 
         }));
 
@@ -187,31 +148,18 @@ export default function InventoryAdmin() {
       const immunizationResult = results.find(r => r.name === 'immunization');
 
       if (immunizationResult?.success && immunizationResult.data) {
-
         const standardizedImmunization: InventoryItem[] = immunizationResult.data.map((item: any) => ({
-
           id: item.imzStck_id,
-
           name: item.imz_detail?.imz_name || item.imz_id?.imz_name || 'Unknown Supply',
-
           category: 'immunization_supply' as const,
-
           description: item.imzStck_unit || 'Immunization Supply',
-
           stock: item.imzStck_avail || 0,
-
           minStock: 15,
-
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
-
           batchNumber: item.batch_number || 'N/A',
-
           lastUpdated: item.inv_detail?.updated_at ?
-
-            new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
-
+          new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }));
-
         allInventory.push(...standardizedImmunization);
       }
 
@@ -283,14 +231,14 @@ export default function InventoryAdmin() {
 
         <View className="pt-4">
           <Text className="text-3xl font-PoppinsBold text-[#263D67]">Inventory</Text>
-          <Text className="text-base font-PoppinsRegular text-[#6B7280] mt-1">Manage your medical supplies efficiently</Text>
+          <Text className="text-md font-PoppinsRegular text-[#6B7280] mt-1">Manage your medical supplies efficiently</Text>
         </View>
 
         {/* Search Bar */}
-        <View className="flex-row items-center bg-[#F0F0F0] rounded-xl px-4 py-3 my-5 border border-[#E0E0E0]">
-          <Search size={22} color="#6B7280" />
+        <View className="flex-row items-center bg-[#F0F0F0] rounded-xl px-1 p-2 my-5 border border-[#E0E0E0]">
+          <Search size={18} color="#6B7280" />
           <TextInput
-            className="flex-1 ml-3 text-[#263D67] font-PoppinsRegular text-base"
+            className="flex-1 ml-2 mt-1 text-[#263D67] font-PoppinsRegular text-base"
             placeholder="Search inventory..."
             placeholderTextColor="#9CA3AF"
             value={searchQuery}
@@ -299,8 +247,8 @@ export default function InventoryAdmin() {
         </View>
 
         {/* Category Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
-          <View className="flex-row space-x-3">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 2 }}>
+          <View className="flex-row gap-2">
             {categories.map((category) => {
               const isSelected = selectedCategory === category.id;
               return (
@@ -322,64 +270,65 @@ export default function InventoryAdmin() {
         </ScrollView>
       </View>
 
-      {/* Statistics Cards */}
-      <View className="px-5 py-5">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row gap-2">
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedStockFilter('all');
-                setSelectedCategory('all');
-              }}
-              className="bg-white p-5 rounded-xl shadow-md min-w-[140px]"
-            >
-              <Text className="text-3xl font-PoppinsBold text-[#263D67]">
-                {inventoryData.length}
-              </Text>
-              <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Total Items</Text>
-            </TouchableOpacity>
+     {/* Statistics Cards */}
+<View className="px-5 p-3 mb-2">
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <View className="flex-row gap-2 bg-[#F8F8F8]">
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedStockFilter('all');
+          setSelectedCategory('all');
+        }}
+        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
+      >
+        <Text className="text-2xl font-PoppinsBold text-[#263D67]">
+          {inventoryData.length}
+        </Text>
+        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Total Items</Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedStockFilter('low_stock');
-                setSelectedCategory('all');
-              }}
-              className="bg-white p-5 rounded-xl shadow-md min-w-[140px]"
-            >
-              <Text className="text-3xl font-PoppinsBold text-[#DC3545]">
-                {inventoryData.filter(item => item.stock > 0 && item.stock <= item.minStock).length}
-              </Text>
-              <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Low Stock</Text>
-            </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedStockFilter('low_stock');
+          setSelectedCategory('all');
+        }}
+        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
+      >
+        <Text className="text-2xl font-PoppinsBold text-[#DC3545]">
+          {inventoryData.filter(item => item.stock > 0 && item.stock <= item.minStock).length}
+        </Text>
+        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Low Stock</Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedStockFilter('out_of_stock');
-                setSelectedCategory('all');
-              }}
-              className="bg-white p-5 rounded-xl shadow-md min-w-[140px]"
-            >
-              <Text className="text-3xl font-PoppinsBold text-[#FFC107]">
-                {inventoryData.filter(item => item.stock === 0).length}
-              </Text>
-              <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Out of Stock</Text>
-            </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedStockFilter('out_of_stock');
+          setSelectedCategory('all');
+        }}
+        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
+      >
+        <Text className="text-2xl font-PoppinsBold text-[#FFC107]">
+          {inventoryData.filter(item => item.stock === 0).length}
+        </Text>
+        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">Out of Stock</Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedStockFilter('in_stock');
-                setSelectedCategory('all');
-              }}
-              className="bg-white p-5 rounded-xl shadow-md min-w-[140px]"
-            >
-              <Text className="text-3xl font-PoppinsBold text-[#28A745]">
-                {inventoryData.filter(item => item.stock > item.minStock).length}
-              </Text>
-              <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">In Stock</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedStockFilter('in_stock');
+          setSelectedCategory('all');
+        }}
+        className="bg-white p-3 rounded-xl border border-[#E0E0E0] shadow-md min-w-[120px]"
+      >
+        <Text className="text-2xl font-PoppinsBold text-[#28A745]">
+          {inventoryData.filter(item => item.stock > item.minStock).length}
+        </Text>
+        <Text className="text-sm font-PoppinsRegular text-[#6B7280] mt-1">In Stock</Text>
+      </TouchableOpacity>
+    </View>
+  </ScrollView>
+</View>
+
 
       {/* Content */}
       <ScrollView
@@ -444,9 +393,9 @@ export default function InventoryAdmin() {
                         </View>
                       )}
                     </View>
-                    <Text className="text-sm font-PoppinsRegular text-[#9CA3AF]">
+                    {/* <Text className="text-sm font-PoppinsRegular text-[#9CA3AF]">
                       Min: {item.minStock}
-                    </Text>
+                    </Text> */}
                   </View>
 
                   {/* Progress Bar */}

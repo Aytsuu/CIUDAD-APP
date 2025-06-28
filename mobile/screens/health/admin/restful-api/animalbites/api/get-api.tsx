@@ -9,6 +9,21 @@ const handleApiError = (err: any, operation: string) => {
   throw new Error(err.response?.data?.detail || `Failed to ${operation.toLowerCase()}`)
 }
 
+export const getAnimalBitePatientCounts = async () => {
+  try {
+    console.log("🔍 Fetching aggregated animal bite patient records from /animalbites/patient-record-counts/...");
+    const res = await api2.get("animalbites/patient-record-counts/"); // Changed endpoint
+    const aggregatedRecords = res.data;
+
+    console.log(`✅ Found ${aggregatedRecords.length} unique animal bite patient records.`);
+
+    return aggregatedRecords;
+  } catch (error) {
+    console.error("❌ Error fetching aggregated animal bite patients:", error);
+    handleApiError(error, "Fetch Aggregated Animal Bite Patients");
+    return [];
+  }
+};
 
 export const getAnimalbitePatients = async () => {
   try {
@@ -33,29 +48,6 @@ export const getAllPatients = async () => {
     return []
   }
 }
-
-// export const getAnimalBitePatientDetails = async (patientId?: string) => {
-//   try {
-//     console.log(`🔍 Fetching animal bite patient details for patientId: ${patientId || "all"}...`)
-//     const url = patientId ? `animalbites/patient-details/?patient_id=${patientId}` : "animalbites/patient-details/"
-
-//     const res = await api2.get(url)
-//     console.log(`✅ Animal bite patient details fetched successfully: ${res.data.length} records`)
-//     return res.data
-//   } catch (error: any) {
-//     console.error("❌ Error fetching animal bite patient details:", error)
-//     console.error("Response data:", error.response?.data)
-//     console.error("Status:", error.response?.status)
-
-//     // More detailed error handling
-//     if (error.response?.status === 500) {
-//       console.error("Server error - check Django logs for details")
-//     }
-
-//     handleApiError(error, "Fetch Animal Bite Patient Details")
-//     return []
-//   }
-// }
 
 export const getAnimalBitePatientDetails = async () => {
     try {
@@ -83,18 +75,15 @@ export const getAnimalbiteDetails = async () => {
 }
 
 export const getUniqueAnimalbitePatients = async () => {
-  try {
-    console.log("🔍 Fetching unique animal bite patient counts from /animalbites/patient-record-counts/...");
-    const res = await api2.get('animalbites/patient-record-counts/');
-    console.log(`✅ Found ${res.data.length} unique animal bite patients with counts.`);
-    return res.data;
-  } catch (error) {
-    console.error("❌ Error fetching unique animal bite patients:", error);
-    handleApiError(error, 'Fetch Unique Animal Bite Patients');
-    return [];
-  }
-};
-
+    try {
+        console.log("🔍 Fetching unique animal bite patients from /animalbites/patient-details/ (old endpoint for overall view)...");
+        const res = await api2.get("animalbites/patient-details/");
+        return res.data;
+    } catch (error) {
+        handleApiError(error, "Fetch Unique Animal Bite Patients");
+        return [];
+    }
+}
 export const getPatientById = async (patientId: string) => {
   try {
     console.log(`🔍 Fetching patient with ID: ${patientId}...`)
