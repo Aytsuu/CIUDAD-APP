@@ -104,15 +104,7 @@ export default function Profile() {
       {/* Profile Header Card */}
       <Card className="overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-32 relative">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-          <div className="absolute top-6 right-6">
-            <Badge
-              variant="secondary"
-              className="bg-white/20 text-white border-white/30 backdrop-blur-sm"
-            >
-              Profile
-            </Badge>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-blue/20 to-transparent" />
         </div>
 
         <CardContent className="relative -mt-16 pb-8 px-8">
@@ -135,7 +127,7 @@ export default function Profile() {
                 {/* Upload Button */}
                 <Button
                   size="icon"
-                  className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 border-2 border-background text-white" // Added text-white
+                  className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 border-2 border-background" 
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                 >
@@ -167,7 +159,7 @@ export default function Profile() {
             <div className="flex-1 pt-4">
               <div className="space-y-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-foreground mb-2">
+                  <h1 className="text-2xl font-bold text-foreground mb-2">
                     {user?.resident?.per?.per_fname}{" "}
                     {user?.resident?.per?.per_lname}
                   </h1>

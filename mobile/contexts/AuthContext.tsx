@@ -78,11 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(null);
           setIsAuthenticated(false);
           setIsLoading(false);
-        } else if (event === 'SIGNED_IN') {
-          // Don't automatically set as authenticated - wait for backend verification
-          console.log("User signed in, will verify with backend");
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log("Token refreshed, re-checking auth status");
+        } else if (event === 'SIGNED_IN' || event == 'TOKEN_REFRESHED') {
           checkAuthStatus();
         }
       }
