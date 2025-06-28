@@ -6,13 +6,17 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Calendar, MapPin, FileText, CheckCircle2, Loader2, Plus } from "lucide-react"
+import { Calendar, MapPin, FileText, CheckCircle2, Loader2, Plus, Check } from "lucide-react"
 import React from "react"
 import { useLocation } from "react-router"
 import { useGetARByDate } from "../queries/reportFetch"
 import { formatDate, monthNameToNumber } from "@/helpers/dateHelper"
+import { useAddWAR, useAddWARComp } from "../queries/reportAdd"
+import { toast } from "sonner"
+import { useAuth } from "@/context/AuthContext"
 
 export default function CreateMissingWeeks() {
+  const { user } = useAuth();
   const location = useLocation()
   const params = React.useMemo(() => location.state?.params, [location.state])
   const year = React.useMemo(() => params?.year || new Date().getFullYear(), [params])
@@ -20,6 +24,9 @@ export default function CreateMissingWeeks() {
   const week = React.useMemo(() => params?.week || 0, [params])
 
   const { data: ARByDate, isLoading } = useGetARByDate(year, monthNameToNumber(month) as number)
+  const { mutateAsync: addWAR } = useAddWAR();
+    const { mutateAsync: addWARComp } = useAddWARComp();
+  
 
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [isCreating, setIsCreating] = useState(false)
@@ -41,6 +48,31 @@ export default function CreateMissingWeeks() {
   // Handle weekly report creation
   const handleCreateWeeklyReport = async () => {
     if (selectedReports.length === 0) return
+    setIsCreating(true);
+    addWAR(user?.staff?.staff_id as string, {
+      onSuccess: (data) => {
+        const compositions = selectedReports.map((id) => ({
+          ar: id,
+          war: data.war_id,
+        }))
+
+        addWARComp(compositions, {
+          onSuccess: () => {
+            toast("Weekly AR created successfully", {
+              icon: <Check size={24} className="text-green-500" />,
+              style: {
+                border: "1px solid rgb(187, 247, 208)",
+                padding: "16px",
+                color: "#166534",
+                background: "#f0fdf4",
+              },
+            })
+            setIsCreating(false);
+            setSelectedReports([]);
+          },
+        })
+      },
+    })
   }
 
   if (isLoading) {

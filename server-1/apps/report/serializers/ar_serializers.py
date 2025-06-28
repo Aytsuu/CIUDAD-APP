@@ -54,7 +54,7 @@ class ARCreateSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = AcknowledgementReport
-    fields = ['ar_id', 'ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 
+    fields = ['ar_id', 'ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 'ar_created_at', 
               'ar_time_completed', 'ar_action_taken', 'ir_sitio', 'ir_street', 'ir', 'rt', 'staff'] 
     extra_kwargs = {
       'ar_id' : {'read_only': True}
