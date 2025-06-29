@@ -4,6 +4,7 @@ from .views.feature_views import *
 from .views.assignment_views import *
 from .views.permission_views import *
 from .views.staff_views import *
+from .views.analytics_views import *
 
 urlpatterns = [
     # Staff Urls
@@ -31,4 +32,5 @@ urlpatterns = [
     # Permission Urls 
     path('permission/', PermissionView.as_view(), name='permissions-list'),
     path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
+    path('card/analytics/data/', CardAnalyticsView.as_view(), name='card-analytics'),
 ]   

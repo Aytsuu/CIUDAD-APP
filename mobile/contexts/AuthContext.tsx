@@ -1,345 +1,259 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/lib/supabase';
-import { Alert } from 'react-native';
-import { api } from '@/api/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from "react";
+import { AuthContextType, User } from "./auth-types";
+import { api } from "@/api/api";
+import { supabase } from "@/lib/supabase";
 
-type AuthUser = {
-  id: string;
-  email: string;
-  access_token: string;
-  refresh_token: string;
-  django_token?: string;
-  acc_id?: string;
-};
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-type AuthContextType = {
-  user: AuthUser | null;
-  session: any | null;
-  isInitializing: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
-  resetPassword: (newPassword: string) => Promise<any>;
-  signInWithGoogle: () => Promise<void>;
-  syncWithDjango: (accessToken: string) => Promise<any>;
-  getDjangoToken: () => Promise<string | null>;
-  isAuthenticated: boolean;
-};
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-const AuthContext = createContext<AuthContextType | null>(null);
+  const clearError = () => setError(null);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [session, setSession] = useState<any | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const handleError = (error: any, defaultMessage: string) => {
+    const message = error?.message || defaultMessage;
+    setError(message);
+    throw new Error(message);
+  };
 
-  const syncWithDjango = async (accessToken: string) => {
+  // Check authentication status on app load
+  const checkAuthStatus = useCallback(async () => {
     try {
-      console.log('Attempting to sync with Django...', { 
-        baseURL: api.defaults.baseURL,
-        endpoint: 'authentication/mobile/signup/' 
-      });
-
-      // Make sure to send empty body with POST request
-      const response = await api.post('/authentication/mobile/signup/', {}, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        timeout: 15000, // 15 second timeout
-      });
-
-      console.log('Django sync response:', {
-        status: response.status,
-        data: response.data
-      });
-
-      if (response.status < 200 || response.status >= 300) {
-        throw new Error(`Failed to sync with Django: ${response.status}`);
-      }
-
-      const data = response.data;
+      setIsLoading(true);
       
-      // Store Django token if provided
-      if (data.django_token) {
-        await AsyncStorage.setItem('django_token', data.django_token);
-        console.log('Django token stored successfully');
-      }
+      // First check if we have a valid Supabase session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      // Store additional sync data if needed
-      if (data.acc_id) {
-        await AsyncStorage.setItem('acc_id', data.acc_id.toString());
-      }
-      
-      // Show success message
-      if (data.is_new_account) {
-        Alert.alert('Welcome!', 'Account created successfully');
-      } else {
-        console.log('Account synced successfully');
-      }
-      
-      return data;
-    } catch (error: any) {
-      console.error('Django sync error details:', {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          baseURL: error.config?.baseURL,
-          headers: error.config?.headers
-        }
-      });
-      
-      // Show user-friendly error message based on error type
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.warn('Connection Error: Unable to connect to server. Please check your internet connection.');
-      } else if (error.response?.status === 401) {
-        console.warn('Authentication Error: Your session has expired.');
-      } else if (error.response?.status >= 500) {
-        console.warn('Server Error: Server is temporarily unavailable.');
-      } else {
-        console.warn('Sync Error: Failed to sync with server.');
-      }
-      
-      // Don't throw error to prevent blocking the auth flow
-      console.warn('Django sync failed, but continuing with auth flow');
-      return null;
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/login`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Google sign-in error:', error);
-      throw error;
-    }
-  };
-
-  const getDjangoToken = async (): Promise<string | null> => {
-    try {
-      return await AsyncStorage.getItem('django_token');
-    } catch (error) {
-      console.error('Error getting Django token:', error);
-      return null;
-    }
-  };
-
-  const updateUserWithDjangoData = async (supabaseUser: AuthUser, djangoData: any) => {
-    const updatedUser: AuthUser = {
-      ...supabaseUser,
-      django_token: djangoData?.django_token,
-      acc_id: djangoData?.acc_id?.toString(),
-    };
-    setUser(updatedUser);
-    return updatedUser;
-  };
-
-  useEffect(() => {
-    // Initialize the session
-    const initializeAuth = async () => {
-      try {
-        // Get stored session first
-        const storedSession = await AsyncStorage.getItem('supabase_session');
-        const storedDjangoToken = await AsyncStorage.getItem('django_token');
-        const storedAccountId = await AsyncStorage.getItem('acc_id');
-        
-        // Get current session from Supabase
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-        }
-        
-        setSession(session);
-        
-        if (session) {
-          const userData: AuthUser = {
-            id: session.user.id,
-            email: session.user.email ?? '',
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-            django_token: storedDjangoToken || undefined,
-            acc_id: storedAccountId || undefined,
-          };
-          setUser(userData);
-          
-          // Sync with Django in the background if no Django token exists
-          if (!storedDjangoToken) {
-            syncWithDjango(session.access_token)
-              .then(djangoData => {
-                if (djangoData) {
-                  updateUserWithDjangoData(userData, djangoData);
-                }
-              })
-              .catch(e => console.error('Background sync failed:', e));
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`Supabase auth event: ${event}`);
-      setSession(session);
-      
-      if (session) {
-        const userData: AuthUser = {
-          id: session.user.id,
-          email: session.user.email ?? '',
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-        };
-        
-        // Store Supabase session data
-        try {
-          await AsyncStorage.multiSet([
-            ['supabase_session', JSON.stringify(session)],
-            ['access_token', session.access_token],
-            ['refresh_token', session.refresh_token],
-          ]);
-        } catch (error) {
-          console.error('Error storing session data:', error);
-        }
-
-        // Sync with Django when session changes
-        try {
-          const djangoData = await syncWithDjango(session.access_token);
-          if (djangoData) {
-            await updateUserWithDjangoData(userData, djangoData);
-          } else {
-            setUser(userData);
-          }
-        } catch (error) {
-          console.error('Django sync failed:', error);
-          setUser(userData); // Set user even if Django sync fails
-        }
-      } else {
+      if (sessionError || !session?.access_token) {
+        console.log("No valid Supabase session found");
         setUser(null);
-        // Clear all stored data
-        try {
-          await AsyncStorage.multiRemove([
-            'supabase_session', 
-            'access_token', 
-            'refresh_token',
-            'django_token',
-            'acc_id'
-          ]);
-        } catch (error) {
-          console.error('Error clearing stored data:', error);
-        }
+        setIsAuthenticated(false);
+        return;
       }
-    });
 
-    return () => subscription.unsubscribe();
+      console.log("Found Supabase session, verifying with backend...");
+
+      // If we have a session, verify with backend
+      const response = await api.get("authentication/user/");
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      
+      console.log("Authentication verified successfully");
+      
+    } catch (error: any) {
+      console.error("Authentication check failed:", error);
+      
+      // If backend call fails, clear Supabase session too
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        console.log("Clearing invalid session...");
+        await supabase.auth.signOut();
+      }
+      
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  // Listen to Supabase auth changes
+  useEffect(() => {
+    console.log("Setting up auth state listener...");
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Supabase auth state changed:", event, session?.user?.email);
+        
+        if (event === 'SIGNED_OUT' || !session) {
+          setUser(null);
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        } else if (event === 'SIGNED_IN') {
+          // Don't automatically set as authenticated - wait for backend verification
+          console.log("User signed in, will verify with backend");
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log("Token refreshed, re-checking auth status");
+          checkAuthStatus();
+        }
+      }
+    );
+
+    // Initial auth check
+    checkAuthStatus();
+
+    return () => {
+      console.log("Cleaning up auth state listener");
+      subscription.unsubscribe();
+    };
+  }, [checkAuthStatus()]);
+
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    clearError();
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      console.log("Starting login process...");
+      
+      // First authenticate with Supabase
+      const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
 
-      if (error) throw error;
-      if (!data.session) throw new Error('No session returned');
+      if (supabaseError) {
+        console.error("Supabase authentication failed:", supabaseError);
+        throw new Error(supabaseError.message);
+      }
+
+      console.log("Supabase authentication successful, verifying with backend...");
+
+      // Then authenticate with your backend
+      const response = await api.post('authentication/login/', {
+        email,
+        password,
+      });
       
-      // The auth state change listener will handle the rest
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      console.log("Backend authentication successful:", response.data.user.email);
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      
+    } catch (error: any) {
+      console.error("Login error:", error);
+      
+      // Sign out from Supabase if backend login fails
+      await supabase.auth.signOut();
+      
+      const message = error?.response?.data?.error || error?.message || 'Login failed';
+      handleError({message}, "Login failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const register = async (email: string, password: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    username?: string
+  ): Promise<{ requiresConfirmation?: boolean }> => {
+    setIsLoading(true);
+    clearError();
+
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password
+      console.log("Starting signup process...");
+      
+      const response = await api.post('authentication/signup/', {
+        email, 
+        password,
+        username,
       });
 
-      if (error) throw error;
-    } catch (error) {
-      console.error('Registration error:', error);
+      console.log("Signup successful:", response.data);
+      
+      // If signup successful and no confirmation required, user might be auto-logged in
+      if (!response.data.requiresConfirmation && response.data.user) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+      }
+
+      return { requiresConfirmation: response.data?.requiresConfirmation ?? false };
+    } catch (error: any){
+      console.error("Signup error:", error);
+      
+      // If backend signup fails, make sure to clean up any Supabase user that might have been created
+      try {
+        await supabase.auth.signOut();
+      } catch (cleanupError) {
+        console.error("Error during signup cleanup:", cleanupError);
+      }
+      
+      const message = error.response?.data?.error || 'Signup failed';
+      handleError({message}, "Signup failed");
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async () => {
+    setIsLoading(true);
+
     try {
-      // Clear local storage first
-      await AsyncStorage.multiRemove([
-        'supabase_session', 
-        'access_token', 
-        'refresh_token',
-        'django_token',
-        'acc_id'
-      ]);
+      console.log("Starting logout process...");
       
-      // Sign out from Supabase
+      // Sign out from Supabase first
       await supabase.auth.signOut();
       
-      // Clear local state
+      // Then call backend logout
+      await api.post('authentication/logout/');
+
+      console.log("Logout successful");
+
+    } catch (error) {
+      console.error('Logout error: ', error);
+    } finally {
+      // Always clear local state
       setUser(null);
-      setSession(null);
-    } catch (error) {
-      console.error('Failed to logout', error);
-      throw error;
+      setIsAuthenticated(false);
+      setIsLoading(false);
     }
   };
 
-  const resetPassword = async (newPassword: string) => {
+  const refreshSession = async () => {
+    setIsLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
+      console.log("Refreshing session...");
+      
+      // Refresh Supabase session first
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error || !data.session) {
+        throw new Error("Failed to refresh Supabase session");
+      }
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Password reset error:', error);
-      throw error;
+      // Then refresh with backend
+      const response = await api.post('authentication/refresh/');
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      
+      console.log("Session refresh successful");
+      
+    } catch (error: any) {
+      console.error('Session refresh failed: ', error);
+      
+      // If refresh fails, sign out completely
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const contextValue: AuthContextType = {
-    user,
-    session,
-    isInitializing,
-    login,
-    logout,
-    register,
-    resetPassword,
-    signInWithGoogle,
-    syncWithDjango,
-    getDjangoToken,
-    isAuthenticated: !!user && !!session,
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider 
+      value={{
+        user,
+        isAuthenticated,
+        isLoading,
+        error,
+        login,
+        logout,
+        signUp,
+        refreshSession,
+        clearError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -347,6 +261,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if(!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };

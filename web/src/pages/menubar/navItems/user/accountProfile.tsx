@@ -28,7 +28,6 @@ export default function AccountProfile(): JSX.Element {
   const navigate = useNavigate();
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
-
   const handleLogout = () => {
     logout()
     navigate("/home");
@@ -74,7 +73,7 @@ export default function AccountProfile(): JSX.Element {
         className="h-10 w-10 rounded-full flex-shrink-0 object-cover"
       />
       <div className="flex flex-col max-w-[180px]">
-        <p className="font-medium truncate">{user?.username}</p>
+        <p className="font-medium truncate">{`${user?.resident?.per?.per_fname} ${user?.resident?.per?.per_lname}`}</p>
         <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
       </div>
     </div>
@@ -90,7 +89,7 @@ export default function AccountProfile(): JSX.Element {
             className="w-8 h-8 rounded-full"
           />
           <h2 className="hidden sm:block text-sm font-medium">
-            {user?.username}
+            {`${user?.resident?.per?.per_fname} ${user?.resident?.per?.per_lname}`}
           </h2>
         </PopoverTrigger>
         <PopoverContent className="absolute right-0 top-2 p-0 w-64 z-50 bg-white rounded-md shadow-lg">

@@ -4,6 +4,7 @@ from .views.report_type_views import *
 from .views.ar_views import *
 from .views.weekly_ar_views import *
 from .views.rep_template_views import *
+from .views.analytics_views import *
 
 urlpatterns = [
   path('ir/create/', IRCreateView.as_view(), name="create-ir"),
@@ -22,4 +23,7 @@ urlpatterns = [
   path('template/list/create/', RTEListCreateView.as_view(), name="list-create-template"),
   path('template/<str:rte_type>/', RTESpecificTypeView.as_view(), name="specific-template"),
   path('template/<str:rte_type>/update/', RTEUpdateView.as_view(), name="template-update"),
+  path('card/analytics/data/', CardAnalyticsView.as_view(), name='card-analytics'),
+  path('sidebar/analytics/data/', SidebarAnalyticsView.as_view(), name='sidebar-analytics'),
+  path('chart/analytics/data/', ChartAnalyticsView.as_view(), name='chart-analytics'),
 ]
