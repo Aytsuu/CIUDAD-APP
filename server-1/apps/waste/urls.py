@@ -1,7 +1,3 @@
-#KANI 4TH
-#AFTER ANI KAY COMMAND PYTHON MANAGE.PY MAKEMIGRATIONS WASTE 
-#AFTER KAY PYTHON MANAGE.PY MIGRATE WASTE
-
 from django.urls import path
 from .views import *
 
@@ -13,7 +9,20 @@ urlpatterns = [
     path("waste-collection-staff/", WasteCollectionStaffView.as_view(), name="waste-collection-staff-list"),
 
     # Waste COLLECTION Schedule View
+    # Waste COLLECTION Schedule View
     path("waste-collection-sched/", WasteCollectionSchedView.as_view(), name="waste-collection-sched-list"),
+    path("waste-collection-sched-full/", WasteCollectionSchedFullDataView.as_view(), name="waste-collection-sched-full"),
+
+    # Waste COLLECTION Assign Collectors
+    path('waste-ass-collectors/', WasteCollectorView.as_view(), name='waste-ass-collectors'),   
+    path('waste-ass-collectors/list/', WasteCollectorListView.as_view(), name='waste-ass-collectors-list'),
+
+    # Waste COLLECTION UPDATE
+    path("waste-collection-sched/<int:wc_num>/", WasteCollectionSchedUpdateView.as_view(), name="waste-collection-sched-update"),
+    path('waste-ass-collectors/<int:wasc_id>/', WasteCollectorDeleteView.as_view(), name='waste-ass-collectors-delete'),
+
+    # Waste COLLECTION DELETE
+    path('waste-collection-sched-delete/<int:wc_num>/', WasteCollectionSchedDeleteView.as_view(), name='waste-ass-schedule-delete'),
     path("waste-collection-sched-full/", WasteCollectionSchedFullDataView.as_view(), name="waste-collection-sched-full"),
 
     # Waste COLLECTION Assign Collectors
@@ -29,6 +38,9 @@ urlpatterns = [
 
     # Waste Hotspot URLs
     path("waste-hotspot/", WasteHotspotView.as_view(), name="waste-hotspot-list"),
+    path("waste-watchman/", WatchmanView.as_view(), name="waste-watchman"),
+    path('update-waste-hotspot/<int:wh_num>/', UpdateHotspotView.as_view(), name='update-waste-hotspot'),
+    path('delete-waste-hotspot/<int:wh_num>/', DeleteHotspotView.as_view(), name='delete-waste-hotpot'),
 
     # Waste Report URLs
     path("waste-report/", WasteReportView.as_view(), name="waste-report-list"),
@@ -49,10 +61,13 @@ urlpatterns = [
     # Sitio URL
     path("sitio/", SitioListView.as_view(), name="sitio-list"),
 
+    # Garbage Pickup Urls
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
     path('garbage-pickup-request-accepted/', GarbagePickupRequestAcceptedView.as_view(), name='garbage-pickup-request-accepted'), #retrieve accepted requests
+    path('garbage-pickup-view-accepted/<int:garb_id>/', GarbagePickupAcceptedRequestDetailView.as_view(), name='garbage-pickup-view-accepted'), #retrieve accted request details
     path('garbage-pickup-request-completed/', GarbagePickupRequestCompletedView.as_view(), name='garbage-pickup-request-completed'), #retrieve completed requests
+    path('garbage-pickup-view-completed/<int:garb_id>/', GarbagePickupCompletedRequestDetailView.as_view(), name='garbage-pickup-view-completed'), #retrieve completed request details
     path('update-garbage-pickup-request/<int:garb_id>/', UpdateGarbagePickupRequestStatusView.as_view(), name='update-garbage-pickup-request'), #reject request update status to rejected
     path('update-pickup-assignment/<int:pick_id>/', UpdatePickupAssignmentView.as_view(), name='update-pickup-assignment'), #update pickup assignment
     path('delete-assignment-collector/<int:acl_id>/', AssignmentCollectorDeleteView.as_view(), name='delete-assignment-collector'), #update pickup assignment

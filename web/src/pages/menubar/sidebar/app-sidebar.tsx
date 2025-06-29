@@ -345,6 +345,10 @@ const items: MenuItem[] = [
     url: "/waste-illegaldumping-report",
   },
   {
+    title: "Garbage Pickup Request",
+    url: "/garbage-pickup-request"
+  },
+  {
     title: "Waste Personnel & Collection Vehicle",
     url: "/waste-personnel"
   },
