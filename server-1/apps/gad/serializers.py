@@ -14,10 +14,35 @@ class FileUploadSerializer(serializers.ModelSerializer):
         fields = ['file_name', 'file_type', 'file_path', 'file_url']
         read_only_fields = ['file_type', 'file_path', 'file_url']
 
-class DevelopmentBudgetSerializer(serializers.ModelSerializer):
+class GADDevelopmentBudgetSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DevelopmentBudget
+        model = GAD_Development_Budget
         fields = ['gdb_id', 'gdb_name', 'gdb_pax', 'gdb_price']
+
+class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
+    budgets = GADDevelopmentBudgetSerializer(many=True, required=False)
+
+    class Meta:
+        model = GADDevelopmentPlan
+        fields = '__all__'
+
+    def create(self, validated_data):
+        budgets_data = validated_data.pop('budgets', [])
+        plan = GADDevelopmentPlan.objects.create(**validated_data)
+        for budget in budgets_data:
+            GAD_Development_Budget.objects.create(dev=plan, **budget)
+        return plan
+
+    def update(self, instance, validated_data):
+        budgets_data = validated_data.pop('budgets', [])
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        # Remove old budgets and add new ones
+        instance.budgets.all().delete()
+        for budget in budgets_data:
+            GAD_Development_Budget.objects.create(dev=instance, **budget)
+        return instance
 
 class GADBudgetFileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,7 +53,7 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
         }
 
 class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
-    gdb = DevelopmentBudgetSerializer(read_only=True)
+    gdb = GADDevelopmentBudgetSerializer(read_only=True)
     files = GADBudgetFileSerializer(many=True, read_only=True)
     gbudy = serializers.PrimaryKeyRelatedField(queryset=GAD_Budget_Year.objects.all())
     staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, default=None)

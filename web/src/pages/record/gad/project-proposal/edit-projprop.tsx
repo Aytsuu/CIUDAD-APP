@@ -132,20 +132,20 @@ export const EditProjectProposalForm: React.FC<
       const suppDocs =
         initialValues.supportDocs?.map((doc: any) => {
           let type: "image" | "video" | "document" = "document";
-          if (doc.fileType?.startsWith("image/")) {
+          if (doc.psd_type?.startsWith("image/")) {
             type = "image";
-          } else if (doc.fileType?.startsWith("video/")) {
+          } else if (doc.psd_type?.startsWith("video/")) {
             type = "video";
           }
 
           return {
-            id: `doc-${doc.psdId}`,
+            id: `doc-${doc.psd_id}`,
             type,
-            file: new File([], doc.fileName),
-            publicUrl: doc.fileUrl,
-            storagePath: doc.filePath || `uploads/${doc.fileName}`,
+            file: new File([], doc.psd_name),
+            publicUrl: doc.psd_url,
+            storagePath: doc.psd_path || `uploads/${doc.psd_name}`,
             status: "uploaded" as const,
-            previewUrl: doc.fileUrl,
+            previewUrl: doc.psd_url,
           };
         }) || [];
 
@@ -271,20 +271,20 @@ export const EditProjectProposalForm: React.FC<
       // Preserve all existing supportDocs and include new ones, default to empty array if undefined
       const existingSupportDocs = initialValues.supportDocs || [];
       const updatedSupportDocs = validSupportDocs.map((doc) => {
-        const existingDoc = existingSupportDocs.find(d => d.fileUrl === doc.publicUrl);
+        const existingDoc = existingSupportDocs.find(d => d.psd_url === doc.publicUrl);
         return {
-          psdId: existingDoc?.psdId || Date.now() + Math.random(), // Temporary ID for new docs
-          fileUrl: doc.publicUrl,
-          fileName: doc.file.name,
-          fileType: doc.file.type,
-          storagePath: doc.storagePath,
-          isArchive: false,
+          psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
+          psd_url: doc.publicUrl,
+          psd_name: doc.file.name,
+          psd_type: doc.file.type,
+          psd_path: doc.storagePath,
+          psd_is_archive: false,
         };
       });
 
       // Identify new documents to add via mutation
       const newDocs = updatedSupportDocs.filter(doc =>
-        !existingSupportDocs.some(existing => existing.psdId === doc.psdId)
+        !existingSupportDocs.some(existing => existing.psd_id === doc.psd_id)
       );
 
       // Update existing supportDocs for PUT
@@ -313,11 +313,11 @@ export const EditProjectProposalForm: React.FC<
         staffId: initialValues.staffId || null,
         gprIsArchive: initialValues.gprIsArchive || false,
         supportDocs: existingSupportDocs.map(doc => ({
-          psdId: doc.psdId,
-          fileUrl: doc.fileUrl,
-          fileName: doc.fileName,
-          fileType: doc.fileType,
-          isArchive: doc.isArchive,
+          psd_id: doc.psd_id,
+          psd_url: doc.psd_url,
+          psd_name: doc.psd_name,
+          psd_type: doc.psd_type,
+          psd_is_archive: doc.psd_is_archive,
         })) || [], // Only existing docs with valid psdId for PUT
       };
 
@@ -345,10 +345,10 @@ export const EditProjectProposalForm: React.FC<
             addSupportDocMutation.mutateAsync({
               gprId,
               fileData: {
-                file_url: doc.fileUrl,
-                file_path: doc.storagePath,
-                file_name: doc.fileName,
-                file_type: doc.fileType,
+                psd_url: doc.psd_url,
+                psd_path: doc.psd_path!,
+                psd_name: doc.psd_name,
+                psd_type: doc.psd_type,
               },
             })
           )

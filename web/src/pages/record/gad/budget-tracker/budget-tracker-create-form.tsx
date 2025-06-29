@@ -54,15 +54,6 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
 
     const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
     if (!currentYearBudget) return 0;
-    const budgetYear = currentYearBudget?.gbudy_year; 
-    const validateDateInBudgetYear = (dateString: string) => {
-        if (!budgetYear) return true; // Skip validation if no year
-        
-        const inputDate = new Date(dateString);
-        const inputYear = inputDate.getFullYear();
-        
-        return inputYear.toString() === budgetYear;
-      };
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
 

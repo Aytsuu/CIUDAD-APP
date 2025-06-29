@@ -431,24 +431,24 @@ const handleUpdateStatus = () => {
               <p className="text-gray-500 text-center py-8">Loading documents...</p>
             ) : selectedSuppDocs.length > 0 ? (
               selectedSuppDocs.map((doc) => (
-                <div key={doc.psdId || Math.random()} className="flex flex-col items-center">
+                <div key={doc.psd_id || Math.random()} className="flex flex-col items-center">
                   <div className="relative w-full max-w-4xl">
-                    {doc.fileType?.startsWith('image/') && doc.fileUrl ? (
+                    {doc.psd_type?.startsWith('image/') && doc.psd_url ? (
                       <img
-                        src={doc.fileUrl}
-                        alt={`Supporting Document ${doc.fileName || 'Unknown'}`}
+                        src={doc.psd_url}
+                        alt={`Supporting Document ${doc.psd_name || 'Unknown'}`}
                         className="w-full max-h-[70vh] object-contain"
                         onError={(e) => {
-                          console.error(`Failed to load image: ${doc.fileUrl}`);
+                          console.error(`Failed to load image: ${doc.psd_url}`);
                           (e.target as HTMLImageElement).src = '/placeholder-image.png';
                         }}
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg">
-                        <p className="mt-2 text-sm text-gray-600">{doc.fileName || 'No file name'}</p>
-                        {doc.fileUrl ? (
+                        <p className="mt-2 text-sm text-gray-600">{doc.psd_name || 'No file name'}</p>
+                        {doc.psd_url ? (
                           <a
-                            href={doc.fileUrl}
+                            href={doc.psd_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-2 text-blue-600 hover:underline"
@@ -461,7 +461,7 @@ const handleUpdateStatus = () => {
                       </div>
                     )}
                   </div>
-                  <p className="mt-2 text-sm text-gray-500">{doc.fileName || 'Unknown'}</p>
+                  <p className="mt-2 text-sm text-gray-500">{doc.psd_name || 'Unknown'}</p>
                 </div>
               ))
             ) : (

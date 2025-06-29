@@ -10,7 +10,7 @@ import {
   Loader2,
   Search,
   Archive,
-  RotateCcw,
+  ArchiveRestore,
 } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
@@ -491,7 +491,7 @@ const WastePersonnel = () => {
                                         {restoreTruck.isPending ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                          <RotateCcw className="h-4 w-4 text-green-500" />
+                                          <ArchiveRestore className="h-4 w-4 text-green-500" />
                                         )}
                                       </Button>
                                     }
@@ -518,7 +518,7 @@ const WastePersonnel = () => {
                                         {deleteTruck.isPending ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                          <Archive className="h-4 w-4 text-yellow-500" />
+                                          <Archive className="h-4 w-4" />
                                         )}
                                       </Button>
                                     }
@@ -647,7 +647,7 @@ const WastePersonnel = () => {
             <div className="grid gap-4">
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit(handleSubmit)}
+                  onSubmit={(e) => e.preventDefault()}
                   className="flex flex-col gap-4"
                 >
                   <FormInput
@@ -734,21 +734,33 @@ const WastePersonnel = () => {
                         >
                           Cancel
                         </Button>
-                        <Button
-                          type="submit"
-                          disabled={
-                            currentTruck
-                              ? updateTruck.isPending
-                              : addTruck.isPending
+                        <ConfirmationModal
+                          trigger={
+                            <Button
+                              type="button"
+                              disabled={
+                                currentTruck
+                                  ? updateTruck.isPending
+                                  : addTruck.isPending
+                              }
+                            >
+                              {currentTruck ? "Update" : "Add"} Truck
+                              {(currentTruck
+                                ? updateTruck.isPending
+                                : addTruck.isPending) && (
+                                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                              )}
+                            </Button>
                           }
-                        >
-                          {currentTruck ? "Update" : "Add"} Truck
-                          {(currentTruck
-                            ? updateTruck.isPending
-                            : addTruck.isPending) && (
-                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                          )}
-                        </Button>
+                          title={`Confirm ${currentTruck ? "Update" : "Add"} Truck`}
+                          description={
+                            currentTruck
+                              ? `Are you sure you want to update truck ${currentTruck.truck_plate_num}?`
+                              : "Are you sure you want to add this new truck?"
+                          }
+                          actionLabel={currentTruck ? "Update" : "Add"}
+                          onClick={form.handleSubmit(handleSubmit)}
+                        />
                       </>
                     )}
                   </div>

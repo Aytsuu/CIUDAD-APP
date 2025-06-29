@@ -7,7 +7,6 @@ import {
   ArchiveRestore,
   Eye,
   Search,
-  FileInput,
   ChevronLeft,
   Calendar,
   ArrowUpDown,
@@ -33,7 +32,7 @@ import {
 import { useGADBudgets } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { GADBudgetEntry } from "./requestAPI/BTGetRequest";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function BudgetTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,12 +100,6 @@ function BudgetTracker() {
     { id: "12", name: "December" },
   ];
 
-  const filterOptions = [
-    { id: "All", name: "All" },
-    { id: "Income", name: "Income" },
-    { id: "Expense", name: "Expense" },
-  ];
-
   const filteredData = budgetEntries.filter((entry: GADBudgetEntry) => {
     if (activeTab === "active" && entry.gbud_is_archive) return false;
     if (activeTab === "archive" && !entry.gbud_is_archive) return false;
@@ -116,7 +109,7 @@ function BudgetTracker() {
     const matchesFilter =
       selectedFilter === "All" || entry.gbud_type === selectedFilter;
 
-    const matchesSearch = `${entry.gbud_inc_particulars} ${entry.gbud_type} ${
+    const matchesSearch = `${entry.gbud_inc_particulars} ${entry.gbud_exp_particulars} ${entry.gbud_type} ${
       entry.gbud_inc_amt ||
       entry.gbud_proposed_budget ||
       entry.gbud_actual_expense
@@ -141,7 +134,7 @@ function BudgetTracker() {
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          DATETIME
+          Date & Time
           <ArrowUpDown size={14} />
         </div>
       ),
@@ -153,15 +146,19 @@ function BudgetTracker() {
     },
     {
       accessorKey: "gbud_type",
-      header: "TYPE",
+      header: "Type",
     },
     {
-      accessorKey: "gbud_inc_particulars",
-      header: "PARTICULAR",
+    id: "particulars", 
+      header: "Particular",
+      cell: ({ row }) => {
+        const particulars = row.original.gbud_inc_particulars || row.original.gbud_exp_particulars;
+        return <div>{particulars}</div>;
+      },
     },
     {
       accessorKey: "gbud_amount",
-      header: "AMOUNT",
+      header: "Amount",
       cell: ({ row }) => {
         const type = row.getValue("gbud_type") as string;
         const incAmt = row.original.gbud_inc_amt;
@@ -185,7 +182,7 @@ function BudgetTracker() {
     },
     {
       accessorKey: "files",
-      header: "SUPPORTING DOCS",
+      header: "Supporting Docs",
       cell: ({ row }) => {
         const entry = row.original;
         const files = entry.files || [];
@@ -220,8 +217,8 @@ function BudgetTracker() {
       },
     },
     {
-      accessorKey: "action",
-      header: "ACTION",
+      id: "action",
+      header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-1">
           <TooltipLayout
@@ -269,19 +266,19 @@ function BudgetTracker() {
   ];
 
   const archiveColumns: ColumnDef<GADBudgetEntry>[] = [
-    ...columns.filter((col) => col.accessorKey !== "action"),
+    ...columns.filter((col) => col.id !== "action"),
     {
-      accessorKey: "action",
-      header: "ACTION",
+      id: "action",
+      header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-1">
           <TooltipLayout
             trigger={
               <ConfirmationModal
                 trigger={
-                  <Button variant="secondary">
+                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
                     <ArchiveRestore size={16} />
-                  </Button>
+                  </div>
                 }
                 title="Restore Entry"
                 description="This will move the entry back to active. Continue?"

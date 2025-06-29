@@ -11,12 +11,12 @@ export type ProjectProposalLog = {
 };
 
 export type SupportDoc = {
-  psdId: number;
-  fileUrl: string;
-  fileName: string;
-  fileType: string;
-  storagePath?: string;
-  isArchive: boolean;
+  psd_id: number;
+  psd_url: string;
+  psd_name: string;
+  psd_type: string;
+  psd_path?: string;
+  psd_is_archive: boolean;
 };
 
 export type ProjectProposal = {
@@ -96,16 +96,7 @@ export const useGetStaffList = (options = {}) => {
 export const useGetSupportDocs = (proposalId: number, options = {}) => {
   return useQuery<SupportDoc[], Error>({
     queryKey: ["supportDocs", proposalId],
-    queryFn: async () => {
-      const data = await getSupportDocs(proposalId);
-      return data.map((doc: { psd_id: number; psd_is_archive: boolean; file: { file_url: string; file_name: string; file_type: string } }) => ({
-        psdId: doc.psd_id ?? 0,
-        fileUrl: doc.file?.file_url ?? '',
-        fileName: doc.file?.file_name ?? 'Unknown',
-        fileType: doc.file?.file_type ?? 'application/octet-stream',
-        isArchive: doc.psd_is_archive ?? false
-      }));
-    },
+    queryFn: () => getSupportDocs(proposalId),
     enabled: !!proposalId,
     ...options
   });
