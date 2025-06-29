@@ -44,6 +44,7 @@ export default function PendingTable() {
 
   const columns: ColumnDef<GarbageRequestPending>[] = [
     { accessorKey: "garb_requester", header: "Requester" },
+    { accessorKey: "sitio_name", header: "Sitio" },
     { accessorKey: "garb_location", header: "Location" },
     { accessorKey: "garb_waste_type", header: "Waste Type" },
     { accessorKey: "garb_pref_date", header: "Preferred Date" },

@@ -11,7 +11,7 @@ import { useUpdateGarbageRequestStatus } from "../queries/GarbageRequestUpdateQu
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
-import { formatTime } from "@/helpers/timeFormatter"
+import { formatTime } from "@/helpers/timeFormatter";
 import EditAcceptPickupRequest from "../assignment-edit-form"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
@@ -55,6 +55,7 @@ export default function AcceptedTable() {
 
   const columns: ColumnDef<GarbageRequestAccept>[] = [
     { accessorKey: "garb_requester", header: "Requester" },
+    { accessorKey: "sitio_name", header: "Sitio" },
     { accessorKey: "garb_location", header: "Location" },
     { accessorKey: "garb_waste_type", header: "Waste Type" },
     { 

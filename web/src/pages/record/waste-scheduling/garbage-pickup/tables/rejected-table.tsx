@@ -36,6 +36,7 @@ export default function RejectedTable() {
 
   const columns: ColumnDef<GarbageRequestReject>[] = [
     { accessorKey: "garb_requester", header: "Requester" },
+    { accessorKey: "sitio_name", header: "Sitio" },
     { accessorKey: "garb_location", header: "Location" },
     { accessorKey: "garb_waste_type", header: "Waste Type" },
     {

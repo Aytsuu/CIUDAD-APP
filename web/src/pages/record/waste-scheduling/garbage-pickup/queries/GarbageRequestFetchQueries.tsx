@@ -109,6 +109,7 @@ export type GarbageRequestReject = {
     dec_date?: string | null;
     dec_reason: string;
     file_url: string;
+    sitio_name: string;
 };
 
 
@@ -140,6 +141,7 @@ export type GarbageRequestAccept = {
     truck?: string;
   } | null;
   file_url: string;
+  sitio_name: string;
 };
 
 
@@ -169,6 +171,7 @@ export type GarbageRequestComplete = {
     truck?: string;
   } | null;
   file_url: string;
+  sitio_name: string;
 }
 
 export const useGetGarbageCompleteRequest = () => {

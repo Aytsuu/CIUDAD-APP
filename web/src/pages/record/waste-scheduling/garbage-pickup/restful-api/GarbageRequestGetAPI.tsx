@@ -49,6 +49,7 @@ export const getGarbagePendingRequest = async () => {
             garb_created_at: item.garb_created_at,
             garb_additional_notes: item.garb_additional_notes,
             file_url: item.file?.file_url || '',
+            sitio_name: item.sitio_name || ''
 
         }));
     } catch (err) {
@@ -75,6 +76,7 @@ export const getGarbageRejectedRequest = async () => {
             dec_date: item.dec_date || null,
             dec_reason: item.dec_reason || '',
             file_url: item.file_url || '',
+            sitio_name: item.sitio_name || ''
         }));
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
@@ -110,6 +112,7 @@ export const getGarbageAcceptedRequest = async () => {
                 truck: item.assignment_info.truck || '',
             } : null,
             file_url: item.file_url || '',
+            sitio_name: item.sitio_name || ''
         }));
 
     } catch (err) {
@@ -146,6 +149,7 @@ export const getGarbageCompletedRequest = async () => {
                 truck: item.assignment_info.truck || '',
             } : null,
             file_url: item.file_url || '',
+            sitio_name: item.sitio_name || '',
         }));
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
