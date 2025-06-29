@@ -514,7 +514,7 @@ function GADProjectProposal() {
                         <ConfirmationModal
                           trigger={
                             <Archive
-                              className="text-gray-500 hover:text-yellow-600 cursor-pointer"
+                              className="text-gray-500 hover:text-red-600 cursor-pointer"
                               size={20}
                             />
                           }

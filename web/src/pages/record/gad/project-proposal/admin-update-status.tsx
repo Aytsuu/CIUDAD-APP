@@ -430,7 +430,9 @@ const handleUpdateStatus = () => {
             {isSupportDocsLoading ? (
               <p className="text-gray-500 text-center py-8">Loading documents...</p>
             ) : selectedSuppDocs.length > 0 ? (
-              selectedSuppDocs.map((doc) => (
+              selectedSuppDocs
+              .filter(doc => doc.psd_is_archive === false)
+              .map((doc) => (
                 <div key={doc.psd_id || Math.random()} className="flex flex-col items-center">
                   <div className="relative w-full max-w-4xl">
                     {doc.psd_type?.startsWith('image/') && doc.psd_url ? (

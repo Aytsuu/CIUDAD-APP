@@ -2,9 +2,6 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('gad-annual-development-plan/', GADDevelopmentPlanListCreate.as_view()),
-    path('gad-annual-development-plan/years', GADDevelopmentPlanYears.as_view()),
-    path('gad-annual-development-plan/<int:dev_id>/', GADDevelopmentPlanUpdate.as_view()),
     path("development-budget-items/", DevelopmentBudgetItemsView.as_view()),
 
     path("gad-budget-tracker-main/", GAD_Budget_YearView.as_view()),

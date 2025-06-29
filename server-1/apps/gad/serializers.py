@@ -14,35 +14,10 @@ class FileUploadSerializer(serializers.ModelSerializer):
         fields = ['file_name', 'file_type', 'file_path', 'file_url']
         read_only_fields = ['file_type', 'file_path', 'file_url']
 
-class GADDevelopmentBudgetSerializer(serializers.ModelSerializer):
+class DevelopmentBudgetSerializer(serializers.ModelSerializer):
     class Meta:
-        model = GAD_Development_Budget
+        model = DevelopmentBudget
         fields = ['gdb_id', 'gdb_name', 'gdb_pax', 'gdb_price']
-
-class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
-    budgets = GADDevelopmentBudgetSerializer(many=True, required=False)
-
-    class Meta:
-        model = GADDevelopmentPlan
-        fields = '__all__'
-
-    def create(self, validated_data):
-        budgets_data = validated_data.pop('budgets', [])
-        plan = GADDevelopmentPlan.objects.create(**validated_data)
-        for budget in budgets_data:
-            GAD_Development_Budget.objects.create(dev=plan, **budget)
-        return plan
-
-    def update(self, instance, validated_data):
-        budgets_data = validated_data.pop('budgets', [])
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        # Remove old budgets and add new ones
-        instance.budgets.all().delete()
-        for budget in budgets_data:
-            GAD_Development_Budget.objects.create(dev=instance, **budget)
-        return instance
 
 class GADBudgetFileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -53,7 +28,7 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
         }
 
 class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
-    gdb = GADDevelopmentBudgetSerializer(read_only=True)
+    gdb = DevelopmentBudgetSerializer(read_only=True)
     files = GADBudgetFileSerializer(many=True, read_only=True)
     gbudy = serializers.PrimaryKeyRelatedField(queryset=GAD_Budget_Year.objects.all())
     staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, default=None)
@@ -151,55 +126,14 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         }
 
 
-class ProposalSuppDocSerializer(serializers.ModelSerializer):
-    file_url = serializers.CharField(write_only=True)
-    file_path = serializers.CharField(write_only=True)
-    file_name = serializers.CharField(write_only=True)
-    file_type = serializers.CharField(write_only=True)
-    file = FileUploadSerializer(read_only=True)
-    
+class ProposalSuppDocSerializer(serializers.ModelSerializer):   
     class Meta:
         model = ProposalSuppDoc
-        fields = '__all__'
+        fields = ['psd_id', 'psd_is_archive', 'psd_url', 'psd_name', 'psd_type', 'psd_path']
         extra_kwargs = {
             'gpr': {'read_only': True},
             'psd_is_archive': {'default': False}
         }
-
-    def create(self, validated_data):
-        try:
-            # Extract file data from validated_data
-            file_url = validated_data.pop('file_url')
-            file_path = validated_data.pop('file_path')
-            file_name = validated_data.pop('file_name')
-            file_type = validated_data.pop('file_type')
-            
-            # Create File record
-            file_record = File.objects.create(
-                file_name=file_name,
-                file_type=file_type,
-                file_path=file_path,
-                file_url=file_url
-            )
-            
-            # Get the proposal from context (set in the view)
-            proposal = self.context.get('proposal')
-            if not proposal:
-                raise ValidationError("Proposal context is missing")
-            
-            # Create ProposalSuppDoc
-            return ProposalSuppDoc.objects.create(
-                gpr=proposal,
-                file=file_record,
-                **validated_data
-            )
-            
-        except Exception as e:
-            # Clean up if something goes wrong
-            if 'file_record' in locals() and file_record.id:
-                file_record.delete()
-            raise serializers.ValidationError(str(e))
-
 
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()

@@ -3,31 +3,46 @@ from datetime import date
 from django.contrib.postgres.fields import ArrayField
 
 
-class GADDevelopmentPlan(models.Model):
-    dev_id = models.AutoField(primary_key=True)
-    dev_date = models.DateField()
-    dev_client = models.CharField(max_length=100)
-    dev_issue = models.TextField()
-    dev_project = models.TextField()
-    dev_res_person = models.CharField(max_length=100)
-    dev_indicator = models.TextField()
-    dev_gad_budget = models.DecimalField(max_digits=12, decimal_places=2)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
+#gihimoan lang nako so that I could connect as fk
+class DevelopmentPlan(models.Model):
+    dev_id = models.BigAutoField(primary_key=True)
+    dev_date = models.DateField(default=date.today)
+    dev_client = models.CharField(max_length=200, null=True)
+    dev_issue = models.CharField(max_length=200, null=True)
+    dev_project = models.CharField(max_length=200, null=True)
+    dev_res_person = models.CharField(max_length=200, null=True)
+    dev_indicator = models.CharField(max_length=200, null=True)
+    dev_gad_budget = models.DecimalField(max_digits=10, decimal_places=2)
+
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'gad_development_plan'
-        managed = False
 
-class GAD_Development_Budget(models.Model):
-    gdb_id = models.AutoField(primary_key=True)
-    gdb_name = models.CharField(max_length=255)
-    gdb_pax = models.CharField(max_length=255)
-    gdb_price = models.DecimalField(max_digits=12, decimal_places=2)
-    dev = models.ForeignKey(GADDevelopmentPlan, related_name='budgets', on_delete=models.CASCADE)
+class DevelopmentBudget(models.Model):
+    gdb_id = models.BigAutoField(primary_key=True)
+    gdb_name = models.CharField(max_length=200, null=True)
+    gdb_pax = models.DecimalField(max_digits=10, decimal_places=2)
+    gdb_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    dev = models.ForeignKey(
+        DevelopmentPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='dev_id'
+    )
 
     class Meta:
         db_table = 'gad_development_budget'
-        managed = False
+
+
 
 #===========================================================================================================
 
@@ -50,7 +65,7 @@ class GAD_Budget_Tracker(models.Model):
 
     #if type is income
     gbud_inc_particulars = models.CharField(max_length=200, null=True)
-    gbud_inc_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
+    gbud_inc_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     #if type is expense
     gbud_exp_particulars = models.CharField(max_length=200, null=True) #this saves the retrieved gdb_name from devbudget
@@ -70,7 +85,7 @@ class GAD_Budget_Tracker(models.Model):
     )
 
     gdb = models.ForeignKey(
-        GAD_Development_Budget,
+        DevelopmentBudget,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -90,10 +105,10 @@ class GAD_Budget_Tracker(models.Model):
 
 class GAD_Budget_File(models.Model):
     gbf_id = models.BigAutoField(primary_key=True)
-    gbf_name = models.CharField(max_length=255)
-    gbf_type = models.CharField(max_length=100)
-    gbf_path = models.CharField(max_length=500)
-    gbf_url = models.CharField(max_length=500)
+    gbf_name = models.CharField()
+    gbf_type = models.CharField(max_length=50)
+    gbf_path = models.CharField()
+    gbf_url = models.CharField()
     
     gbud = models.ForeignKey(
         GAD_Budget_Tracker,
@@ -126,13 +141,6 @@ class ProjectProposal(models.Model):
     gpr_budget_items = models.JSONField(default=list)
     gpr_signatories = models.JSONField(default=list)
 
-    # gpr_supp_docs = ArrayField(
-    #     models.TextField(blank=True),
-    #     blank=True,
-    #     null=True,
-    #     default=list
-    # )
-    
     staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.SET_NULL,
@@ -201,6 +209,10 @@ class ProjectProposalLog(models.Model):
 class ProposalSuppDoc(models.Model):
     psd_id = models.BigAutoField(primary_key=True)
     psd_is_archive = models.BooleanField(default=False)
+    psd_name = models.CharField(null=True)
+    psd_type = models.CharField(max_length=50, null=True)
+    psd_path = models.CharField(null=True)
+    psd_url = models.CharField(null=True)
 
     gpr = models.ForeignKey(
         ProjectProposal,
@@ -209,14 +221,5 @@ class ProposalSuppDoc(models.Model):
         db_column='gpr_id'
     )
 
-    file = models.ForeignKey(
-        'file.File',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='file_id'
-    )
-
     class Meta:
         db_table = 'proposal_supp_doc'
-

@@ -7,12 +7,10 @@ from .serializers import *
 from django.db.models import OuterRef, Subquery
 from django.apps import apps
 from django.utils import timezone
-from django.db.models.functions import ExtractYear
-from rest_framework.views import APIView
 
 class DevelopmentBudgetItemsView(generics.ListAPIView):
-    queryset = GAD_Development_Budget.objects.all()
-    serializer_class = GADDevelopmentBudgetSerializer 
+    queryset = DevelopmentBudget.objects.all()
+    serializer_class = DevelopmentBudgetSerializer 
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -21,26 +19,6 @@ class DevelopmentBudgetItemsView(generics.ListAPIView):
             'data': serializer.data,
             'count': queryset.count()
         })
-
-class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
-    serializer_class = GADDevelopmentPlanSerializer
-
-    def get_queryset(self):
-        year = self.request.query_params.get('year')
-        qs = GADDevelopmentPlan.objects.all()
-        if year:
-            qs = qs.filter(dev_date__year=year)
-        return qs
-    
-class GADDevelopmentPlanYears(APIView):
-    def get(self, request, *args, **kwargs):
-        years = GADDevelopmentPlan.objects.annotate(year=ExtractYear('dev_date')).values_list('year', flat=True).distinct()
-        return Response(sorted(years))
-
-class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
-    queryset = GADDevelopmentPlan.objects.all()
-    serializer_class = GADDevelopmentPlanSerializer
-    lookup_field = 'dev_id'
 
 class GAD_Budget_TrackerView(generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
@@ -272,7 +250,7 @@ class UpdateProposalStatusView(generics.GenericAPIView):
         except ProjectProposal.DoesNotExist:
             return Response({"error": "Proposal not found"})
         
-class ProposalSuppDocCreateView(generics.ListCreateAPIView):  # Changed from CreateAPIView
+class ProposalSuppDocCreateView(generics.ListCreateAPIView):
     serializer_class = ProposalSuppDocSerializer
     queryset = ProposalSuppDoc.objects.all()
     
@@ -287,6 +265,10 @@ class ProposalSuppDocCreateView(generics.ListCreateAPIView):  # Changed from Cre
             raise Response("Project proposal not found")
         return context
 
+    def perform_create(self, serializer):
+        # Ensure gpr_id is set from URL parameter
+        serializer.save(gpr_id=self.kwargs['proposal_id'])
+    
     def perform_destroy(self, instance):
         """Soft delete by archiving"""
         instance.psd_is_archive = True
