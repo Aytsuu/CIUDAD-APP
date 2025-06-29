@@ -147,6 +147,7 @@ class Inventory(models.Model):
         super().save(*args, **kwargs)
     class Meta:
         db_table = 'inventory'
+        
 class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
     minv_dsg = models.PositiveIntegerField(default=0)

@@ -1,9 +1,8 @@
-"use client"
-
+// confirmation.tsx
 import { View, ScrollView, TouchableWithoutFeedback, Animated } from "react-native"
 import { Check, ArrowLeft, Clock, Package } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button" // Assuming you have a Button component
 import { router, useLocalSearchParams } from "expo-router"
 import * as React from "react"
 
@@ -19,6 +18,7 @@ export default function Confirmation() {
   // Parse the order items from the URL params
   const orderItems = React.useMemo(() => {
     try {
+      // DecodeURIComponent is essential for correctly parsing URL-encoded JSON
       return orderItemsString ? JSON.parse(decodeURIComponent(orderItemsString)) : []
     } catch (error) {
       console.error("Error parsing order items:", error)
@@ -28,7 +28,7 @@ export default function Confirmation() {
 
   // Calculate total items
   const totalItems = React.useMemo(() => {
-    return orderItems.reduce((sum, item) => sum + (item.quantity || 1), 0)
+    return orderItems.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0)
   }, [orderItems])
 
   React.useEffect(() => {
@@ -55,20 +55,20 @@ export default function Confirmation() {
   }, [])
 
   return (
-    <View className="flex-1 bg-gradient-to-b from-[#ECF8FF] to-[#F8FCFF]">
+    <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 pt-12 pb-4">
+      <View className="flex-row items-center justify-between px-4 pt-12 pb-4 bg-blue-50">
         <TouchableWithoutFeedback onPress={() => router.back()}>
           <View className="flex-row items-center">
             <ArrowLeft size={20} color="#263D67" strokeWidth={2} />
-            <Text className="text-[#263D67] text-[16px] font-PoppinsMedium ml-2">Back</Text>
+            <Text className="text-[#263D67] text-[16px] font-medium ml-2">Back</Text>
           </View>
         </TouchableWithoutFeedback>
       </View>
 
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         {/* Success Animation */}
-        <Animated.View 
+        <Animated.View
           className="items-center justify-center pt-4 pb-8"
           style={{
             opacity: fadeAnim,
@@ -78,20 +78,18 @@ export default function Confirmation() {
            <View className="bg-green-500 mb-20 w-36 h-36 rounded-full flex items-center justify-center shadow-lg">
               <Check size={70} color="white" strokeWidth={3}/>
             </View>
-          <Text className="text-3xl font-PoppinsBold text-[#263D67] text-center mb-3">
+          <Text className="text-3xl font-bold text-[#263D67] text-center mb-3">
             Request Submitted!
           </Text>
 
-          <Text className="text-lg font-PoppinsRegular text-[#6B7280] text-center mb-2 px-4">
-            Please wait for the confirmation in your notification.  
+          <Text className="text-lg font-medium text-[#6B7280] text-center mb-2 px-4">
+            Please wait for the confirmation in your notification.
           </Text>
-
-
         </Animated.View>
 
         {/* Request Summary */}
         {orderItems && orderItems.length > 0 && (
-          <Animated.View 
+          <Animated.View
             className="mb-6"
             style={{
               opacity: fadeAnim,
@@ -106,10 +104,10 @@ export default function Confirmation() {
                     <Package size={20} color="#3B82F6" />
                   </View>
                   <View>
-                    <Text className="text-xl font-PoppinsSemiBold text-[#263D67]">
+                    <Text className="text-xl font-semibold text-[#263D67]">
                       Request Summary
                     </Text>
-                    <Text className="text-sm font-PoppinsRegular text-[#6B7280]">
+                    <Text className="text-sm font-medium text-[#6B7280]">
                       {orderItems.length} medicine{orderItems.length > 1 ? 's' : ''} • {totalItems} total items
                     </Text>
                   </View>
@@ -118,40 +116,50 @@ export default function Confirmation() {
 
               {/* Table Header */}
               <View className="flex-row justify-between px-6 py-3 bg-gray-50">
-                <Text className="text-[#263D67] font-PoppinsSemiBold text-sm w-1/2">
+                <Text className="text-[#263D67] font-semibold text-sm w-1/2">
                   MEDICINE
                 </Text>
-                <Text className="text-[#263D67] font-PoppinsSemiBold text-sm w-1/4 text-center">
+                <Text className="text-[#263D67] font-semibold text-sm w-1/4 text-center">
                   QTY
                 </Text>
-                <Text className="text-[#263D67] font-PoppinsSemiBold text-sm w-1/4 text-center">
+                <Text className="text-[#263D67] font-semibold text-sm w-1/4 text-center">
                   UNIT
                 </Text>
               </View>
 
               {/* Order Items */}
               <ScrollView className="max-h-64">
-                {orderItems.map((item, index) => (
-                  <View 
-                    key={item.id} 
+                {orderItems.map((item: any, index: number) => ( // Use 'any' or define a specific type for orderItems
+                  <View
+                    key={item.id}
                     className={`flex-row justify-between items-center px-6 py-4 ${
                       index !== orderItems.length - 1 ? 'border-b border-gray-100' : ''
                     }`}
                   >
                     <View className="w-1/2 pr-2">
-                      <Text className="text-[#263D67] font-PoppinsMedium text-[15px]">
+                      <Text className="text-[#263D67] font-medium text-[15px]">
                         {item.name}
                       </Text>
+                      {item.reason && (
+                          <Text className="text-gray-600 text-xs italic mt-1" numberOfLines={1}>
+                              Reason: {item.reason}
+                          </Text>
+                      )}
+                      {item.hasPrescription && (
+                          <Text className="text-green-700 text-xs mt-1" numberOfLines={1}>
+                              Prescription Attached
+                          </Text>
+                      )}
                     </View>
                     <View className="w-1/4 items-center">
                       <View className="bg-blue-50 px-3 py-1 rounded-full">
-                        <Text className="text-[#263D67] font-PoppinsSemiBold text-sm">
+                        <Text className="text-[#263D67] font-semibold text-sm">
                           {item.quantity || 1}
                         </Text>
                       </View>
                     </View>
-                    <Text className="text-[#6B7280] font-PoppinsRegular text-sm w-1/4 text-center">
-                      pc/s
+                    <Text className="text-[#6B7280] font-medium text-sm w-1/4 text-center">
+                      {item.unit || "pc/s"}
                     </Text>
                   </View>
                 ))}
@@ -160,15 +168,16 @@ export default function Confirmation() {
           </Animated.View>
         )}
 
-     
-          <Button 
+
+        <Button
             className="bg-[#263D67] w-full mb-4 py-4 rounded-xl shadow-sm"
-            onPress={() => router.push("/(health)")}
-          >
-            <Text className="text-white font-PoppinsSemiBold text-[16px]">
+            onPress={() => router.push("/home")}
+        >
+            <Text className="text-white font-semibold text-[16px]">
               Back to Home
             </Text>
-          </Button>
-</ScrollView>
-</View>
-  )}
+        </Button>
+      </ScrollView>
+    </View>
+  )
+}

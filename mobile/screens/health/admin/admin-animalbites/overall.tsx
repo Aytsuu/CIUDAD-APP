@@ -1,19 +1,6 @@
 import React, { useState, useMemo } from "react"
 import { View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, FlatList } from "react-native"
-import {
-  Search,
-  ChevronLeft,
-  AlertCircle,
-  Package,
-  User,
-  Calendar,
-  FileText,
-  Users,
-  TrendingUp,
-  Filter,
-  ChevronDown,
-  ChevronUp
-} from "lucide-react-native"
+import { Search,ChevronLeft,AlertCircle,Package,User,Calendar,FileText,Users,TrendingUp,Filter } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
@@ -61,9 +48,10 @@ export default function AnimalBiteOverallScreen() {
           patient.patient_fname.toLowerCase().includes(lowerCaseQuery) ||
           patient.patient_lname.toLowerCase().includes(lowerCaseQuery) ||
           patient.patient_id.toLowerCase().includes(lowerCaseQuery)
-  )}
+      )
+    }
     if (activeFilter !== 'all') {
-      result = result.filter((patient) => 
+      result = result.filter((patient) =>
         patient.patient_type.toLowerCase() === activeFilter
       )
     }
@@ -119,9 +107,9 @@ export default function AnimalBiteOverallScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <View className="bg-white p-8 rounded-2xl shadow-lg items-center">
+        <View className="bg-white p-8 rounded-2xl items-center">
           <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="mt-4 text-gray-600 font-medium">Loading patient records...</Text>
+          <Text className="mt-4 text-gray-600 font-medium">Loading animal bite records...</Text>
         </View>
       </View>
     )
@@ -162,7 +150,7 @@ export default function AnimalBiteOverallScreen() {
         <View className="px-4 pb-4">
           <View className="flex-row items-center space-x-3">
             <View className="flex-1 mt-4 flex-row items-center p-1  border border-gray-200 bg-gray-100 rounded-2xl  shadow-sm">
-              <Search size={20}  color="#6B7280" />
+              <Search size={20} color="#6B7280" />
               <TextInput
                 className="flex-1 ml-3 text-gray-800 font-medium"
                 placeholder="Search by name or patient ID..."
@@ -171,8 +159,8 @@ export default function AnimalBiteOverallScreen() {
                 onChangeText={setSearchQuery}
               />
             </View>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               onPress={() => setShowFilters(!showFilters)}
               className="p-3 mt-4"
             >
@@ -183,7 +171,7 @@ export default function AnimalBiteOverallScreen() {
           {/* Filter Dropdown */}
           {showFilters && (
             <View className=" bg-white rounded-xl shadow-md p-3">
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => handleFilterPress('all')}
                 className={`py-2 px-3 rounded-lg ${activeFilter === 'all' ? 'bg-blue-50' : ''}`}
               >
@@ -191,7 +179,7 @@ export default function AnimalBiteOverallScreen() {
                   All Patients ({patients.length})
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => handleFilterPress('resident')}
                 className={`py-2 px-3 rounded-lg ${activeFilter === 'resident' ? 'bg-blue-50' : ''}`}
               >
@@ -199,7 +187,7 @@ export default function AnimalBiteOverallScreen() {
                   Residents ({stats.residentPatients})
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => handleFilterPress('transient')}
                 className={`py-2 px-3 rounded-lg ${activeFilter === 'transient' ? 'bg-blue-50' : ''}`}
               >
@@ -299,8 +287,8 @@ export default function AnimalBiteOverallScreen() {
                     <View className="flex-row items-center mb-4">
                       {/* Avatar */}
                       <View className="w-14 h-14 bg-gray-400 rounded-full items-center justify-center mr-4 shadow-md">
-                        <User color="white"/>
-                          
+                        <User color="white" />
+
                       </View>
 
                       {/* Patient Info */}
@@ -311,16 +299,14 @@ export default function AnimalBiteOverallScreen() {
                         <Text className="text-gray-500 text-sm mb-1">ID: {patient.patient_id}</Text>
                         <View className="flex-row items-center">
                           <View
-                            className={`px-3 py-1 rounded-full ${
-                              patient.patient_type === "Transient"
+                            className={`px-3 py-1 rounded-full ${patient.patient_type === "Transient"
                                 ? "bg-orange-100 border border-orange-200"
                                 : "bg-green-100 border border-green-200"
-                            }`}
+                              }`}
                           >
                             <Text
-                              className={`text-xs font-semibold ${
-                                patient.patient_type === "Transient" ? "text-orange-700" : "text-green-700"
-                              }`}
+                              className={`text-xs font-semibold ${patient.patient_type === "Transient" ? "text-orange-700" : "text-green-700"
+                                }`}
                             >
                               {patient.patient_type}
                             </Text>
@@ -385,19 +371,19 @@ export default function AnimalBiteOverallScreen() {
         {filteredPatients.length > patientsPerPage && (
           <View className="px-4 pb-6">
             <View className="bg-white rounded-2xl p-4 shadow-sm flex-row justify-between items-center">
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
                 className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-gray-100' : 'bg-blue-50'}`}
               >
                 <Text className={`font-medium ${page === 1 ? 'text-gray-400' : 'text-blue-700'}`}>Previous</Text>
               </TouchableOpacity>
-              
+
               <Text className="text-gray-600">
                 Page {page} of {totalPages}
               </Text>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 onPress={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
                 className={`px-4 py-2 rounded-lg ${page === totalPages ? 'bg-gray-100' : 'bg-blue-50'}`}

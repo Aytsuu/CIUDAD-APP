@@ -190,12 +190,11 @@ class InventoryUpdateView(generics.RetrieveUpdateAPIView):
 #STOCKS
 class MedicineInventoryView(generics.ListCreateAPIView):
     serializer_class=MedicineInventorySerializer
-    queryset=MedicineInventory.objects.all()
+  
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     def get_queryset(self):
-        # Filter out MedicineInventory entries where the related Inventory is archived
-        queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
+        queryset = MedicineInventory.objects.select_related('med_id', 'med_id__cat', 'inv').all()
         return queryset
     
     
@@ -575,6 +574,7 @@ class ArchiveMedicineInventoryView(generics.ListCreateAPIView):
     def get_queryset(self):
         # Filter out MedicineInventory entries where the related Inventory is archived
         queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+        queryset = MedicineInventory.objects.select_related('med_id','minv_id', 'med_id__cat', 'inv').filter(inv__is_Archived=True)
         return queryset
     
     
@@ -596,4 +596,16 @@ class ArchiveFirstAidInventoryVIew(generics.ListCreateAPIView):
         return queryset
     
     
+class MedicineInventoryView(generics.ListCreateAPIView):
+    serializer_class = MedicineInventorySerializer # Use your new serializer
+    queryset = MedicineInventory.objects.all() # Fetch all medicine inventory items
+
+    def get_queryset(self):
+        queryset = MedicineInventory.objects.select_related('med_id', 'inv_id').all()
     
+        return queryset
+    
+    def get_medname(self):
+        queryset = Medicinelist.objects.all()
+        return queryset
+        

@@ -24,14 +24,14 @@ export default function InventoryAdmin() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
   const [inventoryData, setInventoryData] = React.useState<InventoryItem[]>([])
-  const [isError, setError] = React.useState<string | null>(null)
+  const [isError, setIsError] = React.useState(true)
   const [showFilters, setShowFilters] = React.useState(false)
   const [page, setPage] = React.useState(1)
   const itemsPerPage = 10
 
   const fetchInventoryData = async () => {
     setIsLoading(true);
-    setError(null);
+    setIsError(null);
 
     try {
       const endpoints = [
@@ -84,7 +84,7 @@ export default function InventoryAdmin() {
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
           batchNumber: 'N/A',
           lastUpdated: item.inv_detail?.updated_at ?
-          new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
+            new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }));
         allInventory.push(...standardizedCommodities);
       }
@@ -101,7 +101,7 @@ export default function InventoryAdmin() {
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
           batchNumber: 'N/A',
           lastUpdated: item.inv_detail?.updated_at ?
-          new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
+            new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }));
         allInventory.push(...standardizedFirstAids);
       }
@@ -118,7 +118,7 @@ export default function InventoryAdmin() {
           expiryDate: item.inv_details?.expiry_date || item.inv_id?.expiry_date || 'N/A',
           batchNumber: item.batch_number || 'N/A',
           lastUpdated: item.inv_details?.updated_at || item.updated_at ?
-          new Date(item.inv_details?.updated_at || item.updated_at).toLocaleDateString() : 'N/A',
+            new Date(item.inv_details?.updated_at || item.updated_at).toLocaleDateString() : 'N/A',
         }));
         allInventory.push(...standardizedVaccines);
       }
@@ -135,14 +135,14 @@ export default function InventoryAdmin() {
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
           batchNumber: item.batch_number || 'N/A',
           lastUpdated: item.inv_detail?.updated_at ?
-          new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
+            new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }));
         allInventory.push(...standardizedImmunization);
       }
 
       setInventoryData(allInventory);
     } catch (error) {
-      setError("Failed to load inventory data. Please check your connection and try again.");
+      setIsError(true);
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +160,7 @@ export default function InventoryAdmin() {
   }, []);
 
   const categories = [
-    { id: 'all', name: 'All Items' },
+    { id: 'all', name: 'All' },
     { id: 'medicine', name: 'Medicine' },
     { id: 'vaccine', name: 'Vaccine' },
     { id: 'commodity', name: 'Commodity' },
@@ -216,7 +216,7 @@ export default function InventoryAdmin() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <View className="bg-white p-8 rounded-2xl items-center">
+        <View className="bg-white p-8 rounded-2xl  items-center">
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading inventory...</Text>
         </View>
@@ -231,7 +231,7 @@ export default function InventoryAdmin() {
           <AlertTriangle size={48} color="#EF4444" />
           <Text className="text-red-500 text-xl font-bold mb-2 mt-4">Error</Text>
           <Text className="text-gray-700 text-center leading-6">
-            {error || "Failed to load inventory data. Please try again later."}
+            {isError || "Failed to load inventory data. Please try again later."}
           </Text>
           <TouchableOpacity onPress={fetchInventoryData} className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
             <Text className="text-white font-semibold">Retry</Text>
@@ -249,30 +249,32 @@ export default function InventoryAdmin() {
           <TouchableOpacity onPress={() => router.back()} className="p-2 mr-3 bg-gray-100 rounded-full">
             <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-2xl font-bold text-gray-800">Medical Inventory</Text>
+          <View className="flex-1 p-4">
+            <Text className="text-xl font-bold text-gray-800">
+              Medical Inventory
+            </Text>
           </View>
         </View>
 
         {/* Search and Filter Bar */}
         <View className="px-4 pb-4">
           <View className="flex-row items-center space-x-3">
-            <View className="flex-1 flex-row items-center bg-gray-100 rounded-2xl px-4 py-3 shadow-sm">
+            <View className="flex-1 mt-4 flex-row items-center p-1  border border-gray-200 bg-gray-100 rounded-2xl  shadow-sm">
               <Search size={20} color="#6B7280" />
               <TextInput
                 className="flex-1 ml-3 text-gray-800 font-medium"
-                placeholder="Search by name or description..."
+                placeholder="Search by name or patient ID..."
                 placeholderTextColor="#9CA3AF"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
             </View>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               onPress={() => setShowFilters(!showFilters)}
-              className="bg-gray-100 p-3 rounded-2xl"
+              className="p-3 mt-4"
             >
-              <Filter size={20} color="#6B7280" />
+              <Filter size={20} color="blue" />
             </TouchableOpacity>
           </View>
 
@@ -282,7 +284,7 @@ export default function InventoryAdmin() {
               <Text className="font-semibold text-gray-700 mb-2">Category</Text>
               <View className="flex-row flex-wrap gap-2 mb-3">
                 {categories.map((category) => (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     key={category.id}
                     onPress={() => {
                       setSelectedCategory(category.id);
@@ -300,7 +302,7 @@ export default function InventoryAdmin() {
               <Text className="font-semibold text-gray-700 mb-2">Stock Status</Text>
               <View className="flex-row flex-wrap gap-2">
                 {stockFilters.map((filter) => (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     key={filter.id}
                     onPress={() => {
                       setSelectedStockFilter(filter.id);
@@ -327,8 +329,8 @@ export default function InventoryAdmin() {
         {/* Statistics Cards */}
         <View className="p-4">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row gap-2">
-              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+            <View className="flex-row space-x-4">
+              <View className="bg-white p-4 rounded-2xl shadow-sm min-w-[160px]">
                 <View className="flex-row items-center mb-2">
                   <Package size={20} color="#3B82F6" />
                   <Text className="ml-2 text-gray-600 font-medium">Total Items</Text>
@@ -336,7 +338,7 @@ export default function InventoryAdmin() {
                 <Text className="text-3xl font-bold text-gray-800">{stats.totalItems}</Text>
               </View>
 
-              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+              <View className="bg-white p-4 rounded-2xl shadow-sm min-w-[160px]">
                 <View className="flex-row items-center mb-2">
                   <AlertTriangle size={20} color="#F59E0B" />
                   <Text className="ml-2 text-gray-600 font-medium">Low Stock</Text>
@@ -344,7 +346,7 @@ export default function InventoryAdmin() {
                 <Text className="text-3xl font-bold text-gray-800">{stats.lowStock}</Text>
               </View>
 
-              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+              <View className="bg-white p-4 rounded-2xl shadow-sm min-w-[160px]">
                 <View className="flex-row items-center mb-2">
                   <AlertTriangle size={20} color="#EF4444" />
                   <Text className="ml-2 text-gray-600 font-medium">Out of Stock</Text>
@@ -352,7 +354,7 @@ export default function InventoryAdmin() {
                 <Text className="text-3xl font-bold text-gray-800">{stats.outOfStock}</Text>
               </View>
 
-              <View className="bg-blue-100 p-4 rounded-2xl shadow-sm min-w-[160px]">
+              <View className="bg-white p-4 rounded-2xl shadow-sm min-w-[160px]">
                 <View className="flex-row items-center mb-2">
                   <Package size={20} color="#10B981" />
                   <Text className="ml-2 text-gray-600 font-medium">In Stock</Text>
@@ -419,12 +421,7 @@ export default function InventoryAdmin() {
                             {item.stock}
                           </Text>
                         </View>
-                        <View className="items-end">
-                          <Text className="text-gray-500 text-sm">Minimum Stock</Text>
-                          <Text className="text-lg font-semibold text-gray-700">
-                            {item.minStock}
-                          </Text>
-                        </View>
+
                       </View>
 
                       {/* Progress Bar */}
@@ -458,19 +455,19 @@ export default function InventoryAdmin() {
         {filteredInventory.length > itemsPerPage && (
           <View className="px-4 pb-6">
             <View className="bg-white rounded-2xl p-4 shadow-sm flex-row justify-between items-center">
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
                 className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-gray-100' : 'bg-blue-50'}`}
               >
                 <Text className={`font-medium ${page === 1 ? 'text-gray-400' : 'text-blue-700'}`}>Previous</Text>
               </TouchableOpacity>
-              
+
               <Text className="text-gray-600">
                 Page {page} of {totalPages}
               </Text>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 onPress={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
                 className={`px-4 py-2 rounded-lg ${page === totalPages ? 'bg-gray-100' : 'bg-blue-50'}`}

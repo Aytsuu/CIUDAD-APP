@@ -1,118 +1,64 @@
-"use client"
-
-import { useState, useEffect } from "react"
+// details.tsx
+import { useState, useEffect, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert, ScrollView } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { ArrowLeft, Upload, FileText, Camera, X, CheckCircle, AlertCircle, Pill } from "lucide-react-native"
+import { ArrowLeft, Upload, FileText, Camera, X, CheckCircle, AlertCircle, Pill, Plus, Minus } from "lucide-react-native"
 import * as DocumentPicker from "expo-document-picker"
 import * as ImagePicker from "expo-image-picker"
 
-import type { Medicine } from "./request-page"
-import { addToCart } from "./cart-state"
+import { addToCart, Medicine as CartMedicineType, UploadedFile, useGlobalCartState } from "./cart-state" // Import types and addToCart
 
-// Extended Medicine type to include additional details
-type ExtendedMedicine = Medicine & {
-  dosage?: string
-  inStock?: boolean
-  requiresPrescription?: boolean
-}
+// The medicine type received from request-page.tsx
+type MedicineDetailsProps = {
+  id: number;
+  name: string;
+  category: string;
+  medicine_type: string; // "Prescription" or "Over-the-Counter"
+  dosage: string;
+  description?: string;
+  minv_qty_avail: number; // Available stock
+};
 
-type UploadedFile = {
-  id: string
-  name: string
-  type: string
-  uri: string
-  size?: number
-}
 
 export default function MedicineDetailsScreen() {
-  const { id } = useLocalSearchParams()
-  const [medicine, setMedicine] = useState<ExtendedMedicine | null>(null)
-  const [quantity, setQuantity] = useState(1)
-  const [reason, setReason] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [showUploadOptions, setShowUploadOptions] = useState(false)
+  const params = useLocalSearchParams();
+  // Parse the medicineData string back into an object
+  const medicine: MedicineDetailsProps | null = useMemo(() => {
+    if (params.medicineData) {
+      try {
+        return JSON.parse(params.medicineData as string);
+      } catch (e) {
+        console.error("Failed to parse medicineData param:", e);
+        return null;
+      }
+    }
+    return null;
+  }, [params.medicineData]);
+
+
+  const [quantity, setQuantity] = useState(1);
+  const [reason, setReason] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   // File size limit: 15MB in bytes
-  const MAX_FILE_SIZE = 15 * 1024 * 1024 // 15MB
+  const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
-  // Enhanced mock data for medicines
-  const mockMedicines: ExtendedMedicine[] = [
-    {
-      id: 1,
-      name: "Biogesic",
-      category: "Paracetamol",
-      dosage: "500mg",
-      inStock: true,
-      requiresPrescription: false,
-      description:
-        "Biogesic is a brand of paracetamol used to relieve mild to moderate pain such as headache, backache, menstrual pain, toothache, and help reduce fever.",
-    },
-    {
-      id: 2,
-      name: "Panadol",
-      category: "Paracetamol",
-      dosage: "500mg",
-      inStock: true,
-      requiresPrescription: false,
-      description:
-        "Panadol is a pain reliever and fever reducer used to temporarily relieve mild to moderate pain and reduce fever.",
-    },
-    {
-      id: 3,
-      name: "Calpol",
-      category: "Paracetamol",
-      dosage: "250mg",
-      inStock: false,
-      requiresPrescription: false,
-      description: "Calpol is a common paracetamol-based pain and fever relief medication for children and infants.",
-    },
-    {
-      id: 4,
-      name: "Neozep",
-      category: "Cold Medicine",
-      dosage: "500mg",
-      inStock: true,
-      requiresPrescription: false,
-      description: "Neozep is a combination medicine used to treat symptoms of the common cold or flu.",
-    },
-    {
-      id: 5,
-      name: "Amoxicillin",
-      category: "Antibiotics",
-      dosage: "250mg",
-      inStock: true,
-      requiresPrescription: true,
-      description: "Amoxicillin is a penicillin antibiotic that fights bacteria in the body.",
-    },
-    {
-      id: 6,
-      name: "Cefalexin",
-      category: "Antibiotics",
-      dosage: "500mg",
-      inStock: true,
-      requiresPrescription: true,
-      description: "Cefalexin is an antibiotic used to treat a number of bacterial infections.",
-    },
-  ]
+  // Check if prescription is required based on medicine_type
+  const requiresPrescription = medicine?.medicine_type === 'Prescription';
 
-  // Find the medicine by ID
-  useEffect(() => {
-    setIsLoading(true)
-
-    if (id) {
-      const foundMedicine = mockMedicines.find((m) => m.id === Number.parseInt(id as string))
-      if (foundMedicine) {
-        setMedicine(foundMedicine)
-        setIsLoading(false)
-      } else {
-        Alert.alert("Error", "Medicine not found", [{ text: "OK", onPress: () => router.back() }])
-      }
-    } else {
-      Alert.alert("Error", "No medicine selected", [{ text: "OK", onPress: () => router.back() }])
+  // Quantity handlers
+  const increaseQuantity = () => {
+    if (medicine && quantity < medicine.minv_qty_avail) {
+      setQuantity(prev => prev + 1);
     }
-  }, [id])
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
+  };
 
   // Function to check file size
   const checkFileSize = (fileSize?: number, fileName?: string): boolean => {
@@ -121,25 +67,23 @@ export default function MedicineDetailsScreen() {
         "File Too Large",
         `The file "${fileName || "selected file"}" is too large. Please select a file smaller than 15MB.`,
         [{ text: "OK" }],
-      )
-      return false
+      );
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleDocumentPicker = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ["application/pdf", "image/jpeg", "image/png", "image/jpg"],
         copyToCacheDirectory: true,
-      })
+      });
 
       if (!result.canceled && result.assets[0]) {
-        const file = result.assets[0]
-
-        // Check file size
+        const file = result.assets[0];
         if (!checkFileSize(file.size, file.name)) {
-          return
+          return;
         }
 
         const newFile: UploadedFile = {
@@ -148,37 +92,34 @@ export default function MedicineDetailsScreen() {
           type: file.mimeType || "unknown",
           uri: file.uri,
           size: file.size,
-        }
-        setUploadedFiles((prev) => [...prev, newFile])
-        setShowUploadOptions(false)
+        };
+        setUploadedFiles((prev) => [...prev, newFile]);
+        setShowUploadOptions(false);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to pick document")
+      Alert.alert("Error", "Failed to pick document");
     }
-  }
+  };
 
   const handleImagePicker = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission needed", "Please grant camera roll permissions to upload images.")
-        return
+        Alert.alert("Permission needed", "Please grant camera roll permissions to upload images.");
+        return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false, // Removed cropping
+        allowsEditing: false,
         quality: 0.8,
-        // Removed aspect ratio since we're not cropping
-      })
+      });
 
       if (!result.canceled && result.assets[0]) {
-        const image = result.assets[0]
-
-        // Check file size (estimate based on dimensions if fileSize not available)
-        const estimatedSize = image.fileSize || image.width * image.height * 3 // Rough estimate
+        const image = result.assets[0];
+        const estimatedSize = image.fileSize || image.width * image.height * 3;
         if (!checkFileSize(estimatedSize, `gallery_image_${Date.now()}.jpg`)) {
-          return
+          return;
         }
 
         const newFile: UploadedFile = {
@@ -187,36 +128,33 @@ export default function MedicineDetailsScreen() {
           type: "image/jpeg",
           uri: image.uri,
           size: estimatedSize,
-        }
-        setUploadedFiles((prev) => [...prev, newFile])
-        setShowUploadOptions(false)
+        };
+        setUploadedFiles((prev) => [...prev, newFile]);
+        setShowUploadOptions(false);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to pick image")
+      Alert.alert("Error", "Failed to pick image");
     }
-  }
+  };
 
   const handleCameraPicker = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync()
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission needed", "Please grant camera permissions to take photos.")
-        return
+        Alert.alert("Permission needed", "Please grant camera permissions to take photos.");
+        return;
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: false, // Removed cropping
+        allowsEditing: false,
         quality: 0.8,
-        // Removed aspect ratio since we're not cropping
-      })
+      });
 
       if (!result.canceled && result.assets[0]) {
-        const image = result.assets[0]
-
-        // Check file size (estimate based on dimensions if fileSize not available)
-        const estimatedSize = image.fileSize || image.width * image.height * 3 // Rough estimate
+        const image = result.assets[0];
+        const estimatedSize = image.fileSize || image.width * image.height * 3;
         if (!checkFileSize(estimatedSize, `camera_photo_${Date.now()}.jpg`)) {
-          return
+          return;
         }
 
         const newFile: UploadedFile = {
@@ -225,95 +163,106 @@ export default function MedicineDetailsScreen() {
           type: "image/jpeg",
           uri: image.uri,
           size: estimatedSize,
-        }
-        setUploadedFiles((prev) => [...prev, newFile])
-        setShowUploadOptions(false)
+        };
+        setUploadedFiles((prev) => [...prev, newFile]);
+        setShowUploadOptions(false);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to take photo")
+      Alert.alert("Error", "Failed to take photo");
     }
-  }
+  };
 
   const removeFile = (fileId: string) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId))
-  }
+    setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
+  };
 
   const getFileIcon = (type: string) => {
     if (type.includes("image")) {
-      return <Camera size={20} color="#4F46E5" />
+      return <Camera size={20} color="#4F46E5" />;
     }
-    return <FileText size={20} color="#4F46E5" />
-  }
+    return <FileText size={20} color="#4F46E5" />;
+  };
 
   const formatFileSize = (bytes?: number) => {
-    if (!bytes) return ""
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(1024))
-    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i]
-  }
+    if (!bytes) return "";
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+  };
 
   const handleAddToCart = () => {
-    if (medicine) {
-      if (!reason.trim()) {
-        Alert.alert("Required", "Please provide a reason for requesting this medicine")
-        return
-      }
+    if (!medicine) return; // Should not happen if medicine is loaded
 
-      if (medicine.requiresPrescription && uploadedFiles.length === 0) {
-        Alert.alert(
-          "Prescription Required",
-          "This medicine requires a prescription. Please upload your doctor's prescription or consultation document.",
-        )
-        return
-      }
-
-      addToCart({
-        ...medicine,
-        quantity,
-        reason,
-        uploadedFiles,
-      })
-
-      Alert.alert("Success", "Medicine added to your request", [
-        { text: "View more", onPress: () => router.back() },
-        { text: "View cart", onPress: () => router.push("/medicine-request/cart") },
-      ])
+    if (!reason.trim()) {
+      Alert.alert("Required Field", "Please provide a reason for requesting this medicine.");
+      return;
     }
-  }
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 justify-center items-center">
-        <View className="bg-white p-6 rounded-2xl shadow-lg">
-          <Text className="text-lg font-medium text-gray-700">Loading medicine details...</Text>
-        </View>
-      </SafeAreaView>
-    )
-  }
+    if (requiresPrescription && uploadedFiles.length === 0) {
+      Alert.alert(
+        "Prescription Required",
+        "This medicine requires a prescription. Please upload your doctor's prescription or consultation document to proceed.",
+      );
+      return;
+    }
+
+    if (quantity === 0) {
+        Alert.alert("Quantity Error", "Please select a quantity greater than 0.");
+        return;
+    }
+    if (quantity > medicine.minv_qty_avail) {
+        Alert.alert("Stock Error", `You can only request up to ${medicine.minv_qty_avail} of this medicine.`);
+        return;
+    }
+
+    // Add to cart with full details
+    const itemToAdd: CartMedicineType = {
+        id: medicine.id,
+        name: medicine.name,
+        category: medicine.category,
+        medicine_type: medicine.medicine_type,
+        dosage: medicine.dosage,
+        description: medicine.description,
+        minv_qty_avail: medicine.minv_qty_avail,
+        requestedQuantity: quantity, // The quantity the user selected
+        reason: reason,
+        uploadedFiles: uploadedFiles.length > 0 ? uploadedFiles : undefined, // Only include if files exist
+    };
+    
+    addToCart(itemToAdd);
+
+    Alert.alert("Success", "Medicine added to your request", [
+      { text: "Continue Browsing", onPress: () => router.back() },
+      { text: "View Cart", onPress: () => router.push("/medicine-request/cart") },
+    ]);
+  };
+
 
   if (!medicine) {
+    // This state indicates medicineData was not passed correctly or could not be parsed
     return (
       <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 justify-center items-center">
         <View className="bg-white p-6 rounded-2xl shadow-lg items-center">
           <AlertCircle size={48} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-800 mt-4 mb-2">Medicine not found</Text>
-          <Text className="text-gray-600 text-center mb-4">The requested medicine could not be found.</Text>
+          <Text className="text-xl font-semibold text-gray-800 mt-4 mb-2">Medicine details not found</Text>
+          <Text className="text-gray-600 text-center mb-4">Please select a medicine from the list.</Text>
           <TouchableOpacity className="bg-indigo-600 px-6 py-3 rounded-xl" onPress={() => router.back()}>
             <Text className="text-white font-semibold">Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    )
+    );
   }
 
   return (
-    <SafeAreaView className="flex-1">
-      <ScrollView className="flex-1 bg-blue-100">
-        <TouchableOpacity onPress={() => router.back()} className="mt-10 mr-3">
-          <View className="bg-indigo-100 p-3 rounded-full mr-3">
-            <ArrowLeft size={24} color="#4F46E5" />
-          </View>
-        </TouchableOpacity>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <ScrollView className="flex-1">
+        <View className="flex-row items-center p-4 bg-white border-b border-gray-100">
+            <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
+                <ArrowLeft size={24} color="#333" />
+            </TouchableOpacity>
+            <Text className="text-xl font-bold text-gray-800 flex-1">Medicine Details</Text>
+        </View>
 
         <View className="px-4 pt-6 pb-6">
           {/* Medicine Info Card */}
@@ -333,19 +282,19 @@ export default function MedicineDetailsScreen() {
 
                 <View className="flex-row items-center justify-between mt-3">
                   <Text className="text-sm font-medium">{medicine.category}</Text>
-
-                  <View className="flex-row items-center">
-                    <View className={`w-2 h-2 rounded-full mr-2 ${medicine.inStock ? "bg-green-500" : "bg-red-500"}`} />
-                    <Text className={`text-sm font-medium ${medicine.inStock ? "text-green-700" : "text-red-700"}`}>
-                      {medicine.inStock ? "In Stock" : "Out of Stock"}
+                  <Text className="text-sm font-medium text-gray-700">Type: {medicine.medicine_type}</Text>
+                </View>
+                <View className="flex-row items-center mt-2">
+                    <View className={`w-2 h-2 rounded-full mr-2 ${medicine.minv_qty_avail > 0 ? "bg-green-500" : "bg-red-500"}`} />
+                    <Text className={`text-sm font-medium ${medicine.minv_qty_avail > 0 ? "text-green-700" : "text-red-700"}`}>
+                        {medicine.minv_qty_avail > 0 ? `${medicine.minv_qty_avail} in stock` : "Out of Stock"}
                     </Text>
-                  </View>
                 </View>
               </View>
             </View>
 
             {/* Prescription Warning */}
-            {medicine.requiresPrescription && (
+            {requiresPrescription && (
               <View className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
                 <View className="flex-row items-center">
                   <AlertCircle size={20} color="#F59E0B" />
@@ -358,14 +307,47 @@ export default function MedicineDetailsScreen() {
             )}
 
             {/* Description */}
-            <View className="mb-4">
-              <Text className="text-gray-700 font-medium mb-2">Description</Text>
-              <Text className="text-gray-600 leading-6">{medicine.description}</Text>
-            </View>
+            {medicine.description && (
+                <View className="mb-4">
+                <Text className="text-gray-700 font-medium mb-2">Description</Text>
+                <Text className="text-gray-600 leading-6">{medicine.description}</Text>
+                </View>
+            )}
           </View>
 
           {/* Request Form Card */}
           <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            {/* Quantity Selector */}
+            <View className="mb-6">
+                <Text className="text-gray-700 font-semibold mb-3">Quantity</Text>
+                <View className="flex-row items-center justify-center border border-gray-200 rounded-xl p-2 bg-gray-50">
+                    <TouchableOpacity
+                        onPress={decreaseQuantity}
+                        disabled={quantity <= 1}
+                        className={`p-2 rounded-lg ${quantity <= 1 ? 'bg-gray-200' : 'bg-blue-100'}`}
+                    >
+                        <Minus size={20} color={quantity <= 1 ? '#9CA3AF' : '#263D67'} />
+                    </TouchableOpacity>
+                    <Text className="text-2xl font-bold text-gray-800 mx-4 w-12 text-center">
+                        {quantity}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={increaseQuantity}
+                        disabled={!medicine.minv_qty_avail || quantity >= medicine.minv_qty_avail}
+                        className={`p-2 rounded-lg ${!medicine.minv_qty_avail || quantity >= medicine.minv_qty_avail ? 'bg-gray-200' : 'bg-blue-100'}`}
+                    >
+                        <Plus size={20} color={!medicine.minv_qty_avail || quantity >= medicine.minv_qty_avail ? '#9CA3AF' : '#263D67'} />
+                    </TouchableOpacity>
+                </View>
+                {medicine.minv_qty_avail === 0 && (
+                    <Text className="text-red-500 text-sm text-center mt-2">Currently out of stock.</Text>
+                )}
+                {quantity > medicine.minv_qty_avail && medicine.minv_qty_avail > 0 && (
+                    <Text className="text-red-500 text-sm text-center mt-2">Cannot request more than available stock ({medicine.minv_qty_avail}).</Text>
+                )}
+            </View>
+
+
             {/* Reason Input */}
             <View className="mb-6">
               <Text className="text-gray-700 font-semibold mb-3">Reason for Request</Text>
@@ -383,7 +365,7 @@ export default function MedicineDetailsScreen() {
             <View className="mb-6">
               <View className="flex-row items-center justify-between mb-3">
                 <Text className="text-gray-700 font-semibold">
-                  Medical Documentation {medicine.requiresPrescription && <Text className="text-red-500">*</Text>}
+                  Medical Documentation {requiresPrescription && <Text className="text-red-500">*</Text>}
                 </Text>
                 <TouchableOpacity
                   onPress={() => setShowUploadOptions(!showUploadOptions)}
@@ -453,19 +435,24 @@ export default function MedicineDetailsScreen() {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              className={`py-4 rounded-xl items-center ${medicine.inStock ? "bg-green-600" : "bg-gray-400"}`}
+              className={`py-4 rounded-xl items-center ${medicine.minv_qty_avail > 0 ? "bg-indigo-600" : "bg-gray-400"}`}
               onPress={handleAddToCart}
-              disabled={!medicine.inStock}
+              disabled={medicine.minv_qty_avail === 0 || quantity === 0 || (requiresPrescription && uploadedFiles.length === 0)}
             >
               <Text className="text-white font-bold text-lg">
-                {medicine.inStock ? "Add to Request" : "Out of Stock"}
+                {medicine.minv_qty_avail > 0 ? "Add to Request" : "Out of Stock"}
               </Text>
             </TouchableOpacity>
 
-            {medicine.requiresPrescription && uploadedFiles.length === 0 && (
+            {requiresPrescription && uploadedFiles.length === 0 && (
               <Text className="text-red-500 text-sm text-center mt-2">
                 * Please upload prescription document to proceed
               </Text>
+            )}
+            {!reason.trim() && (
+                <Text className="text-red-500 text-sm text-center mt-1">
+                    * Reason for request is required.
+                </Text>
             )}
           </View>
         </View>
