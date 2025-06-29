@@ -168,12 +168,13 @@ class StaffListView(generics.ListAPIView):
 #TEMPLATE
 class TemplateView(generics.ListCreateAPIView):
     serializer_class = TemplateSerializer
-    queryset = Template.objects.filter(temp_is_archive=False) 
+    queryset = Template.objects.all()
 
-#Use as updating the values as well as archiving 
+
+#UPDATE TEMPLATE
 class UpdateTemplateView(generics.RetrieveUpdateAPIView):
     serializer_class = TemplateSerializer
-    queryset = Template.objects.filter(temp_is_archive=False) 
+    queryset = Template.objects.all()
     lookup_field = 'temp_id'
 
     def update(self, request, *args, **kwargs):
@@ -183,6 +184,16 @@ class UpdateTemplateView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#DELETE TEMPLATE
+class DeleteTemplateView(generics.DestroyAPIView):
+    serializer_class = TemplateSerializer    
+    queryset = Template.objects.all()
+
+    def get_object(self):
+        temp_id = self.kwargs.get('temp_id')
+        return get_object_or_404(Template, temp_id=temp_id) 
+
 
 
  # =================================  RESOLUTION =================================
