@@ -5,7 +5,7 @@ import ViewPatientsRecord from "@/pages/record/health/patientsRecord/ViewDisplay
 export const patientsRecordRouter = [
 
     {
-        path: 'patients-record-main',
+        path: 'patients-record',
         element: <PatientsRecord />
     },
     

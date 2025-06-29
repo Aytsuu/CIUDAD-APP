@@ -357,7 +357,7 @@ const items: MenuItem[] = [
     items: [
       { title: "Administration", url: "/health-administration" },
       { title: "Doctor", url: "/mainMedicalForm" },
-      { title: "Patients Record", url: "/patients-record-main" },
+      { title: "Patients Record", url: "/patients-record" },
 
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },

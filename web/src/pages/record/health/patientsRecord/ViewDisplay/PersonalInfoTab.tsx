@@ -129,7 +129,7 @@ export default function PersonalInfoTab({
                               <FormLabel className="text-sm font-medium">
                                 Sex
                               </FormLabel>
-                              <Select disabled={!isEditable} defaultValue={field.value} onValueChange={field.onChange}>
+                              <Select disabled={!isEditable} value={field.value} onValueChange={field.onChange}>
                                 <FormControl>
                                   <SelectTrigger className={!isEditable ? "bg-muted/30" : ""}>
                                     <SelectValue />
@@ -188,7 +188,7 @@ export default function PersonalInfoTab({
                               <FormLabel className="text-sm font-medium">
                                 Patient Type
                               </FormLabel>
-                              <Select disabled defaultValue={field.value}>
+                              <Select disabled value={field.value}>
                                 <FormControl>
                                   <SelectTrigger className="bg-muted/30">
                                     <SelectValue />

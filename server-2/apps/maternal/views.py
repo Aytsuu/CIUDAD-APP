@@ -99,6 +99,7 @@ def get_postpartum_records(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+
 @api_view(['GET'])
 def get_postpartum_record_detail(request, ppr_id):
     """Get specific postpartum record with all related data"""
@@ -129,10 +130,10 @@ def get_postpartum_record_detail(request, ppr_id):
 def get_patient_postpartum_count(request, pat_id):
     """Get count of postpartum records for a specific patient"""
     try:
-        # Verify patient exists
+        # verify patient exists
         patient = Patient.objects.get(pat_id=pat_id)
         
-        # Count postpartum records for this patient
+        # count postpartum records for this patient
         count = PostpartumRecord.objects.filter(
             patrec_id__pat_id=patient
         ).count()

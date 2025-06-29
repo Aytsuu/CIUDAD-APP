@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPatients, getMaternalRecords } from "../restful-api/maternalGetAPI";
+import { getPatients, getMaternalRecords, getPatientPostpartumCount } from "../restful-api/maternalGetAPI";
 
 // for getPatients
 export const usePatients = () => {
@@ -21,3 +21,14 @@ export const useMaternalRecords = () => {
 	});
 }
 
+
+export const usePatientPostpartumCount = (patientId: string) => {
+  return useQuery({
+	 queryKey: ["patientPostpartumCount", patientId],
+	 queryFn: () => getPatientPostpartumCount(patientId),
+	 enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+	 staleTime: 1 * 60 * 1000, 
+	 retry: 1, 
+	 refetchOnMount: true,
+  })
+}

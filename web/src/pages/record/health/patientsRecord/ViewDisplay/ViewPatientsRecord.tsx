@@ -12,12 +12,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { usePatientDetails } from "../queries/patientsFetchQueries";
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
-import { usePatientPostpartumCount } from "@/pages/record/health/patientsRecord/queries/patientsFetchQueries";
+import { usePatientPostpartumCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries";
 import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
+
 import { toast } from "sonner";
 import { useUpdatePatient } from "../queries/patientsUpdateQueries";
 import CardLayout from "@/components/ui/card/card-layout";
@@ -38,6 +40,7 @@ interface PatientData {
     per_sex: string;
     per_contact: string;
     per_dob: string;
+    ageTime?: "yrs";
   };
   address: {
     add_street: string;
@@ -176,10 +179,13 @@ const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
         per_lname: currentPatient?.personal_info.per_lname ?? patientData?.lastName ?? "",
         per_dob: currentPatient?.personal_info.per_dob ?? patientData?.dateOfBirth ?? "",
         per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? "",
+        ageTime: "yrs" as "yrs",
       },
     }),
     [currentPatient, patientData, patientId]
   );
+
+  console.log("Patient Link Data:", patientLinkData);
   
 
   const handleEdit = () => {
