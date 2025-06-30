@@ -108,7 +108,7 @@ export default function Confirmation() {
                       Request Summary
                     </Text>
                     <Text className="text-sm font-medium text-[#6B7280]">
-                      {orderItems.length} medicine{orderItems.length > 1 ? 's' : ''} • {totalItems} total items
+                      {orderItems.length} medicine{orderItems.length > 1 ? 's' : ''} 
                     </Text>
                   </View>
                 </View>
@@ -119,12 +119,12 @@ export default function Confirmation() {
                 <Text className="text-[#263D67] font-semibold text-sm w-1/2">
                   MEDICINE
                 </Text>
-                <Text className="text-[#263D67] font-semibold text-sm w-1/4 text-center">
+                {/* <Text className="text-[#263D67] font-semibold text-sm w-1/4 text-center">
                   QTY
                 </Text>
                 <Text className="text-[#263D67] font-semibold text-sm w-1/4 text-center">
                   UNIT
-                </Text>
+                </Text> */}
               </View>
 
               {/* Order Items */}
@@ -151,16 +151,16 @@ export default function Confirmation() {
                           </Text>
                       )}
                     </View>
-                    <View className="w-1/4 items-center">
+                    {/* <View className="w-1/4 items-center">
                       <View className="bg-blue-50 px-3 py-1 rounded-full">
                         <Text className="text-[#263D67] font-semibold text-sm">
                           {item.quantity || 1}
                         </Text>
                       </View>
-                    </View>
-                    <Text className="text-[#6B7280] font-medium text-sm w-1/4 text-center">
+                    </View> */}
+                    {/* <Text className="text-[#6B7280] font-medium text-sm w-1/4 text-center">
                       {item.unit || "pc/s"}
-                    </Text>
+                    </Text> */}
                   </View>
                 ))}
               </ScrollView>

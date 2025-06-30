@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react"
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert } from "react-native"
 import { router } from "expo-router"
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, Pill } from "lucide-react-native"
-import { useGlobalCartState, updateQuantity, removeFromCart, clearCart } from "./cart-state"
+import { ArrowLeft, Trash2, ShoppingBag, Pill } from "lucide-react-native"
+import { useGlobalCartState, removeFromCart, clearCart } from "./cart-state"
 
 export default function CartScreen() {
   // Use the global cart state hook to get cart items
@@ -19,7 +19,6 @@ export default function CartScreen() {
     const orderItems = cartItems.map(item => ({
       id: item.id,
       name: item.name,
-      quantity: item.requestedQuantity,
       unit: "pc/s", // Or map from your medicine's unit if available
       reason: item.reason,
       // You might want to pass a summary of uploaded files if confirmation needs them
@@ -43,30 +42,30 @@ export default function CartScreen() {
     ]);
   };
 
-  const handleUpdateQuantity = (id: number, currentQuantity: number, action: 'increase' | 'decrease', availableStock: number) => {
-    let newQuantity = currentQuantity;
-    if (action === 'increase') {
-      newQuantity = currentQuantity + 1;
-      if (newQuantity > availableStock) {
-        Alert.alert("Stock Limit", `Cannot request more than available stock (${availableStock}).`);
-        return;
-      }
-    } else { // 'decrease'
-      newQuantity = currentQuantity - 1;
-      if (newQuantity < 1) {
-        Alert.alert("Quantity Error", "Quantity cannot be less than 1. Remove item if not needed.");
-        return;
-      }
-    }
-    updateQuantity(id, newQuantity);
-  };
+  // const handleUpdateQuantity = (id: number, currentQuantity: number, action: 'increase' | 'decrease', availableStock: number) => {
+  //   let newQuantity = currentQuantity;
+  //   if (action === 'increase') {
+  //     newQuantity = currentQuantity + 1;
+  //     if (newQuantity > availableStock) {
+  //       Alert.alert("Stock Limit", `Cannot request more than available stock (${availableStock}).`);
+  //       return;
+  //     }
+  //   } else { // 'decrease'
+  //     newQuantity = currentQuantity - 1;
+  //     if (newQuantity < 1) {
+  //       Alert.alert("Quantity Error", "Quantity cannot be less than 1. Remove item if not needed.");
+  //       return;
+  //     }
+  //   }
+  //   updateQuantity(id, newQuantity);
+  // };
 
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <View className="flex-1 p-4">
         {/* Header */}
-        <View className="flex-row items-center mb-6 border-b border-gray-200 pb-4">
+        <View className="flex-row items-center mb-6 mt-10 border-b  border-gray-200 pb-4">
           <TouchableOpacity onPress={() => router.back()} className="p-2">
             <ArrowLeft size={24} color="#333" />
           </TouchableOpacity>
@@ -77,9 +76,9 @@ export default function CartScreen() {
         {cartItems.length > 0 ? (
           <>
             {/* Items List */}
-            <ScrollView className="flex-1">
+            <ScrollView className="flex-1 bg-white">
               {cartItems.map((item, index) => (
-                <View key={item.id} className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100">
+                <View key={item.id} className="bg-white rounded-lg p-6 mb-3 shadow-sm border border-gray-300">
                   <View className="flex-row items-center mb-3">
                     <Pill size={20} color="#3B82F6" />
                     <View className="flex-1 ml-3">
@@ -91,7 +90,7 @@ export default function CartScreen() {
 
                   {/* Quantity controls */}
                   <View className="flex-row items-center justify-between border-t border-gray-100 pt-3 mt-3">
-                    <View className="flex-row items-center bg-gray-50 rounded-lg px-2 py-1">
+                    {/* <View className="flex-row items-center bg-gray-50 rounded-lg px-2 py-1">
                       <TouchableOpacity
                         onPress={() => handleUpdateQuantity(item.id, item.requestedQuantity, 'decrease', item.minv_qty_avail)}
                         className="p-1 rounded-full"
@@ -107,15 +106,15 @@ export default function CartScreen() {
                       >
                         <Plus size={18} color="#263D67" />
                       </TouchableOpacity>
-                    </View>
+                    </View> */}
                     
-                    {/* Unit and stock info */}
+                    {/* Unit and stock info
                     <View className="flex-row items-center">
                         <Text className="text-base text-gray-700 mr-2">pc/s</Text>
                         <Text className="text-sm text-gray-500">
                             (Max: {item.minv_qty_avail})
                         </Text>
-                    </View>
+                    </View> */}
                   </View>
 
                   {item.reason && (

@@ -256,7 +256,7 @@ export default function AnimalBiteIndividualScreen() {
 
           {records && records.length > 0 ? (
             <View className="space-y-4 gap-5 ">
-              {records.map((record) => {
+              {records.map((record: { exposure_type: string; bite_id: boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.Key | null | undefined; referral_date: string; record_created_at: string; biting_animal: any; exposure_site: any; actions_taken: any; referral_sender: any; referral_receiver: any; referredby: any }) => {
                 const exposureColors = getExposureTypeColor(record.exposure_type)
                 return (
                   <View

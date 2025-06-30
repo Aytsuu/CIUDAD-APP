@@ -36,29 +36,28 @@ export default function MedicineDetailsScreen() {
   }, [params.medicineData]);
 
 
-  const [quantity, setQuantity] = useState(1);
+  // const [quantity, setQuantity] = useState(1);
   const [reason, setReason] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
-  // File size limit: 15MB in bytes
   const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
   // Check if prescription is required based on medicine_type
   const requiresPrescription = medicine?.medicine_type === 'Prescription';
 
   // Quantity handlers
-  const increaseQuantity = () => {
-    if (medicine && quantity < medicine.minv_qty_avail) {
-      setQuantity(prev => prev + 1);
-    }
-  };
+  // const increaseQuantity = () => {
+  //   if (medicine && quantity < medicine.minv_qty_avail) {
+  //     setQuantity(prev => prev + 1);
+  //   }
+  // };
 
-  const decreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
+  // const decreaseQuantity = () => {
+  //   if (quantity > 1) {
+  //     setQuantity(prev => prev - 1);
+  //   }
+  // };
 
   // Function to check file size
   const checkFileSize = (fileSize?: number, fileName?: string): boolean => {
@@ -206,29 +205,29 @@ export default function MedicineDetailsScreen() {
       return;
     }
 
-    if (quantity === 0) {
-        Alert.alert("Quantity Error", "Please select a quantity greater than 0.");
-        return;
-    }
-    if (quantity > medicine.minv_qty_avail) {
-        Alert.alert("Stock Error", `You can only request up to ${medicine.minv_qty_avail} of this medicine.`);
-        return;
-    }
+    // if (quantity === 0) {
+    //     Alert.alert("Quantity Error", "Please select a quantity greater than 0.");
+    //     return;
+    // }
+    // if (quantity > medicine.minv_qty_avail) {
+    //     Alert.alert("Stock Error", `You can only request up to ${medicine.minv_qty_avail} of this medicine.`);
+    //     return;
+    // }
 
     // Add to cart with full details
     const itemToAdd: CartMedicineType = {
-        id: medicine.id,
-        name: medicine.name,
-        category: medicine.category,
-        medicine_type: medicine.medicine_type,
-        dosage: medicine.dosage,
-        description: medicine.description,
-        minv_qty_avail: medicine.minv_qty_avail,
-        requestedQuantity: quantity, // The quantity the user selected
-        reason: reason,
-        uploadedFiles: uploadedFiles.length > 0 ? uploadedFiles : undefined, // Only include if files exist
+      id: medicine.id,
+      name: medicine.name,
+      category: medicine.category,
+      medicine_type: medicine.medicine_type,
+      dosage: medicine.dosage,
+      description: medicine.description,
+      minv_qty_avail: medicine.minv_qty_avail,
+      reason: reason,
+      uploadedFiles: uploadedFiles.length > 0 ? uploadedFiles : undefined,
+
     };
-    
+
     addToCart(itemToAdd);
 
     Alert.alert("Success", "Medicine added to your request", [
@@ -257,7 +256,7 @@ export default function MedicineDetailsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView className="flex-1">
-        <View className="flex-row items-center p-4 bg-white border-b border-gray-100">
+        <View className="flex-row items-center p-4 mt-10 bg-white border-b border-gray-100">
             <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
                 <ArrowLeft size={24} color="#333" />
             </TouchableOpacity>
@@ -266,7 +265,7 @@ export default function MedicineDetailsScreen() {
 
         <View className="px-4 pt-6 pb-6">
           {/* Medicine Info Card */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
+          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6">
             {/* Medicine Header */}
             <View className="flex-row items-start justify-between mb-4">
               <View className="flex-1">
@@ -316,9 +315,9 @@ export default function MedicineDetailsScreen() {
           </View>
 
           {/* Request Form Card */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-00">
             {/* Quantity Selector */}
-            <View className="mb-6">
+            {/* <View className="mb-6">
                 <Text className="text-gray-700 font-semibold mb-3">Quantity</Text>
                 <View className="flex-row items-center justify-center border border-gray-200 rounded-xl p-2 bg-gray-50">
                     <TouchableOpacity
@@ -345,7 +344,7 @@ export default function MedicineDetailsScreen() {
                 {quantity > medicine.minv_qty_avail && medicine.minv_qty_avail > 0 && (
                     <Text className="text-red-500 text-sm text-center mt-2">Cannot request more than available stock ({medicine.minv_qty_avail}).</Text>
                 )}
-            </View>
+            </View> */}
 
 
             {/* Reason Input */}
@@ -437,7 +436,7 @@ export default function MedicineDetailsScreen() {
             <TouchableOpacity
               className={`py-4 rounded-xl items-center ${medicine.minv_qty_avail > 0 ? "bg-indigo-600" : "bg-gray-400"}`}
               onPress={handleAddToCart}
-              disabled={medicine.minv_qty_avail === 0 || quantity === 0 || (requiresPrescription && uploadedFiles.length === 0)}
+              disabled={medicine.minv_qty_avail === 0 || (requiresPrescription && uploadedFiles.length === 0)}
             >
               <Text className="text-white font-bold text-lg">
                 {medicine.minv_qty_avail > 0 ? "Add to Request" : "Out of Stock"}

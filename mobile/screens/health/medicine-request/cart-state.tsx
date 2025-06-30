@@ -59,8 +59,6 @@ export type Medicine = {
   description?: string; // Optional: from backend if available
   minv_qty_avail: number; // Available stock from backend
 
-  // Fields for the cart item (specific to the request)
-  requestedQuantity: number;
   reason: string;
   uploadedFiles?: UploadedFile[]; // Array of uploaded files for prescription
 };
@@ -98,7 +96,6 @@ export const addToCart = (medicine: Medicine): void => {
     // If item exists, update its quantity and reason
     _globalCartState.items[existingItemIndex] = {
       ..._globalCartState.items[existingItemIndex],
-      requestedQuantity: medicine.requestedQuantity,
       reason: medicine.reason,
       uploadedFiles: medicine.uploadedFiles,
     };
@@ -114,14 +111,14 @@ export const removeFromCart = (id: number): void => {
   notifySubscribers();
 };
 
-export const updateQuantity = (id: number, newQuantity: number): void => {
-  const item = _globalCartState.items.find(item => item.id === id);
-  if (item) {
-    // Ensure quantity doesn't exceed available stock
-    item.requestedQuantity = Math.min(newQuantity, item.minv_qty_avail);
-    notifySubscribers();
-  }
-};
+// export const updateQuantity = (id: number, newQuantity: number): void => {
+//   const item = _globalCartState.items.find(item => item.id === id);
+//   if (item) {
+//     // Ensure quantity doesn't exceed available stock
+//     item.requestedQuantity = Math.min(newQuantity, item.minv_qty_avail);
+//     notifySubscribers();
+//   }
+// };
 
 export const clearCart = (): void => {
   _globalCartState.items = [];

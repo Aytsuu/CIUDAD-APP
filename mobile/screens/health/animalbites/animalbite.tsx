@@ -14,7 +14,7 @@ export default function AnimalBites() {
           resizeMode="cover"
           style={{ width: '100%', height: 250 }}
         />
-        <View className="absolute inset-0 bg-black opacity-50" />
+        <View className="absolute inset-0 bg-black opacity-60" />
 
         <TouchableOpacity
           onPress={() => router.back()}

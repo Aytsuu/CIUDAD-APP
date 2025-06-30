@@ -110,15 +110,15 @@ export default function MedicineRequestScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1">
+      <View className="flex-1 p-3">
         {/* Header */}
-        <View className="flex-row items-center justify-between p-4 border-b border-gray-200 bg-white">
+        <View className="flex-row items-center justify-between mt-10 p-3 border-b border-gray-200 bg-white">
           <TouchableOpacity onPress={() => router.back()} className="p-2">
             <ArrowLeft size={24} color="#333" />
           </TouchableOpacity>
           <Text className="text-xl font-semibold text-gray-800">Request Medicine</Text>
           <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="p-2 relative">
-            <ShoppingBag size={24} color="#333" />
+            <ShoppingBag size={24} color="blue" />
             {cartItems.length > 0 && (
               <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
                 <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
@@ -140,7 +140,7 @@ export default function MedicineRequestScreen() {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery("")} className="ml-2">
-                <X size={20} color="#9CA3AF" />
+                <X size={20} color="blue" />
               </TouchableOpacity>
             )}
           </View>
@@ -161,9 +161,9 @@ export default function MedicineRequestScreen() {
               <ScrollView>
                 {categories.map((category) => (
                   <TouchableOpacity
-                    key={category}
+                    key={category as string}
                     onPress={() => {
-                      setSelectedCategory(category)
+                      setSelectedCategory(category as string)
                       setShowCategories(false)
                     }}
                     className={`py-3 px-4 ${
@@ -175,7 +175,7 @@ export default function MedicineRequestScreen() {
                         selectedCategory === category ? "font-semibold text-blue-600" : ""
                       }`}
                     >
-                      {category}
+                      {category as string}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -185,26 +185,26 @@ export default function MedicineRequestScreen() {
         </View>
 
         {/* Medicine List */}
-        <View className="flex-1 bg-white">
+        <View className="flex-1 bg-white ">
           <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
             {medicines.length > 0 ? (
-              <View className="px-4 py-3">
+              <View className="px-4 py-3 gap-2">
                 {medicines.map((medicine: MedicineDisplay) => ( // Use MedicineDisplay type here
                   <TouchableOpacity
                     key={medicine.minv_id} // Use minv_id as key as it's unique from backend
                     onPress={() => handleMedicinePress(medicine)}
-                    className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-lg shadow-sm border border-gray-200"
+                    className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-lg shadow-sm border border-gray-300"
                   >
-                    <Pill size={24} color="#6B7280" />
+                    <Pill size={24} color="blue" />
                     <View className="flex-1 ml-4">
                       <Text className="text-lg font-semibold text-gray-900">{medicine.medicine_name}</Text>
                       <View className="flex-row items-center justify-between mt-1">
                         <Text className="text-sm font-medium text-gray-700">
                           {medicine.category_name}
                         </Text>
-                        <Text className="text-sm text-gray-600 ml-2">
+                        {/* <Text className="text-sm text-gray-600 ml-2">
                           Type: {medicine.medicine_type}
-                        </Text>
+                        </Text> */}
                       </View>
                       {medicine.minv_dsg && medicine.minv_dsg_unit && (
                         <Text className="text-gray-600 text-sm mt-1">
