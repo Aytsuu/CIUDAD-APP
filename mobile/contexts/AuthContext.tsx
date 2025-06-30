@@ -78,11 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(null);
           setIsAuthenticated(false);
           setIsLoading(false);
-        } else if (event === 'SIGNED_IN') {
-          // Don't automatically set as authenticated - wait for backend verification
-          console.log("User signed in, will verify with backend");
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log("Token refreshed, re-checking auth status");
+        } else if (event === 'SIGNED_IN' || event == 'TOKEN_REFRESHED') {
           checkAuthStatus();
         }
       }
@@ -95,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Cleaning up auth state listener");
       subscription.unsubscribe();
     };
-  }, [checkAuthStatus()]);
+  }, [checkAuthStatus]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -117,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       console.log("Supabase authentication successful, verifying with backend...");
 
-      // Then authenticate with your backend
+      // authenticate with backend
       const response = await api.post('authentication/login/', {
         email,
         password,
@@ -169,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error: any){
       console.error("Signup error:", error);
       
-      // If backend signup fails, make sure to clean up any Supabase user that might have been created
+      // If backend signup fails,  clean up supabase_user
       try {
         await supabase.auth.signOut();
       } catch (cleanupError) {
@@ -201,7 +197,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Logout error: ', error);
     } finally {
-      // Always clear local state
       setUser(null);
       setIsAuthenticated(false);
       setIsLoading(false);

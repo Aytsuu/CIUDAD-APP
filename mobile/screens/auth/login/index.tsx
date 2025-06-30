@@ -41,7 +41,7 @@ export default function SignInScreen() {
   useEffect(() => {
     if (isAuthenticated && user) {
       toast.success("Welcome back!");
-      // router.replace("/dashboard");
+      router.replace('/(tabs)');
     }
   }, [isAuthenticated, user, router, toast]);
 
