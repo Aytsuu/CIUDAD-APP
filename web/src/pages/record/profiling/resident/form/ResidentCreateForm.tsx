@@ -159,10 +159,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       
       // Safely get staff_id with proper type checking
       const staffId = user?.staff?.staff_id;
-
-      // Log the staffId to verify
-      console.log("Staff ID:", staffId);
-
+      
       if (!staffId) {
         throw new Error("Staff information not available");
       }

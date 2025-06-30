@@ -4,7 +4,7 @@ import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { FaFacebook, FaPhoneAlt } from "react-icons/fa";
 import { GoVerified } from "react-icons/go";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import SignIn from "@/pages/landing/sign-in";
+import SignIn from "@/pages/landing/Signin";
 
 const NavItemList = [
   { path: "/home", title: "Home" },
@@ -76,9 +76,9 @@ export default function LandingLayout() {
       <div className="h-[120px]"></div>
 
       {/* Scrollable Page Content */}
-      <main className="flex-1 overflow-y-auto w-full flex justify-center">
+      <section className="flex-1 overflow-y-auto w-full flex justify-center">
         <Outlet />
-      </main>
+      </section>
     </div>
   );
 }

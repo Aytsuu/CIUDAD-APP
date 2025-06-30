@@ -1,12 +1,11 @@
 import "@/global.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableWithoutFeedback, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
-// import { Google } from "@/lib/icons/Google";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,57 +15,83 @@ import { useToastContext } from "@/components/ui/toast";
 import { SignupOptions } from "./SignupOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { signInSchema } from "@/form-schema/signin-schema";
-import { icons } from "lucide-react-native";
 
 type SignInForm = z.infer<typeof signInSchema>;
 
-export default () => {
+export default function SignInScreen() {
   const { toast } = useToastContext();
-  const defaultValues: Partial<SignInForm> = generateDefaultValues(signInSchema);
-  const [showSignupOptions, setShowSignupOptions] = useState<boolean>(false);  
-  const [showPassword, setShowPassword] = useState(false);
-  const { login, isInitializing, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSignupOptions, setShowSignupOptions] = useState(false);
 
-  const { control, trigger, getValues, formState: { errors } } = useForm<SignInForm>({
+  const defaultValues: Partial<SignInForm> = generateDefaultValues(signInSchema);
+  const {
+    control,
+    trigger,
+    getValues,
+    formState: { errors },
+  } = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
     defaultValues,
   });
 
-  const handleLogin = async () => {
-    try {
-      const formIsValid = await trigger();
-      
-      if (!formIsValid) {
-        if (errors.email) toast.error(errors.email.message ?? "Invalid email");
-        else if (errors.password) toast.error(errors.password.message ?? "Invalid password");
-        return;
-      }
+  const { login, isLoading, isAuthenticated, user, error, clearError } = useAuth();
 
-      const { email, password } = getValues();
-      await login(email, password);
+  // Handle successful authentication
+  useEffect(() => {
+    if (isAuthenticated && user) {
       toast.success("Welcome back!");
-    } catch (error) {
-      toast.error("Incorrect email or password");
-      console.error("Login error:", error);
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, user, router, toast]);
+
+  // Handle auth errors
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      clearError();
+    }
+  }, [error, toast, clearError]);
+
+  const handleLogin = async () => {
+    // Clear any previous errors
+    clearError();
+    
+    const isValid = await trigger();
+    if (!isValid) {
+      if (errors.email) {
+        toast.error(errors.email.message ?? "Invalid email");
+      } else if (errors.password) {
+        toast.error(errors.password.message ?? "Invalid password");
+      }
+      return;
+    }
+
+    const { email, password } = getValues();
+
+    try {
+      await login(email, password);
+      // Success handling is now done in useEffect above
+    } catch (error: any) {
+      // Error handling is now done in useEffect above
+      console.error("Login failed:", error);
     }
   };
 
   return (
-    <ScreenLayout
+    <ScreenLayout 
       showExitButton={false}
-      customLeftAction={<Text className="text-[13px] ml-2"></Text>}
-    > 
-      <View className="flex-1 flex-col">
-        <View className="items-center justify-center mt-7">
-          <Image
-            source={require("@/assets/images/Logo.png")}
-            className="w-24 h-24"
-          />
+      showBackButton={false}
+    >
+      <View className="flex-1">
+        <View className="items-center mt-7">
+          <Image source={require("@/assets/images/Logo.png")} className="w-24 h-24" />
         </View>
-        <View className="flex-row justify-center mt-6">
+
+        <View className="mt-6 items-center">
           <Text className="text-[24px] font-PoppinsMedium">Welcome back</Text>
         </View>
+
         <View className="flex-grow mt-6">
           <FormInput
             control={control}
@@ -81,77 +106,65 @@ export default () => {
               label="Password"
               secureTextEntry={!showPassword}
             />
-            <TouchableWithoutFeedback
+            <TouchableWithoutFeedback 
               onPress={() => setShowPassword(!showPassword)}
+              disabled={isLoading}
             >
               <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
-                {showPassword ? (
-                  <Eye className="text-gray-700" />
-                ) : (
-                  <EyeOff className="text-gray-700" />
-                )}
+                {showPassword ? 
+                  <Eye className={`${isLoading ? 'text-gray-400' : 'text-gray-700'}`} /> : 
+                  <EyeOff className={`${isLoading ? 'text-gray-400' : 'text-gray-700'}`} />
+                }
               </View>
             </TouchableWithoutFeedback>
           </View>
-          <TouchableWithoutFeedback onPress={() => router.push("/forgot-password")}>
+
+          <TouchableWithoutFeedback 
+            onPress={() => router.push("/forgot-password")}
+            disabled={isLoading}
+          >
             <View className="flex-row justify-end mt-3 mb-4">
-              <Text className="text-primaryBlue font-PoppinsMedium text-[13px]">
+              <Text className={`font-PoppinsMedium text-[13px] ${
+                isLoading ? 'text-gray-400' : 'text-primaryBlue'
+              }`}>
                 Forgot Password?
               </Text>
             </View>
           </TouchableWithoutFeedback>
 
           <Button
-            className="bg-primaryBlue"
-            size={"lg"}
+            className={`${isLoading ? 'bg-gray-400' : 'bg-primaryBlue'}`}
+            size="lg"
             onPress={handleLogin}
-            disabled={isInitializing}
+            disabled={isLoading}
           >
             <Text className="text-white font-PoppinsSemiBold text-[14px]">
-              {isInitializing ? "Signing in..." : "Sign In"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </Text>
-          </Button>
-
-          <View className="flex-row items-center my-6">
-            <View className="flex-1 h-px bg-gray-200" />
-            <Text className="px-4 text-gray-500 font-PoppinsRegular text-[13px]">
-              or
-            </Text>
-            <View className="flex-1 h-px bg-gray-200" />
-          </View>
-
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-gray-300 bg-white"
-            onPress={signInWithGoogle}
-            disabled={isInitializing}
-          >
-            <View className="flex-row items-center justify-center gap-3">
-              {/* <Google width={20} height={20} /> */}
-              <Text className="text-gray-800 font-PoppinsMedium text-[14px]">
-                Continue with Google
-              </Text>
-            </View>
           </Button>
         </View>
-      </View>
 
-      <View className="flex-row justify-center gap-2 mb-6">
-        <Text className="text-gray-600 font-PoppinsRegular text-[13px]">
-          Don't have an account?
-        </Text>
-        <TouchableWithoutFeedback onPress={() => setShowSignupOptions(true)}>
-          <Text className="text-primaryBlue font-PoppinsMedium text-[13px]">
-            Sign up
+        <View className="flex-row justify-center gap-2 mt-8 mb-6">
+          <Text className="text-gray-600 font-PoppinsRegular text-[13px]">
+            Don't have an account?
           </Text>
-        </TouchableWithoutFeedback>
-      </View>
+          <TouchableWithoutFeedback 
+            onPress={() => setShowSignupOptions(true)}
+            disabled={isLoading}
+          >
+            <Text className={`font-PoppinsMedium text-[13px] ${
+              isLoading ? 'text-gray-400' : 'text-primaryBlue'
+            }`}>
+              Sign up
+            </Text>
+          </TouchableWithoutFeedback>
+        </View>
 
-      <SignupOptions
-        visible={showSignupOptions}
-        onClose={() => setShowSignupOptions(false)}
-      />
+        <SignupOptions
+          visible={showSignupOptions}
+          onClose={() => setShowSignupOptions(false)}
+        />
+      </View>
     </ScreenLayout>
   );
-};
+}

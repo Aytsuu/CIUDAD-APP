@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { BsChevronLeft } from "react-icons/bs";
 import { Link, useLocation } from "react-router-dom";
-import { ComplaintRecord } from "./complaint-type";
+import { Complaint } from "./complaint-type";
 import {
   FileText,
   User,
@@ -19,62 +19,12 @@ import {
 import { toast } from "sonner";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { archiveComplaint } from "./restful-api/complaint-api";
-
-// Utility function to format file size
-function formatFileSize(bytes?: number): string {
-  if (!bytes) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return (bytes / Math.pow(k, i)).toFixed(1) + " " + sizes[i];
-}
-
-// Helper function to construct proper file URL
-function getFileUrl(file: any): string {
-  // If it's already a full URL, return as is
-  if (file.file_url && file.file_url.startsWith('http')) {
-    return file.file_url;
-  }
-  
-  // If it's a relative path, construct the full URL
-  if (file.file_path) {
-    // Adjust this base URL to match your backend
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    return `${baseUrl}${file.file_path}`;
-  }
-  
-  // Fallback - try file_url even if it doesn't start with http
-  return file.file_url || '';
-}
-
-// Helper function to determine file type
-function getFileType(file: any): string {
-  // First check the file_type field
-  if (file.file_type) {
-    return file.file_type.toLowerCase();
-  }
-  
-  // Fallback to file extension
-  const fileName = file.file_name || '';
-  const extension = fileName.split('.').pop()?.toLowerCase() || '';
-  
-  // Map common extensions to types
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
-  const videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v'];
-  const pdfExtensions = ['pdf'];
-  
-  if (imageExtensions.includes(extension)) return 'image';
-  if (videoExtensions.includes(extension)) return 'video';
-  if (pdfExtensions.includes(extension)) return 'pdf';
-  
-  return extension || 'unknown';
-}
+import { useAuth } from "@/context/AuthContext";
 
 export function ComplaintViewRecord() {
   const { state } = useLocation();
-  const complaintData = state?.complaint as ComplaintRecord;
+  const { user } = useAuth();
+  const complaintData = state?.complaint as Complaint;
   const [isRaiseIssueDialogOpen, setIsRaiseIssueDialogOpen] = useState(false);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -438,168 +388,6 @@ export function ComplaintViewRecord() {
             Supporting Documents
           </h2>
         </div>
-
-        {complaintData.complaint_files &&
-        complaintData.complaint_files.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {complaintData.complaint_files.map((file) => {
-              // Use the helper function to get the proper URL
-              const fileUrl = getFileUrl(file.file);
-              const fileName = file.file.file_name || "Document";
-              const fileType = getFileType(file.file);
-
-              // Debugging
-              console.log("File details:", {
-                originalFile: file.file,
-                constructedUrl: fileUrl,
-                name: fileName,
-                type: fileType,
-              });
-
-              const isImage = fileType.includes('image') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(fileType);
-              const isVideo = fileType.includes('video') || ['mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v'].includes(fileType);
-              const isPDF = fileType === 'pdf';
-
-              return (
-                <div
-                  key={file.cf_id}
-                  className="border rounded-md p-2 flex flex-col h-full"
-                >
-                  <div className="relative w-full aspect-square bg-gray-100 rounded-md overflow-hidden mb-2">
-                    {isImage ? (
-                      <img
-                        src={fileUrl}
-                        alt={fileName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.error("Failed to load image:", fileUrl);
-                          // Try alternative URLs or show fallback
-                          const target = e.target as HTMLImageElement;
-                          if (!target.dataset.fallbackTried) {
-                            target.dataset.fallbackTried = 'true';
-                            // Try without the constructed base URL
-                            const originalUrl = file.file.file_url || file.file.file_path;
-                            if (originalUrl && originalUrl !== fileUrl) {
-                              target.src = originalUrl;
-                              return;
-                            }
-                          }
-                          // Show fallback content
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) {
-                            fallback.style.display = 'flex';
-                          }
-                        }}
-                        onLoad={() => {
-                          console.log("Image loaded successfully:", fileUrl);
-                        }}
-                      />
-                    ) : isVideo ? (
-                      <div className="relative w-full h-full">
-                        <video
-                          className="w-full h-full object-cover"
-                          controls={false}
-                          muted
-                          playsInline
-                          onError={(e) => {
-                            console.error("Failed to load video:", fileUrl);
-                          }}
-                        >
-                          <source src={fileUrl} type={`video/${fileType.replace('video/', '')}`} />
-                        </video>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white bg-black/50 rounded-full p-1.5" />
-                        </div>
-                      </div>
-                    ) : isPDF ? (
-                      <div className="flex flex-col items-center justify-center h-full p-4">
-                        <FileText className="w-12 h-12 text-red-500" />
-                        <span className="mt-2 text-sm">PDF Document</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full p-4">
-                        <FileText className="w-12 h-12 text-gray-400" />
-                        <span className="mt-2 text-sm">
-                          {fileType.toUpperCase()} File
-                        </span>
-                      </div>
-                    )}
-                    
-                    {/* Fallback for failed images */}
-                    {isImage && (
-                      <div className="flex flex-col items-center justify-center h-full p-4" style={{display: 'none'}}>
-                        <FileText className="w-12 h-12 text-gray-400" />
-                        <span className="mt-2 text-sm text-center">Image Preview Unavailable</span>
-                        <span className="text-xs text-gray-500">{fileName}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-2 flex-grow flex flex-col">
-                    <p className="text-sm font-medium truncate px-1" title={fileName}>
-                      {fileName}
-                    </p>
-                    <p className="text-xs text-gray-500 px-1">
-                      {fileType.toUpperCase()} •{" "}
-                      {file.file.file_size
-                        ? formatFileSize(file.file.file_size)
-                        : "Unknown size"}
-                    </p>
-
-                    <div className="mt-auto flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() => {
-                          if (fileUrl) {
-                            window.open(fileUrl, "_blank");
-                          } else {
-                            toast.error("File URL not available");
-                          }
-                        }}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() => {
-                          if (fileUrl) {
-                            // Create a temporary link for download
-                            const link = document.createElement('a');
-                            link.href = fileUrl;
-                            link.download = fileName;
-                            link.target = '_blank';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          } else {
-                            toast.error("File URL not available");
-                          }
-                        }}
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <FolderOpen className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-lg">
-              No supporting documents attached
-            </p>
-            <p className="text-gray-400 text-sm mt-1">
-              Documents will appear here when available
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

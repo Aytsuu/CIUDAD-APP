@@ -36,13 +36,14 @@ export const FormInput = ({
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}
-            value={capitalize(value) || ""}
+            value={value || ""}
             onChangeText={onChange}
             onBlur={onBlur}
             secureTextEntry={secureTextEntry}
             keyboardType={keyboardType}
             returnKeyType={returnKeyType}
             submitBehavior={submitBehavior}
+            autoCapitalize='none'
           />
           {error && (
             <Text className="text-red-500 text-xs mt-1">{error.message}</Text>

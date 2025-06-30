@@ -155,7 +155,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
                 isSubmitting={isSubmitting}
                 submit={submit}
                 isReadOnly={false}
-                reject={reject}
+                // reject={reject}
               />
             </form>
           </Form>
