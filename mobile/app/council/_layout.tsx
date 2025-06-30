@@ -10,6 +10,9 @@ export default () => {
         <Stack.Screen name="council-events/editEvent" options={{ headerShown: false, headerTitle: ""}}/>
         <Stack.Screen name="attendance/main-attendance-page" options={{ headerShown: false }} />
         <Stack.Screen name="attendance/attendance-info" options={{ headerShown: false }} />
+
+        <Stack.Screen name="template/template-main-page" options={{ headerShown: false }} />
+        <Stack.Screen name="template/template-view-page" options={{ headerShown: false }} />    
       </Stack>
     </ToastProvider>
   );

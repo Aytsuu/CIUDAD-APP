@@ -41,18 +41,20 @@ export default function RootLayout() {
     <ThemeProvider value={LIGHT_THEME}>
       <StatusBar backgroundColor="#ECF8FF" style="dark" />
       <QueryClientProvider client={queryClient}>
-        <Stack initialRouteName='(auth)'>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(health)" options={{ headerShown: false }} />
-          <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
-          <Stack.Screen name="donation" options = {{headerShown: false}}/>
-          <Stack.Screen name="council" options={{ headerShown: false }} />
-          <Stack.Screen name="treasurer" options = {{headerShown: false}}/>
-          <Stack.Screen name="waste" options = {{headerShown: false}}/>
-          <Stack.Screen name="gad" options = {{headerShown: false}}/>
-          <Stack.Screen name="+not-found" />
-        </Stack>
+        <ToastProvider>
+          <Stack initialRouteName='(auth)'>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(health)" options={{ headerShown: false }} />
+            <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
+            <Stack.Screen name="donation" options = {{headerShown: false}}/>
+            <Stack.Screen name="council" options={{ headerShown: false }} />
+            <Stack.Screen name="treasurer" options = {{headerShown: false}}/>
+            <Stack.Screen name="waste" options = {{headerShown: false}}/>
+            <Stack.Screen name="gad" options = {{headerShown: false}}/>
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </ToastProvider>
       </QueryClientProvider>
       <PortalHost />
     </ThemeProvider>
