@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import date
+from django.contrib.postgres.fields import ArrayField
 
 class CouncilScheduling(models.Model):
     ce_id = models.BigAutoField(primary_key=True)
@@ -79,3 +80,69 @@ class Template(models.Model):
 
     class Meta:
         db_table = 'template'
+
+
+class Resolution(models.Model):
+    res_num = models.BigAutoField(primary_key=True)
+    res_title = models.CharField(max_length=500)
+    res_date_approved = models.DateField(default=date.today)
+    res_area_of_focus = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        blank=True
+    )
+    res_is_archive = models.BooleanField(default=False)
+
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+
+    class Meta:
+        db_table = 'resolution'
+
+
+class ResolutionFile(models.Model):
+    rf_id = models.BigAutoField(primary_key=True)
+    rf_name = models.CharField(max_length=500)
+    rf_type = models.CharField(max_length=500)
+    rf_path = models.CharField(max_length=500)
+    rf_url = models.CharField(max_length=500)
+ 
+
+    res_num = models.ForeignKey(
+        Resolution,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='resolution_files',
+        db_column='res_num'
+    )   
+
+    
+
+    class Meta:
+        db_table = 'resolution_file'
+
+class ResolutionSupDocs(models.Model):
+    rsd_id = models.BigAutoField(primary_key=True)
+    rsfd_name = models.CharField(max_length=500)
+    rsfd_type = models.CharField(max_length=500)
+    rsd_path = models.CharField(max_length=500)
+    rsd_url = models.CharField(max_length=500)
+
+    res_num = models.ForeignKey(
+        Resolution,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='resolution_supp',
+        db_column='res_num'
+    )   
+
+    class Meta:
+        db_table = 'resolution_supp_doc'
+    

@@ -168,12 +168,13 @@ class StaffListView(generics.ListAPIView):
 #TEMPLATE
 class TemplateView(generics.ListCreateAPIView):
     serializer_class = TemplateSerializer
-    queryset = Template.objects.filter(temp_is_archive=False) 
+    queryset = Template.objects.all()
 
-#Use as updating the values as well as archiving 
+
+#UPDATE TEMPLATE
 class UpdateTemplateView(generics.RetrieveUpdateAPIView):
     serializer_class = TemplateSerializer
-    queryset = Template.objects.filter(temp_is_archive=False) 
+    queryset = Template.objects.all()
     lookup_field = 'temp_id'
 
     def update(self, request, *args, **kwargs):
@@ -183,3 +184,85 @@ class UpdateTemplateView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#DELETE TEMPLATE
+class DeleteTemplateView(generics.DestroyAPIView):
+    serializer_class = TemplateSerializer    
+    queryset = Template.objects.all()
+
+    def get_object(self):
+        temp_id = self.kwargs.get('temp_id')
+        return get_object_or_404(Template, temp_id=temp_id) 
+
+
+
+ # =================================  RESOLUTION =================================
+
+class ResolutionView(generics.ListCreateAPIView):
+    serializer_class = ResolutionSerializer
+    queryset = Resolution.objects.all()
+
+
+class DeleteResolutionView(generics.DestroyAPIView):
+    serializer_class = ResolutionSerializer    
+    queryset = Resolution.objects.all()
+
+    def get_object(self):
+        res_num = self.kwargs.get('res_num')
+        return get_object_or_404(Resolution, res_num=res_num) 
+
+
+class UpdateResolutionView(generics.RetrieveUpdateAPIView):
+    serializer_class = ResolutionSerializer
+    queryset = Resolution.objects.all()
+    lookup_field = 'res_num'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+ # RESOLUTION FILE
+# class ResolutionFileView(generics.ListCreateAPIView):
+#     serializer_class = ResolutionFileSerializer
+#     queryset = ResolutionFile.objects.all()
+
+
+class ResolutionFileView(generics.ListCreateAPIView):
+    serializer_class = ResolutionFileSerializer
+    queryset = ResolutionFile.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        res_num = self.request.query_params.get('res_num')
+        if res_num:
+            queryset = queryset.filter(res_num=res_num)
+        return queryset
+
+# Deleting Res File or replace if updated
+class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
+    queryset = ResolutionFile.objects.all()
+    serializer_class = ResolutionFileSerializer
+    lookup_field = 'rf_id' 
+
+
+ # Resolution Supp Docs
+class ResolutionSupDocsView(generics.ListCreateAPIView):
+    serializer_class = ResolutionSupDocsSerializer
+    queryset = ResolutionSupDocs.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        res_num = self.request.query_params.get('res_num')
+        if res_num:
+            queryset = queryset.filter(res_num=res_num)
+        return queryset
+
+
+class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
+    queryset = ResolutionSupDocs.objects.all()
+    serializer_class = ResolutionSupDocsSerializer
+    lookup_field = 'rsd_id' 
