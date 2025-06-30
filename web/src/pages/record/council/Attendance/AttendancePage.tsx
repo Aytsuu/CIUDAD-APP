@@ -55,11 +55,11 @@ const ArchiveTabActions = ({
                 {row.original.sheets.length > 0 ? (
                   row.original.sheets.map((sheet, index) => (
                     <div key={sheet.att_id} className="mb-4">
-                      {sheet.file_url ? (
+                      {sheet.att_file_url ? (
                         <div className="relative flex flex-row items-end gap-2">
                           <div className="flex-1">
                             <img
-                              src={sheet.file_url}
+                              src={sheet.att_file_url}
                               alt={`Archived Event File ${index + 1}`}
                               className="w-full h-auto max-h-[calc(100vh-200px)] object-contain"
                               onError={(e) => (e.currentTarget.src = "/placeholder-image.png")}
@@ -224,11 +224,11 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
                     {sheets.length > 0 ? (
                       sheets.map((sheet, index) => (
                         <div key={sheet.att_id} className="mb-4">
-                          {sheet.file_url ? (
+                          {sheet.att_file_url ? (
                             <div className="relative flex flex-row items-end gap-2">
                               <div className="flex-1">
                                 <img
-                                  src={sheet.file_url}
+                                  src={sheet.att_file_url}
                                   alt={`Event File ${index + 1}`}
                                   className="w-full h-auto max-h-[calc(100vh-200px)] object-contain"
                                 />
@@ -237,7 +237,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
                                 trigger={
                                   <ConfirmationModal
                                     trigger={
-                                      <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-yellow-500 transition-colors">
+                                      <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-red-500 transition-colors">
                                         <Archive size={16} />
                                       </div>
                                     }

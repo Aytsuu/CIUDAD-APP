@@ -109,7 +109,9 @@ function BudgetTracker() {
     const matchesFilter =
       selectedFilter === "All" || entry.gbud_type === selectedFilter;
 
-    const matchesSearch = `${entry.gbud_inc_particulars} ${entry.gbud_exp_particulars} ${entry.gbud_type} ${
+    const matchesSearch = `${entry.gbud_inc_particulars} ${
+      entry.gbud_exp_particulars
+    } ${entry.gbud_type} ${
       entry.gbud_inc_amt ||
       entry.gbud_proposed_budget ||
       entry.gbud_actual_expense
@@ -125,6 +127,95 @@ function BudgetTracker() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+
+  const calculateTotalProposedWithoutActual = () => {
+    if (!budgetEntries || budgetEntries.length === 0) return 0;
+
+    return budgetEntries.reduce((total, entry) => {
+      // Skip archived or non-expense entries
+      if (entry.gbud_is_archive || entry.gbud_type !== "Expense") return total;
+
+      // Convert all values to numbers safely (handles strings like "0.00")
+      const toNum = (val: any) => {
+        if (val === undefined || val === null) return undefined;
+        const num = +val; // Convert to number
+        return isNaN(num) ? undefined : num;
+      };
+
+      const actual = toNum(entry.gbud_actual_expense);
+      const proposed = toNum(entry.gbud_proposed_budget);
+
+      // Include if:
+      // 1. Actual is either undefined/null OR equals 0 (as number)
+      // 2. Proposed exists and is not 0
+      const shouldInclude =
+        (actual === undefined || actual === null || actual === 0) &&
+        proposed !== undefined &&
+        proposed !== null &&
+        proposed !== 0;
+
+      if (shouldInclude) {
+        return total + proposed;
+      }
+      return total;
+    }, 0);
+  };
+
+  const getLatestRemainingBalance = (): number => {
+    // If no entries, return the initial budget
+    if (!budgetEntries || budgetEntries.length === 0) {
+      return currentYearBudget ? Number(currentYearBudget) : 0;
+    }
+
+    // Filter active entries if needed
+    const activeEntries = budgetEntries.filter(
+      (entry) => !entry.gbud_is_archive
+    );
+
+    // If no active entries, return initial budget
+    if (activeEntries.length === 0) {
+      return currentYearBudget ? Number(currentYearBudget) : 0;
+    }
+
+    // Find the most recent entry with an explicit remaining balance
+    const entriesWithBalance = activeEntries.filter(
+      (entry) =>
+        entry.gbud_remaining_bal !== undefined &&
+        entry.gbud_remaining_bal !== null
+    );
+
+    // If we have entries with explicit balances, return the latest one
+    if (entriesWithBalance.length > 0) {
+      const latestWithBalance = entriesWithBalance.reduce((latest, current) =>
+        new Date(current.gbud_datetime) > new Date(latest.gbud_datetime)
+          ? current
+          : latest
+      );
+      return latestWithBalance.gbud_remaining_bal || 0;
+    }
+
+    // Fallback: Calculate balance from scratch
+    let balance = currentYearBudget ? Number(currentYearBudget) : 0;
+
+    // Process entries in chronological order
+    const sortedEntries = [...activeEntries].sort(
+      (a, b) =>
+        new Date(a.gbud_datetime).getTime() -
+        new Date(b.gbud_datetime).getTime()
+    );
+
+    sortedEntries.forEach((entry) => {
+      if (entry.gbud_type === "Income") {
+        balance += entry.gbud_inc_amt || 0;
+      } else if (entry.gbud_type === "Expense") {
+        const amount =
+          entry.gbud_actual_expense ?? entry.gbud_proposed_budget ?? 0;
+        balance -= amount;
+      }
+    });
+
+    return balance;
+  };
 
   const columns: ColumnDef<GADBudgetEntry>[] = [
     {
@@ -149,10 +240,12 @@ function BudgetTracker() {
       header: "Type",
     },
     {
-    id: "particulars", 
+      id: "particulars",
       header: "Particular",
       cell: ({ row }) => {
-        const particulars = row.original.gbud_inc_particulars || row.original.gbud_exp_particulars;
+        const particulars =
+          row.original.gbud_inc_particulars ||
+          row.original.gbud_exp_particulars;
         return <div>{particulars}</div>;
       },
     },
@@ -160,24 +253,25 @@ function BudgetTracker() {
       accessorKey: "gbud_amount",
       header: "Amount",
       cell: ({ row }) => {
-        const type = row.getValue("gbud_type") as string;
-        const incAmt = row.original.gbud_inc_amt;
-        const proposedBudget = row.original.gbud_proposed_budget;
-        const actualExpense = row.original.gbud_actual_expense;
+        const {
+          gbud_type,
+          gbud_inc_amt,
+          gbud_actual_expense,
+          gbud_proposed_budget,
+        } = row.original;
+        const num = (val: any) =>
+          val !== undefined && val !== null ? +val : undefined;
 
-        let amountToShow;
-        if (type === "Income" && incAmt !== undefined) {
-          amountToShow = incAmt;
-        } else if (type === "Expense") {
-          amountToShow =
-            actualExpense !== undefined && actualExpense !== null
-              ? actualExpense
-              : proposedBudget;
+        let amount;
+        if (gbud_type === "Income") {
+          amount = num(gbud_inc_amt) ?? 0;
         } else {
-          amountToShow = 0;
+          amount =
+            num(gbud_actual_expense) > 0
+              ? num(gbud_actual_expense)
+              : num(gbud_proposed_budget) ?? 0;
         }
-
-        return <div>Php {Number(amountToShow).toFixed(2)}</div>;
+        return <div>Php {amount.toFixed(2)}</div>;
       },
     },
     {
@@ -352,11 +446,23 @@ function BudgetTracker() {
       </div>
       <hr className="border-gray mb-6 sm:mb-6" />
 
-      <div className="flex flex-row gap-5 mb-5">
+      <div className="flex flex-row gap-5 mb-5 flex-wrap">
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Budget:</Label>
           <Label className="text-red-500 text-md font-bold">
             Php {formattedBudget}
+          </Label>
+        </div>
+        <div className="flex flex-row gap-2">
+          <Label className="w-35 text-md">Remaining:</Label>
+          <Label className="text-green-600 text-md font-bold">
+            Php {getLatestRemainingBalance()}
+          </Label>
+        </div>
+        <div className="flex flex-row gap-2">
+          <Label className="w-35 text-md">Pending Expenses:</Label>
+          <Label className="text-yellow-600 text-md font-bold">
+            Php {calculateTotalProposedWithoutActual()}
           </Label>
         </div>
       </div>

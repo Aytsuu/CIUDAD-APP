@@ -1,5 +1,6 @@
 import api from '@/pages/api/api';
 import { formatDate } from '@/helpers/dateFormatter';
+import { AttendanceSheetInput } from '../queries/fetchqueries';
 
 export const putCouncilEvent = async (ce_id: number, eventInfo: Record<string, any>) => {
     try {
@@ -46,19 +47,15 @@ export const putAttendee = async (atn_id: number, attendeeInfo: Record<string, a
     throw err;
   }
 };
-export const putAttendanceSheet = async (att_id: number, attendanceInfo: Record<string, any>) => {
-    try {
-        const res = await api.put(`council/attendance-sheet/${att_id}/`, {
-            ce_id: attendanceInfo.ce_id,
-            file_id: attendanceInfo.file_id,
-            staff_id: attendanceInfo.staff_id,
-        });
 
-        return res.data;
-    } catch (err) {
-        console.error("Error updating attendance sheet:", err);
-        throw err;
-    }
+export const putAttendanceSheet = async (att_id: number, attendanceInfo: Partial<AttendanceSheetInput>) => {
+  try {
+    const res = await api.put(`council/attendance-sheets/${att_id}/`, attendanceInfo);
+    return res.data;
+  } catch (err) {
+    console.error("Error updating attendance sheet:", err);
+    throw err;
+  }
 };
 
 export const updateAttendees = async (ce_id: number, attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[]) => {

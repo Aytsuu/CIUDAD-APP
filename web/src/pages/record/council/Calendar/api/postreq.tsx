@@ -63,7 +63,7 @@ export const postAttendanceSheet = async (attendanceInfo: Record<string, any>) =
             staff_id: attendanceInfo.staff_id,
         });
 
-        const res = await api.post('council/attendance-sheet/', {
+        const res = await api.post('council/attendance-sheets/', {
             ce_id: attendanceInfo.ce_id,
             file_id: attendanceInfo.file_id,
             staff_id: attendanceInfo.staff_id,

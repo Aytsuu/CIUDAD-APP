@@ -343,7 +343,7 @@ const CouncilCalendarPage = () => {
               className="bg-blue-600 p-2 rounded-full"
               onPress={() => router.push('/council/council-events/schedule?isAdding=true')}
             >
-              <Text className='text-white text-xs'><Plus size={10} color="#ffffff" />Add</Text>
+              <Plus size={20} color="#ffffff" />
             </TouchableOpacity>
           </View>
         </View>
