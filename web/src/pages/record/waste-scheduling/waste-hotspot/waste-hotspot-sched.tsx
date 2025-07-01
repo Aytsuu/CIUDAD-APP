@@ -25,7 +25,6 @@ const announcementOptions = [
     { id: "watchmen", label: "Watchmen" },
 ];
 
-
 function WasteHotSched({onSuccess}: {
     onSuccess?: () => void;
 }) {
@@ -46,7 +45,8 @@ function WasteHotSched({onSuccess}: {
         resolver: zodResolver(WasteHotspotSchema),
         defaultValues: {
             date: '',
-            time: '',
+            start_time: '',
+            end_time: '',
             additionalInstructions: '',
             sitio: '', 
             selectedAnnouncements: [], 
@@ -99,17 +99,26 @@ function WasteHotSched({onSuccess}: {
 
                 {/* Date and Time */}
                 <FormDateTimeInput
-                        control={form.control}
-                        name="date"
-                        type="date"
-                        label="Date"
+                    control={form.control}
+                    name="date"
+                    type="date"
+                    label="Date"
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} 
+                />
+
+
+                <FormDateTimeInput
+                    control={form.control}
+                    name="start_time"
+                    type="time"
+                    label="Start Time"
                 />
 
                 <FormDateTimeInput
                     control={form.control}
-                    name="time"
+                    name="end_time"
                     type="time"
-                    label="Time"
+                    label="End Time"
                 />
     
                 {/* Additional Instructions */}

@@ -13,7 +13,8 @@ export const useEditHotspot = (onSuccess?: () => void) => {
             mutationFn: (values: z.infer<typeof WasteHotspotEditSchema>) => 
             editHotspot(values.wh_num, { 
                 date: values.date,
-                time: values.time,
+                start_time: values.start_time,
+                end_time: values.end_time,
                 additionalInstructions: values.additionalInstructions,
                 watchman: values.watchman,
                 sitio: values.sitio

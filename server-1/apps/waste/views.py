@@ -20,24 +20,128 @@ class WasteCollectionStaffView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionStaffSerializer
     queryset = WasteCollectionStaff.objects.all()
 
+# WASTE COLLECTION RETRIEVE / VIEW
+# WASTE COLLECTION RETRIEVE / VIEW
 class WasteCollectionSchedView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionSchedSerializer
     queryset = WasteCollectionSched.objects.all()
 
-class WasteCollectionAssignmentView(generics.ListCreateAPIView):
-    serializer_class = WasteCollectionAssignmentSerializer
-    queryset = WasteCollectionAssignment.objects.all()
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        return instance  # Return the created instance including wc_num
+
+# class WasteCollectionAssignmentView(generics.ListCreateAPIView):
+#     serializer_class = WasteCollectionAssignmentSerializer
+#     queryset = WasteCollectionAssignment.objects.all()
 
 class WasteCollectorView(generics.ListCreateAPIView):
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
+
+class WasteCollectorListView(generics.ListAPIView):
+    serializer_class = WasteCollectorSerializer
+    
+    def get_queryset(self):
+        queryset = WasteCollector.objects.all()
+        wc_num = self.request.query_params.get('wc_num')
+        wstp = self.request.query_params.get('wstp')
+        
+        if wc_num:
+            queryset = queryset.filter(wc_num=wc_num)
+        if wstp:
+            queryset = queryset.filter(wstp=wstp)
+            
+        return queryset
+
+class WasteCollectionSchedFullDataView(generics.ListAPIView):
+    serializer_class = WasteCollectionSchedFullDataSerializer
+    queryset = WasteCollectionSched.objects.all()
+
+# WASTE COLLECTION UPDATE
+class WasteCollectionSchedUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = WasteCollectionSched.objects.all()
+    serializer_class = WasteCollectionSchedSerializer
+    lookup_field = 'wc_num'
+
+class WasteCollectorDeleteView(generics.DestroyAPIView):
+    queryset = WasteCollector.objects.all()
+    serializer_class = WasteCollectorSerializer
+
+    def get_object(self):
+        wasc_id = self.kwargs.get('wasc_id')
+        return get_object_or_404(WasteCollector, wasc_id=wasc_id) 
+
+# WASTE COLLECTION DELETE
+class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
+    queryset = WasteCollectionSched.objects.all()
+    serializer_class = WasteCollectionSchedSerializer
+
+    def get_object(self):
+        wc_num = self.kwargs.get('wc_num')
+        return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
+
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        return instance  # Return the created instance including wc_num
+
+# class WasteCollectionAssignmentView(generics.ListCreateAPIView):
+#     serializer_class = WasteCollectionAssignmentSerializer
+#     queryset = WasteCollectionAssignment.objects.all()
+
+class WasteCollectorView(generics.ListCreateAPIView):
+    serializer_class = WasteCollectorSerializer
+    queryset = WasteCollector.objects.all()
+
+class WasteCollectorListView(generics.ListAPIView):
+    serializer_class = WasteCollectorSerializer
+    
+    def get_queryset(self):
+        queryset = WasteCollector.objects.all()
+        wc_num = self.request.query_params.get('wc_num')
+        wstp = self.request.query_params.get('wstp')
+        
+        if wc_num:
+            queryset = queryset.filter(wc_num=wc_num)
+        if wstp:
+            queryset = queryset.filter(wstp=wstp)
+            
+        return queryset
+
+class WasteCollectionSchedFullDataView(generics.ListAPIView):
+    serializer_class = WasteCollectionSchedFullDataSerializer
+    queryset = WasteCollectionSched.objects.all()
+
+# WASTE COLLECTION UPDATE
+class WasteCollectionSchedUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = WasteCollectionSched.objects.all()
+    serializer_class = WasteCollectionSchedSerializer
+    lookup_field = 'wc_num'
+
+class WasteCollectorDeleteView(generics.DestroyAPIView):
+    queryset = WasteCollector.objects.all()
+    serializer_class = WasteCollectorSerializer
+
+    def get_object(self):
+        wasc_id = self.kwargs.get('wasc_id')
+        return get_object_or_404(WasteCollector, wasc_id=wasc_id) 
+
+# WASTE COLLECTION DELETE
+class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
+    queryset = WasteCollectionSched.objects.all()
+    serializer_class = WasteCollectionSchedSerializer
+
+    def get_object(self):
+        wc_num = self.kwargs.get('wc_num')
+        return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
+
 
 class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
         return WasteHotspot.objects.select_related(
-            'wstp_id__staff_id__rp__per', 
+            'wstp_id__staff__rp__per', 
             'sitio_id'                   
         ).all()
 
@@ -62,6 +166,17 @@ class DeleteHotspotView(generics.DestroyAPIView):
         wh_num = self.kwargs.get('wh_num')
         return get_object_or_404(WasteHotspot, wh_num=wh_num) 
     
+class WasteReportFileView(generics.ListCreateAPIView):
+    serializer_class = WasteReportFileSerializer
+    queryset = WasteReport_File.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        rep_num = self.request.query_params.get('rep_num')
+        if rep_num:
+            queryset = queryset.filter(rep_num=rep_num)
+        return queryset
+
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
     queryset = WasteReport.objects.all()
@@ -86,6 +201,7 @@ class DeleteWasteReportView(generics.DestroyAPIView):
     def get_object(self):
         rep_id = self.kwargs.get('rep_id')
         return get_object_or_404(WasteReport, rep_id=rep_id) 
+
 
 class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
     serializer_class = WastePersonnelSerializer
@@ -170,15 +286,15 @@ class WasteTruckView(APIView):
     #     return Response(serializer.data)
 
     def get(self, request):
-        # Get is_archive parameter from query params (default to False)
-        is_archive = request.query_params.get('is_archive', 'false').lower() == 'true'
-        
-        # Filter trucks based on archive status
-        trucks = WasteTruck.objects.filter(truck_is_archive=is_archive)
-        
+        is_archive = request.query_params.get('is_archive', None)
+        if is_archive is not None:
+            is_archive = is_archive.lower() == 'true'
+            trucks = WasteTruck.objects.filter(truck_is_archive=is_archive)
+        else:
+            trucks = WasteTruck.objects.all()  # Fetch all trucks
         serializer = WasteTruckSerializer(trucks, many=True)
         return Response(serializer.data)
-    
+
     def post(self, request):
         serializer = WasteTruckSerializer(data=request.data)
         if serializer.is_valid():
@@ -223,10 +339,28 @@ class WasteTruckDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, pk):
         instance = self.get_object(pk)
-        instance.truck_is_archive = True
-        instance.save()
+        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        if permanent:
+            # Permanent delete
+            instance.delete()
+        else:
+            # Soft delete (archive)
+            instance.truck_is_archive = True
+            instance.save()
+            
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+class WasteTruckRestoreView(generics.UpdateAPIView):
+    queryset = WasteTruck.objects.filter(truck_is_archive=True)
+    serializer_class = WasteTruckSerializer
+    lookup_field = 'truck_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.truck_is_archive = False
+        instance.save()
+        return Response(status=status.HTTP_200_OK)
 
 # get Driver for garbage Collection Form
 class DriverPersonnelAPIView(APIView):
@@ -236,8 +370,8 @@ class DriverPersonnelAPIView(APIView):
         drivers = WastePersonnel.objects.filter(
             staff_id__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
-            'staff_id__pos',
-            'staff_id__rp__per'
+            'staff__pos',
+            'staff__rp__per'
         )
         
         data = [driver.to_dict() for driver in drivers]
@@ -248,11 +382,11 @@ class CollectorPersonnelAPIView(APIView):
     def get(self, request, *args, **kwargs): 
         allowed_positions = ["Waste Collector", "Collector"]  
         
-        collectors = WastePersonnel.objects.filter(
+        collectors = WastePersonnel.objects.filter( 
             staff_id__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
-            'staff_id__pos',
-            'staff_id__rp__per'
+            'staff__pos',
+            'staff__rp__per'
         )
         
         data = [collector.to_dict() for collector in collectors]
@@ -271,16 +405,16 @@ class WasteCollectorView(generics.ListCreateAPIView):
 class WatchmanView(generics.GenericAPIView): 
     def get(self, request, *args, **kwargs):
         watchmen = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title="Watchman"  
+            staff__pos__pos_title="Watchman"  
         ).select_related(
-            'staff_id__pos',
-            'staff_id__rp__per'
+            'staff__pos',
+            'staff__rp__per'
         )
 
         data = [watchman.to_dict() for watchman in watchmen]
         return Response(data)
      
-class GarbagePickupRequestPendingView(generics.ListAPIView):
+class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer
     def get_queryset(self):
         queryset = Garbage_Pickup_Request.objects.all()
@@ -313,6 +447,15 @@ class GarbagePickupRequestAcceptedView(generics.ListAPIView):
         
         return queryset
     
+class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
+    serializer_class = GarbagePickupRequestAcceptedSerializer
+    queryset = Garbage_Pickup_Request.objects.all()
+    lookup_field = 'garb_id'  # or 'id' depending on your model
+
+    def get_object(self):
+        obj = super().get_object()
+        return obj
+    
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
     def get_queryset(self):
@@ -323,7 +466,16 @@ class GarbagePickupRequestCompletedView(generics.ListAPIView):
             queryset = queryset.filter(garb_req_status__iexact=status.lower())
         
         return queryset 
+    
+class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
+    serializer_class = GarbagePickupRequestCompletedSerializer
+    queryset = Garbage_Pickup_Request.objects.all()
+    lookup_field = 'garb_id'  # or 'id' depending on your model
 
+    def get_object(self):
+        obj = super().get_object()
+        return obj
+    
 
 class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer
@@ -354,7 +506,6 @@ class UpdatePickupAssignmentView(generics.UpdateAPIView):
 class PickupRequestDecisionView(generics.ListCreateAPIView):
     serializer_class = PickupRequestDecisionSerializer
     queryset = Pickup_Request_Decision.objects.all()
-
 
 class PickupAssignmentView(generics.ListCreateAPIView):
     serializer_class = PickupAssignmentSerializer

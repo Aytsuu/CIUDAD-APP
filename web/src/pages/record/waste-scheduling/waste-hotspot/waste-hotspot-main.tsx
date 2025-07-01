@@ -42,10 +42,18 @@ function WasteHotspotMain() {
         { accessorKey: "watchman", header: "Watchman" },
         { accessorKey: "wh_date", header: "Assignment Date"},
         { 
-            accessorKey: "wh_time", 
-            header: "Assignment Time",
+            accessorKey: "wh_start_time", 
+            header: "Start Time",
             cell: ({ row }) => {
-                const date = row.original.wh_time;
+                const date = row.original.wh_start_time;
+                return formatTime(date);
+            }
+        },
+        { 
+            accessorKey: "wh_end_time", 
+            header: "End Time",
+            cell: ({ row }) => {
+                const date = row.original.wh_end_time;
                 return formatTime(date);
             }
         },
@@ -72,7 +80,8 @@ function WasteHotspotMain() {
                                             mainContent={
                                                 <WasteHotSchedEdit
                                                     wh_num = {row.original.wh_num}
-                                                    wh_time = {row.original.wh_time}
+                                                    wh_start_time = {row.original.wh_start_time}
+                                                    wh_end_time = {row.original.wh_end_time}
                                                     wh_date = {row.original.wh_date}
                                                     wh_add_info = {row.original.wh_add_info}
                                                     sitio_id = {row.original.sitio_id}

@@ -49,7 +49,8 @@ export const useGetSitio = () => {
 export type Hotspot = {
     wh_num: string;
     wh_date: string;
-    wh_time: string;
+    wh_start_time: string;
+    wh_end_time: string;
     wh_add_info: string;
     wh_is_archive: boolean;
     sitio: string;

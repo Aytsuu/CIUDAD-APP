@@ -26,10 +26,11 @@ const announcementOptions = [
 ];
 
 
-function WasteHotSchedEdit({wh_num, wh_date, wh_time, wh_add_info, wstp_id, sitio_id, onSuccess}: {
+function WasteHotSchedEdit({wh_num, wh_date, wh_start_time, wh_end_time, wh_add_info, wstp_id, sitio_id, onSuccess}: {
     wh_num: string;
     wh_date: string;
-    wh_time: string;
+    wh_start_time: string;
+    wh_end_time: string;
     wh_add_info: string;
     wstp_id: string;
     sitio_id: string;
@@ -54,7 +55,8 @@ function WasteHotSchedEdit({wh_num, wh_date, wh_time, wh_add_info, wstp_id, siti
         resolver: zodResolver(WasteHotspotEditSchema),
         defaultValues: {
             date: wh_date,
-            time: wh_time,
+            start_time: wh_start_time,
+            end_time: wh_end_time,
             additionalInstructions: wh_add_info,
             sitio: String(sitio_id), 
             selectedAnnouncements: [], 
@@ -110,17 +112,25 @@ function WasteHotSchedEdit({wh_num, wh_date, wh_time, wh_add_info, wstp_id, siti
 
                 {/* Date and Time */}
                 <FormDateTimeInput
-                        control={form.control}
-                        name="date"
-                        type="date"
-                        label="Date"
+                    control={form.control}
+                    name="date"
+                    type="date"
+                    label="Date"
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} 
                 />
 
                 <FormDateTimeInput
                     control={form.control}
-                    name="time"
+                    name="start_time"
                     type="time"
-                    label="Time"
+                    label="Start Time"
+                />
+
+                <FormDateTimeInput
+                    control={form.control}
+                    name="end_time"
+                    type="time"
+                    label="End Time"
                 />
     
                 {/* Additional Instructions */}
