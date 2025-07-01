@@ -4,7 +4,7 @@ from django.db.models import Prefetch, Q, Count, Value, CharField, Subquery, Out
 from django.db.models.functions import Coalesce, Concat
 from ..serializers.family_serializers import *
 from ..serializers.resident_profile_serializers import *
-from pagination import *
+from apps.pagination import *
 
 class FamilyTableView(generics.ListCreateAPIView):
   serializer_class = FamilyTableSerializer

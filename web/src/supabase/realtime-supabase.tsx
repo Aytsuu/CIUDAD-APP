@@ -23,7 +23,7 @@ export const manageNotificationChannel = (user_id: string) => {
           event: "*",
           schema: "public",
           table: "notification",
-          filter: `acc_id=eq.${user_id}`,
+          filter: `supabase_id=eq.${user_id}`,
         },
         (payload) => console.log("Changes: ", payload)
       )
@@ -45,10 +45,10 @@ export const AuthAwareNotifier = () => {
     const { user } = useAuth();
 
     useEffect(() => {
-        if(!user?.id) return;
-        console.log(user?.djangoUser?.email)
-        const cleanup = manageNotificationChannel(user.id);
+        if(!user?.supabase_id) return;
+        console.log(user?.email)
+        const cleanup = manageNotificationChannel(user.supabase_id);
 
         return cleanup;
-    }, [user?.id])
+    }, [user?.supabase_id])
 }

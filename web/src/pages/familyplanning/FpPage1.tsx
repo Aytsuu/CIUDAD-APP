@@ -67,8 +67,8 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     const fetchPatients = async () => {
       setLoading(true)
       try {
-        const response = await api.get("/health-profiling/personal/")
-        const patientData = response.data
+        // const response = await api.get("/health-profiling/personal/")
+        // const patientData = response.data
 
         // Make sure we're mapping the data correctly based on the API response
         const formatted = patientData.map((patient: PatientRecord) => ({

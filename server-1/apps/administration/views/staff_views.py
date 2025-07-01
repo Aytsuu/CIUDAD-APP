@@ -5,7 +5,7 @@ from ..serializers.staff_serializers import *
 from pagination import *
 
 class StaffCreateView(generics.CreateAPIView):
-  serializer_class = StaffBaseSerializer
+  serializer_class = StaffCreateSerializer
   queryset = Staff.objects.all()
 
 class StaffTableView(generics.ListCreateAPIView):
@@ -45,12 +45,19 @@ class StaffUpdateView(generics.UpdateAPIView):
   lookup_field = 'staff_id'
 
   def update(self, request, *args, **kwargs):
-    instance = self.get_object()
-    serializer = self.get_serializer(instance, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
+    pos = request.data['pos']
+    pos_data = Position.objects.filter(pos_id=pos).first()
+    max_holders = pos_data.pos_max
+    holders = Staff.objects.filter(pos=pos)
+
+    if len(holders) < max_holders:
+      instance = self.get_object()
+      serializer = self.get_serializer(instance, data=request.data, partial=True)
+
+      if serializer.is_valid():
+          serializer.save()
+          return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
   
 class StaffDeleteView(generics.DestroyAPIView):
   serializer_class = StaffBaseSerializer

@@ -37,4 +37,5 @@ export type AdministrationRecord = {
     contact: number
     position: string
     dateAssigned: string
+    fam: string
 }

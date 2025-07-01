@@ -35,6 +35,7 @@ import { medicineRequest } from './medicine-request'
 import { forwardedhealthrecord_router } from './forwardedhealthrecords';
 import { firstaid_router } from './firstaid-router';
 import { health_schedule_routes } from './health-schedules-router';
+import { summon_router } from './summon-router';
 
 
 export const main_router: RouteObject[] = [
@@ -78,6 +79,7 @@ export const main_router: RouteObject[] = [
             ...medicalConsultation,
             ...patientQueue,
             ...doctorRouting,
+            ...summon_router,
             ...familyProfilingRoute,
             ...patientsRecordRouter,
             ...health_administration_router,

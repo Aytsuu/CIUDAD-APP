@@ -19,7 +19,6 @@ interface ModalSelectProps {
   disabled?: boolean
   maxHeight?: number
   className?: string
-  isInModal?: boolean
 }
 
 export const SelectLayout: React.FC<ModalSelectProps> = ({
@@ -32,7 +31,6 @@ export const SelectLayout: React.FC<ModalSelectProps> = ({
   disabled = false,
   maxHeight = 300,
   className,
-  isInModal=false
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [dropdownLayout, setDropdownLayout] = useState({ x: 0, y: 0, width: 0, height: 0 })
@@ -98,12 +96,12 @@ export const SelectLayout: React.FC<ModalSelectProps> = ({
     const dropdownHeight = Math.min(maxHeight, options.length * 50)
 
     // Use custom offset if provided, otherwise auto-detect context
-    let gapAdjustment = isInModal ? 5 : -30;
+    let gapAdjustment = -30;
     let top = dropdownLayout.y + dropdownLayout.height + gapAdjustment;
 
     // If not enough space below, show above
     if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-      top = dropdownLayout.y - dropdownHeight - (isInModal ? 0 : 30)
+      top = dropdownLayout.y - dropdownHeight - 30
     }
 
     return {

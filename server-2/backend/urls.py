@@ -28,8 +28,6 @@ urlpatterns = [
     path('maternal/', include('apps.maternal.urls')),
     path('animalbites/', include("apps.animalbites.urls")),
     path('vaccination/', include("apps.vaccination.urls")),
-    path('administration/', include("apps.administration.urls")),
-    path('user/', include('apps.account.urls')),
     path('family-planning/', include("apps.familyplanning.urls")),
     path('patientrecords/', include("apps.patientrecords.urls")),
     path('medical-consultation/', include("apps.medicalConsultation.urls")),

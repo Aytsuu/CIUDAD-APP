@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { capitalize } from "@/helpers/capitalize";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Link } from "react-router";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
@@ -95,13 +96,30 @@ const PersonalInfoForm = ({
       {origin === Origin.Administration && (
         <Combobox
           options={formattedResidents}
-          value={watch("per_id")}
+          value={watch("per_id") as string}
           onChange={(value) => {
             setValue("per_id", value);
             onComboboxChange && onComboboxChange();
           }}
           placeholder="Select a resident"
-          emptyMessage="No resident found"
+          emptyMessage={
+            <div className="flex gap-2 justify-center items-center">
+              <Label className="font-normal text-[13px]">No resident found.</Label>
+              <Link to="/resident/form"
+                state={{
+                  params: {
+                    origin: "create",
+                    title: "Resident Registration",
+                    description: "Provide the necessary details, and complete the registration.",
+                  },
+                }}
+              >
+                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                  Register
+                </Label>
+              </Link>
+            </div>
+          }
         />
       )}
       {/* Name Fields */}

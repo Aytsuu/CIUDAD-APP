@@ -50,7 +50,6 @@ urlpatterns = [
     # Resident Urls
     path("resident/", ResidentProfileListExcludeFamView.as_view(), name="resident-details"),
     path("resident/list/table/", ResidentProfileTableView.as_view(), name="residents-table"),
-    path("resident/create/", ResidentProfileCreateView.as_view(), name="resident-create"),
     path("resident/create/combined/", ResidentPersonalCreateView.as_view(), name="resident-combined-create"),
     path("resident/personal/<str:rp_id>/", ResidentPersonalInfoView.as_view(), name="resident-personal-info"),
     path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListExcludeFamView.as_view(), name="resident-list-with exclusions"),
@@ -61,7 +60,7 @@ urlpatterns = [
     path("request/create/", RequestCreateView.as_view(), name="request-create"),
     path("request/file/create/", RequestFileCreateView.as_view(), name="request-file-create"),
     path("request/link/registration/", LinkRegVerificationView.as_view(), name="link-registration-verification"),
-    # path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
+    path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
     # path("request/file/", RequestFileView.as_view(), name="request-files"),
 
     # # Business Urls

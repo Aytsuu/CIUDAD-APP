@@ -10,8 +10,8 @@ import { Card } from "@/components/ui/card/card";
 import { CircleAlert } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import { useAddPosition } from "./queries/administrationAddQueries";
-import { useEditPosition } from "./queries/administrationUpdateQueries";
+import { useAddPositionHealth } from "./queries/administrationAddQueries";
+import { useEditPositionHealth } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./administrationActionConfig";
 import { Type } from "./administrationEnums";
 
@@ -19,8 +19,8 @@ import { Type } from "./administrationEnums";
 export default function PositionForm() {
   const  navigate = useNavigate();
   const { user }  = React.useRef(useAuth()).current;
-  const { mutate: addPosition, isPending: isAdding } = useAddPosition();
-  const { mutate: editPosition, isPending: isUpdating } = useEditPosition();
+  const { mutate: addPosition, isPending: isAdding } = useAddPositionHealth();
+  const { mutate: editPosition, isPending: isUpdating } = useEditPositionHealth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params || {}, [location.state])
@@ -72,11 +72,12 @@ export default function PositionForm() {
     
       return;
     }
-    
+    // Safely get staff_id with proper type checking
+    const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
     const values = form.getValues()
     if(formType === Type.Add) {
       addPosition(
-        {data: values, staffId: user?.staff.staff_id}, {
+        {data: values, staffId: staffId ?? ''}, {
           onSuccess: () => {
             form.setValue('pos_title', '');
             form.setValue('pos_max', '1');
