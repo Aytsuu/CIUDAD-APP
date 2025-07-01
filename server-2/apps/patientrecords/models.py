@@ -3,8 +3,6 @@ from django.db.models import Max
 from django.utils import timezone
 from decimal import Decimal
 from apps.healthProfiling.models import ResidentProfile
-from apps.healthProfiling.models import Personal, ResidentProfile
-
 # Create your models here.
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
@@ -229,23 +227,30 @@ class Illness(models.Model):
 # FINDINGS
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
-    # find_description = models.TextField()   
-    obj_description = models.TextField(default="")
-    subj_description = models.TextField(default="")
+    assessment_summary =models.TextField(default="")
+    obj_summary = models.TextField(default="")
+    subj_summary = models.TextField(default="")
+    plantreatment_summary=models.TextField(default="")
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'finding'
 
 
+
+class MedicalHistory(models.Model):
+    medhist_id = models.BigAutoField(primary_key=True)
+    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True)
+    medrec = models.ForeignKey("medicalConsultation.MedicalConsultation_Record", on_delete=models.CASCADE, related_name='medical_history', null=True)
+
+    class Meta:
+        db_table = 'medical_history'  
+        
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
-    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='diagnosis', null=True)
-    find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True)
+    find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
+    medhist =models.ForeignKey(MedicalHistory, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='medhist_id')
     class Meta:
-        db_table = 'diagnosis'
-        
-        
-     
+        db_table = 'diagnosis'   
      
 # Section of the physical exam (e.g., "Skin/Extremities", "HEENT")
 class PESection(models.Model):

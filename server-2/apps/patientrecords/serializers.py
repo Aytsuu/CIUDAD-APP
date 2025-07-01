@@ -484,7 +484,13 @@ class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:
         model = Diagnosis
         fields = '__all__'
-        
+     
+class MedicalHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model =MedicalHistory
+        fields = '__all__'
+      
+       
 class PESectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = PESection

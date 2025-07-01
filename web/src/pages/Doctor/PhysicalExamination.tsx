@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/form/form";
 import { UseFormReturn, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PEType, PESchema } from "@/form-schema/doctor/doctorSchema";
+import { PEType, PESchema } from "@/form-schema/doctor/soapSchema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { Button } from "@/components/ui/button/button";
@@ -20,7 +20,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { CombinedType } from "@/form-schema/doctor/doctorSchema";
+import { CombinedType } from "@/form-schema/doctor/soapSchema";
 
 interface Option {
   id: string;

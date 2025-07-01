@@ -212,14 +212,12 @@ class MedicineRequestItemView(generics.ListCreateAPIView):
     
     
             
-class UpdateMedicineRequestView(generics.UpdateAPIView):
+class DeleteUpdateMedicineRequestView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = MedicineRequestSerializer
     queryset = MedicineRequest.objects.all()
+    lookup_field = "medreq_id"
     
-    def get_object(self):
-        medreq_id = self.kwargs['medreq_id']
-        return MedicineRequest.objects.get(medreq_id=medreq_id)
-
+   
 
  
 class MedicineRequestItemDelete(generics.DestroyAPIView):

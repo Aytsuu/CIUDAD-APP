@@ -21,8 +21,8 @@ import PEForm from "./PhysicalExamination";
 import {
   CombinedSchema,
   CombinedType,
-} from "@/form-schema/doctor/doctorSchema";
-import { findings } from "@/form-schema/doctor/doctorSchema";
+} from "@/form-schema/doctor/soapSchema";
+import { findings } from "@/form-schema/doctor/soapSchema";
 import { Activity } from "lucide-react";
 import { useState } from "react";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";

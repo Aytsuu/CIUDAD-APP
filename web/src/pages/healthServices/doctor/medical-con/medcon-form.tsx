@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card/card";
 import { ChevronLeft, ClipboardList } from "lucide-react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -20,16 +20,56 @@ import CurrentConsultationCard from "@/pages/healthServices/medicalconsultation/
 
 export default function PendingDisplayMedicalConsultation() {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Changed to access state directly without params wrapper
+  // Keep these lines exactly as they are
   const { patientData, MedicalConsultation } = location.state || {};
-
   const [consultationHistory, setConsultationHistory] = useState<
     MedicalConsultationHistory[]
   >([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  console.log("MedicalConsultation data:", MedicalConsultation);
+  // Custom back navigation that preserves data
+  const handleBackNavigation = useCallback(() => {
+    localStorage.removeItem("pendingConsultation");
+    localStorage.removeItem("soapFormData");
+
+    localStorage.removeItem("soapFormMedicines");
+    navigate(-1);
+  }, [navigate, patientData, MedicalConsultation]);
+
+  // Restore from localStorage if location.state is empty
+  useEffect(() => {
+    if (!patientData || !MedicalConsultation) {
+      const savedData = localStorage.getItem("pendingConsultation");
+      if (savedData) {
+        const {
+          patientData: savedPatientData,
+          MedicalConsultation: savedConsultation,
+        } = JSON.parse(savedData);
+        // Use navigate to re-inject the state
+        navigate(location.pathname, {
+          state: {
+            patientData: savedPatientData,
+            MedicalConsultation: savedConsultation,
+          },
+          replace: true,
+        });
+      }
+    } else {
+      // Save to localStorage whenever we get fresh state
+      localStorage.setItem(
+        "pendingConsultation",
+        JSON.stringify({
+          patientData,
+          MedicalConsultation,
+        })
+      );
+    }
+  }, [patientData, MedicalConsultation, navigate, location.pathname]);
 
   const patientId = useMemo(() => patientData?.pat_id, [patientData]);
 
@@ -55,8 +95,9 @@ export default function PendingDisplayMedicalConsultation() {
         setConsultationHistory([]);
         return;
       }
-
+      
       const formattedHistories = responseData.map((history: any) => ({
+        patrec: history.patrec,
         medrec_id: history.medrec_id,
         medrec_status: history.medrec_status,
         medrec_chief_complaint:
@@ -98,21 +139,18 @@ export default function PendingDisplayMedicalConsultation() {
     } finally {
       setLoading(false);
     }
-  }, [patientId, patientData]);
+  }, [patientId]);
 
   useEffect(() => {
-    fetchConsultationHistory();
-  }, [fetchConsultationHistory]);
+    if (patientData) {
+      fetchConsultationHistory();
+    }
+  }, [fetchConsultationHistory, patientData]);
 
-  // Use the passed MedicalConsultation if available, otherwise find it in history
+  // Use the passed MedicalConsultation if available
   const currentConsultation = useMemo(() => {
-    return (
-      MedicalConsultation ||
-      consultationHistory.find(
-        (history) => history.medrec_id === MedicalConsultation?.medrec_id
-      )
-    );
-  }, [consultationHistory, MedicalConsultation]);
+    return MedicalConsultation;
+  }, [MedicalConsultation]);
 
   const relevantHistory = useMemo(() => {
     if (!currentConsultation?.created_at) return consultationHistory;
@@ -134,6 +172,10 @@ export default function PendingDisplayMedicalConsultation() {
         <p className="text-base sm:text-lg md:text-xl text-gray-600">
           No medical consultation data found.
         </p>
+
+        <Button onClick={handleBackNavigation} className="ml-4">
+          Go Back
+        </Button>
       </div>
     );
   }
@@ -141,16 +183,18 @@ export default function PendingDisplayMedicalConsultation() {
   return (
     <div className="w-full min-h-screen flex flex-col p-4 sm:p-6 md:p-8">
       <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <Link
-          to={-1 as any}
-          className="text-darkGray p-2 hover:bg-gray-100 rounded-md border border-gray-200"
+        <button
+          onClick={handleBackNavigation}
+          className="text-darkGray p-2 bg-white hover:bg-gray-100 rounded-md border border-gray-200"
         >
           <ChevronLeft className="h-4 w-4" />
-        </Link>
+        </button>
+       
         <div>
           <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
             Medical Consultation Record
           </h1>
+
           <p className="text-xs sm:text-sm text-darkGray">
             View consultation details and patient information
           </p>
@@ -206,16 +250,21 @@ export default function PendingDisplayMedicalConsultation() {
 
           {/* Navigation Buttons */}
           <div className="flex justify-end mt-6 sm:mt-8">
-            
+            <Button
+              onClick={handleBackNavigation}
+              className="mr-2 w-[100px]"
+              variant={"outline"}
+            >
+              Previous
+            </Button>
             <Link
               to="/soap-form"
               state={{
                 patientData,
                 MedicalConsultation: currentConsultation,
               }}
-              className="inline-flex items-center justify-center bg-darkBlue2 hover:bg-blue-700 text-white px-6 py-2 rounded-md"
             >
-              Next
+              <Button className="w-[100px]">Next</Button>
             </Link>
           </div>
         </CardContent>

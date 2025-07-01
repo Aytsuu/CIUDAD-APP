@@ -42,7 +42,7 @@ export default function CurrentConsultationCard({
                 {`${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_lname}`}
               </span>
             </div>
-          </div>
+       </div>
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm sm:min-w-[80px]">
               Date:
@@ -144,6 +144,7 @@ export default function CurrentConsultationCard({
                 </span>
                 <div className="border-b border-black flex-1">
                   <span className="text-sm">{consultation.vital_signs.vital_temp}</span>
+
                 </div>
                 <span className="text-black text-sm">°C</span>
               </div>
@@ -181,6 +182,7 @@ export default function CurrentConsultationCard({
             </span>
             <div className="border-b border-black flex-1 min-w-0">
               <span className="text-sm">{consultation.medrec_chief_complaint}</span>
+              
             </div>
           </div>
         </div>

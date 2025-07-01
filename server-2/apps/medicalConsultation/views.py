@@ -37,7 +37,10 @@ class MedicalConsultationRecordView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-    
+class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
+    serializer_class = MedicalConsultationRecordSerializer
+    queryset = MedicalConsultation_Record.objects.all()
+    lookup_field = 'medrec_id'
 
 class ViewMedicalConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer

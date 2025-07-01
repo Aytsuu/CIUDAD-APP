@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Form,
   FormControl,
@@ -9,7 +11,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, AlertCircle, ChevronDown, ChevronRight, Plus, Edit2, Save, X } from "lucide-react";
+import { AlertCircle, ChevronDown, Loader2, Plus, Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -17,18 +19,62 @@ import * as z from "zod";
 import { useState, useCallback, useEffect } from "react";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
-import { submitMedicineRequest } from "./restful-api/medicineAPI";
 import { api2 } from "@/api/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PhysicalExam } from "../../../../components/ui/physical-exam";
+import { useLocalStorage } from "@/helpers/useLocalStorage";
+import {
+  MedicineRequestArrayType,
+  MedicineRequestArraySchema,
+} from "@/form-schema/medicineRequest";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { getPESections, getPEOptions, updatePEOption, createPEResults ,createPEOption} from "./restful-api/physicalExamAPI";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog/dialog";
+import { FormInput } from "@/components/ui/form/form-input";
+import { Link } from "react-router-dom";
+import { medicalConsultation } from "@/routers/medConsultation";
+import {
+  getPESections,
+  getPEOptions,
+  createPEResults,
+  deletePEResults,
+} from "./restful-api/physicalExamAPI";
+import {
+  createMedicineRequest,
+  deleteMedicineRequest,
+} from "./restful-api/medicineAPI";
+import {
+  updateMedicalConsultation,
+  createMedicalHistory,
+  deleteMedicalHistory,
+  createFollowUpVisit,
+} from "./restful-api/medicalhistory";
+import { createFindings, deleteFindings } from "./restful-api/findings";
+import { deleteFollowUpVisit } from "@/pages/healthServices/vaccination/restful-api/PostAPI";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { IllnessComponent } from "@/components/ui/add-search-illness";
+import { TreatmentReceipt } from "@/components/ui/treatment-receipt";
 
-// Define interfaces for Physical Exam
+const soapSchema = z.object({
+  sub_summary: z.string().optional(),
+  followv: z.string().optional(),
+  obj_summary: z.string().optional(),
+  assessment_summary: z.string().optional(),
+  plantreatment_summary: z.string().min(1, "Treatment plan is required"),
+  medicineRequest: MedicineRequestArraySchema.optional(),
+  physicalExamResults: z.array(z.number()).optional(),
+  selectedIllnesses: z.array(z.number()).optional(),
+});
+
+type SoapFormType = z.infer<typeof soapSchema>;
+
 interface ExamOption {
   pe_option_id: number;
   text: string;
@@ -42,603 +88,489 @@ interface ExamSection {
   isOpen: boolean;
 }
 
-// Define the medicine request schema
-const MedicineRequestSchema = z.object({
-  minv_id: z.string().min(1, "Medicine ID is required"),
-  medrec_qty: z.number().min(1, "Quantity must be at least 1"),
-  reason: z.string().optional()
-});
-
-const MedicineRequestArraySchema = z.object({
-  pat_id: z.string().min(1, "Patient ID is required"),
-  medicines: z.array(MedicineRequestSchema).min(1, "At least one medicine is required"),
-});
-
-// Define the schema for the SOAP form
-const soapSchema = z.object({
-  subjective: z.string().optional(),
-  objective: z.string().optional(),
-  assessment: z.string().optional(),
-  plan: z.string().min(1, "Treatment plan is required"),
-  medicineRequest: MedicineRequestArraySchema.optional(),
-  physicalExamResults: z.array(z.number()).optional()
-});
-
-type SoapFormType = z.infer<typeof soapSchema>;
-type MedicineRequestArrayType = z.infer<typeof MedicineRequestArraySchema>;
-
-// Custom localStorage hook
-const useLocalStorage = <T,>(key: string, initialValue: T): [T, (value: T) => void] => {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const item = window.localStorage.getItem(key);
-        return item ? JSON.parse(item) : initialValue;
-      }
-      return initialValue;
-    } catch (error) {
-      console.error(error);
-      return initialValue;
-    }
-  });
-
-  const setValue = (value: T) => {
-    try {
-      setStoredValue(value);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(key, JSON.stringify(value));
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  return [storedValue, setValue];
-};
-
 export default function SoapForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { patientData, MedicalConsultation } = location.state || {};
   const [currentPage, setCurrentPage] = useState(1);
-  
-  // Physical Exam state
-  const [examSections, setExamSections] = useState<ExamSection[]>([]);
-  const [editingOption, setEditingOption] = useState<{ sectionId: number; optionId: number } | null>(null);
-  const [editText, setEditText] = useState("");
-  const [newOptionText, setNewOptionText] = useState<{ [key: number]: string }>({});
-  const [isLoadingPE, setIsLoadingPE] = useState(true);
-  
-  // Use localStorage for selected medicines
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [showReceipt, setShowReceipt] = useState(false);
+
   const [selectedMedicines, setSelectedMedicines] = useLocalStorage<
     { minv_id: string; medrec_qty: number; reason: string }[]
-  >("soapFormMedicines", MedicalConsultation?.find_details?.prescribed_medicines || []);
+  >(
+    "soapFormMedicines",
+    MedicalConsultation?.find_details?.prescribed_medicines || []
+  );
 
-  // Use localStorage for form data
-  const [formData, setFormData] = useLocalStorage<SoapFormType>("soapFormData", {
-    subjective: MedicalConsultation?.find_details?.notes || "",
-    objective: "",
-    assessment: MedicalConsultation?.find_details?.diagnosis || "",
-    plan: MedicalConsultation?.find_details?.treatment || "",
-    medicineRequest: {
-      pat_id: patientData?.pat_id || "",
-      medicines: MedicalConsultation?.find_details?.prescribed_medicines || []
-    },
-    physicalExamResults: []
-  });
+  const [formData, setFormData] = useLocalStorage<SoapFormType>(
+    "soapFormData",
+    {
+      sub_summary: MedicalConsultation?.find_details?.notes || "",
+      obj_summary: "",
+      assessment_summary: MedicalConsultation?.find_details?.diagnosis || "",
+      plantreatment_summary: MedicalConsultation?.find_details?.treatment || "",
+      medicineRequest: {
+        pat_id: patientData?.pat_id || "",
+        medicines:
+          MedicalConsultation?.find_details?.prescribed_medicines || [],
+      },
+      physicalExamResults: [],
+      selectedIllnesses: [],
+    }
+  );
 
-  const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+  const [examSections, setExamSections] = useState<ExamSection[]>([]);
+  const [isPeLoading, setIsPeLoading] = useState(true);
+  const { medicineStocksOptions, isLoading: isMedicinesLoading } =
+    fetchMedicinesWithStock();
 
   const form = useForm<SoapFormType>({
     resolver: zodResolver(soapSchema),
-    defaultValues: formData
+    defaultValues: {
+      ...formData,
+      selectedIllnesses: formData.selectedIllnesses || [],
+      physicalExamResults: formData.physicalExamResults || [],
+      followv: undefined,
+    },
   });
 
-  // Load Physical Exam data
-  useEffect(() => {
-    const fetchPEData = async () => {
-      try {
-        setIsLoadingPE(true);
-        const [sectionsData, optionsData] = await Promise.all([
-          getPESections(),
-          getPEOptions()
-        ]);
-        
-        const sections: ExamSection[] = sectionsData.map((section: any) => ({
-          pe_section_id: section.pe_section_id,
-          title: section.title,
-          isOpen: false,
-          options: []
-        }));
-        
-        optionsData.forEach((option: any) => {
-          const section = sections.find(s => s.pe_section_id === option.pe_section);
-          if (section) {
-            section.options.push({
-              pe_option_id: option.pe_option_id,
-              text: option.text,
-              checked: formData.physicalExamResults?.includes(option.pe_option_id) || false
-            });
-          }
-        });
-        
-        setExamSections(sections);
-      } catch (error) {
-        console.error("Error fetching PE data:", error);
-        toast.error("Failed to load physical exam data");
-      } finally {
-        setIsLoadingPE(false);
-      }
-    };
-    
-    fetchPEData();
-  }, []);
-
-  // Save form data to localStorage on change
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      setFormData(value as SoapFormType);
-    });
-    return () => subscription.unsubscribe();
-  }, [form, setFormData]);
-
-  // Check for invalid quantities
   const hasInvalidQuantities = selectedMedicines.some((med) => {
-    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    const medicine = medicineStocksOptions.find((m) => m.id === med.minv_id);
     return med.medrec_qty < 1 || (medicine && med.medrec_qty > medicine.avail);
   });
 
-  // Check for medicines that exceed available stock
   const hasExceededStock = selectedMedicines.some((med) => {
-    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    const medicine = medicineStocksOptions.find((m) => m.id === med.minv_id);
     return medicine && med.medrec_qty > medicine.avail;
   });
 
-  // Update treatment plan and medicine request
-  useEffect(() => {
-    if (selectedMedicines.length > 0) {
-      const medicineText = selectedMedicines.map(med => {
-        const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
-        return `• ${medicine?.name} ${medicine?.dosage} - ${med.medrec_qty} ${medicine?.unit} (Reason: ${med.reason || "Not specified"})`;
-      }).join('\n');
-      
-      const currentPlan = form.getValues('plan') || '';
-      const nonMedicinePlan = currentPlan.split('\n')
-        .filter(line => !line.startsWith('• ') && line.trim() !== '')
-        .join('\n');
-      
-      const newPlan = [nonMedicinePlan, medicineText].filter(Boolean).join('\n\n');
-      
-      form.setValue('plan', newPlan);
-      form.setValue('medicineRequest', {
-        pat_id: patientData?.pat_id || "",
-        medicines: selectedMedicines
-      });
-    } else {
-      form.setValue('medicineRequest.medicines', []);
-    }
-  }, [selectedMedicines, medicineStocksOptions, form, patientData]);
-
   const handleSelectedMedicinesChange = useCallback(
-    (updatedMedicines: { minv_id: string; medrec_qty: number; reason: string }[]) => {
+    (
+      updatedMedicines: {
+        minv_id: string;
+        medrec_qty: number;
+        reason: string;
+      }[]
+    ) => {
       setSelectedMedicines(updatedMedicines);
+
+      const currentplantreatment_summary =
+        form.getValues("plantreatment_summary") || "";
+
+      const nonMedicineplantreatment_summaryLines = currentplantreatment_summary
+        .split("\n")
+        .filter((line) => !line.startsWith("- ") && line.trim() !== "");
+
+      const medicineLines =
+        updatedMedicines.length > 0
+          ? updatedMedicines.map((med) => {
+              const medicine = medicineStocksOptions.find(
+                (m) => m.id === med.minv_id
+              );
+              return `- ${medicine?.name} ${medicine?.dosage} - ${
+                med.medrec_qty
+              } ${medicine?.unit} (Reason: ${med.reason || "Not specified"})`;
+            })
+          : [];
+
+      const newplantreatment_summary = [
+        ...nonMedicineplantreatment_summaryLines,
+        ...medicineLines,
+      ].join("\n");
+
+      form.setValue("plantreatment_summary", newplantreatment_summary);
+      form.setValue("medicineRequest", {
+        pat_id: patientData?.pat_id || "",
+        medicines: updatedMedicines,
+      });
     },
-    [setSelectedMedicines]
+    [form, medicineStocksOptions, patientData, setSelectedMedicines]
   );
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
 
-  // Physical Exam functions
-  const toggleSection = (sectionId: number) => {
-    setExamSections((sections) =>
-      sections.map((section) => (section.pe_section_id === sectionId ? { ...section, isOpen: !section.isOpen } : section)),
-    );
-  };
-
-  const toggleOption = (sectionId: number, optionId: number) => {
-    setExamSections((sections) =>
-      sections.map((section) =>
-        section.pe_section_id === sectionId
-          ? {
-              ...section,
-              options: section.options.map((option) =>
-                option.pe_option_id === optionId ? { ...option, checked: !option.checked } : option,
-              ),
-            }
-          : section,
-      ),
-    );
-
-    // Update form values
-    const currentResults = form.getValues('physicalExamResults') || [];
-    if (currentResults.includes(optionId)) {
-      form.setValue('physicalExamResults', currentResults.filter(id => id !== optionId));
-    } else {
-      form.setValue('physicalExamResults', [...currentResults, optionId]);
+  useEffect(() => {
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+      return;
     }
-  };
 
-  const startEditing = (sectionId: number, optionId: number, currentText: string) => {
-    setEditingOption({ sectionId, optionId });
-    setEditText(currentText);
-  };
+    const subscription = form.watch((value) => {
+      if (JSON.stringify(value) !== JSON.stringify(formData)) {
+        setFormData(value as SoapFormType);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, formData, setFormData, isInitialLoad]);
 
-  const saveEdit = async () => {
-    if (!editingOption) return;
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setIsPeLoading(true);
 
-    try {
-      await updatePEOption(editingOption.optionId, editText);
-      
-      setExamSections((sections) =>
-        sections.map((section) =>
-          section.pe_section_id === editingOption.sectionId
-            ? {
-                ...section,
-                options: section.options.map((option) =>
-                  option.pe_option_id === editingOption.optionId ? { ...option, text: editText } : option,
-                ),
-              }
-            : section,
-        ),
-      );
-      setEditingOption(null);
-      setEditText("");
-      toast.success("Option updated successfully");
-    } catch (error) {
-      console.error("Failed to update option:", error);
-      toast.error("Failed to update option");
-    }
-  };
+        const [sectionsData, optionsData] = await Promise.all([
+          getPESections(),
+          getPEOptions(),
+        ]);
 
-  const cancelEdit = () => {
-    setEditingOption(null);
-    setEditText("");
-  };
+        const sections: ExamSection[] = sectionsData.map((section: any) => ({
+          pe_section_id: section.pe_section_id,
+          title: section.title,
+          isOpen: false,
+          options: [],
+        }));
 
-  const addNewOption = async (sectionId: number) => {
-    const text = newOptionText[sectionId]?.trim();
-    if (!text) return;
+        optionsData.forEach((option: any) => {
+          const section = sections.find(
+            (s) => s.pe_section_id === option.pe_section
+          );
+          if (section) {
+            section.options.push({
+              pe_option_id: option.pe_option_id,
+              text: option.text,
+              checked:
+                form
+                  .getValues("physicalExamResults")
+                  ?.includes(option.pe_option_id) || false,
+            });
+          }
+        });
 
-    try {
-        // Call the API to create the new option
-        const response = await createPEOption(sectionId, text);
-        
-        const newOption: ExamOption = {
-            pe_option_id: response.pe_option_id,
-            text: response.text,
-            checked: false,
-        };
+        setExamSections(sections);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        toast.error("Failed to load initial data");
+      } finally {
+        setIsPeLoading(false);
+      }
+    };
 
-        setExamSections((sections) =>
-            sections.map((section) =>
-                section.pe_section_id === sectionId 
-                    ? { ...section, options: [...section.options, newOption] } 
-                    : section
-            ),
-        );
+    fetchInitialData();
+  }, [form]);
 
-        setNewOptionText((prev) => ({ ...prev, [sectionId]: "" }));
-        toast.success("Option created successfully");
-    } catch (error) {
-        console.error("Failed to create option:", error);
-        toast.error("Failed to create option");
-    }
-};
-  const getSelectedCount = () => {
-    return examSections.reduce((total, section) => {
-      return total + section.options.filter((option) => option.checked).length;
-    }, 0);
-  };
 
-  const clearAllSelections = () => {
-    setExamSections((sections) =>
-      sections.map((section) => ({
-        ...section,
-        options: section.options.map((option) => ({ ...option, checked: false })),
-      })),
-    );
-    form.setValue('physicalExamResults', []);
-  };
 
   const onSubmit = async (data: SoapFormType) => {
-    try {
-      // First submit the SOAP notes to findings endpoint
-      const findingResponse = await api2.post("patientrecords/findings/", {
-        obj_description: data.objective,
-        subj_description: data.subjective,
-        created_at: new Date().toISOString(),
-      });
-
-      // Extract the response ID from the API response
-      const findingId = findingResponse.data?.find_id;
-
-      if (!findingId) {
-        throw new Error("Failed to retrieve the finding ID from the response");
-      }
+    let findingId;
+    let medHistoryCreated = false;
+    let perCreated = false;
+    let medRequestId: number | null = null;
+    let followv: string | null = null;
   
-      // Then submit the medicine request if medicines were selected
-      if (data.medicineRequest?.medicines && data.medicineRequest.medicines.length > 0) {
-        const medicineRequestData: MedicineRequestArrayType = {
+    try {
+      const findingResponse = await createFindings({
+        assessment_summary: data.assessment_summary || "",
+        plantreatment_summary: data.plantreatment_summary,
+        sub_summary: data.sub_summary || "",
+        obj_summary: data.obj_summary || "",
+      });
+      findingId = findingResponse.find_id;
+  
+      if (
+        data.medicineRequest?.medicines &&
+        data.medicineRequest.medicines.length > 0
+      ) {
+        const medRequestResponse = await createMedicineRequest({
           pat_id: data.medicineRequest.pat_id,
-          medicines: data.medicineRequest.medicines.map(med => ({
+          medicines: data.medicineRequest.medicines.map((med) => ({
             minv_id: med.minv_id,
             medrec_qty: med.medrec_qty,
-            reason: med.reason || "No reason provided"
-          }))
-        };
-  
-        await submitMedicineRequest(medicineRequestData);
+            reason: med.reason || "No reason provided",
+          })),
+        });
+        medRequestId = medRequestResponse.medreq_id;
       }
   
-      // Submit physical exam results if any
       if (data.physicalExamResults && data.physicalExamResults.length > 0) {
-        await createPEResults(data.physicalExamResults,findingId);
+        await createPEResults(data.physicalExamResults, findingId);
+        perCreated = true;
       }
   
-      // Clear saved data on successful submission
+      // Only create follow-up visit if date is provided
+      if (data.followv) {
+        const followv_response = await createFollowUpVisit(
+          MedicalConsultation.patrec ?? "",
+          data.followv ?? ""
+        );
+        followv = followv_response?.followv_id;
+      }
+  
+      await updateMedicalConsultation(
+        MedicalConsultation.medrec_id,
+        "completed",
+        findingId,
+        medRequestId ?? undefined,
+        followv ?? undefined
+      );
+  
+      if (data.selectedIllnesses && data.selectedIllnesses.length > 0) {
+        const medicalHistoryData = data.selectedIllnesses.map((illnessId) => ({
+          patrec: MedicalConsultation?.patrec,
+          ill: illnessId,
+          medrec: MedicalConsultation.medrec_id,
+          created_at: new Date().toISOString(),
+        }));
+        await createMedicalHistory(medicalHistoryData);
+        medHistoryCreated = true;
+      }
+  
       localStorage.removeItem("soapFormData");
       localStorage.removeItem("soapFormMedicines");
-      
       toast.success("Documentation saved successfully");
-      navigate(-1);
+      setShowReceipt(true);
     } catch (error) {
       console.error("Error saving documentation:", error);
+  
+      try {
+        if (medHistoryCreated && MedicalConsultation?.medrec_id) {
+          await deleteMedicalHistory(MedicalConsultation.medrec_id);
+        }
+  
+        if (findingId) {
+          await updateMedicalConsultation(
+            MedicalConsultation.medrec_id,
+            "pending"
+          );
+        }
+        if (medRequestId) {
+          await deleteMedicineRequest(medRequestId);
+        }
+  
+        if (perCreated && findingId) {
+          await deletePEResults(findingId);
+        }
+  
+        if (findingId) {
+          await deleteFindings(findingId);
+        }
+  
+        if (followv) {
+          await deleteFollowUpVisit(followv);
+        }
+      } catch (rollbackError) {
+        console.error("Error during rollback:", rollbackError);
+        toast.error(
+          "Failed to fully rollback changes. Please contact support."
+        );
+      }
+  
       toast.error("Failed to save documentation");
     }
   };
-
-  return (
-    <div className="p-4 sm:p-8">
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="rounded-full"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            SOAP Documentation
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {patientData?.personal_info?.per_lastname}, {patientData?.personal_info?.per_firstname}
-          </p>
+  
+  if (isMedicinesLoading || isPeLoading) {
+    return (
+      <div className="w-full h-full p-4">
+        <div className="max-w-7xl mx-auto">
+          <Skeleton className="h-10 w-1/6 mb-3" />
+          <Skeleton className="h-7 w-1/4 mb-6" />
+          <Skeleton className="h-10 w-full mb-4" />
+          <Skeleton className="h-4/5 w-full mb-4" />
         </div>
       </div>
+    );
+  }
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6 space-y-6">
-            {/* Subjective Section */}
-            <div className="space-y-3">
-              <h2 className="font-medium text-base text-darkBlue2">Subjective</h2>
-              <FormTextArea
-                control={form.control}
-                name="subjective"
-                label="Patient-reported symptoms and history"
-                placeholder="Describe the patient's chief complaint and history in their own words"
-                className="min-h-[120px]"
-              />
-            </div>
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6 space-y-6">
+              {/* Subjective Section */}
+              <div className="space-y-3">
+                <h2 className="text-lg font-medium text-darkBlue2">
+                  Subjective
+                </h2>
+                <FormTextArea
+                  control={form.control}
+                  name="sub_summary"
+                  label="Patient-reported symptoms and history"
+                  placeholder="Describe the patient's chief complaint and history in their own words"
+                  className="min-h-[120px] w-full"
+                />
+              </div>
 
-            {/* Objective Section - Now includes Physical Exam */}
-            <div className="space-y-3">
-              <h2 className="font-medium text-base text-darkBlue2">Objective</h2>
-              <FormTextArea
-                control={form.control}
-                name="objective"
-                label="Clinical findings and measurements"
-                placeholder="Document vital signs, physical exam findings, lab results, etc."
-                className="min-h-[120px]"
-              />
+              {/* Physical Exam Section */}
+              <div className="space-y-3">
+                <PhysicalExam
+                  examSections={examSections}
+                  setExamSections={setExamSections}
+                />
+              </div>
 
-              {/* Physical Exam Component */}
-              <div className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      Physical Examination
-                      <Badge variant="secondary">{getSelectedCount()} items selected</Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      Document physical examination findings by checking applicable options.
-                    </CardDescription>
-                    {getSelectedCount() > 0 && (
-                      <Button variant="outline" size="sm" onClick={clearAllSelections}>
-                        Clear All Selections
-                      </Button>
-                    )}
-                  </CardHeader>
-                </Card>
+              {/* Medicine Section */}
+              <div className="space-y-3">
+                <h2 className="text-lg font-medium text-darkBlue2">
+                  Plan Treatment (Treatment)
+                </h2>
 
-                {isLoadingPE ? (
-                  <div className="p-4 text-center">Loading physical exam data...</div>
-                ) : (
-                  <div className="space-y-4 mt-4">
-                    {examSections.map((section) => (
-                      <Card key={section.pe_section_id}>
-                        <Collapsible open={section.isOpen} onOpenChange={() => toggleSection(section.pe_section_id)}>
-                          <CollapsibleTrigger asChild>
-                            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                              <CardTitle className="flex items-center justify-between text-lg">
-                                <span>{section.title}</span>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline">
-                                    {section.options.filter((opt) => opt.checked).length}/{section.options.length}
-                                  </Badge>
-                                  {section.isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                </div>
-                              </CardTitle>
-                            </CardHeader>
-                          </CollapsibleTrigger>
+                <div className="overflow-x-auto">
+                  <MedicineDisplay
+                    medicines={medicineStocksOptions}
+                    initialSelectedMedicines={selectedMedicines}
+                    onSelectedMedicinesChange={handleSelectedMedicinesChange}
+                    itemsPerPage={5}
+                    currentPage={currentPage}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
 
-                          <CollapsibleContent>
-                            <CardContent className="pt-0">
-                              <div className="space-y-3">
-                                {section.options.map((option) => (
-                                  <div key={option.pe_option_id} className="flex items-center justify-between group">
-                                    <div className="flex items-center space-x-3 flex-1">
-                                      <Checkbox
-                                        id={`option-${option.pe_option_id}`}
-                                        checked={option.checked}
-                                        onCheckedChange={() => toggleOption(section.pe_section_id, option.pe_option_id)}
-                                      />
-                                      {editingOption?.sectionId === section.pe_section_id && editingOption?.optionId === option.pe_option_id ? (
-                                        <div className="flex items-center space-x-2 flex-1">
-                                          <Input
-                                            value={editText}
-                                            onChange={(e) => setEditText(e.target.value)}
-                                            className="flex-1"
-                                            onKeyDown={(e) => {
-                                              if (e.key === "Enter") saveEdit()
-                                              if (e.key === "Escape") cancelEdit()
-                                            }}
-                                            autoFocus
-                                          />
-                                          <Button size="sm" onClick={saveEdit} type="button">
-                                            <Save className="h-3 w-3" />
-                                          </Button>
-                                          <Button size="sm" variant="outline" type="button" onClick={cancelEdit}>
-                                            <X className="h-3 w-3" />
-                                          </Button>
-                                        </div>
-                                      ) : (
-                                        <Label
-                                          htmlFor={`option-${option.pe_option_id}`}
-                                          className={`flex-1 cursor-pointer ${option.checked ? "text-primary font-medium" : ""}`}
-                                        >
-                                          {option.text}
-                                        </Label>
-                                      )}
-                                    </div>
-
-                                    {editingOption?.sectionId !== section.pe_section_id || editingOption?.optionId !== option.pe_option_id ? (
-                                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => startEditing(section.pe_section_id, option.pe_option_id, option.text)}
-                                          type="button" >
-                                          <Edit2 className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ))}
-
-                                <Separator />
-
-                                <div className="flex items-center space-x-2">
-                                  <Input
-                                    placeholder="Add new examination finding..."
-                                    value={newOptionText[section.pe_section_id] || ""}
-                                    onChange={(e) =>
-                                      setNewOptionText((prev) => ({
-                                        ...prev,
-                                        [section.pe_section_id]: e.target.value,
-                                      }))
-                                    }
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") addNewOption(section.pe_section_id)
-                                    }}
-                                  />
-                                  <Button
-                                    size="sm"
-                                    onClick={() => addNewOption(section.pe_section_id)}
-                                    disabled={!newOptionText[section.pe_section_id]?.trim()}
-                                    type="button" >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </Card>
-                    ))}
+                {hasInvalidQuantities && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-900">
+                          {hasExceededStock
+                            ? "Stock Limit Exceeded"
+                            : "Invalid Quantities"}
+                        </p>
+                        <p className="text-xs text-amber-700 mt-1">
+                          {hasExceededStock
+                            ? "One or more medicines exceed available stock. Please adjust quantities."
+                            : "Please ensure all medicine quantities are at least 1."}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Assessment Section */}
-            <div className="space-y-3">
-              <h2 className="font-medium text-base text-darkBlue2">Assessment</h2>
-              <FormTextArea
-                control={form.control}
-                name="assessment"
-                label="Clinical impression/diagnosis"
-                placeholder="Provide your assessment and differential diagnosis"
-                className="min-h-[120px]"
-              />
-            </div>
+              {/* Objective and Plan Treatment Sections */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <div>
+                  <h2 className="text-lg font-medium text-darkBlue2">
+                    Objective Summary
+                  </h2>
+                  <FormTextArea
+                    control={form.control}
+                    name="obj_summary"
+                    label="Clinical findings and measurements"
+                    placeholder="Document vital signs, physical exam findings, lab results, etc."
+                    rows={10}
+                    className="w-full"
+                  />
+                </div>
 
-            {/* Plan Section */}
-            <div className="space-y-3">
-              <h2 className="font-medium text-base text-darkBlue2">Plan (Treatment)</h2>
-              
-              <MedicineDisplay
-                medicines={medicineStocksOptions}
-                initialSelectedMedicines={selectedMedicines}
-                onSelectedMedicinesChange={handleSelectedMedicinesChange}
-                itemsPerPage={5}
-                currentPage={currentPage}
-                onPageChange={handlePageChange}
-              />
+                <div>
+                  <h2 className="text-lg font-medium text-darkBlue2">
+                    Plan Treatment Summary
+                  </h2>
+                  <FormTextArea
+                    control={form.control}
+                    name="plantreatment_summary"
+                    label="Detailed treatment plan"
+                    placeholder="Specify medications, therapies, follow-up plantreatment_summary, patient education, etc."
+                    rows={10}
+                    className="w-full"
+                  />
+                </div>
+              </div>
 
-              {hasInvalidQuantities && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-900">
-                        {hasExceededStock
-                          ? "Stock Limit Exceeded"
-                          : "Invalid Quantities"}
-                      </p>
-                      <p className="text-xs text-amber-700 mt-1">
-                        {hasExceededStock
-                          ? "One or more medicines exceed available stock. Please adjust quantities."
-                          : "Please ensure all medicine quantities are at least 1."}
-                      </p>
+              {/* Illness Diagnosis and Assessment Sections */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                {/* Illness Diagnosis Section */}
+                <div
+                  className="bg-white rounded-lg shadow-sm p-4 border border-gray-100"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-medium text-darkBlue2">
+                      Illness Diagnoses
+                    </h2>
+                    <div className="text-xs text-gray-500">
+                      {form.getValues("selectedIllnesses")?.length || 0} selected
                     </div>
                   </div>
+
+                  <IllnessComponent
+                    selectedIllnesses={form.getValues("selectedIllnesses") || []}
+                    onIllnessSelectionChange={(selected) =>
+                      form.setValue("selectedIllnesses", selected)
+                    }
+                    onAssessmentUpdate={(assessment) =>
+                      form.setValue("assessment_summary", assessment)
+                    }
+                  />
                 </div>
-              )}
 
-              <FormTextArea
-                control={form.control}
-                name="plan"
-                label="Detailed treatment plan"
-                placeholder="Specify medications, therapies, follow-up plan, patient education, etc."
-                className="min-h-[150px]"
-              />
-            </div>
+                {/* Assessment Section */}
+                <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+                  <h2 className="text-lg font-medium text-darkBlue2">
+                    Assessment/Diagnoses Summary
+                  </h2>
+                  <div className="space-y-2">
+                    <FormTextArea
+                      control={form.control}
+                      name="assessment_summary"
+                      label=""
+                      placeholder="Enter clinical impressions, diagnosis, and any additional notes..."
+                      className="min-h-[180px] text-sm w-full"
+                      rows={7}
+                    />
+                  </div>
+                </div>
+              </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => navigate(-1)}
-                className="px-6"
-              >
-                Previous
-              </Button>
-              <Button
-                type="submit"
-                className="px-6"
-                disabled={form.formState.isSubmitting || hasInvalidQuantities}
-              >
-                {form.formState.isSubmitting ? "Saving..." : "Save Documentation"}
-              </Button>
+              {/* Follow-up Section */}
+              <div className="space-y-3">
+                <h2 className="text-lg font-medium text-darkBlue2">
+                  Follow-up
+                </h2>
+
+                <div className="w-full md:w-1/2 lg:w-1/3">
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="followv"
+                    label="Next Follow-up Visit Date"
+                    type="date"
+                  />
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="w-full sm:w-auto px-6"
+                >
+                  Previous
+                </Button>
+
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto px-6"
+                  disabled={form.formState.isSubmitting || hasInvalidQuantities}
+                >
+                  {form.formState.isSubmitting
+                    ? "Saving..."
+                    : "Save Documentation"}
+                </Button>
+              </div>
             </div>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
+
+      {/* Treatment Receipt Dialog */}
+      <TreatmentReceipt
+        isOpen={showReceipt}
+        onClose={() => {
+          setShowReceipt(false);
+          navigate("/pending-medical-con");
+        }}
+        patientName={`${patientData?.personal_info?.per_lname}, ${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_mname || ""}`}
+        patientId={patientData?.pat_id}
+        date={new Date().toLocaleDateString()}
+        treatmentPlan={form.getValues("plantreatment_summary")}
+        doctorName="Dr. Your Name" // Replace with actual doctor name
+      />
     </div>
   );
 }

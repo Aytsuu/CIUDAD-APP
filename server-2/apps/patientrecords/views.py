@@ -522,8 +522,31 @@ class  DeleteUpdateDiagnosisView(generics.RetrieveUpdateDestroyAPIView):
         except NotFound:
             return Response({"error": "Diagnosis record not found."}, status=status.HTTP_404_NOT_FOUND)
         
+class MedicalHistoryView(generics.ListCreateAPIView):
+    serializer_class = MedicalHistorySerializer
+    queryset = MedicalHistory.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        # Handle single object creation
+        if isinstance(request.data, dict):
+            return super().create(request, *args, **kwargs)
+        
+        # Handle multiple object creation
+        elif isinstance(request.data, list):
+            serializer = self.get_serializer(data=request.data, many=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        
+        return Response({"error": "Invalid data format"}, status=status.HTTP_400_BAD_REQUEST)
 
-
+class DeleteMedicalHistoryByPatrecView(APIView):
+    def delete(self, request, medrec_id):
+        deleted_count, _ = MedicalHistory.objects.filter(medrec_id=medrec_id).delete()
+        if deleted_count > 0:
+            return Response({"message": f"Deleted {deleted_count} medical history record(s)."}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "No medical history records found."}, status=status.HTTP_404_NOT_FOUND)
 class GetCompletedFollowUpVisits(APIView):
   
     def get(self, request, pat_id):
@@ -612,7 +635,7 @@ class PEOptionView(generics.ListCreateAPIView):
     
          
 
-class PEOptionUpdateView(generics.RetrieveUpdateDestroyAPIView):
+class DeleteUpdatePEOptionView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PEOptionSerializer
     queryset = PEOption.objects.all()
     lookup_field = 'pe_option_id'
@@ -646,3 +669,16 @@ class PEResultCreateView(generics.ListCreateAPIView):
             
         headers = self.get_success_headers(results)
         return Response(results, status=status.HTTP_201_CREATED, headers=headers)
+    
+class DeletePEResultByFindingView(APIView):
+    def delete(self, request, find_id):
+        deleted_count, _ = PEResult.objects.filter(find_id=find_id).delete()
+        if deleted_count > 0:
+            return Response(
+                {"message": f"Deleted {deleted_count} PE result(s)."},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        return Response(
+            {"message": "No PE results found for this finding."},
+            status=status.HTTP_404_NOT_FOUND
+        )

@@ -7,4 +7,5 @@ urlpatterns=[
     path('view-medcon-record/<str:pat_id>/', ViewMedicalConsultationRecordView.as_view(), name='medical-consultation-record-detail'),
     path('pending-medcon-record/',PendingPatientMedConsultationRecordView.as_view(),name='pending-medcon-record'),
     path('view-medconpending-record/<str:pat_id>/', ViewMedicalWithPendingRecordView.as_view(), name='medical-consultation-record-detail'),
+    path('update-medcon/<int:medrec_id>/', UpdateMedicalConsultationRecordView.as_view(), name='update-medical-consultation-record'),
 ]

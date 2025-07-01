@@ -9,7 +9,9 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyFirstAidRecordsAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-request-items/', MedicineRequestItemView.as_view(), name='medicine_request_items'),
         path('medicine-request/', MedicineRequestView.as_view(), name='medicine_request'),
-        path('medicine-request/<int:medreq_id>/', UpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
+      
+      
+        path('medicine-request/<int:medreq_id>/', DeleteUpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
         path('delete-medicine-request-item/int<medreqitem_id>/',MedicineRequestItemDelete.as_view(),name="delete-medicine-request-item")
 
 

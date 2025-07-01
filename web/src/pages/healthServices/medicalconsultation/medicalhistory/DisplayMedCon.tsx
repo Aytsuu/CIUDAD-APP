@@ -58,6 +58,7 @@ export default function DisplayMedicalConsultation() {
       }
 
       const formattedHistories = responseData.map((history: any) => ({
+        patrec:history.patrec,
         medrec_id: history.medrec_id,
         medrec_status: history.medrec_status,
         medrec_chief_complaint:

@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "sonner";
 import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
-
+import { MedicalConsultationHistory } from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
+import { medicalConsultation } from "@/routers/medConsultation";
 // Medical Record interface (following your reference pattern)
 export interface MedicalRecord {
   pat_id: string;
@@ -27,52 +28,25 @@ export interface MedicalRecord {
   province: string;
   pat_type: string;
   address: string;
-  medicalrec_count: number;
+  // medicalrec_count: number;
   dob: string;
 }
 
 // Medical Consultation interface (additional data for pending consultations)
-export interface MedicalConsultation {
-  medrec_id: number;
-  medrec_status: string;
-  medrec_chief_complaint: string;
-  medrec_age: string;
-  created_at: string;
-  vital_signs: {
-    vital_id: number;
-    vital_bp_systolic: string;
-    vital_bp_diastolic: string;
-    vital_temp: string;
-    vital_RR: string;
-    vital_o2: string;
-    vital_pulse: string;
-    created_at: string;
-    patrec: number | null;
-  };
-  bmi_details: {
-    bm_id: number;
-    age: string;
-    height: string;
-    weight: string;
-    bmi: string;
-    created_at: string;
-    patrec: number;
-  };
-}
 
 // Combined interface for pending consultations
 export interface PendingConsultationRecord extends MedicalRecord {
-  consultation: MedicalConsultation;
+  consultation: MedicalConsultationHistory;
 }
 
-export default function PendingMedicalConsultationRecords() {
+export default function PendingimpoRecords() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: PendingConsultations, isLoading } = useQuery({
-    queryKey: ["PendingMedicalConsultationRecords"],
+    queryKey: ["PendingimpoRecords"],
     queryFn: async () => {
       const response = await api2.get("/medical-consultation/pending-medcon-record/");
       return response.data || [];
@@ -105,11 +79,11 @@ export default function PendingMedicalConsultationRecords() {
         province: address.add_province || '',
         pat_type: details.pat_type || '',
         address: address.full_address || `${address.add_street || ''}, ${address.add_barangay || ''}, ${address.add_city || ''}, ${address.add_province || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
-        medicalrec_count: 0, // Not available in pending consultation data
       };
 
       // Medical consultation details
-      const consultation: MedicalConsultation = {
+      const consultation: MedicalConsultationHistory = {
+        patrec:record.patrec,
         medrec_id: record.medrec_id,
         medrec_status: record.medrec_status,
         medrec_chief_complaint: record.medrec_chief_complaint,
@@ -117,6 +91,7 @@ export default function PendingMedicalConsultationRecords() {
         created_at: record.created_at,
         vital_signs: record.vital_signs,
         bmi_details: record.bmi_details,
+        find_details: record.find_details || null,
       };
 
       return {

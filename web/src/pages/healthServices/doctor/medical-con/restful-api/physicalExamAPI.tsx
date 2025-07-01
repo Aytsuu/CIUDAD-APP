@@ -76,3 +76,14 @@ export const createPEResults = async (selectedOptionIds: number[],find:number) =
         throw err;
     }
 };
+
+
+export const deletePEResults = async (findingId: string) => {
+    try {
+      await api2.delete(`patientrecords/physical-exam-results/${findingId}/`);
+    } catch (error) {
+      console.error("Error deleting PE results:", error);
+      throw error;
+    }
+  };
+  

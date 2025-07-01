@@ -5,6 +5,7 @@ import { ClipboardList } from "lucide-react";
 import { useMemo } from "react";
 
 export type MedicalConsultationHistory = {
+  patrec:number,
   medrec_id: number;
   medrec_status: string;
   medrec_chief_complaint: string;
