@@ -22,12 +22,7 @@ export default function DependentsInfoLayout({
   selectedParents,
   dependentsList,
   setDependentsList,
-<<<<<<< HEAD
-  defaultValues,
-
-=======
   back,
->>>>>>> mobile-register
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -51,11 +46,7 @@ export default function DependentsInfoLayout({
     if (Array.isArray(dependents)) {
       // Transform the list into an array of Dependent objects
       const transformedData = dependents.map((value) => ({
-<<<<<<< HEAD
-        id: value.id.split(" ")[0],
-=======
         id: value.id?.split(" ")[0] as string,
->>>>>>> mobile-register
         lname: value.lastName,
         fname: value.firstName,
         mname: value.middleName,
@@ -65,13 +56,9 @@ export default function DependentsInfoLayout({
       }));
 
       // Update the state with the transformed data
-<<<<<<< HEAD
-      setDependentsList(transformedData);
-=======
       if(transformedData.length > 0) {
         setDependentsList(transformedData);
       }
->>>>>>> mobile-register
     }
   }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
 

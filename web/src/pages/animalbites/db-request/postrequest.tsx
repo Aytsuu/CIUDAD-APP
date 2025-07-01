@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import { api2 } from "@/api/api"
-=======
-import { api } from "@/api/api"
-import { formatDate } from "@/helpers/dateHelper"
->>>>>>> mobile-register
+
 import axios from "axios"
 import { getAllPatients } from "../api/get-api"
 

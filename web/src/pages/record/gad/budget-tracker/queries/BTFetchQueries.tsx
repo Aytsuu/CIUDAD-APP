@@ -1,7 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-<<<<<<< HEAD
-import { api } from "@/api/api";
-=======
 import {
     fetchGADBudgets,
     fetchGADBudgetEntry,
@@ -12,7 +9,6 @@ import {
     fetchGADBudgetFile,
     fetchGADBudgetFiles
 } from "../requestAPI/BTGetRequest";
->>>>>>> mobile-register
 
 import { GADBudgetFile } from "../requestAPI/BTPostRequest";
 

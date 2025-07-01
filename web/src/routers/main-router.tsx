@@ -30,13 +30,9 @@ import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { health_administration_router } from './administration-health-router';
 import { reports_router } from './reports-router';
-<<<<<<< HEAD
 import {medicineRequest} from './medicine-request'
 import {forwardedhealthrecord_router} from './forwardedhealthrecords';
 import {firstaid_router} from './firstaid-router';
-=======
-import { summon_router } from './summon-router';
->>>>>>> mobile-register
 
 
 export const main_router: RouteObject[] = [

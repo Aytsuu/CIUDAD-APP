@@ -7,14 +7,9 @@ import { useNavigate } from "react-router-dom";
 
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button/button";
-<<<<<<< HEAD
-import { ChevronLeft, Save } from "lucide-react";
-import { toast } from "sonner";
-=======
 import { ChevronLeft, Save, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
->>>>>>> mobile-register
 import CardLayout from "@/components/ui/card/card-layout";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -89,7 +84,6 @@ export default function CreatePatientRecord() {
   });
 
 
-<<<<<<< HEAD
   const [selectedResidentId, setSelectedResidentId] = useState<string>("")
   const { data: residentsData, isLoading: residentLoading } = useResidents();
 
@@ -239,30 +233,6 @@ export default function CreatePatientRecord() {
       setIsSubmitting(false);
     }
   };
-=======
-  // const submit = async () => {
-  //   setIsSubmitting(true);
-  //   try {
-  //     const res = await personal(form.getValues());
-
-  //     if (res) {
-  //       toast({
-  //         title: "Success",
-  //         description: "Patient record has been created successfully",
-  //       });
-  //       form.reset(defaultValues);
-  //     }
-  //   } catch (error) {
-  //     toast({
-  //       title: "Error",
-  //       description: "Failed to create patient record. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
->>>>>>> mobile-register
 
   return (
     <div className="w-full">
@@ -314,28 +284,6 @@ export default function CreatePatientRecord() {
           Select a resident if they are already registered.
         </p>
       </div>
-<<<<<<< HEAD
-        <CardLayout
-          title="Patient Information"
-          description="Review the patient information and set patient type"
-          content={
-            <div className="w-full mx-auto border-none">
-              <Separator className="w-full bg-gray" />
-              <div className="pt-4">
-                <Form {...form}>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      submit();
-                    }}
-                    className="space-y-6"
-                  >
-                    {/* Personal Information Section - Read Only */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={false} />
-                      <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={false} />
-                      <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={false} />
-=======
 
       <CardLayout
         title="Patients Information"
@@ -382,7 +330,6 @@ export default function CreatePatientRecord() {
                           contentClassName='w-full'
                           emptyMessage='No household found'
                     />
->>>>>>> mobile-register
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -451,20 +398,12 @@ export default function CreatePatientRecord() {
                 </Form>
               </div>
             </div>
-<<<<<<< HEAD
-          }
-          cardClassName="border-none pb-2 p-3 rounded-lg"
-          headerClassName="pb-2 bt-2 text-xl"
-          contentClassName="pt-0"
-        />
-=======
           </div>
         }
         cardClassName="border-none pb-2 p-3 rounded-lg"
         headerClassName="pb-2 bt-2 text-xl"
         contentClassName="pt-0"
       />
->>>>>>> mobile-register
     </div>
   );
 }

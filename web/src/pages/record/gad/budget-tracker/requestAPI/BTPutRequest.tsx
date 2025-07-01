@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-import { api } from '@/api/api';
-import { formatDate } from '@/helpers/dateFormatter';
-=======
 import api from '@/pages/api/api';
 import { MediaUploadType } from '@/components/ui/media-upload';
 import { GADBudgetFile } from './BTPostRequest';
->>>>>>> mobile-register
 
 export type GADBudgetUpdatePayload = {
   gbud_type: 'Income' | 'Expense';

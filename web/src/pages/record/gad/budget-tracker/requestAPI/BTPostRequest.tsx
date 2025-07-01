@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // // import { api } from '@/api/api';
 // // import { formatDate } from '@/helpers/dateFormatter';
 
@@ -38,9 +37,6 @@
 // // };
 
 // import { formatDate } from '@/helpers/dateFormatter';
-=======
-// import api from '@/pages/api/api';
->>>>>>> mobile-register
 
 // export type GADBudgetFile = {
 //   gbf_id?: number;
@@ -51,29 +47,6 @@
 //   gbud_num: number;
 // };
 
-<<<<<<< HEAD
-import { api } from "@/api/api";
-
-// export const postbudgettrackreq = async (budgetInfo: Record<string, any>) => {
-//     try {
-//         const res = await api.post(`gad-budget-tracker-table/`, {
-//             gbud_num: budgetInfo.gbud_num,
-//             gbud_type: budgetInfo.gbud_type,
-//             gbud_amount: Number(budgetInfo.gbud_amount),
-//             gbud_particulars: budgetInfo.gbud_particulars,
-//             gbud_add_notes: budgetInfo.gbud_add_notes || "",
-//             gbud_date: budgetInfo.gbud_date,
-//             gbud_remaining_bal: Number(budgetInfo.gbud_remaining_bal),
-//             gbudy_num: Number(budgetInfo.gbudy_num),
-//             gbud_receipt: budgetInfo.gbud_receipt,
-//         });
-
-//         return res.data.gbud_num;
-//     } catch (err) {
-//         console.error("API Error:", err);
-//         throw err;
-//     }
-=======
 // export type GADBudgetCreatePayload = {
 //   gbud_type: 'Income' | 'Expense';
 //   gbud_datetime: string;
@@ -93,7 +66,6 @@ import { api } from "@/api/api";
 //   // Relations
 //   gbudy: number;
 //   gdb_id?: number | null;
->>>>>>> mobile-register
 // };
 
 // export const createGADBudget = async (payload: GADBudgetCreatePayload) => {

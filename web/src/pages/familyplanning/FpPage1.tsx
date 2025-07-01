@@ -12,14 +12,9 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
-<<<<<<< HEAD
 import { api2 } from "@/api/api"
 import { page1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { useObstetricalHistoryData } from "./queries/fpFetchQuery"
-=======
-import { toast } from "sonner"
-import api  from "../api/api"
->>>>>>> mobile-register
 
 type Page1Props = {
   onNext2: () => void
@@ -146,20 +141,10 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
     const fetchPatients = async () => {
       setLoading(true)
       try {
-<<<<<<< HEAD
         const response = await api2.get("patientrecords/patient/")
         const formattedPatients = response.data.map((patient: any) => ({
           id: patient.pat_id?.toString() || "",
           name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim(),
-=======
-        // const response = await api.get("/health-profiling/personal/")
-        // const patientData = response.data
-
-        // Make sure we're mapping the data correctly based on the API response
-        const formatted = patientData.map((patient: PatientRecord) => ({
-          id: patient.per_id.toString(),
-          name: `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname || ""}`.trim(),
->>>>>>> mobile-register
         }))
         setPatients(formattedPatients)
       } catch (error) {

@@ -65,10 +65,6 @@
     "dompurify": "^3.2.4",
     "echarts-for-react": "^3.0.2",
     "firebase": "^11.6.0",
-<<<<<<< HEAD
-    "framer-motion": "^12.7.3",
-=======
->>>>>>> mobile-register
     "framer-motion": "^12.7.4",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.0",

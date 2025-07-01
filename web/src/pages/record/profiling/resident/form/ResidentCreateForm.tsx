@@ -90,10 +90,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       hideLoading();
     }
   }, [isLoadingResidents, isLoadingSitio, isLoadingResidentsHealth, isLoadingSitioHealth, showLoading, hideLoading]);
-<<<<<<< HEAD
   }, [isLoadingResidents, isLoadingSitio]);
-=======
->>>>>>> mobile-register
 
   React.useEffect(() => {
     const subscription = form.watch((value) => {
@@ -134,11 +131,6 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       (resident: any) => resident.rp_id === selectedId
     );
 
-<<<<<<< HEAD
-    populateFields(data?.personal_info);
-    // You can also use healthData here if needed for health-related fields
-  }, [form, residentsList, residentsListHealth, populateFields]);
-=======
     // Use main database data if available, otherwise use health database data
     const dataToUse = mainData || healthData;
     
@@ -147,7 +139,6 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       setAddresses(dataToUse.personal_info.per_addresses || addresses);
     }
   }, [form, residentsList, residentsListHealth, populateFields, addresses]);
->>>>>>> mobile-register
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -167,22 +158,16 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
       
-<<<<<<< HEAD
       // // Safely get staff_id with proper type checking
       const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
-=======
       // Safely get staff_id with proper type checking
       const staffId = user?.staff?.staff_id;
->>>>>>> mobile-register
       
       if (!staffId) {
         throw new Error("Staff information not available");
       }
 
-<<<<<<< HEAD
-=======
       // First insertion - Main database
->>>>>>> mobile-register
       addResidentAndPersonal(
         {
           personalInfo: personalInfo,
@@ -278,12 +263,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       );
     } catch (err) {
       setIsSubmitting(false);
-<<<<<<< HEAD
       handleSubmitError("An unexpected error occurred. Please try again.");
       console.error("Submit error:", err);
-=======
-      handleSubmitError(err instanceof Error ? err.message : "An error occurred");
->>>>>>> mobile-register
     }
   };
 

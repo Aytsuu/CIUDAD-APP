@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-import { api } from '@/api/api';
-=======
 import api from '@/pages/api/api';
 import { GADBudgetFile } from './BTPostRequest';
->>>>>>> mobile-register
 
 // Types
 export type GADBudgetEntry = {

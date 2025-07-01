@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-import { api } from '@/api/api';
-import { formatDate } from '@/helpers/dateFormatter';
-=======
 import api from '@/pages/api/api';
 import { formatDate } from '@/helpers/dateHelper';
->>>>>>> mobile-register
 
 export const putdonationreq = async (don_num: number, donationInfo: Record<string, any>) => {
     try{

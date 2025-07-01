@@ -42,7 +42,6 @@
 //       const residentId = form.watch("id");
 //       const householdId = form.watch("householdNo");
   
-<<<<<<< HEAD
 //       if (!formIsValid && !residentId && !householdId) {
 //         setIsSubmitting(false);
 //         setInvalidResident(true);
@@ -52,23 +51,6 @@
 //         });
 //         return;
 //       }
-=======
-      if (!formIsValid && !residentId && !householdId) {
-        setIsSubmitting(false);
-        setInvalidResident(true);
-        setInvalidHousehold(true);
-        toast("Please fill out all required fields", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-          style: {
-            border: '1px solid rgb(225, 193, 193)',
-            padding: '16px',
-            color: '#b91c1c',
-            background: '#fef2f2',
-          },
-        });
-        return;
-      }
->>>>>>> mobile-register
   
 //       const data = form.getValues();
 //       const familyNo = await addFamily(data, null, null);

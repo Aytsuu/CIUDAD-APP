@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 // import React from "react"
 // import { Button } from "@/components/ui/button/button"
 // import { Input } from "@/components/ui/input"
@@ -262,7 +260,6 @@
 //     </MainLayoutComponent>
 //   )
 // }
->>>>>>> mobile-register
 import React from "react"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
@@ -317,13 +314,10 @@ export default function ResidentRecords() {
     : residentsTableHealthData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-<<<<<<< HEAD
-=======
   const currentData = activeTab === "profile" ? residents : residentsHealth;
   const currentLoading = activeTab === "profile" ? isLoading : isLoadingHealth;
   const currentError = activeTab === "profile" ? error : errorHealth;
 
->>>>>>> mobile-register
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes or tab changes
   React.useEffect(() => {
