@@ -42,6 +42,16 @@ export const permanentDeleteDisbursementImage = async (disf_num: number) => {
   return res.data;
 };
 
+export const deleteIncomeFolder = async (inf_num: number) => {
+  const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/?permanent=true`);
+  return res.data;
+};
+
+export const deleteDisbursementFolder = async (dis_num: number) => {
+  const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/?permanent=true`);
+  return res.data;
+};
+
 // export const getIncomeImages = async (archive: boolean = false) => {
 //   try {
 //     const res = await api.get('treasurer/income-tab/images/', {

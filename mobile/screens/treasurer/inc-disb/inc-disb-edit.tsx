@@ -41,8 +41,8 @@ const EditFolderForm = () => {
   const createFolderMutation = useCreateFolder()
   const { data: incomeFolder, isLoading: isIncomeFolderLoading } = useGetIncomeFolder(folderType === "income" ? parseInt(folderId || "0", 10) : null)
   const { data: disbursementFolder, isLoading: isDisbursementFolderLoading } = useGetDisbursementFolder(folderType === "disbursement" ? parseInt(folderId || "0", 10) : null)
-  const { data: incomeImages } = useGetIncomeImages(false, folderType === "income" ? parseInt(folderId || "0", 10) : null)
-  const { data: disbursementImages } = useGetDisbursementImages(false, folderType === "disbursement" ? parseInt(folderId || "0", 10) : null)
+  const { data: incomeImages } = useGetIncomeImages(false, folderType === "income" ? parseInt(folderId, 10) : undefined)
+  const { data: disbursementImages } = useGetDisbursementImages(false, folderType === "disbursement" ? parseInt(folderId, 10) : undefined)
 
   useEffect(() => {
     if (folderId && folderType) {
@@ -101,7 +101,7 @@ const EditFolderForm = () => {
               console.log("Create image success response:", response)
             },
             onError: (error) => {
-              console.error("Create image error:", error, error.response?.data)
+              console.error("Create image error:", error)
             },
           })
           const newImageId = data.type === "income" ? createResponse.infi_num : createResponse.disf_num
@@ -143,7 +143,7 @@ const EditFolderForm = () => {
         router.push({ pathname: "/treasurer/inc-disbursement/inc-disb-main", params: { isIncome: (data.type === "income").toString(), folderId: newFolderId.toString() } })
       }
     } catch (error) {
-      console.error("Form submission failed:", error, error.response?.data)
+      console.error("Form submission failed:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -192,7 +192,7 @@ const EditFolderForm = () => {
                 disabled={isSubmitting || mediaFiles.some(f => f.status === 'uploading')}
               >
                 <Text className="text-white text-lg font-medium">
-                  {isSubmitting ? "Submitting..." : "Update Folder"}
+                  {isSubmitting ? "Submitting..." : "Update"}
                 </Text>
                 {isSubmitting && <Loader2 size={20} color="white" className="ml-2 animate-spin" />}
               </TouchableOpacity>

@@ -279,7 +279,7 @@ class PaymentStatus(APIView):
                         'don_item_name': "E-money",
                         'don_qty': donation.od_amount,
                         'don_description': "Sent thru an online payment channel",
-                        'don_category': "Monetary Donation",
+                        'don_category': "Monetary Donations",
                         'per_id': donation.account.rp.per if donation.account else None
                     }
                 )
