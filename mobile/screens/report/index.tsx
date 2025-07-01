@@ -1,8 +1,8 @@
 import { ScrollView, Text, TouchableOpacity, View } from "react-native"
 import ScreenLayout from "../_ScreenLayout"
 import { router, useRouter } from "expo-router"
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight } from "@/lib/icons/ChevronRight"
+import { ChevronLeft } from "lucide-react-native"
 
 export default () => {
   const router = useRouter();

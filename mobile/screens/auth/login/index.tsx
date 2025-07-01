@@ -1,22 +1,13 @@
 import "@/global.css";
-import { api } from "@/api/api";
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableWithoutFeedback,
-  Image,
-  Alert,
-} from "react-native";
+import { View, Text, TouchableWithoutFeedback, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Input } from "@/components/ui/input";
+import { FormInput } from "@/components/ui/form/form-input";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import ScreenLayout from "@/screens/_ScreenLayout";
@@ -30,11 +21,6 @@ type SignInForm = z.infer<typeof signInSchema>;
 export default function SignInScreen() {
   const { toast } = useToastContext();
   const router = useRouter();
-import { z } from "zod";
-
-export default function LoginScreen() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showSignupOptions, setShowSignupOptions] = useState(false);
 
@@ -112,22 +98,13 @@ export default function LoginScreen() {
             name="email"
             label="Email"
             keyboardType="email-address"
-        <View className="flex-grow gap-5 mt-7">
-          <Input
-            className="h-[57px] font-PoppinsRegular"
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
           />
           <View className="relative">
-            <Input
-              className="h-[57px] font-PoppinsRegular"
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
+            <FormInput
+              control={control}
+              name="password"
+              label="Password"
               secureTextEntry={!showPassword}
-              autoCapitalize="none"
             />
             <TouchableWithoutFeedback 
               onPress={() => setShowPassword(!showPassword)}

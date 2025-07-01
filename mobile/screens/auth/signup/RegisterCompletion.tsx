@@ -2,7 +2,6 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import {
   useAddPersonal,
   useAddRequest,
-  useAddFile,
   useAddRequestFile,
   useAddAddress,
   useAddPerAddress,

@@ -1,12 +1,11 @@
 import React, { useMemo } from "react"
 import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
-import { ChevronLeft, User, FileText, MapPin, AlertCircle, Package, Clock, Shield, Activity } from "lucide-react-native"
+import { ChevronLeft, User, FileText, AlertCircle, Package, Clock, Shield, Activity } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router, useLocalSearchParams } from "expo-router"
 import { usePatientRecordsByPatId } from "../restful-api/animalbites/db-request/get-query"
 import { format } from "date-fns"
 
-// Type definition for individual patient records
 type PatientRecordDetail = {
   bite_id: number
   actions_taken: string

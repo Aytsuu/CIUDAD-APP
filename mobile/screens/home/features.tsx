@@ -28,6 +28,6 @@ export const features: FeatureType[] = [
   {
     name: "Health",
     icon: <HeartPulse className="text-white"/>,
-    route: ""
+    route: "/(health)/home"
   },
 ]

@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TouchableWithoutFeedback, Image, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 
