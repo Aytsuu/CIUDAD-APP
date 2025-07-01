@@ -9,6 +9,7 @@ import { addAssCollector } from "../request/wasteColPostRequest";
 
 
 
+
 export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => {
   const queryClient = useQueryClient();
 
@@ -16,82 +17,47 @@ export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => 
     mutationFn: (values: z.infer<typeof WasteColSchedSchema>) =>
       wasteColData(values),
     onSuccess: (wc_num) => {
-      queryClient.invalidateQueries({ queryKey: ['wasteColData'] });
-
+      queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
       toast.success("Waste collection scheduled successfully", {
-        id: "createSchedule",
+        id: "createWaste",
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 5000
+        duration: 4000
       });
-
       if (onSuccess) onSuccess(wc_num);
     },
     onError: (err) => {
       console.error("Error creating schedule:", err);
-      toast.error("Failed to create schedule. Please try again.");
+      toast.error("Failed to create schedule.");
     }
   });
 };
 
 
-
-// export const useCreateWasteAssignment = () => {
-//   return useMutation({
-//     mutationFn: (data: any) => wasteAssData(data),
-//     onSuccess: () => {
-//       toast.success("Waste collection assigned successfully", {
-//         icon: "✅",
-//         duration: 6000
-//       });
-//     },
-//     onError: (err) => {
-//       console.error("Error creating assignment:", err);
-//       toast.error("Failed to create assignment.");
-//     }
-//   });
-// };
-
-
-
-export const useCreateWasteAssignment = () => {
+export const useAssignCollectors = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: any) => {
-      // Step 1: Create waste assignment
-      const was_id = await wasteAssData({
-        wc_num: data.wc_num,
-        sitio_id: data.sitio_id,
-        wstp_id: data.wstp_id, // driver value here!
-        truck_id: data.truck_id,
-        staff_id: data.staff_id
-      });
-
-      // Step 2: Assign collectors
-      const selectedCollectors = data.selectedCollectors || [];
-
+    mutationFn: async ({ wc_num, collectorIds }: { wc_num: number, collectorIds: string[] }) => {
       await Promise.all(
-        selectedCollectors.map(async (collectorId: number | string) => {
-          await addAssCollector({
-            was_id: was_id,
-            wstp_id: collectorId
-          });
-        })
+        collectorIds.map(collectorId => 
+          addAssCollector(wc_num, collectorId)
+        )
       );
-
-      return was_id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wasteColData'] });
-      toast.success("Waste collection assigned successfully", {
-        id: "createAssignCol",
+      queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
+      toast.success("Collectors assigned successfully", {
+        id: "createWaste",
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 6000
+        duration: 3000
       });
     },
     onError: (err) => {
-      console.error("Error creating assignment:", err);
-      toast.error("Failed to create assignment.");
+      console.error("Error assigning collectors:", err);
+      toast.error("Failed to assign collectors.");
     }
   });
 };
+
+
+

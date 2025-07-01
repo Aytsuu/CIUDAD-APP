@@ -1,8 +1,10 @@
 
 
+import { useState, useEffect } from "react";
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
@@ -18,9 +20,23 @@ import { useGetWasteCollectors } from './queries/wasteColFetchQueries';
 import { useGetWasteDrivers } from './queries/wasteColFetchQueries';
 import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
-import { useCreateWasteSchedule } from './queries/wasteColAddQueries';
-import { useCreateWasteAssignment } from './queries/wasteColAddQueries';
+import { useUpdateWasteSchedule } from './queries/wasteColUpdateQueries';
+import { useUpdateCollectors } from './queries/wasteColUpdateQueries';
 
+
+
+interface UpdateWasteColProps {
+    wc_num: number;
+    wc_date: string;
+    wc_time: string;
+    wc_add_info: string;
+    wc_is_archive: boolean;
+    sitio_id: string;
+    truck_id: string;
+    driver_id: string;
+    collector_ids: string[];
+    onSuccess?: () => void; 
+}
 
 const announcementOptions = [
     { id: "all", label: "All" },
@@ -33,38 +49,14 @@ const announcementOptions = [
 ];
 
 
-function UpdateWasteColSched() {
+function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, wc_is_archive, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
 
     //ADD QUERY MUTATIONS
-    const { mutate: createAssignment } = useCreateWasteAssignment();
 
-    // const { mutate: createSchedule } = useCreateWasteSchedule(async (wc_num) => {
-    //         // Combine collectors and driver
-    //     const combinedPersonnel = [
-    //         ...form.getValues("selectedCollectors"),
-    //         form.getValues("driver")
-    //     ];
+    console.log("UpdateWasteColSched props:", { wc_num, wc_date, wc_time, wc_add_info, wc_is_archive, sitio_id, truck_id, driver_id, collector_ids })
 
-    //     // Send second request
-    //     createAssignment({
-    //         wc_num: wc_num,
-    //         sitio_id: form.getValues("selectedSitios"),
-    //         wstp_id: combinedPersonnel,
-    //         truck_id: form.getValues("collectionTruck"),
-    //         staff_id: null 
-    //     });
-    // });
 
-    const { mutate: createSchedule } = useCreateWasteSchedule(async (wc_num) => {
-        createAssignment({
-            wc_num: wc_num, // FK to assignment
-            sitio_id: form.getValues("selectedSitios"),
-            wstp_id: form.getValues("driver"), // DRIVER goes here → wstp_id in assignment
-            truck_id: form.getValues("collectionTruck"),
-            staff_id: null,
-            selectedCollectors: form.getValues("selectedCollectors") // pass collectors → used for waste-ass-collectors
-        });
-    });
+
 
 
     //FETCH QUERY MUTATIONS
@@ -74,6 +66,11 @@ function UpdateWasteColSched() {
     const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio();
 
     const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
+
+
+    //UPDATE QUERY MUTATIONS
+    const { mutate: updateSchedule } = useUpdateWasteSchedule();
+    const { mutate: updateCollectors } = useUpdateCollectors();
 
 
     const collectorOptions = collectors.map(collector => ({
@@ -100,28 +97,54 @@ function UpdateWasteColSched() {
     const form = useForm<z.infer<typeof WasteColSchedSchema>>({
         resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: '',
-            time: '',
-            additionalInstructions: '',
-            selectedSitios: '',
-            selectedCollectors: [],
-            driver: '',
-            collectionTruck: '',
+            date: wc_date,
+            time: wc_time,
+            additionalInstructions: wc_add_info,
+            selectedSitios: String(sitio_id),
+            selectedCollectors: collector_ids.map(String),
+            driver: String(driver_id),
+            collectionTruck: String(truck_id),
             selectedAnnouncements: [],
         },
     });
 
-    const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
-        const [hour, minute] = values.time.split(":");
-        const formattedTime = `${hour}:${minute}:00`;
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-        const formattedValues = {
-            ...values,
-            time: formattedTime
-        };
+    const onSubmit = async (values: z.infer<typeof WasteColSchedSchema>) => {
+        setIsSubmitting(true);
+        try {
+            const [hour, minute] = values.time.split(":");
+            const formattedTime = `${hour}:${minute}:00`;
 
-        createSchedule(formattedValues);
-        
+            await new Promise<void>((resolve, reject) => {
+                updateSchedule({
+                    wc_num,
+                    values: {
+                        ...values,
+                        time: formattedTime
+                    }
+                }, {
+                    onSuccess: () => {
+                        updateCollectors({
+                            wc_num,
+                            newCollectorIds: values.selectedCollectors.map(String),
+                            existingCollectorIds: collector_ids.map(String)
+                        }, {
+                            onSuccess: () => {
+                                onSuccess?.();
+                                resolve();
+                            },
+                            onError: reject
+                        });
+                    },
+                    onError: reject
+                });
+            });
+        } catch (error) {
+            console.error("Update failed:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
 
@@ -143,8 +166,8 @@ function UpdateWasteColSched() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 max-w-4xl mx-auto">
-                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">SCHEDULE WASTE COLLECTION</Label>
+            <form onSubmit={(e) => e.preventDefault()} className="p-4 sm:p-6 max-w-4xl mx-auto">
+                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">UPDATE WASTE COLLECTION</Label>
 
                 <div className="grid grid-cols-2 gap-4 pt-5">
                     {/* Sitio Selection */}
@@ -249,9 +272,20 @@ function UpdateWasteColSched() {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
-                        Schedule
-                    </Button>
+                    <ConfirmationModal
+                        trigger={
+                            <Button 
+                                type="button"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? "Updating..." : "Update"}
+                            </Button>
+                        }
+                        title="Confirm Update"
+                        description="Are you sure you want to update this waste collection schedule?"
+                        actionLabel={isSubmitting ? "Updating..." : "Confirm"}
+                        onClick={() => form.handleSubmit(onSubmit)()}
+                    />
                 </div>
             </form>
         </Form>

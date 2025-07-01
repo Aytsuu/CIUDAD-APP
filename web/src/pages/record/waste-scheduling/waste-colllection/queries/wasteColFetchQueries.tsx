@@ -3,6 +3,7 @@ import { getWasteCollectors } from "../request/wasteColGetRequest";
 import { getWasteDrivers } from "../request/wasteColGetRequest";
 import { getWasteTrucks } from "../request/wasteColGetRequest";
 import { getSitio } from "../request/wasteColGetRequest";
+import { getWasteCollectionSchedFull } from "../request/wasteColGetRequest";
 
 
 // Retrieve Waste Collectors
@@ -99,3 +100,63 @@ export const useGetWasteSitio = () => {
         staleTime: 1000 * 60 * 30,
     });
 }
+
+
+
+//Retrieve Full data for Waste Collection
+// export type WasteCollectionSchedFull = {
+//     wc_num: string;
+//     wc_date: string;
+//     wc_time: string;
+//     wc_add_info: string;
+//     wc_is_archive: boolean;
+//     staff: number;
+//     waste_assignments: {
+//         was_id: number;
+//         sitio: { id: number; name: string } | null;
+//         truck: number | null;
+//         staff: number | null;
+//         wstp: { id: number; name: string } | null;
+//         waste_collectors: { id: number; name: string }[];
+//     }[];
+// };
+
+// export const useGetWasteCollectionSchedFull = () => {
+//     return useQuery<WasteCollectionSchedFull[]>({
+//         queryKey: ["wasteCollectionSchedFull"],
+//         queryFn: getWasteCollectionSchedFull,
+//         staleTime: 1000 * 60 * 30,
+//     });
+// };
+
+
+
+
+export type WasteCollectionSchedFull = {
+    wc_num: number;
+    wc_date: string;
+    wc_time: string;
+    wc_add_info: string;
+    wc_is_archive: boolean;
+    staff: number;
+    sitio: string;        // sitio ID
+    sitio_name: string;
+    truck: string;
+    wstp: string;
+    collectors: {
+        wasc_id: number;
+        wstp_id: string;
+        name: string;
+    }[];
+    collectors_wstp_ids: string[];  
+    collectors_names: string,
+    driver_name: string,
+};
+
+export const useGetWasteCollectionSchedFull = () => {
+    return useQuery<WasteCollectionSchedFull[]>({
+        queryKey: ["wasteCollectionSchedFull"],
+        queryFn: getWasteCollectionSchedFull,
+        staleTime: 1000 * 60 * 30,
+    });
+};

@@ -1,15 +1,20 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import EventCalendar from "@/components/ui/calendar/EventCalendar"
 import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main"
+import WasteCollectionMain from "./waste-colllection/waste-col-main"
 import { useGetHotspotRecords, type Hotspot } from "./waste-hotspot/queries/hotspotFetchQueries"
+import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull  } from "./waste-colllection/queries/wasteColFetchQueries"
 import { formatTime } from "@/helpers/timeFormatter"
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Clock, MapPin, Calendar } from "lucide-react"
 import { hotspotColumns } from "./event-columns/event-cols"
+import { wasteColColumns } from "./event-columns/event-cols"
+
 
 const WasteMainScheduling = () => {
   const { data: hotspotData = [], isLoading } = useGetHotspotRecords()
+  const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
   const [activeTab, setActiveTab] = useState("calendar")
 
 
@@ -24,14 +29,15 @@ const WasteMainScheduling = () => {
       endTimeAccessor: "wh_end_time",
       defaultColor: "#3b82f6", // blue
     },
-    // {
-    //   data: wasteCollectionData,
-    //   columns: wasteCollectionColumns,
-    //   titleAccessor: "collectors_names",
-    //   dateAccessor: "wc_date",
-    //   timeAccessor: "wc_time",
-    //   defaultColor: "#10b981", // emerald
-    // }
+    {
+      name: "Waste Collection",
+      data: wasteCollectionData.filter((row) => row.wc_is_archive === false),
+      columns: wasteColColumns,
+      titleAccessor: "collectors_names",
+      dateAccessor: "wc_date",
+      timeAccessor: "wc_time",
+      defaultColor: "#10b981", // emerald
+    }
   ];
 
   // Filter upcoming events (non-archived and future dates)
@@ -41,7 +47,7 @@ const WasteMainScheduling = () => {
   //   return !event.wh_is_archive && eventDate >= now
   // })
 
-  if (isLoading) {
+  if (isLoading || isWasteColLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
@@ -178,7 +184,7 @@ const WasteMainScheduling = () => {
         </TabsContent>
 
         <TabsContent value="waste-collection" className="space-y-4">
-          {/* <WasteColSched /> */}
+          <WasteCollectionMain />
         </TabsContent>
 
         <TabsContent value="hotspot" className="space-y-4">

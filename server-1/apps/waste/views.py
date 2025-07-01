@@ -21,7 +21,6 @@ class WasteCollectionStaffView(generics.ListCreateAPIView):
     queryset = WasteCollectionStaff.objects.all()
 
 # WASTE COLLECTION RETRIEVE / VIEW
-# WASTE COLLECTION RETRIEVE / VIEW
 class WasteCollectionSchedView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionSchedSerializer
     queryset = WasteCollectionSched.objects.all()
