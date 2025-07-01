@@ -17,6 +17,8 @@ urlpatterns=[
     path("template/", TemplateView.as_view(), name="document-template"),
     path("update-template/<int:temp_id>/", UpdateTemplateView.as_view(), name="update-document-template"),
     path('delete-template/<int:temp_id>/', DeleteTemplateView.as_view(), name='delete-document-template'), 
+
+    path("purpose-rates-view/", PurposeRatesListView.as_view(), name="purpose-rates-list"),
     
     # RESOLUTION
     path("resolution/", ResolutionView.as_view(), name="council-resolution"),

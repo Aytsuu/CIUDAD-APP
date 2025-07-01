@@ -28,7 +28,9 @@ export const updateTemplateRec = async (temp_id: number, templateInfo: Record<st
             temp_paperSize: templateInfo.temp_paperSize,
             temp_margin: templateInfo.temp_margin,
             temp_filename: templateInfo.temp_filename,
-            temp_body: templateInfo.temp_body
+            temp_body: templateInfo.temp_body,
+            pr_id: Number(templateInfo.selectedPurposeRates),
+            staff_id: templateInfo.staff_id || null,
         })
 
         return res.data;

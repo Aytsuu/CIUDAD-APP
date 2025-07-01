@@ -62,6 +62,26 @@ class CouncilAttendance(models.Model):
         db_table = 'attendance_sheet'
 
 
+# class Template(models.Model):
+#     temp_id = models.BigAutoField(primary_key=True)
+#     temp_header = models.CharField(max_length=200)
+#     # temp_below_headerContent = models.CharField(max_length=999, null=True, blank=True)
+#     temp_below_headerContent = models.TextField(null=True, blank=True) 
+#     temp_title = models.CharField(max_length=200)
+#     temp_subtitle = models.CharField(max_length=200, null=True, blank=True)
+#     temp_w_sign = models.BooleanField(default=False)
+#     temp_w_seal = models.BooleanField(default=False)
+#     temp_w_summon = models.BooleanField(default=False)
+#     temp_paperSize = models.CharField(max_length=100)
+#     temp_margin = models.CharField(max_length=100)
+#     temp_filename = models.CharField(max_length=100)
+#     temp_body = models.TextField(null=True, blank=True) 
+#     temp_is_archive = models.BooleanField(default=False)
+
+#     class Meta:
+#         db_table = 'template'
+
+
 class Template(models.Model):
     temp_id = models.BigAutoField(primary_key=True)
     temp_header = models.CharField(max_length=200)
@@ -77,6 +97,22 @@ class Template(models.Model):
     temp_filename = models.CharField(max_length=100)
     temp_body = models.TextField(null=True, blank=True) 
     temp_is_archive = models.BooleanField(default=False)
+
+    pr_id = models.ForeignKey(
+        'treasurer.Purpose_And_Rates',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        db_column='pr_id'
+    )        
+
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )    
 
     class Meta:
         db_table = 'template'
