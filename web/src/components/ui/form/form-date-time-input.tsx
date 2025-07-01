@@ -1,16 +1,31 @@
 import React from "react";
 import {
-    FormField,
-    FormItem,
-    FormLabel,
-    FormControl,
-    FormMessage,
-  } from "@/components/ui/form/form";
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form/form";
 
-// Reusable Form Date Input Component
-export const FormDateTimeInput = React.memo(({ control, name, label, readOnly, type, disabled=false }: 
-    { control: any; name: string; label: string; readOnly?: boolean; type: "date" | "time" | "datetime-local"; disabled?: boolean}
-  ) => (
+// Reusable Form Date/Time Input Component
+export const FormDateTimeInput = React.memo(
+  ({
+    control,
+    name,
+    label,
+    readOnly,
+    type,
+    min,
+    max,
+  }: {
+    control: any;
+    name: string;
+    label: string;
+    readOnly?: boolean;
+    type: "date" | "time";
+    min?: string;
+    max?: string;
+  }) => (
     <FormField
       control={control}
       name={name}
@@ -26,11 +41,13 @@ export const FormDateTimeInput = React.memo(({ control, name, label, readOnly, t
               onChange={(e) => field.onChange(e.target.value)}
 
               readOnly={readOnly}
-              disabled={disabled}
+              min={min}
+              max={max}
             />
           </FormControl>
           <FormMessage />
         </FormItem>
       )}
     />
-  ));
+  )
+);

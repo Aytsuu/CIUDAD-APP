@@ -8,6 +8,13 @@ from rest_framework import status, filters
 from .models import WasteTruck
 from apps.profiling.models import Sitio
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, filters
+from .models import WasteTruck
+from apps.profiling.models import Sitio
+from rest_framework import generics
 
 # Create your views here.
 #KANI 3RD
@@ -141,7 +148,7 @@ class WasteHotspotView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return WasteHotspot.objects.select_related(
-            'wstp_id__staff_id__rp__per', 
+            'wstp_id__staff__rp__per', 
             'sitio_id'                   
         ).all()
 
