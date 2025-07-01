@@ -250,9 +250,9 @@ class UpdateProposalStatusView(generics.GenericAPIView):
         except ProjectProposal.DoesNotExist:
             return Response({"error": "Proposal not found"})
         
-class ProposalSuppDocCreateView(generics.ListCreateAPIView):  # Changed from CreateAPIView
+class ProposalSuppDocCreateView(generics.ListCreateAPIView):
     serializer_class = ProposalSuppDocSerializer
-    queryset = ProposalSuppDoc.objects.filter(psd_is_archive=False)
+    queryset = ProposalSuppDoc.objects.all()
     
     def get_queryset(self):
         return self.queryset.filter(gpr_id=self.kwargs['proposal_id'])
@@ -265,6 +265,10 @@ class ProposalSuppDocCreateView(generics.ListCreateAPIView):  # Changed from Cre
             raise Response("Project proposal not found")
         return context
 
+    def perform_create(self, serializer):
+        # Ensure gpr_id is set from URL parameter
+        serializer.save(gpr_id=self.kwargs['proposal_id'])
+    
     def perform_destroy(self, instance):
         """Soft delete by archiving"""
         instance.psd_is_archive = True

@@ -1,117 +1,75 @@
-import { FormField, Form, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form";
-import { Button } from "@/components/ui/button/button";
+import { Form } from "@/components/ui/form/form";
 import BudgetAllocationSchema from "@/form-schema/treasurer/budget-allocation-schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 import { z } from "zod";
-import BudgetHeaderSchema from "@/form-schema/treasurer/budgetplan-header-schema";
 import { UseFormReturn } from "react-hook-form";
+import { FormInput } from "@/components/ui/form/form-input";
+import { Button } from "@/components/ui/button/button";
 
-// interface BudgetAllocationFormProps {
-//     headerValues: z.infer<typeof BudgetHeaderSchema>; // Just pass them as props
-//     onFinalSubmit: (allocationValues: z.infer<typeof BudgetAllocationSchema>) => void;
-//     setIsDialogOpen: (isOpen: boolean) => void;
-// }
-
-function BudgetAllocationForm({form}:{
-    form: UseFormReturn<z.infer<typeof BudgetAllocationSchema>>
+function BudgetAllocationForm({ form, onBack, onSubmit }: {
+    form: UseFormReturn<z.infer<typeof BudgetAllocationSchema>>;
+    onBack: () => void;
+    onSubmit: () => void;
 }) {
-    // const form = useForm<z.infer<typeof BudgetAllocationSchema>>({
-    //     resolver: zodResolver(BudgetAllocationSchema),
-    //     defaultValues: {
-    //         personalServicesLimit: "",
-    //         miscExpenseLimit: "",
-    //         localDevLimit: "",
-    //         skFundLimit: "",
-    //         calamityFundLimit: "",
-    //     }
-    // });
-
-    const onSubmit = (values: z.infer<typeof BudgetAllocationSchema>) => {
-        // onFinalSubmit(values);
-        // setIsDialogOpen(false);
+    
+    const handleSubmit = (values: z.infer<typeof BudgetAllocationSchema>) => {
+        onSubmit();
     };
-
     return (
-        <>
+         <div className="flex items-center justify-center">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <div className="flex flex-col gap-4">
-                        <FormField
-                            control={form.control}
-                            name="personalServicesLimit"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-black">Personal Services</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="number" placeholder="0.0" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                <form 
+                    onSubmit={form.handleSubmit(handleSubmit)} 
+                    className="w-full max-w-md bg-white p-5 rounded-md shadow-md"
+                >
+                    <div className="text-xl font-semibold text-darkBlue2 pb-2 border-b border-gray-200 mb-3">
+                        Budget Allocation Form
+                    </div>
 
-                        <FormField
-                            control={form.control}
-                            name="miscExpenseLimit"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-black">Extraordinary & Miscellaneous Expense</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="number" placeholder="0.0" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                    <div className="flex flex-col gap-3">
+                        <FormInput 
+                            control={form.control} 
+                            name="personalServicesLimit" 
+                            label="Personal Services (% of Actual Income)" 
+                            type="number" 
+                            placeholder="0.00" 
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="localDevLimit"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-black">Local Development Fund</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="number" placeholder="0.0" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                        <FormInput 
+                            control={form.control} 
+                            name="miscExpenseLimit" 
+                            label="Extraordinary & Miscellaneous Expense (% of Actual RPT Income)" 
+                            type="number" 
+                            placeholder="0.00" 
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="skFundLimit"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-black">Sangguniang Kabataan (SK) Fund</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="number" placeholder="0.0" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                        <FormInput 
+                            control={form.control} 
+                            name="localDevLimit" 
+                            label="Local Development Fund (% of National Tax Allotment)" 
+                            type="number" 
+                            placeholder="0.00" 
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="calamityFundLimit"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-black">Calamity Fund</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="number" placeholder="0.0" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                        <FormInput 
+                            control={form.control} 
+                            name="skFundLimit" 
+                            label="Sangguniang Kabataan Fund (% of Net Available Resources)" 
+                            type="number" 
+                            placeholder="0.00" 
                         />
+                        <FormInput 
+                            control={form.control} 
+                            name="calamityFundLimit" 
+                            label="Calamity Fund (% of Net Available Resources)" 
+                            type="number" 
+                            placeholder="0.00" 
+                        />
+                    </div>
 
+                    <div className="mt-4 flex justify-between">
+                        <Button onClick={onBack}>Back</Button>
+                        <Button type="submit">Next</Button>
                     </div>
                 </form>
             </Form>
-        </>
+        </div>
     );
 }
 

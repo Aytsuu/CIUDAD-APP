@@ -40,8 +40,21 @@ export type DevelopmentBudgetItem = {
     gdb_price: number;
 };
 
+// export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
+//     const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
+//     return response.data || [];
+// };
+
 export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
     const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
+    console.log('API Response with Remaining Balances:', 
+        response.data.map((entry: GADBudgetEntry) => ({
+            id: entry.gbud_num,
+            datetime: entry.gbud_datetime,
+            type: entry.gbud_type,
+            remaining: entry.gbud_remaining_bal
+        }))
+    );
     return response.data || [];
 };
 

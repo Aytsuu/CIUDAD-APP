@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native';
 import { Input } from '../input';
-import { Controller, Control, FieldError } from 'react-hook-form';
+import { Controller, Control } from 'react-hook-form';
 import { capitalize } from '@/helpers/capitalize';
 
 interface FormInputProps {
@@ -12,6 +12,7 @@ interface FormInputProps {
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
   submitBehavior?: 'submit' | 'newline' | 'blurAndSubmit';
+  editable?: boolean;
 }
 
 export const FormInput = ({
@@ -20,22 +21,28 @@ export const FormInput = ({
   label,
   placeholder,
   secureTextEntry,
-  keyboardType='default',
-  returnKeyType='next',
-  submitBehavior='newline',
+  keyboardType = 'default',
+  returnKeyType = 'next',
+  submitBehavior = 'newline',
+  editable = true,
 }: FormInputProps) => {
   return (
     <Controller
       control={control}
       name={name}
-      render={({ field: { onChange, onBlur, value } ,  fieldState: { error } }) => (
+      render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View className="mb-4">
-          <Text className="text-[12px] font-PoppinsRegular">{label}</Text>
+          {label && <Text className="text-[12px] font-PoppinsRegular">{label}</Text>}
           <Input
-            className={`h-[45px] font-PoppinsRegular bg-white border ${
-              error ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`
+              h-[45px]
+              font-PoppinsRegular
+              bg-white
+              text-black
+              ${error ? 'border-red-500' : 'border-gray-300'}
+            `}
             placeholder={placeholder}
+            placeholderTextColor="#888"
             value={capitalize(value) || ""}
             onChangeText={onChange}
             onBlur={onBlur}
@@ -43,6 +50,7 @@ export const FormInput = ({
             keyboardType={keyboardType}
             returnKeyType={returnKeyType}
             submitBehavior={submitBehavior}
+            editable={editable}
           />
           {error && (
             <Text className="text-red-500 text-xs mt-1">{error.message}</Text>

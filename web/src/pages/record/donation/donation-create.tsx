@@ -26,6 +26,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetPersonalList } from "./queries/donationFetchQueries";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface ClerkDonateCreateFormProps {
   onSuccess?: () => void;
@@ -83,7 +84,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
       <div className="grid gap-4">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(e) => e.preventDefault()} // Prevent default form submission
             className="flex flex-col gap-4"
           >
             <FormField
@@ -249,13 +250,21 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
 
             {/* Submit Button */}
             <div className="mt-8 flex justify-end gap-3">
-              <Button
-                type="submit"
-                className=""
-                disabled={isPending}
-              >
-                {isPending ? "Saving..." : "Save"}
-              </Button>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className=""
+                    disabled={isPending}
+                  >
+                    {isPending ? "Saving..." : "Save"}
+                  </Button>
+                }
+                title="Confirm Donation"
+                description="Are you sure the details of this entry are accurate?"
+                actionLabel="Confirm"
+                onClick={form.handleSubmit(onSubmit)}
+              />
             </div>
           </form>
         </Form>
