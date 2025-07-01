@@ -1,3 +1,5 @@
+"use client"
+
 import { useQuery } from "@tanstack/react-query";
 import { getPatients, getMaternalRecords, getPatientPostpartumCount } from "../restful-api/maternalGetAPI";
 

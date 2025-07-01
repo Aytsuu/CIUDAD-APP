@@ -1,3 +1,5 @@
+"use client"
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPrenatalRecord, addPostpartumRecord } from "../restful-api/maternalPOST";
 import { useNavigate } from "react-router";

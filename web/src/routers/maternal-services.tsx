@@ -3,7 +3,7 @@ import MaternalIndivRecords from "@/pages/healthServices/maternal/maternal-indiv
 import PrenatalForm from "@/pages/healthServices/maternal/prenatal/prenatal-form";
 import PrenatalViewingOne from "@/pages/healthServices/maternal/prenatal/prenatal-viewing";
 import PrenatalIndivHistory from "@/pages/healthServices/maternal/prenatal/prenatal-indiv-history";
-import PostpartumForm from "@/pages/healthServices/maternal/postpartum/postpartum-form";
+import PostpartumForm from "@/pages/healthServices/maternal/postpartum/postpartum-main";
 import PostpartumViewing from "@/pages/healthServices/maternal/postpartum/pospartum-viewing";
 import PostpartumIndivHistory from "@/pages/healthServices/maternal/postpartum/postpartum-indiv-history";
 

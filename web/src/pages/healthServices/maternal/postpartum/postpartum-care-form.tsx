@@ -22,7 +22,10 @@ import { Loader2, AlertCircle } from "lucide-react"
 
 import type { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
 import { useAddPostpartumRecord } from "../queries/maternalAddQueries"
-import { transformPostpartumFormData, validatePostpartumFormData } from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
+import {
+  transformPostpartumFormData,
+  validatePostpartumFormData,
+} from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
 import { toast } from "sonner"
 
 // Updated interface to match the expected Patient type
@@ -70,7 +73,6 @@ interface Patient {
   }
 }
 
-
 type PostpartumTableType = {
   date: string
   lochialDischarges?: string
@@ -115,6 +117,52 @@ export default function PostpartumFormFirstPg({
     if (!patient) {
       setSelectedPatientId("")
       setSelectedPatient(null)
+      form.reset({
+        mothersPersonalInfo: {
+          familyNo: "",
+          motherLName: "",
+          motherFName: "",
+          motherMName: "",
+          motherAge: "",
+          husbandLName: "",
+          husbandFName: "",
+          husbandMName: "",
+          husbandDob: "",
+          address: {
+            street: "",
+            sitio: "",
+            barangay: "",
+            city: "",
+            province: "",
+          },
+        },
+        postpartumInfo: {
+          dateOfDelivery: "",
+          timeOfDelivery: "",
+          placeOfDelivery: "",
+          outcome: "",
+          attendedBy: "",
+          ttStatus: "",
+          ironSupplement: "",
+          vitASupplement: "",
+          noOfPadPerDay: "",
+          mebendazole: "",
+          dateBfInitiated: "",
+          timeBfInitiated: "",
+          nextVisitDate: "",
+          lochialDischarges: "",
+        },
+        postpartumTable: {
+          date: today,
+          bp: {
+            systolic: "",
+            diastolic: "",
+          },
+          feeding: "",
+          findings: "",
+          nursesNotes: "",
+        },
+      })
       return
     }
 
@@ -137,30 +185,32 @@ export default function PostpartumFormFirstPg({
       const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info
       const spouse = patient.spouse_info?.spouse_info
 
-      setValue("mothersPersonalInfo.familyNo", patient.family?.fam_id || "")
-      setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname)
-      setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname)
-      setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname)
-      setValue("mothersPersonalInfo.motherAge", personalInfo?.per_dob ? calculateAge(personalInfo.per_dob) : "")
-      setValue("mothersPersonalInfo.motherDOB", personalInfo?.per_dob)
-      setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
-      setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
-      setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
-      setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
+      form.setValue("mothersPersonalInfo.familyNo", patient.family?.fam_id || "")
+      form.setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname || "")
+      form.setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname || "")
+      form.setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname || "")
+      form.setValue(
+        "mothersPersonalInfo.motherAge",
+        personalInfo?.per_dob ? String(calculateAge(personalInfo.per_dob)) : "",
+      )
+      form.setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
+      form.setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
+      form.setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
+      form.setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
 
       if (address) {
-        setValue("mothersPersonalInfo.address.street", address.add_street)
-        setValue("mothersPersonalInfo.address.sitio", address.sitio || "")
-        setValue("mothersPersonalInfo.address.barangay", address.add_barangay)
-        setValue("mothersPersonalInfo.address.city", address.add_city)
-        setValue("mothersPersonalInfo.address.province", address.add_province)
+        form.setValue("mothersPersonalInfo.address.street", address.add_street || "")
+        form.setValue("mothersPersonalInfo.address.sitio", address.sitio || "")
+        form.setValue("mothersPersonalInfo.address.barangay", address.add_barangay || "")
+        form.setValue("mothersPersonalInfo.address.city", address.add_city || "")
+        form.setValue("mothersPersonalInfo.address.province", address.add_province || "")
       }
 
-      if(spouse) {
-        setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
-        setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
-        setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
-        setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
+      if (spouse) {
+        form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+        form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+        form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+        form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
       }
     }
   }
@@ -202,7 +252,7 @@ export default function PostpartumFormFirstPg({
   const today = new Date().toLocaleDateString("en-CA")
 
   useEffect(() => {
-    setValue("postpartumTable.date", today)
+    form.setValue("postpartumTable.date", today)
   }, [setValue, today])
 
   const addPostpartumCare = () => {
@@ -254,13 +304,13 @@ export default function PostpartumFormFirstPg({
       ])
 
       // Clear form fields
-      setValue("postpartumTable.date", today)
-      setValue("postpartumInfo.lochialDischarges", "")
-      setValue("postpartumTable.bp.systolic", "")
-      setValue("postpartumTable.bp.diastolic", "")
-      setValue("postpartumTable.feeding", "")
-      setValue("postpartumTable.findings", "")
-      setValue("postpartumTable.nursesNotes", "")
+      form.setValue("postpartumTable.date", today)
+      form.setValue("postpartumInfo.lochialDischarges", "")
+      form.setValue("postpartumTable.bp.systolic", "")
+      form.setValue("postpartumTable.bp.diastolic", "")
+      form.setValue("postpartumTable.feeding", "")
+      form.setValue("postpartumTable.findings", "")
+      form.setValue("postpartumTable.nursesNotes", "")
     } else {
       toast.error("Please fill in all required fields for the assessment including lochial discharges")
     }
@@ -283,7 +333,6 @@ export default function PostpartumFormFirstPg({
       return
     }
 
-    // FIXED: Don't try to parse patient ID as number - keep as string
     if (!selectedPatientId || selectedPatientId.trim() === "" || selectedPatientId.toLowerCase() === "nan") {
       toast.error("Invalid patient ID selected")
       console.error("Invalid patient ID:", selectedPatientId)
@@ -293,7 +342,6 @@ export default function PostpartumFormFirstPg({
     setFormErrors([])
 
     try {
-      // Transform form data to API format - pass string patient ID directly
       const transformedData = transformPostpartumFormData(formData, selectedPatientId, postpartumCareData)
 
       console.log("Submitting postpartum data:", transformedData)
@@ -481,11 +529,18 @@ export default function PostpartumFormFirstPg({
                 name="postpartumInfo.attendedBy"
                 placeholder="Attended By"
               />
-              <FormInput
+              <FormSelect
                 control={form.control}
                 label="Tetanus Toxoid Status"
                 name="postpartumInfo.ttStatus"
-                placeholder="Tetanus Toxoid Status"
+                options={[
+                  { id: "tt1", name: "TT1" },
+                  { id: "tt2", name: "TT2" },
+                  { id: "tt3", name: "TT3" },
+                  { id: "tt4", name: "TT4" },
+                  { id: "tt5", name: "TT5" },
+                  { id: "fim", name: "FIM" },
+                ]}
               />
               <FormDateTimeInput
                 control={form.control}

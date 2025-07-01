@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const PostPartumSchema = z.object({
     mothersPersonalInfo: z.object({
-        familyNo: z.string().min(1, 'Family No. is required'),
+        familyNo: z.string().optional(),
         motherLName: z.string().min(1, 'Last name is required'),
         motherFName: z.string().min(1, 'First name is required'),
         motherMName: z.string().optional(),
@@ -22,7 +22,7 @@ export const PostPartumSchema = z.object({
 
     postpartumInfo: z.object({
         dateOfDelivery: z.string().date(),
-        timeOfDelivery: z.string().time(),
+        timeOfDelivery: z.string(),
         placeOfDelivery: z.string(),
         attendedBy: z.string().optional(),
         outcome: z.string(),

@@ -12,21 +12,45 @@ month = str(today.month).zfill(2)
 year = str(today.year)
 
 class Pregnancy(models.Model):
-    pregnancy_id = models.AutoField(primary_key=True)
-    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    pregnancy_number = models.IntegerField()
-    estimated_due_date = models.DateField(null=True, blank=True)
+    pregnancy_id = models.CharField(primary_key=True, max_length=20, unique=True)
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='pregnancy')
     status = models.CharField(max_length=20, choices=[
         ('active', 'Active'),
         ('completed', 'Completed'),
-        ('pregnancy loss', 'Pergnancy Loss')
+        ('pregnancy loss', 'Pregnancy Loss')
     ], default='active')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    prenatal_end_date = models.DateField(null=True, blank=True)
+    postpartum_end_date = models.DateField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.pregnancy_id:
+            current_yr = datetime.now().year
+            current_yr_suffix = str(current_yr)[-2:] 
+
+            prefix = f'PREG-{current_yr}-{current_yr_suffix}'
+
+            existing_preg_max = Pregnancy.objects.filter(
+                pregnancy_id__startswith=prefix
+                ).aggregate(
+                    max_num = Max('pregnancy_id')
+                )
+            
+            if existing_preg_max['max_num']:
+                last_preg_id = existing_preg_max('max_num')
+                last_num = int(last_preg_id[-4:])
+                new_num = last_num + 1
+            else:
+                new_num = 1
+            
+            self.pregnancy_id = f'{prefix}{str(new_num).zfill(4)}'
+            
+        super().save(*args, **kwargs)
     
     class Meta:
         db_table = 'pregnancy'
         ordering = ['created_at']
-        unique_together = ['pat_id', 'pregnancy_number']
 
 
 class Prenatal_Form(models.Model):
@@ -144,11 +168,11 @@ class PostpartumRecord(models.Model):
     ppr_time_of_bf = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, null=True, related_name='postpartum_record', db_column='pf_id')
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_record', null=False, db_column='patrec_id')
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_record', db_column='spouse_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_record', db_column='vital_id', null=False)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
+    pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
     def save(self, *args, **kwargs):

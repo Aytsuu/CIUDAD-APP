@@ -1,3 +1,5 @@
+"use client"
+
 import { api2 } from "@/api/api"
 import axios from "axios"
 

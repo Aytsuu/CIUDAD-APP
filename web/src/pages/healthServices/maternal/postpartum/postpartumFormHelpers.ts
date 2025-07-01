@@ -53,11 +53,11 @@ export const transformPostpartumFormData = (
     vital_bp_systolic:
       postpartumCareData.length > 0
         ? postpartumCareData[0].bp.split(" / ")[0]
-        : formData.postpartumTable?.bp?.systolic || "120",
+        : formData.postpartumTable?.bp?.systolic || "",
     vital_bp_diastolic:
       postpartumCareData.length > 0
         ? postpartumCareData[0].bp.split(" / ")[1]
-        : formData.postpartumTable?.bp?.diastolic || "80",
+        : formData.postpartumTable?.bp?.diastolic || "",
 
     // Follow-up visit data
     followup_date: formData.postpartumInfo?.nextVisitDate || new Date().toISOString().split("T")[0],

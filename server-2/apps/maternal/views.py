@@ -84,7 +84,7 @@ def get_postpartum_records(request):
     """Get all postpartum records with related data"""
     try:
         records = PostpartumRecord.objects.select_related(
-            'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
+            'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'pregnancy_id'
         ).prefetch_related(
             'postpartum_delivery_record', 'postpartum_assessment'
         ).all()
