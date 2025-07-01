@@ -3,11 +3,10 @@ import EventCalendar from "@/components/ui/calendar/EventCalendar"
 import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main"
 import { useGetHotspotRecords, type Hotspot } from "./waste-hotspot/queries/hotspotFetchQueries"
 import { formatTime } from "@/helpers/timeFormatter"
-import type { EventDetailColumn } from "@/components/ui/calendar/EventCalendar"
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Clock, MapPin, Calendar } from "lucide-react"
-import { hotspotColumns } from "./waste-hotspot/event-columns/event-cols"
+import { hotspotColumns } from "./event-columns/event-cols"
 
 const WasteMainScheduling = () => {
   const { data: hotspotData = [], isLoading } = useGetHotspotRecords()

@@ -1,4 +1,4 @@
-import type { Hotspot } from "../queries/hotspotFetchQueries"
+import type { Hotspot } from "../waste-hotspot/queries/hotspotFetchQueries"
 import type { EventDetailColumn } from "@/components/ui/calendar/EventCalendar"
 import { formatTime } from "@/helpers/timeFormatter"
 
