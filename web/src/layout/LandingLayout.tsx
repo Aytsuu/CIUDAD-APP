@@ -5,17 +5,21 @@ import { FaFacebook, FaPhoneAlt } from "react-icons/fa";
 import { GoVerified } from "react-icons/go";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import SignIn from "@/pages/landing/Signin";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button/button";
 
 const NavItemList = [
   { path: "/home", title: "Home" },
   { path: "/about", title: "About" },
   { path: "/services", title: "Services" },
+  { path: "/health", title: "Health" },
   { path: "/donation", title: "Donation" },
   { path: "/barangay-council", title: "Barangay Council" },
   { path: "/mobile-app", title: "Mobile App" },
 ];
 
 export default function LandingLayout() {
+  const { user } = useAuth();
   return (
     <div className="w-screen h-screen bg-snow overflow-hidden flex flex-col">
       {/* Fixed Headers Container */}
@@ -60,13 +64,17 @@ export default function LandingLayout() {
                   </Label>
                 </Link>
               ))}
-              <DialogLayout
-                trigger={<Label className="pt-2.5 pb-2.5 pl-4 pr-4 bg-[#2563EB] text-white rounded-lg cursor-pointer hover:bg-[#2563EB]/90">Sign in</Label>}
+              {user?.staff?.staff_id ? (
+                <Link to={"/dashboard"}>
+                  <Button>Dashboard</Button>
+                </Link>
+              ) : (<DialogLayout
+                trigger={<Button>Sign in</Button>}
                 className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
                 mainContent={
                   <SignIn/>
                 }
-              />
+              />)}
             </nav>
           </div>
         </header>
