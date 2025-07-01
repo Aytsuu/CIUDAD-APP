@@ -72,7 +72,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Features Section */}
-        <Card className="p-5 rounded-none">
+        <Card className="p-5 bg-white rounded-none">
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900">Features</Text>
             <Text className="text-sm text-gray-600">Quick access to your tools</Text>

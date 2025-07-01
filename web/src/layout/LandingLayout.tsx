@@ -36,7 +36,7 @@ export default function LandingLayout() {
         <header className="w-full bg-white flex justify-center shadow-lg">
           <div className="w-full h-full flex justify-between items-center">
             {/* Logo and Barangay Name */}
-            <div className="w-1/3 h-full flex items-center slope-right p-3 bg-blue">
+              <div className="w-1/3 h-full flex items-center slope-right p-3 bg-[#1273B8]">
               <div className="w-full flex justify-center items-center gap-3">
                 <img
                   src={SanRoqueLogo}
@@ -76,7 +76,7 @@ export default function LandingLayout() {
       <div className="h-[120px]"></div>
 
       {/* Scrollable Page Content */}
-      <section className="flex-1 overflow-y-auto w-full flex justify-center">
+      <section className="flex-1 overflow-y-auto w-full flex justify-center bg-[#17294A]">
         <Outlet />
       </section>
     </div>
