@@ -184,7 +184,7 @@ import WasteReportResolved from "./waste-illegal-dumping-update";
 
 interface WasteReportDetailsProps {
   rep_id: number;
-  rep_image: string;
+  // rep_image: string;
   rep_matter: string;
   rep_location: string;
   rep_add_details: string;
@@ -194,11 +194,17 @@ interface WasteReportDetailsProps {
   rep_date: string;
   rep_date_resolved: string;
   rep_resolved_img: string;
+  sitio_id: number;
+  sitio_name: string;
+  waste_report_file: {
+      wrf_id: number;
+      wrf_url: string;
+  }[];
 }
 
 function WasteIllegalDumpingDetails({
   rep_id,
-  rep_image,
+  // rep_image,
   rep_status,
   rep_matter,
   rep_location,
@@ -207,7 +213,10 @@ function WasteIllegalDumpingDetails({
   rep_date,
   rep_contact,
   rep_date_resolved,
-  rep_resolved_img
+  rep_resolved_img,
+  sitio_id,
+  sitio_name,
+  waste_report_file
 }: WasteReportDetailsProps) {
 
   const isResolved = !!rep_date_resolved || rep_status === "resolved";
@@ -255,14 +264,14 @@ function WasteIllegalDumpingDetails({
         {/* Images Container */}
         <div className="lg:w-1/2 space-y-6">
           {/* Original Report Image */}
-          {rep_image && (
+          {waste_report_file[0].wrf_url && (
             <div className="w-full relative">
               <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700">
                 Report Evidence
               </span>
               <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2">
                 <img
-                  src={rep_image}
+                  src={waste_report_file[0].wrf_url}
                   alt="Report evidence"
                   className="w-full h-full object-cover"
                 />
@@ -293,26 +302,30 @@ function WasteIllegalDumpingDetails({
             <div className="grid grid-cols-2">
               <div>
                 <p className="font-semibold">Sitio</p>
+                <p>{sitio_name}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Location</p>
                 <p>{rep_location}</p>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2">
               <div>
                 <p className="font-semibold">Contact Number</p>
                 <p>{rep_contact}</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2">
               <div>
                 <p className="font-semibold">Violator</p>
                 <p>{rep_violator || "Unknown"}</p>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2">
               <div>
                 <p className="font-semibold">Date and Time</p>
                 <p>{formatDate(rep_date)}</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2">
               <div>
                 <p className="font-semibold pb-2">Report Status</p>
                 <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusStyle(rep_status)}`}>

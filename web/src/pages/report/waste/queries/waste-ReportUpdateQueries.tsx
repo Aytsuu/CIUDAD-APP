@@ -28,7 +28,7 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
       });
       
       // Invalidate any related queries if needed
-      queryClient.invalidateQueries({ queryKey: ['wastereport'] });
+      queryClient.invalidateQueries({ queryKey: ["wastereport"] });
       
       if (onSuccess) onSuccess();
     },

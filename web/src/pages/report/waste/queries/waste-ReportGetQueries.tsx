@@ -5,7 +5,7 @@ import { getWasteReport } from "../request/waste-ReportGetRequest";
 
 export type WasteReport = {
     rep_id: number;
-    rep_image: string;
+    // rep_image: string;
     rep_matter: string;
     rep_location: string;
     rep_add_details: string;
@@ -14,8 +14,15 @@ export type WasteReport = {
     rep_contact: string;
     rep_status: string;
     rep_date: string;
+    rep_anonymous: boolean;
     rep_date_resolved: string;
     rep_resolved_img: string;
+    sitio_id: number;
+    sitio_name: string;
+    waste_report_file: {
+        wrf_id: number;
+        wrf_url: string;
+    }[];
 };
   
 // Retrieving income/expense data
