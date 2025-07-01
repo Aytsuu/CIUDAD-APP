@@ -117,22 +117,22 @@ class IncomeFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        # Get all images in folder (both archived and active)
+        images = Income_Image.objects.filter(inf_num=instance)
         
-        if permanent:
-            # First delete all images in the folder
-            Income_Image.objects.filter(inf_num=instance).delete()
-            # Then delete the folder
-            instance.delete()
-            return Response({"message": "Income folder and all images permanently deleted"}, 
-                          status=status.HTTP_204_NO_CONTENT)
-        else:
-            # Archive folder and all its images
-            instance.inf_is_archive = True
-            instance.save()
-            Income_Image.objects.filter(inf_num=instance).update(infi_is_archive=True)
-            return Response({"message": "Income folder and all images archived"}, 
-                          status=status.HTTP_200_OK)
+        # Delete all images
+        deleted_count, _ = images.delete()
+        
+        # Delete the now-empty folder
+        instance.delete()
+        
+        return Response(
+            {
+                "message": "Folder and all images deleted",
+                "deleted_images": deleted_count
+            },
+            status=status.HTTP_200_OK
+        )
 
 class RestoreIncomeFolderView(generics.UpdateAPIView):
     queryset = Income_File_Folder.objects.filter(inf_is_archive=True)
@@ -177,22 +177,22 @@ class DisbursementFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        # Get all images in folder (both archived and active)
+        images = Disbursement_Image.objects.filter(dis_num=instance)
         
-        if permanent:
-            # First delete all images in the folder
-            Disbursement_Image.objects.filter(dis_num=instance).delete()
-            # Then delete the folder
-            instance.delete()
-            return Response({"message": "Disbursement folder and all images permanently deleted"}, 
-                          status=status.HTTP_204_NO_CONTENT)
-        else:
-            # Archive folder and all its images
-            instance.dis_is_archive = True
-            instance.save()
-            Disbursement_Image.objects.filter(dis_num=instance).update(disf_is_archive=True)
-            return Response({"message": "Disbursement folder and all images archived"}, 
-                          status=status.HTTP_200_OK)
+        # Delete all images
+        deleted_count, _ = images.delete()
+        
+        # Delete the now-empty folder
+        instance.delete()
+        
+        return Response(
+            {
+                "message": "Folder and all images deleted",
+                "deleted_images": deleted_count
+            },
+            status=status.HTTP_200_OK
+        )
 
 class RestoreDisbursementFolderView(generics.UpdateAPIView):
     queryset = Disbursement_File_Folder.objects.filter(dis_is_archive=True)

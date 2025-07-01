@@ -23,41 +23,7 @@ const FormComboCheckbox = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const triggerRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
-  const [triggerWidth, setTriggerWidth] = useState(0);
-
-  useEffect(() => {
-    if (triggerRef.current) {
-      triggerRef.current.measure((
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        pageX: number,
-        pageY: number
-      ) => {
-        setTriggerWidth(width);
-      });
-    }
-    const updateWidth = () => {
-      if (triggerRef.current) {
-        triggerRef.current.measure((
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          pageX: number,
-          pageY: number
-        ) => {
-          setTriggerWidth(width);
-        });
-      }
-    };
-    const subscription = Dimensions.addEventListener('change', updateWidth);
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+  const modalContentRef = useRef<View>(null);
 
   const filteredOptions = options.filter(option =>
     option.name.toLowerCase().includes(search.toLowerCase()),
@@ -90,13 +56,23 @@ const FormComboCheckbox = ({
           return selectedOptions.map(opt => opt.name).join(', ');
         };
 
+        const handleBackdropPress = (e: any) => {
+          if (modalContentRef.current) {
+            modalContentRef.current.measure((fx, fy, width, height, px, py) => {
+              const tapY = e.nativeEvent.pageY;
+              if (tapY < py) {
+                setIsOpen(false);
+              }
+            });
+          }
+        };
+
         return (
           <View className="w-full">
             {label && <Text className="text-black/70 text-sm mb-2">{label}</Text>}
             {!readOnly ? (
               <>
                 <TouchableOpacity
-                  ref={triggerRef}
                   onPress={() => setIsOpen(true)}
                   className={cn(
                     'w-full border border-gray-300 rounded-md px-3 py-2 flex-row justify-between items-center',
@@ -106,21 +82,33 @@ const FormComboCheckbox = ({
                   <Text className="flex-1 truncate">{getDisplayText()}</Text>
                   <View className="flex-row">
                     {selectedValues.length > 0 && (
-                      <TouchableOpacity onPress={clearSelections} className="mr-2">
+                      <TouchableOpacity 
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          clearSelections();
+                        }} 
+                        className="mr-2"
+                      >
                         <MaterialIcons name="clear" size={16} color="gray" />
                       </TouchableOpacity>
                     )}
                     <MaterialIcons name="arrow-drop-down" size={20} color="gray" />
                   </View>
                 </TouchableOpacity>
+                
                 <Modal
                   visible={isOpen}
                   transparent={true}
                   animationType="slide"
                   onRequestClose={() => setIsOpen(false)}
                 >
-                  <View className="flex-1 bg-black/50 justify-end">
-                    <View
+                  <TouchableOpacity 
+                    activeOpacity={1}
+                    onPress={handleBackdropPress}
+                    className="flex-1 bg-black/50 justify-end"
+                  >
+                    <View 
+                      ref={modalContentRef}
                       className="bg-white rounded-t-lg p-4"
                       style={{ width: '100%', maxHeight: '50%' }}
                     >
@@ -128,13 +116,13 @@ const FormComboCheckbox = ({
                         <TouchableOpacity onPress={() => setIsOpen(false)}>
                           <Text className="text-blue-500 text-base font-medium">Done</Text>
                         </TouchableOpacity>
-                        <Text className="text-lg font-bold">Select Attendees</Text>
+                        <Text className="text-lg font-bold">Select</Text>
                         <TouchableOpacity onPress={() => setIsOpen(false)}>
                           <MaterialIcons name="close" size={24} color="black" />
                         </TouchableOpacity>
                       </View>
                       <TextInput
-                        placeholder="Search attendees..."
+                        placeholder="Search"
                         value={search}
                         onChangeText={setSearch}
                         className="border border-gray-300 rounded-md px-3 py-2 mb-4"
@@ -165,7 +153,7 @@ const FormComboCheckbox = ({
                         )}
                       />
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 </Modal>
               </>
             ) : (

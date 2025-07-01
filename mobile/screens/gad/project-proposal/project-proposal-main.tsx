@@ -245,6 +245,7 @@ const ProjectProposalListContent: React.FC = () => {
                 </Text>
                 <View className="flex-row">
                   {viewMode === "active" ? (
+                    project.status !== 'Viewed' && (
                     <ConfirmationModal
                       trigger={
                         <TouchableOpacity className="p-1">
@@ -257,6 +258,7 @@ const ProjectProposalListContent: React.FC = () => {
                       onPress={() => handleArchivePress(project)}
                       loading={isProcessing}
                     />
+                    )
                   ) : (
                     <>
                       <ConfirmationModal
@@ -265,8 +267,8 @@ const ProjectProposalListContent: React.FC = () => {
                             <ArchiveRestore color="#10b981" size={20} />
                           </TouchableOpacity>
                         }
-                        title={`Unarchive "${project.projectTitle}"`}
-                        description="Are you sure you want to unarchive this project proposal?"
+                        title={`Restore "${project.projectTitle}"`}
+                        description="Are you sure you want to restore this project proposal?"
                         actionLabel="Restore"
                         onPress={() => handleRestorePress(project)}
                         loading={isProcessing}
