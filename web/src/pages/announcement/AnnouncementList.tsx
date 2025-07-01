@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"

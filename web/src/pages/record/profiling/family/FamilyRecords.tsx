@@ -186,4 +186,8 @@ export default function FamilyRecords() {
       </div>
     </MainLayoutComponent>
   )
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> mobile-register

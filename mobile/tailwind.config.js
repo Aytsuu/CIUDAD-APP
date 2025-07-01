@@ -52,7 +52,8 @@ module.exports = {
         lightBlue: {
           1: '#ECF8FF',
           2: '#E0F2FF'
-        }
+        },
+        buttonBlue: '#2563EB',
       },
       borderWidth: {
         hairline: hairlineWidth(),

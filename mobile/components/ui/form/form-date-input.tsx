@@ -29,12 +29,19 @@ export const FormDateInput = ({ control, name, label }: DatePickerProps) => {
           <View className="flex relative">
             <Button
               onPress={() => setShowPicker(true)}
-              className="bg-white border border-gray-300 native:h-[57px] items-start"
+              className={`h-[45px] font-PoppinsRegular border bg-white items-start ${
+              error ? 'border-red-500' : 'border-gray-300'
+            }`}
             >
               <Text className="text-[16px]">
                 {value ? new Date(value).toLocaleDateString() : "Select Date"}
               </Text>
             </Button>
+            
+            {/* Fix icon to specific pixel position instead of percentage */}
+            <View className="absolute right-5 top-[12px]">
+              <Calendar size={20} className="text-gray-700" />
+            </View>
             
             {showPicker && (
               <DateTimePicker

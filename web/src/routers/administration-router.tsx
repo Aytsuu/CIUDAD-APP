@@ -1,18 +1,23 @@
 import RoleLayout from "@/pages/record/administration/RoleLayout"
 import AdministrationRecords from "@/pages/record/administration/AdministrationRecords"
-import PositionForm from "@/pages/record/administration/PositionForm"
+import NewPositionForm from "@/pages/record/administration/NewPositionForm"
+import GroupPositionForm from "@/pages/record/administration/GroupPositionForm"
 
 export const administration_router = [
     {
         path: 'administration',
-        element: <AdministrationRecords /> 
+        element: <AdministrationRecords />,
     },
     {   
         path: 'administration/role',
         element: <RoleLayout /> 
     }, 
     {
-        path: 'administration/role/add-position',
-        element: <PositionForm /> 
+        path: 'administration/role/position',
+        element: <NewPositionForm /> 
+    },
+    {
+        path: 'administration/role/group-position',
+        element: <GroupPositionForm /> 
     }
 ]

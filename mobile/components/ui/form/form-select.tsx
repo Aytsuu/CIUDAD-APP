@@ -3,56 +3,48 @@ import { View, Text } from 'react-native';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import SelectLayout from '../select/select-layout';
 
-interface FormSelectProps<T extends FieldValues> {
-    control: Control<T>;
-    name: Path<T>;
-    options: { label: string; value: string }[];
-    label?: string;
-    placeholder?: string;
-    className?: string;
-    contentClassName?: string;
-  }
-  
-  export const FormSelect = <T extends FieldValues>({
-    control,
-    name,
-    options,
-    label,
-    placeholder = 'Select...',
-    className,
-    contentClassName,
-  }: FormSelectProps<T>) => {
-    return (
-      <Controller
-        control={control}
-        name={name}
-        render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <View className="mb-4">
-            {label && (
-              <Text className="text-[ 16px] font-PoppinsRegular mb-2">
-                {label}
-              </Text>
-            )}
-            
-            <SelectLayout
-              className={className}
-              contentClassName={contentClassName}
-              placeholder={placeholder}
-              options={options}
-              selected={options.find(opt => opt.value === value) || {label: 'Select', value: 'select'}}
-              onValueChange={(selectedOption) => {
-                // Handle both the case where selectedOption might be undefined
-                onChange(selectedOption?.value ?? null);
-              }}
-            />
-            
-            {error && (
-              <Text className="text-red-500 text-sm mt-1">
-                {error.message}
-              </Text>
-            )}
-          </View>
-        )}
-      />
-    );
-  };
+interface FormCustomDropdownProps<T extends FieldValues> {
+  control: Control<T>
+  name: Path<T>
+  options: DropdownOption[]
+  label?: string
+  placeholder?: string
+  disabled?: boolean
+  maxHeight?: number
+  className?: string
+  isInModal?: boolean
+}
+
+export const FormSelect = <T extends FieldValues>({
+  control,
+  name,
+  options,
+  label,
+  placeholder = "Select...",
+  disabled = false,
+  maxHeight = 300,
+  className,
+  isInModal
+}: FormCustomDropdownProps<T>) => {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field: { onChange, value }, fieldState: { error } }) => (
+        <View className="mb-4">
+          <SelectLayout
+            options={options}
+            selectedValue={value}
+            onSelect={(option: any) => onChange(option.value)}
+            label={label}
+            placeholder={placeholder}
+            error={error?.message}
+            disabled={disabled}
+            maxHeight={maxHeight}
+            className={className}
+          />
+        </View>
+      )}
+    />
+  )
+}

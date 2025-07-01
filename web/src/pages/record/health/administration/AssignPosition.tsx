@@ -13,11 +13,10 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { toast } from "sonner";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useAuth } from "@/context/AuthContext";
-import { usePositions } from "./queries/administrationFetchQueries";
+import { usePositionsHealth } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
-import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
-
+import { useAddStaffHealth } from "./queries/administrationAddQueries";
+import { useAddResidentAndPersonalHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
 export default function AssignPosition({
   personalInfoform,
   close,
@@ -27,9 +26,9 @@ export default function AssignPosition({
 }) {
   // ============= STATE INITIALIZATION ===============
   const { user } = React.useRef(useAuth()).current;
-  const {data: positions, isLoading: isLoadingPositions} = usePositions();
-  const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
-  const {mutateAsync: addStaff} = useAddStaff();
+  const {data: positionsHealth, isLoading: isLoadingPositions} = usePositionsHealth() ;
+  const {mutateAsync: addResidentAndPersonalHealth} = useAddResidentAndPersonalHealth();
+  const {mutateAsync: addStaffHealth} = useAddStaffHealth();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const personalDefaults = React.useRef(
     generateDefaultValues(personalInfoSchema)
@@ -58,7 +57,7 @@ export default function AssignPosition({
 
     // If resident exists, assign
     if (residentId) {
-      addStaff({
+      addStaffHealth({
         residentId: residentId, 
         positionId: positionId,
         staffId: user?.staff.staff_id
@@ -74,12 +73,12 @@ export default function AssignPosition({
 
       if(!personalInfo) return;
       
-      addResidentAndPersonal({
+      addResidentAndPersonalHealth({
         personalInfo: personalInfo,
         staffId: user?.staff.staff_id
       }, {
         onSuccess: (resident) => {
-          addStaff({
+          addStaffHealth({
             residentId: resident.rp_id, 
             positionId: positionId,
             staffId: user?.staff.staff_id
@@ -118,7 +117,7 @@ export default function AssignPosition({
         <FormSelect
           control={form.control}
           name="assignPosition"
-          options={formatPositions(positions)}
+          options={formatPositions(positionsHealth)}
           readOnly={false}
         />
         <div className="flex justify-end">

@@ -6,225 +6,151 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { Session } from "@supabase/supabase-js";
-import supabase from "@/supabase/supabase";
+import { AuthContextType, User } from "./auth-types";
 import { api } from "@/api/api";
-
-interface StaffProfile {
-  staff_id: string;
-  staff_type: 'Barangay Staff' | 'Health Staff' | string;
-  assignments: Record<string,any>[];
-}
-
-interface DjangoUser {
-  acc_id: number;
-  supabase_id: string;
-  username: string;
-  email: string;
-  profile_image?: string | null;
-  resident_profile?: {
-    rp_id: string;
-    staff?: StaffProfile;
-  };
-}
-
-interface User {
-  id: string;
-  email: string;
-  username?: string;
-  profile_image?: string | null;
-  djangoUser: DjangoUser | null;
-}
-
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  signUp: (email: string, password: string, username?: string) => Promise<{ requiresConfirmation?: boolean }>;
-  signInWithGoogle: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-  clearError: () => void;
-  isBarangayStaff: () => boolean;
-  isHealthStaff: () => boolean;
-}
+import supabase from "@/supabase/supabase";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const clearError = () => setError(null);
 
-  const isBarangayStaff = () => {
-    return user?.djangoUser?.resident_profile?.staff?.staff_type === "Barangay Staff";
+  const handleError = (error: any, defaultMessage: string) => {
+    const message = error?.message || defaultMessage;
+    setError(message);
+    throw new Error(message);
   };
 
-  const isHealthStaff = () => {
-    return user?.djangoUser?.resident_profile?.staff?.staff_type === "Health Staff";
-  };
-
-  const syncWithDjango = async (session: Session | null): Promise<DjangoUser | null> => {
-    if (!session?.user) return null;
-    
+  // Check authentication status on app load
+  const checkAuthStatus = useCallback(async () => {
     try {
-      const response = await api.post('/authentication/login/', {
-        supabase_id: session.user.id,
-        email: session.user.email,
-        username: session.user.user_metadata?.username || session.user.email?.split('@')[0],
-        profile_image: session.user.user_metadata?.avatar_url || 
-                     'https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg'
-      });
+      setIsLoading(true);
       
-      return response.data;
-    } catch (error: any) {
-      console.error('Django sync error:', error);
-      throw new Error(error.response?.data?.error || 'Failed to sync with Django');
-    }
-  };
-
-  const handleSessionChange = useCallback(async (session: Session | null) => {
-    setIsLoading(true);
-    try {
-      if (session?.user) {
-        const djangoUser = await syncWithDjango(session);
-        setUser({
-          id: session.user.id,
-          email: session.user.email || "",
-          username: djangoUser?.username || session.user.user_metadata?.username,
-          profile_image: djangoUser?.profile_image || session.user.user_metadata?.avatar_url,
-          djangoUser
-        });
-        setIsAuthenticated(true);
-      } else {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        console.log("No valid Supabase session found");
         setUser(null);
         setIsAuthenticated(false);
+        return;
       }
-    } catch (error) {
-      console.error("Session error:", error);
-      setError(error instanceof Error ? error.message : "Authentication error");
+
+      const response = await api.get("authentication/user/");
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      
+    } catch (error: any) {
+      console.error("Authentication check failed:", error);
+      
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        await supabase.auth.signOut();
+      }
+      
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // Listen to Supabase auth changes
   useEffect(() => {
-    let mounted = true;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Supabase auth state changed:", event, session?.user?.email);
+        
+        if (event === 'SIGNED_OUT' || !session) {
+          setUser(null);
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // It does not automatically set as authenticated it waits for backend verification
+          if (event === 'TOKEN_REFRESHED') {
+            checkAuthStatus();
+          }
+        }
+      }
+    );
 
-    const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted) await handleSessionChange(session);
-    };
+    checkAuthStatus();
 
-    initializeAuth();
+    return () => subscription.unsubscribe();
+  }, [checkAuthStatus]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (mounted) await handleSessionChange(session);
-    });
-
-    return () => {
-      mounted = false;
-      subscription?.unsubscribe();
-    };
-  }, [handleSessionChange]);
-
-const login = async (email: string, password: string) => {
-  setIsLoading(true);
-  clearError();
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
-    if (!data?.session) throw new Error("No session returned");
-
-    // Get full user data from Django
-    const djangoUser = await syncWithDjango(data.session);
-    
-    // Check staff permissions
-    const staffType = djangoUser?.resident_profile?.staff?.staff_type;
-    if (!staffType || !['Barangay Staff', 'Health Staff'].includes(staffType)) {
-      await supabase.auth.signOut();
-      throw new Error("Only authorized staff can access this system");
-    }
-
-    setUser({
-      id: data.session.user.id,
-      email: data.session.user.email || "",
-      username: djangoUser?.username,
-      profile_image: djangoUser?.profile_image,
-      djangoUser
-    });
-    setIsAuthenticated(true);
-    
-  } catch (error) {
-    setError(error instanceof Error ? error.message : "Login failed");
-    throw error;
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-  const signUp = async (email: string, password: string, username?: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     clearError();
+
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: { username },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
       });
 
-      if (error) throw error;
-      if (!data.user) throw new Error("No user returned");
-
-      await api.post('/authentication/signup/', {
-        supabase_id: data.user.id,
-        email: data.user.email,
-        username: username || data.user.email?.split('@')[0]
-      });
-
-      if (!data.session) {
-        return { requiresConfirmation: true };
+      if (supabaseError) {
+        throw new Error(supabaseError.message);
       }
 
-      await handleSessionChange(data.session);
-      return { requiresConfirmation: false };
+      const response = await api.post('authentication/login/', {
+        email,
+        password,
+      });
+      
+      console.log("Login successful:", response.data.user);
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      
     } catch (error: any) {
-      setError(error.response?.data?.error || error.message || "Signup failed");
-      throw error;
+      console.error("Login error:", error);
+      
+      await supabase.auth.signOut();
+      
+      const message = error?.response?.data?.error || error?.message || 'Login failed';
+      handleError({message}, "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signUp = async (
+    email: string,
+    password: string,
+    username?: string
+  ): Promise<{ requiresConfirmation?: boolean }> => {
     setIsLoading(true);
     clearError();
+
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
+      const response = await api.post('authentication/signup/', {
+        email, 
+        password,
+        username,
       });
-      if (error) throw error;
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Google login failed");
+
+      // If signup successful and no confirmation required, user might be auto-logged in
+      if (!response.data.requiresConfirmation && response.data.user) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+      }
+
+      return { 
+        requiresConfirmation: response.data?.requiresConfirmation ?? false 
+      };
+      
+    } catch (error: any) {
+      try {
+        await supabase.auth.signOut();
+      } catch (cleanupError) {
+        console.error("Error during signup cleanup:", cleanupError);
+      }
+      
+      const message = error.response?.data?.error || 'Signup failed';
+      handleError({message}, "Signup failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -233,34 +159,48 @@ const login = async (email: string, password: string) => {
 
   const logout = async () => {
     setIsLoading(true);
+
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
+      
+      await api.post('authentication/logout/');
+
+    } catch (error) {
+      console.error('Logout error: ', error);
+    } finally {
       setUser(null);
       setIsAuthenticated(false);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Logout failed");
-      throw error;
-    } finally {
       setIsLoading(false);
     }
   };
 
   const refreshSession = async () => {
     setIsLoading(true);
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      await handleSessionChange(session);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Session refresh failed");
-      throw error;
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error || !data.session) {
+        throw new Error("Failed to refresh Supabase session");
+      }
+
+      const response = await api.post('authentication/refresh/');
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      
+    } catch (error: any) {
+      console.error('Session refresh failed: ', error);
+      
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider
+    <AuthContext.Provider 
       value={{
         user,
         isAuthenticated,
@@ -269,11 +209,8 @@ const login = async (email: string, password: string) => {
         login,
         logout,
         signUp,
-        signInWithGoogle,
         refreshSession,
         clearError,
-        isBarangayStaff,
-        isHealthStaff,
       }}
     >
       {children}
@@ -283,6 +220,6 @@ const login = async (email: string, password: string) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if(!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };

@@ -9,7 +9,7 @@ import type { Assigned, Feature } from "./administrationTypes"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { useAllAssignedFeatures, usePositions } from "./queries/administrationFetchQueries"
-import { Users, Settings, Shield, ArrowRight } from "lucide-react"
+import { Users, Settings, Shield } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 

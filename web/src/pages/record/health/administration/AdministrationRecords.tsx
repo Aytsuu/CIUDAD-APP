@@ -8,7 +8,7 @@ import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdministrationRecord } from "./administrationTypes";
-import { useFeatures, useStaffs } from "./queries/administrationFetchQueries";
+import { useFeaturesHealth, useStaffsHealth } from "./queries/administrationFetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function AdministrationRecords() {
@@ -17,14 +17,14 @@ export default function AdministrationRecords() {
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  const { data: staffs, isLoading: isLoadingStaffs } = useStaffs();
-  const { data: features, isLoading: isLoadingFeatures } = useFeatures();
+  const { data: staffsHealth, isLoading: isLoadingStaffs } = useStaffsHealth();
+  const { data: featuresHealth, isLoading: isLoadingFeatures } = useFeaturesHealth();
 
   // Format staff data for table
   const formatStaffData = React.useCallback((): AdministrationRecord[] => {
-    if (!staffs) return [];
+    if (!staffsHealth) return [];
 
-    return staffs.map((staff: any) => {
+    return staffsHealth.map((staff: any) => {
       const position = staff.pos;
       const personal = staff.rp.per;
 
@@ -40,7 +40,7 @@ export default function AdministrationRecords() {
         dateAssigned: staff.staff_assign_date || "",
       };
     });
-  }, [staffs]);
+  }, [staffsHealth]);
 
   // Filtering formatted staff data (searching)
   const filteredStaffs = React.useMemo(() => {
@@ -52,7 +52,7 @@ export default function AdministrationRecords() {
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );
-  }, [staffs, searchQuery]);
+  }, [staffsHealth, searchQuery]);
 
   const totalPage = Math.ceil(filteredStaffs.length / pageSize);
 
@@ -96,7 +96,7 @@ export default function AdministrationRecords() {
           <Link to="/health-administration/role"
             state={{
               params: {
-                features: features,
+                features: featuresHealth,
               },
             }}
           >

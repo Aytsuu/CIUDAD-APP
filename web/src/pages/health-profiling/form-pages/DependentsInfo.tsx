@@ -581,7 +581,19 @@ export default function DependentsForm({ onSubmit, initialData }: DependentsForm
             </div>
           </div>
         </div>
+<<<<<<< HEAD
+=======
+        <div className="flex justify-end mt-6">
+          <Button type="button" onClick={handleMainFormSubmit}>
+            Submit All Records
+          </Button>
+        </div>
+>>>>>>> mobile-register
       </Form>
     </div>
   )
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> mobile-register

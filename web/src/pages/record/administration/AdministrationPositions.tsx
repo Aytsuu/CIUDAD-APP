@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
-import { Link, useNavigate } from "react-router"
+import { useNavigate } from "react-router"
 import { Action, Type } from "./administrationEnums"
 import { useDeletePosition } from "./queries/administrationDeleteQueries"
 import { ChevronRight, ChevronDown, Ellipsis, Trash, Loader2, Plus, Pen, Users, FolderOpen } from "lucide-react"
@@ -21,7 +21,7 @@ export default function AdministrationPositions({
   setSelectedPosition: (value: string) => void
 }) {
   const navigate = useNavigate()
-  const { mutate: deletePosition, isPending: isDeleting } = useDeletePosition()
+  const { mutateAsync: deletePosition, isPending: isDeleting } = useDeletePosition()
   const [openCategories, setOpenCategories] = React.useState<Set<string>>(new Set())
 
   // Group positions by category
@@ -33,7 +33,7 @@ export default function AdministrationPositions({
       }) || []
 
     return filtered.reduce((acc: Record<string, any[]>, position: any) => {
-      const category = position.pos_category || "Uncategorized"
+      const category = position.pos_group
       if (!acc[category]) {
         acc[category] = []
       }
@@ -77,7 +77,7 @@ export default function AdministrationPositions({
   }, [selectedPosition, deletePosition])
 
   const handleEdit = React.useCallback(() => {
-    navigate("/administration/role/add-position", {
+    navigate("position", {
       state: {
         params: {
           type: Type.Edit,
@@ -89,6 +89,30 @@ export default function AdministrationPositions({
     })
   }, [selectedPosition])
 
+  const handleCreateSelect = (value: string) => {
+    if(value === "new") {
+      navigate('position', {
+        state: {
+          params: {
+            type: Type.Add,
+            title: "New Position",
+            description: "Fill out all fields to proceed with creating new position.",
+          }
+        }
+      })
+    } else {
+      navigate('group-position', {
+        state: {
+          params: {
+            type: Type.Add,
+            title: "New Group",
+            description: "Fill out all fields to proceed with creating new group.",
+          }
+        }
+      })
+    }
+  }
+
   return (
     <div className="w-full h-full flex flex-col gap-4">
       {/* Header */}
@@ -97,21 +121,25 @@ export default function AdministrationPositions({
           <Label className="text-[20px] text-darkBlue1 font-semibold">Positions</Label>
           <Label className="text-sm text-black/60">Manage barangay positions</Label>
         </div>
-        <Link
-          to="/administration/role/add-position"
-          state={{
-            params: {
-              type: Type.Add,
-              title: "New Position",
-              description: "Fill out all fields to proceed with creating new position.",
-            },
-          }}
-        >
-          <Button className="gap-2 text-[13px] h-8 w-22">
+        <DropdownLayout 
+          trigger={<Button className="gap-2 text-[13px] h-8 w-22">
             <Plus className="w-4 h-4" />
             Create
-          </Button>
-        </Link>
+          </Button>}
+          options={[
+            {
+              id: 'new',
+              name: 'New Position',
+              variant: 'default'
+            },
+            {
+              id: 'group',
+              name: 'Group Position',
+              variant: 'default'
+            },
+          ]}  
+          onSelect={handleCreateSelect}
+        />
       </div>
 
       <Separator />
@@ -167,7 +195,7 @@ export default function AdministrationPositions({
                               </div>
                               {position.staff && (
                                 <div className="flex items-center gap-1">
-                                  <Label className="text-[12px]">Current: {position.staff}</Label>
+                                  <Label className="text-[12px]">Created by: {position.staff}</Label>
                                 </div>
                               )}
                             </div>
@@ -194,6 +222,7 @@ export default function AdministrationPositions({
                                       name: "Delete",
                                       icon: <Trash className="w-4 h-4" />,
                                       variant: "delete",
+                                      disabled: position.pos_is_predefined
                                     },
                                   ]}
                                   onSelect={handleAction}

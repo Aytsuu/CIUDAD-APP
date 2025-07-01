@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // // import { api } from '@/api/api';
 // // import { formatDate } from '@/helpers/dateFormatter';
 
@@ -37,59 +38,20 @@
 // // };
 
 // import { formatDate } from '@/helpers/dateFormatter';
+=======
+// import api from '@/pages/api/api';
+>>>>>>> mobile-register
 
-// interface BudgetTrackInfo {
-//   gbud_num?: number;
-//   gbud_date: string; 
-//   gbud_remaining_bal: number;
-//   gbud_particulars: string;
-//   gbud_type: string;
-//   gbud_amount: number;
-//   gbud_add_notes?: string;
-//   gbudy_num: number;
-//   budget_item?: number;  
-//   gbud_receipt: string;
-//   year?: string;
-// }
-
-// export const postbudgettrackreq = async (budgetTrackInfo: BudgetTrackInfo) => {
-//     try {
-//         if (!budgetTrackInfo.year) {
-//             throw new Error('Year parameter is required');
-//         }
-
-//         const currentDate = new Date();
-//         const payload: Record<string, any> = {
-//             gbud_num: budgetTrackInfo.gbud_num,   
-//             gbud_date: formatDate(currentDate),
-//             gbud_remaining_bal: budgetTrackInfo.gbud_remaining_bal,
-//             gbud_particulars: budgetTrackInfo.gbud_particulars,
-//             gbud_type: budgetTrackInfo.gbud_type,
-//             gbud_amount: budgetTrackInfo.gbud_amount,
-//             gbud_add_notes: budgetTrackInfo.gbud_add_notes || '',
-//             gbud_receipt: budgetTrackInfo.gbud_receipt || '', // Empty string if no receipt
-//             gbudy_num: budgetTrackInfo.gbudy_num
-//         };
-
-//         // Only add gbud_num if it exists
-//         if (budgetTrackInfo.gbud_num !== undefined) {
-//             payload.gbud_num = budgetTrackInfo.gbud_num;
-//         }
-
-//         console.log('Submitting budget track:', payload);
-
-//         const res = await api.post(
-//             `/gad/gad-budget-tracker-entry/${budgetTrackInfo.year}/`, 
-//             payload
-//         );
-
-//         return res.data;
-//     } catch (err) {
-//         console.error('Error submitting budget track:', err);
-//         throw err;
-//     }
+// export type GADBudgetFile = {
+//   gbf_id?: number;
+//   gbf_name: string;
+//   gbf_type: string;
+//   gbf_path: string;
+//   gbf_url: string;
+//   gbud_num: number;
 // };
 
+<<<<<<< HEAD
 import { api } from "@/api/api";
 
 // export const postbudgettrackreq = async (budgetInfo: Record<string, any>) => {
@@ -111,37 +73,94 @@ import { api } from "@/api/api";
 //         console.error("API Error:", err);
 //         throw err;
 //     }
+=======
+// export type GADBudgetCreatePayload = {
+//   gbud_type: 'Income' | 'Expense';
+//   gbud_datetime: string;
+//   gbud_add_notes?: string | null;
+  
+//   // Income fields
+//   gbud_inc_particulars?: string | null;
+//   gbud_inc_amt?: number | null;
+  
+//   // Expense fields
+//   gbud_exp_particulars?: string | null;
+//   gbud_proposed_budget?: number | null;
+//   gbud_actual_expense?: number | null;
+//   gbud_remaining_bal?: number | null;
+//   gbud_reference_num?: string | null;
+  
+//   // Relations
+//   gbudy: number;
+//   gdb_id?: number | null;
+>>>>>>> mobile-register
 // };
 
-export const postbudgettrackreq = async (budgetInfo: Record<string, any>) => {
-    try {
-        // Use the correct creation endpoint
-        const endpoint = '/gad/gad-budget-tracker-table/';
-        
-        const payload = {
-            gbud_type: budgetInfo.gbud_type,
-            gbud_amount: Number(budgetInfo.gbud_amount),
-            gbud_particulars: budgetInfo.gbud_particulars,
-            gbud_add_notes: budgetInfo.gbud_add_notes || "",
-            gbud_date: budgetInfo.gbud_date,
-            gbud_remaining_bal: Number(budgetInfo.gbud_remaining_bal),
-            gbudy_num: Number(budgetInfo.gbudy_num),
-            gbud_receipt: budgetInfo.gbud_receipt,
-        };
+// export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
+//   const response = await api.post('/gad/gad-budget-tracker-table/', payload);
+//   return response.data;
+// };
 
-        const res = await api.post(endpoint, payload);
-        return res.data;
-    } catch (err: unknown) {
-        if (err instanceof Error) {
-            console.error("API Error:", {
-                message: err.message,
-                response: (err as any).response?.data,
-                status: (err as any).response?.status,
-                config: (err as any).config
-            });
-        } else {
-            console.error("Unexpected error", err);
-        }
-        throw err;
-    }
+// export const createGADBudgetFile = async (fileData: GADBudgetFile) => {
+//   const response = await api.post('/gad/gad-budget-files/', fileData);
+//   return response.data;
+// };
+
+import api from '@/pages/api/api';
+import { MediaUploadType } from '@/components/ui/media-upload';
+
+export type GADBudgetFile = {
+  gbf_id?: number;
+  gbf_name: string;
+  gbf_type: string;
+  gbf_path: string;
+  gbf_url: string;
+  gbud_num: number;
+};
+
+export type GADBudgetCreatePayload = {
+  gbud_type: 'Income' | 'Expense';
+  gbud_datetime: string;
+  gbud_add_notes?: string | null;
+  gbud_inc_particulars?: string | null;
+  gbud_inc_amt?: number | null;
+  gbud_exp_particulars?: string | null;
+  gbud_proposed_budget?: number | null;
+  gbud_actual_expense?: number | null;
+  gbud_remaining_bal?: number | null;
+  gbud_reference_num?: string | null;
+  gbudy: number;
+  gdb_id?: number | null;
+  onChange?: string;
+};
+
+export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
+  const response = await api.post('/gad/gad-budget-tracker-table/', payload);
+  return response.data;
+};
+
+export const createGADBudgetFile = async (media: MediaUploadType[number], gbud_num: number) => {
+  if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
+    throw new Error('File upload incomplete: missing URL or path');
+  }
+
+  const formData = new FormData();
+  formData.append('file', media.file);
+  formData.append('gbud', gbud_num.toString());
+  formData.append('gbf_name', media.file.name);
+  formData.append('gbf_type', media.file.type || 'application/octet-stream');
+  formData.append('gbf_path', media.storagePath);
+  formData.append('gbf_url', media.publicUrl);
+
+  try {
+    const response = await api.post('/gad/gad-budget-files/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('File upload failed:', error.response?.data || error);
+    throw error;
+  }
 };

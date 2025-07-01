@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { FixedSizeList as List } from "react-window";
 import { Assigned, Feature } from "./administrationTypes";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelper";
 import { useAuth } from "@/context/AuthContext";
 import {
   Accordion,
@@ -12,7 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useAssignFeature, useSetPermission } from "./queries/administrationAddQueries";
+import { useAssignFeatureHealth, useSetPermissionHealth } from "./queries/administrationAddQueries";
 import { useDeleteAssignedFeature } from "./queries/administrationDeleteQueries";
 
 interface FeatureSelectionProps {
@@ -29,8 +29,8 @@ export default function FeatureSelection({
   setAssignedFeatures,
 }: FeatureSelectionProps) {
   const { user } = useAuth();
-  const { mutateAsync: assignFeature } = useAssignFeature();
-  const { mutateAsync: setPermissions} = useSetPermission();
+  const { mutateAsync: assignFeature } = useAssignFeatureHealth();
+  const { mutateAsync: setPermissions} = useSetPermissionHealth();
   const { mutate: deleteAssignedFeature} = useDeleteAssignedFeature();
 
   // Create a set for quick lookup of assigned feature IDs
@@ -47,6 +47,8 @@ export default function FeatureSelection({
     async (feature: any, checked: boolean) => {
       // Create a reference to the current state to avoid stale closures
       const currentAssignedFeatures = assignedFeatures;
+      // Safely get staff_id with proper type checking
+      const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
 
       try {
         if (checked) {
@@ -78,7 +80,7 @@ export default function FeatureSelection({
           const assignment = await assignFeature({
             positionId: selectedPosition,
             featureId: feature.feat_id,
-            staffId: user?.staff.staff_id,
+            staffId: staffId ?? "",
           });
       
           const permission = await setPermissions({

@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/form/form";
 import { SelectLayout } from "../select/select-layout";
 import { Input } from "@/components/ui/input";
-import { capitalize } from "@/helpers/capitalize";
 
 // Reusable Form Select Component with integrated loading/empty states
 export const FormSelect = React.memo(({ 

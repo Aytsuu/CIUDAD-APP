@@ -1,78 +1,91 @@
-// import { useQuery } from "@tanstack/react-query";
-// import { getbudgettrackreq } from "../requestAPI/BTGetRequest";
-
-// export type GADBudgetEntry = {
-//     gbud_num: number;
-//     gbud_date: string;
-//     gbud_particulars: string;
-//     gbud_type: string;
-//     gbud_amount: number;
-//     gbud_remaining_bal: number;
-//     gbud_add_notes: string;
-//     budget_item: number;
-//   };
-
-// export const useGetGADBudgets = () => {
-//   return useQuery<GADBudgetEntry[], Error>({
-//     queryKey: ["gad-budget"],
-//     queryFn: () => getbudgettrackreq().catch((error) => {
-//         console.error("Error fetching donations:", error);
-//         throw error; // Re-throw to let React Query handle the error
-//       }),
-//     staleTime: 1000 * 60 * 5, // 5 minutes 
-//   });
-// };
-
 import { useQuery } from "@tanstack/react-query";
+<<<<<<< HEAD
 import { api } from "@/api/api";
+=======
+import {
+    fetchGADBudgets,
+    fetchGADBudgetEntry,
+    fetchIncomeParticulars,
+    fetchExpenseParticulars,
+    GADBudgetEntry,
+    DevelopmentBudgetItem,
+    fetchGADBudgetFile,
+    fetchGADBudgetFiles
+} from "../requestAPI/BTGetRequest";
+>>>>>>> mobile-register
 
-export type GADBudgetEntry = {
-  gbud_num?: number;
-  gbud_date: string; 
-  gbud_remaining_bal: number;
-  gbud_particulars: string;
-  gbud_type: string;
-  gbud_amount: number;
-  gbud_add_notes?: string;
-  gbudy_num: number;
-  budget_item?: number;  
-  gbud_receipt: string;
-  year?: string;
-  gbudy_budget?: number; 
+import { GADBudgetFile } from "../requestAPI/BTPostRequest";
+
+export type GADBudgetEntryUI = GADBudgetEntry & {
+    gbud_particulars?: string | null;
+    gbud_amount?: number | null;
 };
 
-export const useGetGADBudgets = (year?: string) => {
-  return useQuery<GADBudgetEntry[]>({
-    queryKey: ['gad-budgets', year],
-    queryFn: async () => {
-      console.log(`Fetching data for year: ${year}`); // Debug
-      try {
-        const res = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
-        console.log('API Response:', res.data); // Debug
-        return res.data || [];
-      } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-      }
-    },
-    enabled: !!year,
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
-  });
+const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
+//   console.log("Transforming Entry:", entry);
+  return {
+    ...entry,
+    gbud_particulars: entry.gbud_type === 'Income' 
+      ? entry.gbud_inc_particulars || null
+      : entry.gbud_exp_particulars || null,
+    gbud_amount: entry.gbud_type === 'Income'
+      ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
+      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
+  };
 };
 
-export const useGetGADBudgetEntry = (gbud_num: number) => {
-  return useQuery<GADBudgetEntry>({
-    queryKey: ['gad-budget-entry', gbud_num],
-    queryFn: async () => {
-      try {
-        const res = await api.get(`/gad/gad-budget-tracker-entry/${gbud_num}/`);
-        return res.data;
-      } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-      }
-    },
-    enabled: !!gbud_num,
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
-  });
+
+// React Query hooks
+export const useGADBudgets = (year?: string) => {
+    return useQuery({
+        queryKey: ['gad-budgets', year],
+        queryFn: () => fetchGADBudgets(year || ''),
+        enabled: !!year,
+        select: (data) => data.map(transformBudgetEntry),
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
+export const useGADBudgetEntry = (gbud_num?: number) => {
+    return useQuery({
+        queryKey: ['gad-budget-entry', gbud_num],
+        queryFn: () => fetchGADBudgetEntry(gbud_num || 0),
+        enabled: !!gbud_num,
+        select: transformBudgetEntry,
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
+export const useIncomeParticulars = (year?: string) => {
+    return useQuery({
+        queryKey: ['income-particulars', year],
+        queryFn: () => fetchIncomeParticulars(year || ''),
+        enabled: !!year,
+        staleTime: 1000 * 60 * 30,
+    });
+};
+
+export const useExpenseParticulars = () => {
+    return useQuery<DevelopmentBudgetItem[]>({
+        queryKey: ['expense-particulars'],
+        queryFn: fetchExpenseParticulars,
+        staleTime: 1000 * 60 * 60 * 24,
+    });
+};
+
+export const useGADBudgetFiles = () => {
+    return useQuery<GADBudgetFile[]>({
+        queryKey: ['gad-budget-files'],
+        queryFn: fetchGADBudgetFiles,
+        staleTime: 1000 * 60 * 15, 
+    });
+};
+
+export const useGADBudgetFile = (gbf_id?: number) => {
+    return useQuery<GADBudgetFile>({
+        queryKey: ['gad-budget-file', gbf_id],
+        queryFn: () => fetchGADBudgetFile(gbf_id || 0),
+        enabled: !!gbf_id,
+        staleTime: 1000 * 60 * 15, 
+    });
 };

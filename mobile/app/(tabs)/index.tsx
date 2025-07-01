@@ -1,11 +1,6 @@
-import { View, Text, Platform } from 'react-native';
-import "@/global.css"
+import Home from "@/screens/home"
 
-export default function HomeScreen() {
-  return (
-    <View>
-        <Text>Welcome!</Text>
-      </View>
-  );
+export default () => {
+  return <Home/>
 }
 

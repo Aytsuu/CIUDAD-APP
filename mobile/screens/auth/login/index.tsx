@@ -1,6 +1,6 @@
 import "@/global.css";
 import { api } from "@/api/api";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,85 +8,110 @@ import {
   Image,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "@/components/ui/input";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
 import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import ScreenLayout from "@/screens/_ScreenLayout";
+import { useToastContext } from "@/components/ui/toast";
+import { SignupOptions } from "./SignupOptions";
+import { useAuth } from "@/contexts/AuthContext";
+import { signInSchema } from "@/form-schema/signin-schema";
+
+type SignInForm = z.infer<typeof signInSchema>;
+
+export default function SignInScreen() {
+  const { toast } = useToastContext();
+  const router = useRouter();
 import { z } from "zod";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [showSignupOptions, setShowSignupOptions] = useState(false);
+
+  const defaultValues: Partial<SignInForm> = generateDefaultValues(signInSchema);
+  const {
+    control,
+    trigger,
+    getValues,
+    formState: { errors },
+  } = useForm<SignInForm>({
+    resolver: zodResolver(signInSchema),
+    defaultValues,
+  });
+
+  const { login, isLoading, isAuthenticated, user, error, clearError } = useAuth();
+
+  // Handle successful authentication
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      toast.success("Welcome back!");
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, user, router, toast]);
+
+  // Handle auth errors
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      clearError();
+    }
+  }, [error, toast, clearError]);
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert("Error", "Please enter both username and password.");
+    // Clear any previous errors
+    clearError();
+    
+    const isValid = await trigger();
+    if (!isValid) {
+      if (errors.email) {
+        toast.error(errors.email.message ?? "Invalid email");
+      } else if (errors.password) {
+        toast.error(errors.password.message ?? "Invalid password");
+      }
       return;
     }
-  
-    setIsLoading(true);
-  
+
+    const { email, password } = getValues();
+
     try {
-      const response = await api.post("user/login/", {
-        username: username,
-        password: password,
-      });
-
-      if (response.data.token) { 
-        await AsyncStorage.multiSet([
-          ["authToken", response.data.token],
-          ["userId", response.data.user_id.toString()],
-          ["username", response.data.username],
-          ["email", response.data.email],
-          ["isLoggedIn", "true"]
-        ]);
-
-        Alert.alert("Success", "Login successful!");
-        router.replace("/"); // Navigate to home screen after login
-      } else {
-        Alert.alert("Error", "Login failed - no token received");
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          Alert.alert("Error", "Invalid username or password");
-        } else if (error.response?.status === 400) {
-          Alert.alert("Error", "Invalid request format");
-        } else {
-          Alert.alert("Error", "Server error. Please try again later.");
-        }
-      } else {
-        Alert.alert("Error", "Network error. Please check your connection.");
-      }
-    } finally {
-      setIsLoading(false);
+      await login(email, password);
+      // Success handling is now done in useEffect above
+    } catch (error: any) {
+      // Error handling is now done in useEffect above
+      console.error("Login failed:", error);
     }
-  };
-
-  const handleSignUp = () => {
-    router.push("/verification");
   };
 
   return (
-    <SafeAreaView className="flex-1 justify-between bg-lightBlue-1 p-[24px]">
-      <View className="flex-1 flex-col">
-        <View className="items-center justify-center mt-10">
-          <Image
-            source={require("@/assets/images/Logo.png")}
-            className="w-30 h-30"
-          />
+    <ScreenLayout 
+      showExitButton={false}
+      showBackButton={false}
+    >
+      <View className="flex-1">
+        <View className="items-center mt-7">
+          <Image source={require("@/assets/images/Logo.png")} className="w-24 h-24" />
         </View>
-        <View className="flex-row justify-center mt-7">
-          <Text className="text-[24px] font-PoppinsMedium">Login Account</Text>
+
+        <View className="mt-6 items-center">
+          <Text className="text-[24px] font-PoppinsMedium">Welcome back</Text>
         </View>
+
+        <View className="flex-grow mt-6">
+          <FormInput
+            control={control}
+            name="email"
+            label="Email"
+            keyboardType="email-address"
         <View className="flex-grow gap-5 mt-7">
           <Input
             className="h-[57px] font-PoppinsRegular"
@@ -104,52 +129,65 @@ export default function LoginScreen() {
               secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
-
-            {password.length > 0 && (
-              <TouchableWithoutFeedback
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
-                  {showPassword ? (
-                    <Eye className="text-gray-700" />
-                  ) : (
-                    <EyeOff className="text-gray-700" />
-                  )}
-                </View>
-              </TouchableWithoutFeedback>
-            )}
+            <TouchableWithoutFeedback 
+              onPress={() => setShowPassword(!showPassword)}
+              disabled={isLoading}
+            >
+              <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
+                {showPassword ? 
+                  <Eye className={`${isLoading ? 'text-gray-400' : 'text-gray-700'}`} /> : 
+                  <EyeOff className={`${isLoading ? 'text-gray-400' : 'text-gray-700'}`} />
+                }
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-          <TouchableWithoutFeedback onPress={() => router.push("/verifyemail")}>
-            <View className="flex-row justify-end">
-              <Text className="text-black font-PoppinsRegular text-[16px]">
+
+          <TouchableWithoutFeedback 
+            onPress={() => router.push("/forgot-password")}
+            disabled={isLoading}
+          >
+            <View className="flex-row justify-end mt-3 mb-4">
+              <Text className={`font-PoppinsMedium text-[13px] ${
+                isLoading ? 'text-gray-400' : 'text-primaryBlue'
+              }`}>
                 Forgot Password?
               </Text>
             </View>
           </TouchableWithoutFeedback>
 
           <Button
-            className="bg-primaryBlue native:h-[57px]"
-            size={"lg"}
+            className={`${isLoading ? 'bg-gray-400' : 'bg-primaryBlue'}`}
+            size="lg"
             onPress={handleLogin}
             disabled={isLoading}
           >
-            <Text className="text-white font-PoppinsSemiBold text-[16px]">
-              {isLoading ? "Logging in..." : "Log in"}
+            <Text className="text-white font-PoppinsSemiBold text-[14px]">
+              {isLoading ? "Signing in..." : "Sign In"}
             </Text>
           </Button>
         </View>
-      </View>
 
-      <View className="flex-row justify-center gap-2">
-        <Text className="text-black font-PoppinsRegular text-[16px] ">
-          Not registered yet?
-        </Text>
-        <TouchableWithoutFeedback onPress={handleSignUp}>
-          <Text className="text-black font-PoppinsMedium underline text-[16px]">
-            Register
+        <View className="flex-row justify-center gap-2 mt-8 mb-6">
+          <Text className="text-gray-600 font-PoppinsRegular text-[13px]">
+            Don't have an account?
           </Text>
-        </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback 
+            onPress={() => setShowSignupOptions(true)}
+            disabled={isLoading}
+          >
+            <Text className={`font-PoppinsMedium text-[13px] ${
+              isLoading ? 'text-gray-400' : 'text-primaryBlue'
+            }`}>
+              Sign up
+            </Text>
+          </TouchableWithoutFeedback>
+        </View>
+
+        <SignupOptions
+          visible={showSignupOptions}
+          onClose={() => setShowSignupOptions(false)}
+        />
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
