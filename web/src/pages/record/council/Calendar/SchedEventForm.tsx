@@ -14,7 +14,7 @@ import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAddCouncilEvent, useAddAttendee } from "./queries/addqueries";
 import { useGetStaffList } from "./queries/fetchqueries";
-import { formatDate } from '@/helpers/dateFormatter';
+import { formatDate } from '@/helpers/dateHelper';
 
 interface SchedEventFormProps {
   onSuccess?: () => void;
@@ -139,6 +139,11 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
+      <div className="pb-2">
+        <h2 className="text-lg font-semibold">ADD EVENT</h2>
+        <p className="text-xs text-black/50">Fill out all necessary fields</p>
+      </div>
+
       <Form {...form}>
         <form className="flex flex-col gap-4">
           <div className="grid gap-4">

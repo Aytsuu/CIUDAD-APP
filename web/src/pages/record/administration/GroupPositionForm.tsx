@@ -15,6 +15,7 @@ import { CircleAlert, CircleCheck, Plus, Users, Trash2, Badge as Position } from
 import { useLocation } from "react-router"
 import { useAuth } from "@/context/AuthContext"
 import { useAddPositionBulk } from "./queries/administrationAddQueries"
+import { useAddPositionBulkHealth } from "../health/administration/queries/administrationAddQueries"
 import { renderActionButton } from "./administrationActionConfig"
 import type { z } from "zod"
 import { Button } from "@/components/ui/button/button"
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button/button"
 export default function GroupPositionForm() {
   const { user } = useAuth()
   const { mutateAsync: addPositionBulk } = useAddPositionBulk()
+  const { mutateAsync: addPositionBulkHealth } = useAddPositionBulkHealth()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [positions, setPositions] = React.useState<Record<string, any>[]>([])
   const location = useLocation()
@@ -115,24 +117,24 @@ export default function GroupPositionForm() {
     const values = form.getValues()
     const data = positions.map((pos: any) => ({
       ...pos,
-      pos_group: values.pos_group,
+      pos_group: values.pos_group.toUpperCase(),
       staff: user?.staff?.staff_id,
     }))
 
-    addPositionBulk(data, {
-      onSuccess: () => {
-        toast("Record added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        })
-        setIsSubmitting(false)
-      },
-      onError: () => {
-        toast("Failed to create group position", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        })
-        setIsSubmitting(false)
-      },
-    })
+    try {
+      await addPositionBulk(data)
+      await addPositionBulkHealth(data)
+      
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      })
+      setIsSubmitting(false)
+    } catch (error) {
+      toast("Failed to create group position", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      })
+      setIsSubmitting(false)
+    }
   }
 
   return (

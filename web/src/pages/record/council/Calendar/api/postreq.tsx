@@ -1,5 +1,5 @@
 import api from '@/pages/api/api';
-import { formatDate } from '@/helpers/dateFormatter';
+import { formatDate } from '@/helpers/dateHelper';
 
 export const postCouncilEvent = async (eventInfo: Record<string, any>) => {
     try {
@@ -63,7 +63,7 @@ export const postAttendanceSheet = async (attendanceInfo: Record<string, any>) =
             staff_id: attendanceInfo.staff_id,
         });
 
-        const res = await api.post('council/attendance-sheets/', {
+        const res = await api.post('council/attendance-sheet/', {
             ce_id: attendanceInfo.ce_id,
             file_id: attendanceInfo.file_id,
             staff_id: attendanceInfo.staff_id,

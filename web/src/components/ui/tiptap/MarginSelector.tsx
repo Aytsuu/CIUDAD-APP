@@ -8,7 +8,7 @@ interface MarginSelectorProps {
 function MarginSelector({ onMarginChange }: MarginSelectorProps) {
   return (
     <Select onValueChange={onMarginChange}>
-      <SelectTrigger className="w-[150px]">
+      <SelectTrigger className="w-[150px] bg-white">
         <SelectValue placeholder="Margin" />
       </SelectTrigger>
       <SelectContent>

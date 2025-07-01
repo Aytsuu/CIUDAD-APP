@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+
 // Format positions for searching
 export const formatPositions = (positions: any) => {
   if (!positions) return [];
@@ -20,3 +22,25 @@ export const formatPositionGroups = (groups: any) => {
     name: group
   }))
 }
+
+// Format staffs for searching
+export const formatStaffs = (staffs: any) => {
+  if (!staffs) return [];
+
+  // Begin formatting
+  return staffs.map((staff: any) => ({
+    id: `${staff.staff_id} ${staff.position}-${staff.lname} ${staff.fname} ${staff.mname ? staff.mname : ''}`,
+    name: (
+      <div className="flex gap-4 items-center">
+        <Badge className="bg-green-500 hover:bg-green-500">
+          {staff.staff_id}
+        </Badge>
+        <Badge>
+          {staff.position}
+        </Badge>
+        {`${staff.lname}, ${staff.fname} ${staff.mname ? staff.mname : ''}`}
+      </div>
+    ),
+  }));
+
+};

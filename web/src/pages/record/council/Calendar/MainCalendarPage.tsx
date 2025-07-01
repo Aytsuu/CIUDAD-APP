@@ -3,7 +3,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Button } from "@/components/ui/button/button.tsx";
 import SchedEventForm from "./SchedEventForm.tsx";
-import { Plus, Archive, ArchiveRestore, Trash, Eye } from "lucide-react";
+import { Plus, Archive, RotateCcw, Trash, Eye } from "lucide-react";
 import { useGetCouncilEvents, CouncilEvent } from "./queries/fetchqueries";
 import { format } from "date-fns";
 import EditEventForm from "./EditEvent.tsx";
@@ -243,7 +243,7 @@ const filteredEvents = councilEvents.filter((event) => {
                                   size="sm"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <Archive className="h-4 w-4 text-red-500" />
+                                  <Archive className="h-4 w-4 text-yellow-500" />
                                 </Button>
                               }
                               title="Confirm Archive"
@@ -265,7 +265,7 @@ const filteredEvents = councilEvents.filter((event) => {
                                     size="sm"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <ArchiveRestore className="h-4 w-4 text-green-500" />
+                                    <RotateCcw className="h-4 w-4 text-green-500" />
                                   </Button>
                                 }
                                 title="Confirm Restore"

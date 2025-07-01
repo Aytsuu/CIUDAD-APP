@@ -1,5 +1,5 @@
 import api from '@/pages/api/api';
-import { formatDate } from '@/helpers/dateFormatter';
+import { formatDate } from '@/helpers/dateHelper';
 import { AttendanceSheetInput } from '../queries/fetchqueries';
 
 export const putCouncilEvent = async (ce_id: number, eventInfo: Record<string, any>) => {

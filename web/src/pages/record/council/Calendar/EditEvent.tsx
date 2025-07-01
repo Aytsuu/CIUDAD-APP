@@ -13,7 +13,7 @@ import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useUpdateCouncilEvent, useUpdateAttendees } from "./queries/updatequeries";
 import { useGetStaffList, useGetAttendees, Staff } from "./queries/fetchqueries";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelper";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteCouncilEvent } from "./queries/delqueries";

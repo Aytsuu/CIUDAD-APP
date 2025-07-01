@@ -1,3 +1,5 @@
+//toolbar
+
 "use client";
 import { useState } from "react";
 import { type Editor } from "@tiptap/react";
@@ -10,7 +12,8 @@ import {
     Heading2,
     Image as ImageIcon,
     Scissors,
-    AlignLeft, AlignCenter, AlignRight, AlignJustify
+    AlignLeft, AlignCenter, AlignRight, AlignJustify,
+    TableRowsSplit 
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import ReactCrop, { type Crop } from "react-image-crop";
@@ -20,6 +23,7 @@ import "react-image-crop/dist/ReactCrop.css";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import MarginSelector from "./MarginSelector";
 import PaperSizeSelector from "./PaperSizeSelector";
+
 
 
 type Props = {
@@ -115,10 +119,13 @@ export function Toolbar({ editor, uploadImage, onMarginChange, onPaperSizeChange
   };
 
   return (
-    <div className="flex space-x-2 h-15 border border-input bg-transparent rounded-md p-2">
+    <div className="flex space-x-2 h-15 border border-input bg-lightBlue rounded-md p-2">
+
+
         <MarginSelector onMarginChange={onMarginChange} />
 
         <PaperSizeSelector onPaperSizeChange={onPaperSizeChange} />
+
         
         <TooltipLayout
             trigger={
@@ -257,6 +264,18 @@ export function Toolbar({ editor, uploadImage, onMarginChange, onPaperSizeChange
             content="Crop"
         />  
 
+        <TooltipLayout
+            trigger={
+                <Toggle 
+                    size="lg"
+                    onClick={() => editor?.chain().focus().insertContent({ type: 'pageBreak' }).run()}
+                >
+                    <TableRowsSplit size={20}/>
+                </Toggle>
+            }
+            content="Page Break"
+        />
+
         <input
             type="file"
             accept="image/*"
@@ -295,6 +314,7 @@ export function Toolbar({ editor, uploadImage, onMarginChange, onPaperSizeChange
     </div>
   );
 }
+
 
 
 

@@ -16,6 +16,7 @@ export type TemplateRecord = {
     temp_margin: string;
     temp_filename: string;
     temp_body: string;
+    temp_is_archive: string;
 };
   
 

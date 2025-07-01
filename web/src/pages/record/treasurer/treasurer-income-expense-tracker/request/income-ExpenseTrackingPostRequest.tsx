@@ -1,5 +1,5 @@
 import {api} from "@/api/api";
-import { formatDate } from '@/helpers/dateFormatter';
+import { formatDate } from '@/helpers/dateHelper';
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { capitalize } from "@/helpers/capitalize";
 import { useState } from "react";

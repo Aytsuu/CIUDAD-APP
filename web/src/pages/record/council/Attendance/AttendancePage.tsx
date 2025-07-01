@@ -237,7 +237,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
                                 trigger={
                                   <ConfirmationModal
                                     trigger={
-                                      <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-red-500 transition-colors">
+                                      <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-yellow-500 transition-colors">
                                         <Archive size={16} />
                                       </div>
                                     }
