@@ -11,9 +11,9 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('administration', '0002_initial'),
+        ('administration', '0001_initial'),
         ('file', '0001_initial'),
-        ('profiling', '0002_remove_personal_per_address'),
+        # ('profiling', '0002_remove_personal_per_address'),
     ]
 
     operations = [

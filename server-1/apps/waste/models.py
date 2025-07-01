@@ -28,31 +28,6 @@ class WasteCollectionStaff(models.Model):
         db_table = 'waste_collection_staff'
 
 
-class WasteHotspot(models.Model):
-    wh_num = models.BigAutoField(primary_key=True)
-    wh_date = models.DateField()
-    wh_start_time = models.TimeField()
-    wh_end_time = models.TimeField()
-    wh_add_info = models.CharField(max_length=200, null=True, blank=True)
-    wh_is_archive = models.BooleanField(default=False)
-    sitio_id = models.ForeignKey(
-        'profiling.Sitio',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        db_column='sitio_id'
-    )
-    wstp_id = models.ForeignKey(
-        'WastePersonnel', 
-        on_delete=models.CASCADE,
-        db_column='wstp_id',
-        default=None,
-    )
-
-    class Meta:
-        db_table = 'waste_hotspot'
-
-
 class WasteReport(models.Model):
     rep_id = models.BigAutoField(primary_key=True)
     rep_image = models.CharField(default="none", null=True, blank=True)
@@ -327,8 +302,9 @@ class Pickup_Confirmation(models.Model):
 
 class WasteHotspot(models.Model):
     wh_num = models.BigAutoField(primary_key=True)
-    wh_date = models.DateField(null=True)
-    wh_time = models.TimeField(null=True)
+    wh_date = models.DateField()
+    wh_start_time = models.TimeField()
+    wh_end_time = models.TimeField()
     wh_add_info = models.CharField(max_length=200, null=True, blank=True)
     wh_is_archive = models.BooleanField(default=False)
     sitio_id = models.ForeignKey(

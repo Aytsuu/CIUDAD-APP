@@ -16,6 +16,7 @@ const WasteMainScheduling = () => {
 
    const calendarSources = [
     {
+      name: "Hotspot Assignment",
       data: hotspotData.filter((row) => row.wh_is_archive === false),
       columns: hotspotColumns,
       titleAccessor: "watchman",
