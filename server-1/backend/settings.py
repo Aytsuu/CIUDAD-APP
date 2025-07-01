@@ -75,7 +75,6 @@ INSTALLED_APPS = [
     'apps.file',
     'apps.complaint',
     'apps.report',
-    'apps.council',
     'apps.drr',
     'apps.donation',
     'apps.notification',
