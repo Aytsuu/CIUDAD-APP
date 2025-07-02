@@ -10,7 +10,7 @@ import { X } from "@/lib/icons/X";
 import { UserSearch } from "@/lib/icons/UserSearch";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Ionicons } from '@expo/vector-icons';
-import { useValidateResidentId } from "./queries/signupAddQueries";
+import { useValidateResidentId } from "./queries/signupPostQueries";
 import { useToastContext } from "@/components/ui/toast";
 
 export default () => {
@@ -31,18 +31,15 @@ export default () => {
 
       const residentId = getValues("residentId");
       validateResidentID(residentId, {
-        onSuccess: (data) => {
-          router.push("/account-details");
+        onSuccess: (result) => {
+          router.push({
+            pathname: "/account-details",
+            params: {
+              registrationType: 'link',
+              rp_id: result?.data?.rp_id
+            }
+          });
         },
-        onError: (error: any) => {
-          if(error?.response?.status === 404) {
-            toast.error("Resident ID not found.");
-          }
-
-          if(error?.response?.status === 403) {
-            toast.error("Your age is not eligible for registration.");
-          }
-        }
       })
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again.");
@@ -82,11 +79,7 @@ export default () => {
         </TouchableOpacity>
       }
     >
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <View className="flex-1 px-5">
         <View className="flex-1 py-4">
           {/* Header Section */}
           <View className="mb-8">
@@ -154,7 +147,7 @@ export default () => {
             </Text>
           </View>
         </View>
-      </ScrollView>
+      </View>
     </_ScreenLayout>
   );
 };

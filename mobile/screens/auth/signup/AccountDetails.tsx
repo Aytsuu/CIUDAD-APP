@@ -1,19 +1,52 @@
 import "@/global.css"
-import { View, Text, TouchableOpacity, ScrollView, Dimensions } from "react-native"
-import { useRouter } from "expo-router"
+import React from "react"
+import { View, Text, TouchableOpacity, ScrollView } from "react-native"
+import { useLocalSearchParams, useRouter } from "expo-router"
 import { Button } from "@/components/ui/button"
 import _ScreenLayout from "@/screens/_ScreenLayout"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
+import { useToast } from "@/hooks/use-toast"
+import { useAddAccount } from "./queries/signupPostQueries"
 
 export default function AccountDetails() {
   const router = useRouter()
-  const { control } = useRegistrationFormContext();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { registrationType, rp_id } = useLocalSearchParams();
+  const { toast } = useToast();
+  const { control, trigger, getValues } = useRegistrationFormContext();
+  const { mutateAsync: addAccount } = useAddAccount();
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
+    const formIsValid = await trigger([
+      'accountFormSchema.username',
+      'accountFormSchema.email',
+      'accountFormSchema.password',
+      'accountFormSchema.confirmPassword',
+    ]);
 
+    if(!formIsValid) {
+      setIsSubmitting(false);
+      return;
+    }
+
+    switch(registrationType) {
+      case 'link': 
+        createAccount();
+        return;
+      default: router.push('/(auth)/personal-information')
+    }
+  }
+
+  const createAccount = () => {
+    const values = getValues('accountFormSchema')
+    addAccount({
+      accountInfo: values,
+      residentId: rp_id as string
+    });
   }
 
   return (
@@ -36,7 +69,7 @@ export default function AccountDetails() {
         </TouchableOpacity>
       }
     >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <View className="flex-1 px-5">
         {/* Header Section */}
         <View className="">
           <Text className="text-xl font-PoppinsMedium text-gray-900 mb-2">Create Your Account</Text>
@@ -66,19 +99,17 @@ export default function AccountDetails() {
             </View>
           </View>
         </View>
-      </ScrollView>
+        <View className="py-6 bg-white border-t border-gray-100">
+          <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
+            <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue</Text>
+          </Button>
 
-      {/* Fixed Bottom Section */}
-      <View className="py-6 bg-white border-t border-gray-100">
-        <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue to Photo</Text>
-        </Button>
-
-        {/* Terms and Privacy */}
-        <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-4 leading-4">
-          By continuing, you agree to our <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text>{" "}
-          and <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
-        </Text>
+          {/* Terms and Privacy */}
+          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-4 leading-4">
+            By continuing, you agree to our <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text>{" "}
+            and <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
+          </Text>
+        </View>
       </View>
     </_ScreenLayout>
   )
