@@ -106,48 +106,6 @@ function WasteHotspotMain() {
         }
     ];
 
-    // Columns for archive tab
-    // const archiveColumns: ColumnDef<Hotspot>[] = [
-    //     ...commonColumns,
-    //     {
-    //         accessorKey: "action", 
-    //         header: "Action",
-    //         cell: ({ row }) => {
-    //             return (
-    //                 <div className="flex justify-center gap-2">
-    //                     <TooltipLayout
-    //                         trigger={
-    //                             <div>
-    //                                 <ConfirmationModal
-    //                                     trigger={ <div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
-    //                                     title="Restore Archived Schedule"
-    //                                     description="Would you like to restore this schedule from the archive and make it active again?"
-    //                                     actionLabel="confirm"
-    //                                     onClick={() => handleRestore(row.original.wh_num)}
-    //                                 />
-    //                             </div>
-    //                         }
-    //                         content="Restore"
-    //                     />
-    //                     <TooltipLayout
-    //                         trigger={
-    //                             <div>
-    //                                 <ConfirmationModal
-    //                                     trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
-    //                                     title="Permanent Deletion Confirmation"
-    //                                     description="This record will be permanently deleted and cannot be recovered. Do you wish to proceed?"
-    //                                     actionLabel="confirm"
-    //                                     onClick={() => handleDelete(row.original.wh_num)}
-    //                                 />
-    //                             </div>
-    //                         }
-    //                         content="Delete"
-    //                     />
-    //                 </div>
-    //             )
-    //         }
-    //     }
-    // ];
 
     if (isLoading){
         return (
@@ -227,7 +185,7 @@ function WasteHotspotMain() {
                                 <TabsTrigger value="active">Active  Watchlist</TabsTrigger>
                                 <TabsTrigger value="all">
                                     <div className="flex items-center gap-2">
-                                        <History size={16} /> History
+                                        <History size={16} /> Past Schedules
                                     </div>
                                 </TabsTrigger>
                             </TabsList>
