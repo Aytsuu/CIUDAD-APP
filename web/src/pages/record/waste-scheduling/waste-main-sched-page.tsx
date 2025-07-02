@@ -1,22 +1,27 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import EventCalendar from "@/components/ui/calendar/EventCalendar"
-import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main"
-import WasteCollectionMain from "./waste-colllection/waste-col-main"
-import { useGetHotspotRecords } from "./waste-hotspot/queries/hotspotFetchQueries"
-import { useGetWasteCollectionSchedFull } from "./waste-colllection/queries/wasteColFetchQueries"
-import { useState } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { hotspotColumns } from "./event-columns/event-cols"
-import { wasteColColumns } from "./event-columns/event-cols"
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EventCalendar from "@/components/ui/calendar/EventCalendar";
+import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main";
+import WasteCollectionMain from "./waste-colllection/waste-col-main";
+import { useGetHotspotRecords } from "./waste-hotspot/queries/hotspotFetchQueries";
+import { useGetWasteCollectionSchedFull } from "./waste-colllection/queries/wasteColFetchQueries";
+import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { hotspotColumns } from "./event-columns/event-cols";
+import {
+  wasteColColumns,
+  councilEventColumns,
+} from "./event-columns/event-cols";
+import { useGetCouncilEvents } from "../council/Calendar/queries/fetchqueries";
 
 const WasteMainScheduling = () => {
-  const { data: hotspotData = [], isLoading } = useGetHotspotRecords()
-  const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
-  const [activeTab, setActiveTab] = useState("calendar")
+  const { data: hotspotData = [], isLoading } = useGetHotspotRecords();
+  const { data: wasteCollectionData = [], isLoading: isWasteColLoading } =
+    useGetWasteCollectionSchedFull();
+  const [activeTab, setActiveTab] = useState("calendar");
+  const { data: councilEvents = [] } = useGetCouncilEvents();
+  const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
 
-
-   const calendarSources = [
+  const calendarSources = [
     {
       name: "Hotspot Assignment",
       data: hotspotData,
@@ -35,7 +40,16 @@ const WasteMainScheduling = () => {
       dateAccessor: "wc_date",
       timeAccessor: "wc_time",
       defaultColor: "#10b981", // emerald
-    }
+    },
+    {
+      name: "Council Events",
+      data: calendarEvents,
+      columns: councilEventColumns,
+      titleAccessor: "ce_title",
+      dateAccessor: "ce_date",
+      timeAccessor: "ce_time",
+      defaultColor: "#191970", // midnight blue
+    },
   ];
 
   if (isLoading || isWasteColLoading) {
@@ -50,15 +64,19 @@ const WasteMainScheduling = () => {
           <Skeleton className="h-10 w-24" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="w-full h-full">
       {/* Header Section */}
       <div className="flex-col items-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Calendar</h1>
-        <p className="text-xs sm:text-sm text-darkGray">Manage and view scheduled tasks and events.</p>
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Calendar
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view scheduled tasks and events.
+        </p>
       </div>
       <hr className="border-gray mb-6 sm:mb-8" />
 
@@ -101,7 +119,8 @@ const WasteMainScheduling = () => {
               sources={calendarSources}
               legendItems={[
                 { label: "Hotspot Assignments", color: "#3b82f6" },
-                { label: "Waste Collection", color: "#10b981" }
+                { label: "Waste Collection", color: "#10b981" },
+                { label: "Council Events", color: "#191970" },
               ]}
             />
           </div>
@@ -120,7 +139,7 @@ const WasteMainScheduling = () => {
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default WasteMainScheduling
+export default WasteMainScheduling;

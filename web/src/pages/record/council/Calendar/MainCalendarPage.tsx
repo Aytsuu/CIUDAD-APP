@@ -3,37 +3,17 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Button } from "@/components/ui/button/button.tsx";
 import SchedEventForm from "./SchedEventForm.tsx";
-import { Plus, Archive, RotateCcw, Trash, Eye } from "lucide-react";
-import { useGetCouncilEvents, CouncilEvent } from "./queries/fetchqueries";
+import { Plus, Archive, ArchiveRestore, Trash, Eye } from "lucide-react";
+import { useGetCouncilEvents} from "./queries/fetchqueries";
 import { format } from "date-fns";
 import EditEventForm from "./EditEvent.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteCouncilEvent, useRestoreCouncilEvent } from "./queries/delqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-
-interface EventDetailColumn<T> {
-  accessorKey: keyof T;
-  header: string;
-  cell?: (props: { row: { original: T } }) => React.ReactNode;
-}
-
-const councilEventColumns: EventDetailColumn<CouncilEvent>[] = [
-  { accessorKey: "ce_title", header: "Event Title" },
-  { accessorKey: "ce_place", header: "Location" },
-  { 
-    accessorKey: "ce_date", 
-    header: "Date",
-    cell: ({ row }) => format(new Date(row.original.ce_date), "MMM d, yyyy"),
-  },
-  { accessorKey: "ce_time", header: "Time" },
-  {
-  accessorKey: "ce_type",
-  header: "Type",
-  cell: (props: { row: { original: { ce_type: string } } }) =>
-    props.row.original.ce_type.charAt(0).toUpperCase() + props.row.original.ce_type.slice(1)
-}
-];
+import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-colllection/queries/wasteColFetchQueries.tsx";
+import { useGetHotspotRecords } from "../../waste-scheduling/waste-hotspot/queries/hotspotFetchQueries.tsx";
+import { hotspotColumns, wasteColColumns, councilEventColumns } from "./council-event-cols.tsx";
 
 function CalendarPage() {
   const { data: councilEvents = [], isLoading } = useGetCouncilEvents();
@@ -42,6 +22,40 @@ function CalendarPage() {
   const [viewEvent, setViewEvent] = useState<any | null>(null);
   const [actionInProgress, setActionInProgress] = useState(false);
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
+  const { data: hotspotData = [] } = useGetHotspotRecords()
+  const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
+
+  const calendarSources = [
+    {
+      name: "Hotspot Assignment",
+      data: hotspotData,
+      columns: hotspotColumns,
+      titleAccessor: "watchman",
+      dateAccessor: "wh_date",
+      timeAccessor: "wh_start_time",
+      endTimeAccessor: "wh_end_time",
+      defaultColor: "#3b82f6", // blue
+    },
+    {
+      name: "Waste Collection",
+      data: wasteCollectionData,
+      columns: wasteColColumns,
+      titleAccessor: "collectors_names",
+      dateAccessor: "wc_date",
+      timeAccessor: "wc_time",
+      defaultColor: "#10b981", // emerald
+    },
+    {
+      name: "Council Events",
+      data: calendarEvents,
+      columns: councilEventColumns,
+      titleAccessor: "ce_title",
+      dateAccessor: "ce_date",
+      timeAccessor: "ce_time",
+      defaultColor: "#191970", // midnight blue
+      viewEditComponent: EditEventForm,
+    }
+  ];
 
 const filteredEvents = councilEvents.filter((event) => {
   const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
@@ -157,11 +171,13 @@ const filteredEvents = councilEvents.filter((event) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 sm:p-4">
             <EventCalendar
-                name=""
-                titleAccessor="ce_title"
-                data={calendarEvents}
-                columns={councilEventColumns}
-                viewEditComponent={EditEventForm}
+              sources={calendarSources}
+              legendItems={[
+                { label: "Hotspot Assignments", color: "#3b82f6" },
+                { label: "Waste Collection", color: "#10b981" },
+                { label: "Council Events", color: "#191970" },
+              ]}
+              viewEditComponentSources={["Council Events"]}
               />
           </div>
           <div className="sm:col-span-1 lg:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 sm:p-4">
@@ -243,7 +259,7 @@ const filteredEvents = councilEvents.filter((event) => {
                                   size="sm"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <Archive className="h-4 w-4 text-yellow-500" />
+                                  <Archive className="h-4 w-4" />
                                 </Button>
                               }
                               title="Confirm Archive"
@@ -265,7 +281,7 @@ const filteredEvents = councilEvents.filter((event) => {
                                     size="sm"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <RotateCcw className="h-4 w-4 text-green-500" />
+                                    <ArchiveRestore className="h-4 w-4 text-green-500" />
                                   </Button>
                                 }
                                 title="Confirm Restore"

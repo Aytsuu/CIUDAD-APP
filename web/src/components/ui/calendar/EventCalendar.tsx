@@ -10,6 +10,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import Legend from "./Legend";
 import EventInfoModal from "./EventInfoModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import DialogLayout from "../dialog/dialog-layout";
 
 // Types
 export interface EventDetailColumn<T> {
@@ -28,6 +29,10 @@ export interface EventSource<T extends Record<string, any>> {
   endTimeAccessor?: keyof T;
   colorAccessor?: keyof T;
   defaultColor?: string;
+  viewEditComponent?: React.ComponentType<{
+    initialValues: T;
+    onClose: () => void;
+  }>;
 }
 
 export interface IEventInfo<T = any> extends Event {
@@ -49,9 +54,11 @@ const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales
 const EventCalendar = <T extends Record<string, any>>({
   sources,
   legendItems: initialLegendItems = [],
+  viewEditComponentSources = [],
 }: {
   sources: EventSource<any>[];
   legendItems?: Array<{ label: string; color: string }>;
+  viewEditComponentSources?: string[];
 }) => {
   const [events, setEvents] = useState<IEventInfo<any>[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<IEventInfo<any> | null>(null);
@@ -70,7 +77,7 @@ const EventCalendar = <T extends Record<string, any>>({
         endTimeAccessor,
         colorAccessor,
         defaultColor = "#b32aa9",
-        name: sourceName = `Source ${index + 1}` // Default name if not provided
+        name: sourceName = `Source ${index + 1}`,
       } = source;
 
       const convertedEvents = data.map((item) => {
@@ -86,13 +93,12 @@ const EventCalendar = <T extends Record<string, any>>({
           const start = new Date(`${dateStr}T${timeStr}`);
           if (isNaN(start.getTime())) throw new Error("Invalid date");
           
-          // Calculate end time - use endTimeAccessor if provided, otherwise add 1 hour
           let end: Date;
           if (endTimeAccessor) {
             const endTimeStr = String(item[endTimeAccessor]);
             end = new Date(`${dateStr}T${endTimeStr}`);
           } else {
-            end = new Date(start.getTime() + 60 * 60 * 1000); // Default 1 hour duration
+            end = new Date(start.getTime() + 60 * 60 * 1000);
           }
 
           return {
@@ -103,7 +109,7 @@ const EventCalendar = <T extends Record<string, any>>({
             color: colorAccessor ? String(item[colorAccessor]) : defaultColor,
             description: JSON.stringify(item),
             originalData: item,
-            sourceName, // Will use the provided name or default
+            sourceName,
           };
         } catch (error) {
           console.error("Error processing event:", error, item);
@@ -123,7 +129,6 @@ const EventCalendar = <T extends Record<string, any>>({
     );
   };
 
-  // Filter events based on active source
   const filteredEvents = activeSource === 'all' 
     ? events 
     : events.filter(event => event.sourceName === activeSource);
@@ -140,7 +145,7 @@ const EventCalendar = <T extends Record<string, any>>({
     setActiveSource(value);
   };
 
-   return (
+  return (
     <Box mb={2} component="main" sx={{ flexGrow: 1, py: 1 }}>
       <Container>
         <Card>
@@ -199,6 +204,7 @@ const EventCalendar = <T extends Record<string, any>>({
                 },
               })}
               onSelectEvent={(event) => {
+                console.log("Selected event sourceName:", event.sourceName);
                 setSelectedEvent(event as IEventInfo<any>);
               }}
               style={{ height: 900, width: "100%" }}
@@ -209,15 +215,35 @@ const EventCalendar = <T extends Record<string, any>>({
       </Container>
 
       {selectedEvent && (
-        <EventInfoModal<any>
-          open={!!selectedEvent}
-          handleClose={() => setSelectedEvent(null)}
-          currentEvent={selectedEvent}
-          columns={
-            sources.find(s => (s.name || `Source ${sources.indexOf(s) + 1}`) === selectedEvent.sourceName)?.columns || []
+        (() => {
+          const source = sources.find(s => (s.name || `Source ${sources.indexOf(s) + 1}`) === selectedEvent.sourceName);
+          if (source && viewEditComponentSources.includes(selectedEvent.sourceName) && source.viewEditComponent) {
+            return (
+              <DialogLayout
+                isOpen={!!selectedEvent}
+                onOpenChange={(open) => !open && setSelectedEvent(null)}
+                title="Event Details"
+                description="View or edit event details"
+                mainContent={
+                  <source.viewEditComponent
+                    initialValues={selectedEvent.originalData}
+                    onClose={() => setSelectedEvent(null)}
+                  />
+                }
+                className="max-w-[90%] sm:max-w-[55%] h-[300px] sm:h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              />
+            );
           }
-          title={selectedEvent.sourceName}
-        />
+          return (
+            <EventInfoModal<any>
+              open={!!selectedEvent}
+              handleClose={() => setSelectedEvent(null)}
+              currentEvent={selectedEvent}
+              columns={source?.columns || []}
+              title={selectedEvent.sourceName}
+            />
+          );
+        })()
       )}
     </Box>
   );
