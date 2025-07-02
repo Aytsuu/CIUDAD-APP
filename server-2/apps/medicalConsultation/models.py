@@ -1,6 +1,7 @@
 from django.db import models
 from apps.patientrecords.models import PatientRecord,VitalSigns,BodyMeasurement,Finding
-from apps.medicine.models import MedicineRequest,FollowUpVisit
+from apps.medicineservices.models import MedicineRequest
+from apps.patientrecords.models import FollowUpVisit
 
 # Create your models here.
 

@@ -67,13 +67,13 @@ INSTALLED_APPS = [
     # 'apps.gad'
     'apps.account',
     'apps.medicalConsultation',
-    'apps.medicine',
+    'apps.medicineservices',
     'apps.firstaid',
+    'apps.childhealthservices',
 
 ]
 
-print("INSTALLED_APPS:", INSTALLED_APPS)
-
+print("Installed Apps:", INSTALLED_APPS)
 
 MIDDLEWARE = [
    'corsheaders.middleware.CorsMiddleware', 
