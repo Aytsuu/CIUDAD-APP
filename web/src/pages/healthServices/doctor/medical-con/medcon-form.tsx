@@ -2,13 +2,9 @@ import { Button } from "@/components/ui/button/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card/card";
-import { ChevronLeft, ClipboardList } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";
 import {
@@ -17,12 +13,12 @@ import {
   medicalConsultationCache,
 } from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
 import CurrentConsultationCard from "@/pages/healthServices/medicalconsultation/medicalhistory/current-medrec";
+import { ConsultationHistorySkeleton } from "@/pages/healthServices/skeleton/doc-medform-skeleton"
 
 export default function PendingDisplayMedicalConsultation() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Keep these lines exactly as they are
   const { patientData, MedicalConsultation } = location.state || {};
   const [consultationHistory, setConsultationHistory] = useState<
     MedicalConsultationHistory[]
@@ -31,17 +27,14 @@ export default function PendingDisplayMedicalConsultation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  console.log("MedicalConsultation data:", MedicalConsultation);
-  // Custom back navigation that preserves data
+
   const handleBackNavigation = useCallback(() => {
     localStorage.removeItem("pendingConsultation");
     localStorage.removeItem("soapFormData");
-
     localStorage.removeItem("soapFormMedicines");
     navigate(-1);
-  }, [navigate, patientData, MedicalConsultation]);
+  }, [navigate]);
 
-  // Restore from localStorage if location.state is empty
   useEffect(() => {
     if (!patientData || !MedicalConsultation) {
       const savedData = localStorage.getItem("pendingConsultation");
@@ -50,7 +43,6 @@ export default function PendingDisplayMedicalConsultation() {
           patientData: savedPatientData,
           MedicalConsultation: savedConsultation,
         } = JSON.parse(savedData);
-        // Use navigate to re-inject the state
         navigate(location.pathname, {
           state: {
             patientData: savedPatientData,
@@ -60,7 +52,6 @@ export default function PendingDisplayMedicalConsultation() {
         });
       }
     } else {
-      // Save to localStorage whenever we get fresh state
       localStorage.setItem(
         "pendingConsultation",
         JSON.stringify({
@@ -95,7 +86,7 @@ export default function PendingDisplayMedicalConsultation() {
         setConsultationHistory([]);
         return;
       }
-      
+
       const formattedHistories = responseData.map((history: any) => ({
         patrec: history.patrec,
         medrec_id: history.medrec_id,
@@ -118,9 +109,13 @@ export default function PendingDisplayMedicalConsultation() {
         },
         find_details: history.find_details
           ? {
-              diagnosis: history.find_details.diagnosis || "Not specified",
-              treatment: history.find_details.treatment || "Not specified",
-              notes: history.find_details.notes || "None",
+              assessment_summary:
+                history.find_details.assessment_summary || "Not specified",
+              plantreatment_summary:
+                history.find_details.plantreatment_summary || "Not specified",
+              subj_summary:
+                history.find_details.subj_summary || "Not specified",
+              obj_summary: history.find_details.obj_summary || "Not specified",
             }
           : null,
       }));
@@ -147,7 +142,6 @@ export default function PendingDisplayMedicalConsultation() {
     }
   }, [fetchConsultationHistory, patientData]);
 
-  // Use the passed MedicalConsultation if available
   const currentConsultation = useMemo(() => {
     return MedicalConsultation;
   }, [MedicalConsultation]);
@@ -172,7 +166,6 @@ export default function PendingDisplayMedicalConsultation() {
         <p className="text-base sm:text-lg md:text-xl text-gray-600">
           No medical consultation data found.
         </p>
-
         <Button onClick={handleBackNavigation} className="ml-4">
           Go Back
         </Button>
@@ -181,7 +174,7 @@ export default function PendingDisplayMedicalConsultation() {
   }
 
   return (
-    <div className="w-full min-h-screen flex flex-col p-4 sm:p-6 md:p-8">
+    <div className="">
       <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <button
           onClick={handleBackNavigation}
@@ -189,12 +182,11 @@ export default function PendingDisplayMedicalConsultation() {
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-       
+
         <div>
           <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
             Medical Consultation Record
           </h1>
-
           <p className="text-xs sm:text-sm text-darkGray">
             View consultation details and patient information
           </p>
@@ -212,25 +204,16 @@ export default function PendingDisplayMedicalConsultation() {
             />
           )}
 
-          <Separator className="my-6 sm:my-8" />
-
           {/* Consultation History Section */}
           <div>
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div className="bg-gray-100 p-2 sm:p-3 rounded-full">
-                <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-darkGray" />
-              </div>
-              <h2 className="font-bold text-base sm:text-lg text-darkGray">
+              <h2 className="font-bold text-base sm:text-lg">
                 Consultation History
               </h2>
             </div>
 
             {loading ? (
-              <div className="text-center p-4 sm:p-6 bg-gray-50 rounded-lg">
-                <p className="text-base sm:text-lg text-gray-600">
-                  Loading consultation history...
-                </p>
-              </div>
+              <ConsultationHistorySkeleton />
             ) : error ? (
               <div className="text-center p-4 sm:p-6 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-base sm:text-lg text-red-600 font-medium">
@@ -255,7 +238,7 @@ export default function PendingDisplayMedicalConsultation() {
               className="mr-2 w-[100px]"
               variant={"outline"}
             >
-              Previous
+              Cancel
             </Button>
             <Link
               to="/soap-form"
@@ -264,7 +247,12 @@ export default function PendingDisplayMedicalConsultation() {
                 MedicalConsultation: currentConsultation,
               }}
             >
-              <Button className="w-[100px]">Next</Button>
+              <Button 
+                className={`w-[100px] ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
+                disabled={loading}
+              >
+                 Next
+              </Button>
             </Link>
           </div>
         </CardContent>

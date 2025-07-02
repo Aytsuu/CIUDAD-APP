@@ -42,25 +42,22 @@ def get_pending_followup_visits(pat_id):
         # Log the error if needed
         print(f"Error fetching completed follow-up visits: {e}")
         return FollowUpVisit.objects.none()  # Return empty queryset on error
-    
 
-def get_previous_height_weight(pat_id):
+def get_latest_height_weight(pat_id):
     try:
-        # Get all body measurements for the patient, ordered by newest first
-        records = BodyMeasurement.objects.filter(
+        latest = BodyMeasurement.objects.filter(
             patrec__pat_id=pat_id
-        ).order_by('-created_at')
+        ).order_by('-created_at').first()
 
-        # Return the second most recent record (i.e., the previous one)
-        if records.count() >= 2:
-            previous = records[1]
+        if latest:
             return {
-                'height': previous.height,
-                'weight': previous.weight
+                'height': float(latest.height),
+                'weight': float(latest.weight),
             }
         else:
-            # Not enough records to get a previous measurement
             return None
     except Exception as e:
-        print("Error fetching previous height/weight:", e)
-        return None    
+        print("Error fetching height and weight:", e)
+        return None
+
+

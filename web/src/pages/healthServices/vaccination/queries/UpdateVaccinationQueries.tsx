@@ -16,7 +16,7 @@ import {
   updateFollowUpVisit,
   // updateVaccinationRecord, 
   createAntigenStockTransaction
-} from '../restful-api/PostAPI';
+} from '../restful-api/post';
 import { VaccineSchemaType, VitalSignsType } from '@/form-schema/vaccineSchema';
 import { api2 } from '@/api/api';
 import { Dispatch, SetStateAction } from 'react';

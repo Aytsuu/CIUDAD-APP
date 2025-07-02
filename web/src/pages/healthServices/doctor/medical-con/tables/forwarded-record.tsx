@@ -12,7 +12,16 @@ import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { MedicalConsultationHistory } from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
 import { medicalConsultation } from "@/routers/medConsultation";
-// Medical Record interface (following your reference pattern)
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { FileInput } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown/dropdown-menu";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+
 export interface MedicalRecord {
   pat_id: string;
   fname: string;
@@ -28,13 +37,9 @@ export interface MedicalRecord {
   province: string;
   pat_type: string;
   address: string;
-  // medicalrec_count: number;
   dob: string;
 }
 
-// Medical Consultation interface (additional data for pending consultations)
-
-// Combined interface for pending consultations
 export interface PendingConsultationRecord extends MedicalRecord {
   consultation: MedicalConsultationHistory;
 }
@@ -44,6 +49,7 @@ export default function PendingimpoRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: PendingConsultations, isLoading } = useQuery({
     queryKey: ["PendingimpoRecords"],
@@ -53,7 +59,6 @@ export default function PendingimpoRecords() {
     },
   });
 
-  // Format data following your reference pattern
   const formatPendingConsultationData = React.useCallback((): PendingConsultationRecord[] => {
     if (!PendingConsultations) return [];
 
@@ -62,7 +67,16 @@ export default function PendingimpoRecords() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
-      // Patient details (following MedicalRecord structure)
+      // Construct address string
+      const addressParts = [
+        address.add_street,
+        address.add_barangay, 
+        address.add_city,
+        address.add_province
+      ].filter(Boolean).join(", ");
+      
+      const fullAddress = address.full_address || addressParts || "";
+
       const patientRecord: MedicalRecord = {
         pat_id: record.patrec_details?.pat_id || '',
         fname: info.per_fname || '',
@@ -78,12 +92,11 @@ export default function PendingimpoRecords() {
         city: address.add_city || '',
         province: address.add_province || '',
         pat_type: details.pat_type || '',
-        address: address.full_address || `${address.add_street || ''}, ${address.add_barangay || ''}, ${address.add_city || ''}, ${address.add_province || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
+        address: fullAddress,
       };
 
-      // Medical consultation details
       const consultation: MedicalConsultationHistory = {
-        patrec:record.patrec,
+        patrec: record.patrec,
         medrec_id: record.medrec_id,
         medrec_status: record.medrec_status,
         medrec_chief_complaint: record.medrec_chief_complaint,
@@ -101,13 +114,17 @@ export default function PendingimpoRecords() {
     });
   }, [PendingConsultations]);
 
-  // Filter data based on search query
   const filteredData = React.useMemo(() => {
     return formatPendingConsultationData().filter((record: PendingConsultationRecord) => {
       const searchText = `${record.pat_id} ${record.lname} ${record.fname} ${record.consultation.medrec_chief_complaint}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
+      
+      const statusMatches = 
+        statusFilter === "all" || 
+        record.consultation.medrec_status.toLowerCase() === statusFilter.toLowerCase();
+
+      return searchText.includes(searchQuery.toLowerCase()) && statusMatches;
     });
-  }, [searchQuery, formatPendingConsultationData]);
+  }, [searchQuery, formatPendingConsultationData, statusFilter]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -119,10 +136,8 @@ export default function PendingimpoRecords() {
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
@@ -186,7 +201,9 @@ export default function PendingimpoRecords() {
       header: "Address",
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate text-sm">{row.original.address}</div>
+          <div className="w-full truncate text-sm">
+            {row.original.address || "No address provided"}
+          </div>
         </div>
       ),
     },
@@ -226,7 +243,7 @@ export default function PendingimpoRecords() {
                   add_barangay: row.original.barangay,
                   add_city: row.original.city,
                   add_province: row.original.province,
-                  add_external_sitio: row.original.sitio,
+                  sitio: row.original.sitio,
                 },
                 households: [{ hh_id: row.original.householdno }],
                 personal_info: {
@@ -263,63 +280,95 @@ export default function PendingimpoRecords() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="w-full h-full flex flex-col p-4">
-        {/* Header Section */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="font-semibold text-xl text-darkBlue2">
-              Pending Medical Consultations
-            </h1>
-            <p className="text-sm text-darkGray">
-              {filteredData.length} pending consultation records
-            </p>
-          </div>
+      <div className="w-full h-full flex flex-col">
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Pending Medical Consultations
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            {filteredData.length} pending consultation records
+          </p>
         </div>
+        <hr className="border-gray mb-5 sm:mb-8" />
 
-        {/* Search Section */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search patients, ID, or complaint..."
-              className="pl-10 bg-white"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
+          <div className="w-full flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search patients, ID, or complaint..."
+                className="pl-10 bg-white w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <SelectLayout
+              placeholder="Filter status"
+              label=""
+              className="bg-white w-full sm:w-48"
+              options={[
+                { id: "all", name: "All Status" },
+                { id: "pending", name: "Pending" },
+                { id: "in-progress", name: "In Progress" },
+              ]}
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value)}
             />
           </div>
         </div>
 
-        {/* Table Container */}
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-8"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                }}
+                min="1"
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" aria-label="Export data">
+                    <FileInput className="mr-2 h-4 w-4" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="bg-white w-full overflow-x-auto">
             <DataTable columns={columns} data={paginatedData} />
           </div>
-          
-          {/* Pagination */}
-          <div className="flex items-center justify-between p-4 border-t">
-            <div className="text-sm text-gray-500">
-              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{" "}
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing{" "}
+              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
               {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} records
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              >
-                Next
-              </Button>
+              {filteredData.length} rows
+            </p>
+
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           </div>
         </div>

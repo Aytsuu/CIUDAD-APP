@@ -5,11 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card/card";
-import {
-  ChevronLeft,
-  ClipboardList,
-  Scale,
-} from "lucide-react";
+import { ChevronLeft, ClipboardList, Scale } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -18,7 +14,7 @@ import { api2 } from "@/api/api";
 import {
   MedicalConsultationHistory,
   ConsultationHistoryTable,
-  medicalConsultationCache
+  medicalConsultationCache,
 } from "./table-history";
 import CurrentConsultationCard from "./current-medrec"; // Import the new component
 
@@ -27,7 +23,9 @@ export default function DisplayMedicalConsultation() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData, MedicalConsultation } = params || {};
-  const [consultationHistory, setConsultationHistory] = useState<MedicalConsultationHistory[]>([]);
+  const [consultationHistory, setConsultationHistory] = useState<
+    MedicalConsultationHistory[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,7 +56,7 @@ export default function DisplayMedicalConsultation() {
       }
 
       const formattedHistories = responseData.map((history: any) => ({
-        patrec:history.patrec,
+        patrec: history.patrec,
         medrec_id: history.medrec_id,
         medrec_status: history.medrec_status,
         medrec_chief_complaint:
@@ -79,9 +77,13 @@ export default function DisplayMedicalConsultation() {
         },
         find_details: history.find_details
           ? {
-              diagnosis: history.find_details.diagnosis || "Not specified",
-              treatment: history.find_details.treatment || "Not specified",
-              notes: history.find_details.notes || "None",
+              assessment_summary:
+                history.find_details.assessment_summary || "Not specified",
+              plantreatment_summary:
+                history.find_details.plantreatment_summary || "Not specified",
+              subj_summary:
+                history.find_details.subj_summary || "Not specified",
+              obj_summary: history.find_details.obj_summary || "Not specified",
             }
           : null,
       }));
@@ -130,14 +132,6 @@ export default function DisplayMedicalConsultation() {
     setCurrentPage(pageNumber);
   }, []);
 
-  const nextPage = useCallback(() => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  }, [totalPages]);
-
-  const prevPage = useCallback(() => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  }, []);
-
   if (!patientData || !MedicalConsultation) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-4">
@@ -182,7 +176,7 @@ export default function DisplayMedicalConsultation() {
   }
 
   return (
-    <div className="w-full min-h-screen flex flex-col p-4 sm:p-6 md:p-8">
+    <div>
       <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <Button
           className="text-darkGray p-2"
@@ -204,24 +198,20 @@ export default function DisplayMedicalConsultation() {
 
       {/* Single Comprehensive Card */}
       <Card className="w-full p-4 sm:p-6 md:p-8">
-        <CardContent className="p-0">
+        <CardContent>
           {/* Use the new CurrentConsultationCard component */}
           {currentConsultation && (
-            <CurrentConsultationCard 
+            <CurrentConsultationCard
               consultation={currentConsultation}
               patientData={patientData}
             />
           )}
-          
-          <Separator className="my-6 sm:my-8" />
-          
+
+
           {/* Consultation History Section */}
-          <div>
+          <div className="mt-8">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div className="bg-gray-100 p-2 sm:p-3 rounded-full">
-                <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-darkGray" />
-              </div>
-              <h2 className="font-bold text-base sm:text-lg text-darkGray">
+              <h2 className="font-bold text-base sm:text-lg ">
                 Consultation History
               </h2>
             </div>

@@ -607,7 +607,7 @@ class GetPendingFollowUpVisits(APIView):
 
 class GetPreviousHeightWeightAPIView(APIView):
     def get(self, request, pat_id):
-        result = get_previous_height_weight(pat_id)
+        result = get_latest_height_weight(pat_id)
 
         if result:
             return Response(result, status=status.HTTP_200_OK)

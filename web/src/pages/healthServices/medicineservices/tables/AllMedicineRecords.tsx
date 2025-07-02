@@ -20,6 +20,7 @@ import { Toaster } from "sonner";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getMedicineRecords } from "../restful-api/getAPI";
 import { useNavigate } from "react-router";
+
 export interface MedicineRecord {
   pat_id: string;
   fname: string;
@@ -46,6 +47,7 @@ export default function AllMedicineRecords() {
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
   // Fetch medicine records from API
   const { data: medicineRecords, isLoading } = useQuery<MedicineRecord[]>({
     queryKey: ["medicineRecords"],
@@ -61,23 +63,33 @@ export default function AllMedicineRecords() {
       const info = record.patient_details.personal_info || {};
       const address = record.patient_details.address || {};
 
+      // Construct address string - returns empty string if no address components
+      const addressString = [
+        address.add_street,
+        address.add_barangay,
+        address.add_city,
+        address.add_province
+      ]
+        .filter(part => part && part.trim().length > 0) // Remove empty parts
+        .join(", ") || ""; // Join with commas or return empty string
+
       return {
         pat_id: record.pat_id,
-        fname: info.per_fname,
-        lname: info.per_lname,
-        mname: info.per_mname,
-        sex: info.per_sex,
+        fname: info.per_fname || '',
+        lname: info.per_lname || '',
+        mname: info.per_mname || '',
+        sex: info.per_sex || '',
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob,
-        householdno: record.patient_details?.households?.[0]?.hh_id,
-        street: address.add_street,
-        sitio: address.sitio,
-        barangay: address.add_barangay,
-        city: address.add_city,
-        province: address.add_province,
-        pat_type: record.patient_details.pat_type,
+        dob: info.per_dob || '',
+        householdno: record.patient_details?.households?.[0]?.hh_id || "",
+        street: address.add_street || '',
+        sitio: address.sitio || '',
+        barangay: address.add_barangay || '',
+        city: address.add_city || '',
+        province: address.add_province || '',
+        pat_type: record.patient_details.pat_type || '',
         medicine_count: record.medicine_count || 0,
-        address: `${address.add_street}, ${address.add_barangay}, ${address.add_city}, ${address.add_province}`,
+        address: addressString, // Will be empty string if no address parts
       };
     });
   }, [medicineRecords]);
@@ -143,7 +155,9 @@ export default function AllMedicineRecords() {
       ),
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
+          <div className="w-full truncate">
+            {row.original.address ? row.original.address : "No address provided"}
+          </div>
         </div>
       ),
     },
@@ -152,7 +166,9 @@ export default function AllMedicineRecords() {
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
+          <div className="text-center w-full">
+            {row.original.sitio || "N/A"}
+          </div>
         </div>
       ),
     },
@@ -190,7 +206,7 @@ export default function AllMedicineRecords() {
                     pat_id: row.original.pat_id,
                     pat_type: row.original.pat_type,
                     age: row.original.age,
-                    addressFull: row.original.address,
+                    addressFull: row.original.address || "No address provided",
                     address: {
                       add_street: row.original.street,
                       add_barangay: row.original.barangay,
@@ -231,6 +247,7 @@ export default function AllMedicineRecords() {
 
   return (
     <>
+      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-col items-center ">
@@ -281,7 +298,7 @@ export default function AllMedicineRecords() {
 
         {/* Table Container */}
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex  sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-3 justify-start items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input

@@ -24,7 +24,7 @@ import {
   createFollowUpVisit,
   deleteVitalSigns,
   updateFollowUpVisit,
-} from "@/pages/healthServices/vaccination/restful-api/PostAPI";
+} from "@/pages/healthServices/vaccination/restful-api/post";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 

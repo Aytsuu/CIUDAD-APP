@@ -48,7 +48,6 @@ export default function IndivMedicalForm() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData } = params || {};
-  const [loading, setLoading] = useState(false);
 
   // Use the health warnings hook
   const { vitalWarnings, bmiResult, updateVitalWarnings, updateBMIResult } =
@@ -236,9 +235,9 @@ export default function IndivMedicalForm() {
   ];
 
   return (
-    <div className="p-4 sm:p-8">
+    <div>
       {/* Header and navigation */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <Button
           className="text-black p-2 mb-2 self-start"
           variant={"outline"}
@@ -246,15 +245,16 @@ export default function IndivMedicalForm() {
         >
           <ChevronLeft />
         </Button>
-        <div className="flex-col items-center mb-4">
+        <div className="flex-col items-center">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Medical Consultation
+            Medical Consultation Form
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patient information
+            Add new medical consultation and view patient information
           </p>
         </div>
       </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Patient Info Card */}
       {patientData && (
@@ -417,7 +417,7 @@ export default function IndivMedicalForm() {
             <Button
               variant="outline"
               type="button"
-              onClick={() => form.reset()}
+              onClick={() => navigate(-1)}
               className="w-full sm:w-[150px]"
             >
               Reset Form

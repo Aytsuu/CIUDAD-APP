@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Eye, Trash, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,17 +15,12 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMedconRecordById } from "../restful-api/GetMedicalRecord";
-import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import {
-  UserRound,
-  Fingerprint,
+  
   Syringe,
-  MapPin,
   AlertCircle,
 } from "lucide-react";
-import { calculateAge } from "@/helpers/ageCalculator";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 
@@ -86,7 +80,7 @@ export default function InvMedicalConRecords() {
   }, [patientData]);
 
   const { data: medicalRecords, isLoading } = useQuery({
-    queryKey: ["patientMedicalDetails", patientData?.pat_id],
+    queryKey: ["patientMedicalDetails"],
     queryFn: () => getMedconRecordById(patientData?.pat_id),
     refetchOnMount: true,
     staleTime: 0,
@@ -262,7 +256,7 @@ export default function InvMedicalConRecords() {
     <>
       <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <Button
             className="text-black p-2 mb-2 self-start"
             variant={"outline"}
@@ -270,7 +264,7 @@ export default function InvMedicalConRecords() {
           >
             <ChevronLeft />
           </Button>
-          <div className="flex-col items-center mb-4">
+          <div className="flex-col items-center ">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Medical Consultation Records
             </h1>

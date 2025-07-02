@@ -12,7 +12,7 @@ import IndivMedicalForm from "@/pages/healthServices/medicalconsultation/Forms/I
 import DisplayMedicalConsultation from "@/pages/healthServices/medicalconsultation/medicalhistory/DisplayMedCon";
 
 export const medicalConsultation = [
- 
+
  
   {
     path: "/AllMedicalForm",

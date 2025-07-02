@@ -1,11 +1,11 @@
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/table/history-table-col";
-import { ClipboardList } from "lucide-react";
+import { History } from "lucide-react";
 import { useMemo } from "react";
 
 export type MedicalConsultationHistory = {
-  patrec:number,
+  patrec: number;
   medrec_id: number;
   medrec_status: string;
   medrec_chief_complaint: string;
@@ -26,13 +26,17 @@ export type MedicalConsultationHistory = {
     bmi: string;
   };
   find_details: {
-    diagnosis: string;
-    treatment: string;
-    notes: string;
+    subj_summary: string;
+    obj_summary: string;
+    assessment_summary: string;
+    plantreatment_summary: string;
   } | null;
 };
 
-export const medicalConsultationCache: Record<string, MedicalConsultationHistory[]> = {};
+export const medicalConsultationCache: Record<
+  string,
+  MedicalConsultationHistory[]
+> = {};
 
 export function ConsultationHistoryTable({
   relevantHistory,
@@ -48,7 +52,7 @@ export function ConsultationHistoryTable({
   onPaginate: (page: number) => void;
 }) {
   const recordsPerPage = 3;
-  
+
   const tableData = useMemo(() => {
     if (relevantHistory.length <= 0) return [];
 
@@ -58,7 +62,11 @@ export function ConsultationHistoryTable({
       { attribute: "Temperature", type: "data" },
       { attribute: "Pulse Rate", type: "data" },
       { attribute: "Respiratory Rate", type: "data" },
-      { attribute: "BMI", type: "data" },
+      { attribute: "HT", type: "data" },
+      { attribute: "WT", type: "data" },
+      { attribute: "Subjective Summary", type: "data" },
+      { attribute: "Objective Summary", type: "data" },
+      { attribute: "Plan Treatment Summary", type: "data" },
       { attribute: "Diagnosis", type: "data" },
     ];
 
@@ -90,10 +98,19 @@ export function ConsultationHistoryTable({
           rowData[recordId] = `${record.vital_signs.vital_pulse} bpm`;
         } else if (row.attribute === "Respiratory Rate") {
           rowData[recordId] = `${record.vital_signs.vital_RR} per min`;
-        } else if (row.attribute === "BMI") {
-          rowData[recordId] = record.bmi_details.bmi;
+        } else if (row.attribute === "HT") {
+          rowData[recordId] = record.bmi_details.height;
+        } else if (row.attribute === "WT") {
+          rowData[recordId] = record.bmi_details.weight;
+        } else if (row.attribute === "Subjective Summary") {
+          rowData[recordId] = record.find_details?.subj_summary || "N/A";
+        } else if (row.attribute === "Objective Summary") {
+          rowData[recordId] = record.find_details?.obj_summary || "N/A";
+        } else if (row.attribute === "Plan Treatment Summary") {
+          rowData[recordId] =
+            record.find_details?.plantreatment_summary || "N/A";
         } else if (row.attribute === "Diagnosis") {
-          rowData[recordId] = record.find_details?.diagnosis || "N/A";
+          rowData[recordId] = record.find_details?.assessment_summary || "N/A";
         }
       });
 
@@ -149,14 +166,20 @@ export function ConsultationHistoryTable({
 
             if (rowData.attribute === "Chief Complaint") {
               const formattedValue = value
-                ? value.split(",").map((item) => item.trim()).filter(Boolean)
+                ? value
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean)
                 : [];
               return (
                 <div className="text-justify pr-4">
                   {formattedValue.length > 0 ? (
                     <ul className="list-disc list-inside text-sm sm:text-base">
                       {formattedValue.map((item, index) => (
-                        <li key={index} className="whitespace-normal break-words">
+                        <li
+                          key={index}
+                          className="whitespace-normal break-words"
+                        >
                           {item}
                         </li>
                       ))}
@@ -170,7 +193,125 @@ export function ConsultationHistoryTable({
               );
             }
 
-            return <div className="text-sm sm:text-base  min-w-[250px]">{value || "N/A"}</div>;
+            if (rowData.attribute === "Objective Summary") {
+              const formattedValue = value
+                ? value
+                    .split("-")
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
+              return (
+                <div className="text-justify pr-4">
+                  {formattedValue.length > 0 ? (
+                    <ul className="list-disc list-inside text-sm sm:text-base">
+                      {formattedValue.map((item, index) => (
+                        <li
+                          key={index}
+                          className="whitespace-normal break-words"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-sm sm:text-base break-words whitespace-normal">
+                      N/A
+                    </span>
+                  )}
+                </div>
+              );
+            }
+            if (rowData.attribute === "HT") {
+              return (
+                <div className="text-sm sm:text-base">
+                  {value
+                    ? `${
+                        parseFloat(value).toFixed(2).endsWith(".00")
+                          ? parseInt(value)
+                          : value
+                      } cm`
+                    : "N/A"}
+                </div>
+              );
+            }
+
+            if (rowData.attribute === "WT") {
+              return (
+                <div className="text-sm sm:text-base">
+                  {value
+                    ? `${
+                        parseFloat(value).toFixed(2).endsWith(".00")
+                          ? parseInt(value)
+                          : value
+                      } kg`
+                    : "N/A"}
+                </div>
+              );
+            }
+
+            if (rowData.attribute === "Diagnosis") {
+              const formattedValue = value
+                ? value
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
+              return (
+                <div className="text-justify pr-4">
+                  {formattedValue.length > 0 ? (
+                    <ul className="list-disc list-inside text-sm sm:text-base">
+                      {formattedValue.map((item, index) => (
+                        <li
+                          key={index}
+                          className="whitespace-normal break-words"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-sm sm:text-base break-words whitespace-normal">
+                      N/A
+                    </span>
+                  )}
+                </div>
+              );
+            }
+
+            if (rowData.attribute === "Plan Treatment Summary") {
+              const formattedValue = value
+                ? value
+                    .split(/[-,]/)
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
+              return (
+                <div className="text-justify pr-4">
+                  {formattedValue.length > 0 ? (
+                    <ul className="list-disc list-inside text-sm sm:text-base">
+                      {formattedValue.map((item, index) => (
+                        <li
+                          key={index}
+                          className="whitespace-normal break-words"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-sm sm:text-base break-words whitespace-normal">
+                      N/A
+                    </span>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="text-sm sm:text-base  min-w-[250px]">
+                {value || "N/A"}
+              </div>
+            );
           },
         });
       });
@@ -180,9 +321,11 @@ export function ConsultationHistoryTable({
 
   if (relevantHistory.length <= 1) {
     return (
-      <div className="text-center p-4 sm:p-6 md:p-8 bg-gray-50 rounded-lg sm:rounded-xl border border-gray-200 sm:border-gray-300">
-        <ClipboardList className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 text-gray-400 mx-auto mb-2 sm:mb-3 md:mb-4" />
-        <p className="text-lg sm:text-xl text-gray-600 font-medium">
+      <div className="text-center">
+        <div className="flex items-center justify-center mb-2">
+          <History size={20} />
+        </div>
+        <p className="text-lg sm:text-lg text-gray-600 ">
           No previous consultation history found.
         </p>
       </div>
@@ -190,14 +333,14 @@ export function ConsultationHistoryTable({
   }
 
   return (
-    <DataTable 
-      columns={columns} 
+    <DataTable
+      columns={columns}
       data={tableData}
       pagination={true}
       manualPagination={{
         currentPage,
         totalPages,
-        onPageChange: onPaginate
+        onPageChange: onPaginate,
       }}
     />
   );

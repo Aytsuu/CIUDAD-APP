@@ -17,12 +17,12 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMedicalRecord } from "../restful-api/GetMedicalRecord";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { getMedicalRecord } from "../restful-api/GetMedicalRecord";
 
 export interface MedicalRecord {
   pat_id: number;
@@ -62,10 +62,6 @@ export default function AllMedicalConsRecord() {
     staleTime: 0,
   });
 
-  useEffect(() => {
-    console.log(MedicalRecord);
-  }, []);
-
   const formatMedicalData = React.useCallback((): MedicalRecord[] => {
     if (!MedicalRecord) return [];
 
@@ -74,23 +70,33 @@ export default function AllMedicalConsRecord() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
+      // Construct address string - returns empty string if no address components
+      const addressString = [
+        address.add_street || info.per_address || "",
+        address.add_barangay || "",
+        address.add_city || "",
+        address.add_province || ""
+      ]
+        .filter(part => part.trim().length > 0) // Remove empty parts
+        .join(", ") || ""; // Join with commas or return empty string
+
       return {
         pat_id: record.pat_id,
-        fname: info.per_fname,
-        lname: info.per_lname,
-        mname: info.per_mname,
-        sex: info.per_sex,
+        fname: info.per_fname || '',
+        lname: info.per_lname || '',
+        mname: info.per_mname || '',
+        sex: info.per_sex || '',
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob,
+        dob: info.per_dob || '',
         householdno: details.households?.[0]?.hh_id || "",
-        street: address.add_street || info.per_address || "",
-        sitio: address.add_external_sitio || "",
-        barangay: address.add_barangay || "",
-        city: address.add_city || "",
-        province: address.add_province || "",
-        pat_type: details.pat_type,
-        address: `${address.add_street || info.per_address || ""}, ${address.add_barangay || ""}, ${address.add_city || ""}, ${address.add_province || ""}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
-        medicalrec_count: record.medicalrec_count,
+        street: address.add_street || '',
+        sitio: address.sitio || '',
+        barangay: address.add_barangay || '',
+        city: address.add_city || '',
+        province: address.add_province || '',
+        pat_type: details.pat_type || '',
+        address: addressString, // Will be empty string if no address parts
+        medicalrec_count: record.medicalrec_count || 0,
       };
     });
   }, [MedicalRecord]);
@@ -122,9 +128,7 @@ export default function AllMedicalConsRecord() {
   const confirmArchiveRecord = async () => {
     if (recordToArchive !== null) {
       try {
-        // Add your archive logic here, e.g., API call to archive the record
-        // await archiveMedicalRecord(recordToArchive);
-
+        // Add your archive logic here
         toast.success("Record archived successfully!");
         queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
       } catch (error) {
@@ -174,7 +178,9 @@ export default function AllMedicalConsRecord() {
       ),
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
+          <div className="w-full truncate">
+            {row.original.address ? row.original.address : "No address provided"}
+          </div>
         </div>
       ),
     },
@@ -183,7 +189,9 @@ export default function AllMedicalConsRecord() {
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
+          <div className="text-center w-full">
+            {row.original.sitio || "N/A"}
+          </div>
         </div>
       ),
     },
@@ -224,13 +232,13 @@ export default function AllMedicalConsRecord() {
                         pat_id: row.original.pat_id,
                         pat_type: row.original.pat_type,
                         age: row.original.age,
-                        addressFull: row.original.address,
+                        addressFull: row.original.address || "No address provided",
                         address: {
                           add_street: row.original.street,
                           add_barangay: row.original.barangay,
                           add_city: row.original.city,
                           add_province: row.original.province,
-                          add_external_sitio: row.original.sitio,
+                          sitio: row.original.sitio,
                         },
                         households: [{ hh_id: row.original.householdno }],
                         personal_info: {
@@ -267,7 +275,6 @@ export default function AllMedicalConsRecord() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         {/* Header Section */}
         <div className="flex-col items-center mb-4">

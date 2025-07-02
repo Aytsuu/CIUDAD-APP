@@ -5,7 +5,7 @@ import { api2 } from "@/api/api";
 export const createFindings = async (data: {
     assessment_summary: string;
     plantreatment_summary: string;
-    sub_summary: string;
+    subj_summary: string;
     obj_summary: string;
   }) => {
     try {

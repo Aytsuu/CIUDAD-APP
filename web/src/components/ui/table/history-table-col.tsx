@@ -173,7 +173,7 @@ export function DataTable<TData, TValue>({
           )}
         </div>
 
-        {/* Table */}
+        {/* Table with vertical borders */}
         <div className="rounded-md border overflow-x-auto">
           <Table className="min-w-full">
             {header && (
@@ -187,7 +187,7 @@ export function DataTable<TData, TValue>({
                           width: header.getSize(),
                           position: "relative",
                         }}
-                        className="overflow-hidden"
+                        className="overflow-hidden border-r border-gray-200 last:border-r-0"
                       >
                         {header.isPlaceholder
                           ? null
@@ -225,7 +225,7 @@ export function DataTable<TData, TValue>({
                         style={{
                           width: cell.column.getSize(),
                         }}
-                        className="overflow-hidden"
+                        className="overflow-hidden border-r border-gray-200 last:border-r-0"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

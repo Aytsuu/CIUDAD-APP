@@ -232,9 +232,8 @@ export default function AllMedicalForm() {
       const bmiResponse = await api2.post("patientrecords/body-measurements/", {
         height: parseFloat(data.height?.toFixed(2)),
         weight: parseFloat(data.weight?.toFixed(2)),
-        age: selectedPatientData?.age,
+        age: calculateAge(selectedPatientData?.personal_info?.per_dob),
         bmi: parseFloat(bmiValue.toFixed(2)),
-        // bmi_category: bmiCategory,
         created_at: new Date().toISOString(),
         patrec: patrec,
       });
@@ -247,8 +246,7 @@ export default function AllMedicalForm() {
         find: null,
         medrec_chief_complaint: data.medrec_chief_complaint,
         created_at: new Date().toISOString(),
-        medrec_age:selectedPatientData?.age
-        
+        medrec_age: calculateAge(selectedPatientData?.personal_info?.per_dob),
       });
 
       toast.success("Medical record created successfully");
@@ -290,6 +288,7 @@ export default function AllMedicalForm() {
           </p>
         </div>
       </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       <PatientSearch onPatientSelect={handlePatientSelect} />
 

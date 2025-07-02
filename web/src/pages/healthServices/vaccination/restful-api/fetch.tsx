@@ -1,6 +1,40 @@
 import { useState, useEffect } from "react";
 import { api2 } from "@/api/api";
-import { getVaccintStocks, getVaccinationHistory } from "./GetVaccination";
+import { getVaccintStocks, getUnvaccinatedResidents,getVaccinationRecords ,getVaccinationRecordById} from "./get";
+import { useQuery } from "@tanstack/react-query";
+import { VaccinationRecord } from "../tables/columns/types";
+
+
+
+export const usePatientVaccinationDetails = (patientId: string) => {
+  return useQuery({
+    queryKey: ["patientVaccinationDetails", patientId],
+    queryFn: () => getVaccinationRecordById(patientId),
+    refetchOnMount: true,
+    staleTime: 0,
+    enabled: !!patientId, // Only fetch if patientId exists
+  });
+};
+
+// Updated hook with parameters
+export const useVaccinationRecords = () => {
+  return useQuery<VaccinationRecord[]>({
+    queryKey: ["vaccinationRecords"],
+    queryFn: getVaccinationRecords,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+};
+
+export const useUnvaccinatedResidents = () => {
+  return useQuery({
+    queryKey: ["unvaccinatedResidents"],
+    queryFn: getUnvaccinatedResidents,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+};
+
 export const fetchVaccinesWithStock = () => {
   const [vaccines, setVaccines] = useState<
     {
@@ -58,109 +92,6 @@ export const fetchVaccinesWithStock = () => {
     isLoading,
   };
 };
-
-// export const checkVachistory =() =>{
-
-//    vachistResponse = await getVaccinationHistory()
-
-// }
-
-// export const fetchSpecificVaccinesWithStock = (vacStck_id: number) => {
-//     const [vaccines, setVaccines] = useState<{
-//       id: string;
-//       name: string;
-//       vac_id: string;
-//       expiry: string | null;
-//       available: boolean;
-//     }[]>([{  // Default loading state
-//       id: "loading",
-//       name: "Loading vaccine data...",
-//       vac_id: "loading",
-//       expiry: null,
-//       available: false
-//     }]);
-
-//     const [error, setError] = useState<string | null>(null);
-
-//     useEffect(() => {
-//       const fetchData = async () => {
-//         try {
-//           const specificStock = await getSpecificVaccintStocks(vacStck_id); // Fixed typo
-
-//           if (!specificStock) {
-//             setError("No vaccine available");
-//             setVaccines([{
-//               id: "no-vaccine",
-//               name: "No vaccine available",
-//               vac_id: "not-found",
-//               expiry: null,
-//               available: false
-//             }]);
-//             return;
-//           }
-
-//           // Handle archived vaccine
-//           if (specificStock.inv_details?.is_Archived) {
-//             setError("No vaccine available");
-//             setVaccines([{
-//               id: "no-vaccine",
-//               name: "No vaccine available",
-//               vac_id: specificStock.vac_id.toString(),
-//               expiry: null,
-//               available: false
-//             }]);
-//             return;
-//           }
-
-//           const isAvailable = specificStock.vacStck_qty_avail > 0;
-//           const expiryDate = specificStock.inv_details?.expiry_date;
-//           const isExpired = expiryDate && new Date(expiryDate) < new Date();
-
-//           let displayName = specificStock.vaccinelist?.vac_name || "Unknown Vaccine";
-//           if (!isAvailable) {
-//             displayName += " (Out of Stock)";
-//           }
-//           if (isExpired) {
-//             displayName += " (Expired)";
-//           }
-
-//           setVaccines([{
-//             id: specificStock.vacStck_id.toString(),
-//             name: displayName,
-//             vac_id: specificStock.vac_id.toString(),
-//             expiry: expiryDate || null,
-//             available: isAvailable && !isExpired
-//           }]);
-
-//         } catch (error) {
-//           console.error("Error fetching vaccine stocks:", error);
-//           setError("No vaccine available");
-//           setVaccines([{
-//             id: "no-vaccine",
-//             name: "No vaccine available",
-//             vac_id: "error",
-//             expiry: null,
-//             available: false
-//           }]);
-//         }
-//       };
-
-//       fetchData();
-//     }, [vacStck_id]);
-
-//     // Sort by expiry date (soonest first)
-//     const sortedVaccines = [...vaccines].sort((a, b) => {
-//       if (!a.expiry) return 1;
-//       if (!b.expiry) return -1;
-//       return new Date(a.expiry).getTime() - new Date(b.expiry).getTime();
-//     });
-
-//     return {
-//       vaccineStocksOptions: sortedVaccines,
-//       error,
-//       hasAvailableStock: sortedVaccines.some(v => v.available && v.id !== "loading")
-//     };
-
 
 
 export const fetchVaccinesWithStockVacID = (vac_id: number) => {

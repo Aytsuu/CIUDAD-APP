@@ -13,9 +13,9 @@ interface PatientLinkData {
   address: {
     add_street: string;
     add_barangay: string;
-    add_city: string;
+    add_city?: string;
     add_province: string;
-    add_external_sitio: string;
+    add_sitio: string;
   };
   households: Array<{ hh_id: string }>;
   personal_info: {
@@ -31,7 +31,8 @@ interface MedicalHistoryTabProps {
   vaccinationCount: number | undefined;
   medicineCount: number | undefined;
   firstAidCount: number | undefined;
-  postpartumCount: number | undefined
+  postpartumCount: number | undefined;
+  medicalconCount: number | undefined;
   patientLinkData: PatientLinkData;
 }
 
@@ -39,14 +40,14 @@ export default function Records({
   vaccinationCount,
   medicineCount,
   firstAidCount,
+  medicalconCount,
   patientLinkData,
 }: MedicalHistoryTabProps) {
-
   const {
     data: postpartumCount = 0,
     isLoading: isLoadingPostpartum,
     error: postpartumError,
-  } = usePatientPostpartumCount(patientLinkData.pat_id)
+  } = usePatientPostpartumCount(patientLinkData.pat_id);
 
   return (
     <TabsContent value="medical" className="mt-0">
@@ -63,17 +64,32 @@ export default function Records({
                       <SyringeIcon className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Vaccination</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Vaccination
+                      </h3>
                       <div className="flex items-center space-x-4 mt-1">
                         <span className="text-sm text-gray-600 bg-sky-100 px-2 py-1 rounded-md">
-                          {vaccinationCount !== undefined ? vaccinationCount : "0"} Records
+                          {vaccinationCount !== undefined
+                            ? vaccinationCount
+                            : "0"}{" "}
+                          Records
                         </span>
-                        <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
+                        <span className="text-sm text-gray-500">
+                          Last updated: June 2, 2023
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <Link to="/invVaccinationRecord" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
-                    <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium">
+                  <Link
+                    to="/invVaccinationRecord"
+                    state={{ params: { patientData: patientLinkData } }}
+                    className="transition-transform hover:scale-105"
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium"
+                    >
                       View Details
                     </Button>
                   </Link>
@@ -88,17 +104,29 @@ export default function Records({
                       <Pill className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Medicine</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Medicine
+                      </h3>
                       <div className="flex items-center space-x-4 mt-1">
                         <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
-                          {medicineCount !== undefined ? medicineCount : "0"} Records
+                          {medicineCount !== undefined ? medicineCount : "0"}{" "}
+                          Records
                         </span>
-                        <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
+                        <span className="text-sm text-gray-500">
+                          Last updated: June 2, 2023
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <Link to="/IndivMedicineRecord" state={{ params: { patientData: patientLinkData } }}>
-                    <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
+                  <Link
+                    to="/IndivMedicineRecord"
+                    state={{ params: { patientData: patientLinkData } }}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium"
+                    >
                       View Details
                     </Button>
                   </Link>
@@ -113,58 +141,118 @@ export default function Records({
                       <Pill className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">First Aid</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        First Aid
+                      </h3>
                       <div className="flex items-center space-x-4 mt-1">
                         <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
-                          {firstAidCount !== undefined ? firstAidCount : "0"} Records
+                          {firstAidCount !== undefined ? firstAidCount : "0"}{" "}
+                          Records
                         </span>
-                        <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
+                        <span className="text-sm text-gray-500">
+                          Last updated: June 2, 2023
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <Link to="/indiv-firstaid-records" state={{ params: { patientData: patientLinkData } }}>
-                    <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
+                  <Link
+                    to="/indiv-firstaid-records"
+                    state={{ params: { patientData: patientLinkData } }}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium"
+                    >
                       View Details
                     </Button>
                   </Link>
                 </div>
               </div>
             )}
-
-            {(isLoadingPostpartum || postpartumCount > 0) && (
-                <div className="p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-pink-100 rounded-lg">
-                        <Baby className="w-5 h-5 text-pink-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Postpartum Care</h3>
-                        <div className="flex items-center space-x-4 mt-1">
-                          <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">
-                            {isLoadingPostpartum ? "Loading..." : `${postpartumCount} Records`}
-                          </span>
-                          <span className="text-sm text-gray-500">Maternal health monitoring</span>
-                        </div>
+            {medicalconCount !== 0 && (
+            
+              <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Pill className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Medical Consultation
+                      </h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-green-200 px-2 py-1 rounded-md">
+                          {medicalconCount !== undefined
+                            ? medicalconCount
+                            : "0"}{" "}
+                          Records
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          Last updated: June 2, 2023
+                        </span>
                       </div>
                     </div>
-                    <Link
-                      to="/maternalindividualrecords"
-                      state={{ params: { patientData: patientLinkData } }}
-                      className="transition-transform hover:scale-105"
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-                        disabled={isLoadingPostpartum}
-                      >
-                        View Details
-                      </Button>
-                    </Link>
                   </div>
+                  <Link
+                    to="/invMedicalRecord"
+                    state={{ params: { patientData: patientLinkData } }}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-green-300 text-green-700 font-medium"
+                    >
+                      View Details
+                    </Button>
+                  </Link>
                 </div>
-              )}
+              </div>
+                        )}
+
+
+
+            {(isLoadingPostpartum || postpartumCount > 0) && (
+              <div className="p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-pink-100 rounded-lg">
+                      <Baby className="w-5 h-5 text-pink-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Postpartum Care
+                      </h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">
+                          {isLoadingPostpartum
+                            ? "Loading..."
+                            : `${postpartumCount} Records`}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          Maternal health monitoring
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/maternalindividualrecords"
+                    state={{ params: { patientData: patientLinkData } }}
+                    className="transition-transform hover:scale-105"
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
+                      disabled={isLoadingPostpartum}
+                    >
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         }
         cardClassName="border shadow-sm rounded-md"

@@ -21,14 +21,14 @@ interface CurrentConsultationCardProps {
 export default function CurrentConsultationCard({
   consultation,
   patientData,
-  className = ""
+  className = "",
 }: CurrentConsultationCardProps) {
   return (
     <div className={`bg-white ${className}`}>
       <h3 className="text-base sm:text-lg md:text-xl font-bold text-center mb-6 sm:mb-8 md:mb-10">
         PATIENT RECORD
       </h3>
-      
+
       {/* Patient Information Section */}
       <div className="space-y-6 sm:space-y-8">
         {/* Row 1: Name and Date */}
@@ -42,7 +42,7 @@ export default function CurrentConsultationCard({
                 {`${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_lname}`}
               </span>
             </div>
-       </div>
+          </div>
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm sm:min-w-[80px]">
               Date:
@@ -68,7 +68,9 @@ export default function CurrentConsultationCard({
               Sex:
             </span>
             <div className="border-b border-black flex-1">
-              <span className="text-sm">{patientData.personal_info.per_sex}</span>
+              <span className="text-sm">
+                {patientData.personal_info.per_sex}
+              </span>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
@@ -76,7 +78,9 @@ export default function CurrentConsultationCard({
               Date of Birth:
             </span>
             <div className="border-b border-black flex-1">
-              <span className="text-sm">{patientData.personal_info.per_dob}</span>
+              <span className="text-sm">
+                {patientData.personal_info.per_dob}
+              </span>
             </div>
           </div>
         </div>
@@ -88,7 +92,9 @@ export default function CurrentConsultationCard({
               Address:
             </span>
             <div className="border-b border-black flex-1 min-w-0">
-              <span className="text-sm line-clamp-2">{patientData.addressFull}</span>
+              <span className="text-sm line-clamp-2">
+                {patientData.addressFull}
+              </span>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
@@ -123,7 +129,9 @@ export default function CurrentConsultationCard({
                   RR:
                 </span>
                 <div className="border-b border-black flex-1">
-                  <span className="text-sm">{consultation.vital_signs.vital_RR}</span>
+                  <span className="text-sm">
+                    {consultation.vital_signs.vital_RR}
+                  </span>
                 </div>
                 <span className="text-black text-sm">cpm</span>
               </div>
@@ -134,7 +142,9 @@ export default function CurrentConsultationCard({
                   HR:
                 </span>
                 <div className="border-b border-black flex-1">
-                  <span className="text-sm">{consultation.vital_signs.vital_pulse}</span>
+                  <span className="text-sm">
+                    {consultation.vital_signs.vital_pulse}
+                  </span>
                 </div>
                 <span className="text-black text-sm">bpm</span>
               </div>
@@ -143,8 +153,9 @@ export default function CurrentConsultationCard({
                   Temperature:
                 </span>
                 <div className="border-b border-black flex-1">
-                  <span className="text-sm">{consultation.vital_signs.vital_temp}</span>
-
+                  <span className="text-sm">
+                    {consultation.vital_signs.vital_temp}
+                  </span>
                 </div>
                 <span className="text-black text-sm">°C</span>
               </div>
@@ -158,7 +169,9 @@ export default function CurrentConsultationCard({
                 WT:
               </span>
               <div className="border-b border-black flex-1">
-                <span className="text-sm">{consultation.bmi_details.weight}</span>
+                <span className="text-sm">
+                  {parseFloat(consultation.bmi_details.weight).toFixed(2).replace(/\.00$/, "")}
+                </span>
               </div>
               <span className="text-black text-sm">kg</span>
             </div>
@@ -167,7 +180,9 @@ export default function CurrentConsultationCard({
                 HT:
               </span>
               <div className="border-b border-black flex-1">
-                <span className="text-sm">{consultation.bmi_details.height}</span>
+                <span className="text-sm">
+                    {parseFloat(consultation.bmi_details.height).toFixed(2).replace(/\.00$/, "")}
+                </span>
               </div>
               <span className="text-black text-sm">cm</span>
             </div>
@@ -181,8 +196,72 @@ export default function CurrentConsultationCard({
               Chief of Complaint:
             </span>
             <div className="border-b border-black flex-1 min-w-0">
-              <span className="text-sm">{consultation.medrec_chief_complaint}</span>
-              
+              <span className="text-sm">
+                {consultation.medrec_chief_complaint}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className=" p-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 ">
+            {/* History of Present Illness/Findings */}
+            <div className="border border-black py-4">
+              <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">
+                History of Present Illness/Findings
+              </h5>
+              <div className="space-y-2 p-4">
+                <div>
+                  <span className="font-bold text-black text-sm">
+                    Subjective Summary:
+                  </span>
+                  <div className="text-sm mt-1">
+                    {consultation.find_details?.subj_summary}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-bold text-black text-sm">
+                    Objective Summary:
+                  </span>
+                  <div className="text-sm mt-1">
+                    {consultation.find_details?.obj_summary
+                      ?.split("-")
+                      .map((line, index) => (
+                        <div key={index}>{line.trim()}</div>
+                      ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-bold text-black text-sm">
+                    Diagnosis:
+                  </span>
+                  <div className="text-sm mt-1">
+                    {consultation.find_details?.assessment_summary
+                      ?.split(",")
+                      .map((item, index) => (
+                        <div key={index}>{item.trim()}</div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Plan/Treatment */}
+            <div className="border border-black py-4">
+              <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">
+                Plan Treatment
+              </h5>
+              <div className="space-y-2 p-4">
+                <div>
+                  <div className="text-sm mt-1">
+                    {consultation.find_details?.plantreatment_summary
+                      ?.split("-")
+                      .map((item, index) => (
+                        <div key={index}>{item.trim()}</div>
+                      ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

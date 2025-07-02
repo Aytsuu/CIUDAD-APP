@@ -57,13 +57,14 @@ import {
   createFollowUpVisit,
 } from "./restful-api/medicalhistory";
 import { createFindings, deleteFindings } from "./restful-api/findings";
-import { deleteFollowUpVisit } from "@/pages/healthServices/vaccination/restful-api/PostAPI";
+import { deleteFollowUpVisit } from "@/pages/healthServices/vaccination/restful-api/post";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { IllnessComponent } from "@/components/ui/add-search-illness";
 import { TreatmentReceipt } from "@/components/ui/treatment-receipt";
+import SoapFormSkeleton from "@/pages/healthServices/skeleton/soap-form-skeleton";
 
 const soapSchema = z.object({
-  sub_summary: z.string().optional(),
+  subj_summary: z.string().optional(),
   followv: z.string().optional(),
   obj_summary: z.string().optional(),
   assessment_summary: z.string().optional(),
@@ -103,23 +104,6 @@ export default function SoapForm() {
     MedicalConsultation?.find_details?.prescribed_medicines || []
   );
 
-  const [formData, setFormData] = useLocalStorage<SoapFormType>(
-    "soapFormData",
-    {
-      sub_summary: MedicalConsultation?.find_details?.notes || "",
-      obj_summary: "",
-      assessment_summary: MedicalConsultation?.find_details?.diagnosis || "",
-      plantreatment_summary: MedicalConsultation?.find_details?.treatment || "",
-      medicineRequest: {
-        pat_id: patientData?.pat_id || "",
-        medicines:
-          MedicalConsultation?.find_details?.prescribed_medicines || [],
-      },
-      physicalExamResults: [],
-      selectedIllnesses: [],
-    }
-  );
-
   const [examSections, setExamSections] = useState<ExamSection[]>([]);
   const [isPeLoading, setIsPeLoading] = useState(true);
   const { medicineStocksOptions, isLoading: isMedicinesLoading } =
@@ -128,9 +112,16 @@ export default function SoapForm() {
   const form = useForm<SoapFormType>({
     resolver: zodResolver(soapSchema),
     defaultValues: {
-      ...formData,
-      selectedIllnesses: formData.selectedIllnesses || [],
-      physicalExamResults: formData.physicalExamResults || [],
+      subj_summary: "",
+      obj_summary: "",
+      assessment_summary: "",
+      plantreatment_summary: "",
+      medicineRequest: {
+        pat_id: "",
+        medicines: [],
+      },
+      physicalExamResults: [],
+      selectedIllnesses: [],
       followv: undefined,
     },
   });
@@ -168,9 +159,7 @@ export default function SoapForm() {
               const medicine = medicineStocksOptions.find(
                 (m) => m.id === med.minv_id
               );
-              return `- ${medicine?.name} ${medicine?.dosage} - ${
-                med.medrec_qty
-              } ${medicine?.unit} (Reason: ${med.reason || "Not specified"})`;
+              return `- ${medicine?.name} ${medicine?.dosage} (${med.medrec_qty} ${medicine?.unit})  ${med.reason}`;
             })
           : [];
 
@@ -191,20 +180,6 @@ export default function SoapForm() {
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
-
-  useEffect(() => {
-    if (isInitialLoad) {
-      setIsInitialLoad(false);
-      return;
-    }
-
-    const subscription = form.watch((value) => {
-      if (JSON.stringify(value) !== JSON.stringify(formData)) {
-        setFormData(value as SoapFormType);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, formData, setFormData, isInitialLoad]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -251,24 +226,22 @@ export default function SoapForm() {
     fetchInitialData();
   }, [form]);
 
-
-
   const onSubmit = async (data: SoapFormType) => {
     let findingId;
     let medHistoryCreated = false;
     let perCreated = false;
     let medRequestId: number | null = null;
     let followv: string | null = null;
-  
+
     try {
       const findingResponse = await createFindings({
         assessment_summary: data.assessment_summary || "",
-        plantreatment_summary: data.plantreatment_summary,
-        sub_summary: data.sub_summary || "",
+        plantreatment_summary: data.plantreatment_summary || "",
+        subj_summary: data.subj_summary || "",
         obj_summary: data.obj_summary || "",
       });
       findingId = findingResponse.find_id;
-  
+
       if (
         data.medicineRequest?.medicines &&
         data.medicineRequest.medicines.length > 0
@@ -283,12 +256,12 @@ export default function SoapForm() {
         });
         medRequestId = medRequestResponse.medreq_id;
       }
-  
+
       if (data.physicalExamResults && data.physicalExamResults.length > 0) {
         await createPEResults(data.physicalExamResults, findingId);
         perCreated = true;
       }
-  
+
       // Only create follow-up visit if date is provided
       if (data.followv) {
         const followv_response = await createFollowUpVisit(
@@ -297,7 +270,7 @@ export default function SoapForm() {
         );
         followv = followv_response?.followv_id;
       }
-  
+
       await updateMedicalConsultation(
         MedicalConsultation.medrec_id,
         "completed",
@@ -305,7 +278,7 @@ export default function SoapForm() {
         medRequestId ?? undefined,
         followv ?? undefined
       );
-  
+
       if (data.selectedIllnesses && data.selectedIllnesses.length > 0) {
         const medicalHistoryData = data.selectedIllnesses.map((illnessId) => ({
           patrec: MedicalConsultation?.patrec,
@@ -316,19 +289,19 @@ export default function SoapForm() {
         await createMedicalHistory(medicalHistoryData);
         medHistoryCreated = true;
       }
-  
+
       localStorage.removeItem("soapFormData");
       localStorage.removeItem("soapFormMedicines");
       toast.success("Documentation saved successfully");
       setShowReceipt(true);
     } catch (error) {
       console.error("Error saving documentation:", error);
-  
+
       try {
         if (medHistoryCreated && MedicalConsultation?.medrec_id) {
           await deleteMedicalHistory(MedicalConsultation.medrec_id);
         }
-  
+
         if (findingId) {
           await updateMedicalConsultation(
             MedicalConsultation.medrec_id,
@@ -338,15 +311,15 @@ export default function SoapForm() {
         if (medRequestId) {
           await deleteMedicineRequest(medRequestId);
         }
-  
+
         if (perCreated && findingId) {
           await deletePEResults(findingId);
         }
-  
+
         if (findingId) {
           await deleteFindings(findingId);
         }
-  
+
         if (followv) {
           await deleteFollowUpVisit(followv);
         }
@@ -356,26 +329,17 @@ export default function SoapForm() {
           "Failed to fully rollback changes. Please contact support."
         );
       }
-  
+
       toast.error("Failed to save documentation");
     }
   };
-  
+
   if (isMedicinesLoading || isPeLoading) {
-    return (
-      <div className="w-full h-full p-4">
-        <div className="max-w-7xl mx-auto">
-          <Skeleton className="h-10 w-1/6 mb-3" />
-          <Skeleton className="h-7 w-1/4 mb-6" />
-          <Skeleton className="h-10 w-full mb-4" />
-          <Skeleton className="h-4/5 w-full mb-4" />
-        </div>
-      </div>
-    );
+    return <SoapFormSkeleton />;
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div>
       <div className="max-w-7xl mx-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -387,7 +351,7 @@ export default function SoapForm() {
                 </h2>
                 <FormTextArea
                   control={form.control}
-                  name="sub_summary"
+                  name="subj_summary"
                   label="Patient-reported symptoms and history"
                   placeholder="Describe the patient's chief complaint and history in their own words"
                   className="min-h-[120px] w-full"
@@ -483,12 +447,15 @@ export default function SoapForm() {
                       Illness Diagnoses
                     </h2>
                     <div className="text-xs text-gray-500">
-                      {form.getValues("selectedIllnesses")?.length || 0} selected
+                      {form.getValues("selectedIllnesses")?.length || 0}{" "}
+                      selected
                     </div>
                   </div>
 
                   <IllnessComponent
-                    selectedIllnesses={form.getValues("selectedIllnesses") || []}
+                    selectedIllnesses={
+                      form.getValues("selectedIllnesses") || []
+                    }
                     onIllnessSelectionChange={(selected) =>
                       form.setValue("selectedIllnesses", selected)
                     }
@@ -565,7 +532,9 @@ export default function SoapForm() {
           setShowReceipt(false);
           navigate("/pending-medical-con");
         }}
-        patientName={`${patientData?.personal_info?.per_lname}, ${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_mname || ""}`}
+        patientName={`${patientData?.personal_info?.per_lname}, ${
+          patientData?.personal_info?.per_fname
+        } ${patientData?.personal_info?.per_mname || ""}`}
         patientId={patientData?.pat_id}
         date={new Date().toLocaleDateString()}
         treatmentPlan={form.getValues("plantreatment_summary")}

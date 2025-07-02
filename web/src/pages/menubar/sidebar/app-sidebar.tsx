@@ -356,7 +356,13 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       { title: "Administration", url: "/health-administration" },
-      { title: "Doctor", url: "/mainMedicalForm" },
+      {
+        title: "Doctor",
+        url: "/pending-medical-con",
+        anotherItems: [
+          { title: "Forwarded records", url: "/pending-medical-con" },
+        ],
+      },
       { title: "Patients Record", url: "/patients-record-main" },
 
       { title: "Animal Bites", url: "/Animalbite_viewing" },

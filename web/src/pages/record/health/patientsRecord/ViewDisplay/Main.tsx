@@ -12,17 +12,23 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientDetails } from "../queries/patientsFetchQueries";
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
-import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
+import {
+  useCompletedFollowUpVisits,
+  usePendingFollowUpVisits,
+} from "../queries/followv";
 import { toast } from "sonner";
 import { useUpdatePatient } from "../queries/patientsUpdateQueries";
 import CardLayout from "@/components/ui/card/card-layout";
 import PersonalInfoTab from "./PersonalInfoTab";
 import Records from "./Records";
 import VisitHistoryTab from "./VisitHistoryTab";
+import { useMedConCount } from "../queries/count";
+import PatientRecordSkeleton from "../../../../healthServices/skeleton/patient-rec-main-skeleton"
 
 interface PatientData {
   pat_id: string;
@@ -38,10 +44,10 @@ interface PatientData {
     per_dob: string;
   };
   address: {
-    add_street: string;
-    add_barangay: string;
-    add_city: string;
-    add_province: string;
+    add_street?: string;
+    add_barangay?: string;
+    add_city?: string;
+    add_province?: string;
     sitio: string;
   };
   bloodType?: string;
@@ -52,16 +58,27 @@ interface PatientData {
 }
 
 export default function ViewPatientRecord() {
-  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal");
+  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">(
+    "personal"
+  );
   const [isEditable, setIsEditable] = useState(false);
   const { patientId } = useParams<{ patientId: string }>();
-  const { data: patientsData, isLoading, error, isError } = usePatientDetails(patientId ?? "");
+  const {
+    data: patientsData,
+    isLoading,
+    error,
+    isError,
+  } = usePatientDetails(patientId ?? "");
   const { data: medicineCountData } = useMedicineCount(patientId ?? "");
   const medicineCount = medicineCountData?.medicinerecord_count;
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
   const vaccinationCount = vaccinationCountData?.vaccination_count;
   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
   const firstAidCount = firstAidCountData?.firstaidrecord_count;
+
+  const { data: medconCountData } = useMedConCount(patientId ?? "");
+  const medconCount = medconCountData?.medcon_count;
+
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
   const updatePatientData = useUpdatePatient();
@@ -74,8 +91,27 @@ export default function ViewPatientRecord() {
     const patientArray = Array.isArray(patientsData)
       ? patientsData
       : patientsData.results ?? patientsData.data ?? [];
-    return patientArray.find((patient: PatientData) => patient.pat_id === patientId) ?? null;
+    return (
+      patientArray.find(
+        (patient: PatientData) => patient.pat_id === patientId
+      ) ?? null
+    );
   }, [patientsData, patientId]);
+
+  // Debug logging for address data
+  useEffect(() => {
+    if (currentPatient) {
+      console.log('Current Patient Data:', currentPatient);
+      console.log('Address Object:', currentPatient.address);
+      console.log('Individual Address Fields:', {
+        street: currentPatient.address?.add_street,
+        barangay: currentPatient.address?.add_barangay,
+        city: currentPatient.address?.add_city,
+        province: currentPatient.address?.add_province,
+        sitio: currentPatient.address?.sitio
+      });
+    }
+  }, [currentPatient]);
 
   const patientData = useMemo(() => {
     if (!currentPatient) return null;
@@ -89,11 +125,11 @@ export default function ViewPatientRecord() {
       patientType: currentPatient.pat_type,
       houseNo: currentPatient.households[0]?.hh_id ?? "N/A",
       address: {
-        street: currentPatient.address.add_street || "",
-        sitio: currentPatient.address.sitio,
-        barangay: currentPatient.address.add_barangay,
-        city: currentPatient.address.add_city,
-        province: currentPatient.address.add_province,
+        street: currentPatient.address?.add_street || "",
+        sitio: currentPatient.address?.sitio || "",
+        barangay: currentPatient.address?.add_barangay || "",
+        city: currentPatient.address?.add_city || "",
+        province: currentPatient.address?.add_province || "",
       },
       bloodType: currentPatient.bloodType ?? "N/A",
       allergies: currentPatient.allergies ?? "N/A",
@@ -123,7 +159,9 @@ export default function ViewPatientRecord() {
   }, [patientData, form]);
 
   const getInitials = () =>
-    patientData ? `${patientData.firstName[0] ?? ""}${patientData.lastName[0] ?? ""}` : "";
+    patientData
+      ? `${patientData.firstName[0] ?? ""}${patientData.lastName[0] ?? ""}`
+      : "";
 
   const calculateAge = (dob: string) => {
     const today = new Date();
@@ -134,48 +172,65 @@ export default function ViewPatientRecord() {
     return age;
   };
 
-  const getFullAddress = () =>
-    patientData
-      ? [
-          currentPatient.address.add_street,
-          currentPatient.address.sitio,
-          currentPatient.address.add_barangay,
-          currentPatient.address.add_city,
-          currentPatient.address.add_province,
-        ]
-          .filter(Boolean)
-          .join(", ")
-      : "";
+  const getFullAddress = () => {
+    if (!currentPatient || !currentPatient.address) return "No address provided";
+    
+    const addressParts = [
+      currentPatient.address.add_street,
+      currentPatient.address.sitio,
+      currentPatient.address.add_barangay,
+      currentPatient.address.add_city,
+      currentPatient.address.add_province,
+    ].filter(part => part && part.trim() !== "" && part.toLowerCase() !== "n/a");
+    
+    return addressParts.length > 0 ? addressParts.join(", ") : "No address provided";
+  };
+
+  // Helper function to safely get address field value
+  const getAddressField = (field: string | undefined | null): string => {
+    if (!field || field.trim() === "" || field.toLowerCase() === "n/a") {
+      return "";
+    }
+    return field.trim();
+  };
 
   const patientLinkData = useMemo(
-    () => ({
-      pat_id: currentPatient?.pat_id ?? patientId ?? "",
-      pat_type: currentPatient?.pat_type ?? patientData?.patientType ?? "",
-      age: patientData ? calculateAge(patientData.dateOfBirth) : 0,
-      addressFull: getFullAddress(),
-      address: {
-        add_street: currentPatient?.address.add_street ?? "",
-        add_barangay: currentPatient?.address.add_barangay ?? "",
-        add_city: currentPatient?.address.add_city ?? "",
-        add_province: currentPatient?.address.add_province ?? "",
-        add_external_sitio: currentPatient?.address.sitio ?? "",
-      },
-      households: [
-        {
-          hh_id: currentPatient?.households[0]?.hh_id ?? patientData?.houseNo ?? "",
+    () => {
+      console.log('Creating patientLinkData with currentPatient:', currentPatient);
+      
+      const linkData = {
+        pat_id: currentPatient?.pat_id ?? patientId ?? "",
+        pat_type: currentPatient?.pat_type ?? patientData?.patientType ?? "",
+        age: patientData ? calculateAge(patientData.dateOfBirth) : 0,
+        addressFull: getFullAddress(),
+        address: {
+          add_street: getAddressField(currentPatient?.address?.add_street),
+          add_barangay: getAddressField(currentPatient?.address?.add_barangay),
+          add_city: getAddressField(currentPatient?.address?.add_city),
+          add_province: getAddressField(currentPatient?.address?.add_province),
+          add_sitio: getAddressField(currentPatient?.address?.sitio),
         },
-      ],
-      personal_info: {
-        per_fname: currentPatient?.personal_info.per_fname ?? patientData?.firstName ?? "",
-        per_mname: currentPatient?.personal_info.per_mname ?? patientData?.middleName ?? "",
-        per_lname: currentPatient?.personal_info.per_lname ?? patientData?.lastName ?? "",
-        per_dob: currentPatient?.personal_info.per_dob ?? patientData?.dateOfBirth ?? "",
-        per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? "",
-      },
-    }),
+        households: [
+          {
+            hh_id: currentPatient?.households[0]?.hh_id ?? patientData?.houseNo ?? "",
+          },
+        ],
+        personal_info: {
+          per_fname: currentPatient?.personal_info.per_fname ?? patientData?.firstName ?? "",
+          per_mname: currentPatient?.personal_info.per_mname ?? patientData?.middleName ?? "",
+          per_lname: currentPatient?.personal_info.per_lname ?? patientData?.lastName ?? "",
+          per_dob: currentPatient?.personal_info.per_dob ?? patientData?.dateOfBirth ?? "",
+          per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? "",
+        },
+      };
+      
+      console.log('Generated patientLinkData:', linkData);
+      console.log('Address in patientLinkData:', linkData.address);
+      
+      return linkData;
+    },
     [currentPatient, patientData, patientId]
   );
-  
 
   const handleEdit = () => {
     setIsEditable(true);
@@ -226,11 +281,7 @@ export default function ViewPatientRecord() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-lg">Loading patient details...</p>
-      </div>
-    );
+    return <PatientRecordSkeleton />; // Use the new Skeleton component
   }
 
   if (isError) {
@@ -241,12 +292,18 @@ export default function ViewPatientRecord() {
           <AlertDescription className="text-red-800">
             <strong>Patient Not Found</strong>
             <br />
-            {error instanceof Error ? error.message : "The requested patient could not be found."}
+            {error instanceof Error
+              ? error.message
+              : "The requested patient could not be found."}
             <br />
             <span className="text-sm">Patient ID: {patientId}</span>
           </AlertDescription>
         </Alert>
-        <Button onClick={() => window.history.back()} variant="outline" className="mt-4">
+        <Button
+          onClick={() => window.history.back()}
+          variant="outline"
+          className="mt-4"
+        >
           <ChevronLeft className="h-4 w-4 mr-2" />
           Go Back
         </Button>
@@ -271,12 +328,19 @@ export default function ViewPatientRecord() {
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex flex-col">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patient Record</h1>
-          <p className="text-xs sm:text-sm text-darkGray">View patient information</p>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Patient Record
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            View patient information
+          </p>
         </div>
         <div className="flex gap-2 sm:ml-auto">
           {isTransient && activeTab === "personal" && (
-            <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
+            <Button
+              onClick={handleEdit}
+              className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90"
+            >
               <Edit className="h-4 w-4" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
@@ -292,21 +356,40 @@ export default function ViewPatientRecord() {
           content={
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <Avatar className="h-16 w-16 border-2 border-primary/10">
-                <AvatarFallback className="bg-primary/10 text-primary text-xl">{getInitials()}</AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                  {getInitials()}
+                </AvatarFallback>
               </Avatar>
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold">
-                  {`${patientData.firstName} ${patientData.middleName ? patientData.middleName + " " : ""}${patientData.lastName}`}
+                  {`${patientData.firstName} ${
+                    patientData.middleName ? patientData.middleName + " " : ""
+                  }${patientData.lastName}`}
                 </h2>
                 <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                  <span>ID: <span className="font-medium text-foreground">{patientId}</span></span>
+                  <span>
+                    ID:{" "}
+                    <span className="font-medium text-foreground">
+                      {patientId}
+                    </span>
+                  </span>
                   <span>•</span>
                   <span>{calculateAge(patientData.dateOfBirth)} years old</span>
                   <span>•</span>
-                  <span>{patientData.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
+                  <span>
+                    {patientData.sex.toLowerCase() === "male"
+                      ? "Male"
+                      : "Female"}
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <Badge variant={patientData.patientType === "Resident" ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      patientData.patientType === "Resident"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
                     {patientData.patientType}
                   </Badge>
                 </div>
@@ -319,7 +402,13 @@ export default function ViewPatientRecord() {
         />
       </div>
 
-      <Tabs defaultValue="personal" className="ml-2" onValueChange={(value) => setActiveTab(value as "personal" | "medical" | "visits")}>
+      <Tabs
+        defaultValue="personal"
+        className="ml-2"
+        onValueChange={(value) =>
+          setActiveTab(value as "personal" | "medical" | "visits")
+        }
+      >
         <TabsList className="mb-4 bg-background border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
           <TabsTrigger
             value="personal"
@@ -333,6 +422,7 @@ export default function ViewPatientRecord() {
           >
             Records
           </TabsTrigger>
+
           <TabsTrigger
             value="visits"
             className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
@@ -354,8 +444,12 @@ export default function ViewPatientRecord() {
           firstAidCount={firstAidCount}
           postpartumCount={undefined}
           patientLinkData={patientLinkData}
+          medicalconCount={medconCount}
         />
-        <VisitHistoryTab completedData={completedData} pendingData={pendingData} />
+        <VisitHistoryTab
+          completedData={completedData}
+          pendingData={pendingData}
+        />
       </Tabs>
     </div>
   );
