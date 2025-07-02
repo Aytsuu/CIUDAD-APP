@@ -36,9 +36,9 @@ class StaffTableSerializer(serializers.ModelSerializer):
               'contact', 'position', 'staff_assign_date', 'fam']
   
   def get_fam(self, obj):
-     family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam')
+     family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam').first()
 
-     if family_comp:
+     if family_comp and family_comp.fam:
         return family_comp.fam.fam_id 
      return None
   
@@ -74,7 +74,6 @@ class StaffCreateSerializer(serializers.ModelSerializer):
       return register
     
     return None
-  
-  
 
-  
+
+
