@@ -1,7 +1,7 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { archiveHotspot, deleteHotspot, restoreHotspot } from "../restful-API/hotspotDeleteAPI";
+import { archiveHotspot, deleteHotspot } from "../restful-API/hotspotDeleteAPI";
 
 export const useArchiveHotspot = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -59,31 +59,31 @@ export const useDeleteHotspot = (onSuccess?: () => void) => {
     })
 }
 
-export const useRestoreHotspot = (onSuccess?: () => void) => {
-    const queryClient = useQueryClient()
+// export const useRestoreHotspot = (onSuccess?: () => void) => {
+//     const queryClient = useQueryClient()
 
-    return useMutation({
-        mutationFn: (wh_num: string) => restoreHotspot(wh_num),
-        onMutate: () =>{
-            toast.loading("Restoring schedule ...", { id: "restoreHotspot" });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['hotspots'] })
-            toast.success('Schedule is restored successfully', {
-                id: "restoreHotspot",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+//     return useMutation({
+//         mutationFn: (wh_num: string) => restoreHotspot(wh_num),
+//         onMutate: () =>{
+//             toast.loading("Restoring schedule ...", { id: "restoreHotspot" });
+//         },
+//         onSuccess: () => {
+//             queryClient.invalidateQueries({ queryKey: ['hotspots'] })
+//             toast.success('Schedule is restored successfully', {
+//                 id: "restoreHotspot",
+//                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+//                 duration: 2000
+//             });
             
-            onSuccess?.();
-        },
-        onError: (err) => {
-            console.error("Error restoring schedule:", err);
-            toast.error("Failed to restore schedule", {
-                id: "restoreHotspot",
-                duration: 2000
-            });
-        }
-    })
-}
+//             onSuccess?.();
+//         },
+//         onError: (err) => {
+//             console.error("Error restoring schedule:", err);
+//             toast.error("Failed to restore schedule", {
+//                 id: "restoreHotspot",
+//                 duration: 2000
+//             });
+//         }
+//     })
+// }
 

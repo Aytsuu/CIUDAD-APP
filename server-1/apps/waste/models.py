@@ -1,11 +1,11 @@
 from django.db import models
+from django.db.models import Q, ExpressionWrapper, F, DateTimeField
 from datetime import date, datetime
 from django.core.validators import MaxValueValidator
+from django.utils import timezone
 
 def current_time():
     return datetime.now().time()
-
-
 
 
 class WasteEvent(models.Model):
@@ -299,6 +299,7 @@ class Pickup_Confirmation(models.Model):
 
     class Meta: 
         db_table = "pickup_confirmation"
+
 
 class WasteHotspot(models.Model):
     wh_num = models.BigAutoField(primary_key=True)

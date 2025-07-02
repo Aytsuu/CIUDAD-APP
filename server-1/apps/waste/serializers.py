@@ -266,7 +266,7 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
             return ""
 
     def get_sitio(self, obj):
-        return str(obj.sitio_id) if obj.sitio_id else ""
+        return str(obj.sitio_id.sitio_name) if obj.sitio_id else ""
 
 
 class WasteReportFileSerializer(serializers.ModelSerializer):
