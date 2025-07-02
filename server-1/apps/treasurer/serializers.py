@@ -95,6 +95,8 @@ class Income_ImageSerializers(serializers.ModelSerializer):
         fields = ['infi_num', 'infi_upload_date', 'infi_is_archive', 'infi_type', 'infi_name', 'infi_path', 'infi_url', 'inf_num', 'staff_name', 'inf_year', 'inf_name']
         extra_kwargs = {
             'inf_num': {'required': True},
+            'infi_name': {'required': True},
+            'infi_type': {'required': True},
             'infi_url': {'required': True},
             'infi_path': {'required': True},
         }
@@ -109,6 +111,8 @@ class Disbursement_ImageSerializers(serializers.ModelSerializer):
         fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name']
         extra_kwargs = {
             'dis_num': {'required': True},
+            'disf_name': {'required': True},
+            'disf_type': {'required': True},
             'disf_url': {'required': True},
             'disf_path': {'required': True},
         }

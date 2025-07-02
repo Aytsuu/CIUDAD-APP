@@ -280,10 +280,15 @@ class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'psd_id'
     
     def perform_destroy(self, instance):
-        """Soft delete implementation"""
-        instance.psd_is_archive = True
-        instance.save()
+        if not instance.psd_is_archive:
+            # First deletion - archive it
+            instance.psd_is_archive = True
+            instance.save()
+        else:
+            # Already archived - permanent delete
+            instance.delete()
 
+            
 Staff = apps.get_model('administration', 'Staff')
 
 class StaffListView(generics.ListAPIView):

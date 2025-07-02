@@ -31,7 +31,7 @@ const WasteMainScheduling = () => {
     },
     {
       name: "Waste Collection",
-      data: wasteCollectionData.filter((row) => row.wc_is_archive === false),
+      data: wasteCollectionData,
       columns: wasteColColumns,
       titleAccessor: "collectors_names",
       dateAccessor: "wc_date",

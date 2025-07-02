@@ -30,6 +30,10 @@ import {
   useArchiveDisbursementImage,
   useRestoreDisbursementImage,
   usePermanentDeleteDisbursementImage,
+  usePermanentDeleteIncomeFolder,
+  useRestoreIncomeFolder,
+  usePermanentDeleteDisbursementFolder,
+  useRestoreDisbursementFolder,
 } from "./queries/delqueries";
 
 function IncomeandDisbursementView() {
@@ -55,8 +59,11 @@ function IncomeandDisbursementView() {
   const permanentDeleteIncomeImage = usePermanentDeleteIncomeImage();
   const archiveDisbursementImage = useArchiveDisbursementImage();
   const restoreDisbursementImage = useRestoreDisbursementImage();
-  const permanentDeleteDisbursementImage =
-    usePermanentDeleteDisbursementImage();
+  const permanentDeleteDisbursementImage = usePermanentDeleteDisbursementImage();
+  const permanentDeleteIncomeFolder = usePermanentDeleteIncomeFolder();
+  const restoreIncomeFolder = useRestoreIncomeFolder();
+  const permanentDeleteDisbursementFolder = usePermanentDeleteDisbursementFolder();
+  const restoreDisbursementFolder = useRestoreDisbursementFolder();
 
   const albums: Album[] = useMemo(() => {
     const albumMap: { [key: string]: Album } = {};
@@ -178,6 +185,64 @@ function IncomeandDisbursementView() {
       );
     }
   };
+
+const handleDeleteAllImages = (album: Album) => {
+  const allArchived = album.images.every(img => 
+    (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+    (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+  );
+
+  if (allArchived) {
+    // Delete entire folder if all images are archived
+    if (album.type === 'income') {
+      permanentDeleteIncomeFolder.mutate(album.id);
+    } else {
+      permanentDeleteDisbursementFolder.mutate(album.id);
+    }
+  } else {
+    // Only delete archived images
+    album.images.forEach((img) => {
+      const isArchived = img.type === 'income' 
+        ? (img as IncomeImage).infi_is_archive 
+        : (img as DisbursementImage).disf_is_archive;
+        
+      if (isArchived) {
+        handlePermanentDeleteImage(img);
+      }
+    });
+  }
+};
+
+const handleRestoreAllImages = (album: Album) => {
+  // Only restore archived images
+  album.images.forEach((img) => {
+    const isArchived = img.type === 'income' 
+      ? (img as IncomeImage).infi_is_archive 
+      : (img as DisbursementImage).disf_is_archive;
+      
+    if (isArchived) {
+      handleRestoreImage(img);
+    }
+  });
+};
+
+const getDeleteAllTitle = (album: Album) => {
+  const allArchived = album.images.every(img => 
+    (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+    (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+  );
+  return allArchived ? "Delete Entire Folder" : "Delete Archived Images";
+};
+
+const getDeleteAllDescription = (album: Album) => {
+  const allArchived = album.images.every(img => 
+    (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+    (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+  );
+  return allArchived 
+    ? "This will permanently delete the entire folder and all its images. This action cannot be undone."
+    : "This will permanently delete only the archived images in this folder. Active images will remain.";
+};
 
   if (isIncomeLoading || isDisbursementLoading) {
     return (
@@ -507,11 +572,7 @@ function IncomeandDisbursementView() {
                                 title="Restore All Images"
                                 description="All images in this folder will be restored. Do you wish to proceed?"
                                 actionLabel="Confirm"
-                                onClick={() => {
-                                  album.images.forEach((img) =>
-                                    handleRestoreImage(img)
-                                  );
-                                }}
+                                onClick={() => handleRestoreAllImages(album)}
                                 type="success"
                               />
                             </TooltipTrigger>
@@ -531,14 +592,10 @@ function IncomeandDisbursementView() {
                                     <Trash size={16} />
                                   </Button>
                                 }
-                                title="Delete All Images"
-                                description="All images in this folder will be permanently deleted. The folder will be removed if all images are deleted. Do you wish to proceed?"
+                                title={getDeleteAllTitle(album)}
+                                description={getDeleteAllDescription(album)}
                                 actionLabel="Confirm"
-                                onClick={() => {
-                                  album.images.forEach((img) =>
-                                    handlePermanentDeleteImage(img)
-                                  );
-                                }}
+                                onClick={() => handleDeleteAllImages(album)}
                                 type="destructive"
                               />
                             </TooltipTrigger>
