@@ -42,19 +42,40 @@ export const permanentDeleteDisbursementImage = async (disf_num: number) => {
   return res.data;
 };
 
-export const deleteIncomeFolder = async (inf_num: number, permanent: boolean = false) => {
-  const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/`, {
-    params: { permanent: permanent.toString() }
-  });
+// folder operations
+export const permanentDeleteIncomeFolder = async (inf_num: number) => {
+  const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/permanent-delete/`);
   return res.data;
 };
 
-export const deleteDisbursementFolder = async (dis_num: number, permanent: boolean = false) => {
-  const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/`, {
-    params: { permanent: permanent.toString() }
-  });
+export const permanentDeleteDisbursementFolder = async (dis_num: number) => {
+  const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/permanent-delete/`);
   return res.data;
 };
+
+export const restoreIncomeFolder = async (inf_num: number) => {
+  const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/restore/`);
+  return res.data;
+};
+
+export const restoreDisbursementFolder = async (dis_num: number) => {
+  const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/restore/`);
+  return res.data;
+};
+
+// export const deleteIncomeFolder = async (inf_num: number, permanent: boolean = false) => {
+//   const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/`, {
+//     params: { permanent: permanent.toString() }
+//   });
+//   return res.data;
+// };
+
+// export const deleteDisbursementFolder = async (dis_num: number, permanent: boolean = false) => {
+//   const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/`, {
+//     params: { permanent: permanent.toString() }
+//   });
+//   return res.data;
+// };
 
 export const getIncomeImages = async (archive: boolean = false, folderId?: number) => {
   try {

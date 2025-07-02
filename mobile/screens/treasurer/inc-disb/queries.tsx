@@ -15,7 +15,8 @@ import {
   getDisbursementImages, createFolder,
   updateDisbursementFolder, updateIncomeFolder,
   updateDisbursementImage, updateIncomeImage,
-  deleteIncomeFolder, deleteDisbursementFolder
+  restoreDisbursementFolder, restoreIncomeFolder,
+  permanentDeleteDisbursementFolder, permanentDeleteIncomeFolder
 } from "./requests";
 import { useToastContext } from "@/components/ui/toast";
 import { api } from "@/api/api";
@@ -33,7 +34,7 @@ export const useCreateFolder = () => {
     onSuccess: (data: CreateFolderResponse) => {
       const type = data.type === "income" ? "income" : "disbursement";
       queryClient.invalidateQueries({ queryKey: [`${type}Folders`] });
-      toast.success(`Folder "${data.name}" created successfully`);
+      toast.success(`Folder created successfully`);
     },
     onError: (error: Error) => {
       toast.error(`Failed to create folder: ${error.message}`);
@@ -536,78 +537,70 @@ export const useUploadImage = (isIncome: boolean) => {
   });
 };
 
-export const useDeleteFolder = (isIncome: boolean) => {
+export const usePermanentDeleteIncomeFolder = () => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: ({ id, deleteAllImages }: { id: number; deleteAllImages?: boolean }) => {
-      if (deleteAllImages) {
-        // Delete all images and the folder (matches web version behavior)
-        return isIncome 
-          ? api.delete(`treasurer/income-tab/folders/${id}/`)
-          : api.delete(`treasurer/disbursement-tab/folders/${id}/`);
-      } else {
-        // Original archive behavior
-        return isIncome
-          ? api.patch(`treasurer/income-tab/folders/${id}/`, { inf_is_archive: true })
-          : api.patch(`treasurer/disbursement-tab/folders/${id}/`, { dis_is_archive: true });
-      }
+    mutationFn: permanentDeleteIncomeFolder,
+    onSuccess: () => {
+      toast.success("Income folder and all images deleted");
+      queryClient.invalidateQueries({ queryKey: ["incomeFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["incomeImages"] });
     },
-    onMutate: async ({ id, deleteAllImages }) => {
-      const queryKey = isIncome ? "incomeImages" : "disbursementImages";
-      await queryClient.cancelQueries({ queryKey });
-      
-      const previousImages = queryClient.getQueryData<ImageItem[]>([queryKey]);
+    onError: (error: Error) => {
+      toast.error(`Failed to delete income folder: ${error.message}`);
+    }
+  });
+};
 
-      if (deleteAllImages) {
-        // Optimistically remove all images in this folder
-        queryClient.setQueryData<ImageItem[]>([queryKey], (old = []) =>
-          old.filter(image => 
-            (isIncome 
-              ? (image as IncomeImage).inf_num 
-              : (image as DisbursementImage).dis_num) !== id
-          )
-        );
-      } else {
-        // Optimistically archive all images in this folder
-        queryClient.setQueryData<ImageItem[]>([queryKey], (old = []) =>
-          old.map(image => {
-            if ((isIncome 
-                  ? (image as IncomeImage).inf_num 
-                  : (image as DisbursementImage).dis_num) === id) {
-              return {
-                ...image,
-                [isIncome ? 'infi_is_archive' : 'disf_is_archive']: true
-              };
-            }
-            return image;
-          })
-        );
-      }
-      
-      return { previousImages };
+export const usePermanentDeleteDisbursementFolder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: permanentDeleteDisbursementFolder,
+    onSuccess: () => {
+      toast.success("Disbursement folder and all images deleted");
+      queryClient.invalidateQueries({ queryKey: ["disbursementFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["disbursementImages"] });
     },
-    onSuccess: (data, variables) => {
-      if (variables.deleteAllImages) {
-        toast.success(`Deleted all images and folder successfully`);
-      } else {
-        toast.success(`Folder and contents archived successfully`);
-      }
+    onError: (error: Error) => {
+      toast.error(`Failed to delete disbursement folder: ${error.message}`);
+    }
+  });
+};
+
+export const useRestoreIncomeFolder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: restoreIncomeFolder,
+    onSuccess: () => {
+      toast.success("Income folder and all images restored");
+      queryClient.invalidateQueries({ queryKey: ["incomeFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["incomeImages"] });
     },
-    onError: (error: Error, variables, context) => {
-      const queryKey = isIncome ? "incomeImages" : "disbursementImages";
-      
-      // Revert optimistic updates
-      if (context?.previousImages) {
-        queryClient.setQueryData([queryKey], context.previousImages);
-      }
-      
-      toast.error(`Operation failed: ${error.message}`);
+    onError: (error: Error) => {
+      toast.error(`Failed to restore income folder: ${error.message}`);
+    }
+  });
+};
+
+export const useRestoreDisbursementFolder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: restoreDisbursementFolder,
+    onSuccess: () => {
+      toast.success("Disbursement folder and all images restored");
+      queryClient.invalidateQueries({ queryKey: ["disbursementFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["disbursementImages"] });
     },
-    onSettled: () => {
-      const queryKey = isIncome ? "incomeImages" : "disbursementImages";
-      queryClient.invalidateQueries({ queryKey });
+    onError: (error: Error) => {
+      toast.error(`Failed to restore disbursement folder: ${error.message}`);
     }
   });
 };

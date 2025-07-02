@@ -21,7 +21,10 @@ import {
   useRestoreDisbursementImage,
   useDeleteDisbursementImage,
   usePermanentDeleteDisbursementImage,
-  useDeleteFolder
+  usePermanentDeleteDisbursementFolder,
+  usePermanentDeleteIncomeFolder,
+  useRestoreDisbursementFolder,
+  useRestoreIncomeFolder
 } from "./queries";
 
 const PLACEHOLDER_IMAGE = "/placeholder-image.png";
@@ -47,7 +50,10 @@ const IncomeandDisbursementMain = () => {
   const restoreDisbursementImage = useRestoreDisbursementImage();
   const deleteDisbursementImage = useDeleteDisbursementImage();
   const permanentDeleteDisbursementImage = usePermanentDeleteDisbursementImage();
-  const deleteFolder = useDeleteFolder(selectedAlbum?.type === "income");
+  const permanentDeleteIncomeFolder = usePermanentDeleteIncomeFolder();
+  const restoreIncomeFolder = useRestoreIncomeFolder();
+  const permanentDeleteDisbursementFolder = usePermanentDeleteDisbursementFolder();
+  const restoreDisbursementFolder = useRestoreDisbursementFolder();
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
   const typeOptions = [
@@ -153,33 +159,66 @@ const IncomeandDisbursementMain = () => {
     currentPage * pageSize
   );
 
+  const handlePermanentDeleteImage = useCallback((item: ImageItem) => {
+    const mutate = item.type === "income" ? permanentDeleteIncomeImage.mutate : permanentDeleteDisbursementImage.mutate;
+    const id = item.type === "income" ? (item as IncomeImage).infi_num : (item as DisbursementImage).disf_num;
+    
+    mutate(id, {
+      onError: (error) => console.error("Error deleting image:", error)
+    });
+  }, [permanentDeleteIncomeImage, permanentDeleteDisbursementImage]);
+
+  const handlePermanentDeleteFolder = useCallback((album: Album) => {
+    const allArchived = album.images.every(img => 
+      (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+      (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+    );
+
+    if (allArchived) {
+      if (album.type === 'income') {
+        permanentDeleteIncomeFolder.mutate(album.id, {
+          onError: (error) => console.error("Error deleting folder:", error)
+        });
+      } else {
+        permanentDeleteDisbursementFolder.mutate(album.id, {
+          onError: (error) => console.error("Error deleting folder:", error)
+        });
+      }
+    } else {
+      album.images.forEach((img) => {
+        const isArchived = img.type === 'income' 
+          ? (img as IncomeImage).infi_is_archive 
+          : (img as DisbursementImage).disf_is_archive;
+          
+        if (isArchived) {
+          handlePermanentDeleteImage(img);
+        }
+      });
+    }
+  }, [permanentDeleteIncomeFolder, permanentDeleteDisbursementFolder, handlePermanentDeleteImage]);
+
+  const getDeleteAllTitle = (album: Album) => {
+    const allArchived = album.images.every(img => 
+      (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+      (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+    );
+    return allArchived ? "Delete Image(s)" : "Delete Archived Images";
+  };
+
+  const getDeleteAllDescription = (album: Album) => {
+    const allArchived = album.images.every(img => 
+      (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+      (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+    );
+    return allArchived 
+      ? "This will permanently delete the image(s). This action cannot be undone."
+      : "This will permanently delete only the archived images in this folder. Active images will remain.";
+  };
+
   const handleAction = useCallback((action: string, items: ImageItem | ImageItem[] | Album, onSuccess?: () => void) => {
     const itemsArray = Array.isArray(items) ? items : [items];
     let hasErrors = false;
 
-  // Handle folder deletion
-  if (action === "permanentDelete" && "id" in items && !("infi_num" in items || "disf_num" in items)) {
-    return new Promise<void>((resolve) => {
-      deleteFolder.mutate(
-        { id: (items as Album).id, deleteAllImages: true },
-        {
-          onSuccess: () => {
-            if (onSuccess) onSuccess();
-            setZoomVisible(false);
-            setSelectedAlbum(null);
-            resolve();
-          },
-          onError: (error: any) => {
-            console.error(`Error deleting folder ${(items as Album).id}:`, error);
-            hasErrors = true;
-            resolve();
-          },
-        }
-      );
-    });
-  }
-
-    // Handle individual image actions
     const mutations = itemsArray.map((item) => {
       const mutate = {
         archive: item.type === "income" ? archiveIncomeImage.mutate : archiveDisbursementImage.mutate,
@@ -212,7 +251,7 @@ const IncomeandDisbursementMain = () => {
       if (onSuccess) onSuccess();
       setZoomVisible(false);
       if (hasErrors) {
-        // toast.error("Some images failed to process, but the operation completed.");
+        console.log("Some images failed to process");
       }
     });
   }, [
@@ -224,7 +263,6 @@ const IncomeandDisbursementMain = () => {
     deleteDisbursementImage,
     permanentDeleteIncomeImage,
     permanentDeleteDisbursementImage,
-    deleteFolder,
   ]);
 
   const handleOpenZoom = (album: Album) => {
@@ -319,11 +357,11 @@ const IncomeandDisbursementMain = () => {
                       <Trash size={16} color="white" />
                     </TouchableOpacity>
                   }
-                  title="Permanently Delete Album"
-                  description="This action cannot be undone. Are you sure you want to permanently delete this album and all its images?"
+                  title={getDeleteAllTitle(album)}
+                  description={getDeleteAllDescription(album)}
                   actionLabel="Delete"
                   variant="destructive"
-                  onPress={() => handleAction("permanentDelete", album)} // Changed to pass album
+                  onPress={() => handlePermanentDeleteFolder(album)}
                 />
               </View>
             </>
@@ -592,11 +630,11 @@ const IncomeandDisbursementMain = () => {
                                 <Trash size={16} color="white" />
                               </TouchableOpacity>
                             }
-                            title="Permanently Delete Image"
-                            description="This action cannot be undone. Are you sure you want to permanently delete this image?"
+                            title="Delete Image"
+                            description="This will permanently delete this image. This action cannot be undone."
                             actionLabel="Delete"
                             variant="destructive"
-                            onPress={() => handleAction("permanentDelete", item)}
+                            onPress={() => handlePermanentDeleteImage(item)}
                           />
                         </>
                       )}
