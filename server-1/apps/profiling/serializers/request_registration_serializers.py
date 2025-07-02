@@ -34,7 +34,7 @@ class RequestTableSerializer(serializers.ModelSerializer):
     model = RequestRegistration
     fields = ['req_id', 'req_date', 'per', 'per_lname', 'per_fname', 'per_mname',  
               'per_suffix','per_sex', 'per_dob', 'per_status', 'addresses',
-              'per_contact', 'per_edAttainment', 'per_religion', 'files']
+              'per_contact', 'per_edAttainment', 'per_religion', 'files', 'acc']
 
   def get_addresses(self, obj):
     per_add = PersonalAddress.objects.filter(per=obj.per)

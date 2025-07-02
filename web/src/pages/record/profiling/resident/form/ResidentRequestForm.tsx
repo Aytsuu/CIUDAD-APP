@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { ImageModal } from "@/components/image-modal"
 import { MediaUploadType } from "@/components/ui/media-upload"
 import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries"
+import { useUpdateAccount } from "../../queries/profilingUpdateQueries"
 
 export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -20,6 +21,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   const { user } = useAuth()
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: deleteRequest } = useDeleteRequest()
+  const { mutateAsync: updateAccount } = useUpdateAccount();
   const { form, handleSubmitError, handleSubmitSuccess } = useResidentForm(params.data)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [isRejecting, setIsRejecting] = React.useState<boolean>(false)
@@ -59,16 +61,21 @@ export default function ResidentRequestForm({ params }: { params: any }) {
         },
         staffId: user?.staff?.staff_id,
       }, {
-        onSuccess: () => {
-          deleteRequest(params.data.req_id)
-          navigate(-1)
-          handleSubmitSuccess("Request has been approved")
+        onSuccess: (newData) => {
+          updateAccount({
+            accNo: params.data.acc,
+            data: {rp: newData.rp_id}
+          }, {
+            onSuccess: () => {
+              deleteRequest(params.data.req_id);
+              navigate(-1);
+              handleSubmitSuccess("Request has been approved");
+            }
+          })
         }
       })
     } catch (error) {
       handleSubmitError("Failed to process request")
-    } finally {
-      setIsSubmitting(false)
     }
   }
 

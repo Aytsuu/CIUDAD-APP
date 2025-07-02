@@ -81,9 +81,9 @@ export const ProfilingSidebar = () => {
                       {formatName(data.per_fname, data.per_mname, data.per_lname)}
                     </h3>
                     
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Calendar className="w-3 h-3" />
-                      <span>ID: {data.req_id}</span>
+                    <div className="flex flex-col gap-1 text-xs text-gray-500">
+                      <span>Request No. {data.req_id}</span>
+                      <span>Request Date: {data.req_date}</span>
                     </div>
                   </div>
                   
