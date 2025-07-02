@@ -103,7 +103,7 @@ function WasteHotSched({onSuccess}: {
                     name="date"
                     type="date"
                     label="Date"
-                    // min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} 
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} 
                 />
 
 
