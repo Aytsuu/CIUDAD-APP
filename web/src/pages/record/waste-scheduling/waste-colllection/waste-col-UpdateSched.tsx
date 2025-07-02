@@ -212,6 +212,7 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, wc_is_archi
                         name="date"
                         type="date"
                         label="Date"
+                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                     />
 
                     <FormDateTimeInput
