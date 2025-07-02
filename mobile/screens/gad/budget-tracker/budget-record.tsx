@@ -79,6 +79,12 @@ const BudgetTrackerRecords = () => {
     if (activeTab === 'active' && entry.gbud_is_archive) return false;
     if (activeTab === 'archive' && !entry.gbud_is_archive) return false;
     if (selectedType !== 'All' && entry.gbud_type !== selectedType) return false;
+
+    if (selectedMonth !== 'All' && entry.gbud_datetime) {
+      const entryDate = new Date(entry.gbud_datetime);
+      const entryMonth = (entryDate.getMonth() + 1).toString().padStart(2, '0'); // Convert to two-digit format
+      if (entryMonth !== selectedMonth) return false;
+    }
     
     if (searchQuery) {
       const searchContent = `${entry.gbud_particulars} ${entry.gbud_type} ${entry.gbud_amount} ${entry.gbud_add_notes}`.toLowerCase();

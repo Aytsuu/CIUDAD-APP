@@ -144,7 +144,7 @@ const filteredEvents = councilEvents.filter((event) => {
       <div className="p-2 sm:p-4 md:p-6 lg:p-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-2 sm:p-4 mb-4 sm:mb-6 flex flex-col sm:flex-row items-center justify-between">
           <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">
-            Events
+            Council Events
           </h1>
           <div className="flex items-center mt-2 sm:mt-0">
             {eventViewMode === "upcoming" && (
