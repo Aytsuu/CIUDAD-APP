@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { addAccount, addAddress, addPersonal, addPersonalAddress, addRequest, addRequestFile } from "../restful-api/signupPostAPI";
+import { addAccount, addAddress, addPersonal, addPersonalAddress, addRequest } from "../rest-api/authPostAPI";
 import { api } from "@/api/api";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
@@ -25,14 +25,7 @@ export const useAddPersonal = () => {
 
 export const useAddRequest = () => {
   return useMutation({
-    mutationFn: (personalId: string) => addRequest(personalId),
-    onSuccess: () => {}
-  })
-}
-
-export const useAddRequestFile = () => {
-  return useMutation({
-    mutationFn: (data: Record<string, any>[]) => addRequestFile(data),
+    mutationFn: (data: Record<string, any>) => addRequest(data),
     onSuccess: () => {}
   })
 }
@@ -41,26 +34,26 @@ export const useValidateResidentId = () => {
   const { toast } = useToastContext();
   return useMutation({
     mutationFn: async (residentId: string) => {
-      const res = await api.post('profiling/request/link/registration/', {
-        resident_id: residentId
-      });
-      return res;
+      try {
+        const res = await api.post('profiling/request/link/registration/', {
+          resident_id: residentId
+        });
+        return res;
+      } catch (err) {
+        throw err;
+      }
     },
-    onError: (error: any) => {
-      if(error?.response?.status === 404) {
+    onSettled: (error: any) => {
+      if (error?.response?.status === 404) {
         toast.error("Resident ID not found.");
-      }
-
-      if(error?.response?.status === 403) {
+      } else if (error?.response?.status === 403) {
         toast.error("Your age is not eligible for registration.");
-      }
-
-      if(error?.response?.status === 409) {
-        toast.error("An account already exists for this resident.")
+      } else if (error?.response?.status === 409) {
+        toast.error("An account already exists for this resident.");
       }
     }
-  })
-}
+  });
+};
 
 export const useAddAccount = () => {
   const router = useRouter();

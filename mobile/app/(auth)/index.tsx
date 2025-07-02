@@ -4,5 +4,5 @@ import VerifyAge from "@/screens/auth/signup/VerifyAge";
 import ValidateResidentID from "@/screens/auth/signup/ValidateResidentID";
 
 export default () => {
-    return <ValidateResidentID/>
+    return <LoginScreen/>
 }

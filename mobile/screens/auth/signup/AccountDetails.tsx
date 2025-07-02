@@ -9,15 +9,17 @@ import { X } from "@/lib/icons/X"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
 import { useToast } from "@/hooks/use-toast"
-import { useAddAccount } from "./queries/signupPostQueries"
+import { useAddAccount } from "../queries/authPostQueries"
+import { useGetAccountEmailList } from "../queries/authFetchQueries"
 
 export default function AccountDetails() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { registrationType, rp_id } = useLocalSearchParams();
   const { toast } = useToast();
-  const { control, trigger, getValues } = useRegistrationFormContext();
+  const { control, trigger, getValues, setError } = useRegistrationFormContext();
   const { mutateAsync: addAccount } = useAddAccount();
+  const { data: accEmailList, isLoading } = useGetAccountEmailList();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -32,6 +34,15 @@ export default function AccountDetails() {
       setIsSubmitting(false);
       return;
     }
+
+    if (accEmailList?.includes(getValues('accountFormSchema.email'))) {
+      setError('accountFormSchema.email', { 
+        type: "manual",
+        message: "Email is already in use" 
+      });
+      return;
+    }
+
 
     switch(registrationType) {
       case 'link': 

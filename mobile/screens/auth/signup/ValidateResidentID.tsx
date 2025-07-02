@@ -10,7 +10,7 @@ import { X } from "@/lib/icons/X";
 import { UserSearch } from "@/lib/icons/UserSearch";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Ionicons } from '@expo/vector-icons';
-import { useValidateResidentId } from "./queries/signupPostQueries";
+import { useValidateResidentId } from "../queries/authPostQueries";
 import { useToastContext } from "@/components/ui/toast";
 
 export default () => {

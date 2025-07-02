@@ -92,6 +92,15 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject({
+      config: error.config,
+      response: {
+        status: error.response?.status,
+        data: {
+          error: "API_REQUEST_FAILED",
+          details: error.response?.data
+        }
+      }
+    });
   }
 );

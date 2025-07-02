@@ -1,4 +1,6 @@
 from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .serializers import UserAccountSerializer
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -13,3 +15,8 @@ class UserAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer
     
+class ListOfExistingEmail(APIView):
+    def get(self, request, *args, **kwargs):
+        accounts = Account.objects.all()
+        return  Response([acc.email for acc in accounts])
+

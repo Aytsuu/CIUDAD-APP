@@ -23,7 +23,7 @@ export const addPersonalAddress = async (data: Record<string, any>[]) => {
 
 
 export const addPersonal = async (data: Record<string, any>) => {
-
+  
   try {
     console.log(data)
     const res = await api.post("profiling/personal/create/", {
@@ -46,29 +46,15 @@ export const addPersonal = async (data: Record<string, any>) => {
   }
 };
 
-export const addRequest = async (personalId: string) => {
+export const addRequest = async (data: Record<string, any>) => {
   try {
-    const res = await api.post("profiling/request/create/", {
-      per: personalId,
-    });
-
+    const res = await api.post("profiling/request/create/", data);
     return res.data
   } catch (err) {
     console.error(err);
     throw err;
   }
 };
-
-export const addRequestFile = async (data: Record<string, any>[]) => {
-  try {
-    console.log(data)
-    const res = await api.post('profiling/request/file/create/', data)
-    return res.data
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-}
 
 export const postFaceData = async (data: Record<string, any>) => {
   try {

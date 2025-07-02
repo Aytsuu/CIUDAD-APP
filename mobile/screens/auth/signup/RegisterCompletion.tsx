@@ -2,10 +2,9 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import {
   useAddPersonal,
   useAddRequest,
-  useAddRequestFile,
   useAddAddress,
   useAddPerAddress,
-} from "./queries/signupPostQueries";
+} from "../queries/authPostQueries";
 import React from "react";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { useRouter } from "expo-router";
@@ -38,7 +37,6 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
   const { getValues } = useRegistrationFormContext();
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addRequest } = useAddRequest();
-  const { mutateAsync: addRequestFile } = useAddRequestFile();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
 
@@ -46,14 +44,14 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
     setPhoto({});
     setDetectionStatus("");
   };
-
+  
   const submit = async () => {
-    setIsSubmitting(true);
+    setIsSubmitting(false);
     try {
       const {per_addresses, ...data} = getValues("personalInfoSchema");
       const dob = getValues("verificationSchema.dob");
       const photoList = getValues("photoSchema.list");
-
+      const accountInfo = getValues("accountFormSchema")
       console.log("Data:", data)
       console.log("Addresses:", per_addresses.list)
 
@@ -68,21 +66,19 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
               addPersonalAddress(per_address)
             }
           })
-          addRequest(newData.per_id, {
-            onSuccess: (request) => {
-              const data = photoList.map((photo: any) => ({
-                ...photo,
-                req: request.req_id,
-              }));
 
-              console.log('file data:', data)
-              addRequestFile(data, {
-                onSuccess: () => {
-                  setStatus("success");
-                  setIsSubmitting(false);
-                  setShowFeedback(true);
-                }
-              });
+          addRequest({
+            per: newData.per_id,
+            files: photoList,
+            acc: accountInfo
+          }, {
+            onSuccess: () => {
+              setStatus("success");
+              setIsSubmitting(false);
+              setShowFeedback(true);
+            },
+            onError: () => {
+              setIsSubmitting(false);
             }
           });
         }

@@ -7,7 +7,7 @@ import { View, StyleSheet, Image } from "react-native";
 import { supabase } from "@/lib/supabase";
 import * as ImageManipulator from "expo-image-manipulator";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { postFaceData } from "./restful-api/signupPostAPI";
+import { postFaceData } from "../rest-api/authPostAPI";
 
 export type FaceDetectionCamHandle = {
   capturePhoto: () => Promise<Record<string, any> | null | undefined>;
