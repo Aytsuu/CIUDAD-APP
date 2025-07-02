@@ -15,6 +15,7 @@ import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { Plus } from "@/lib/icons/Plus";
 import { AccusedDrawer } from "./AccusedDrawer";
 import { useComplaintFormContext } from "@/contexts/ComplaintFormContext";
+import { CheckCircle } from "@/lib/icons/CheckCircle";
 
 type Complaint = z.infer<typeof complaintFormSchema>;
 
@@ -64,27 +65,13 @@ export default function ComplaintForm() {
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Blotter Complaint</Text>}
-      customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
-      }
+      customRightAction={<View className="w-10 h-10"/>}
     >
-      <View className="flex-1 justify-between gap-6">
-        <View className="flex-1 gap-6">
+      <View className="flex-1 justify-between px-5 py-4">
+        <View className="flex-1 gap-4">
           
           {/* ID Type Selection */}
-          <View className="gap-3">
-            <View className="flex-row items-center gap-2">
-              <View className="w-full mb-4 pb-2 border-b border-gray-200">
-                <Text className="text-lg font-PoppinsSemiBold text-gray-800">Complaint Form</Text>
-                <Text className="text-sm text-gray-600 font-PoppinsRegular">Fill out all required fields. Submit a photo to support your complaint</Text>
-              </View>
-            </View>
-            
+          <View>
             <FormSelect 
               control={control}
               name="comp_incident_type"
@@ -93,7 +80,7 @@ export default function ComplaintForm() {
               label="Incident Type"
             />
 
-            <FormTextArea control={control} name="comp_allegation" label="Allegation"/>
+            <FormTextArea control={control} name="comp_allegation" label="Allegation" placeholder="Provide details of the incident..."/>
             <View className="mb-4">
               <Text className="text-sm font-PoppinsRegular mb-2">Accused</Text>
               <View className={`border rounded-lg p-3 ${accusedError ? "border-red-500" : "border-gray-200"}`}>
@@ -150,15 +137,18 @@ export default function ComplaintForm() {
           </View>
         </View>
 
-        {/* Fixed Bottom Button */}
-        <View className="pt-4 pb-8 bg-white border-t border-gray-100">
-          <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-            <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue to Photo</Text>
+        <View className="pt-4 pb-8 bg-white border-t border-gray-100 mb-6 mt-4">
+          <Button 
+            onPress={handleSubmit} 
+            className='min-h-[56px] bg-blue-600 flex-row items-center justify-center'
+          >
+            <CheckCircle size={20} className="text-white mr-2" />
+            <Text className="text-white text-base font-semibold">Submit Complaint</Text>
           </Button>
 
           {/* Helper Text */}
-          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
-            All information will be kept secure and confidential
+          <Text className="text-xs font-PoppinsRegular text-gray-500 text-center mt-2">
+            Your complaint will be reviewed by our team
           </Text>
         </View>
 

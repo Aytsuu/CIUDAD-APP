@@ -28,19 +28,19 @@ class StaffTableSerializer(serializers.ModelSerializer):
   dob = serializers.CharField(source='rp.per.per_dob')
   contact = serializers.CharField(source='rp.per.per_contact')
   position = serializers.CharField(source='pos.pos_title')
+  group = serializers.CharField(source='pos.pos_group')
   fam = serializers.SerializerMethodField()
 
   class Meta:
     model = Staff
     fields = ['staff_id', 'lname', 'fname', 'mname', 'dob', 
-              'contact', 'position', 'staff_assign_date', 'fam']
+              'contact', 'position', 'group', 'staff_assign_date', 'fam']
   
   def get_fam(self, obj):
-     family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam').first()
-
-     if family_comp and family_comp.fam:
-        return family_comp.fam.fam_id 
-     return None
+    family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam').first()
+    if family_comp and family_comp.fam:
+      return family_comp.fam.fam_id
+    return None
   
 class StaffFullSerializer(serializers.ModelSerializer):
   pos = PositionBaseSerializer(read_only=True)

@@ -87,7 +87,7 @@ export default function PersonalInformation() {
         </TouchableOpacity>
       }
     >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+      <View className="flex-1 px-5">
         {/* Full Name Section */}
         <View className="mb-8">
           <View className="w-full mb-4 pb-2 border-b border-gray-200">
@@ -218,27 +218,25 @@ export default function PersonalInformation() {
             {addressError && <Text className="text-red-500 text-xs mt-1">At least one address is required</Text>}
           </View>
         </View>
-      </ScrollView>
+        <View className="pt-4 pb-8 bg-white border-t border-gray-100">
+          <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
+            <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue to Photo</Text>
+          </Button>
 
-      {/* Fixed Bottom Button */}
-      <View className="pt-4 pb-8 bg-white border-t border-gray-100">
-        <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue to Photo</Text>
-        </Button>
+          {/* Helper Text */}
+          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
+            All information will be kept secure and confidential
+          </Text>
+        </View>
 
-        {/* Helper Text */}
-        <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
-          All information will be kept secure and confidential
-        </Text>
+        {/* Address Drawer */}
+        <AddressDrawer
+          visible={showAddressDrawer}
+          onClose={() => {
+            setShowAddressDrawer(false)
+          }}
+        />
       </View>
-
-      {/* Address Drawer */}
-      <AddressDrawer
-        visible={showAddressDrawer}
-        onClose={() => {
-          setShowAddressDrawer(false)
-        }}
-      />
     </_ScreenLayout>
   )
 }

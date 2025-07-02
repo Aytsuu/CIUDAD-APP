@@ -42,7 +42,12 @@ export default function VerifyAge() {
         return;
       }
 
-      router.push("/(auth)/personal-information");
+      router.push({
+        pathname: "/(auth)/account-details",
+        params: {
+          registrationType: 'independent'
+        }
+      });
     }
     setIsSubmitting(false);
   };
@@ -83,7 +88,7 @@ export default function VerifyAge() {
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-1 py-4">
+        <View className="flex-1 py-4 px-5">
           {/* Header Section */}
           <View className="mb-8">
             <View className="items-center mb-4">
