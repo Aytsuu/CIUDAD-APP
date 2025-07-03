@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, Dimensions } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, Dimensions, ScrollView, RefreshControl } from "react-native";
 import { router } from "expo-router";
 import { Input } from "@/components/ui/input";
 import { Search, Trash, Archive, ArchiveRestore, Edit, X, ChevronLeft } from "lucide-react-native";
@@ -39,7 +39,7 @@ const IncomeandDisbursementMain = () => {
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [zoomVisible, setZoomVisible] = useState(false);
 
-  const { data: incomeImages = [], isLoading: isIncomeLoading, error: incomeError } = useGetIncomeImages(viewMode === "archived");
+  const { data: incomeImages = [], isLoading: isIncomeLoading, error: incomeError, refetch } = useGetIncomeImages(viewMode === "archived");
   const { data: disbursementImages = [], isLoading: isDisbursementLoading, error: disbursementError } = useGetDisbursementImages(viewMode === "archived");
 
   const archiveIncomeImage = useArchiveIncomeImage();
@@ -55,6 +55,14 @@ const IncomeandDisbursementMain = () => {
   const permanentDeleteDisbursementFolder = usePermanentDeleteDisbursementFolder();
   const restoreDisbursementFolder = useRestoreDisbursementFolder();
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   const typeOptions = [
     { label: "All Types", value: "all" },
@@ -434,6 +442,7 @@ const IncomeandDisbursementMain = () => {
       keyboardAvoiding={true}
       contentPadding="medium"
     >
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <View className="flex-1 p-4">
         <View className="flex flex-col gap-4 mb-4">
           <View className="flex-row justify-between items-center">
@@ -651,6 +660,7 @@ const IncomeandDisbursementMain = () => {
           </View>
         </Modal>
       </View>
+      </ScrollView>
     </ScreenLayout>
   );
 };

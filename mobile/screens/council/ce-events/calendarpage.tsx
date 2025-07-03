@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   Dimensions,
+  RefreshControl, ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetCouncilEvents, useDeleteCouncilEvent, useRestoreCouncilEvent } from '@/screens/council/ce-events/queries';
@@ -30,7 +31,14 @@ const CouncilCalendarPage = () => {
 
   // Queries
   const isArchived = eventViewMode === 'archive';
-  const { data: events = [], isLoading, error } = useGetCouncilEvents(isArchived);
+  const { data: events = [], isLoading, error, refetch } = useGetCouncilEvents(isArchived);
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   // Debug logging for events
   useEffect(() => {
@@ -272,7 +280,7 @@ const CouncilCalendarPage = () => {
         contentPadding="medium"
       scrollable={false}
     >
-
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       {/* View Mode Toggle */}
       <View className="flex-row justify-center my-3">
         <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
@@ -363,6 +371,7 @@ const CouncilCalendarPage = () => {
           </View>
         )}
       </View>
+      </ScrollView>
     </ScreenLayout>
   );
 };

@@ -5,6 +5,8 @@ import {
   SafeAreaView,
   TouchableOpacity,
   TextInput,
+  ScrollView,
+  RefreshControl
 } from 'react-native';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGetCouncilEvents, useGetAttendanceSheets } from '../ce-events/queries';
@@ -24,9 +26,16 @@ interface AttendanceRecord {
 
 const AttendanceRecords = () => {
   const router = useRouter();
-  const { data: councilEvents = [], isLoading, error } = useGetCouncilEvents();
+  const { data: councilEvents = [], isLoading, error, refetch } = useGetCouncilEvents();
   const { data: attendanceSheets = [] } = useGetAttendanceSheets();
   const [searchTerm, setSearchTerm] = useState("");
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   const filteredTableData: AttendanceRecord[] = React.useMemo(() => {
     const data = councilEvents
@@ -85,10 +94,11 @@ const AttendanceRecords = () => {
         headerBetweenAction={<Text className="text-[13px]">Attendance Records</Text>}
         showExitButton={false}
         headerAlign="left"
-        scrollable={true}
+        scrollable={false}
         keyboardAvoiding={true}
         contentPadding="medium"
     >
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {/* Search Bar */}
         <View className="mt-2 px-4 pt-4 pb-2">
           <View className="relative mb-4" onStartShouldSetResponder={() => true}>
@@ -157,6 +167,7 @@ const AttendanceRecords = () => {
               </Text>
             </View>
           )}
+          </ScrollView>
     </ScreenLayout>
   );
 };

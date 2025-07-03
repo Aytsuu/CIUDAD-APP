@@ -138,24 +138,41 @@ function GADViewEditEntryForm() {
   }
 
   const calculateRemainingBalance = () => {
-    if (!currentYearBudget) {
-      console.log("No currentYearBudget available");
-      return 0;
-    }
-    const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
-    const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-    const currentExpense =
-      gbud_type === "Expense" && gbud_amount ? Number(gbud_amount) || 0 : 0;
-    const result = initialBudget - (totalExpenses - currentExpense);
-    console.log("calculateRemainingBalance:", {
-      initialBudget,
-      totalExpenses,
-      currentExpense,
-      gbud_amount,
-      result,
-    });
-    return result;
-  };
+  if (!currentYearBudget) {
+    console.log("No currentYearBudget available");
+    return 0;
+  }
+  const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
+  const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
+  const totalIncome = Number(currentYearBudget.gbudy_income) || 0; // Include income if applicable
+  const isActualExpense = gbud_actual_expense != null && gbud_type === "Expense";
+  const currentExpense = isActualExpense
+    ? Number(gbud_actual_expense) || 0
+    : Number(gbud_proposed_budget) || 0;
+
+  // If editing an existing entry, adjust for the old expense
+  const oldExpense = params.gbud_actual_expense != null
+    ? Number(params.gbud_actual_expense) || 0
+    : Number(params.gbud_proposed_budget) || 0;
+
+  // Calculate base balance: initial budget + income - total expenses + old expense (to revert its effect)
+  let result = initialBudget - (totalExpenses - oldExpense);
+
+  // Subtract the current expense (actual or proposed)
+  result = result - currentExpense;
+
+  console.log("Remaining Balance Calculation:", {
+    initialBudget,
+    totalIncome,
+    totalExpenses,
+    oldExpense,
+    currentExpense,
+    isActualExpense,
+    result
+  });
+
+  return Number(result.toFixed(2));
+};
 
   const remainingBalance = calculateRemainingBalance();
 

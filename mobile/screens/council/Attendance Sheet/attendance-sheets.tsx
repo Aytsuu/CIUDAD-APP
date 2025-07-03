@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Dimensions
+  Dimensions,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Trash, Archive, ArchiveRestore, Edit, X, Loader2, ChevronLeft } from "lucide-react-native";

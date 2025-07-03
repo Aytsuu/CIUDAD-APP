@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, ScrollView } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, ScrollView, RefreshControl  } from "react-native"
 import { Search, Plus, Eye, ArrowLeft, ChevronLeft } from "lucide-react-native"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetDonations, type Donation } from "./queries"
@@ -12,6 +12,13 @@ const DonationTracker = () => {
   const router = useRouter()
   const { data: donations = [], isLoading, refetch } = useGetDonations()
   const [searchTerm, setSearchTerm] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   // Use useMemo to prevent re-rendering issues with search
   const filteredData = useMemo(() => {
@@ -64,13 +71,13 @@ const DonationTracker = () => {
         headerBetweenAction={<Text className="text-[13px]">Donation Records</Text>}
         showExitButton={false}
         headerAlign="left"
-        scrollable={true}
+        scrollable={false}
         keyboardAvoiding={true}
         contentPadding="medium"
       loading={isLoading}
       loadingMessage="Loading donations..."
     >
-        {/* Search Bar */}
+        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <View className="mb-4" onStartShouldSetResponder={() => true}>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm flex-1 mr-2">
@@ -135,6 +142,7 @@ const DonationTracker = () => {
               <Text className="text-gray-500 text-center">No donation records found</Text>
             </View>
           )}
+          </ScrollView>
     </ScreenLayout>
   )
 }

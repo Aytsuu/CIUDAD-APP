@@ -7,7 +7,8 @@ import {
   FlatList,
   Image,
   Modal,
-  ScrollView
+  ScrollView,
+  RefreshControl
 } from 'react-native';
 import {
   Search,
@@ -30,6 +31,7 @@ import ScreenLayout from '@/screens/_ScreenLayout';
 import { useGADBudgets, GADBudgetEntryUI } from './queries/fetch';
 import { useArchiveGADBudget, useRestoreGADBudget, usePermanentDeleteGADBudget } from './queries/del';
 import { useGetGADYearBudgets } from './queries/yearqueries';
+import { Input } from '@/components/ui/input';
 
 type DropdownOption = {
   label: string;
@@ -57,11 +59,18 @@ const BudgetTrackerRecords = () => {
   const [selectedFiles, setSelectedFiles] = useState<BudgetFile[]>([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
 
-  const { data: entries = [], isLoading } = useGADBudgets(year);
+  const { data: entries = [], isLoading, refetch } = useGADBudgets(year); //imong fetch na query
   const { data: yearBudgets = [] } = useGetGADYearBudgets();
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
   const { mutate: deleteEntry } = usePermanentDeleteGADBudget();
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   const currentYearBudget = yearBudgets.find(
     budget => budget.gbudy_year === year
@@ -72,8 +81,7 @@ const BudgetTrackerRecords = () => {
     .filter(entry => !entry.gbud_is_archive)
     .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
 
-  const remainingBalance = latestEntry?.gbud_remaining_bal || 
-    (currentYearBudget - (yearBudgets.find(b => b.gbudy_year === year)?.gbudy_expenses || 0));
+  const remainingBalance = (currentYearBudget - (yearBudgets.find(b => b.gbudy_year === year)?.gbudy_expenses || 0));
 
   const filteredData = entries.filter((entry: GADBudgetEntryUI) => {
     if (activeTab === 'active' && entry.gbud_is_archive) return false;
@@ -82,12 +90,12 @@ const BudgetTrackerRecords = () => {
 
     if (selectedMonth !== 'All' && entry.gbud_datetime) {
       const entryDate = new Date(entry.gbud_datetime);
-      const entryMonth = (entryDate.getMonth() + 1).toString().padStart(2, '0'); // Convert to two-digit format
+      const entryMonth = (entryDate.getMonth() + 1).toString().padStart(2, '0');
       if (entryMonth !== selectedMonth) return false;
     }
     
     if (searchQuery) {
-      const searchContent = `${entry.gbud_particulars} ${entry.gbud_type} ${entry.gbud_amount} ${entry.gbud_add_notes}`.toLowerCase();
+      const searchContent = `${entry.gbud_inc_particulars} ${entry.gbud_exp_particulars} ${entry.gbud_type} ${entry.gbud_amount} ${entry.gbud_add_notes}`.toLowerCase();
       return searchContent.includes(searchQuery.toLowerCase());
     }
     
@@ -171,9 +179,9 @@ const totalProposedBudget = entries
   .filter(entry => 
     !entry.gbud_is_archive && 
     entry.gbud_type === 'Expense' &&
-    (!entry.gbud_actual_expense || entry.gbud_actual_expense === 0) // Only include if no actual expense
+    (!entry.gbud_actual_expense || entry.gbud_actual_expense === '0') 
   )
-  .reduce((sum, entry) => sum + (entry.gbud_proposed_budget || 0), 0);
+  .reduce((sum, entry) => sum + Number(entry.gbud_proposed_budget || 0), 0);
 
   const renderItem = ({ item }: { item: GADBudgetEntryUI }) => (
     <TouchableOpacity onPress={() => handleEdit(item)}>
@@ -300,13 +308,14 @@ const totalProposedBudget = entries
           </View>
         </View>
       }
-      scrollable={true}
+      scrollable={false}
       contentPadding="medium"
       loading={isLoading}
       loadingMessage="Loading budget data..."
       showBackButton={false}
       showExitButton={false}
     >
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <View className="mb-4 flex-row gap-2">
         <SelectLayout
           options={[
@@ -345,7 +354,7 @@ const totalProposedBudget = entries
       <View className="mb-4">
         <View className="relative">
           <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-          <TextInput
+          <Input
             placeholder="Search..."
             className="pl-10 w-full bg-white text-sm rounded-lg p-2 border border-gray-300"
             value={searchQuery}
@@ -474,6 +483,7 @@ const totalProposedBudget = entries
           )}
         </View>
       </Modal>
+      </ScrollView>
     </ScreenLayout>
   );
 };

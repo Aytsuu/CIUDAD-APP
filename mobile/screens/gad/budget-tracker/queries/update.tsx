@@ -1,132 +1,3 @@
-// import { useMutation, useQueryClient } from "@tanstack/react-query";
-// import { useToastContext } from "@/components/ui/toast";
-// import { updateGADBudget, createGADBudgetFile } from "../request/put";
-// import { deleteGADBudgetFiles } from "../request/delete";
-// import { api } from "@/api/api";
-
-// type BudgetYear = {
-//   gbudy_year: string;
-//   gbudy_budget: number;
-//   gbudy_expenses: number;
-//   gbudy_income: number;
-// };
-
-// export type MediaFileType = {
-//   id: string;
-//   uri: string;
-//   name: string;
-//   type: string;
-//   path: string;
-//   publicUrl?: string;
-//   status: 'uploading' | 'uploaded' | 'error';
-// };
-
-// const handleFileUpdates = async (gbud_num: number, mediaFiles: MediaFileType[]) => {
-//   try {
-//     // Get current files from server
-//     const currentFilesRes = await api.get(`/gad/gad-budget-files/?gbud_num=${gbud_num}`);
-//     const currentFiles = currentFilesRes.data || [];
-
-//     // Determine files to keep and delete
-//     const existingFileIds = mediaFiles
-//       .filter(file => file.id?.startsWith('existing-'))
-//       .map(file => parseInt(file.id.replace('existing-', '')));
-
-//     // Delete files that were removed
-//     const filesToDelete = currentFiles
-//       .filter((file: any) => !existingFileIds.includes(file.gbf_id))
-//       .map((file: any) => file.gbf_id.toString());
-//     if (filesToDelete.length > 0) {
-//       await deleteGADBudgetFiles(filesToDelete, gbud_num);
-//     }
-
-//     // Add new files
-//     const filesToAdd = mediaFiles.filter(file => !file.id?.startsWith('existing-'));
-//     await Promise.all(filesToAdd.map(file => {
-//       if (file.status !== 'uploaded' || !file.publicUrl) {
-//         throw new Error(`File upload incomplete for ${file.name}: missing URL or status`);
-//       }
-//       return createGADBudgetFile({
-//         file: { name: file.name, type: file.type },
-//         publicUrl: file.publicUrl,
-//         storagePath: file.path,
-//         status: file.status,
-//       }, gbud_num);
-//     }));
-//   } catch (err) {
-//     console.error("Error updating files:", err);
-//     throw err;
-//   }
-// };
-
-// export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
-//   const queryClient = useQueryClient();
-//   const { toast } = useToastContext();
-
-//   return useMutation({
-//     mutationFn: async (data: {
-//       gbud_num: number;
-//       budgetData: Record<string, any>;
-//       files: MediaFileType[];
-//       filesToDelete: string[];
-//     }) => {
-//       // Validate remaining balance for Expense
-//       if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
-//         const currentYearBudget = yearBudgets.find(
-//           (b) => b.gbudy_year === new Date(data.budgetData.gbud_datetime).getFullYear().toString()
-//         );
-//         if (!currentYearBudget) {
-//           throw new Error("No budget found for the selected year");
-//         }
-//         const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
-//         const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-//         const totalIncome = Number(currentYearBudget.gbudy_income) || 0;
-//         const remainingBalance = initialBudget - totalExpenses + totalIncome;
-//         if (data.budgetData.gbud_actual_expense > remainingBalance) {
-//           throw new Error(
-//             `Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`
-//           );
-//         }
-//         // Validate gbud_remaining_bal if provided and not null
-//         if (data.budgetData.gbud_remaining_bal != null) {
-//           const expectedRemaining = remainingBalance - data.budgetData.gbud_actual_expense;
-//           if (data.budgetData.gbud_remaining_bal !== expectedRemaining) {
-//             throw new Error(
-//               `Remaining balance mismatch: expected ₱${expectedRemaining.toLocaleString()}, got ₱${data.budgetData.gbud_remaining_bal.toLocaleString()}`
-//             );
-//           }
-//         }
-//       }
-
-//       // Update budget entry
-//       const budgetEntry = await updateGADBudget(data.gbud_num, data.budgetData);
-
-//       // Handle file updates
-//       await handleFileUpdates(data.gbud_num, data.files);
-
-//       return budgetEntry;
-//     },
-//     onSuccess: (data, variables) => {
-//       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
-//       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
-//       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.gbud_num] });
-//       queryClient.invalidateQueries({ queryKey: ['gadYearBudgets'] });
-
-//       toast.success('Budget entry updated successfully');
-//     },
-//     onError: (error: any, variables) => {
-//       const errorMessage = error.message || JSON.stringify(error.response?.data || 'Unknown error');
-//       toast.error('Failed to update budget entry');
-//       console.error('Update Error:', {
-//         errorMessage,
-//         response: error.response?.data,
-//         filesToDelete: variables.filesToDelete,
-//         gbud_num: variables.gbud_num,
-//       });
-//     },
-//   });
-// };
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { updateGADBudget, createGADBudgetFile } from "../request/put";
@@ -215,6 +86,7 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       // Get old values (default to 0 if null/undefined)
       const oldActualExpense = Number(currentEntry.gbud_actual_expense) || 0;
       const oldProposedBudget = Number(currentEntry.gbud_proposed_budget) || 0;
+      const oldExpense = oldActualExpense || oldProposedBudget;
 
       // Validate remaining balance for Expense entries
       if (data.budgetData.gbud_type === "Expense") {
@@ -229,12 +101,9 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
         const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
         const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
         const totalIncome = Number(currentYearBudget.gbudy_income) || 0;
-
-        // Calculate adjustment for previous entry
-        const oldValue = oldActualExpense || oldProposedBudget;
         
         // Calculate current available balance
-        const currentAvailable = initialBudget - totalExpenses + totalIncome + oldValue;
+        const currentAvailable = initialBudget - (totalExpenses - oldExpense);
 
         // Determine new expense value (prioritize actual over proposed)
         const newExpenseValue = data.budgetData.gbud_actual_expense != null 
@@ -264,7 +133,7 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
               totalIncome,
               oldActualExpense,
               oldProposedBudget,
-              oldValue,
+              oldExpense,
               currentAvailable,
               newExpenseValue,
               expectedRemaining,
@@ -280,7 +149,7 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
         }
 
         // Auto-calculate remaining balance if not provided
-        data.budgetData.gbud_remaining_bal = expectedRemaining;
+        data.budgetData.gbud_remaining_bal = Number(expectedRemaining.toFixed(2));
       }
 
       // Update budget entry
