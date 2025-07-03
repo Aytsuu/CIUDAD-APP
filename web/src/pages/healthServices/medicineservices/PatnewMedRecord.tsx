@@ -44,7 +44,7 @@ interface Patient {
     add_barangay?: string;
     add_city?: string;
     add_province?: string;
-    add_external_sitio?: string;
+    add_sitio?: string;
   };
 }
 

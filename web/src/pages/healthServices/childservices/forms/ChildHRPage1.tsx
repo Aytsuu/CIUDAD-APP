@@ -11,16 +11,18 @@ import {
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { BasicInfoType, BasicInfoSchema } from "@/form-schema/chr-schema";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@radix-ui/react-label";
 import { Button } from "@/components/ui/button/button";
 import { UserPlus } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect } from "react";
-import { CardTitle, CardHeader } from "@/components/ui/card/card";
-import { ChevronLeft, Search } from "lucide-react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { ChevronLeft } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { Patient } from "@/components/ui/patientSearch";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { PatientSearch } from "@/components/ui/patientSearch";
 
 type Page1Props = {
   onNext2: () => void;
@@ -33,14 +35,129 @@ export default function ChildHRPage1({
   updateFormData,
   formData,
 }: Page1Props) {
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [childAge, setChildAge] = useState("");
+
   const form = useForm<BasicInfoType>({
-    // resolver: zodResolver(BasicInfoSchema),
-    defaultValues: formData,
+    resolver: zodResolver(BasicInfoSchema),
+    defaultValues: {
+      ...formData,
+    },
   });
 
+  const residenceType = form.watch("residenceType");
+  const isTransient = residenceType === "Transient";
+  const childDob = form.watch("childDob");
+  const motherdob = form.watch("motherdob");
+  const fatherdob = form.watch("fatherdob");
+
+  // Automatically calculate age when DOB changes for transient patients
   useEffect(() => {
-    console.log("Form data updated:", formData);
-  }, [formData]);
+    if (isTransient && childDob) {
+      const age = calculateAge(childDob);
+      setChildAge(age);
+      form.setValue("childAge", age);
+    }
+  }, [childDob, isTransient, form]);
+
+  // Calculate mother's age when DOB changes
+  useEffect(() => {
+    if (motherdob) {
+      const age = calculateAge(motherdob);
+      form.setValue("motherAge", age.toString());
+    }
+  }, [motherdob, form]);
+
+  // Calculate father's age when DOB changes
+  useEffect(() => {
+    if (fatherdob) {
+      const age = calculateAge(fatherdob);
+      form.setValue("fatherAge", age.toString());
+    }
+  }, [fatherdob, form]);
+
+  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+    setSelectedPatient(patient);
+    if (patient) {
+      form.setValue("pat_id", patient.pat_id.toString());
+      const age = calculateAge(patient.personal_info?.per_dob || "");
+      setChildAge(age);
+      form.setValue("childAge", age);
+    } else {
+      form.resetField("pat_id");
+      setChildAge("");
+      form.resetField("childAge");
+    }
+  };
+
+  const combineAddress = (address: Patient["address"]) => {
+    if (!address) return "No address provided";
+
+    const parts = [
+      address.add_street,
+      address.add_sitio,
+      address.add_barangay,
+      address.add_city,
+      address.add_province,
+    ].filter(Boolean);
+
+    return parts.join(", ") || "No address provided";
+  };
+
+  useEffect(() => {
+    if (selectedPatient) {
+      // Populate form with patient data
+      form.setValue("pat_id", selectedPatient.pat_id || "");
+      form.setValue("familyNo", selectedPatient.family_head_info?.fam_id || "N/A");
+      form.setValue("ufcNo",  "N/A");
+      
+      form.setValue("childFname", selectedPatient.personal_info?.per_fname || "");
+      form.setValue("childLname", selectedPatient.personal_info?.per_lname || "");
+      form.setValue("childMname", selectedPatient.personal_info?.per_mname || "");
+      form.setValue("childSex", selectedPatient.personal_info?.per_sex || "");
+      form.setValue("childDob", selectedPatient.personal_info?.per_dob || "");
+      form.setValue("residenceType", selectedPatient.pat_type || "Resident");
+
+      // If patient is resident, populate parent info from family_head_info
+      if (!isTransient && selectedPatient.family_head_info?.family_heads) {
+        const { mother, father } = selectedPatient.family_head_info.family_heads;
+
+        // Populate mother's information if available
+        if (mother?.personal_info) {
+          form.setValue("motherFname", mother.personal_info.per_fname || "");
+          form.setValue("motherLname", mother.personal_info.per_lname || "");
+          form.setValue("motherMname", mother.personal_info.per_mname || "");
+          form.setValue("motherdob", mother.personal_info.per_dob || "");
+          
+          // Calculate mother's age from DOB if available
+          if (mother.personal_info.per_dob) {
+            const motherAge = calculateAge(mother.personal_info.per_dob);
+            form.setValue("motherAge", motherAge.toString());
+          }
+          
+          form.setValue("motherOccupation", "");
+        }
+
+        // Populate father's information if available
+        if (father?.personal_info) {
+          form.setValue("fatherFname", father.personal_info.per_fname || "");
+          form.setValue("fatherLname", father.personal_info.per_lname || "");
+          form.setValue("fatherMname", father.personal_info.per_mname || "");
+          form.setValue("fatherdob", father.personal_info.per_dob || "");
+          
+          if (father.personal_info.per_dob) {
+            const fatherAge = calculateAge(father.personal_info.per_dob);
+            form.setValue("fatherAge", fatherAge.toString());
+          }
+          
+          form.setValue("fatherOccupation", "");
+        }
+      }
+
+      // Handle address - use full_address if available, otherwise combine parts
+      form.setValue("address", selectedPatient.address?.full_address || "No address Provided")
+    }
+  }, [selectedPatient, isTransient, form]);
 
   const onsubmitForm = (data: BasicInfoType) => {
     console.log("PAGE 1:", data);
@@ -49,195 +166,119 @@ export default function ChildHRPage1({
   };
 
   const location = useLocation();
-  const recordType = location.state?.recordType || "nonExistingPatient"; // Default value if undefined
-
-  const formFields = [
-    { name: "familyNo", label: "Family No:", type: "text" },
-    { name: "ufcNo", label: "UFC No:", type: "text" },
-    { name: "childFname", label: "First Name", type: "text" },
-    { name: "childLname", label: "Last Name", type: "text" },
-    { name: "childMname", label: "Middle Name", type: "text" },
-    {
-      name: "childSex",
-      label: "Gender",
-      type: "select",
-      options: [
-        { id: "1", name: "Male" },
-        { id: "2", name: "Female" },
-      ],
-    },
-    { name: "childDob", label: "Date of Birth", type: "date" },
-    { name: "childPob", label: "Place of Birth", type: "text" },
-    { name: "motherFname", label: "First Name", type: "text" },
-    { name: "motherLname", label: "Last Name", type: "text" },
-    { name: "motherMname", label: "Middle Name", type: "text" },
-    { name: "motherAge", label: "Age", type: "number" },
-    { name: "motherOccupation", label: "Occupation", type: "text" },
-    { name: "fatherFname", label: "First Name", type: "text" },
-    { name: "fatherLname", label: "Last Name", type: "text" },
-    { name: "fatherMname", label: "Middle Name", type: "text" },
-    { name: "fatherAge", label: "Age", type: "number" },
-    { name: "fatherOccupation", label: "Occupation", type: "text" },
-    { name: "landmarks", label: "Landmarks:", type: "text" },
-  ];
-  const addressFields = [
-    { name: "houseno", label: "House No.", placeholder: "Enter house number" },
-    { name: "street", label: "Street", placeholder: "Enter street" },
-    { name: "sitio", label: "Sitio", placeholder: "Enter sitio" },
-    { name: "barangay", label: "Barangay", placeholder: "Enter barangay" },
-    { name: "city", label: "City", placeholder: "Enter city" },
-    { name: "province", label: "Province", placeholder: "Enter province" },
-  ];
+  const recordType = location.state?.recordType || "nonExistingPatient";
 
   return (
     <>
-      <div className=" bg-white rounded-lg shadow p-8 md:p-4 lg:p-8">
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full">
+        {recordType === "existingPatient" || (
+          <div className="flex items-center justify-between gap-3 mb-10 w-full">
+            <div className="flex-1">
+              <PatientSearch
+                onPatientSelect={handlePatientSelect}
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onsubmitForm, (errors) => {
-              console.error("Form validation errors:", errors);
-            })}
-            className="space-y-6 p-4 md:p-6 lg:p-8"
+            onSubmit={form.handleSubmit(onsubmitForm)}
+            className="space-y-6 md:p-6 lg:p-8"
           >
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
-              {recordType === "existingPatient" || (
-                <div className="flex items-center justify-between gap-3 mb-10">
-                  <div className="relative flex-1">
-                    <Search
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                      size={17}
-                    />
-                    <Input
-                      placeholder="Search..."
-                      className="pl-10 w-72 bg-white"
-                    />
-                  </div>
-
-                  <Label>or</Label>
-
-                  <button className="flex items-center gap-1 underline text-blue hover:bg-blue-600 hover:text-sky-500 transition-colors rounded-md">
-                    <UserPlus className="h-4 w-4" />
-                    Add Resident
-                  </button>
-                </div>
-              )}
-
-              <div className="flex justify-end w-full sm:w-auto sm:ml-auto">
-                <FormField
+            <div className="flex w-full flex-wrap gap-4">
+              <div className="flex justify-end gap-4 w-full">
+                <FormInput
                   control={form.control}
-                  name="isTransient"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value === "transient"}
-                          onCheckedChange={(checked) => {
-                            field.onChange(checked ? "transient" : "resident");
-                          }}
-                        />
-                      </FormControl>
-                      <FormLabel className="leading-none">Transient</FormLabel>
-                    </FormItem>
-                  )}
+                  name="residenceType"
+                  label="Residence Type"
+                  type="text"
+                  readOnly
+                  className="w-[200px]"
                 />
               </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              {formFields.slice(0, 2).map(({ name, label, type }) => (
-                <FormField
-                  key={name}
+              
+              <div className="flex justify-end gap-4 w-full">
+                <FormInput
                   control={form.control}
-                  name={name as keyof BasicInfoType}
-                  render={({ field }) => (
-                    <FormItem className="flex-1 min-w-[200px]">
-                      <FormLabel className="text-black/65">
-                        {label} <span className="text-red-600">*</span>{" "}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type={type}
-                          value={String(field.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  name="familyNo"
+                  label="Family No:"
+                  type="text"
+                  readOnly={!!selectedPatient}
+                  className="w-[200px]"
                 />
-              ))}
+                <FormInput
+                  control={form.control}
+                  name="ufcNo"
+                  label="UFC No:"
+                  type="text"
+                  readOnly={!!selectedPatient}
+                  className="w-[200px]"
+                />
+              </div>
             </div>
 
             <div className="space-y-4">
               <h2 className="font-bold text-lg text-darkBlue2 mt-10">
                 Child's Information
               </h2>
-
-              <div className="flex flex-wrap gap-4">
-                {formFields
-                  .slice(2, 6)
-                  .map(({ name, label, type, options }) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name as keyof BasicInfoType}
-                      render={({ field }) => (
-                        <FormItem className="flex-1 min-w-[200px]">
-                          <FormLabel className="text-black/65">
-                            {label}
-                          </FormLabel>
-                          <FormControl>
-                            {type === "select" ? (
-                              <SelectLayout
-                                className="w-full"
-                                label={label}
-                                placeholder={`Select ${label.toLowerCase()}`}
-                                options={options || []}
-                                value={field.value as string}
-                                onChange={field.onChange}
-                              />
-                            ) : (
-                              <Input
-                                {...field}
-                                type={type}
-                                value={String(field.value)}
-                              />
-                            )}
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                {formFields.slice(6, 8).map(({ name, label, type }) => (
-                  <FormField
-                    key={name}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormInput
+                  control={form.control}
+                  name="childFname"
+                  label="First Name"
+                  type="text"
+                  readOnly={!!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="childLname"
+                  label="Last Name"
+                  type="text"
+                  readOnly={!!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="childMname"
+                  label="Middle Name"
+                  type="text"
+                  readOnly={!!selectedPatient}
+                />
+                <FormSelect
+                  control={form.control}
+                  name="childSex"
+                  label="Gender"
+                  options={[
+                    { id: "1", name: "Male" },
+                    { id: "2", name: "Female" },
+                  ]}
+                  readOnly={!!selectedPatient}
+                />
+                <FormDateTimeInput
+                  control={form.control}
+                  name="childDob"
+                  label="Date of Birth"
+                  type="date"
+                  readOnly={!!selectedPatient && !isTransient} // Allow editing for transient patients
+                />
+                <FormItem>
+                  <FormLabel className="text-black/65">Age</FormLabel>
+                  <FormControl>
+                    <Input value={childAge} readOnly className="bg-gray-100" />
+                  </FormControl>
+                </FormItem>
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <FormInput
                     control={form.control}
-                    name={name as keyof BasicInfoType}
-                    render={({ field }) => (
-                      <FormItem
-                        className={
-                          name === "childPob"
-                            ? "flex-1 min-w-[300px]"
-                            : "w-[200px]"
-                        }
-                      >
-                        <FormLabel className="text-black/65">{label}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type={type}
-                            value={String(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    name="childPob"
+                    label="Place of Birth"
+                    type="text"
+                    placeholder="Enter place of birth"
                   />
-                ))}
+                </div>
               </div>
             </div>
 
@@ -245,58 +286,53 @@ export default function ChildHRPage1({
               <h2 className="font-bold text-lg text-darkBlue2">
                 Mother's Information
               </h2>
-              <div className="flex flex-wrap gap-4">
-                {formFields.slice(8, 12).map(({ name, label, type }, index) => (
-                  <FormField
-                    key={name}
-                    control={form.control}
-                    name={name as keyof BasicInfoType}
-                    render={({ field }) => (
-                      <FormItem className="flex-1 min-w-[200px]">
-                        <FormLabel className="text-black/65">
-                          {label}
-                          {/* Conditionally render the asterisk */}
-                          {index !== 2 && (
-                            <span className="text-red-600">*</span>
-                          )}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type={type}
-                            value={String(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                {formFields.slice(12, 13).map(({ name, label, type }) => (
-                  <FormField
-                    key={name}
-                    control={form.control}
-                    name={name as keyof BasicInfoType}
-                    render={({ field }) => (
-                      <FormItem className="w-full md:w-1/2">
-                        <FormLabel className="text-black/65">
-                          {label}{" "}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type={type}
-                            value={String(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormInput
+                  control={form.control}
+                  name="motherFname"
+                  label="First Name"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="motherLname"
+                  label="Last Name"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="motherMname"
+                  label="Middle Name"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormDateTimeInput
+                  control={form.control}
+                  name="motherdob"
+                  label="Date of Birth"
+                  type="date"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="motherAge"
+                  label="Age"
+                  type="number"
+                  min={0}
+                  max={120}
+                  readOnly
+                  className="bg-gray-100"
+                />
+                <FormInput
+                  control={form.control}
+                  name="motherOccupation"
+                  label="Occupation"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                
               </div>
             </div>
 
@@ -304,112 +340,81 @@ export default function ChildHRPage1({
               <h2 className="font-bold text-lg text-darkBlue2 mt-10">
                 Father's Information
               </h2>
-
-              <div className="flex flex-wrap gap-4">
-                {formFields
-                  .slice(13, 17)
-                  .map(({ name, label, type }, index) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name as keyof BasicInfoType}
-                      render={({ field }) => (
-                        <FormItem className="flex-1 min-w-[200px]">
-                          <FormLabel className="text-black/65">
-                            {label}
-                            {/* Conditionally render the asterisk */}
-                            {index !== 2 && (
-                              <span className="text-red-600">*</span>
-                            )}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type={type}
-                              value={String(field.value)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-              </div>
-              <div className="flex flex-wrap gap-4">
-                {formFields.slice(17, 18).map(({ name, label, type }) => (
-                  <FormField
-                    key={name}
-                    control={form.control}
-                    name={name as keyof BasicInfoType}
-                    render={({ field }) => (
-                      <FormItem className="w-full md:w-1/2">
-                        <FormLabel className="text-black/65">{label}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type={type}
-                            value={String(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormInput
+                  control={form.control}
+                  name="fatherFname"
+                  label="First Name"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="fatherLname"
+                  label="Last Name"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="fatherMname"
+                  label="Middle Name"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormDateTimeInput
+                  control={form.control}
+                  name="fatherdob"
+                  label="Date of Birth"
+                  type="date"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+                <FormInput
+                  control={form.control}
+                  name="fatherAge"
+                  label="Age"
+                  type="number"
+                  min={0}
+                  max={120}
+                  readOnly
+                  className="bg-gray-100"
+                />
+                <FormInput
+                  control={form.control}
+                  name="fatherOccupation"
+                  label="Occupation"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
+                />
+               
               </div>
             </div>
 
-            <h2 className="font-bold text-lg text-darkBlue2 mt-10">Address</h2>
-            {/* Address Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {addressFields.map(({ name, label, placeholder }) => (
-                <FormField
-                  key={name}
+            <div className="space-y-4">
+              <h2 className="font-bold text-lg text-darkBlue2 mt-10">
+                {isTransient ? "Temporary Address" : "Permanent Address"}
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                
+                <FormInput
                   control={form.control}
-                  name={name as keyof BasicInfoType}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-black/65">{label}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="text"
-                          value={String(field.value)}
-                          placeholder={placeholder}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  name="address"
+                  label="Complete Address"
+                  type="text"
+                  readOnly={!isTransient && !!selectedPatient}
                 />
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              {formFields.slice(18).map(({ name, label, type }) => (
-                <FormField
-                  key={name}
+                <FormInput
                   control={form.control}
-                  name={name as keyof BasicInfoType}
-                  render={({ field }) => (
-                    <FormItem className="flex-1 min-w-[300px]">
-                      <FormLabel className="text-black/65">{label}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type={type}
-                          value={String(field.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  name="landmarks"
+                  label="Landmarks"
+                  type="text"
+                  placeholder="Enter landmarks"
                 />
-              ))}
+              </div>
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" className="w-[100px]">
+              <Button type="submit" className="w-full sm:w-[100px]">
                 Next
               </Button>
             </div>

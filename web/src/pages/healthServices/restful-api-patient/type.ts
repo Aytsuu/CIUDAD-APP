@@ -5,3 +5,4 @@
     pat_type: string;
     [key: string]: any;
   }
+

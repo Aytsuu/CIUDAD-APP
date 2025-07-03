@@ -302,3 +302,25 @@ class Appointment(models.Model):
         blank=True,
         db_column='pat_id'
     )
+    class  Meta:
+        db_table = 'appointment'
+        ordering = ['-app_date', '-app_time']
+    
+class ListOfDisabilities(models.Model):
+    disability_id = models.BigAutoField(primary_key=True)
+    disability_name = models.CharField(max_length=100, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'list_of_disabilities'
+        ordering = ['disability_name']
+        
+class PatientDisablity(models.Model):
+    pd_id = models.BigAutoField(primary_key=True)
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='patient_disabilities')
+    disability = models.ForeignKey(ListOfDisabilities, on_delete=models.CASCADE, related_name='patient_disabilities')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'patient_disability'
+        unique_together = ('pat_id', 'disability')

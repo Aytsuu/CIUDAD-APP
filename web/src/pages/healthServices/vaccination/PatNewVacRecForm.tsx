@@ -29,27 +29,8 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { ValidationAlert } from "./vac-required-alert";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { Patient } from "@/components/ui/patientSearch"
 
-interface Patient {
-  pat_id: number;
-  pat_type: string;
-  name?: string;
-  personal_info?: {
-    per_fname?: string;
-    per_mname?: string;
-    per_lname?: string;
-    per_dob?: string;
-    per_sex?: string;
-  };
-  households?: { hh_id: string }[];
-  address?: {
-    add_street?: string;
-    add_barangay?: string;
-    add_city?: string;
-    add_province?: string;
-    add_external_sitio?: string;
-  };
-}
 
 export default function PatNewVacRecForm() {
   const navigate = useNavigate();
