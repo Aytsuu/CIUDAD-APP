@@ -6,7 +6,7 @@ export default () => {
     <ScreenLayout
       showBackButton={false}
       showExitButton={false}
-      headerBetweenAction={<Text className="text-[13px]">Profile</Text>}
+      headerBetweenAction={<Text className="text-[13px]">Account</Text>}
     >
       <ScrollView>
 

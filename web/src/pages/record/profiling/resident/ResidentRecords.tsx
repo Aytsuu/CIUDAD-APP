@@ -111,13 +111,13 @@ export default function ResidentRecords() {
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending
-                    {isLoadingRequestCount ? <Skeleton className="w-7 h-6"/> : 
-                      <Badge variant="secondary" 
+                    {isLoadingRequestCount ? <Skeleton className="w-7 h-6"/> : (requestCount > 0 ?
+                      (<Badge variant="secondary" 
                         className="ml-2 bg-orange-500/20 text-orange-600 hover:bg-orange-500/20"
                       >
                         {requestCount}
-                      </Badge>
-                    }
+                      </Badge>) : (<></>)
+                    )}
                   </Button>
                 </Link>
 

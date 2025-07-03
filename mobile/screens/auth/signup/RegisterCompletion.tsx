@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useToastContext } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 const { width } = Dimensions.get('window');
 
@@ -49,16 +50,14 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
   };
   
   const submit = async () => {
-    setIsSubmitting(false);
+    setIsSubmitting(true);
     try {
       const {per_addresses, ...data} = getValues("personalInfoSchema");
       const dob = getValues("verificationSchema.dob");
       const photoList = getValues("photoSchema.list");
       const {confirmPassword, ...accountInfo} = getValues("accountFormSchema")
-      console.log("Data:", data)
-      console.log("Addresses:", per_addresses.list)
 
-      addPersonal({...data, per_dob: dob }, {
+      addPersonal({...capitalizeAllFields(data), per_dob: dob }, {
         onSuccess: (newData) => {
           addAddress(per_addresses.list, {
             onSuccess: (new_addresses) => {
