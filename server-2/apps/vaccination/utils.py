@@ -1,6 +1,6 @@
 from .models import *
 from apps.inventory.models import *
-from apps.patientrecords.serializers import PatientSerializer
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer
 from apps.patientrecords.models import *
 from django.db.models import Q
 from collections import defaultdict

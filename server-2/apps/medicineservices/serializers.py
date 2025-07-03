@@ -3,8 +3,8 @@ from .models import *
 from datetime import date
 from apps.inventory.serializers import *
 from apps.patientrecords.models import *
-from apps.patientrecords.serializers import *
-from apps.patientrecords.serializers import *
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
+from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.models import *
 # serializers.py
 
@@ -56,15 +56,31 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
         return getattr(obj, 'rp_id', None)
 
     def get_personal_info(self, obj):
-        rp = self.get_rp(obj)
-        if rp and hasattr(rp, 'per'):
-            return PersonalSerializer(rp.per, context=self.context).data
+        # Handle resident patient
+        if obj.pat_id and obj.pat_id.pat_type == 'Resident' and obj.pat_id.rp_id and hasattr(obj.pat_id.rp_id, 'per'):
+            personal = obj.pat_id.rp_id.per
+            return PersonalSerializer(personal, context=self.context).data
+        
+        # Handle transient patient
+        if obj.pat_id and obj.pat_id.pat_type == 'Transient' and obj.pat_id.trans_id:
+            trans = obj.pat_id.trans_id
+            return {
+                'per_fname': trans.tran_fname,
+                'per_lname': trans.tran_lname,
+                'per_mname': trans.tran_mname,
+                'per_suffix': trans.tran_suffix,
+                'per_dob': trans.tran_dob,
+                'per_sex': trans.tran_sex,
+                'per_status': trans.tran_status,
+                'per_edAttainment': trans.tran_ed_attainment,
+                'per_religion': trans.tran_religion,
+                'per_contact': trans.tran_contact,
+            }
         return None
 
     def get_address(self, obj):
         rp = self.get_rp(obj)
         if not rp or not hasattr(rp, 'per'):
-            print("❌ No ResidentProfile or personal info.")
             return None
 
         # Check PersonalAddress
@@ -95,7 +111,6 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
                 'full_address': f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
             }
 
-        print("❌ No address found (Personal or Household).")
         return None
     
     

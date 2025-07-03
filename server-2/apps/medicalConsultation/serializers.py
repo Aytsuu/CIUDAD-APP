@@ -1,13 +1,16 @@
 from rest_framework import serializers
 from .models import *
 from datetime import date
-from apps.patientrecords.serializers import PatientSerializer, PatientRecordSerializer,VitalSignsSerializer,BodyMeasurementSerializer,FindingSerializer
-from apps.patientrecords.models import Patient, PatientRecord
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
+from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
+from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
+from apps.patientrecords.serializers.findings_serializers import FindingSerializer
+from apps.patientrecords.models import *
 
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
     patient_details = PatientSerializer(source='*', read_only=True)
     medicalrec_count = serializers.IntegerField(read_only=True)  # ✅ Add this line
-
+ 
     class Meta:
         model = Patient
         fields = "__all__"

@@ -33,6 +33,23 @@ class Transient(models.Model):
     tradd_id = models.ForeignKey(TransientAddress, on_delete=models.CASCADE, related_name='transients', db_column='tradd_id', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
+    
+    # 🟢 MOTHER fields
+    mother_fname = models.CharField(max_length=100, null=True, blank=True)
+    mother_lname = models.CharField(max_length=100, null=True, blank=True)
+    mother_mname = models.CharField(max_length=100, null=True, blank=True)
+    mother_occupation = models.CharField(max_length=100, null=True, blank=True)
+    mother_age = models.CharField(max_length=100, null=True, blank=True)
+    mother_dob = models.DateField(null=True, blank=True)
+
+    # 🟢 FATHER fields
+    father_fname = models.CharField(max_length=100, null=True, blank=True)
+    father_lname = models.CharField(max_length=100, null=True, blank=True)
+    father_mname = models.CharField(max_length=100, null=True, blank=True)
+    father_occupation = models.CharField(max_length=100, null=True, blank=True)
+    father_age = models.CharField(max_length=100, null=True, blank=True)
+    father_dob = models.DateField(null=True, blank=True)
+
 
 
     class Meta:

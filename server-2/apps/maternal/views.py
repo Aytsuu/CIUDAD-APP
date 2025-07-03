@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models import OuterRef, Exists
 from rest_framework.response import Response
 from .serializer import *
+from apps.patientrecords.serializers.patients_serializers import *
+
 from datetime import datetime
 import logging
 

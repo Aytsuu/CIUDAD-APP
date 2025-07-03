@@ -4,8 +4,8 @@ from .models import *
 from datetime import date, timedelta
 from apps.patientrecords.models import Spouse, VitalSigns, FollowUpVisit, PatientRecord, Patient
 from apps.maternal.models import *
-from apps.patientrecords.serializers import PatientSerializer, SpouseSerializer
-
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer, SpouseSerializer
+ 
 # ************** prenatal serializers **************
 class PrenatalFormSerializer(serializers.ModelSerializer):
     class Meta:

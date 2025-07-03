@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from ..models import *
 from datetime import date
 from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer,HouseholdMinimalSerializer
@@ -7,6 +7,8 @@ from apps.healthProfiling.models import FamilyComposition,Household, ResidentPro
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 from apps.maternal.models import PostpartumRecord
 from apps.healthProfiling.serializers.minimal import *
+from .spouse_serializers import SpouseSerializer
+
 
 class PartialUpdateMixin:  
     def to_internal_value(self, data):
@@ -72,7 +74,7 @@ class PatientSerializer(serializers.ModelSerializer):
             return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
         return []
     
-
+    
     def get_family(self, obj):
         if obj.pat_type == 'Resident' and obj.rp_id:
             try:
@@ -87,6 +89,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 mother_composition = all_compositions.filter(fc_role__iexact='Mother').first()
                 if mother_composition:
                     print(f'Found mother role for resident {obj.rp_id.rp_id}, using fam_id: {mother_composition.fam_id}')
+                    print(f'Mother Info: {mother_composition}')
                     return {
                         'fam_id': mother_composition.fam_id,
                         'fc_role': 'Mother',
@@ -97,6 +100,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 father_composition = all_compositions.filter(fc_role__iexact='Father').first()
                 if father_composition:
                     print(f'Found father role for resident {obj.rp_id.rp_id}, using fam_id: {father_composition.fam_id}')
+                    print(f'Father Info: {father_composition}')
                     return {
                         'fam_id': father_composition.fam_id,
                         'fc_role': 'Father',
@@ -120,10 +124,12 @@ class PatientSerializer(serializers.ModelSerializer):
                 
                 return None
             
+            
             except Exception as e:
                 print(f'Error fetching fam_id for resident {obj.rp_id.rp_id}: {str(e)}')
                 return None
             
+        
         return None
 
     def get_family_head_info(self, obj):
@@ -162,11 +168,54 @@ class PatientSerializer(serializers.ModelSerializer):
                     'has_father': 'father' in family_heads,
                     'total_heads': len(family_heads)
                 }
+            except Exception as e:
+                print(f"Error in get_family_head_info: {str(e)}")
+                return None
+                
+                
+                
+        elif obj.pat_type == 'Transient' and obj.trans_id:
+            try:
+                trans = obj.trans_id
+                family_heads = {}
+
+                if trans.mother_fname or trans.mother_lname:
+                    family_heads['mother'] = {
+                        'role': 'Mother',
+                        'personal_info': {
+                            'per_fname': trans.mother_fname,
+                            'per_lname': trans.mother_lname,
+                            'per_mname': trans.mother_mname,
+                            'per_dob': trans.mother_dob,
+                        }
+                    }
+                    print(f"Transient Mother Info: {family_heads['mother']}")
+
+                if trans.father_fname or trans.father_lname:
+                    family_heads['father'] = {
+                        'role': 'Father',
+                        'personal_info': {
+                            'per_fname': trans.father_fname,
+                            'per_lname': trans.father_lname,
+                            'per_mname': trans.father_mname,
+                            'per_dob': trans.father_dob,
+                        }
+                    }
+                    print(f"Transient Father Info: {family_heads['father']}")
+                
+                return {
+                    'fam_id': None,  # Transient has no `fam_id` because no FamilyComposition
+                    'family_heads': family_heads,
+                    'has_mother': 'mother' in family_heads,
+                    'has_father': 'father' in family_heads,
+                    'total_heads': len(family_heads)
+                }
                 
             except Exception as e:
-                print(f'Error fetching family head info: {str(e)}')
+                print(f"Error in get_family_head_info: {str(e)}")
                 return None
-        
+            
+       
         return None
 
 
@@ -414,125 +463,4 @@ class PatientRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
   
     
-class VitalSignsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = VitalSigns
-        fields = '__all__'
 
-
-class ObstetricalHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Obstetrical_History
-        fields = '__all__'
-
-
-class FollowUpVisitSerializer(PartialUpdateMixin,serializers.ModelSerializer):
-    class Meta:
-        model = FollowUpVisit
-        fields = '__all__'
-
-class FollowUpVisitWithPatientSerializer(serializers.ModelSerializer):
-    """
-    Serializer for FollowUpVisit that includes complete patient information
-    """
-    patient_details = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = FollowUpVisit
-        fields = [
-            'followv_id',
-            'followv_date', 
-            'followv_description',
-            'followv_status',
-            'patrec_id',
-            'created_at',
-            'updated_at',
-            'patient_details'  # This will contain all patient info
-        ]
-    
-    def get_patient_details(self, obj):
-        """
-        Get complete patient details from the related patient record
-        """
-        try:
-            if obj.patrec_id and obj.patrec_id.pat_id:
-                patient = obj.patrec_id.pat_id
-                # Use your existing PatientSerializer to get all patient data
-                patient_serializer = PatientSerializer(patient, context=self.context)
-                return patient_serializer.data
-            return None
-        except Exception as e:
-            print(f"Error getting patient details: {str(e)}")
-            return None
-
-
-class SpouseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Spouse
-        fields = '__all__'
-
-class SpouseCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Spouse
-        fields = [ 'spouse_type', 'spouse_lname', 'spouse_fname', 'spouse_mname',
-                  'spouse_occupation', 'spouse_dob', 'created_at']
-        extra_kwargs = {
-            'spouse_mname': { 'required': False, 'allow_blank': True },
-            'spouse_dob': { 'required': False, 'allow_blank': True }
-        }
-    
-    def validate(self, data):
-        required_fields = ['spouse_lname', 'spouse_fname', 'spouse_occupation', 'spouse_dob', 'pat_id']
-        
-        for field in required_fields:
-            if not data.get(field):
-                raise serializers.ValidationError(f"{field} is required.")
-            
-        return data
-
-class BodyMeasurementSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BodyMeasurement
-        fields = '__all__'
-
-class IllnessSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Illness
-        fields= '__all__'
-class FindingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Finding
-        fields = '__all__'
-        
-
-
-class DiagnosisSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Diagnosis
-        fields = '__all__'
-     
-class MedicalHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model =MedicalHistory
-        fields = '__all__'
-      
-       
-class PESectionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PESection
-        fields = '__all__'
-        
-class PEOptionSerializer(serializers.ModelSerializer):
-    pe_section_details = PESectionSerializer(source="pe_section", read_only=True)
-    
-    class Meta:
-        model=PEOption
-        fields='__all__'
-        
-class PEResultSerializer(serializers.ModelSerializer):
-    pe_option_details = PEOptionSerializer(source="pe_option",read_only=True)
-    find_details = FindingSerializer(source="find", read_only = True)
-    
-    class Meta:
-        model = PEResult
-        fields = '__all__'

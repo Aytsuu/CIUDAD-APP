@@ -8,11 +8,11 @@ from datetime import datetime
 from django.db.models import Count, Max, Subquery, OuterRef, Q, F
 from django.db.models.functions import TruncMonth
 from apps.patientrecords.models import Patient,PatientRecord
-from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
 from apps.patientrecords.models import VitalSigns
 from rest_framework.views import APIView
 from .utils import *
-
+ 
 
 
 class VaccineRecordView(generics.ListCreateAPIView):
