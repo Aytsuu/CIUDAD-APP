@@ -7,7 +7,7 @@ import { Link } from "react-router";
 interface PatientLinkData {
   pat_id: string;
   pat_type: string;
-  age: number;
+  age: string;
   addressFull: string;
   address: {
     add_street: string;
@@ -23,7 +23,6 @@ interface PatientLinkData {
     per_lname: string;
     per_dob: string;
     per_sex: string;
-    ageTime: "yrs";
   };
 }
 

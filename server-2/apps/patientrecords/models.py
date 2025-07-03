@@ -323,4 +323,3 @@ class PatientDisablity(models.Model):
 
     class Meta:
         db_table = 'patient_disability'
-        unique_together = ('pat_id', 'disability')

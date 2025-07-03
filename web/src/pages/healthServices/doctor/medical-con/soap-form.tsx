@@ -27,19 +27,7 @@ import {
   MedicineRequestArrayType,
   MedicineRequestArraySchema,
 } from "@/form-schema/medicineRequest";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog/dialog";
-import { FormInput } from "@/components/ui/form/form-input";
-import { Link } from "react-router-dom";
-import { medicalConsultation } from "@/routers/medConsultation";
+
 import {
   getPESections,
   getPEOptions,
@@ -64,7 +52,7 @@ import { TreatmentReceipt } from "@/components/ui/treatment-receipt";
 import SoapFormSkeleton from "@/pages/healthServices/skeleton/soap-form-skeleton";
 
 const soapSchema = z.object({
-  subj_summary: z.string().optional(),
+  subj_summary: z.string().min(1, "Subjective summary is required"),
   followv: z.string().optional(),
   obj_summary: z.string().optional(),
   assessment_summary: z.string().optional(),
@@ -181,6 +169,21 @@ export default function SoapForm() {
     setCurrentPage(page);
   }, []);
 
+  // FIXED: Proper illness selection handling
+  const handleIllnessSelectionChange = useCallback((selectedIllnesses: number[]) => {
+    console.log("SOAP Form - Illness selection changed:", selectedIllnesses);
+    form.setValue("selectedIllnesses", selectedIllnesses);
+    // Trigger validation to ensure the form knows about the change
+    form.trigger("selectedIllnesses");
+  }, [form]);
+
+  // FIXED: Proper assessment update handling
+  const handleAssessmentUpdate = useCallback((assessment: string) => {
+    console.log("SOAP Form - Assessment update:", assessment);
+    form.setValue("assessment_summary", assessment);
+    form.trigger("assessment_summary");
+  }, [form]);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -232,6 +235,8 @@ export default function SoapForm() {
     let perCreated = false;
     let medRequestId: number | null = null;
     let followv: string | null = null;
+
+    console.log("Form submission data:", data);
 
     try {
       const findingResponse = await createFindings({
@@ -437,7 +442,7 @@ export default function SoapForm() {
 
               {/* Illness Diagnosis and Assessment Sections */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-                {/* Illness Diagnosis Section */}
+                {/* Illness Diagnosis Section - FIXED */}
                 <div
                   className="bg-white rounded-lg shadow-sm p-4 border border-gray-100"
                   onClick={(e) => e.stopPropagation()}
@@ -447,21 +452,14 @@ export default function SoapForm() {
                       Illness Diagnoses
                     </h2>
                     <div className="text-xs text-gray-500">
-                      {form.getValues("selectedIllnesses")?.length || 0}{" "}
-                      selected
+                      {form.watch("selectedIllnesses")?.length || 0} selected
                     </div>
                   </div>
 
                   <IllnessComponent
-                    selectedIllnesses={
-                      form.getValues("selectedIllnesses") || []
-                    }
-                    onIllnessSelectionChange={(selected) =>
-                      form.setValue("selectedIllnesses", selected)
-                    }
-                    onAssessmentUpdate={(assessment) =>
-                      form.setValue("assessment_summary", assessment)
-                    }
+                    selectedIllnesses={form.watch("selectedIllnesses") || []}
+                    onIllnessSelectionChange={handleIllnessSelectionChange}
+                    onAssessmentUpdate={handleAssessmentUpdate}
                   />
                 </div>
 

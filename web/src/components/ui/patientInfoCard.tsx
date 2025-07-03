@@ -20,7 +20,7 @@ interface Patient {
     add_barangay?: string;
     add_city?: string;
     add_province?: string;
-    sitio?: string;
+    add_sitio?: string;
   };
 }
 
@@ -134,7 +134,7 @@ export const PatientInfoCard = ({ patient }: PatientInfoCardProps) => {
           <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-gray-900 leading-relaxed">
-              {patient.address?.sitio || "No sitio provided"}
+              {patient.address?.add_sitio || "No sitio provided"}
             </p>
             <p className="text-xs text-gray-500">Sitio</p>
           </div>

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Search, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { api2 } from "@/api/api";
 
 interface Illness {
@@ -89,16 +88,18 @@ export const IllnessComponent = ({
       // Add new illness to the beginning of the array
       setIllnesses([createdIllness, ...illnesses]);
 
+      // Automatically check the newly added illness
       const updatedSelected = [...selectedIllnesses, createdIllness.ill_id];
       onIllnessSelectionChange(updatedSelected);
 
-      const selectedIllnessNames = illnesses
+      // Update assessment with all selected illnesses including the new one
+      const selectedIllnessNames = [...illnesses, createdIllness]
         .filter((illness) => updatedSelected.includes(illness.ill_id))
         .map((illness) => illness.illname)
         .join(", ");
       
-      onAssessmentUpdate(selectedIllnessNames || createdIllness.illname);
-      toast.success("Illness added successfully");
+      onAssessmentUpdate(selectedIllnessNames);
+      toast.success("Illness added and selected successfully");
     } catch (err) {
       console.error("Error adding illness:", err);
       toast.error("Failed to add illness");
@@ -109,16 +110,21 @@ export const IllnessComponent = ({
   };
 
   const handleIllnessCheckboxChange = (illnessId: number, checked: boolean) => {
+    console.log("Checkbox clicked:", { illnessId, checked, currentSelected: selectedIllnesses });
+    
     const updatedSelected = checked
       ? [...selectedIllnesses, illnessId]
       : selectedIllnesses.filter((id) => id !== illnessId);
 
+    console.log("Updated selection:", updatedSelected);
     onIllnessSelectionChange(updatedSelected);
 
     const selectedIllnessNames = illnesses
       .filter((illness) => updatedSelected.includes(illness.ill_id))
       .map((illness) => illness.illname)
       .join(", ");
+    
+    console.log("Updated assessment:", selectedIllnessNames);
     onAssessmentUpdate(selectedIllnessNames);
   };
 
@@ -194,13 +200,16 @@ export const IllnessComponent = ({
               key={illness.ill_id}
               className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
             >
-              <Checkbox
-              className="h-5 w-5 border border-zinc-400"
+              {/* REPLACED CUSTOM CHECKBOX WITH NATIVE HTML CHECKBOX */}
+              <input
+                type="checkbox"
                 id={`illness-${illness.ill_id}`}
                 checked={selectedIllnesses.includes(illness.ill_id)}
-                onCheckedChange={(checked) =>
-                  handleIllnessCheckboxChange(illness.ill_id, checked as boolean)
-                }
+                onChange={(e) => {
+                  console.log(`Checkbox ${illness.ill_id} changed to:`, e.target.checked);
+                  handleIllnessCheckboxChange(illness.ill_id, e.target.checked);
+                }}
+                className="w-5 h-5 text-blue-600 border-2 border-zinc-400 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
               />
               <label
                 htmlFor={`illness-${illness.ill_id}`}
