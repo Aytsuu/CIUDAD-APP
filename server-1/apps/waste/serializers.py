@@ -287,7 +287,7 @@ class WasteReportSerializer(serializers.ModelSerializer):
             'rep_violator', 'rep_anonymous', 'rep_contact', 'rep_status', 
             'rep_date', 'rep_date_resolved', 'rep_resolved_img', 
             'rep_complainant', 'waste_report_file', 'sitio_name', 'sitio_id',
-            'staff_id'
+            'staff_id', 'rp_id'
         ]
     
     def get_rep_complainant(self, obj):

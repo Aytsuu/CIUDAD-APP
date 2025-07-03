@@ -9,9 +9,13 @@ export default () => {
                 <Stack.Screen name="waste-personnel/waste-truck-create" options={{ headerShown: false }} />
                 <Stack.Screen name="waste-personnel/waste-truck-edit" options={{ headerShown: false }} />
 
+                <Stack.Screen name="illegal-dumping/resident/illegal-dump-res-create" options={{ headerShown: false }} />   
+                <Stack.Screen name="illegal-dumping/staff/illegal-dump-main-staff" options={{ headerShown: false }} />    
+                <Stack.Screen name="illegal-dumping/staff/illegal-dump-view-staff" options={{ headerShown: false }} />  
+                
                 <Stack.Screen name="waste-collection/waste-col-main" options={{ headerShown: false }} />
                 <Stack.Screen name="waste-collection/waste-col-create" options={{ headerShown: false }} />
-                <Stack.Screen name="waste-collection/waste-col-edit" options={{ headerShown: false }} />
+                <Stack.Screen name="waste-collection/waste-col-edit" options={{ headerShown: false }} />                
             </Stack>
         </ToastProvider>
     );
