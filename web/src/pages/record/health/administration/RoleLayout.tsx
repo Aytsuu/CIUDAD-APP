@@ -1,14 +1,14 @@
 import React from "react";
 import AdministrationPositions from "./AdministrationPositions";
 import FeatureSelection from "./FeatureSelection";
-import SettingPermissions from "./SettingPermissions";
+// import SettingPermissions from "./SettingPermissions";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Assigned, Feature } from "./administrationTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import { useAllAssignedFeatures, usePositions } from "./queries/administrationFetchQueries";
+import { useAllAssignedFeaturesHealth, usePositionsHealth } from "./queries/administrationFetchQueries";
 
 export default function RoleLayout() {
   const location = useLocation();
@@ -17,8 +17,8 @@ export default function RoleLayout() {
     [location.state]
   );
   const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures } =
-    useAllAssignedFeatures();
-  const { data: positions, isLoading: isLoadingPositions } = usePositions();
+    useAllAssignedFeaturesHealth();
+  const { data: positionsHealth, isLoading: isLoadingPositions } = usePositionsHealth();
   const [selectedPosition, setSelectedPosition] = React.useState<string>("");
   const [positionFeaturesMap, setPositionFeaturesMap] = React.useState<
     Map<number, Assigned[]>
@@ -83,7 +83,7 @@ export default function RoleLayout() {
         {/* Positions Section */}
         <div className="w-full h-full flex flex-col p-5">
           <AdministrationPositions
-            positions={positions}
+            positions={positionsHealth}
             selectedPosition={selectedPosition}
             setSelectedPosition={handlePositionSelect}
           />
@@ -111,7 +111,7 @@ export default function RoleLayout() {
         </div>
 
         {/* Permissions Section */}
-        <div className="w-full border-l flex flex-col gap-4">
+        {/* <div className="w-full border-l flex flex-col gap-4">
           <div className="w-full px-5 pt-5 text-darkBlue1">
             <Label>Set feature permissions</Label>
           </div>
@@ -125,13 +125,13 @@ export default function RoleLayout() {
                 No feature selected
               </Label>
             ) : (
-              <SettingPermissions
-                selectedPosition={selectedPosition}
-                assignedFeatures={assignedFeatures}
-              />
+              // <SettingPermissions
+              //   selectedPosition={selectedPosition}
+              //   assignedFeatures={assignedFeatures}
+              // />
             )}
           </ScrollArea>
-        </div>
+        </div> */}
       </Card>
     </LayoutWithBack>
   );

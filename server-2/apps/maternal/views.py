@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
+from django.db.models import OuterRef, Exists
 from rest_framework.response import Response
 from .serializer import *
 from datetime import datetime
@@ -53,11 +54,37 @@ class PostpartumRecordCreateView(generics.CreateAPIView):
             )
 
 @api_view(['GET'])
+def get_maternal_patients(request):
+    try:
+        maternal_patients = Patient.objects.filter(
+            Exists(PatientRecord.objects.filter(
+                pat_id=OuterRef('pat_id'),
+                patrec_type__in=['Prenatal', 'Postpartum Care']
+            ))
+        ).distinct()
+
+        serializer = PatientSerializer(maternal_patients, many=True)
+
+        return Response({
+            'success': True,
+            'patients': serializer.data,
+            'count': maternal_patients.count()
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+            
+        }, status=500)
+
+
+@api_view(['GET'])
 def get_postpartum_records(request):
     """Get all postpartum records with related data"""
     try:
         records = PostpartumRecord.objects.select_related(
-            'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
+            'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'pregnancy_id'
         ).prefetch_related(
             'postpartum_delivery_record', 'postpartum_assessment'
         ).all()
@@ -71,6 +98,7 @@ def get_postpartum_records(request):
             {'error': f'Failed to fetch postpartum records: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
 
 @api_view(['GET'])
 def get_postpartum_record_detail(request, ppr_id):
@@ -102,10 +130,10 @@ def get_postpartum_record_detail(request, ppr_id):
 def get_patient_postpartum_count(request, pat_id):
     """Get count of postpartum records for a specific patient"""
     try:
-        # Verify patient exists
+        # verify patient exists
         patient = Patient.objects.get(pat_id=pat_id)
         
-        # Count postpartum records for this patient
+        # count postpartum records for this patient
         count = PostpartumRecord.objects.filter(
             patrec_id__pat_id=patient
         ).count()
@@ -133,10 +161,9 @@ def get_patient_postpartum_count(request, pat_id):
 def get_patient_postpartum_records(request, pat_id):
     """Get all postpartum records for a specific patient"""
     try:
-        # Verify patient exists
         patient = Patient.objects.get(pat_id=pat_id)
         
-        # Get postpartum records for this patient
+        # get postpartum records for this patient
         records = PostpartumRecord.objects.filter(
             patrec_id__pat_id=patient
         ).select_related(

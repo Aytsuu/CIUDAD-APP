@@ -2,7 +2,6 @@ import { UseFormReturn } from "react-hook-form"
 import { useState } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { z } from "zod"
-import { IoDocumentTextOutline } from "react-icons/io5";
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
@@ -12,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FormInput } from "@/components/ui/form/form-input";
+import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
@@ -79,7 +79,7 @@ export default function PrenatalFormSecPg({form, onSubmit, back}: {
                     submit();
                 }}
                 >
-                    <h3 className="text-md font-bold">PREVIOUS PREGNANCY</h3>
+                    <h3 className="text-md font-semibold">PREVIOUS PREGNANCY</h3>
                     <div className="grid grid-cols-4 gap-4 mt-2">
                         <FormDateTimeInput
                             control={form.control}
@@ -136,7 +136,7 @@ export default function PrenatalFormSecPg({form, onSubmit, back}: {
                     
                     {/* tetanus toxoid status */}
                     <Separator className="mt-10 mb-10"/>
-                    <h3 className="text-md font-bold"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
+                    <h3 className="text-md font-semibold"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
                     <div className="grid gap-3">
                         <div className="flex flex-col">
                             <div className="flex flex-row mt-1 mb-2">
@@ -232,7 +232,7 @@ export default function PrenatalFormSecPg({form, onSubmit, back}: {
                         
                         <div className="border rounded-lg p-5">
                             <div>
-                                <h3 className="text-sm font-bold pl-3 pb-3"> TT STATUS HISTORY</h3>
+                                <h3 className="text-sm font-semibold pl-3 pb-3"> TT STATUS HISTORY</h3>
                             </div>
                             <div className="flex flex-col pl-3 pr-3 ">
                                 <div className="grid grid-cols-6 gap-2">
@@ -308,7 +308,7 @@ export default function PrenatalFormSecPg({form, onSubmit, back}: {
 
                     {/* present pregnancy */}
                     <Separator className="mt-10"/>
-                    <h3 className="text-md font-bold mt-8">PRESENT PREGNANCY</h3>
+                    <h3 className="text-md font-semibold mt-8">PRESENT PREGNANCY</h3>
                     <div className="grid grid-cols-6 gap-4 mt-2">
                         <FormInput
                             control={form.control}
@@ -357,8 +357,8 @@ export default function PrenatalFormSecPg({form, onSubmit, back}: {
                     </div>
                     
 
-                    <div className="mt-8">
-                        <FormInput
+                    <div className="mt-5">
+                        <FormTextArea
                             control={form.control}
                             name="labResults.laboratoryRemarks"
                             label="Laboratory Remarks"
@@ -366,7 +366,7 @@ export default function PrenatalFormSecPg({form, onSubmit, back}: {
                         />
                     </div>
 
-                    <div className="mt-8 sm:mt-auto flex justify-end">
+                    <div className="mt-8 sm:mt-14 flex justify-end">
                         <Button variant="outline" className="mt-4 mr-4 sm-w-32" onClick={back}>
                             Prev
                         </Button>

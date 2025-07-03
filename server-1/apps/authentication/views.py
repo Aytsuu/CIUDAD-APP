@@ -33,6 +33,7 @@ class LoginView(AuthBaseView):
             supabase_id, email = self.validate_request_data(request.data)
             username = request.data.get('username')
             profile_image = request.data.get('profile_image')
+            account = request.data.get('account')
 
             with transaction.atomic():
                 account = Account.objects.filter(
@@ -253,7 +254,6 @@ def sync_supabase_session(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-# Alternative Class-Based View version (if you prefer)
 class MobileSyncView(APIView):
     permission_classes = [AllowAny]
     

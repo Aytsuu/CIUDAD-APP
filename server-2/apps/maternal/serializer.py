@@ -3,7 +3,7 @@ from django.db import transaction
 from .models import *
 from datetime import date, timedelta
 from apps.patientrecords.models import Spouse, VitalSigns, FollowUpVisit, PatientRecord, Patient
-from apps.maternal.models import Prenatal_Form
+from apps.maternal.models import *
 from apps.patientrecords.serializers import PatientSerializer, SpouseSerializer
 
 # ************** prenatal serializers **************
@@ -44,30 +44,9 @@ class ChecklistSerializer(serializers.ModelSerializer):
         model = Checklist
         fields = '__all__'
 
-# class BirthPlanSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = BirthPlan
-#         fields = '__all__'
-
 
 
 # ************** postpartum serializers **************
-# class PostpartumRecordSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = PostpartumRecord
-#         fields = '__all__'
-
-# class PostpartumDeliveryRecordSerializer(serializers.ModelSerializer):
-#     class Meta: 
-#         model = PostpartumDeliveryRecord
-#         fields = '__all__'
-
-# class PostpartumAssessmentSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = PostpartumAssessment
-#         fields = '__all__'
-
-
 try:
     from .models import Prenatal_Form
     PRENATAL_FORM_EXISTS = True
@@ -96,17 +75,17 @@ class SpouseCreateSerializer(serializers.ModelSerializer):
 
 class PostpartumCompleteSerializer(serializers.ModelSerializer):
     # Nested serializers for related data
-    delivery_record = PostpartumDeliveryRecordSerializer()
-    assessments = PostpartumAssessmentSerializer(many=True)
+    delivery_record = PostpartumDeliveryRecordSerializer(write_only=True)
+    assessments = PostpartumAssessmentSerializer(many=True, write_only=True)
     spouse_data = SpouseCreateSerializer(required=False)
     
     # Vital signs data
-    vital_bp_systolic = serializers.CharField()
-    vital_bp_diastolic = serializers.CharField()
+    vital_bp_systolic = serializers.CharField(write_only=True)
+    vital_bp_diastolic = serializers.CharField(write_only=True)
     
     # Follow-up visit data
-    followup_date = serializers.DateField()
-    followup_description = serializers.CharField(default="Postpartum follow-up visit")
+    followup_date = serializers.DateField(write_only=True)
+    followup_description = serializers.CharField(default="Postpartum follow-up visit", write_only=True)
     
     # Patient data - we'll create the PatientRecord here
     pat_id = serializers.CharField(write_only=True, required=True)
@@ -153,7 +132,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     def validate_ppr_lochial_discharges(self, value):
         """Ensure lochial discharges is not blank"""
         if not value or (isinstance(value, str) and value.strip() == ""):
-            return "Lochia Rubra"  # Default value
+            return ""  # Default value
         return value
 
     def validate_assessments(self, value):
@@ -234,12 +213,12 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         return value
 
-    def find_related_prenatal_form(self, patient, delivery_date):
-        """
-        Temporarily disabled prenatal form linking to avoid database issues
-        """
-        print("Prenatal form linking temporarily disabled")
-        return None
+    # def find_related_prenatal_form(self, patient, delivery_date):
+    #     """
+    #     Temporarily disabled prenatal form linking to avoid database issues
+    #     """
+    #     print("Prenatal form linking temporarily disabled")
+    #     return None
 
     def handle_spouse_logic(self, patient, spouse_data):
         """
@@ -249,31 +228,30 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             return None
         
         try:
-            # Use your existing PatientSerializer to get spouse info
             patient_serializer = PatientSerializer(patient)
             spouse_info = patient_serializer.get_spouse_info(patient)
             
             print(f"Spouse info for patient {patient.pat_id}: {spouse_info}")
             
-            # Check if spouse exists (either in family composition or medical records)
+            # check if spouse exists (either in family composition or medical records)
             if spouse_info.get('spouse_exists', False):
                 spouse_source = spouse_info.get('spouse_source', '')
                 existing_spouse_info = spouse_info.get('spouse_info', {})
                 
                 if spouse_source == 'family_composition':
-                    # Father exists in family composition, don't create spouse
+                    # if father exists in family composition, don't create spouse
                     print("Father exists in family composition, not creating spouse")
                     return None
                 
                 elif spouse_source in ['prenatal_record', 'postpartum_record']:
-                    # Existing spouse in medical records, use it
+                    # existing spouse in medical records, use it
                     spouse_id = existing_spouse_info.get('spouse_id')
                     if spouse_id:
                         existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
                         print(f"Using existing spouse from {spouse_source}: {existing_spouse.spouse_id}")
                         return existing_spouse
             
-            # Check if spouse insertion is allowed
+            # check if spouse insertion is allowed
             if spouse_info.get('allow_spouse_insertion', False):
                 print(f"Creating new spouse. Reason: {spouse_info.get('reason', 'Unknown')}")
                 return Spouse.objects.create(**spouse_data)
@@ -283,7 +261,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 
         except Exception as e:
             print(f"Error in spouse logic: {str(e)}")
-            # Fallback: try to create spouse if there's an error
+            # fallback: try to create spouse if there's an error
             try:
                 return Spouse.objects.create(**spouse_data)
             except Exception as create_error:
@@ -293,20 +271,17 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         print(f"Creating postpartum record with validated data: {validated_data}")
         
-        # Extract nested data
+        # validated data
         delivery_data = validated_data.pop('delivery_record')
         assessments_data = validated_data.pop('assessments', [])
         spouse_data = validated_data.pop('spouse_data', None)
         
-        # Extract vital signs data
         vital_bp_systolic = validated_data.pop('vital_bp_systolic')
         vital_bp_diastolic = validated_data.pop('vital_bp_diastolic')
         
-        # Extract follow-up data
         followup_date = validated_data.pop('followup_date')
         followup_description = validated_data.pop('followup_description')
         
-        # Extract patient data
         pat_id = validated_data.pop('pat_id')
         patrec_type = validated_data.pop('patrec_type')
 
@@ -315,6 +290,67 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 # Verify patient exists
                 patient = Patient.objects.get(pat_id=pat_id)
                 print(f"Found patient: {patient.pat_id}")
+                
+				#  pregnancy creation logic
+                pregnancy = None
+                current_datetime = timezone.now()
+                current_date = current_datetime.date()
+                
+				# first, check if patient has an active pregnancy
+                recent_active_pregnancy = Pregnancy.objects.filter(pat_id=patient, status='active').first()
+                if recent_active_pregnancy:
+                    print("Found active pregnancy: {recently_active_pregnancy.pregnancy_id}. Marking as completed")
+                    recent_active_pregnancy.status = "completed"
+                    recent_active_pregnancy.updated_at = current_datetime
+                    recent_active_pregnancy.prenatal_end_date = current_date
+                    recent_active_pregnancy.postpartum_end_date = None
+                    recent_active_pregnancy.save()
+                    pregnancy = recent_active_pregnancy
+                
+				# second, check if there are any completed pregnancies that is within 45 days
+                else:
+                    forty_five_days_ago = current_date - timedelta(days=45)
+                    recent_completed_pregnancy = Pregnancy.objects.filter(
+                        pat_id=patient, 
+                        status='completed', 
+                        prenatal_end_date__gte=forty_five_days_ago,
+                        prenatal_end_date__lte=current_date
+                    ).order_by('-prenatal_end_date').first()
+                    
+                    if recent_completed_pregnancy:
+                        print(f'Found recent completed pregnancy: {recent_completed_pregnancy.pregnancy_id}')
+                        pregnancy = recent_completed_pregnancy
+                    
+                    # if no completed then create new pregnancy
+                    else:
+                        current_yr = current_datetime.year
+                        current_yr_suffix = str(current_yr)[-2:]
+                        prefix = f'PREG-{current_yr}-{current_yr_suffix}'
+                        existing_preg_max = Pregnancy.objects.filter(
+                            pregnancy_id__startswith=prefix
+                        ).aggregate(
+                            max_num = Max('pregnancy_id')
+                        )
+                        
+                        if existing_preg_max['max_num']:
+                            last_preg_id = existing_preg_max['max_num']
+                            last_num = int(last_preg_id[-4:])
+                            new_num = last_num + 1
+                        else:
+                            new_num = 1
+                        
+                        new_pregnancy_id = f'{prefix}{str(new_num).zfill(4)}'
+
+                        pregnancy = Pregnancy.objects.create(
+                            pregnancy_id=new_pregnancy_id,
+                            pat_id=patient,
+                            status='active',
+                            created_at=current_date,
+                            updated_at=current_date,
+                            prenatal_end_date=None,
+                            postpartum_end_date=None
+                        )
+                        print(f'Created new Pregnancy: {pregnancy.pregnancy_id}')
                 
                 # Create PatientRecord first
                 patient_record = PatientRecord.objects.create(
@@ -350,45 +386,28 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 )
                 print(f"Created follow-up visit: {follow_up_visit.followv_id}")
                 
-                # Find related prenatal form if it exists within timeframe
-                delivery_date = delivery_data.get('ppdr_date_of_delivery')
-                prenatal_form = self.find_related_prenatal_form(patient, delivery_date)
-                
-                # Create PostpartumRecord - check if pf_id column exists first
+                # create PostpartumRecord - check if pf_id column exists first
                 postpartum_data = {
                     'patrec_id': patient_record,
                     'vital_id': vital_signs,
                     'spouse_id': spouse,
                     'followv_id': follow_up_visit,
-                    **validated_data
+                    'pregnancy_id': pregnancy,
+                    # **validated_data
                 }
-                
-                # Only add pf_id if the column exists in the database
-                from django.db import connection
-                with connection.cursor() as cursor:
-                    cursor.execute("""
-                        SELECT column_name 
-                        FROM information_schema.columns 
-                        WHERE table_name = 'postpartum_record' 
-                        AND column_name = 'pf_id'
-                    """)
-                    if cursor.fetchone():
-                        postpartum_data['pf_id'] = prenatal_form
-                        print("Added pf_id to postpartum record")
-                    else:
-                        print("pf_id column does not exist, skipping prenatal form linking")
+                postpartum_data.update(validated_data)
                 
                 postpartum_record = PostpartumRecord.objects.create(**postpartum_data)
                 print(f"Created postpartum record: {postpartum_record.ppr_id}")
                 
-                # Create PostpartumDeliveryRecord
+                # create PostpartumDeliveryRecord
                 delivery_record = PostpartumDeliveryRecord.objects.create(
                     ppr_id=postpartum_record,
                     **delivery_data
                 )
                 print(f"Created delivery record: {delivery_record.ppdr_id}")
                 
-                # Create PostpartumAssessments
+                # create PostpartumAssessments
                 for i, assessment_data in enumerate(assessments_data):
                     assessment = PostpartumAssessment.objects.create(
                         ppr_id=postpartum_record,
@@ -410,15 +429,14 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         # Get the base representation but exclude the nested fields that don't exist on the instance
-        representation = {}
+        representation = super().to_representation(instance)
         
         # Only include fields that actually exist on the PostpartumRecord instance
         for field_name, field in self.fields.items():
             if field_name in ['delivery_record', 'assessments', 'spouse_data', 
-                            'vital_bp_systolic', 'vital_bp_diastolic', 
-                            'followup_date', 'followup_description', 
-                            'pat_id', 'patrec_type']:
-                # Skip these fields as they don't exist on the instance
+				'vital_bp_systolic', 'vital_bp_diastolic', 
+				'followup_date', 'followup_description', 
+				'pat_id', 'patrec_type']:
                 continue
             
             if hasattr(instance, field_name):
@@ -426,21 +444,21 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 if attribute is not None:
                     representation[field_name] = field.to_representation(attribute)
         
+        if instance.pregnancy_id:
+            representation['pregnancy'] = {
+                'pregnancy_id': instance.pregnancy_id.pregnancy_id,
+                'status': instance.pregnancy_id.status,
+                'created_at': instance.pregnancy_id.created_at,
+                'updated_at': instance.pregnancy_id.updated_at,
+                'prenatal_end_date': instance.pregnancy_id.prenatal_end_date,
+                'postpartum_end_date': instance.pregnancy_id.postpartum_end_date,
+                'pat_id': instance.pregnancy_id.pat_id.pat_id
+            }
+        else:
+            representation['pregnancy'] = None
+        
         # Add the created patrec_id to the response
         representation['patrec_id'] = instance.patrec_id.patrec_id if instance.patrec_id else None
-        
-        # Add prenatal form info if linked and column exists
-        try:
-            if hasattr(instance, 'pf_id') and instance.pf_id:
-                representation['prenatal_form'] = {
-                    'pf_id': instance.pf_id.pf_id,
-                    'pf_lmp': instance.pf_id.pf_lmp,
-                    'pf_edc': instance.pf_id.pf_edc
-                }
-            else:
-                representation['prenatal_form'] = None
-        except AttributeError:
-            representation['prenatal_form'] = None
         
         # Add delivery records using the correct related name
         try:
@@ -454,8 +472,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         # Add assessments - you'll need to provide the correct related name for PostpartumAssessment
         try:
-            # Replace 'postpartum_assessment' with the actual related_name from your PostpartumAssessment model
-            assessments = instance.postpartum_assessment.all()  # Update this line with correct related_name
+            assessments = instance.postpartum_assessment.all()
             representation['assessments'] = PostpartumAssessmentSerializer(
                 assessments, many=True
             ).data

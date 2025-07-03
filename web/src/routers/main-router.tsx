@@ -31,9 +31,11 @@ import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { health_administration_router } from './administration-health-router';
 import { reports_router } from './reports-router';
-import {medicineRequest} from './medicine-request'
-import {forwardedhealthrecord_router} from './forwardedhealthrecords';
-import {firstaid_router} from './firstaid-router';
+import { medicineRequest } from './medicine-request'
+import { forwardedhealthrecord_router } from './forwardedhealthrecords';
+import { firstaid_router } from './firstaid-router';
+import { health_schedule_routes } from './health-schedules-router';
+import { summon_router } from './summon-router';
 
 
 export const main_router: RouteObject[] = [
@@ -77,13 +79,14 @@ export const main_router: RouteObject[] = [
             ...medicalConsultation,
             ...patientQueue,
             ...doctorRouting,
+            ...summon_router,
             ...familyProfilingRoute,
             ...patientsRecordRouter,
             ...health_administration_router,
             ...medicineRequest,
             ...forwardedhealthrecord_router,
             ...firstaid_router,
-            
+            ...health_schedule_routes,
         ]
     }
 ]

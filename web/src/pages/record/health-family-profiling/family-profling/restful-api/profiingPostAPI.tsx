@@ -24,6 +24,20 @@ export const addPersonalAddressHealth = async (data: Record<string, any>[]) => {
     throw err;
   }
 }
+// POST request for resident_profile model 
+export const addResidentProfileHealth = async (personalId: string, staffId: string) => {
+  try {
+      const res = await api2.post("health-profiling/resident/create/", {
+        rp_date_registered: formatDate(new Date()),
+        per: personalId,
+        staff: staffId,
+      });
+  
+      return res.data;
+    } catch (err) {
+      throw err;
+    }
+};
 // POST request for personal model 
 export const addResidentAndPersonalHealth = async (personalInfo: Record<string, any>, staffId?: string) => {
   try {
@@ -54,20 +68,7 @@ export const addResidentAndPersonalHealth = async (personalInfo: Record<string, 
     }
 };
 
-// POST request for resident_profile model 
-export const addResidentProfileHealth = async (personalId: string, staffId: string) => {
-   try {
-       const res = await api2.post("health-profiling/resident/create/", {
-         rp_date_registered: formatDate(new Date()),
-         per: personalId,
-         staff: staffId,
-       });
-   
-       return res.data;
-     } catch (err) {
-       throw err;
-     }
-};
+
 
 // POST request for family model 
 export const addFamilyHealth = async (
@@ -121,6 +122,8 @@ export const addHouseholdHealth = async (householdInfo: Record<string, string>, 
       throw err;
     }
 };
+
+
 
 
 

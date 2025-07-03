@@ -18,7 +18,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { Label } from "@/components/ui/label"
 import { PatientSearch } from "@/components/ui/patientSearch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, AlertCircle, CheckCircle } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
 
 import type { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
 import { useAddPostpartumRecord } from "../queries/maternalAddQueries"
@@ -63,40 +63,12 @@ interface Patient {
       }
     }
   }
-}
-
-// Keep the original interface for internal use
-interface PatientRecord {
-  pat_id: string
-  pat_type: string
-  family?: {
-    fam_id: string
-    fc_id: string
-    fc_role: string
-  }
-  personal_info: {
-    per_fname: string
-    per_lname: string
-    per_mname: string
-    per_dob: string
-  }
-  address: {
-    add_street: string
-    add_barangay: string
-    add_city: string
-    add_province: string
-    sitio?: string
-  }
-  family_head_info?: {
-    family_heads?: {
-      father: {
-        personal_info?: {
-          per_fname?: string
-          per_mname?: string
-          per_lname?: string
-          per_dob?: string
-        }
-      }
+  spouse_info?: {
+    spouse_info?: {
+      spouse_fname?: string
+      spouse_lname?: string
+      spouse_mname?: string
+      spouse_dob?: string
     }
   }
 }
@@ -131,43 +103,12 @@ export default function PostpartumFormFirstPg({
 }) {
   const { setValue, getValues } = useFormContext()
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
-  const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(null)
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [postpartumCareData, setPostpartumCareData] = useState<PostpartumTableType[]>([])
   const [formErrors, setFormErrors] = useState<string[]>([])
   const navigate = useNavigate()
 
-  // Use the postpartum mutation hook
   const addPostpartumMutation = useAddPostpartumRecord()
-
-  // Helper function to convert Patient to PatientRecord
-  const convertPatientToPatientRecord = (patient: Patient): PatientRecord | null => {
-    if (
-      !patient.personal_info?.per_fname ||
-      !patient.personal_info?.per_lname ||
-      !patient.personal_info?.per_mname ||
-      !patient.personal_info?.per_dob
-    ) {
-      console.warn("Patient data is incomplete, cannot convert to PatientRecord")
-      return null
-    }
-
-    return {
-      ...patient,
-      personal_info: {
-        per_fname: patient.personal_info.per_fname,
-        per_lname: patient.personal_info.per_lname,
-        per_mname: patient.personal_info.per_mname,
-        per_dob: patient.personal_info.per_dob,
-      },
-      address: {
-        add_street: patient.address?.add_street || "",
-        add_barangay: patient.address?.add_barangay || "",
-        add_city: patient.address?.add_city || "",
-        add_province: patient.address?.add_province || "",
-        sitio: patient.address?.sitio,
-      },
-    } as PatientRecord
-  }
 
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     console.log("Selected Patient:", patient)
@@ -176,21 +117,59 @@ export default function PostpartumFormFirstPg({
     if (!patient) {
       setSelectedPatientId("")
       setSelectedPatient(null)
+      form.reset({
+        mothersPersonalInfo: {
+          familyNo: "",
+          motherLName: "",
+          motherFName: "",
+          motherMName: "",
+          motherAge: "",
+          husbandLName: "",
+          husbandFName: "",
+          husbandMName: "",
+          husbandDob: "",
+          address: {
+            street: "",
+            sitio: "",
+            barangay: "",
+            city: "",
+            province: "",
+          },
+        },
+        postpartumInfo: {
+          dateOfDelivery: "",
+          timeOfDelivery: "",
+          placeOfDelivery: "",
+          outcome: "",
+          attendedBy: "",
+          ttStatus: "",
+          ironSupplement: "",
+          vitASupplement: "",
+          noOfPadPerDay: "",
+          mebendazole: "",
+          dateBfInitiated: "",
+          timeBfInitiated: "",
+          nextVisitDate: "",
+          lochialDischarges: "",
+        },
+        postpartumTable: {
+          date: today,
+          bp: {
+            systolic: "",
+            diastolic: "",
+          },
+          feeding: "",
+          findings: "",
+          nursesNotes: "",
+        },
+      })
       return
     }
 
-    // Convert Patient to PatientRecord
-    const patientRecord = convertPatientToPatientRecord(patient)
-    if (!patientRecord) {
-      toast.error("Selected patient data is incomplete. Please select a different patient.")
-      return
-    }
-
-    // Use the patient ID from the patient object, not the callback parameter
     const actualPatientId = patient.pat_id
     console.log("Using Patient ID:", actualPatientId)
 
-    // Validate patient ID is not NaN or empty
+    // check if patient ID is not NaN or empty
     if (!actualPatientId || actualPatientId.trim() === "" || actualPatientId.toLowerCase() === "nan") {
       toast.error("Invalid patient ID. Please select a different patient.")
       console.error("Invalid patient ID:", actualPatientId)
@@ -198,30 +177,40 @@ export default function PostpartumFormFirstPg({
     }
 
     setSelectedPatientId(actualPatientId)
-    setSelectedPatient(patientRecord)
+    setSelectedPatient(patient)
 
-    if (patientRecord && patientRecord.personal_info) {
-      const personalInfo = patientRecord.personal_info
-      const address = patientRecord.address
-      const familyHeadFather = patientRecord.family_head_info?.family_heads?.father?.personal_info
+    if (patient && patient.personal_info) {
+      const personalInfo = patient.personal_info
+      const address = patient.address
+      const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info
+      const spouse = patient.spouse_info?.spouse_info
 
-      setValue("mothersPersonalInfo.familyNo", patientRecord.family?.fam_id || "")
-      setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname)
-      setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname)
-      setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname)
-      setValue("mothersPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
-      setValue("mothersPersonalInfo.motherDOB", personalInfo?.per_dob)
-      setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
-      setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
-      setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
-      setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
+      form.setValue("mothersPersonalInfo.familyNo", patient.family?.fam_id || "")
+      form.setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname || "")
+      form.setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname || "")
+      form.setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname || "")
+      form.setValue(
+        "mothersPersonalInfo.motherAge",
+        personalInfo?.per_dob ? String(calculateAge(personalInfo.per_dob)) : "",
+      )
+      form.setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
+      form.setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
+      form.setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
+      form.setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
 
       if (address) {
-        setValue("mothersPersonalInfo.address.street", address.add_street)
-        setValue("mothersPersonalInfo.address.sitio", address.sitio || "")
-        setValue("mothersPersonalInfo.address.barangay", address.add_barangay)
-        setValue("mothersPersonalInfo.address.city", address.add_city)
-        setValue("mothersPersonalInfo.address.province", address.add_province)
+        form.setValue("mothersPersonalInfo.address.street", address.add_street || "")
+        form.setValue("mothersPersonalInfo.address.sitio", address.sitio || "")
+        form.setValue("mothersPersonalInfo.address.barangay", address.add_barangay || "")
+        form.setValue("mothersPersonalInfo.address.city", address.add_city || "")
+        form.setValue("mothersPersonalInfo.address.province", address.add_province || "")
+      }
+
+      if (spouse) {
+        form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+        form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+        form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+        form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
       }
     }
   }
@@ -263,7 +252,7 @@ export default function PostpartumFormFirstPg({
   const today = new Date().toLocaleDateString("en-CA")
 
   useEffect(() => {
-    setValue("postpartumTable.date", today)
+    form.setValue("postpartumTable.date", today)
   }, [setValue, today])
 
   const addPostpartumCare = () => {
@@ -315,13 +304,13 @@ export default function PostpartumFormFirstPg({
       ])
 
       // Clear form fields
-      setValue("postpartumTable.date", today)
-      setValue("postpartumInfo.lochialDischarges", "")
-      setValue("postpartumTable.bp.systolic", "")
-      setValue("postpartumTable.bp.diastolic", "")
-      setValue("postpartumTable.feeding", "")
-      setValue("postpartumTable.findings", "")
-      setValue("postpartumTable.nursesNotes", "")
+      form.setValue("postpartumTable.date", today)
+      form.setValue("postpartumInfo.lochialDischarges", "")
+      form.setValue("postpartumTable.bp.systolic", "")
+      form.setValue("postpartumTable.bp.diastolic", "")
+      form.setValue("postpartumTable.feeding", "")
+      form.setValue("postpartumTable.findings", "")
+      form.setValue("postpartumTable.nursesNotes", "")
     } else {
       toast.error("Please fill in all required fields for the assessment including lochial discharges")
     }
@@ -344,7 +333,6 @@ export default function PostpartumFormFirstPg({
       return
     }
 
-    // FIXED: Don't try to parse patient ID as number - keep as string
     if (!selectedPatientId || selectedPatientId.trim() === "" || selectedPatientId.toLowerCase() === "nan") {
       toast.error("Invalid patient ID selected")
       console.error("Invalid patient ID:", selectedPatientId)
@@ -354,20 +342,16 @@ export default function PostpartumFormFirstPg({
     setFormErrors([])
 
     try {
-      // Transform form data to API format - pass string patient ID directly
       const transformedData = transformPostpartumFormData(formData, selectedPatientId, postpartumCareData)
 
       console.log("Submitting postpartum data:", transformedData)
 
-      // Submit using the mutation - the API will generate both patrec_id and ppr_id
       const success = await addPostpartumMutation.mutateAsync(transformedData)
 
-      // Call the original onSubmit if needed
       onSubmit()
       if (success) {
         navigate(-1)
       }
-       // Navigate back after successful submission
     } catch (error) {
       console.error("Error submitting postpartum form:", error)
     }
@@ -386,19 +370,6 @@ export default function PostpartumFormFirstPg({
       <div>
         <PatientSearch onPatientSelect={handlePatientSelection} />
       </div>
-
-      {/* Patient Selection Status */}
-      {selectedPatient && (
-        <div className="mt-4">
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>
-              Patient selected: {selectedPatient.personal_info.per_fname} {selectedPatient.personal_info.per_lname} (ID:{" "}
-              {selectedPatientId}). Ready to create postpartum record.
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
 
       {/* Form Errors */}
       {formErrors.length > 0 && (
@@ -558,11 +529,18 @@ export default function PostpartumFormFirstPg({
                 name="postpartumInfo.attendedBy"
                 placeholder="Attended By"
               />
-              <FormInput
+              <FormSelect
                 control={form.control}
                 label="Tetanus Toxoid Status"
                 name="postpartumInfo.ttStatus"
-                placeholder="Tetanus Toxoid Status"
+                options={[
+                  { id: "tt1", name: "TT1" },
+                  { id: "tt2", name: "TT2" },
+                  { id: "tt3", name: "TT3" },
+                  { id: "tt4", name: "TT4" },
+                  { id: "tt5", name: "TT5" },
+                  { id: "fim", name: "FIM" },
+                ]}
               />
               <FormDateTimeInput
                 control={form.control}
@@ -697,7 +675,7 @@ export default function PostpartumFormFirstPg({
                 disabled={addPostpartumMutation.isPending || !selectedPatient}
               >
                 {addPostpartumMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Postpartum Record
+                Submit Record
               </Button>
             </div>
           </form>

@@ -118,9 +118,9 @@ export const dependentDataSchema = z.object({
 
 
 export const underFiveSchema = dependentDataSchema.extend({
-  fic: z.string(),
-  nutritionalStatus: z.string().min(1, "Nutritional status is required"),
-  exclusiveBf: z.string(),
+  fic: z.string().optional(),
+  nutritionalStatus: z.string().optional(),
+  exclusiveBf: z.string().optional(),
 });
 
 export const overFiveSchema = dependentDataSchema.extend({

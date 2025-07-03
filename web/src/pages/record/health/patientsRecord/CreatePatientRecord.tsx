@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -15,9 +14,9 @@ import type { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema";
 import { Form } from "@/components/ui/form/form";
-import { useLocation } from "react-router";
 import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -77,6 +76,7 @@ export default function CreatePatientRecord() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const defaultValues = generateDefaultValues(patientRecordSchema);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<z.infer<typeof patientRecordSchema>>({
@@ -162,14 +162,14 @@ export default function CreatePatientRecord() {
     }
   }
 
-  const submit = async () => {
+  // This function handles the form validation and opens the confirmation dialog
+  const handleFormSubmit = async () => {
     const formData = form.getValues();
 
     if (formData.patientType ==="resident" && !selectedResidentId){
       toast("Please select a resident first");
       return;
     }
-
 
     if(formData.patientType === "transient"){
       const requiredFields = ['lastName', 'firstName', 'dateOfBirth', 'sex', 'contact'];
@@ -181,6 +181,14 @@ export default function CreatePatientRecord() {
       }
     }
 
+    // If validation passes, open the confirmation dialog
+    setIsDialogOpen(true);
+  };
+
+  // This function actually submits the data after confirmation
+  const confirmSubmit = async () => {
+    const formData = form.getValues();
+    
     setIsSubmitting(true);
     try {
       const patientType = formData.patientType === "resident" ? "Resident" : formData.patientType === "transient" ? "Transient" : "Resident" 
@@ -225,15 +233,20 @@ export default function CreatePatientRecord() {
       if (success) {
         form.reset(defaultValues);
         setSelectedResidentId("");
-
         navigate(-1)
       }
     } catch (error) {
       toast("Failed to create patient record. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setIsDialogOpen(false); // Close dialog after submission
     }
   };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+  }
+
 
   return (
     <div className="w-full">
@@ -285,99 +298,108 @@ export default function CreatePatientRecord() {
           Select a resident if they are already registered.
         </p>
       </div>
-        <CardLayout
-          title="Patient Information"
-          description="Review the patient information and set patient type"
-          content={
-            <div className="w-full mx-auto border-none">
-              <Separator className="w-full bg-gray" />
-              <div className="pt-4">
-                <Form {...form}>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      submit();
-                    }}
-                    className="space-y-6"
-                  >
-                    {/* Personal Information Section - Read Only */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={false} />
-                      <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={false} />
-                      <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={false} />
-                    </div>
+      
+      <CardLayout
+        title="Patient Information"
+        description="Review the patient information and set patient type"
+        content={
+          <div className="w-full mx-auto border-none">
+            <Separator className="w-full bg-gray" />
+            <div className="pt-4">
+              <Form {...form}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleFormSubmit(); // Changed to call handleFormSubmit instead of submit
+                  }}
+                  className="space-y-6"
+                >
+                  {/* Personal Information Section - Read Only */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={false} />
+                    <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={false} />
+                    <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={false} />
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                      <FormSelect 
-                        control={form.control} 
-                        name="sex" 
-                        label="Sex" 
-                        options={[
-                          { id: 'female', name: "Female" }, 
-                          { id: 'male', name: "Male" }
-                        ]}
-                        readOnly={false}
-                      />
-                      <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={false} />
-                      <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type='date' readOnly={false}/>
-                      <FormSelect 
-                        control={form.control} 
-                        name="patientType" 
-                        label="Patient Type" 
-                        options={[
-                          { id: 'resident', name: "Resident" }, 
-                          { id: 'transient', name: "Transient" }
-                        ]}
-                        readOnly={false}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <FormSelect 
+                      control={form.control} 
+                      name="sex" 
+                      label="Sex" 
+                      options={[
+                        { id: 'female', name: "Female" }, 
+                        { id: 'male', name: "Male" }
+                      ]}
+                      readOnly={false}
+                    />
+                    <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={false} />
+                    <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type='date' readOnly={false}/>
+                    <FormSelect 
+                      control={form.control} 
+                      name="patientType" 
+                      label="Patient Type" 
+                      options={[
+                        { id: 'resident', name: "Resident" }, 
+                        { id: 'transient', name: "Transient" }
+                      ]}
+                      readOnly={false}
+                    />
+                  </div>
 
-                    {/* Address Section - Read Only */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                      <FormInput control={form.control} name="address.street" label="Street" placeholder="Enter street " readOnly={false} />
-                      <FormInput control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={false}/>
-                      <FormInput control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={false}/>
-                      <FormInput control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={false}/>
-                      <FormInput control={form.control} name="address.province" label="Province" placeholder="Enter province " readOnly={false}/>
-                    </div>
+                  {/* Address Section - Read Only */}
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                    <FormInput control={form.control} name="address.street" label="Street" placeholder="Enter street " readOnly={false} />
+                    <FormInput control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={false}/>
+                    <FormInput control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={false}/>
+                    <FormInput control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={false}/>
+                    <FormInput control={form.control} name="address.province" label="Province" placeholder="Enter province " readOnly={false}/>
+                  </div>
 
-                    {/* Form Actions */}
-                    <div className="flex justify-end space-x-4 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => window.history.back()}
-                        disabled={isSubmitting}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        className="bg-buttonBlue hover:bg-buttonBlue/90 text-white"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <div className="flex items-center">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Creating Patient Record...
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <Save className="mr-2 h-4 w-4" />
-                            Save Patient
-                          </div>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </div>
+                  {/* Form Actions */}
+                  <div className="flex justify-end space-x-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => window.history.back()}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-buttonBlue hover:bg-buttonBlue/90 text-white"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Creating Patient Record...
+                        </div>
+                      ) : (
+                        <div className="flex items-center">
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Patient
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </div>
-          }
-          cardClassName="border-none pb-2 p-3 rounded-lg"
-          headerClassName="pb-2 bt-2 text-xl"
-          contentClassName="pt-0"
-        />
+          </div>
+        }
+        cardClassName="border-none pb-2 p-3 rounded-lg"
+        headerClassName="pb-2 bt-2 text-xl"
+        contentClassName="pt-0"
+      />
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDialogOpen}
+        onOpenChange={handleDialogClose}
+        onConfirm={confirmSubmit}
+        title="Confirm Patient Registration"
+      />
     </div>
   );
 }

@@ -3,13 +3,55 @@ from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone
 from django.core.validators import MinValueValidator
-from apps.patientrecords.models import PatientRecord, Spouse, VitalSigns, FollowUpVisit
+from apps.patientrecords.models import Patient, PatientRecord, Spouse, VitalSigns, FollowUpVisit
 # from apps.healthProfiling.models import Staff
 
 # ************** prenatal **************
 today = datetime.now()
 month = str(today.month).zfill(2)  
 year = str(today.year)
+
+class Pregnancy(models.Model):
+    pregnancy_id = models.CharField(primary_key=True, max_length=20, unique=True)
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='pregnancy')
+    status = models.CharField(max_length=20, choices=[
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('pregnancy loss', 'Pregnancy Loss')
+    ], default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    prenatal_end_date = models.DateField(null=True, blank=True)
+    postpartum_end_date = models.DateField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.pregnancy_id:
+            current_yr = datetime.now().year
+            current_yr_suffix = str(current_yr)[-2:] 
+
+            prefix = f'PREG-{current_yr}-{current_yr_suffix}'
+
+            existing_preg_max = Pregnancy.objects.filter(
+                pregnancy_id__startswith=prefix
+                ).aggregate(
+                    max_num = Max('pregnancy_id')
+                )
+            
+            if existing_preg_max['max_num']:
+                last_preg_id = existing_preg_max('max_num')
+                last_num = int(last_preg_id[-4:])
+                new_num = last_num + 1
+            else:
+                new_num = 1
+            
+            self.pregnancy_id = f'{prefix}{str(new_num).zfill(4)}'
+            
+        super().save(*args, **kwargs)
+    
+    class Meta:
+        db_table = 'pregnancy'
+        ordering = ['created_at']
+
 
 class Prenatal_Form(models.Model):
     pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)
@@ -20,8 +62,8 @@ class Prenatal_Form(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True)  # TEMPORARY to handle existing records
+    spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id')
-    # patrec_id = models.OneToOneField(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True  # TEMPORARY to handle existing records)
 
     def save(self, *args, **kwargs):
         if not self.pf_id:
@@ -44,6 +86,7 @@ class Previous_Hospitalization(models.Model):
     class Meta:
         db_table = 'pf_previous_hospitalization'
 
+
 class Previous_Pregnancy(models.Model):
     pfpp_id = models.BigAutoField(primary_key=True)
     pfpp_date_of_delivery = models.DateField()
@@ -58,6 +101,7 @@ class Previous_Pregnancy(models.Model):
     class Meta:
         db_table = 'pf_previous_pregnancy'
 
+
 class TT_Status(models.Model):
     pfts_id = models.BigAutoField(primary_key=True)
     pfts_vaccine_type = models.CharField(max_length=100)
@@ -70,24 +114,6 @@ class TT_Status(models.Model):
     class Meta:
         db_table = 'pf_tt_status'
 
-# class Lab_Result_Dates(models.Model):
-#     pflr_id = models.BigAutoField(primary_key=True)
-#     pflr_urinalysis = models.DateField()
-#     pflr_cbc = models.DateField()   
-#     pflr_sgot_sgpt = models.DateField()
-#     pflr_creatinine_serum = models.DateField()
-#     pflr_bua_bun = models.DateField()
-#     pflr_syphillis = models.DateField()
-#     pflr_hiv_test = models.DateField()
-#     pflr_hepa_b = models.DateField()
-#     pflr_ogct_50 = models.DateField()
-#     pflr_ogct_100 = models.DateField()
-#     pflr_lab_remarks = models.CharField(max_length=250)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,  related_name='pf_lab_result_dates', db_column='pf_id')
-
-#     class Meta:
-#         db_table = 'pf_lab_result_dates'
 
 class Guide4ANCVisit(models.Model):
     pfav_id = models.BigAutoField(primary_key=True)
@@ -99,6 +125,7 @@ class Guide4ANCVisit(models.Model):
 
     class Meta:
         db_table = 'pf_anc_visit'
+
 
 class Checklist(models.Model):
     pfc_id = models.BigAutoField(primary_key=True)
@@ -141,11 +168,11 @@ class PostpartumRecord(models.Model):
     ppr_time_of_bf = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, null=True, related_name='postpartum_record', db_column='pf_id')
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_record', null=False, db_column='patrec_id')
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_record', db_column='spouse_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_record', db_column='vital_id', null=False)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
+    pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
     def save(self, *args, **kwargs):

@@ -21,6 +21,8 @@ import {
   useCompletedFollowUpVisits,
   usePendingFollowUpVisits,
 } from "../queries/followv";
+import { usePatientPostpartumCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries";
+
 import { toast } from "sonner";
 import { useUpdatePatient } from "../queries/patientsUpdateQueries";
 import CardLayout from "@/components/ui/card/card-layout";
@@ -42,6 +44,7 @@ interface PatientData {
     per_sex: string;
     per_contact: string;
     per_dob: string;
+    ageTime?: "yrs";
   };
   address: {
     add_street?: string;
@@ -49,7 +52,7 @@ interface PatientData {
     add_city?: string;
     add_province?: string;
     sitio: string;
-  };
+  } | null;
   bloodType?: string;
   allergies?: string;
   chronicConditions?: string;
@@ -81,6 +84,9 @@ export default function ViewPatientRecord() {
 
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "");
+  const postpartumCount = postpartumCountData;
+
   const updatePatientData = useUpdatePatient();
 
   const currentPatient = useMemo(() => {
@@ -108,7 +114,7 @@ export default function ViewPatientRecord() {
         barangay: currentPatient.address?.add_barangay,
         city: currentPatient.address?.add_city,
         province: currentPatient.address?.add_province,
-        sitio: currentPatient.address?.sitio
+        sitio: currentPatient.address?.add_sitio
       });
     }
   }, [currentPatient]);
@@ -126,7 +132,7 @@ export default function ViewPatientRecord() {
       houseNo: currentPatient.households[0]?.hh_id ?? "N/A",
       address: {
         street: currentPatient.address?.add_street || "",
-        sitio: currentPatient.address?.sitio || "",
+        sitio: currentPatient.address?.add_sitio || "",
         barangay: currentPatient.address?.add_barangay || "",
         city: currentPatient.address?.add_city || "",
         province: currentPatient.address?.add_province || "",
@@ -177,7 +183,7 @@ export default function ViewPatientRecord() {
     
     const addressParts = [
       currentPatient.address.add_street,
-      currentPatient.address.sitio,
+      currentPatient.address.add_sitio,
       currentPatient.address.add_barangay,
       currentPatient.address.add_city,
       currentPatient.address.add_province,
@@ -201,14 +207,14 @@ export default function ViewPatientRecord() {
       const linkData = {
         pat_id: currentPatient?.pat_id ?? patientId ?? "",
         pat_type: currentPatient?.pat_type ?? patientData?.patientType ?? "",
-        age: patientData ? calculateAge(patientData.dateOfBirth) : 0,
+        age: patientData ? calculateAge(patientData.dateOfBirth).toString() : "0",
         addressFull: getFullAddress(),
         address: {
           add_street: getAddressField(currentPatient?.address?.add_street),
           add_barangay: getAddressField(currentPatient?.address?.add_barangay),
           add_city: getAddressField(currentPatient?.address?.add_city),
           add_province: getAddressField(currentPatient?.address?.add_province),
-          add_sitio: getAddressField(currentPatient?.address?.sitio),
+          add_sitio: getAddressField(currentPatient?.address?.add_sitio),
         },
         households: [
           {
@@ -442,7 +448,7 @@ export default function ViewPatientRecord() {
           vaccinationCount={vaccinationCount}
           medicineCount={medicineCount}
           firstAidCount={firstAidCount}
-          postpartumCount={undefined}
+          postpartumCount={postpartumCount}
           patientLinkData={patientLinkData}
           medicalconCount={medconCount}
         />

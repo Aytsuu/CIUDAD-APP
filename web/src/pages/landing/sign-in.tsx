@@ -46,6 +46,47 @@ export default function SignIn() {
     setLoading(true);
     setErrorMessage("");
 
+    // try {
+    //   let response;
+    //   try {
+    //     response = await axios.post("http://127.0.0.1:8001/user/login/", {
+    //       email_or_username: data.usernameOrEmail, // Send as one field
+    //       password: data.password,
+    //     });
+    //   } catch (error) {
+    //     if (axios.isAxiosError(error) && (!error.response || error.response.status === 404)) {
+    //       response = await axios.post("http://127.0.0.1:8000/user/login/", {
+    //     email_or_username: data.usernameOrEmail, // Send as one field
+    //     password: data.password,
+    //       });
+    //     } else {
+    //       throw error;
+    //     }
+    //   }
+
+    //   if (response.status === 200) {
+    //     login({
+    //       username: response.data.username,
+    //       email: response.data.email,
+    //       profile_image: response.data.profile_image,
+    //       token: response.data.token,
+    //       rp: response.data.rp,
+    //       staff: response.data.staff
+    //     });
+    //     navigate("/dashboard");
+    //   }
+    // } catch (error) {
+    //   if (axios.isAxiosError(error)) {
+    //     setErrorMessage(
+    //       error.response?.data?.error ||
+    //         "Invalid credentials. Please try again."
+    //     );
+    //   } else {
+    //     setErrorMessage("An unexpected error occurred.");
+    //   }
+    // } finally {
+    //   setLoading(false);
+    // }
     try {
       await login(credentials.email, credentials.password);
       navigate("/dashboard");
@@ -59,6 +100,7 @@ export default function SignIn() {
     } finally {
       setLoading(false);
     }
+  
   };
 
   const handleGoogleSignIn = async () => {

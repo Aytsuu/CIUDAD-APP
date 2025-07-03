@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Combobox } from "@/components/ui/combobox";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 // icons import
@@ -29,41 +28,54 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { toast } from "sonner";
 import { usePatients } from "../queries/maternalFetchQueries";
-// import { set } from "date-fns";
+import { PatientSearch } from "@/components/ui/patientSearch";
 
 
-interface PatientRecord{
-    pat_id: any
-    pat_type: string
-    pat_status:string
-    // patrec_id: number
-    // spouse_id: number
-
-    personal_info: {
-        per_fname: string
-        per_lname: string
-        per_mname: string
-        per_dob: string
-    };
-
-    address: {
-        add_street: string
-        add_barangay: string
-        add_city: string
-        add_province: string
-        sitio?: string
-    } | null;
-
-    spouse?: {
-        spouse_id: number
-        spouse_lname: string
-        spouse_fname: string
-        spouse_mname: string
-        spouse_dob: string
-        spouse_occupation: string
-    };
-    
+interface Patient {
+  pat_id: string
+  pat_type: string
+  family?: {
+    fam_id: string
+    fc_id: string
+    fc_role: string
+  }
+  personal_info?: {
+    per_fname?: string
+    per_lname?: string
+    per_mname?: string
+    per_dob?: string
+    per_sex?: string
+  }
+  address?: {
+    add_street?: string
+    add_barangay?: string
+    add_city?: string
+    add_province?: string
+    sitio?: string
+  }
+  family_head_info?: {
+    family_heads?: {
+      father?: {
+        personal_info?: {
+          per_fname?: string
+          per_mname?: string
+          per_lname?: string
+          per_dob?: string
+          per_occupation?: string
+        }
+      }
+    }
+  }
+  spouse_info?: {
+    spouse_info?: {
+      spouse_fname?: string
+      spouse_lname?: string
+      spouse_mname?: string
+      spouse_dob?: string
+    }
+  }
 }
+
 
 // age calculation for dob
 const calculateAge = (dob: string): number => {
@@ -102,55 +114,106 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
 
     // patient data fetching
     const [selectedPatientId, setSelectedPatientId] = useState<string>("")
-    const { data: patientData, isLoading: patientLoading } = usePatients();
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
 
-    const patients = {
-        default: patientData || [],
-        formatted: 
-            patientData?.map((patient: any) => ({
-                id: patient.pat_id.toString(),
-                name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
-            })) || []
-    };
 
-	const handlePatientSelection = (id: string) => {
-		setSelectedPatientId(id)
-		const selectedPatient: PatientRecord | undefined = patients.default.find((p: PatientRecord) => p.pat_id.toString() === id)
-		toast("Patients loaded successfully");
+    // const convertPatientToPatientRecord = (patient: Patient): PatientRecord | null => {
+    //     if (
+    //         !patient.personal_info?.per_fname ||
+    //         !patient.personal_info?.per_lname ||
+    //         !patient.personal_info?.per_mname ||
+    //         !patient.personal_info?.per_dob
+    //         ) {
+    //             console.warn("Patient data is incomplete, cannot convert to PatientRecord")
+    //             return null
+    //         }
 
-		if (selectedPatient && selectedPatient.personal_info) {
-			
-			console.log("Selected Patient:", selectedPatient)
-			setSelectedPatientId(selectedPatient.pat_id.toString());
+    //         return {
+    //             ...patient,
+    //             personal_info: {
+    //                 per_fname: patient.personal_info.per_fname,
+    //                 per_lname: patient.personal_info.per_lname,
+    //                 per_mname: patient.personal_info.per_mname,
+    //                 per_dob: patient.personal_info.per_dob,
+    //             },
+    //         address: {
+    //             add_street: patient.address?.add_street || "",
+    //             add_barangay: patient.address?.add_barangay || "",
+    //             add_city: patient.address?.add_city || "",
+    //             add_province: patient.address?.add_province || "",
+    //             sitio: patient.address?.sitio,
+    //         },
+    //     } as PatientRecord
+    // }
 
-			const personalInfo = selectedPatient.personal_info;
-			const address = selectedPatient.address
-			const spouse = selectedPatient.spouse;
+    const handlePatientSelection = (patient: Patient | null, patientId: string) => {
+        setSelectedPatientId(patientId);
 
-			setValue("motherPersonalInfo.familyNo", selectedPatient.pat_id)
-			setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname) 
-			setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname)
-			setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname)
-			setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
-			setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob)
+        if (!patient) {
+            setSelectedPatientId("")
+            setSelectedPatient(null)
+            return
+        }
 
-			if(address){
-					setValue("motherPersonalInfo.address.street", address.add_street)
-					setValue("motherPersonalInfo.address.sitio", address.sitio || "")
-					setValue("motherPersonalInfo.address.barangay", address.add_barangay)
-					setValue("motherPersonalInfo.address.city", address.add_city)
-					setValue("motherPersonalInfo.address.province", address.add_province)
-			}
+        if (patient && patient.personal_info) {
+            console.log("Selected Patient:", patient);
+            setSelectedPatientId(patient.pat_id.toString());
 
-			if(spouse){
-					setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
-					setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
-					setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
-					setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
-					setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
-			}
-		}
-	}
+            const personalInfo = patient?.personal_info;
+            const address = patient.address;
+            const father = patient.family_head_info?.family_heads?.father?.personal_info;
+            const spouse = patient.spouse_info?.spouse_info;
+
+            setValue("motherPersonalInfo.familyNo", patient.family?.fam_id || "");
+            setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname || "");
+            setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname || "");
+            setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname);
+            setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob || ""));
+            setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob || "");
+
+            if (address) {
+                setValue("motherPersonalInfo.address.street", address.add_street || "");
+                setValue("motherPersonalInfo.address.sitio", address.sitio || "");
+                setValue("motherPersonalInfo.address.barangay", address.add_barangay || "");
+                setValue("motherPersonalInfo.address.city", address.add_city || "");
+                setValue("motherPersonalInfo.address.province", address.add_province || "");
+
+            } else {
+                setValue("motherPersonalInfo.address.street", "");
+                setValue("motherPersonalInfo.address.sitio", "");
+                setValue("motherPersonalInfo.address.barangay", "");  
+                setValue("motherPersonalInfo.address.city", "");
+                setValue("motherPersonalInfo.address.province", "");  
+            }
+
+            if (father) {
+                setValue("motherPersonalInfo.husbandLName", father.per_lname || "");
+                setValue("motherPersonalInfo.husbandFName", father.per_fname || "");
+                setValue("motherPersonalInfo.husbandMName", father.per_mname || "");
+                setValue("motherPersonalInfo.husbandDob", father.per_dob || "");
+                setValue("motherPersonalInfo.occupation", father.per_occupation || "");
+
+            } else{
+                setValue("motherPersonalInfo.husbandLName", "");
+                setValue("motherPersonalInfo.husbandFName", "");
+                setValue("motherPersonalInfo.husbandMName", "");
+                setValue("motherPersonalInfo.husbandDob", "");
+            }
+
+            if (spouse) {
+                setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "");
+                setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "");
+                setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "");
+                setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "");
+
+            } else{
+                setValue("motherPersonalInfo.husbandLName", "");
+                setValue("motherPersonalInfo.husbandFName", "");
+                setValue("motherPersonalInfo.husbandMName", "");
+                setValue("motherPersonalInfo.husbandDob", "");
+            }
+        }
+    }
 
 
     // previous illness and previous hospitalization data 
@@ -369,6 +432,8 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
 
         setValue("motherPersonalInfo.motherBMICategory", bmiCategory);
     }, [bmi, setValue]);
+
+
     
     
     return (
@@ -378,7 +443,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                 description="Fill out the prenatal record with the mother's personal information."
             >
                 <div> 
-                    <Combobox
+                    {/* <Combobox
                         options={patients.formatted}
                         value={selectedPatientId}
                         onChange={handlePatientSelection}
@@ -396,7 +461,8 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 </Link>
                             </div>
                         }
-                    />
+                    /> */}
+                    <PatientSearch onPatientSelect={handlePatientSelection}/>
                 </div>
 
                 <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
@@ -411,24 +477,12 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                     }}
                     >
 
-                        <div className="flex justify-between">  
+                        <div className="flex">  
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.familyNo"
                                 label="Family No."
                                 placeholder="Enter Family No."
-                            />
-                            <FormField
-                                control={control}
-                                name="motherPersonalInfo.isTransient"
-                                render={({ field }) => (
-                                    <FormItem className="mt-8">
-                                            <FormControl>
-                                                <Checkbox {...field}></Checkbox>
-                                            </FormControl>
-                                            <FormLabel className="ml-1">Transient</FormLabel>
-                                    </FormItem>   
-                                )}
                             />
                         </div>
                         <div className="grid grid-cols-5 gap-4 mt-4">
@@ -554,17 +608,19 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 label="BMI"
                                 placeholder="BMI"
                                 type="number"
+                                readOnly
                             />
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.motherBMICategory"
                                 label="BMI Category"
                                 placeholder="BMI Category"
+                                readOnly
                             />
                         </div>
                         <Separator className="mt-8 mb-6" />
                         {/* obstetric history */}
-                        <h3 className="text-md font-bold">OBSTETRIC HISTORY</h3>
+                        <h3 className="text-md font-semibold">OBSTETRIC HISTORY</h3>
                         <div className="flex flex-col mt-2">
                             <div className="grid grid-cols-4 gap-4 mb-2">
                                 <FormInput control={control} name="obstreticHistory.noOfChBornAlive" label="No. of Children Born Alive" placeholder="Enter No." type="number"/>
@@ -580,7 +636,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
 
                         <Separator className="mt-8 mb-6" />
                         {/* medical history */}
-                        <h3 className="text-md font-bold">MEDICAL HISTORY</h3>
+                        <h3 className="text-md font-semibold">MEDICAL HISTORY</h3>
                         <div className="p-4 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4 border rounded-md p-4 items-center">

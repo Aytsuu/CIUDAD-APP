@@ -120,6 +120,7 @@ export default function ScheduleRecords() {
     return currentStatus
   }
 
+
   const columns: ColumnDef<ScheduleRecord>[] = [
     {
       accessorKey: "id",
@@ -300,10 +301,12 @@ export default function ScheduleRecords() {
     return filtered
   }, [transformedData, selectedFilter, searchTerm])
 
+
   // Sort data by date (most recent first)
   const sortedData = [...filteredData].sort((a, b) => {
     return new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
   })
+
 
   // Export to CSV
   const exportToCSV = () => {
@@ -349,7 +352,7 @@ export default function ScheduleRecords() {
   // Error state
   if (error) {
     return (
-      <LayoutWithBack title="Schedule Records" description="Manage and view patient appointment schedules">
+      <LayoutWithBack title="Health Schedule Records" description="Manage and view patient appointment schedules">
         <div className="flex flex-col items-center justify-center h-64">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-red-600 mb-2 text-lg font-semibold">Error loading data</p>
@@ -362,20 +365,9 @@ export default function ScheduleRecords() {
     )
   }
 
-  // No data state
-  if (transformedData.length === 0) {
-    return (
-      <LayoutWithBack title="Schedule Records" description="Manage and view patient appointment schedules">
-        <div className="flex flex-col items-center justify-center h-64">
-          <p className="text-gray-600 mb-4">No follow-up visits found</p>
-          <Button variant="default">New Schedule</Button>
-        </div>
-      </LayoutWithBack>
-    )
-  }
 
   return (
-    <LayoutWithBack title="Schedule Records" description="Manage and view patient appointment schedules">
+    <LayoutWithBack title="Health Schedule Records" description="Manage and view patient appointment schedules">
       <div className="w-full h-full flex flex-col">
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -434,7 +426,9 @@ export default function ScheduleRecords() {
             </div>
           </div>
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={sortedData.slice(0, itemsPerPage)} />
+            {transformedData.length === 0 && (
+              <DataTable columns={columns} data={sortedData.slice(0, itemsPerPage)} />
+            )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-gray-600 pl-0 sm:pl-4">

@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        # ('healthProfiling', '0002_solid_waste_mgmt_remove_household_hh_barangay_and_more'),
+        # ('healthProfiling', '0002_patient_solid_waste_mgmt_and_more'),
     ]
 
     operations = [

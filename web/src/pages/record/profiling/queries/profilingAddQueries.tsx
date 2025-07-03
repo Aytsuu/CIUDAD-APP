@@ -11,7 +11,6 @@ import {
   addHousehold,
   addPersonalAddress,
   addResidentAndPersonal,
-  addResidentProfile,
 } from "../restful-api/profiingPostAPI";
 
 export const useAddAddress = () => {
@@ -25,18 +24,6 @@ export const useAddPerAddress = () => {
     mutationFn: (data: Record<string, any>[]) => addPersonalAddress(data)
   })
 }
-
-export const useAddResidentProfile = () => { // For registration request
-  return useMutation({
-    mutationFn: ({
-      personalId,
-      staffId,
-    }: {
-      personalId: string;
-      staffId: string;
-    }) => addResidentProfile(personalId, staffId)
-  });
-};
 
 export const useAddResidentAndPersonal = () => { // For registration from the web
   const queryClient = useQueryClient();

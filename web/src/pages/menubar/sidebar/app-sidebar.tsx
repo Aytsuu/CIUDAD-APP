@@ -376,6 +376,7 @@ const items: MenuItem[] = [
       { title: "Firstaid Request ", url: "/all-firstaid-records" },
       {title:"Forwarded Records", url: "/forwarded-vaccination-records"},
       {title:"Archive", url: "/archiveMainInventoryStocks"},
+      {title: "Schedules", url: "/health-schedules"},
       {title:"Reports", url: "/healthcare-reports" }, 
 
       

@@ -5,7 +5,6 @@ import { useResidentForm } from "./useResidentForm"
 import { Type } from "../../profilingEnums"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
-import { useAddResidentProfile } from "../../queries/profilingAddQueries"
 import { useAuth } from "@/context/AuthContext"
 import { useDeleteRequest } from "../../queries/profilingDeleteQueries"
 import { useNavigate } from "react-router"
@@ -13,12 +12,13 @@ import { CircleAlert, ImageIcon, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ImageModal } from "@/components/image-modal"
 import { MediaUploadType } from "@/components/ui/media-upload"
+import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries"
 
 export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { mutateAsync: addResidentProfile } = useAddResidentProfile()
+  const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: deleteRequest } = useDeleteRequest()
   const { form, handleSubmitError, handleSubmitSuccess } = useResidentForm(params.data)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
@@ -26,15 +26,16 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   const [selectedImage, setSelectedImage] = React.useState<MediaUploadType[number] | null>();
   const files = params.data?.files || []
 
-  console.log(params.data)
-
   // ==================== HANDLERS ====================
   const reject = async () => {
     setIsRejecting(true)
     try {
-      await deleteRequest(params.data.req_id)
-      navigate(-1)
-      handleSubmitError("Request rejected successfully")
+      deleteRequest(params.data.req_id, {
+        onSuccess: () => {
+          navigate(-1)
+          handleSubmitError("Request rejected successfully")
+        }
+      })
     } catch (error) {
       handleSubmitError("Failed to reject request")
     } finally {
@@ -44,22 +45,26 @@ export default function ResidentRequestForm({ params }: { params: any }) {
 
   const submit = async () => {
     setIsSubmitting(true)
-    const isValid = await form.trigger()
-    if (!isValid) {
+    const formIsValid = await form.trigger()
+    if (!formIsValid) {
       setIsSubmitting(false)
       handleSubmitError("Please fill out all required fields")
       return
     }
 
     try {
-      addResidentProfile({
-        personalId: params.data?.per.per_id,
-        staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
+      addResidentAndPersonal({
+        personalInfo: {
+          per_id: params.data?.per
+        },
+        staffId: user?.staff?.staff_id,
+      }, {
+        onSuccess: () => {
+          deleteRequest(params.data.req_id)
+          navigate(-1)
+          handleSubmitSuccess("Request has been approved")
+        }
       })
-
-      deleteRequest(params.data.req_id)
-      navigate(-1)
-      handleSubmitSuccess("New record created successfully")
     } catch (error) {
       handleSubmitError("Failed to process request")
     } finally {

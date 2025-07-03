@@ -88,11 +88,11 @@ export default function ARFormLayout() {
         'ir_sitio': data.ir_sitio,
         'ir_street': data.ir_street,
         'ir': data.ir_id,
-        'staff': user?.staff.staff_id,
+        'staff': user?.staff?.staff_id,
         'rt': data.ir_type || null
       } : {
         ...values,
-        'staff': user?.staff.staff_id,
+        'staff': user?.staff?.staff_id,
       }, {
         onSuccess: (newAR) => {
           console.log(newAR)
@@ -102,7 +102,7 @@ export default function ARFormLayout() {
             'arf_path': media.storagePath,
             'arf_url': media.publicUrl,
             'ar': newAR.ar_id,
-            'staff': user?.staff.staff_id
+            'staff': user?.staff?.staff_id
           }))
 
           addARFile(files, {
