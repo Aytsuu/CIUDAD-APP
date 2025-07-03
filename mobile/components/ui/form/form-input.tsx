@@ -43,7 +43,7 @@ export const FormInput = ({
             `}
             placeholder={placeholder}
             placeholderTextColor="#888"
-            value={capitalize(value) || ""}
+            value={value || ""}
             onChangeText={onChange}
             onBlur={onBlur}
             secureTextEntry={secureTextEntry}
