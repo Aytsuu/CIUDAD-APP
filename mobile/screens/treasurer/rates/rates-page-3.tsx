@@ -30,7 +30,7 @@ export default function RatesPage3() {
 
   const handleCreate = () => {
      router.push({
-      pathname: '/treasurer/rates/purpose-and-rate-create',
+      pathname: '/(treasurer)/rates/purpose-and-rate-create',
       params: {
         category: 'Service Charge'
       }
@@ -43,7 +43,7 @@ export default function RatesPage3() {
 
   const handleEdit = (item: PurposeAndRate) => {
       router.push({
-        pathname: '/treasurer/rates/purpose-and-rate-edit',
+        pathname: '/(treasurer)/rates/purpose-and-rate-edit',
         params: {
           pr_id: item.pr_id.toString(),
           pr_purpose: item.pr_purpose,

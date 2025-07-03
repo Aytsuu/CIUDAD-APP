@@ -1,7 +1,7 @@
 # signals.py
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
-from .models import Budget_Plan, Income_Expense_Main, Budget_Plan_Detail
+from .models import *
 from django.apps import apps
 
 @receiver(post_save, sender='treasurer.Budget_Plan')
@@ -12,7 +12,6 @@ def sync_income_expense_main(sender, instance, created, **kwargs):
         'ie_main_tot_budget': instance.plan_budgetaryObligations,
         'ie_main_inc': 0.0,
         'ie_main_exp': 0.0,
-        'ie_remaining_bal': instance.plan_budgetaryObligations,
         'ie_is_archive': instance.plan_is_archive  # Sync archive status
     }
     
@@ -71,3 +70,10 @@ def delete_related_records(sender, instance, **kwargs):
     GAD_Budget_Year.objects.filter(
         gbudy_year=instance.plan_year
     ).delete()
+
+
+@receiver(post_save, sender=Purpose_And_Rates)
+def delete_template_on_archive(sender, instance, **kwargs):
+    if instance.pr_is_archive:
+        Template = apps.get_model('council', 'Template')
+        Template.objects.filter(pr_id=instance.pr_id).delete()

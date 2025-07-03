@@ -39,7 +39,7 @@ export default function RatesPage1() {
     const lastMaxRange = sortedData.length > 0 ? sortedData[0].ags_maximum : 0;
 
     router.push({
-      pathname: '/treasurer/rates/annual-gross-sales-create',
+      pathname: '/(treasurer)/rates/annual-gross-sales-create',
       params: {
         lastMaxRange: lastMaxRange.toString(),
       },
@@ -52,7 +52,7 @@ export default function RatesPage1() {
 
    const handleEdit = (item: AnnualGrossSales) => {
       router.push({
-        pathname: '/treasurer/rates/annual-gross-sales-edit',
+        pathname: '/(treasurer)/rates/annual-gross-sales-edit',
         params: {
           ags_id: item.ags_id.toString(),
           ags_minimum: item.ags_minimum,

@@ -9,8 +9,17 @@ from django.db.models import Q
 from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
+from apps.treasurer.models import Purpose_And_Rates
+from rest_framework.decorators import api_view
 
 logger = logging.getLogger(__name__)
+
+@api_view(['PATCH'])
+def update_template_pr_id(request):
+    old_id = request.data.get("old_pr_id")
+    new_id = request.data.get("new_pr_id")
+    Template.objects.filter(pr_id=old_id).update(pr_id=new_id)
+    return Response({"status": "updated"})
 
 class CouncilSchedulingView(generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
