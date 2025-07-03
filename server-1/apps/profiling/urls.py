@@ -56,6 +56,7 @@ urlpatterns = [
     path("request/file/create/", RequestFileCreateView.as_view(), name="request-file-create"),
     path("request/link/registration/", LinkRegVerificationView.as_view(), name="link-registration-verification"),
     path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
+    path("request/count/", RequestCountView.as_view(), name="total-request"),
 
     # Business Urls
     path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),

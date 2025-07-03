@@ -115,7 +115,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
                     </div>
                     <div className="flex flex-col gap-1 text-center">
                       <p className="text-xs text-gray-600 mt-2 text-center truncate">
-                        Document {index + 1}
+                        Photo {index + 1}
                       </p>
                       {media.is_id ? media.id_type : 'Face'}
                     </div>

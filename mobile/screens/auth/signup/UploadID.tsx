@@ -46,6 +46,7 @@ export default function UploadID() {
         rf_is_id: true,
         rf_id_type: getValues("uploadIdSchema.selected")
       })
+      console.log(getValues('photoSchema.list'))
     }
   }, [selectedImage])
 

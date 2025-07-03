@@ -73,7 +73,9 @@ class RequestFileInputSerializer(serializers.Serializer):
   rf_name = serializers.CharField()
   rf_type = serializers.CharField()
   rf_path = serializers.CharField()
-  rf_url = serializers.CharField()
+  rf_url = serializers.URLField()
+  rf_is_id = serializers.BooleanField()
+  rf_id_type = serializers.CharField(allow_blank=True)
 
 class AccountInputSerializer(serializers.Serializer):
   email = serializers.EmailField()

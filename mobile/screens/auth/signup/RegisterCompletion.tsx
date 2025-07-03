@@ -26,7 +26,7 @@ const { width } = Dimensions.get('window');
 
 export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus }: {
   photo: string,
-  setPhoto: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  setPhoto: React.Dispatch<React.SetStateAction<Record<string, any> | null>>
   setDetectionStatus: React.Dispatch<React.SetStateAction<string>>
 }) {
   const { toast } = useToastContext();
@@ -34,14 +34,17 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [status, setStatus] = React.useState<"success" | "failure">("success");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { getValues } = useRegistrationFormContext();
+  const { getValues, setValue } = useRegistrationFormContext();
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addRequest } = useAddRequest();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
 
   const cancel = () => {
-    setPhoto({});
+    const files = getValues('photoSchema.list');
+    const face_removed = files.filter((file) => file.rf_url !== photo);
+    setValue('photoSchema.list', face_removed); 
+    setPhoto(null);
     setDetectionStatus("");
   };
   
@@ -51,7 +54,7 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
       const {per_addresses, ...data} = getValues("personalInfoSchema");
       const dob = getValues("verificationSchema.dob");
       const photoList = getValues("photoSchema.list");
-      const accountInfo = getValues("accountFormSchema")
+      const {confirmPassword, ...accountInfo} = getValues("accountFormSchema")
       console.log("Data:", data)
       console.log("Addresses:", per_addresses.list)
 
@@ -89,6 +92,8 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
       setShowFeedback(true);
     }
   };
+
+  console.log('Photo list:',getValues("photoSchema.list"))
 
   if (showFeedback) {
     return (
