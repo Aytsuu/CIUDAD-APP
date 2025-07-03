@@ -3,13 +3,11 @@
 import type { z } from "zod"
 import { FormProvider, useForm } from "react-hook-form"
 import { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
-import PostpartumFormFirstPg from "./postpartum-care-form"
+import PostpartumFormFirstPg from "./postpartum-form"
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 export default function PostpartumForm() {
-  // Define comprehensive default values to ensure all controlled inputs are initialized
-  // with a non-undefined value (e.g., empty strings for text fields).
   const defaultValues: z.infer<typeof PostPartumSchema> = {
     mothersPersonalInfo: {
       familyNo: "",
@@ -46,7 +44,7 @@ export default function PostpartumForm() {
       lochialDischarges: "",
     },
     postpartumTable: {
-      date: new Date().toLocaleDateString("en-CA"), // Default to today's date
+      date: new Date().toLocaleDateString("en-CA"),
       bp: {
         systolic: "",
         diastolic: "",
@@ -61,7 +59,7 @@ export default function PostpartumForm() {
 
   const form = useForm<z.infer<typeof PostPartumSchema>>({
     resolver: zodResolver(PostPartumSchema),
-    defaultValues, // Use the explicitly defined default values
+    defaultValues,
   })
 
   const nextPage = () => {

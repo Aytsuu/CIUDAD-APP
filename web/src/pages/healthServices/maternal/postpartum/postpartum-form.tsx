@@ -365,6 +365,8 @@ export default function PostpartumFormFirstPg({
     })
   }
 
+  const nextVisitDate = form.watch("postpartumInfo.nextVisitDate")
+
   return (
     <LayoutWithBack title="Postpartum Form" description="Fill out the postpartum form with the mother's information.">
       <div>
@@ -585,13 +587,28 @@ export default function PostpartumFormFirstPg({
               <Label className="text-lg">Schedule</Label>
               <Separator className="mt-2" />
             </div>
-            <div className="flex mt-4">
+            <div className="flex flex-col gap-4 mt-4">
               <FormDateTimeInput
                 control={form.control}
                 label="Date of next visit"
                 name="postpartumInfo.nextVisitDate"
                 type="date"
               />
+              {nextVisitDate && ( // Only display if a date is selected
+                <div className="bg-gray-50 p-4 rounded-md border">
+                  <p className="text-sm font-medium text-gray-700">Scheduled Follow-up:</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {nextVisitDate
+                      ? new Date(nextVisitDate).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "N/A"}
+                  </p>
+                  <p className="text-sm text-gray-600">Description: Postpartum Follow-up Visit</p>
+                </div>
+              )}
             </div>
 
             {/* Postpartum table fields */}
