@@ -17,6 +17,7 @@ urlpatterns=[
     path("template/", TemplateView.as_view(), name="document-template"),
     path("update-template/<int:temp_id>/", UpdateTemplateView.as_view(), name="update-document-template"),
     path('delete-template/<int:temp_id>/', DeleteTemplateView.as_view(), name='delete-document-template'), 
+    path('update-template-pr-id/', update_template_pr_id, name='update-template-pr-id'),
     
     # RESOLUTION
     path("resolution/", ResolutionView.as_view(), name="council-resolution"),
