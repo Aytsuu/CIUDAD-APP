@@ -26,7 +26,9 @@ const LIGHT_THEME: Theme = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    
+  });
 
   const [loaded] = useFonts({
     PoppinsRegular: require("../assets/fonts/Poppins-Regular.ttf"),
@@ -59,6 +61,7 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(announcement)" options={{ headerShown: false }} />
               <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
+              <Stack.Screen name="(profiling)" options={{ headerShown: false }} />
               <Stack.Screen name="(report)" options={{ headerShown: false }} />
               <Stack.Screen name="(health)" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" />

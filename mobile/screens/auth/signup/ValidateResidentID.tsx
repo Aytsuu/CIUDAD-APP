@@ -10,13 +10,14 @@ import { X } from "@/lib/icons/X";
 import { UserSearch } from "@/lib/icons/UserSearch";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Ionicons } from '@expo/vector-icons';
-import { useValidateResidentId } from "./queries/signupAddQueries";
+import { useValidateResidentId } from "../queries/authPostQueries";
 import { useToastContext } from "@/components/ui/toast";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
 export default () => {
   const { toast } = useToastContext();
   const router = useRouter();
-  const { control, trigger, getValues } = useRegistrationFormContext();
+  const { control, trigger, getValues, reset } = useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: validateResidentID } = useValidateResidentId();
 
@@ -31,18 +32,15 @@ export default () => {
 
       const residentId = getValues("residentId");
       validateResidentID(residentId, {
-        onSuccess: (data) => {
-          router.push("/account-details");
+        onSuccess: (result) => {
+          router.push({
+            pathname: "/account-details",
+            params: {
+              registrationType: 'link',
+              rp_id: result?.data?.rp_id
+            }
+          });
         },
-        onError: (error: any) => {
-          if(error?.response?.status === 404) {
-            toast.error("Resident ID not found.");
-          }
-
-          if(error?.response?.status === 403) {
-            toast.error("Your age is not eligible for registration.");
-          }
-        }
       })
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again.");
@@ -52,14 +50,8 @@ export default () => {
   };
 
   const handleClose = () => {
-    Alert.alert(
-      "Exit Registration",
-      "Are you sure you want to exit? Your progress will be lost.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Exit", style: "destructive", onPress: () => router.push("/") }
-      ]
-    );
+    reset();
+    router.replace("/(auth)");
   };
 
   return (
@@ -74,19 +66,16 @@ export default () => {
       }
       headerBetweenAction={<Text className="text-[13px]">Verifying Profile</Text>}
       customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={<X size={20} className="text-gray-700" />}
+          variant="destructive"
+          onPress={handleClose}
+        />
       }
     >
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <View className="flex-1 px-5">
         <View className="flex-1 py-4">
           {/* Header Section */}
           <View className="mb-8">
@@ -154,7 +143,7 @@ export default () => {
             </Text>
           </View>
         </View>
-      </ScrollView>
+      </View>
     </_ScreenLayout>
   );
 };

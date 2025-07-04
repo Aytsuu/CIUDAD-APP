@@ -82,8 +82,12 @@ class ResidentProfileFamSpecificListView(generics.ListAPIView):
 class LinkRegVerificationView(APIView):
 
     def post(self, request):
-        residentId = request.data.get('resident_id')
-        profile = ResidentProfile.objects.filter(rp_id=residentId).first()
+        resident_id = request.data.get('resident_id')
+        account = Account.objects.filter(rp=resident_id).first()
+        if account: 
+            return Response(status=status.HTTP_409_CONFLICT)
+
+        profile = ResidentProfile.objects.filter(rp_id=resident_id).first()
         if not profile:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
@@ -93,5 +97,5 @@ class LinkRegVerificationView(APIView):
         if age < 13:
             return Response(status=status.HTTP_403_FORBIDDEN)
         
-        return Response(status=status.HTTP_200_OK, data=profile)
+        return Response(status=status.HTTP_200_OK, data=ResidentProfileBaseSerializer(profile).data)
         

@@ -48,7 +48,6 @@ export default function SignIn() {
 
     try {
       await login(credentials.email, credentials.password);
-      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage(

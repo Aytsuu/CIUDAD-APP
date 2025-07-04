@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q
 from apps.pagination import StandardResultsPagination
@@ -35,7 +36,7 @@ class RequestTableView(generics.ListAPIView):
     return queryset
 
 class RequestCreateView(generics.CreateAPIView):
-  serializer_class = RequestBaseSerializer
+  serializer_class = RequestCreateSerializer
   queryset = RequestRegistration.objects.all()
 
 
@@ -61,3 +62,7 @@ class RequestDeleteView(generics.DestroyAPIView):
   serializer_class = RequestBaseSerializer
   queryset = RequestRegistration.objects.all()
   lookup_field = 'req_id'
+
+class RequestCountView(APIView):
+  def get(self, request, *args, **kwargs):
+    return Response(RequestRegistration.objects.count())

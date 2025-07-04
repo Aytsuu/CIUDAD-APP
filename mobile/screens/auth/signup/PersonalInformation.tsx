@@ -11,6 +11,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
 import { Plus } from "@/lib/icons/Plus"
 import { AddressDrawer } from "./AddressDrawer"
+import { ConfirmationModal } from "@/components/ui/confirmationModal"
 
 
 const sexOptions: { label: string; value: string }[] = [
@@ -26,7 +27,7 @@ const civilStatusOptions: { label: string; value: string }[] = [
 
 export default function PersonalInformation() {
   const router = useRouter();
-  const { control, trigger, watch, getValues, setValue } = useRegistrationFormContext();
+  const { control, trigger, watch, getValues, setValue,  reset } = useRegistrationFormContext();
   const [showAddressDrawer, setShowAddressDrawer] = React.useState(false);
   const [addresses, setAddresses] = React.useState<any[]>([]);
   const [addressError, setAddressesError] = React.useState<boolean>(false);
@@ -67,6 +68,11 @@ export default function PersonalInformation() {
     router.push("/(auth)/upload-id")
   }
 
+  const handleClose = () => {
+    reset();
+    router.replace("/(auth)");
+  };
+
   return (
     <_ScreenLayout
       customLeftAction={
@@ -79,15 +85,16 @@ export default function PersonalInformation() {
       }
       headerBetweenAction={<Text className="text-[13px]">Personal Information</Text>}
       customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={<X size={20} className="text-gray-700" />}
+          variant="destructive"
+          onPress={handleClose}
+        />
       }
     >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+      <View className="flex-1 px-5">
         {/* Full Name Section */}
         <View className="mb-8">
           <View className="w-full mb-4 pb-2 border-b border-gray-200">
@@ -218,27 +225,25 @@ export default function PersonalInformation() {
             {addressError && <Text className="text-red-500 text-xs mt-1">At least one address is required</Text>}
           </View>
         </View>
-      </ScrollView>
+        <View className="pt-4 pb-8 bg-white border-t border-gray-100">
+          <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
+            <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue to Photo</Text>
+          </Button>
 
-      {/* Fixed Bottom Button */}
-      <View className="pt-4 pb-8 bg-white border-t border-gray-100">
-        <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue to Photo</Text>
-        </Button>
+          {/* Helper Text */}
+          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
+            All information will be kept secure and confidential
+          </Text>
+        </View>
 
-        {/* Helper Text */}
-        <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
-          All information will be kept secure and confidential
-        </Text>
+        {/* Address Drawer */}
+        <AddressDrawer
+          visible={showAddressDrawer}
+          onClose={() => {
+            setShowAddressDrawer(false)
+          }}
+        />
       </View>
-
-      {/* Address Drawer */}
-      <AddressDrawer
-        visible={showAddressDrawer}
-        onClose={() => {
-          setShowAddressDrawer(false)
-        }}
-      />
     </_ScreenLayout>
   )
 }

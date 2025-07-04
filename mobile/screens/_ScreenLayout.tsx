@@ -254,6 +254,7 @@ export interface ScreenLayoutProps {
   floatingElement?: ReactNode
 
   // Scroll Configuration
+  isScrollView?: boolean
   scrollViewProps?: any
   contentContainerStyle?: any
 
@@ -319,6 +320,7 @@ export default function ScreenLayout({
   floatingElement,
 
   // Scroll Configuration
+  isScrollView = true,
   scrollViewProps = {},
   contentContainerStyle = {},
 
@@ -433,6 +435,7 @@ export default function ScreenLayout({
     }
 
     return (
+      isScrollView ? (
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -444,7 +447,11 @@ export default function ScreenLayout({
         {...scrollViewProps}
       >
         {wrapperChildren}
-      </ScrollView>
+      </ScrollView>) : (
+        <View className="flex-1">
+          {wrapperChildren}
+        </View>
+      )
     )
   }
 
@@ -459,6 +466,7 @@ export default function ScreenLayout({
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        enabled
       >
         {keyboardChildren}
       </KeyboardAvoidingView>

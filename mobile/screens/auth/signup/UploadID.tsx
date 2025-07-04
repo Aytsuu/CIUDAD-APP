@@ -12,6 +12,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
 import { useToastContext } from "@/components/ui/toast";
 import { useFieldArray } from "react-hook-form";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
 const idOptions: {label: string, value: string}[] = [
   {label: "Driver's License", value: "Driver's License"},
@@ -28,7 +29,7 @@ const idOptions: {label: string, value: string}[] = [
 export default function UploadID() {
   const router = useRouter();
   const { toast } = useToastContext();
-  const {control, trigger, getValues, setValue} = useRegistrationFormContext();
+  const {control, trigger, getValues, setValue, reset } = useRegistrationFormContext();
   const [selectedImage, setSelectedImage] = React.useState<Record<string, any>>({});
 
   const { append } = useFieldArray({
@@ -46,6 +47,7 @@ export default function UploadID() {
         rf_is_id: true,
         rf_id_type: getValues("uploadIdSchema.selected")
       })
+      console.log(getValues('photoSchema.list'))
     }
   }, [selectedImage])
 
@@ -62,12 +64,13 @@ export default function UploadID() {
       toast.error("Upload a photo of your valid ID")
       return;
     }
-
-    console.log(getValues('photoSchema.list'))
-
     router.push("/(auth)/take-a-photo")
   };
 
+  const handleClose = () => {
+    reset();
+    router.replace("/(auth)");
+  };
 
   return (
     <_ScreenLayout
@@ -81,15 +84,16 @@ export default function UploadID() {
       }
       headerBetweenAction={<Text className="text-[13px]">Valid ID</Text>}
       customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={<X size={20} className="text-gray-700" />}
+          variant="destructive"
+          onPress={handleClose}
+        />
       }
     >
-      <View className="flex-1 justify-between gap-6">
+      <View className="flex-1 justify-between gap-6 px-5">
         <View className="flex-1 gap-6">
           
           {/* ID Type Selection */}

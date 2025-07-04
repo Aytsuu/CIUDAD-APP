@@ -20,7 +20,7 @@ export function ConfirmationModal({
   trigger,
   title,
   description,
-  actionLabel,
+  actionLabel="Confirm",
   type,
   variant,
   onClick
@@ -28,7 +28,7 @@ export function ConfirmationModal({
   trigger: React.ReactNode;
   title: string;
   description: string;
-  actionLabel: string;
+  actionLabel?: string;
   type?: string;
   variant?: string;
   onClick?: () => void;

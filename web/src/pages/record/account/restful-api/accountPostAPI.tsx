@@ -1,33 +1,12 @@
 import { api } from "@/api/api";
-import supabase from "@/supabase/supabase";
 
 export const addAccount = async (accountInfo: Record<string, string>, residentId: string) => {
   try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: accountInfo.email,
-      password: accountInfo.password,
-      options: {
-        data: {
-          username: accountInfo.username,
-          rp: residentId
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
-    });
-
-    if (authError) {
-      throw new Error(`Authentication failed: ${authError.message}`);
-    }
-
-    if (!authData.user) {
-      throw new Error('No user data returned from Supabase');
-    }
-
     const response = await api.post('authentication/signup/', {
-      supabase_id: authData.user.id,
       username: accountInfo.username,
       email: accountInfo.email,
-      rp: residentId 
+      password: accountInfo.password,
+      resident_id: residentId 
     });
 
     return response.data;

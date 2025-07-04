@@ -3,8 +3,10 @@ import { useGetSidebarAnalytics } from "./profiling-analytics-queries";
 import { Card } from "@/components/ui/card/card";
 import { Clock, Users, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
+import { useNavigate } from "react-router";
 
 export const ProfilingSidebar = () => {
+  const navigate = useNavigate();
   const [period, setPeriod] = React.useState<string>("today");
   const { data: profilingSidebar, isLoading } = useGetSidebarAnalytics(period);
 
@@ -12,6 +14,21 @@ export const ProfilingSidebar = () => {
     const middle = middleName ? `${middleName[0]}.` : '';
     return `${firstName} ${middle} ${lastName}`;
   };
+
+  const handleClick = (req_id: number) => {
+    const data = profilingSidebar.find((req: any) => req.req_id == req_id);
+    navigate('/resident/form', {
+      state: {
+        params: {
+          title: "Registration Request",
+            description:
+              "This is a registration request submitted by the user. Please review the details and approve or reject accordingly.",
+          type: 'request',
+          data: data
+        }
+      }
+    })
+  }
 
   return (
     <Card className="w-80 bg-white h-full flex flex-col">
@@ -67,6 +84,7 @@ export const ProfilingSidebar = () => {
               <Card 
                 key={data.req_id || index}
                 className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
+                onClick={() => handleClick(data.req_id)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
@@ -81,9 +99,9 @@ export const ProfilingSidebar = () => {
                       {formatName(data.per_fname, data.per_mname, data.per_lname)}
                     </h3>
                     
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Calendar className="w-3 h-3" />
-                      <span>ID: {data.req_id}</span>
+                    <div className="flex flex-col gap-1 text-xs text-gray-500">
+                      <span>Request No. {data.req_id}</span>
+                      <span>Request Date: {data.req_date}</span>
                     </div>
                   </div>
                   
