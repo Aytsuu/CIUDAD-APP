@@ -39,13 +39,13 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
         accused_links = ComplaintAccused.objects.filter(comp=obj.comp)
         return [accused.acsd.acsd_name for accused in accused_links]
 
-class CaseActivityFileSerializer(serializers.ModelSerializer):
+class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CaseActivityFile
+        model = ServiceChargeRequestFile
         fields = ['caf_id', 'caf_name', 'caf_type', 'caf_url']
 
 class CaseActivitySerializer(serializers.ModelSerializer):
-    caf = CaseActivityFileSerializer(required=False, allow_null=True)  
+    srf = ServiceChargeRequestFileSerializer(required=False, allow_null=True)  
     
     class Meta:
         model = CaseActivity

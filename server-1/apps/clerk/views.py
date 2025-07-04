@@ -9,7 +9,7 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargeRequestSerializer
 
     def get_queryset(self):
-        return ServiceChargeRequest.objects.filter(sr_payment_status="Paid")
+        return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon")
 
 class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
     serializer_class = ServiceChargeRequestDetailSerializer
@@ -17,7 +17,8 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
     
     def get_queryset(self):
         return ServiceChargeRequest.objects.filter(
-            sr_payment_status="Paid"
+            sr_payment_status="Paid",
+            sr_type = "Summon"
         ).select_related('comp__cpnt')
     
     def get_object(self):

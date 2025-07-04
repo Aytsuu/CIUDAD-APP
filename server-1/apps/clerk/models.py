@@ -86,13 +86,20 @@ class ServiceChargeRequest(models.Model):
     sr_status = models.CharField(null=True, blank=True)
     sr_payment_status = models.CharField(null=True, blank=True)
     sr_type = models.CharField(null=True, blank=True)
-    sr_decision_date = models.DateTimeField(null=True, blank=True)
+    sr_decision_date    = models.DateTimeField(null=True, blank=True)
     # staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, db_column='staff_id', null=True)
     comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-    file_action_file = models.OneToOneField(
-        'CaseActivityFile', null=True, blank=True,
+
+    parent_summon = models.ForeignKey(
+        'self',
+        null=True, blank=True,
         on_delete=models.SET_NULL,
-        related_name='file_action_for'
+        related_name='escalated_file_actions'
+    )
+    file_action_file = models.OneToOneField(
+        'ServiceChargeRequestFile', null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='file_action'
     )
 
     class Meta:
@@ -106,18 +113,18 @@ class CaseActivity(models.Model):
     ca_hearing_time = models.TimeField(null=False)
     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
-    caf = models.ForeignKey('CaseActivityFile', on_delete=models.CASCADE, null=True, related_name='case_file')
+    srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
 
     class Meta:
         db_table = 'case_activity'
 
 
-class CaseActivityFile(models.Model):
-    caf_id = models.BigAutoField(primary_key=True)
-    caf_name = models.CharField(max_length=255)
-    caf_type = models.CharField(max_length=100)
-    caf_path = models.CharField(max_length=500)
-    caf_url = models.CharField(max_length=500)
+class ServiceChargeRequestFile(models.Model):
+    srf_id = models.BigAutoField(primary_key=True)
+    srf_name = models.CharField(max_length=255)
+    srf_type = models.CharField(max_length=100)
+    srf_path = models.CharField(max_length=500)
+    srf_url = models.CharField(max_length=500)
     
     class Meta:
-        db_table = 'case_activity_file'
+        db_table = 'service_charge_request_file'

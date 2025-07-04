@@ -18,6 +18,8 @@ export const escalateCase = async (sr_id: string) => {
             status: "Escalated",
             decision_date: new Date().toISOString(),
         })
+
+        const res2 = await api.post('clerk/')
         return res.data
     }catch(err){
         console.error(err)
