@@ -23,8 +23,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getVaccinationRecordById,
-  getVaccinationCount,
-} from "../restful-api/GetVaccination";
+  getUnvaccinatedVaccines,
+} from "../restful-api/get";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
@@ -35,93 +35,9 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { PatientInfoCard } from "@/components/ui//patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { useVaccinationCount } from "../queries/VacCount";
+import {Patient} from "@/pages/healthServices/restful-api-patient/type"
+import {VaccinationRecord,filter} from "./columns/types";  
 
-type filter = "all" | "partially_vaccinated" | "completed";
-
-export interface VaccinationRecord {
-  patrec_id: number;
-  vachist_id: number;
-  vachist_doseNo: string;
-  vachist_status: string;
-  vachist_age: number;
-  assigned_to: number | null;
-  staff_id: number;
-  vital: number;
-  vacrec: number;
-  vacStck: number;
-  vacrec_status: string;
-  vacrec_totaldose: number;
-
-  vital_signs: {
-    vital_bp_systolic: string;
-    vital_bp_diastolic: string;
-    vital_temp: string;
-    vital_RR: string;
-    vital_o2: string;
-    created_at: string;
-  };
-
-  vaccine_stock: {
-    vaccinelist: {
-      vac_id: number;
-      vaccat_details: {
-        category: string;
-        vaccat_type: string;
-      };
-      intervals: {
-        vacInt_id: number;
-        interval: number;
-        dose_number: number;
-        time_unit: string;
-        vac_id: number;
-      }[];
-      routine_frequency: string | null;
-      vac_type_choices: string;
-      vac_name: string;
-      no_of_doses: number;
-      age_group: string;
-      specify_age: string;
-      created_at: string;
-      updated_at: string;
-      category: string;
-    };
-    inv_id: number;
-    vac_id: number;
-    solvent: string;
-    batch_number: string;
-    volume: number;
-    qty: number;
-    dose_ml: number;
-    vacStck_used: number;
-    vacStck_qty_avail: number;
-    wasted_dose: number;
-    created_at: string;
-    updated_at: string;
-  };
-
-  vaccine_name: string;
-  batch_number: string;
-  updated_at: string;
-  created_at: string;
-
-  vaccine_details: {
-    no_of_doses: number;
-    age_group: string;
-    vac_type: string;
-  };
-
-  follow_up_visit: {
-    followv_id: number;
-    followv_date: string;
-    followv_status: string;
-  };
-}
-export interface Patient {
-  pat_id: number;
-  name: string;
-  pat_type: string;
-  [key: string]: any;
-}
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();
@@ -224,27 +140,33 @@ export default function IndivVaccinationRecords() {
     const fetchUnvaccinatedVaccines = async () => {
       try {
         setIsUnvaccinatedLoading(true);
-        const res = await api2.get(
-          `/vaccination/unvaccinated-vaccines/${patientData.pat_id}/`
-        );
-        setUnvaccinatedVaccines(
-          res.data.map(
-            (vaccine: { vac_name: string; vac_type_choices: string }) => ({
-              vac_name: vaccine.vac_name,
-              vac_type_choices: vaccine.vac_type_choices,
-            })
-          )
-        );
+        const res = await getUnvaccinatedVaccines(patientData.pat_id); 
+        
+        // Add proper error handling and data validation
+        if (Array.isArray(res)) {
+          setUnvaccinatedVaccines(
+            res.map((vaccine: any) => ({
+              vac_name: vaccine?.vac_name || "Unknown Vaccine",
+              vac_type_choices: vaccine?.vac_type_choices || "Unknown Type"
+            }))
+          );
+        } else {
+          console.warn("Unexpected response format for unvaccinated vaccines:", res);
+          setUnvaccinatedVaccines([]);
+        }
       } catch (err) {
         console.error("Error fetching unvaccinated vaccines:", err);
-        setUnvaccinatedVaccines([]);
+        setUnvaccinatedVaccines([]);       
       } finally {
-        setIsUnvaccinatedLoading(false);
+        setIsUnvaccinatedLoading(false);   
       }
     };
+    
+    if (patientData?.pat_id) {            
+      fetchUnvaccinatedVaccines();
+    }
+  }, [patientData.pat_id]);                
 
-    fetchUnvaccinatedVaccines();
-  }, [patientData.pat_id]);
 
   useEffect(() => {
     const fetchFollowupVaccines = async () => {
@@ -289,19 +211,7 @@ export default function IndivVaccinationRecords() {
     currentPage * pageSize
   );
 
-  const confirmArchiveRecord = async () => {
-    if (recordToArchive !== null) {
-      try {
-        toast.success("Record archived successfully!");
-        queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
-      } catch (error) {
-        toast.error("Failed to archive the record.");
-      } finally {
-        setIsArchiveConfirmationOpen(false);
-        setRecordToArchive(null);
-      }
-    }
-  };
+ 
 
   const columns: ColumnDef<VaccinationRecord>[] = [
     {
@@ -755,13 +665,6 @@ export default function IndivVaccinationRecords() {
         </div>
       </div>
 
-      <ConfirmationDialog
-        isOpen={isArchiveConfirmationOpen}
-        onOpenChange={setIsArchiveConfirmationOpen}
-        onConfirm={confirmArchiveRecord}
-        title="Archive Vaccination Record"
-        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
-      />
     </>
   );
 }

@@ -21,7 +21,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
+import { fetchVaccinesWithStock } from "./restful-api/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
@@ -29,27 +29,8 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { ValidationAlert } from "./vac-required-alert";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { Patient } from "@/components/ui/patientSearch"
 
-interface Patient {
-  pat_id: number;
-  pat_type: string;
-  name?: string;
-  personal_info?: {
-    per_fname?: string;
-    per_mname?: string;
-    per_lname?: string;
-    per_dob?: string;
-    per_sex?: string;
-  };
-  households?: { hh_id: string }[];
-  address?: {
-    add_street?: string;
-    add_barangay?: string;
-    add_city?: string;
-    add_province?: string;
-    add_external_sitio?: string;
-  };
-}
 
 export default function PatNewVacRecForm() {
   const navigate = useNavigate();

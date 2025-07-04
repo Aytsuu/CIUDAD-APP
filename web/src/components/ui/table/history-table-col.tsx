@@ -16,7 +16,6 @@ import {
   PaginationState,
   RowSelectionState,
 } from "@tanstack/react-table";
-
 import {
   Table,
   TableBody,
@@ -33,6 +32,13 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -47,6 +53,11 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: boolean;
   className?: string;
   pageSize?: number;
+  manualPagination?: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 export function DataTable<TData, TValue>({
@@ -58,17 +69,18 @@ export function DataTable<TData, TValue>({
   filtering = false,
   columnVisibility = false,
   columnOrdering = false,
-  columnResizing = false,
+  columnResizing = true,
   rowSelection = false,
   className = "",
   pageSize = 10,
+  manualPagination,
 }: DataTableProps<TData, TValue>) {
   const [sortingState, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibilityState, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnOrderState, setColumnOrder] = React.useState<ColumnOrderState>([]);
   const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
-  const [columnResizeMode] = React.useState<ColumnResizeMode>('onChange');
+  const [columnResizeMode] = React.useState<ColumnResizeMode>("onChange");
   const [rowSelectionState, setRowSelection] = React.useState<RowSelectionState>({});
   const [paginationState, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -85,7 +97,7 @@ export function DataTable<TData, TValue>({
       ...(columnOrdering && { columnOrder: columnOrderState }),
       ...(columnResizing && { columnSizing }),
       ...(rowSelection && { rowSelection: rowSelectionState }),
-      ...(pagination && { pagination: paginationState }),
+      ...(pagination && !manualPagination && { pagination: paginationState }),
     },
     ...(sorting && {
       onSortingChange: setSorting,
@@ -109,7 +121,7 @@ export function DataTable<TData, TValue>({
       onRowSelectionChange: setRowSelection,
       enableRowSelection: true,
     }),
-    ...(pagination && {
+    ...(pagination && !manualPagination && {
       onPaginationChange: setPagination,
       getPaginationRowModel: getPaginationRowModel(),
     }),
@@ -117,256 +129,204 @@ export function DataTable<TData, TValue>({
     debugTable: true,
   });
 
-
-
-    // const handleVaccineWaste = async (
-  //   record: StockRecords,
-  //   wastedAmount: number
-  // ) => {
-  //   if (!isVaccine(record)) return;
-
-  //   const inventoryList = await api.get("inventory/vaccine_stocks/");
-
-  //   const existingItem = inventoryList.data.find(
-  //     (item: any) => item.vacStck_id === record.vacStck_id
-  //   );
-  //   if (!existingItem) {
-  //     throw new Error("Vaccine item not found. Please check the ID.");
-  //   }
-  //   const currentQtyAvail = existingItem.vacStck_qty_avail;
-  //   const existingUsedItem = existingItem.vacStck_used;
-
-  //   let newUsedItem = 0;
-  //   let newQty = 0;
-  //   if (currentQtyAvail === 0) {
-  //     throw new Error("Current quantity available is 0.");
-  //   } else if (wastedAmount > currentQtyAvail) {
-  //     throw new Error("Cannot use more items than available.");
-  //   } else {
-  //     newQty = currentQtyAvail - wastedAmount;
-  //     newUsedItem = existingUsedItem + wastedAmount;
-  //   }
-
-  //   const unit = record.solvent === "diluent" ? "containers" : "doses";
-  //   const updatePayload = {
-  //     wasted_dose:
-  //       (record.wastedDose ? parseInt(record.wastedDose) : 0) + wastedAmount,
-  //     vacStck_qty_avail: newQty,
-  //     vacStck_used: newUsedItem,
-  //   };
-
-  //   await api.put(
-  //     `inventory/vaccine_stocks/${record.vacStck_id}/`,
-  //     updatePayload
-  //   );
-
-  //   const transactionPayload = {
-  //     antt_qty: `${wastedAmount} ${unit}`,
-  //     antt_action: "Wasted",
-  //     staff: 0,
-  //     vacStck_id: record.vacStck_id,
-  //   };
-
-  //   await api.post("inventory/antigens_stocks/", transactionPayload);
-  // };
-
-  // const handleSupplyWaste = async (
-  //   record: StockRecords,
-  //   wastedAmount: number
-  // ) => {
-  //   if (!isSupply(record)) return;
-
-  //   // Determine the unit for display (boxes or pcs)
-  //   const displayUnit = record.imzStck_unit === "boxes" ? "boxes" : "pcs";
-  //   // For transaction, always use pcs if the unit is boxes
-  //   const transactionUnit = record.imzStck_unit === "boxes" ? "pcs" : "pcs";
-
-  //   let piecesToDeduct = wastedAmount;
-  //   let updatePayload: any = {
-  //     wasted_items:
-  //       (record.wastedDose ? parseInt(record.wastedDose) : 0) + wastedAmount,
-  //     imzStck_avail: record.availableStock - wastedAmount,
-  //   };
-
-  //   if (record.imzStck_unit === "boxes") {
-  //     const pcsPerBox = record.imzStck_per_pcs || 1;
-  //     piecesToDeduct = wastedAmount * pcsPerBox;
-  //     if ("imzStck_pcs" in record) {
-  //       updatePayload.imzStck_pcs =
-  //         (Number(record.imzStck_pcs) || 0) - piecesToDeduct;
-  //     }
-  //   }
-
-  //   await api.put(
-  //     `inventory/immunization_stock/${record.imzStck_id}/`,
-  //     updatePayload
-  //   );
-
-  //   // Calculate the quantity for transaction
-
-  //   const transactionPayload = {
-  //     imzt_qty: `${wastedAmount} ${transactionUnit}`,
-  //     imzt_action: "Wasted",
-  //     staff: 0,
-  //     imzStck_id: record.imzStck_id,
-  //   };
-
-  //   await api.post("inventory/imz_transaction/", transactionPayload);
-  // };
-
-
   return (
-    <div className={`flex flex-col space-y-4 ${className}`}>
-      {/* Toolbar with filtering and column visibility */}
-      <div className="flex items-center justify-between">
-        {filtering && (
-          <Input
-            placeholder="Filter data..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-        )}
-
-        {columnVisibility && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          {header && (
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      style={{
-                        ...(columnResizing && {
-                          width: header.getSize(),
-                          position: 'relative',
-                        }),
-                      }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                      {columnResizing && header.column.getCanResize() && (
-                        <div
-                          onMouseDown={header.getResizeHandler()}
-                          onTouchStart={header.getResizeHandler()}
-                          className={`absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize select-none touch-none ${
-                            header.column.getIsResizing() ? 'bg-blue-500' : ''
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
+    <TooltipProvider>
+      <div className={`flex flex-col space-y-4 ${className}`}>
+        {/* Toolbar with filtering and column visibility */}
+        <div className="flex items-center justify-between">
+          {filtering && (
+            <Input
+              placeholder="Filter data..."
+              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+              onChange={(event) =>
+                table.getColumn("name")?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
+            />
           )}
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      style={{
-                        ...(columnResizing && {
-                          width: cell.column.getSize(),
-                        }),
-                      }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
 
-      {/* Pagination */}
-      {pagination && (
-        <div className="flex items-center justify-between px-2">
-          <div className="text-sm text-muted-foreground">
-            {rowSelection && (
+          {columnVisibility && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {/* Table with vertical borders */}
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="min-w-full">
+            {header && (
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        style={{
+                          width: header.getSize(),
+                          position: "relative",
+                        }}
+                        className="overflow-hidden border-r border-gray-200 last:border-r-0"
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        {columnResizing && header.column.getCanResize() && (
+                          <div
+                            onMouseDown={header.getResizeHandler()}
+                            onTouchStart={header.getResizeHandler()}
+                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none ${
+                              header.column.getIsResizing()
+                                ? "bg-blue-500"
+                                : "hover:bg-gray-300"
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+            )}
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        style={{
+                          width: cell.column.getSize(),
+                        }}
+                        className="overflow-hidden border-r border-gray-200 last:border-r-0"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        {pagination && (manualPagination ? (
+            <div className="flex flex-wrap justify-center items-center mt-4 sm:mt-6 gap-2 sm:gap-3">
+            <Button
+              variant="outline"
+              onClick={() => manualPagination.onPageChange(manualPagination.currentPage - 1)}
+              disabled={manualPagination.currentPage === 1}
+              className="text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 h-auto font-medium"
+            >
+              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              Previous
+            </Button>
+
+            <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-2">
+              {Array.from({ length: manualPagination.totalPages }, (_, i) => i + 1).map(
+              (number) => (
+                <Button
+                key={number}
+                variant={
+                  manualPagination.currentPage === number ? "default" : "outline"
+                }
+                className="w-6 h-6 sm:w-8 sm:h-8 text-xs sm:text-sm font-medium"
+                onClick={() => manualPagination.onPageChange(number)}
+                >
+                {number}
+                </Button>
+              )
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => manualPagination.onPageChange(manualPagination.currentPage + 1)}
+              disabled={manualPagination.currentPage === manualPagination.totalPages}
+              className="text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 h-auto font-medium"
+            >
+              Next
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+            </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between px-2 gap-2">
+            <div className="text-sm text-muted-foreground text-center sm:text-left">
+              {rowSelection ? (
               <>
                 {table.getFilteredSelectedRowModel().rows.length} of{" "}
                 {table.getFilteredRowModel().rows.length} row(s) selected
               </>
-            )}
-          </div>
-          <div className="flex items-center space-x-6 lg:space-x-8">
-            <div className="flex items-center space-x-2">
+              ) : (
+              <>
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </>
+              )}
+            </div>
+            <div className="flex flex-wrap justify-center items-center space-x-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
               >
-                Previous
+              <ChevronLeft className="h-4 w-4" />
+              Previous
               </Button>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
               >
-                Next
+              Next
+              <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </div>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 }

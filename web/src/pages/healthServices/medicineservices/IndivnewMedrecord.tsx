@@ -9,17 +9,12 @@ import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import {
   ChevronLeft,
-  User,
-  Package,
   AlertCircle,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
 import { fetchMedicinesWithStock } from "./restful-api/fetchAPI";
-import { z } from "zod";
-import { MedicineTransactionType } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/queries/MedicinePostQueries";
 import {
   MedicineRequestArraySchema,
   MedicineRequestArrayType,
@@ -30,7 +25,7 @@ import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
 import { useMedicineRequestMutation } from "./queries/postQueries";
 
 interface Patient {
-  pat_id: number;
+  pat_id: string;
   name: string;
   pat_type: string;
   [key: string]: any;
@@ -79,18 +74,7 @@ export default function IndivPatNewMedRecForm() {
     setCurrentPage(page);
   }, []);
 
-  const handlePreview = useCallback(() => {
-    if (
-      !selectedPatientData ||
-      selectedMedicines.length === 0 ||
-      hasInvalidQuantities
-    ) {
-      toast.error("Please complete all required fields");
-      return;
-    }
-    setShowSummary(true);
-  }, [selectedPatientData, selectedMedicines]);
-
+ 
   const form = useForm<MedicineRequestArrayType>({
     resolver: zodResolver(MedicineRequestArraySchema),
     defaultValues: {
@@ -103,15 +87,14 @@ export default function IndivPatNewMedRecForm() {
     form.setValue("medicines", selectedMedicines);
   }, [selectedMedicines, form]);
 
-  const onSubmit = useCallback(
-    async (data: MedicineRequestArrayType) => {
+  const onSubmit = useCallback(async (data: MedicineRequestArrayType) => {
       setIsConfirming(true);
       const requestData = {
         pat_id: data.pat_id,
         medicines: selectedMedicines.map((med) => ({
           minv_id: med.minv_id,
           medrec_qty: med.medrec_qty,
-          reason: med.reason || "No r",
+          reason: med.reason || "No reason provided",
         })),
       };
       await submitMedicineRequest(requestData);
@@ -125,9 +108,30 @@ export default function IndivPatNewMedRecForm() {
     0
   );
 
-  const hasInvalidQuantities = selectedMedicines.some(
-    (med) => med.medrec_qty < 1
-  );
+  // Check for invalid quantities (less than 1 or exceeds available stock)
+  const hasInvalidQuantities = selectedMedicines.some((med) => {
+    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    return med.medrec_qty < 1 || (medicine && med.medrec_qty > medicine.avail);
+  });
+
+  // Check for medicines that exceed available stock
+  const hasExceededStock = selectedMedicines.some((med) => {
+    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    return medicine && med.medrec_qty > medicine.avail;
+  });
+
+  const handlePreview = useCallback(() => {
+    if (
+      !selectedPatientData ||
+      selectedMedicines.length === 0 ||
+      hasInvalidQuantities
+    ) {
+      toast.error("Please complete all required fields");
+      return;
+    }
+    setShowSummary(true);
+  }, [selectedPatientData, selectedMedicines, hasInvalidQuantities]);
+
 
   return (
     <div className="min-h-screen bg-gray-50 ">
@@ -193,7 +197,6 @@ export default function IndivPatNewMedRecForm() {
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
                   />
-                 
                 </div>
               )}
             </div>
@@ -231,6 +234,8 @@ export default function IndivPatNewMedRecForm() {
                         ? "Patient Required"
                         : selectedMedicines.length === 0
                         ? "Medicines Required"
+                        : hasExceededStock
+                        ? "Stock Limit Exceeded"
                         : "Invalid Quantities"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
@@ -238,6 +243,8 @@ export default function IndivPatNewMedRecForm() {
                         ? "Please select a patient first from the medicine records page."
                         : selectedMedicines.length === 0
                         ? "Please select at least one medicine to submit the request."
+                        : hasExceededStock
+                        ? "One or more medicines exceed available stock. Please adjust quantities."
                         : "Please ensure all medicine quantities are at least 1."}
                     </p>
                   </div>

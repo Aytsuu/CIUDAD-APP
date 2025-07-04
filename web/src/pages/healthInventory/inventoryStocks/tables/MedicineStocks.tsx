@@ -16,7 +16,7 @@ import { useMedicineStocks } from "../REQUEST/Medicine/queries/MedicineFetchQuer
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { useArchiveInventory } from "../REQUEST/Archive/ArchivePutQueries";
 import { MedicineStocksRecord } from "./type";
-import { isNearExpiry, isExpired, isLowStock } from "./columns/Alert";
+import { isNearExpiry, isExpired, isLowStock } from "../../../../helpers/StocksAlert";
 type StockFilter =
   | "all"
   | "low_stock"

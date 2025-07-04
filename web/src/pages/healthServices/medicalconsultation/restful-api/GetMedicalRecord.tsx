@@ -43,7 +43,7 @@ export const getMedicalRecord =  async () => {
 
 
 
-export const getMedconRecordById = async (id: number) => {
+export const getMedconRecordById = async (id: string) => {
   try {
     const response = await api2.get(`/medical-consultation/view-medcon-record/${id}/`);
     return response.data;

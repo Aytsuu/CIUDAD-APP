@@ -1,14 +1,11 @@
-import React, { useEffect, useState } from "react";
+// src/features/vaccination/pages/AllVaccinationRecords.tsx
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "../NewVacRecForm";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
+import { Search, FileInput, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,111 +13,78 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  getVaccinationRecords,
-  getVaccinatedCount,
-} from "../restful-api/GetVaccination";
-import { toast } from "sonner";
-import { Toaster } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { useVaccinationRecords } from "../restful-api/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
-
-export interface VaccinationRecord {
-  pat_id: string;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  pat_type: string;
-  address: string;
-  vaccination_count: number;
-  dob: string;
-}
+import CardLayout from "@/components/ui/card/card-layout";
+import { vaccinationColumns } from "./columns/all-vac-col";
+import { BasicInfoVaccinationRecord, VaccinationCounts } from "./columns/types";
 
 export default function AllVaccinationRecords() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
-  const queryClient = useQueryClient();
-  const [vaccinationCounts, setVaccinationCounts] = useState({
-    resident_vaccinated: 0,
-    transient_vaccinated: 0,
-  });
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await getVaccinatedCount();
-        setVaccinationCounts(result);
-      } catch (err) {
-        console.error("Error loading vaccination counts", err);
-      }
-    };
-  
-    fetchData(); // ✅ call the function directly instead of setTimeout
-  }, []);
-  
 
-  // Fetch vaccination records from API
-  const { data: vaccinationRecords, isLoading } = useQuery<VaccinationRecord[]>(
-    {
-      queryKey: ["vaccinationRecords"],
-      queryFn: getVaccinationRecords,
-      refetchOnMount: true,
-      staleTime: 0,
-    }
-  );
+  const { data: basicInfoVaccinationRecord, isLoading } = useVaccinationRecords();
 
-  useEffect(() => {
-    console.log(vaccinationRecords);
-  }, []);
 
-  
-  const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
-    if (!vaccinationRecords) return [];
 
-    return vaccinationRecords.map((record: any) => {
+  const formatVaccinationData = React.useCallback((): BasicInfoVaccinationRecord[] => {
+    if (!basicInfoVaccinationRecord) return [];
+
+    return basicInfoVaccinationRecord.map((record: any) => {
       const info = record.patient_details.personal_info || {};
       const address = record.patient_details.address || {};
 
+      const addressString =
+        [
+          address.add_street,
+          address.add_barangay,
+          address.add_city,
+          address.add_province,
+        ]
+          .filter((part) => part && part.trim().length > 0)
+          .join(", ") || "";
+
       return {
         pat_id: record.pat_id,
-        fname: info.per_fname,
-        lname: info.per_lname,
-        mname: info.per_mname,
-        sex: info.per_sex,
+        fname: info.per_fname || "",
+        lname: info.per_lname || "",
+        mname: info.per_mname || "",
+        sex: info.per_sex || "",
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob,
-        householdno: record.patient_details?.households?.[0]?.hh_id,
-        street: address.add_street,
-        sitio: address.sitio,
-        barangay: address.add_barangay,
-        city: address.add_city,
-        province: address.add_province,
-        pat_type: record.patient_details.pat_type,
-        address: `${address.add_street}, ${address.add_barangay}, ${address.add_city}, ${address.add_province}`,
-
+        dob: info.per_dob || "",
+        householdno: record.patient_details?.households?.[0]?.hh_id || "",
+        street: address.add_street || "",
+        sitio: address.sitio || "",
+        barangay: address.add_barangay || "",
+        city: address.add_city || "",
+        province: address.add_province || "",
+        pat_type: record.patient_details.pat_type || "",
+        address: addressString,
         vaccination_count: record.vaccination_count || 0,
       };
     });
-  }, [vaccinationRecords]);
+  }, [basicInfoVaccinationRecord]);
 
-  // Filter data based on search query and patient type
+  const { residentCount, transientCount, totalCount }: VaccinationCounts = React.useMemo(() => {
+    const formattedData = formatVaccinationData();
+    const resident = formattedData.filter(
+      (record) => record.pat_type.toLowerCase() === "resident"
+    ).length;
+    const transient = formattedData.filter(
+      (record) => record.pat_type.toLowerCase() === "transient"
+    ).length;
+    const total = formattedData.length;
+
+    return {
+      residentCount: resident,
+      transientCount: transient,
+      totalCount: total,
+    };
+  }, [formatVaccinationData]);
+
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
       const searchText = `${record.pat_id} 
@@ -136,140 +100,11 @@ export default function AllVaccinationRecords() {
     });
   }, [searchQuery, formatVaccinationData, patientTypeFilter]);
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  // Archive confirmation handler
-  const confirmArchiveRecord = async () => {
-    if (recordToArchive !== null) {
-      try {
-        toast.success("Record archived successfully!");
-        queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
-      } catch (error) {
-        toast.error("Failed to archive the record.");
-      } finally {
-        setIsArchiveConfirmationOpen(false);
-        setRecordToArchive(null);
-      }
-    }
-  };
-
-  const columns: ColumnDef<VaccinationRecord>[] = [
-    {
-      accessorKey: "patient",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Patient <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName =
-          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age}
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "vaccination_count",
-      header: "No of Records",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">
-            {row.original.vaccination_count}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-            <Link
-              to="/invVaccinationRecord"
-              state={{
-                params: {
-                  patientData: {
-                    pat_id: row.original.pat_id,
-                    pat_type: row.original.pat_type,
-                    age: row.original.age,
-                    addressFull: row.original.address,
-                    address: {
-                      add_street: row.original.street,
-                      add_barangay: row.original.barangay,
-                      add_city: row.original.city,
-                      add_province: row.original.province,
-                      add_external_sitio: row.original.sitio,
-                    },
-                    households: [{ hh_id: row.original.householdno }],
-                    personal_info: {
-                      per_fname: row.original.fname,
-                      per_mname: row.original.mname,
-                      per_lname: row.original.lname,
-                      per_dob: row.original.dob,
-                      per_sex: row.original.sex,
-                    },
-                  },
-                },
-              }}
-            >
-              View{" "}
-            </Link>
-          </div>
-        </div>
-      ),
-    },
-  ];
 
   if (isLoading) {
     return (
@@ -286,35 +121,51 @@ export default function AllVaccinationRecords() {
     <>
       <div className="w-full h-full flex flex-col">
         {/* Vaccination Counts Cards */}
-        <div className="flex gap-4 mb-4">
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">
-              Residents Vaccinated
-            </h3>
-            <p className="text-2xl font-bold">
-              {vaccinationCounts.resident_vaccinated}
-            </p>
-          </div>
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">
-              Transients Vaccinated
-            </h3>
-            <p className="text-2xl font-bold">
-              {vaccinationCounts.transient_vaccinated}
-            </p>
-          </div>
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">
-              Total Vaccinated
-            </h3>
-            <p className="text-2xl font-bold">
-              {vaccinationCounts.resident_vaccinated +
-                vaccinationCounts.transient_vaccinated}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <CardLayout
+            title={
+              <div className="flex gap-2">
+                <Users2 className="w-5 h-5" />
+                <span>Resident Vaccinated</span>
+              </div>
+            }
+            content={
+              <div className="text-2xl font-bold px-6 text-blue-600">
+                {residentCount}
+              </div>
+            }
+          />
+
+          <CardLayout
+            title={
+              <div className="flex gap-2">
+                <Users2 className="w-5 h-5 " />
+                <span>Transient Vaccinated</span>
+              </div>
+            }
+            content={
+              <div className="text-2xl font-bold px-6  ">
+                {transientCount}
+              </div>
+            }
+          />
+
+          <CardLayout
+            title={
+              <div className="flex gap-2">
+                <Users2 className="w-5 h-5 " />
+                <span>Total Vaccinated</span>
+              </div>
+            }
+            content={
+              <div className="text-2xl font-bold px-6  ">
+                {totalCount}
+              </div>
+            }
+          />
         </div>
 
-        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
+        <div className="w-full flex flex-col sm:flex-row gap-2 mb-2 mt-4">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search
@@ -351,7 +202,7 @@ export default function AllVaccinationRecords() {
 
         {/* Table Container */}
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex  sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-3 justify-start items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
@@ -388,7 +239,7 @@ export default function AllVaccinationRecords() {
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+            <DataTable columns={vaccinationColumns} data={paginatedData} />
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
@@ -408,14 +259,6 @@ export default function AllVaccinationRecords() {
           </div>
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={isArchiveConfirmationOpen}
-        onOpenChange={setIsArchiveConfirmationOpen}
-        onConfirm={confirmArchiveRecord}
-        title="Archive Vaccination Record"
-        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
-      />
     </>
   );
 }

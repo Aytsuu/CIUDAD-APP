@@ -22,8 +22,7 @@ import { useUpdateCommodityStock } from "../REQUEST/Commodity/queries/CommodityP
 
 export default function EditCommodityStock() {
   const location = useLocation();
-  const initialData = location.state?.params
-    ?.initialData as CommodityStocksRecord;
+  const initialData = location.state?.params?.initialData as CommodityStocksRecord;
 
   const form = useForm<AddCommodityStockType>({
     resolver: zodResolver(AddCommoditySchema),
@@ -46,25 +45,7 @@ export default function EditCommodityStock() {
   const confirmAdd = () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    updateStock(
-      { formData, initialData },
-      {
-        onSuccess: () => {
-          navigate("/mainInventoryStocks");
-          toast.success("Stock updated successfully", {
-            icon: (
-              <CircleCheck size={24} className="fill-green-500 stroke-white" />
-            ),
-            duration: 2000,
-          });
-        },
-        onError: (error) => {
-          toast.error(error.message || "Failed to update commodity stock", {
-            duration: 2000,
-          });
-        },
-      }
-    );
+    updateStock({ formData, initialData });
   };
 
   const onSubmit = (data: AddCommodityStockType) => {
@@ -101,13 +82,18 @@ export default function EditCommodityStock() {
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 mr-2">
                 Available Qty:
               </span>
-                {initialData.cinv_qty_unit.toLowerCase() === "boxes" && initialData.qty?.cinv_pcs > 0 ? (
+              {initialData.cinv_qty_unit.toLowerCase() === "boxes" &&
+              initialData.qty?.cinv_pcs > 0 ? (
                 <>
-                  {Math.ceil(Number(initialData.availQty) / Number(initialData.qty.cinv_pcs))} boxe/s ({Number(initialData.availQty)} pc/s)
+                  {Math.ceil(
+                    Number(initialData.availQty) /
+                      Number(initialData.qty.cinv_pcs)
+                  )}{" "}
+                  boxe/s ({Number(initialData.availQty)} pc/s)
                 </>
-                ) : (
+              ) : (
                 `${initialData.availQty} ${initialData.cinv_qty_unit}`
-                )}
+              )}
             </div>
 
             {/* Receive From */}
@@ -119,39 +105,36 @@ export default function EditCommodityStock() {
             </div>
           </div>
 
-
           <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
             <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
             Add Commodity Stocks
           </Label>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            control={form.control}
-            name="cinv_qty"
-            label={
-              currentUnit === "boxes"
-                ? "Add new number of boxes"
-                : "Add new quantity"
-            }
-            type="number"
-            placeholder="Enter quantity"
-          />
+            <FormInput
+              control={form.control}
+              name="cinv_qty"
+              label={
+                currentUnit === "boxes"
+                  ? "Add new number of boxes"
+                  : "Add new quantity"
+              }
+              type="number"
+              placeholder="Enter quantity"
+            />
 
-          <FormSelect
-            control={form.control}
-            name="cinv_qty_unit"
-            label="Unit"
-            options={[
-              { id: "boxes", name: "Boxes" },
-              { id: "bottles", name: "Bottles" },
-              { id: "packs", name: "Packs" },
-            ]}
-            readOnly
-          />
+            <FormSelect
+              control={form.control}
+              name="cinv_qty_unit"
+              label="Unit"
+              options={[
+                { id: "boxes", name: "Boxes" },
+                { id: "bottles", name: "Bottles" },
+                { id: "packs", name: "Packs" },
+              ]}
+              readOnly
+            />
           </div>
-
-         
 
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -178,10 +161,13 @@ export default function EditCommodityStock() {
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full" asChild>
-              <Link to="/mainInventoryStocks">Cancel</Link>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate(-1)}
+            >
+              Cancel
             </Button>
-
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? (
                 <>

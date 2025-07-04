@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import { Archive , Plus } from "lucide-react";
 import { Link } from "react-router";
 import { MedicineStocksRecord } from "../type";
-import { isNearExpiry, isExpired, isLowStock } from "./Alert";
+import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";
 
 export const getColumns = (
   handleArchiveInventory: (inv_id: string) => void

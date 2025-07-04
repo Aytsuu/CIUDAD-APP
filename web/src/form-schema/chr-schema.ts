@@ -2,34 +2,66 @@ import { z } from 'zod';
 
 
 
+// export const BasicInfoSchema = z.object({
+//   familyNo: z.string().min(1, 'required'),
+//   pat_id: z.string().min(1, 'required'),
+//   ufcNo: z.string().min(1, 'required'),
+//   // childFname: z.string().min(1, 'required'),
+//   // childLname: z.string().min(1, 'required'),
+//   // childMname: z.string(),
+//   // childSex: z.string().min(1, ' required'),
+//   // childDob: z.string().min(1, 'required'),
+//   childPob: z.string().min(1, 'required'), //
+//   motherFname: z.string().min(1, 'required'),
+//   motherLname: z.string().min(1, 'required'),
+//   motherMname: z.string(),
+//   motherAge: z.string().min(1, 'required'),
+//   motherOccupation: z.string().min(1, 'required'),
+//   fatherFname: z.string().min(1, 'required'),
+//   fatherLname: z.string().min(1, 'required'),
+//   fatherMname: z.string(),
+//   fatherAge: z.string().min(1, 'required'),
+//   fatherOccupation: z.string().min(1, 'required'),
+//   // address: z.string().min(1, 'Address is required'),
+//   landmarks: z.string().optional(),
+//   // isTransient: z.string().default('Resident'),
+//   // houseno: z.string(),
+//   // street: z.string().optional(),
+//   // sitio: z.string().optional(),
+//   // barangay: z.string().min(1, "required"),
+//   // province: z.string().optional(),
+//   // city: z.string().optional(),
+// });
+
+
 export const BasicInfoSchema = z.object({
   familyNo: z.string().min(1, 'required'),
-  ufcNo: z.string().min(1, 'required'),
+  pat_id: z.string().optional(),
+  ufcNo: z.string().optional(),
   childFname: z.string().min(1, 'required'),
   childLname: z.string().min(1, 'required'),
   childMname: z.string(),
-  childSex: z.string().min(1, ' required'),
+  childSex: z.string().min(1, 'required'),
   childDob: z.string().min(1, 'required'),
+  childAge : z.string().min(1, 'required'), // Assuming this is calculated from childDob
   childPob: z.string().min(1, 'required'),
-  motherFname: z.string().min(1, 'required'),
-  motherLname: z.string().min(1, 'required'),
-  motherMname: z.string(),
-  motherAge: z.string().min(1, 'required'),
-  motherOccupation: z.string().min(1, 'required'),
-  fatherFname: z.string().min(1, 'required'),
-  fatherLname: z.string().min(1, 'required'),
-  fatherMname: z.string(),
-  fatherAge: z.string().min(1, 'required'),
-  fatherOccupation: z.string().min(1, 'required'),
-  // address: z.string().min(1, 'Address is required'),
-  landmarks: z.string().optional(),
-  isTransient: z.string().default('Resident'),
-  houseno: z.string(),
-  street: z.string().optional(),
-  sitio: z.string().optional(),
-  barangay: z.string().min(1, "required"),
-  province: z.string().optional(),
-  city: z.string().optional(),
+  motherFname: z.string().optional(),
+  motherLname: z.string().optional(),
+  motherMname: z.string().optional(),
+  motherdob: z.string().optional(),
+
+  motherAge: z.string().optional(),
+  motherOccupation: z.string().optional(),
+  fatherFname: z.string().optional(),
+  fatherLname: z.string().optional(),
+  fatherMname: z.string().optional(),
+  fatherAge: z.string().optional(),
+  fatherdob: z.string().optional(),
+
+  fatherOccupation: z.string().optional(),
+  residenceType: z.string().default('Resident'), // Default value for residence type
+  address: z.string().optional(),
+landmarks: z.string().optional(),
 });
 
 

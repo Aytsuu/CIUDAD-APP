@@ -1,0 +1,389 @@
+import React, { useEffect, useState } from "react";
+import { DataTable } from "@/components/ui/table/data-table";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/input";
+import { ColumnDef } from "@tanstack/react-table";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
+import { Link } from "react-router-dom";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { CircleCheck, Loader2 } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { getMedicalRecord } from "../restful-api/GetMedicalRecord";
+
+export interface MedicalRecord {
+  pat_id: number;
+  fname: string;
+  lname: string;
+  mname: string;
+  sex: string;
+  age: string;
+  householdno: string;
+  street: string;
+  sitio: string;
+  barangay: string;
+  city: string;
+  province: string;
+  pat_type: string;
+  address: string;
+  medicalrec_count: number;
+  dob: string;
+}
+
+export default function AllMedicalConsRecord() {
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
+  const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
+  const queryClient = useQueryClient();
+
+  // Fetch medical records from API
+  const { data: MedicalRecord, isLoading } = useQuery<[MedicalRecord]>({
+    queryKey: ["MedicalRecord"],
+    queryFn: getMedicalRecord,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+
+  const formatMedicalData = React.useCallback((): MedicalRecord[] => {
+    if (!MedicalRecord) return [];
+
+    return MedicalRecord.map((record: any) => {
+      const details = record.patient_details || {};
+      const info = details.personal_info || {};
+      const address = details.address || {};
+
+      // Construct address string - returns empty string if no address components
+      const addressString = [
+        address.add_street || info.per_address || "",
+        address.add_barangay || "",
+        address.add_city || "",
+        address.add_province || ""
+      ]
+        .filter(part => part.trim().length > 0) // Remove empty parts
+        .join(", ") || ""; // Join with commas or return empty string
+
+      return {
+        pat_id: record.pat_id,
+        fname: info.per_fname || '',
+        lname: info.per_lname || '',
+        mname: info.per_mname || '',
+        sex: info.per_sex || '',
+        age: calculateAge(info.per_dob).toString(),
+        dob: info.per_dob || '',
+        householdno: details.households?.[0]?.hh_id || "",
+        street: address.add_street || '',
+        sitio: address.sitio || '',
+        barangay: address.add_barangay || '',
+        city: address.add_city || '',
+        province: address.add_province || '',
+        pat_type: details.pat_type || '',
+        address: addressString, // Will be empty string if no address parts
+        medicalrec_count: record.medicalrec_count || 0,
+      };
+    });
+  }, [MedicalRecord]);
+
+  // Filter data based on search query and patient type
+  const filteredData = React.useMemo(() => {
+    return formatMedicalData().filter((record: MedicalRecord) => {
+      const searchText = `${record.pat_id} 
+        ${record.lname} 
+        ${record.fname} 
+        ${record.sitio}`.toLowerCase();
+      
+      const typeMatches =
+        patientTypeFilter === "all" ||
+        record.pat_type.toLowerCase() === patientTypeFilter.toLowerCase();
+
+      return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
+    });
+  }, [searchQuery, formatMedicalData, patientTypeFilter]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // Archive confirmation handler
+  const confirmArchiveRecord = async () => {
+    if (recordToArchive !== null) {
+      try {
+        // Add your archive logic here
+        toast.success("Record archived successfully!");
+        queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
+      } catch (error) {
+        toast.error("Failed to archive the record.");
+      } finally {
+        setIsArchiveConfirmationOpen(false);
+        setRecordToArchive(null);
+      }
+    }
+  };
+
+  const columns: ColumnDef<MedicalRecord>[] = [
+    {
+      accessorKey: "patient",
+      header: ({ column }: { column: any }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Patient <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const fullName =
+          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-sm text-darkGray">
+                {row.original.sex}, {row.original.age}
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "address",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Address <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-start min-w-[200px] px-2">
+          <div className="w-full truncate">
+            {row.original.address ? row.original.address : "No address provided"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "sitio",
+      header: "Sitio",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[120px] px-2">
+          <div className="text-center w-full">
+            {row.original.sitio || "N/A"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.pat_type}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "medicalrec_count",
+      header: "No of Records",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">
+            {row.original.medicalrec_count}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <TooltipLayout
+            content="View"
+            trigger={
+              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                <Link
+                  to="/invMedicalRecord"
+                  state={{
+                    params: {
+                      patientData: {
+                        pat_id: row.original.pat_id,
+                        pat_type: row.original.pat_type,
+                        age: row.original.age,
+                        addressFull: row.original.address || "No address provided",
+                        address: {
+                          add_street: row.original.street,
+                          add_barangay: row.original.barangay,
+                          add_city: row.original.city,
+                          add_province: row.original.province,
+                          sitio: row.original.sitio,
+                        },
+                        households: [{ hh_id: row.original.householdno }],
+                        personal_info: {
+                          per_fname: row.original.fname,
+                          per_mname: row.original.mname,
+                          per_lname: row.original.lname,
+                          per_dob: row.original.dob,
+                          per_sex: row.original.sex,
+                        },
+                      },
+                    },
+                  }}
+                >
+                  <Eye size={15} />
+                </Link>
+              </div>
+            }
+          />
+        </div>
+      ),
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="w-full h-full flex flex-col">
+        {/* Header Section */}
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Medical Consultation Records
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Manage and view patients information
+          </p>
+        </div>
+        <hr className="border-gray mb-5 sm:mb-8" />
+
+        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
+          <div className="w-full flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search..."
+                className="pl-10 bg-white w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <SelectLayout
+              placeholder="Filter records"
+              label=""
+              className="bg-white w-full sm:w-48"
+              options={[
+                { id: "all", name: "All Types" },
+                { id: "resident", name: "Resident" },
+                { id: "transient", name: "Transient" },
+              ]}
+              value={patientTypeFilter}
+              onChange={(value) => setPatientTypeFilter(value)}
+            />
+          </div>
+
+          <div className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">
+              <Link to={`/AllMedicalForm`}>New Record</Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Table Container */}
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-8"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                }}
+                min="1"
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" aria-label="Export data">
+                    <FileInput />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="bg-white w-full overflow-x-auto">
+            <DataTable columns={columns} data={paginatedData} />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing{" "}
+              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+              {filteredData.length} rows
+            </p>
+
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ConfirmationDialog
+        isOpen={isArchiveConfirmationOpen}
+        onOpenChange={setIsArchiveConfirmationOpen}
+        onConfirm={confirmArchiveRecord}
+        title="Archive Medical Record"
+        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
+      />
+    </>
+  );
+}

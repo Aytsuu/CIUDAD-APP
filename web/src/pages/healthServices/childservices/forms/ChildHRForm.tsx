@@ -11,6 +11,7 @@ import LastPage from "./ChildHRPagelast";
 // Define initial form data
 const initialFormData: FormData = {
   familyNo: "",
+  pat_id: "", // Added missing property
   ufcNo: "",
   childFname: "",
   childLname: "",
@@ -18,24 +19,22 @@ const initialFormData: FormData = {
   childSex: "",
   childDob: "",
   childPob: "",
+  childAge: "",
+  residenceType: "Resident", // Default value 
   motherFname: "",
   motherLname: "",
   motherMname: "",
   motherAge: "",
+  motherdob: "",
   motherOccupation: "",
   fatherFname: "",
   fatherLname: "",
   fatherMname: "",
   fatherAge: "",
+  fatherdob: "",
   fatherOccupation: "",
-  houseno: "",
-  street: "",
-  sitio: "",
-  barangay: "",
-  province: "",
-  city: "",
+  address:"",
   landmarks: "",
-  isTransient: "Resident",
   dateNewbornScreening: "",
   hasDisability: false,
   disabilityTypes: [],
@@ -46,8 +45,6 @@ const initialFormData: FormData = {
   vaccines: [],
   vitaminRecords: [],
   vitalSigns: [],
-
-
 };
 
 export default function ChildHealthForm() {
@@ -66,7 +63,7 @@ export default function ChildHealthForm() {
   const updateFormData = (data: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   };
-  
+
   const handleSubmit = () => {
     console.log("Submitting Data:", formData);
   };

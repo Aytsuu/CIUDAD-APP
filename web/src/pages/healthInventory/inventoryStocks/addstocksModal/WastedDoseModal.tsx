@@ -56,7 +56,7 @@ export default function WastedAntigen() {
 
   const handleConfirm = async () => {
     if (!formData) return;
-  
+
     try {
       setIsSubmitting(true);
       setIsConfirmationOpen(false);
@@ -65,7 +65,7 @@ export default function WastedAntigen() {
       } else if (isSupply(record)) {
         await handleSupplyWaste(record, formData.wastedDose);
       }
-      navigate("/mainInventoryStocks");
+      navigate(-1);
       toast.success("Added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
@@ -106,7 +106,7 @@ export default function WastedAntigen() {
       <div className="w-full flex items-center justify-center p-4 sm:p-4">
         <Form {...form}>
           <form
-            onSubmit={(e)=> e.preventDefault()} 
+            onSubmit={(e) => e.preventDefault()}
             className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-5"
           >
             <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
@@ -118,13 +118,13 @@ export default function WastedAntigen() {
               name="wastedDose"
               label={getFormLabel()}
               placeholder={getFormLabel()
-              .replace("Wasted (", "Enter ")
-              .replace(")", "")}
+                .replace("Wasted (", "Enter ")
+                .replace(")", "")}
               type="number"
             />
             <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-              <Button variant="outline" className="w-full">
-                <Link to="/mainInventoryStocks">Cancel</Link>
+              <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+                Cancel
               </Button>
 
               <Button

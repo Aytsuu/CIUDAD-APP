@@ -355,9 +355,15 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Administrations", url: "/health-administration" },
-      { title: "Doctor", url: "/mainMedicalForm" },
-      { title: "Patients Record", url: "/patients-record" },
+      { title: "Administration", url: "/health-administration" },
+      {
+        title: "Doctor",
+        url: "/pending-medical-con",
+        anotherItems: [
+          { title: "Forwarded records", url: "/pending-medical-con" },
+        ],
+      },
+      { title: "Patients Record", url: "/patients-record-main" },
 
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },

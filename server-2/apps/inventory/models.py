@@ -155,11 +155,14 @@ class MedicineInventory(models.Model):
     minv_qty = models.PositiveIntegerField(default=0,)
     minv_qty_unit = models.CharField(max_length=100, default="N/A") 
     minv_pcs = models.PositiveIntegerField(default=0)
-    minv_distributed = models.PositiveIntegerField(default=0)
     minv_qty_avail = models.PositiveIntegerField(default=0)
+    # committed_qty = models.PositiveIntegerField(default=0)  # Ensure non-negative
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,  db_column='inv_id')
     med_id = models.ForeignKey('Medicinelist', on_delete=models.PROTECT, db_column='med_id')
-
+    # APP NA END
+    # min_qty_to_display = models.PositiveIntegerField(default=0)
+    # set_low_stock = models.PositiveBigIntegerField(default=0)
+    # set_near_expiry =models.PositiveBigIntegerField(default=0)
     class Meta: 
         db_table = 'medicine_inventory'
 

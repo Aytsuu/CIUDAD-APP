@@ -63,23 +63,33 @@ export default function AllFirstAidRecords() {
       const info = record.patient_details.personal_info || {};
       const address = record.patient_details.address || {};
 
+      // Construct address string
+      const addressParts = [
+        address.add_street,
+        address.add_barangay, 
+        address.add_city,
+        address.add_province
+      ].filter(Boolean).join(", ");
+      
+      const fullAddress = addressParts || "";
+
       return {
         pat_id: record.pat_id,
-        fname: info.per_fname,
-        lname: info.per_lname,
-        mname: info.per_mname,
-        sex: info.per_sex,
+        fname: info.per_fname || '',
+        lname: info.per_lname || '',
+        mname: info.per_mname || '',
+        sex: info.per_sex || '',
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob,
+        dob: info.per_dob || '',
         householdno: record.patient_details?.households?.[0]?.hh_id || "",
-        street: address.add_street,
-        sitio: address.sitio,
-        barangay: address.add_barangay,
-        city: address.add_city,
-        province: address.add_province,
-        pat_type: record.patient_details.pat_type,
+        street: address.add_street || '',
+        sitio: address.sitio || '',
+        barangay: address.add_barangay || '',
+        city: address.add_city || '',
+        province: address.add_province || '',
+        pat_type: record.patient_details.pat_type || '',
         firstaid_count: record.firstaid_count || 0,
-        address: `${address.add_street}, ${address.add_barangay}, ${address.add_city}, ${address.add_province}`,
+        address: fullAddress,
       };
     });
   }, [firstAidRecords]);
@@ -145,7 +155,9 @@ export default function AllFirstAidRecords() {
       ),
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
+          <div className="w-full truncate">
+            {row.original.address || "No address provided"}
+          </div>
         </div>
       ),
     },
@@ -154,7 +166,9 @@ export default function AllFirstAidRecords() {
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
+          <div className="text-center w-full">
+            {row.original.sitio || "N/A"}
+          </div>
         </div>
       ),
     },
@@ -198,7 +212,7 @@ export default function AllFirstAidRecords() {
                       add_barangay: row.original.barangay,
                       add_city: row.original.city,
                       add_province: row.original.province,
-                      add_external_sitio: row.original.sitio,
+                      sitio: row.original.sitio,
                     },
                     households: [{ hh_id: row.original.householdno }],
                     personal_info: {
@@ -233,6 +247,7 @@ export default function AllFirstAidRecords() {
 
   return (
     <>
+      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-col items-center ">
@@ -283,7 +298,7 @@ export default function AllFirstAidRecords() {
 
         {/* Table Container */}
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex  sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-3 justify-start items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input

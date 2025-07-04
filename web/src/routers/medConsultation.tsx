@@ -1,25 +1,27 @@
 import path from "path";
-import AllMedicalConRecords from "@/pages/healthServices/medicalconsultation/medicalconsultationRecords/AllRecords";
-import NonPHMedicalForm from "@/pages/healthServices/medicalconsultation/NoPHmedForm";
-import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/medicalconsultationRecords/IndividualRecords";
-import PHMedicalForm from "@/pages/healthServices/medicalconsultation/PHmedForm";
-import MedConView from "@/pages/healthServices/medicalconsultation/DisplayMedCon";
+// import AllMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/AllRecords";
+// import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/IndividualRecords";
+// import AllMedicalForm from "@/pages/healthServices/medicalconsultation/PHmedForm";
+// import IndivNonPHMedicalForm from "@/pages/healthServices/medicalconsultation/NewMedConForm";
+
+
+import AllMedicalForm from "@/pages/healthServices/medicalconsultation/Forms/AllNewForm";
+import AllMedicalConsRecord from "@/pages/healthServices/medicalconsultation/tables/AllRecords";
+import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/IndividualRecords";
+import IndivMedicalForm from "@/pages/healthServices/medicalconsultation/Forms/IndivMedConForm";
+import DisplayMedicalConsultation from "@/pages/healthServices/medicalconsultation/medicalhistory/DisplayMedCon";
 
 export const medicalConsultation = [
+
  
   {
-    path: "/nonPHmedicalForm",
-    element: <NonPHMedicalForm  />,
+    path: "/AllMedicalForm",
+    element: <AllMedicalForm  />,
   },
-  {
-    path: "/PHmedicalForm",
-    element: <PHMedicalForm  />,
-  },
-
 
   {
     path: "/allMedRecords",
-    element: <AllMedicalConRecords />,
+    element: <AllMedicalConsRecord />,
   },
   {
     path: "/invMedicalRecord",
@@ -27,8 +29,12 @@ export const medicalConsultation = [
   },
 
   {
-    path: "/viewMedConRecord",
-    element: <MedConView />,
+    path: "/IndivMedicalForm",
+    element: <IndivMedicalForm />,
+  },
+  {
+    path:"/DisplayMedicalConsultation",
+    element: <DisplayMedicalConsultation/>
   }
 
 

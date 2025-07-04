@@ -69,6 +69,7 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
 #         model = PatientRecord
 #         fields = '__all__'
 
+
 # INDIVIDUAL RECORDS VIEW
 class VaccinationHistorRecordView(generics.ListAPIView):
     serializer_class = VaccinationHistorySerializer

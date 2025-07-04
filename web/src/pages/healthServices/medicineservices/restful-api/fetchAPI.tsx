@@ -14,7 +14,6 @@ export interface MedicineStock {
   qty: number; // minv_qty
     unit: string; // minv_qty_unit
 }
-
 export const fetchMedicinesWithStock = () => {
   const [medicines, setMedicines] = useState<MedicineStock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,10 +46,11 @@ export const fetchMedicinesWithStock = () => {
           batch_number: stock.inv_detail?.batch_number // Optional field
         }));
 
-        // Filter out medicines with zero available stock
-        const availableMedicines = transformedData.filter(
-          med => med.available > 0
-        );
+        // Filter out medicines with zero available stock or expired
+        const availableMedicines = transformedData.filter(med => {
+          const isExpired = med.expiry ? new Date(med.expiry) < new Date() : false;
+          return med.available > 0 && !isExpired;
+        });
 
         setMedicines(availableMedicines);
       } catch (error) {

@@ -8,8 +8,10 @@ import {
 } from "../restful-api/FirstAidPostAPI";
 import { useAddInventory } from "../../InventoryAPIQueries";
 import { formatQuantityString } from "../../FormatQuantityString";
+import { useNavigate } from "react-router";
 
 export const useAddFirstAidInventory = () => {
+
   return useMutation({
     mutationFn: ({
       data,
@@ -47,6 +49,7 @@ export const useAddFirstAidTransaction = () => {
 
 export const useSubmitFirstAidStock = () => {
   const queryClient = useQueryClient();
+  const navigate=useNavigate()
   const { mutateAsync: addFirstAidInventory } = useAddFirstAidInventory();
   const { mutateAsync: addFirstAidTransaction } = useAddFirstAidTransaction();
   const { mutateAsync: addInventory } = useAddInventory();
@@ -93,15 +96,24 @@ export const useSubmitFirstAidStock = () => {
         action: "Added",
         staffId,
       });
-
-      return { success: true };
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["firstaidtransactions"] });
+   
+      return;
     },
-    onError: (error: Error) => {
-      console.error(error.message);
+    onSuccess: () => {
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };

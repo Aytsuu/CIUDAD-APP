@@ -184,13 +184,22 @@ class PatientSerializer(serializers.ModelSerializer):
             if personal_address and personal_address.add:
                 address = personal_address.add
                 sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                full_address = f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
+                # Construct full address dynamically based on available fields
+                address_parts = [
+                    f"Sitio {sitio}" if sitio else None,
+                    address.add_barangay if address.add_barangay else None,
+                    address.add_city if address.add_city else None,
+                    address.add_province if address.add_province else None,
+                    address.add_street if address.add_street else None,
+                ]
+                # Filter out None values and join with ", "
+                full_address = ", ".join(filter(None, address_parts))
                 result = {
                     'add_street': address.add_street,
                     'add_barangay': address.add_barangay,
                     'add_city': address.add_city,
                     'add_province': address.add_province,
-                    'sitio': sitio,
+                    'add_sitio': sitio,
                     'full_address': full_address
                 }
                 print("✅ PersonalAddress used →", result)
@@ -201,13 +210,22 @@ class PatientSerializer(serializers.ModelSerializer):
             if household and household.add:
                 address = household.add
                 sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                full_address = f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
+                # Construct full address dynamically based on available fields
+                address_parts = [
+                    f"Sitio {sitio}" if sitio else None,
+                    address.add_barangay if address.add_barangay else None,
+                    address.add_city if address.add_city else None,
+                    address.add_province if address.add_province else None,
+                    address.add_street if address.add_street else None,
+                ]
+                # Filter out None values and join with ", "
+                full_address = ", ".join(filter(None, address_parts))
                 result = {
                     'add_street': address.add_street,
                     'add_barangay': address.add_barangay,
                     'add_city': address.add_city,
                     'add_province': address.add_province,
-                    'sitio': sitio,
+                    'add_sitio': sitio,
                     'full_address': full_address
                 }
                 print("⚠️ No PersonalAddress. Used Household instead →", result)
@@ -219,13 +237,22 @@ class PatientSerializer(serializers.ModelSerializer):
         if obj.pat_type == 'Transient' and obj.trans_id and obj.trans_id.tradd_id:
             trans_addr = obj.trans_id.tradd_id
             sitio = trans_addr.tradd_sitio
-            full_address = f"{sitio}, {trans_addr.tradd_barangay}, {trans_addr.tradd_city}, {trans_addr.tradd_province}, {trans_addr.tradd_street}"
+            # Construct full address dynamically based on available fields
+            address_parts = [
+                f"Sitio {sitio}" if sitio else None,
+                trans_addr.tradd_barangay if trans_addr.tradd_barangay else None,
+                trans_addr.tradd_city if trans_addr.tradd_city else None,
+                trans_addr.tradd_province if trans_addr.tradd_province else None,
+                trans_addr.tradd_street if trans_addr.tradd_street else None,
+            ]
+            # Filter out None values and join with ", "
+            full_address = ", ".join(filter(None, address_parts))
             result = {
                 'add_street': trans_addr.tradd_street,
                 'add_barangay': trans_addr.tradd_barangay,
                 'add_city': trans_addr.tradd_city,
                 'add_province': trans_addr.tradd_province,
-                'sitio': sitio,
+                'add_sitio': sitio,
                 'full_address': full_address
             }
             print("📦 Transient Address →", result)
@@ -471,22 +498,41 @@ class BodyMeasurementSerializer(serializers.ModelSerializer):
 class IllnessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Illness
+        fields= '__all__'
 class FindingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Finding
         fields = '__all__'
         
-class PhysicalExaminationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PhysicalExamination
-        fields = '__all__'
 
-class PhysicalExamListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PhysicalExamList
-        fields = '__all__'
-        
+
 class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:
         model = Diagnosis
+        fields = '__all__'
+     
+class MedicalHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model =MedicalHistory
+        fields = '__all__'
+      
+       
+class PESectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PESection
+        fields = '__all__'
+        
+class PEOptionSerializer(serializers.ModelSerializer):
+    pe_section_details = PESectionSerializer(source="pe_section", read_only=True)
+    
+    class Meta:
+        model=PEOption
+        fields='__all__'
+        
+class PEResultSerializer(serializers.ModelSerializer):
+    pe_option_details = PEOptionSerializer(source="pe_option",read_only=True)
+    find_details = FindingSerializer(source="find", read_only = True)
+    
+    class Meta:
+        model = PEResult
         fields = '__all__'

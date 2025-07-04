@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 
-interface Patient {
+export interface Patient {
   pat_id: string;
   pat_type: string;
   name?: string;
@@ -20,33 +20,43 @@ interface Patient {
     per_sex?: string;
   };
   households?: { hh_id: string }[];
-  family?: {
-    fam_id: string;
-    fc_id: string;
-    fc_role:string;
-  };
+
   address?: {
     add_street?: string;
     add_barangay?: string;
     add_city?: string;
     add_province?: string;
-    add_external_sitio?: string;
+    add_sitio?: string;
+    full_address?: string;
   };
   family_head_info?: {
-    family_heads?:{
-      father: {
-        personal_info?:{
+    fam_id: string;
+    family_heads?: {
+      mother?: {
+        personal_info?: {
           per_fname?: string;
           per_mname?: string;
           per_lname?: string;
           per_dob?: string;
-        }
-      }
-    }
-  }
+          per_sex?: string;
+          per_ed_attainment?: string;
+        };
+      };
+      father?: {
+        personal_info?: {
+          per_fname?: string;
+          per_mname?: string;
+          per_lname?: string;
+          per_dob?: string;
+          per_sex?: string;
+          per_ed_attainment?: string;
+        };
+      };
+    };
+  };
   spouse_info?: {
-
-  }
+    // Define spouse info structure if needed
+  };
 }
 
 interface PatientSearchProps {
@@ -54,7 +64,10 @@ interface PatientSearchProps {
   className?: string;
 }
 
-export function PatientSearch({ onPatientSelect, className }: PatientSearchProps) {
+export function PatientSearch({
+  onPatientSelect,
+  className,
+}: PatientSearchProps) {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [patients, setPatients] = useState<{
@@ -92,7 +105,9 @@ export function PatientSearch({ onPatientSelect, className }: PatientSearchProps
   );
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${className}`}>
+    <div
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${className}`}
+    >
       <div className="flex items-center gap-3 mb-4">
         <User className="h-4 w-4 text-darkBlue3" />
         <Label className="text-base font-semibold text-darkBlue3">
@@ -103,7 +118,9 @@ export function PatientSearch({ onPatientSelect, className }: PatientSearchProps
         options={patients.formatted}
         value={selectedPatientId}
         onChange={handlePatientSelection}
-        placeholder={loading ? "Loading patients..." : "Search and select a patient"}
+        placeholder={
+          loading ? "Loading patients..." : "Search and select a patient"
+        }
         triggerClassName="font-normal w-full"
         emptyMessage={
           <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Package, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { StockBadge } from "@/components/ui/stock-badge";
 import { Button } from "@/components/ui/button/button";
+import { isNearExpiry, isLowStock } from "@/helpers/StocksAlert";
 
 interface Medicine {
     id: string;
@@ -12,6 +13,7 @@ interface Medicine {
     avail: number;
     unit: string;
     expiry?: string | null;
+    pcs_per_box?: number;
 }
 
 interface MedicineDisplayProps {
@@ -127,16 +129,6 @@ export const MedicineDisplay = ({
         }
     };
 
-    const isNearExpiry = (expiryDate?: string | null): boolean => {
-        if (!expiryDate) return false;
-        const today = new Date();
-        const expiry = new Date(expiryDate);
-        const diffInDays = Math.ceil(
-            (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
-        return diffInDays <= 30 && diffInDays > 0;
-    };
-
     const PaginationControls = () => (
         <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50">
             <div className="text-sm text-gray-500">
@@ -244,6 +236,13 @@ export const MedicineDisplay = ({
                                     (m) => m.minv_id === medicine.id
                                 );
 
+                                const nearExpiry = medicine.expiry ? isNearExpiry(medicine.expiry) : false;
+                                const lowStock = isLowStock(
+                                    medicine.avail, 
+                                    medicine.unit, 
+                                    medicine.pcs_per_box || 0
+                                );
+
                                 return (
                                     <tr
                                         key={medicine.id}
@@ -260,6 +259,7 @@ export const MedicineDisplay = ({
                                                         handleMedicineSelection(medicine.id, e.target.checked)
                                                     }
                                                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2"
+                                                    disabled={medicine.avail <= 0}
                                                 />
                                             </div>
                                         </td>
@@ -278,9 +278,9 @@ export const MedicineDisplay = ({
                                         <td className="px-2 py-4 text-center">
                                             <div>
                                                 <div className="text-sm text-gray-600">
-                                                    Expiry Date: {medicine.expiry}
+                                                    Expiry Date: {medicine.expiry || "N/A"}
                                                 </div>
-                                                {isNearExpiry(medicine.expiry) && (
+                                                {nearExpiry && (
                                                     <div className="text-sm text-red-500 font-semibold">
                                                         Near Expiry
                                                     </div>
@@ -291,25 +291,72 @@ export const MedicineDisplay = ({
                                             <StockBadge
                                                 quantity={Number(medicine.avail)}
                                                 unit={medicine.unit}
+                                                lowStock={lowStock}
+                                                outOfStock={medicine.avail <= 0}
                                             />
                                         </td>
                                         <td className="px-6 py-4 text-center whitespace-nowrap">
                                             {isSelected && (
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        max={medicine.avail}
-                                                        className="border rounded-lg px-3 py-1 w-20 text-center focus:ring-2"
-                                                        value={selectedMedicine?.medrec_qty || 0}
-                                                        onChange={(e) => {
-                                                            const value = parseInt(e.target.value) || 0;
-                                                            handleQuantityChange(medicine.id, value);
-                                                        }}
-                                                    />
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <Button
+                                                          type="button"  // ← Add this!
+
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0"
+                                                            onClick={() => {
+                                                                const currentQty = selectedMedicine?.medrec_qty || 0;
+                                                                if (currentQty > 0) {
+                                                                    handleQuantityChange(medicine.id, currentQty - 1);
+                                                                }
+                                                            }}
+                                                            disabled={(selectedMedicine?.medrec_qty || 0) <= 0}
+                                                        >
+                                                            <span className="text-lg">-</span>
+                                                        </Button>
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            max={medicine.avail}
+                                                            className="border rounded-lg px-3 py-1 w-20 text-center focus:ring-2"
+                                                            value={selectedMedicine?.medrec_qty || 0}
+                                                            onChange={(e) => {
+                                                                const value = parseInt(e.target.value) || 0;
+                                                                handleQuantityChange(medicine.id, value);
+                                                            }}
+                                                            disabled={medicine.avail <= 0}
+                                                        />
+                                                        <Button
+                                                          type="button"  // ← Add this!
+
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0"
+                                                            onClick={() => {
+                                                                const currentQty = selectedMedicine?.medrec_qty || 0;
+                                                                if (currentQty < medicine.avail) {
+                                                                    handleQuantityChange(medicine.id, currentQty + 1);
+                                                                }
+                                                            }}
+                                                            disabled={(selectedMedicine?.medrec_qty || 0) >= medicine.avail || medicine.avail <= 0}
+                                                        >
+                                                            <span className="text-lg">+</span>
+                                                        </Button>
+                                                    </div>
                                                     {(selectedMedicine?.medrec_qty ?? 0) < 1 && (
                                                         <span className="text-red-500 text-xs">
                                                             Quantity must be more than zero
+                                                        </span>
+                                                    )}
+                                                    {(selectedMedicine?.medrec_qty ?? 0) > medicine.avail && (
+                                                        <span className="text-red-500 text-xs">
+                                                            Quantity exceeds available stock ({medicine.avail} {medicine.unit})
+                                                        </span>
+                                                    )}
+                                                    {medicine.avail <= 0 && (
+                                                        <span className="text-red-500 text-xs">
+                                                            Out of stock
                                                         </span>
                                                     )}
                                                 </div>
@@ -325,6 +372,7 @@ export const MedicineDisplay = ({
                                                     onChange={(e) =>
                                                         handleReasonChange(medicine.id, e.target.value)
                                                     }
+                                                    disabled={medicine.avail <= 0}
                                                 />
                                             )}
                                         </td>

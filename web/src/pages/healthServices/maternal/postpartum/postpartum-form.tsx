@@ -211,6 +211,11 @@ export default function PostpartumFormFirstPg({
         form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
         form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
         form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
+      } else {
+        form.setValue("mothersPersonalInfo.husbandLName", "")
+        form.setValue("mothersPersonalInfo.husbandFName", "")
+        form.setValue("mothersPersonalInfo.husbandMName", "")
+        form.setValue("mothersPersonalInfo.husbandDob", "")
       }
     }
   }
