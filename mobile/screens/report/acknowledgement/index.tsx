@@ -218,8 +218,6 @@ export default () => {
     );
   };
 
-  const renderTabButtons = () => null; // Remove tab functionality for acknowledgement reports
-
   return (
     <PageLayout
       leftAction={

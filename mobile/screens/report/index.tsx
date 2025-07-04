@@ -15,8 +15,13 @@ export default () => {
   },
   {
     title: 'Acknowledgement Report', 
-    description: '', 
+    description: 'Check your records of acknolwedgement reports.', 
     route: '/(report)/acknowledgement/ar-records'
+  },
+  {
+    title: 'Weekly Accomplishment Report', 
+    description: 'Check your weekly accomplishment reports', 
+    route: ''
   },
   {
     title: 'Waste Report', 
