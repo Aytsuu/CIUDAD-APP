@@ -169,11 +169,13 @@ class StaffAttendanceRankingView(generics.ListAPIView):
 
     def get_queryset(self):
         # Aggregate present attendees by atn_name for non-archived events
+        current_year = datetime.now().year
         return (
             CouncilAttendees.objects
             .filter(
                 atn_present_or_absent='Present',
-                ce_id__ce_is_archive=False
+                ce_id__ce_is_archive=False,
+                ce_id__ce_date__year=current_year,
             )
             .values('atn_name', 'atn_designation')
             .annotate(attendance_count=Count('atn_id'))

@@ -4,12 +4,13 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TrendingUp, BarChart3, AlertCircle } from "lucide-react";
-import { useGetStaffAttendanceRanking } from "./ce-event-analytics-queries";
+import { useGetStaffAttendanceRanking, useGetCouncilEvents } from "./ce-event-analytics-queries";
 
 export default function StaffAttendanceRankingChart() {
   const { data: rankingData = [], isLoading, error } = useGetStaffAttendanceRanking();
-
-  const totalMeetings = rankingData.reduce((acc, data) => acc + data.attendance_count, 0);
+  const currentYear = new Date().getFullYear();
+  const { data: councilEvents = [] } = useGetCouncilEvents();
+  const totalMeetings = councilEvents.filter((event) => event.ce_type === "meeting").length;
   const averageMeetings = rankingData.length > 0 ? Math.round(totalMeetings / rankingData.length) : 0;
 
   const chartConfig = {
@@ -41,7 +42,7 @@ export default function StaffAttendanceRankingChart() {
             <CardTitle className="text-xl">Staff Meeting Attendance Ranking</CardTitle>
           </div>
           <CardDescription className="text-sm text-muted-foreground">
-            Top staff by number of council meetings attended
+            Top staff by number of council meetings attended in {currentYear}
           </CardDescription>
         </div>
 
@@ -91,7 +92,7 @@ export default function StaffAttendanceRankingChart() {
             <BarChart3 className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-semibold text-muted-foreground mb-2">No Data Available</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              There are no meeting attendance records to display.
+              There are no meeting attendance records for {currentYear}.
             </p>
           </div>
         ) : (
@@ -114,7 +115,7 @@ export default function StaffAttendanceRankingChart() {
                 tickMargin={8}
                 minTickGap={32}
                 className="text-xs"
-                tickFormatter={(value: string) => value.split(' ').slice(0, 2).join(' ')}
+                tickFormatter={(value: string) => value}
               />
               <YAxis
                 tickLine={false}
@@ -128,9 +129,11 @@ export default function StaffAttendanceRankingChart() {
                   <ChartTooltipContent
                     className="w-[180px] border shadow-lg"
                     labelFormatter={(value: string) => value}
-                    formatter={( props: any) => [
-                      `Designation: ${rankingData.find(d => d.atn_name === props.label)?.atn_designation || 'N/A'}`,
-                    ]}
+                    formatter={(value: number, name: string, props: any) => {
+                      return [
+                        `Designation: ${props.payload?.atn_designation || 'N/A'}`,
+                      ];
+                    }}
                   />
                 }
               />

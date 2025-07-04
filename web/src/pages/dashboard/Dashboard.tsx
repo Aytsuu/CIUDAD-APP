@@ -4,6 +4,7 @@ import { GADExpenseSidebar, GADIncomeSidebar } from "@/components/analytics/gad/
 import { ProjPropPendingSectionCards } from "@/components/analytics/gad/projprop-section-cards";
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
+import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
 
 export default function Dashboard() {
   return (
@@ -14,17 +15,18 @@ export default function Dashboard() {
       <div className="w-full flex gap-2">
         <div className="w-full grid gap-2">
           <div className="grid grid-cols-5">
-            {/* <DonationSectionCards/>
-            <ProjPropPendingSectionCards/> */}
+            <DonationSectionCards/>
+            <ProjPropPendingSectionCards/>
+            <WastePersonnelCards/>
           </div>
           <div className="grid">
-            {/* <StaffAttendanceRankingChart/> */}
+            <StaffAttendanceRankingChart/>
           </div>
         </div>
         <div className="grid gap-2">
-          {/* <GADExpenseSidebar/>
-          <GADIncomeSidebar/> */}
-          {/* <CouncilEventsSidebar/> */}
+          <GADExpenseSidebar/>
+          <GADIncomeSidebar/>
+          <CouncilEventsSidebar/>
         </div>
       </div>
     </MainLayoutComponent>
