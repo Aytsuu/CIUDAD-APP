@@ -10,16 +10,16 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useHouseholdTable } from "./queries/profilingGetQueries";
+import { useFamiliesTable } from "../queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
 import { UsersRound } from "@/lib/icons/UsersRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import PageLayout from "../_PageLayout";
-import { Home } from "@/lib/icons/Home";
+import PageLayout from "@/screens/_PageLayout";
 import { Calendar } from "@/lib/icons/Calendar";
+import { UserRound } from "@/lib/icons/UserRound";
 
-export default function HouseholdRecords() {
+export default function FamilyRecords() {
   const router = useRouter();
   const [searchInputVal, setSearchInputVal] = React.useState<string>('');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
@@ -28,14 +28,14 @@ export default function HouseholdRecords() {
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
 
-  const { data: householdTableData, isLoading, refetch } = useHouseholdTable(
+  const { data: familiesTableData, isLoading, refetch } = useFamiliesTable(
     currentPage,
     pageSize,
     searchQuery
   );
 
-  const households = householdTableData?.results || [];
-  const totalCount = householdTableData?.count || 0;
+  const families = familiesTableData?.results || [];
+  const totalCount = familiesTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleRefresh = async () => {
@@ -49,91 +49,134 @@ export default function HouseholdRecords() {
     setCurrentPage(1);
   }, [searchInputVal]);
 
-  const handleHouseholdPress = (household: any) => {
-    
-  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return 'F';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const householdInitials = item.hh_id ? item.hh_id.substring(0, 2).toUpperCase() : 'HH';
-    const fullAddress = [item.street, item.sitio].filter(Boolean).join(', ') || 'Address not specified';
+    const familyName = `Family ${item.fam_id}`;
+    const memberCount = item.members || 0;
+    const householdNo = item.household_no || 'N/A';
+    const sitio = item.sitio || 'N/A';
+    const building = item.fam_building || 'N/A';
+    const isIndigenous = item.fam_indigenous;
+    const registeredDate = formatDate(item.fam_date_registered);
+    const registeredBy = item.registered_by || 'N/A';
+    
+    // Parent information
+    const mother = item.mother || 'N/A';
+    const father = item.father || 'N/A';
+    const guardian = item.guardian || 'N/A';
+    
+    // Determine primary guardian/head
+    const primaryHead = father !== 'N/A' ? father : mother !== 'N/A' ? mother : guardian;
     
     return (
       <TouchableOpacity
-        onPress={() => handleHouseholdPress(item)}
-        className="mb-3 mx-5"
+        onPress={() => {
+          router.push({
+            pathname: '/(profiling)/family/details', // or '/resident-details' depending on your structure
+            params: {
+              family: JSON.stringify(item)
+            }
+          });
+        }}
+        className="mb-4 mx-5"
         activeOpacity={0.7}
       >
-        <Card className="p-4 bg-white shadow-sm border border-gray-100">
+        <Card className="p-4 bg-white shadow-sm border border-gray-100 rounded-lg">
           {/* Header Section */}
           <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center flex-1">
-              <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-blue-600 font-semibold text-sm">
-                  {householdInitials}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
-                  Household {item.hh_id}
-                </Text>
-                <Text className="text-gray-500 text-sm">
-                  {item.total_families} {item.total_families === 1 ? 'Family' : 'Families'}
-                </Text>
+            <View className="flex-1">
+              <View className="flex-row items-center">
+                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
+                  <Text className="text-blue-600 font-bold text-sm">
+                    {getInitials(familyName)}
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
+                    {familyName}
+                  </Text>
+                  <Text className="text-gray-500 text-sm">
+                    ID: {item.fam_id} • Household: {householdNo}
+                  </Text>
+                </View>
               </View>
             </View>
-            
-            {/* NHTS Badge */}
-            {item.nhts && (
-              <View className="bg-green-100 px-2 py-1 rounded-full mr-2">
-                <Text className="text-green-600 text-xs font-medium">NHTS</Text>
+            <ChevronRight size={20} className="text-gray-400 ml-2" />
+          </View>
+
+          {/* Family Head Information */}
+          {primaryHead !== 'N/A' && (
+            <View className="mb-3">
+              <View className="flex-row items-center mb-1">
+                <UserRound size={14} className="text-gray-500 mr-2" />
+                <Text className="text-gray-600 text-sm font-medium">Family Head</Text>
               </View>
-            )}
-            
-            <ChevronRight size={20} className="text-gray-400" />
-          </View>
-
-          {/* Household Head */}
-          <View className="flex-row items-center mb-2">
-            <UsersRound size={16} className="text-gray-400 mr-2" />
-            <Text className="text-gray-600 text-sm font-medium">Head: </Text>
-            <Text className="text-gray-900 text-sm flex-1" numberOfLines={1}>
-              {item.head || 'Not specified'}
-            </Text>
-          </View>
-
-          {/* Address */}
-          <View className="flex-row items-center mb-2">
-            <Text className="text-gray-600 text-sm font-medium">Address: </Text>
-            <Text className="text-gray-900 text-sm flex-1" numberOfLines={1}>
-              {fullAddress}
-            </Text>
-          </View>
-
-          {/* Registration Info */}
-          <View className="flex-row items-center justify-between pt-2 border-t border-gray-100">
-            <View className="flex-row items-center flex-1">
-              <Calendar size={14} className="text-gray-400 mr-1" />
-              <Text className="text-gray-400 text-xs">
-                Registered: {formatDate(item.date_registered)}
+              <Text className="text-gray-800 text-sm ml-5" numberOfLines={1}>
+                {primaryHead}
               </Text>
             </View>
-            {item.registered_by && (
-              <View className="flex-row items-center">
-                <Text className="text-gray-400 text-xs" numberOfLines={1}>
-                  by {item.registered_by}
+          )}
+
+          {/* Location Information */}
+          <View className="mb-3">
+            <View className="flex-row items-center mb-1">
+              <Text className="text-gray-600 text-sm font-medium">Location</Text>
+            </View>
+            <Text className="text-gray-800 text-sm ml-5" numberOfLines={1}>
+              {sitio}{building !== 'N/A' ? `, ${building}` : ''}
+            </Text>
+          </View>
+
+          {/* Family Details Row */}
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center">
+              <UsersRound size={14} className="text-gray-500 mr-2" />
+              <Text className="text-gray-600 text-sm">
+                {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
+              </Text>
+            </View>
+            
+            {isIndigenous && (
+              <View className="bg-orange-100 px-2 py-1 rounded-full">
+                <Text className="text-orange-600 text-xs font-medium">
+                  Indigenous
                 </Text>
               </View>
             )}
+          </View>
+
+          {/* Registration Information */}
+          <View className="pt-3 border-t border-gray-100">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Calendar size={14} className="text-gray-500 mr-2" />
+                <Text className="text-gray-500 text-xs">
+                  Registered: {registeredDate}
+                </Text>
+              </View>
+              <Text className="text-gray-400 text-xs">
+                By: {registeredBy}
+              </Text>
+            </View>
           </View>
         </Card>
       </TouchableOpacity>
@@ -143,15 +186,15 @@ export default function HouseholdRecords() {
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <Home size={32} className="text-gray-400" />
+        <UsersRound size={32} className="text-gray-400" />
       </View>
       <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No households found' : 'No households yet'}
+        {searchQuery ? 'No families found' : 'No families yet'}
       </Text>
       <Text className="text-gray-400 text-center px-8">
         {searchQuery 
           ? 'Try adjusting your search terms' 
-          : 'Household records will appear here once added'
+          : 'Family records will appear here once added'
         }
       </Text>
     </View>
@@ -160,7 +203,7 @@ export default function HouseholdRecords() {
   const renderLoadingState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-500 mt-4">Loading households...</Text>
+      <Text className="text-gray-500 mt-4">Loading families...</Text>
     </View>
   );
 
@@ -216,7 +259,7 @@ export default function HouseholdRecords() {
       }
       headerTitle={
         <Text className="text-gray-900 text-[13px]">
-          Household Records
+          Family Records
         </Text>
       }
       rightAction={
@@ -242,11 +285,11 @@ export default function HouseholdRecords() {
           {/* Stats Card */}
           <Card className="flex-row items-center p-4 mb-4 bg-primaryBlue shadow-lg mx-5">
             <View className="p-3 bg-white/20 rounded-full mr-4">
-              <Home size={24} className="text-white" />
+              <UsersRound size={24} className="text-white" />
             </View>
             <View className="flex-1">
               <Text className="text-white/80 text-sm font-medium">
-                Total Households
+                Total Families
               </Text>
               <Text className="text-white text-2xl font-bold">
                 {totalCount}
@@ -259,7 +302,7 @@ export default function HouseholdRecords() {
             </View>
           </Card>
 
-          {/* Households List */}
+          {/* Families List */}
           <View className="flex-1">
             {isLoading && !isRefreshing ? (
               renderLoadingState()
@@ -268,9 +311,9 @@ export default function HouseholdRecords() {
             ) : (
               <>
                 <FlatList
-                  data={households}
+                  data={families}
                   renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
-                  keyExtractor={(item) => item.hh_id}
+                  keyExtractor={(item) => item.fam_id.toString()}
                   showsVerticalScrollIndicator={false}
                   refreshControl={
                     <RefreshControl

@@ -44,9 +44,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Found Supabase session, verifying with backend...");
 
       // If we have a session, verify with backend
-      const response = await api.get("authentication/user/");
-      setUser(response.data.user);
-      setIsAuthenticated(true);
+      // const response = await api.get("authentication/user/");
+      // setUser(response.data.user);
+      // setIsAuthenticated(true);
       
       console.log("Authentication verified successfully");
       
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else if (event === 'SIGNED_IN' || event == 'TOKEN_REFRESHED') {
           checkAuthStatus();
         }
-      }
+      } 
     );
 
     // Initial auth check
@@ -118,7 +118,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
       });
-      
+
+
+      console.log('response:', response.data);
       console.log("Backend authentication successful:", response.data.user.email);
       setUser(response.data.user);
       setIsAuthenticated(true);

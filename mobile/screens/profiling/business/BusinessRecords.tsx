@@ -10,16 +10,15 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useFamiliesTable } from "./queries/profilingGetQueries";
+import { useBusinessTable } from "../queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
-import { UsersRound } from "@/lib/icons/UsersRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import PageLayout from "../_PageLayout";
+import PageLayout from "@/screens/_PageLayout";
 import { Calendar } from "@/lib/icons/Calendar";
-import { UserRound } from "@/lib/icons/UserRound";
+import { Building } from "@/lib/icons/Building";
 
-export default function FamilyRecords() {
+export default function BusinessRecords() {
   const router = useRouter();
   const [searchInputVal, setSearchInputVal] = React.useState<string>('');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
@@ -28,14 +27,14 @@ export default function FamilyRecords() {
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
 
-  const { data: familiesTableData, isLoading, refetch } = useFamiliesTable(
+  const { data: businessesTableData, isLoading, refetch } = useBusinessTable(
     currentPage,
     pageSize,
     searchQuery
   );
 
-  const families = familiesTableData?.results || [];
-  const totalCount = familiesTableData?.count || 0;
+  const families = businessesTableData?.results || [];
+  const totalCount = businessesTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleRefresh = async () => {
@@ -49,130 +48,142 @@ export default function FamilyRecords() {
     setCurrentPage(1);
   }, [searchInputVal]);
 
-  const handleResidentPress = (resident: any) => {
-    
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number) => {
+    if (!amount) return 'Not specified';
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
+  // Helper function to format date
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
+    if (!dateString) return 'Not specified';
+    return new Date(dateString).toLocaleDateString('en-PH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return 'F';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  // Helper function to get business initial
+  const getBusinessInitial = (businessName: string) => {
+    return businessName ? businessName.charAt(0).toUpperCase() : 'B';
   };
 
-  const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const familyName = `Family ${item.fam_id}`;
-    const memberCount = item.members || 0;
-    const householdNo = item.household_no || 'N/A';
-    const sitio = item.sitio || 'N/A';
-    const building = item.fam_building || 'N/A';
-    const isIndigenous = item.fam_indigenous;
-    const registeredDate = formatDate(item.fam_date_registered);
-    const registeredBy = item.registered_by || 'N/A';
-    
-    // Parent information
-    const mother = item.mother || 'N/A';
-    const father = item.father || 'N/A';
-    const guardian = item.guardian || 'N/A';
-    
-    // Determine primary guardian/head
-    const primaryHead = father !== 'N/A' ? father : mother !== 'N/A' ? mother : guardian;
+  const RenderBusinessCard = React.memo(({ item, index }: { item: any; index: number }) => {
+    const respondentName = `${item.bus_respondentFname || ''} ${item.bus_respondentMname ? item.bus_respondentMname + ' ' : ''}${item.bus_respondentLname || ''}`.trim();
+    const businessAddress = `${item.bus_street || ''}, ${item.sitio || ''}`.replace(/^,\s*|,\s*$/g, '');
+    const hasFiles = item.files && item.files.length > 0;
     
     return (
       <TouchableOpacity
-        onPress={() => handleResidentPress(item)}
-        className="mb-4 mx-5"
+        onPress={() => {
+          router.push({
+            pathname: '/(profiling)/business/details', // or '/resident-details' depending on your structure
+            params: {
+              business: JSON.stringify(item)
+            }
+          });
+        }}
+        className="mb-3 mx-5"
         activeOpacity={0.7}
       >
-        <Card className="p-4 bg-white shadow-sm border border-gray-100 rounded-lg">
-          {/* Header Section */}
-          <View className="flex-row items-center justify-between mb-3">
+        <Card className="p-4 bg-white shadow-sm border border-gray-100">
+          <View className="flex-row items-start justify-between">
             <View className="flex-1">
-              <View className="flex-row items-center">
+              {/* Business Header */}
+              <View className="flex-row items-center mb-3">
                 <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-blue-600 font-bold text-sm">
-                    {getInitials(familyName)}
+                  <Text className="text-blue-600 font-semibold text-lg">
+                    {getBusinessInitial(item.bus_name)}
                   </Text>
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
-                    {familyName}
+                    {item.bus_name || 'Unnamed Business'}
                   </Text>
                   <Text className="text-gray-500 text-sm">
-                    ID: {item.fam_id} • Household: {householdNo}
+                    ID: {item.bus_id}
                   </Text>
                 </View>
               </View>
-            </View>
-            <ChevronRight size={20} className="text-gray-400 ml-2" />
-          </View>
 
-          {/* Family Head Information */}
-          {primaryHead !== 'N/A' && (
-            <View className="mb-3">
-              <View className="flex-row items-center mb-1">
-                <UserRound size={14} className="text-gray-500 mr-2" />
-                <Text className="text-gray-600 text-sm font-medium">Family Head</Text>
+              {/* Business Details */}
+              <View className="space-y-2">
+                {/* Gross Sales */}
+                {item.bus_gross_sales && (
+                  <View className="flex-row items-center">
+                    <Text>P</Text>
+                    <Text className="text-gray-600 text-sm flex-1">
+                      Gross Sales: <Text className="font-medium text-green-600">{formatCurrency(item.bus_gross_sales)}</Text>
+                    </Text>
+                  </View>
+                )}
+
+                {/* Location */}
+                {businessAddress && (
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-600 text-sm flex-1" numberOfLines={1}>
+                      {businessAddress}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Respondent */}
+                {respondentName && (
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-600 text-sm flex-1" numberOfLines={1}>
+                      Contact: {respondentName}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Contact Number */}
+                {item.bus_respondentContact && (
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-600 text-sm">
+                      {item.bus_respondentContact}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Registration Date */}
+                {item.bus_date_registered && (
+                  <View className="flex-row items-center">
+                    <Calendar size={14} className="text-gray-400 mr-2" />
+                    <Text className="text-gray-600 text-sm">
+                      Registered: {formatDate(item.bus_date_registered)}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Registered By */}
+                {item.bus_registered_by && (
+                  <View className="flex-row items-center">
+                    <Building size={14} className="text-gray-400 mr-2" />
+                    <Text className="text-gray-600 text-sm">
+                      By: {item.bus_registered_by}
+                    </Text>
+                  </View>
+                )}
               </View>
-              <Text className="text-gray-800 text-sm ml-5" numberOfLines={1}>
-                {primaryHead}
-              </Text>
-            </View>
-          )}
 
-          {/* Location Information */}
-          <View className="mb-3">
-            <View className="flex-row items-center mb-1">
-              <Text className="text-gray-600 text-sm font-medium">Location</Text>
-            </View>
-            <Text className="text-gray-800 text-sm ml-5" numberOfLines={1}>
-              {sitio}{building !== 'N/A' ? `, ${building}` : ''}
-            </Text>
-          </View>
-
-          {/* Family Details Row */}
-          <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center">
-              <UsersRound size={14} className="text-gray-500 mr-2" />
-              <Text className="text-gray-600 text-sm">
-                {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
-              </Text>
+              {/* Files indicator */}
+              {hasFiles && (
+                <View className="mt-3 pt-3 border-t border-gray-100">
+                  <Text className="text-xs text-blue-600 font-medium">
+                    📎 {item.files.length} document{item.files.length > 1 ? 's' : ''} attached
+                  </Text>
+                </View>
+              )}
             </View>
             
-            {isIndigenous && (
-              <View className="bg-orange-100 px-2 py-1 rounded-full">
-                <Text className="text-orange-600 text-xs font-medium">
-                  Indigenous
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Registration Information */}
-          <View className="pt-3 border-t border-gray-100">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <Calendar size={14} className="text-gray-500 mr-2" />
-                <Text className="text-gray-500 text-xs">
-                  Registered: {registeredDate}
-                </Text>
-              </View>
-              <Text className="text-gray-400 text-xs">
-                By: {registeredBy}
-              </Text>
-            </View>
+            <ChevronRight size={20} className="text-gray-400 ml-2" />
           </View>
         </Card>
       </TouchableOpacity>
@@ -182,15 +193,15 @@ export default function FamilyRecords() {
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <UsersRound size={32} className="text-gray-400" />
+        <Building size={32} className="text-gray-400" />
       </View>
       <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No families found' : 'No families yet'}
+        {searchQuery ? 'No businesses found' : 'No businesses yet'}
       </Text>
       <Text className="text-gray-400 text-center px-8">
         {searchQuery 
           ? 'Try adjusting your search terms' 
-          : 'Family records will appear here once added'
+          : 'Business records will appear here once added'
         }
       </Text>
     </View>
@@ -199,7 +210,7 @@ export default function FamilyRecords() {
   const renderLoadingState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-500 mt-4">Loading families...</Text>
+      <Text className="text-gray-500 mt-4">Loading businesses...</Text>
     </View>
   );
 
@@ -207,7 +218,7 @@ export default function FamilyRecords() {
     if (totalPages <= 1) return null;
 
     return (
-      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4 mx-5">
+      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4">
         <TouchableOpacity
           onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
@@ -255,7 +266,7 @@ export default function FamilyRecords() {
       }
       headerTitle={
         <Text className="text-gray-900 text-[13px]">
-          Family Records
+          Business Records
         </Text>
       }
       rightAction={
@@ -281,11 +292,11 @@ export default function FamilyRecords() {
           {/* Stats Card */}
           <Card className="flex-row items-center p-4 mb-4 bg-primaryBlue shadow-lg mx-5">
             <View className="p-3 bg-white/20 rounded-full mr-4">
-              <UsersRound size={24} className="text-white" />
+              <Building size={24} className="text-white" />
             </View>
             <View className="flex-1">
               <Text className="text-white/80 text-sm font-medium">
-                Total Families
+                Total Businesses
               </Text>
               <Text className="text-white text-2xl font-bold">
                 {totalCount}
@@ -298,7 +309,7 @@ export default function FamilyRecords() {
             </View>
           </Card>
 
-          {/* Families List */}
+          {/* Business List */}
           <View className="flex-1">
             {isLoading && !isRefreshing ? (
               renderLoadingState()
@@ -308,8 +319,8 @@ export default function FamilyRecords() {
               <>
                 <FlatList
                   data={families}
-                  renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
-                  keyExtractor={(item) => item.fam_id.toString()}
+                  renderItem={({item, index}) => <RenderBusinessCard item={item} index={index} />}
+                  keyExtractor={(item) => item.bus_id}
                   showsVerticalScrollIndicator={false}
                   refreshControl={
                     <RefreshControl

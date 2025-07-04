@@ -10,15 +10,16 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useBusinessTable } from "./queries/profilingGetQueries";
+import { useHouseholdTable } from "../queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
+import { UsersRound } from "@/lib/icons/UsersRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import PageLayout from "../_PageLayout";
+import PageLayout from "@/screens/_PageLayout";
+import { Home } from "@/lib/icons/Home";
 import { Calendar } from "@/lib/icons/Calendar";
-import { Building } from "@/lib/icons/Building";
 
-export default function BusinessRecords() {
+export default function HouseholdRecords() {
   const router = useRouter();
   const [searchInputVal, setSearchInputVal] = React.useState<string>('');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
@@ -27,14 +28,14 @@ export default function BusinessRecords() {
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
 
-  const { data: businessesTableData, isLoading, refetch } = useBusinessTable(
+  const { data: householdTableData, isLoading, refetch } = useHouseholdTable(
     currentPage,
     pageSize,
     searchQuery
   );
 
-  const families = businessesTableData?.results || [];
-  const totalCount = businessesTableData?.count || 0;
+  const households = householdTableData?.results || [];
+  const totalCount = householdTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleRefresh = async () => {
@@ -48,139 +49,94 @@ export default function BusinessRecords() {
     setCurrentPage(1);
   }, [searchInputVal]);
 
-  const handleBusinessPress = (business: any) => {
-    // Navigate to business details
-    // router.push(`/business/${business.bus_id}`);
-  };
-
-  // Helper function to format currency
-  const formatCurrency = (amount: number) => {
-    if (!amount) return 'Not specified';
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
-  // Helper function to format date
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-PH', {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
   };
 
-  // Helper function to get business initial
-  const getBusinessInitial = (businessName: string) => {
-    return businessName ? businessName.charAt(0).toUpperCase() : 'B';
-  };
-
-  const RenderBusinessCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const respondentName = `${item.bus_respondentFname || ''} ${item.bus_respondentMname ? item.bus_respondentMname + ' ' : ''}${item.bus_respondentLname || ''}`.trim();
-    const businessAddress = `${item.bus_street || ''}, ${item.sitio || ''}`.replace(/^,\s*|,\s*$/g, '');
-    const hasFiles = item.files && item.files.length > 0;
+  const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
+    const householdInitials = item.hh_id ? item.hh_id.substring(0, 2).toUpperCase() : 'HH';
+    const fullAddress = [item.street, item.sitio].filter(Boolean).join(', ') || 'Address not specified';
     
     return (
       <TouchableOpacity
-        onPress={() => handleBusinessPress(item)}
+        onPress={() => {
+          router.push({
+            pathname: '/(profiling)/household/details', // or '/resident-details' depending on your structure
+            params: {
+              household: JSON.stringify(item)
+            }
+          });
+        }}
         className="mb-3 mx-5"
         activeOpacity={0.7}
       >
         <Card className="p-4 bg-white shadow-sm border border-gray-100">
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1">
-              {/* Business Header */}
-              <View className="flex-row items-center mb-3">
-                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-blue-600 font-semibold text-lg">
-                    {getBusinessInitial(item.bus_name)}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
-                    {item.bus_name || 'Unnamed Business'}
-                  </Text>
-                  <Text className="text-gray-500 text-sm">
-                    ID: {item.bus_id}
-                  </Text>
-                </View>
+          {/* Header Section */}
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center flex-1">
+              <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
+                <Text className="text-blue-600 font-semibold text-sm">
+                  {householdInitials}
+                </Text>
               </View>
-
-              {/* Business Details */}
-              <View className="space-y-2">
-                {/* Gross Sales */}
-                {item.bus_gross_sales && (
-                  <View className="flex-row items-center">
-                    <Text>P</Text>
-                    <Text className="text-gray-600 text-sm flex-1">
-                      Gross Sales: <Text className="font-medium text-green-600">{formatCurrency(item.bus_gross_sales)}</Text>
-                    </Text>
-                  </View>
-                )}
-
-                {/* Location */}
-                {businessAddress && (
-                  <View className="flex-row items-center">
-                    <Text className="text-gray-600 text-sm flex-1" numberOfLines={1}>
-                      {businessAddress}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Respondent */}
-                {respondentName && (
-                  <View className="flex-row items-center">
-                    <Text className="text-gray-600 text-sm flex-1" numberOfLines={1}>
-                      Contact: {respondentName}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Contact Number */}
-                {item.bus_respondentContact && (
-                  <View className="flex-row items-center">
-                    <Text className="text-gray-600 text-sm">
-                      {item.bus_respondentContact}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Registration Date */}
-                {item.bus_date_registered && (
-                  <View className="flex-row items-center">
-                    <Calendar size={14} className="text-gray-400 mr-2" />
-                    <Text className="text-gray-600 text-sm">
-                      Registered: {formatDate(item.bus_date_registered)}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Registered By */}
-                {item.bus_registered_by && (
-                  <View className="flex-row items-center">
-                    <Building size={14} className="text-gray-400 mr-2" />
-                    <Text className="text-gray-600 text-sm">
-                      By: {item.bus_registered_by}
-                    </Text>
-                  </View>
-                )}
+              <View className="flex-1">
+                <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
+                  Household {item.hh_id}
+                </Text>
+                <Text className="text-gray-500 text-sm">
+                  {item.total_families} {item.total_families === 1 ? 'Family' : 'Families'}
+                </Text>
               </View>
-
-              {/* Files indicator */}
-              {hasFiles && (
-                <View className="mt-3 pt-3 border-t border-gray-100">
-                  <Text className="text-xs text-blue-600 font-medium">
-                    📎 {item.files.length} document{item.files.length > 1 ? 's' : ''} attached
-                  </Text>
-                </View>
-              )}
             </View>
             
-            <ChevronRight size={20} className="text-gray-400 ml-2" />
+            {/* NHTS Badge */}
+            {item.nhts && (
+              <View className="bg-green-100 px-2 py-1 rounded-full mr-2">
+                <Text className="text-green-600 text-xs font-medium">NHTS</Text>
+              </View>
+            )}
+            
+            <ChevronRight size={20} className="text-gray-400" />
+          </View>
+
+          {/* Household Head */}
+          <View className="flex-row items-center mb-2">
+            <UsersRound size={16} className="text-gray-400 mr-2" />
+            <Text className="text-gray-600 text-sm font-medium">Head: </Text>
+            <Text className="text-gray-900 text-sm flex-1" numberOfLines={1}>
+              {item.head || 'Not specified'}
+            </Text>
+          </View>
+
+          {/* Address */}
+          <View className="flex-row items-center mb-2">
+            <Text className="text-gray-600 text-sm font-medium">Address: </Text>
+            <Text className="text-gray-900 text-sm flex-1" numberOfLines={1}>
+              {fullAddress}
+            </Text>
+          </View>
+
+          {/* Registration Info */}
+          <View className="flex-row items-center justify-between pt-2 border-t border-gray-100">
+            <View className="flex-row items-center flex-1">
+              <Calendar size={14} className="text-gray-400 mr-1" />
+              <Text className="text-gray-400 text-xs">
+                Registered: {formatDate(item.date_registered)}
+              </Text>
+            </View>
+            {item.registered_by && (
+              <View className="flex-row items-center">
+                <Text className="text-gray-400 text-xs" numberOfLines={1}>
+                  by {item.registered_by}
+                </Text>
+              </View>
+            )}
           </View>
         </Card>
       </TouchableOpacity>
@@ -190,15 +146,15 @@ export default function BusinessRecords() {
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <Building size={32} className="text-gray-400" />
+        <Home size={32} className="text-gray-400" />
       </View>
       <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No businesses found' : 'No businesses yet'}
+        {searchQuery ? 'No households found' : 'No households yet'}
       </Text>
       <Text className="text-gray-400 text-center px-8">
         {searchQuery 
           ? 'Try adjusting your search terms' 
-          : 'Business records will appear here once added'
+          : 'Household records will appear here once added'
         }
       </Text>
     </View>
@@ -207,7 +163,7 @@ export default function BusinessRecords() {
   const renderLoadingState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-500 mt-4">Loading businesses...</Text>
+      <Text className="text-gray-500 mt-4">Loading households...</Text>
     </View>
   );
 
@@ -215,7 +171,7 @@ export default function BusinessRecords() {
     if (totalPages <= 1) return null;
 
     return (
-      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4">
+      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4 mx-5">
         <TouchableOpacity
           onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
@@ -263,7 +219,7 @@ export default function BusinessRecords() {
       }
       headerTitle={
         <Text className="text-gray-900 text-[13px]">
-          Business Records
+          Household Records
         </Text>
       }
       rightAction={
@@ -289,11 +245,11 @@ export default function BusinessRecords() {
           {/* Stats Card */}
           <Card className="flex-row items-center p-4 mb-4 bg-primaryBlue shadow-lg mx-5">
             <View className="p-3 bg-white/20 rounded-full mr-4">
-              <Building size={24} className="text-white" />
+              <Home size={24} className="text-white" />
             </View>
             <View className="flex-1">
               <Text className="text-white/80 text-sm font-medium">
-                Total Businesses
+                Total Households
               </Text>
               <Text className="text-white text-2xl font-bold">
                 {totalCount}
@@ -306,7 +262,7 @@ export default function BusinessRecords() {
             </View>
           </Card>
 
-          {/* Business List */}
+          {/* Households List */}
           <View className="flex-1">
             {isLoading && !isRefreshing ? (
               renderLoadingState()
@@ -315,9 +271,9 @@ export default function BusinessRecords() {
             ) : (
               <>
                 <FlatList
-                  data={families}
-                  renderItem={({item, index}) => <RenderBusinessCard item={item} index={index} />}
-                  keyExtractor={(item) => item.bus_id}
+                  data={households}
+                  renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
+                  keyExtractor={(item) => item.hh_id}
                   showsVerticalScrollIndicator={false}
                   refreshControl={
                     <RefreshControl

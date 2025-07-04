@@ -4,22 +4,27 @@ import { Card } from "@/components/ui/card"
 import { features } from "./features"
 import { useRouter } from "expo-router"
 import ScreenLayout from "../_ScreenLayout"
+import { useAuth } from "@/contexts/AuthContext"
 
 const { width: screenWidth } = Dimensions.get("window")
 const cardWidth = screenWidth * 0.75
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  console.log(user)
 
   return (
     <ScreenLayout
       showBackButton={false}
       showExitButton={false}
+      headerBetweenAction={<Text className="text-[13px]">Home</Text>}
       backgroundColor="bg-gray-50"
     >
       <View className="flex-1 mb-16" >
         {/* Discovery Section */}
-        <View className="py-6 bg-blue-500">
+        <View className="py-6 bg-primaryBlue">
           <View className="px-5 mb-6">
             <Text className="text-xl font-semibold text-white">Discovery</Text>
             <Text className="text-sm text-white">Explore new content and features</Text>
@@ -89,7 +94,7 @@ export default function HomeScreen() {
                 onPress={() => router.push(feature.route as any)}
               >
                 <View className="items-center p-3 rounded-xl">
-                  <View className="mb-2 p-2 bg-blue-500 rounded-md">
+                  <View className="mb-2 p-2 bg-primaryBlue rounded-md">
                     {feature.icon}
                   </View>
                   <Text className="text-xs font-medium text-gray-900 text-center leading-4">
@@ -122,7 +127,7 @@ export default function HomeScreen() {
                     <Text className="font-semibold text-gray-900 mb-1">New Feature Available</Text>
                     <Text className="text-sm text-gray-600">Check out our latest update with improved performance</Text>
                   </View>
-                  <View className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <View className="w-2 h-2 bg-green-500 rounded-full" />
                 </View>
               </Card>
             </TouchableOpacity>

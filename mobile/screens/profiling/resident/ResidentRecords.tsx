@@ -10,23 +10,12 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useResidentsTable } from "./queries/profilingGetQueries";
+import { useResidentsTable } from "../queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
 import { UserRound } from "@/lib/icons/UserRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import PageLayout from "../_PageLayout";
-
-interface Resident {
-  rp_id: string;
-  lname: string;
-  fname: string;
-  mname: string;
-  address?: string;
-  phone?: string;
-  age?: number;
-  gender?: string;
-}
+import PageLayout from "../../_PageLayout";
 
 export default function ResidentRecords() {
   const router = useRouter();
@@ -58,16 +47,19 @@ export default function ResidentRecords() {
     setCurrentPage(1);
   }, [searchInputVal]);
 
-  const handleResidentPress = (resident: Resident) => {
-    
-  };
-
-  const RenderDataCard = React.memo(({ item, index }: { item: Resident; index: number }) => {
+  const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
     const fullName = `${item.fname} ${item.mname ? item.mname + ' ' : ''}${item.lname}`;
     
     return (
       <TouchableOpacity
-        onPress={() => handleResidentPress(item)}
+        onPress={() => {
+          router.push({
+            pathname: '/(profiling)/resident/details', // or '/resident-details' depending on your structure
+            params: {
+              resident: JSON.stringify(item)
+            }
+          });
+        }}
         className="mb-3 mx-5"
         activeOpacity={0.7}
       >

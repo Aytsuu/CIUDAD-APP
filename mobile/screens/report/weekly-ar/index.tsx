@@ -10,7 +10,6 @@ import React from "react";
 import { Calendar } from "@/lib/icons/Calendar";
 import { FileText } from "@/lib/icons/FileText";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { Search } from "@/lib/icons/Search";
 import { Paperclip } from "@/lib/icons/PaperClip";
 import { Badge } from "@/components/ui/badge";
 import { SelectLayout } from "@/components/ui/select-layout";
@@ -176,6 +175,18 @@ export default () => {
     );
   };
 
+  const NoReportsForMonth = ({ month }: { month: string }) => (
+    <View className="flex-1 justify-center items-center py-8">
+      <FileText size={32} className="text-gray-300 mb-3" />
+      <Text className="text-gray-500 text-base font-medium mb-1">
+        No Reports for {month}
+      </Text>
+      <Text className="text-gray-400 text-sm text-center px-4">
+        There are no weekly reports available for this month.
+      </Text>
+    </View>
+  );
+
   const EmptyState = () => (
     <View className="flex-1 justify-center items-center py-16">
       <FileText size={48} className="text-gray-300 mb-4" />
@@ -281,9 +292,13 @@ export default () => {
                         </View>
                       </AccordionTrigger>
                       <AccordionContent className="p-4">
-                        {weeks.map(({ weekNo, data }) => (
-                          <WARCard key={weekNo} item={data[0]} weekNo={weekNo} />
-                        ))}
+                        {weeks.length > 0 ? (
+                          weeks.map(({ weekNo, data }) => (
+                            <WARCard key={weekNo} item={data[0]} weekNo={weekNo} />
+                          ))
+                        ) : (
+                          <NoReportsForMonth month={month} />
+                        )}
                       </AccordionContent>
                     </AccordionItem>
                   ))}

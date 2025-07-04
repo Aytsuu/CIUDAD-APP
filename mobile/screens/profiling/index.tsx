@@ -21,7 +21,7 @@ export default () => {
       description: 'Individual resident information and demographics',
       icon: UserRound,
       onPress: () => {
-        router.push('/(profiling)/resident-records');
+        router.push('/(profiling)/resident/records');
       }
     },
     {
@@ -30,7 +30,7 @@ export default () => {
       description: 'Family compositions and relationships',
       icon: UsersRound,
       onPress: () => {
-        router.push('/(profiling)/family-records');
+        router.push('/(profiling)/family/records');
       }
     },
     {
@@ -39,7 +39,7 @@ export default () => {
       description: 'Housing information and living conditions',
       icon: Building,
       onPress: () => {
-        router.push('/(profiling)/household-records');
+        router.push('/(profiling)/household/records');
       }
     },
     {
@@ -48,7 +48,7 @@ export default () => {
       description: 'Local businesses and economic activities',
       icon: Store,
       onPress: () => {
-        router.push('/(profiling)/business-records');
+        router.push('/(profiling)/business/records');
       }
     }
   ]
