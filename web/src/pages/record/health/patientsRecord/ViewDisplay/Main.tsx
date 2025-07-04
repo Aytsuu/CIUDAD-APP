@@ -380,7 +380,7 @@ const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
                     </span>
                   </span>
                   <span>•</span>
-                  <span>{calculateAge(patientData.dateOfBirth)} years old</span>
+                  <span>{calculateAge(patientData.dateOfBirth)} {calculateAge(patientData.dateOfBirth) <= 1 ? "year" : "years"} old</span>
                   <span>•</span>
                   <span>
                     {patientData.sex.toLowerCase() === "male"

@@ -23,8 +23,9 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { Combobox } from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
 
-import { useResidents } from "./queries/patientsFetchQueries"
+import { useResidents, useAllTransientAddresses } from "./queries/patientsFetchQueries"
 import { useAddPatient } from "./queries/patientsAddQueries"
+import { set } from "date-fns"
 
 interface ResidentProfile {
   rp_id: string
@@ -61,6 +62,7 @@ interface PatientCreationData {
     tran_ed_attainment?: string
     tran_religion?: string
     tran_status?: string
+    tradd_id?: number
     address?: {
       tradd_street?: string
       tradd_sitio?: string
@@ -76,6 +78,8 @@ export default function CreatePatientRecord() {
   const navigate = useNavigate()
   const defaultValues = generateDefaultValues(patientRecordSchema)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedResidentId, setSelectedResidentId] = useState<string>("")
+  const [selectedTrAddtId, setSelectedTrAddId] = useState<number>(0)
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<z.infer<typeof patientRecordSchema>>({
@@ -83,11 +87,39 @@ export default function CreatePatientRecord() {
     defaultValues,
   })
 
-  // Watch the patientType field to conditionally render the Combobox
   const patientType = form.watch("patientType")
-
-  const [selectedResidentId, setSelectedResidentId] = useState<string>("")
+  
   const { data: residentsData, isLoading: residentLoading } = useResidents()
+  const { data: transAddress, isLoading: transAddressLoading } = useAllTransientAddresses()
+
+
+  const transientAddressOpt = transAddress?.map((tradd: any) => ({
+    id: tradd.tradd_id.toString(),
+    name: `${tradd.tradd_street || ""}, ${tradd.tradd_sitio || ""}, ${tradd.tradd_barangay || ""}, ${tradd.tradd_city || ""}, ${tradd.tradd_province || ""}`.trim(),
+  }))
+
+  const handleTransientAddressSelection = (selectedValue: string) => {
+    const id = Number(selectedValue)
+    setSelectedTrAddId(id)
+    console.log("Selected Transient Address ID: ", id)
+
+    const selectedAddress = transAddress?.find((address : any) => address.tradd_id === id)
+
+    if (selectedAddress) {
+      form.setValue("address.street", selectedAddress.tradd_street || "")
+      form.setValue("address.sitio", selectedAddress.tradd_sitio || "")
+      form.setValue("address.barangay", selectedAddress.tradd_barangay || "")
+      form.setValue("address.city", selectedAddress.tradd_city || "")
+      form.setValue("address.province", selectedAddress.tradd_province || "")
+    } else {
+      form.setValue("address.street", "")
+      form.setValue("address.sitio", "")
+      form.setValue("address.barangay", "")
+      form.setValue("address.city", "")
+      form.setValue("address.province", "")
+    }
+  }
+  
 
   const persons = {
     default: residentsData || [],
@@ -117,7 +149,6 @@ export default function CreatePatientRecord() {
         )
       }
 
-      // Populate form fields for display only (read-only)
       form.setValue("lastName", personalInfo.per_lname || "")
       form.setValue("firstName", personalInfo.per_fname || "")
       form.setValue("middleName", personalInfo.per_mname || "")
@@ -165,7 +196,7 @@ export default function CreatePatientRecord() {
     }
   }
 
-  // This function handles the form validation and opens the confirmation dialog
+  // handles the form validation and opens the confirmation dialog
   const handleFormSubmit = async () => {
     const formData = form.getValues()
 
@@ -209,26 +240,39 @@ export default function CreatePatientRecord() {
           rp_id: selectedResidentId,
         }
       } else {
+        const trPatientData: PatientCreationData['transient_data'] = {
+          tran_lname: formData.lastName,
+          tran_fname: formData.firstName,
+          tran_mname: formData.middleName,
+          tran_dob: formData.dateOfBirth,
+          tran_sex: sexType,
+          tran_contact: formData.contact,
+          tran_status: "Active",
+          tran_ed_attainment: "Not Specified",
+          tran_religion: "Not Specified",
+          // address: {
+          //   tradd_street: formData.address?.street || "",
+          //   tradd_sitio: formData.address?.sitio || "",
+          //   tradd_barangay: formData.address?.barangay || "",
+          //   tradd_city: formData.address?.city || "",
+          //   tradd_province: formData.address?.province || "",
+          // },
+        }
+        if(selectedTrAddtId !== 0) {
+          trPatientData.tradd_id = selectedTrAddtId
+        } else {
+          trPatientData.address = {
+            tradd_street: formData.address?.street || "",
+            tradd_sitio: formData.address?.sitio || "",
+            tradd_barangay: formData.address?.barangay || "",
+            tradd_city: formData.address?.city || "",
+            tradd_province: formData.address?.province || "",
+          }
+        }
+
         patientData = {
           pat_type: patientType,
-          transient_data: {
-            tran_lname: formData.lastName,
-            tran_fname: formData.firstName,
-            tran_mname: formData.middleName,
-            tran_dob: formData.dateOfBirth,
-            tran_sex: sexType,
-            tran_contact: formData.contact,
-            tran_status: "Active",
-            tran_ed_attainment: "Not Specified",
-            tran_religion: "Not Specified",
-            address: {
-              tradd_street: formData.address?.street || "",
-              tradd_sitio: formData.address?.sitio || "",
-              tradd_barangay: formData.address?.barangay || "",
-              tradd_city: formData.address?.city || "",
-              tradd_province: formData.address?.province || "",
-            },
-          },
+          transient_data: trPatientData,
         }
       }
 
@@ -239,6 +283,7 @@ export default function CreatePatientRecord() {
       if (success) {
         form.reset(defaultValues)
         setSelectedResidentId("")
+        setSelectedTrAddId(0)
         navigate(-1)
       }
     } catch (error) {
@@ -407,15 +452,15 @@ export default function CreatePatientRecord() {
                         <Label className="flex text-black/70">Address Selection <p className="text-xs italic text-black/50 ml-2">[Applicable for Transient Only]</p></Label>
                         <div className="relative mb-4 mt-2">
                           <Combobox
-                            options={persons.formatted}
-                            value={selectedResidentId}
-                            onChange={handlePatientSelection}
-                            placeholder={residentLoading ? "Loading residents..." : "Select an address for the transient patient"}
+                            options={transientAddressOpt}
+                            value={selectedTrAddtId ? selectedTrAddtId.toString() : ""}
+                            onChange={handleTransientAddressSelection}
+                            placeholder={transAddressLoading ? "Loading addresses..." : "Select an address for the transient patient"}
                             triggerClassName="font-normal w-full"
                             emptyMessage={
                               <div className="flex flex-col gap-2 justify-center items-center">
                                 <Label className="font-normal text-[13px]">
-                                  {residentLoading
+                                  {transAddressLoading
                                     ? "Loading..."
                                     : "No Address was found. Please fill in the address details below."}
                                 </Label>
