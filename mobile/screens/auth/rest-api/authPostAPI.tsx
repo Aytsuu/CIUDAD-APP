@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelpers";
 import { capitalize } from "@/helpers/capitalize";
 import { supabase } from "@/lib/supabase";
 
