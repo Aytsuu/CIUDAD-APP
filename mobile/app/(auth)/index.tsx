@@ -2,8 +2,8 @@ import LoginScreen from "@/screens/auth/login";
 import UploadID from "@/screens/auth/signup/UploadID";
 import VerifyAge from "@/screens/auth/signup/VerifyAge";
 import ValidateResidentID from "@/screens/auth/signup/ValidateResidentID";
-import Profiling from "../(profiling)";
+import Report from "@/screens/report";
 
 export default () => {
-    return <Profiling/>
+    return <Report/>
 }

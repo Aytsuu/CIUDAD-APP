@@ -1,41 +1,35 @@
-import { 
-  FlatList, 
-  TouchableOpacity, 
-  View, 
-  Text, 
-  RefreshControl,
-  ActivityIndicator,
-} from "react-native";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { useRouter } from "expo-router";
+import { useRouter } from "expo-router"
+import { ActivityIndicator, FlatList, RefreshControl, TouchableOpacity, View, Text } from "react-native"
+import { useGetAcknowledgementReport } from "../queries/reportFetch";
 import React from "react";
-import { Search } from "@/lib/icons/Search";
-import { useHouseholdTable } from "./queries/profilingGetQueries";
+import PageLayout from "@/screens/_PageLayout";
 import { Card } from "@/components/ui/card";
-import { UsersRound } from "@/lib/icons/UsersRound";
-import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import PageLayout from "../_PageLayout";
-import { Home } from "@/lib/icons/Home";
-import { Calendar } from "@/lib/icons/Calendar";
+import { ChevronRight } from '@/lib/icons/ChevronRight';
+import { ChevronLeft } from '@/lib/icons/ChevronLeft';
+import { Search } from '@/lib/icons/Search';
+import { FileText } from '@/lib/icons/FileText';
+import { CheckCircle } from '@/lib/icons/CheckCircle';
+import { Clock } from '@/lib/icons/Clock';
+import { MapPin } from '@/lib/icons/MapPin';
 
-export default function HouseholdRecords() {
+export default () => {
   const router = useRouter();
   const [searchInputVal, setSearchInputVal] = React.useState<string>('');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-  const [pageSize, setPageSize] = React.useState<number>(20);
+  const [pageSize, setPageSize] = React.useState<number>(10);
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
 
-  const { data: householdTableData, isLoading, refetch } = useHouseholdTable(
+  const { data: arReports, isLoading, refetch } = useGetAcknowledgementReport(
     currentPage,
     pageSize,
     searchQuery
   );
-
-  const households = householdTableData?.results || [];
-  const totalCount = householdTableData?.count || 0;
+  
+  const arList = arReports?.results || [];
+  const totalCount = arReports?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleRefresh = async () => {
@@ -49,12 +43,13 @@ export default function HouseholdRecords() {
     setCurrentPage(1);
   }, [searchInputVal]);
 
-  const handleHouseholdPress = (household: any) => {
-    
+  const handleItemPress = (item: any) => {
+    // Navigate to acknowledgement report details
+
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -63,77 +58,96 @@ export default function HouseholdRecords() {
     });
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'signed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-yellow-100 text-yellow-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'signed':
+        return <CheckCircle size={16} className="text-green-600" />;
+      default:
+        return <Clock size={16} className="text-yellow-600" />;
+    }
+  };
+
   const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const householdInitials = item.hh_id ? item.hh_id.substring(0, 2).toUpperCase() : 'HH';
-    const fullAddress = [item.street, item.sitio].filter(Boolean).join(', ') || 'Address not specified';
+    const hasFiles = item.ar_files && item.ar_files.length > 0;
+    const isCompleted = item.status?.toLowerCase() === 'completed';
     
     return (
       <TouchableOpacity
-        onPress={() => handleHouseholdPress(item)}
+        key={index}
         className="mb-3 mx-5"
         activeOpacity={0.7}
+        onPress={() => handleItemPress(item)}
       >
         <Card className="p-4 bg-white shadow-sm border border-gray-100">
-          {/* Header Section */}
-          <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center flex-1">
-              <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-blue-600 font-semibold text-sm">
-                  {householdInitials}
-                </Text>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1">
+              <View className="flex-row items-center mb-2">
+                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
+                  <FileText size={20} className="text-blue-600" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-gray-900 font-semibold text-base" numberOfLines={2}>
+                    {item.ar_title}
+                  </Text>
+                  <Text className="text-gray-500 text-sm">
+                    ID: {item.id}
+                  </Text>
+                </View>
               </View>
-              <View className="flex-1">
-                <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
-                  Household {item.hh_id}
-                </Text>
-                <Text className="text-gray-500 text-sm">
-                  {item.total_families} {item.total_families === 1 ? 'Family' : 'Families'}
-                </Text>
+              
+              <View className="ml-15 space-y-1">
+                <View className="flex-row items-center">
+                  <MapPin size={14} className="text-gray-400 mr-1" />
+                  <Text className="text-gray-600 text-sm">
+                    {item.ar_sitio}, {item.ar_street}
+                  </Text>
+                </View>
+                
+                <View className="flex-row items-center">
+                  <Text className="text-gray-600 text-sm">
+                    Started: {formatDate(item.ar_date_started)}
+                    {item.ar_time_started && ` at ${item.ar_time_started}`}
+                  </Text>
+                </View>
+                
+                {isCompleted && item.ar_date_completed && (
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-600 text-sm">
+                      Completed: {formatDate(item.ar_date_completed)}
+                      {item.ar_time_completed && ` at ${item.ar_time_completed}`}
+                    </Text>
+                  </View>
+                )}
+                
+                <View className="flex-row items-center justify-between mt-2">
+                  <View className={`px-2 py-1 rounded-full flex-row items-center ${getStatusColor(item.status)}`}>
+                    {getStatusIcon(item.status)}
+                    <Text className={`text-xs font-medium ml-1 ${getStatusColor(item.status)}`}>
+                      {item.status}
+                    </Text>
+                  </View>
+                  
+                  {hasFiles && (
+                    <View className="bg-gray-100 px-2 py-1 rounded-full">
+                      <Text className="text-gray-700 text-xs">
+                        📎 {item.ar_files.length} file{item.ar_files.length !== 1 ? 's' : ''}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
             
-            {/* NHTS Badge */}
-            {item.nhts && (
-              <View className="bg-green-100 px-2 py-1 rounded-full mr-2">
-                <Text className="text-green-600 text-xs font-medium">NHTS</Text>
-              </View>
-            )}
-            
-            <ChevronRight size={20} className="text-gray-400" />
-          </View>
-
-          {/* Household Head */}
-          <View className="flex-row items-center mb-2">
-            <UsersRound size={16} className="text-gray-400 mr-2" />
-            <Text className="text-gray-600 text-sm font-medium">Head: </Text>
-            <Text className="text-gray-900 text-sm flex-1" numberOfLines={1}>
-              {item.head || 'Not specified'}
-            </Text>
-          </View>
-
-          {/* Address */}
-          <View className="flex-row items-center mb-2">
-            <Text className="text-gray-600 text-sm font-medium">Address: </Text>
-            <Text className="text-gray-900 text-sm flex-1" numberOfLines={1}>
-              {fullAddress}
-            </Text>
-          </View>
-
-          {/* Registration Info */}
-          <View className="flex-row items-center justify-between pt-2 border-t border-gray-100">
-            <View className="flex-row items-center flex-1">
-              <Calendar size={14} className="text-gray-400 mr-1" />
-              <Text className="text-gray-400 text-xs">
-                Registered: {formatDate(item.date_registered)}
-              </Text>
-            </View>
-            {item.registered_by && (
-              <View className="flex-row items-center">
-                <Text className="text-gray-400 text-xs" numberOfLines={1}>
-                  by {item.registered_by}
-                </Text>
-              </View>
-            )}
+            <ChevronRight size={20} className="text-gray-400 ml-2" />
           </View>
         </Card>
       </TouchableOpacity>
@@ -143,15 +157,15 @@ export default function HouseholdRecords() {
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <Home size={32} className="text-gray-400" />
+        <FileText size={32} className="text-gray-400" />
       </View>
       <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No households found' : 'No households yet'}
+        {searchQuery ? 'No reports found' : 'No acknowledgement reports yet'}
       </Text>
       <Text className="text-gray-400 text-center px-8">
         {searchQuery 
           ? 'Try adjusting your search terms' 
-          : 'Household records will appear here once added'
+          : 'Acknowledgement reports will appear here once added'
         }
       </Text>
     </View>
@@ -160,7 +174,7 @@ export default function HouseholdRecords() {
   const renderLoadingState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-500 mt-4">Loading households...</Text>
+      <Text className="text-gray-500 mt-4">Loading reports...</Text>
     </View>
   );
 
@@ -204,6 +218,8 @@ export default function HouseholdRecords() {
     );
   };
 
+  const renderTabButtons = () => null; // Remove tab functionality for acknowledgement reports
+
   return (
     <PageLayout
       leftAction={
@@ -216,7 +232,7 @@ export default function HouseholdRecords() {
       }
       headerTitle={
         <Text className="text-gray-900 text-[13px]">
-          Household Records
+          Acknowledgement Reports
         </Text>
       }
       rightAction={
@@ -242,11 +258,11 @@ export default function HouseholdRecords() {
           {/* Stats Card */}
           <Card className="flex-row items-center p-4 mb-4 bg-primaryBlue shadow-lg mx-5">
             <View className="p-3 bg-white/20 rounded-full mr-4">
-              <Home size={24} className="text-white" />
+              <FileText size={24} className="text-white" />
             </View>
             <View className="flex-1">
               <Text className="text-white/80 text-sm font-medium">
-                Total Households
+                Total Reports
               </Text>
               <Text className="text-white text-2xl font-bold">
                 {totalCount}
@@ -259,7 +275,7 @@ export default function HouseholdRecords() {
             </View>
           </Card>
 
-          {/* Households List */}
+          {/* Reports List */}
           <View className="flex-1">
             {isLoading && !isRefreshing ? (
               renderLoadingState()
@@ -268,9 +284,9 @@ export default function HouseholdRecords() {
             ) : (
               <>
                 <FlatList
-                  data={households}
+                  data={arList}
                   renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
-                  keyExtractor={(item) => item.hh_id}
+                  keyExtractor={(item) => item.id}
                   showsVerticalScrollIndicator={false}
                   refreshControl={
                     <RefreshControl

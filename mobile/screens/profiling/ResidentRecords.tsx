@@ -3,10 +3,8 @@ import {
   TouchableOpacity, 
   View, 
   Text, 
-  TextInput, 
   RefreshControl,
   ActivityIndicator,
-  Dimensions
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
@@ -16,7 +14,6 @@ import { useResidentsTable } from "./queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
 import { UserRound } from "@/lib/icons/UserRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
-import { X } from "@/lib/icons/X";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "../_PageLayout";
 
@@ -189,7 +186,7 @@ export default function ResidentRecords() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 font-semibold text-lg">
+        <Text className="text-gray-900 text-[13px]">
           Resident Records
         </Text>
       }

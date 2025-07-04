@@ -3,26 +3,20 @@ import {
   TouchableOpacity, 
   View, 
   Text, 
-  TextInput, 
   RefreshControl,
   ActivityIndicator,
-  Dimensions
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Search } from "@/lib/icons/Search";
-import { useBusinessTable, useFamiliesTable, useResidentsTable } from "./queries/profilingGetQueries";
+import { useBusinessTable } from "./queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
-import { UsersRound } from "@/lib/icons/UsersRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
-import { X } from "@/lib/icons/X";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "../_PageLayout";
-import { Home } from "@/lib/icons/Home";
 import { Calendar } from "@/lib/icons/Calendar";
 import { Building } from "@/lib/icons/Building";
-import { UserRound } from "@/lib/icons/UserRound";
 
 export default function BusinessRecords() {
   const router = useRouter();
@@ -268,7 +262,7 @@ export default function BusinessRecords() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 font-semibold text-lg">
+        <Text className="text-gray-900 text-[13px]">
           Business Records
         </Text>
       }

@@ -106,7 +106,7 @@ export default () => {
       }
       headerBetweenAction={
         <View className="items-center">
-          <Text className="text-[13px] text-gray-900">
+          <Text className="text-gray-900 text-[13px]">
             Barangay Profiling
           </Text>
         </View>
