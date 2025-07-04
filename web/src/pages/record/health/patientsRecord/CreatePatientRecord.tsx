@@ -25,7 +25,6 @@ import { Label } from "@/components/ui/label"
 
 import { useResidents, useAllTransientAddresses } from "./queries/patientsFetchQueries"
 import { useAddPatient } from "./queries/patientsAddQueries"
-import { set } from "date-fns"
 
 interface ResidentProfile {
   rp_id: string
