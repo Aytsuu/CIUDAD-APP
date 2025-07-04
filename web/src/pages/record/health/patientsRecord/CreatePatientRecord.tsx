@@ -109,7 +109,6 @@ export default function CreatePatientRecord() {
       console.log("Selected Patient:", selectedPatient)
 
       const personalInfo = selectedPatient.personal_info
-      const sexLowercase = personalInfo.per_sex?.toLowerCase()
 
       if (Array.isArray(selectedPatient?.households)) {
         console.log(
@@ -122,7 +121,7 @@ export default function CreatePatientRecord() {
       form.setValue("lastName", personalInfo.per_lname || "")
       form.setValue("firstName", personalInfo.per_fname || "")
       form.setValue("middleName", personalInfo.per_mname || "")
-      form.setValue("sex", sexLowercase || "")
+      form.setValue("sex", personalInfo.per_sex || "")
       form.setValue("contact", personalInfo.per_contact || "")
       form.setValue("dateOfBirth", personalInfo.per_dob || "")
       form.setValue("patientType", "resident")
@@ -185,11 +184,9 @@ export default function CreatePatientRecord() {
       }
     }
 
-    // If validation passes, open the confirmation dialog
     setIsDialogOpen(true)
   }
 
-  // This function actually submits the data after confirmation
   const confirmSubmit = async () => {
     const formData = form.getValues()
 
@@ -248,8 +245,12 @@ export default function CreatePatientRecord() {
       toast("Failed to create patient record. Please try again.")
     } finally {
       setIsSubmitting(false)
-      setIsDialogOpen(false) // Close dialog after submission
+      setIsDialogOpen(false) 
     }
+  }
+
+  const isResident = () => {
+    return patientType === 'resident'
   }
 
   const handleDialogClose = () => {
@@ -332,7 +333,6 @@ export default function CreatePatientRecord() {
 
                     {patientType === 'transient' && (
                       <div className="flex w-full items-end">
-                        
                         <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1"> <CircleAlert/> For <i>TRANSIENT</i> please fill in the needed details below.</label>
                       </div>
                     )}
@@ -349,32 +349,32 @@ export default function CreatePatientRecord() {
                         <Separator className="w-full bg-gray" />
                       </div>
 
-                      {/* Personal Information Section - Read Only */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                      {/* personal information section - read Only if RESIDENT */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <FormInput
                           control={form.control}
                           name="lastName"
                           label="Last Name"
                           placeholder="Enter last name"
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormInput
                           control={form.control}
                           name="firstName"
                           label="First Name"
                           placeholder="Enter first name"
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormInput
                           control={form.control}
                           name="middleName"
                           label="Middle Name"
                           placeholder="Enter middle name"
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                         <FormSelect
                           control={form.control}
                           name="sex"
@@ -383,60 +383,84 @@ export default function CreatePatientRecord() {
                             { id: "female", name: "Female" },
                             { id: "male", name: "Male" },
                           ]}
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormInput
                           control={form.control}
                           name="contact"
                           label="Contact"
                           placeholder="Enter contact"
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormDateTimeInput
                           control={form.control}
                           name="dateOfBirth"
                           label="Date of Birth"
                           type="date"
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                       </div>
 
-                      {/* Address Section - Read Only */}
+                      {/* address section - read Only if RESIDENT */}
+                      {patientType === 'transient' && (
+                        <>
+                        <Label className="flex text-black/70">Address Selection <p className="text-xs italic text-black/50 ml-2">[Applicable for Transient Only]</p></Label>
+                        <div className="relative mb-4 mt-2">
+                          <Combobox
+                            options={persons.formatted}
+                            value={selectedResidentId}
+                            onChange={handlePatientSelection}
+                            placeholder={residentLoading ? "Loading residents..." : "Select an address for the transient patient"}
+                            triggerClassName="font-normal w-full"
+                            emptyMessage={
+                              <div className="flex flex-col gap-2 justify-center items-center">
+                                <Label className="font-normal text-[13px]">
+                                  {residentLoading
+                                    ? "Loading..."
+                                    : "No Address was found. Please fill in the address details below."}
+                                </Label>
+                              </div>
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
+
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                         <FormInput
                           control={form.control}
                           name="address.street"
                           label="Street"
                           placeholder="Enter street "
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormInput
                           control={form.control}
                           name="address.sitio"
                           label="Sitio"
                           placeholder="Enter sitio "
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormInput
                           control={form.control}
                           name="address.barangay"
                           label="Barangay"
                           placeholder="Enter barangay "
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormInput
                           control={form.control}
                           name="address.city"
                           label="City"
                           placeholder="Enter city "
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                         <FormInput
                           control={form.control}
                           name="address.province"
                           label="Province"
                           placeholder="Enter province "
-                          readOnly={false}
+                          readOnly={isResident() ? true : false}
                         />
                       </div>
 
