@@ -63,24 +63,29 @@ function SummonTrackingView() {
     ];
 
     if (isLoading) {
-        <div className="p-4 border rounded-lg">
-            <Skeleton className="h-8 w-1/3 mb-4" />
-            <div className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+        return ( 
+            <div className="p-4 border rounded-lg">
+                <Skeleton className="h-8 w-1/3 mb-4" />
+                <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </div>
+                <Skeleton className="h-16 w-full mt-4" />
             </div>
-            <Skeleton className="h-16 w-full mt-4" />
-        </div>
+        );
     }
 
     const handleResolve = (srId: string) => {
         markResolve(srId);
     };
 
-    const handleEscalate = (srId: string) => {
-        markEscalate(srId);
+    const handleEscalate = (srId: string, comp_id: string) => {
+        markEscalate({
+            srId,
+            comp_id
+        });
     };
 
     return (
@@ -178,7 +183,7 @@ function SummonTrackingView() {
                                 title="Confirm Escalation"
                                 description="Are you sure you want to escalate this case?"
                                 actionLabel="Confirm"
-                                onClick={() => handleEscalate(sr_id)}
+                                onClick={() => handleEscalate(sr_id, caseDetails?.complaint.comp_id || '')}
                             />
                         </div>
                     ) : (

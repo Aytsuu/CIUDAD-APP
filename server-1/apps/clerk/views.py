@@ -11,6 +11,10 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
     def get_queryset(self):
         return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon")
 
+class FileActionrequestView(generics.ListCreateAPIView):
+    serializer_class = FileActionRequestSerializer
+    queryset = ServiceChargeRequest.objects.all()
+
 class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
     serializer_class = ServiceChargeRequestDetailSerializer
     lookup_field = 'sr_id'

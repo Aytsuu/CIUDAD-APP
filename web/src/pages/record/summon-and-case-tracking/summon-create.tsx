@@ -20,7 +20,7 @@ function CreateNewSummon({sr_id, onSuccess}:{
         { id: "Accused is Absent/Unavailable", name: "Accused is Absent/Unavailable" },
     ];
     
-    console.log(sr_id)
+    
     const form = useForm<z.infer<typeof SummonSchema>>({
             resolver: zodResolver(SummonSchema),
                 defaultValues: {

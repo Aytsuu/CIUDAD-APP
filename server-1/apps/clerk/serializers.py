@@ -112,3 +112,14 @@ class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
         case_activities = CaseActivity.objects.filter(sr=obj)
         serializer = CaseActivitySerializer(case_activities, many=True)
         return serializer.data
+    
+class FileActionRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceChargeRequest
+        fields = [
+            'sr_type',
+            'sr_payment_status',
+            'parent_summon',
+            'file_action_file',
+            'comp',
+        ]
