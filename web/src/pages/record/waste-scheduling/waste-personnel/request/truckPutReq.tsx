@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { formatDate } from '@/helpers/dateFormatter';
+import { formatDate } from '@/helpers/dateHelper';
 
 // Update Waste Truck
 export const putWasteTruck = async (truck_id: number, truckInfo: Record<string, any>) => {

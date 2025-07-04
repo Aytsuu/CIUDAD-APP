@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { FixedSizeList as List } from "react-window";
 import { Assigned, Feature } from "./administrationTypes";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelper";
 import { useAuth } from "@/context/AuthContext";
 import {
   Accordion,

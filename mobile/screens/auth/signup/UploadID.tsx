@@ -89,7 +89,7 @@ export default function UploadID() {
         </TouchableOpacity>
       }
     >
-      <View className="flex-1 justify-between gap-6">
+      <View className="flex-1 justify-between gap-6 px-5">
         <View className="flex-1 gap-6">
           
           {/* ID Type Selection */}

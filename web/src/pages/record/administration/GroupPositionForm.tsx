@@ -1,5 +1,3 @@
-"use client"
-
 import { Form } from "@/components/ui/form/form"
 import React from "react"
 import { toast } from "sonner"
@@ -117,11 +115,12 @@ export default function GroupPositionForm() {
     const values = form.getValues()
     const data = positions.map((pos: any) => ({
       ...pos,
-      pos_group: values.pos_group,
+      pos_group: values.pos_group.toUpperCase(),
       staff: user?.staff?.staff_id,
     }))
 
     try {
+
       await addPositionBulk(data)
       await addPositionBulkHealth(data)
       

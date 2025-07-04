@@ -4,16 +4,39 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from django.db import transaction
+from rest_framework.authtoken.models import Token
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.conf import settings
 import logging
+from django.http import JsonResponse
 from supabase import create_client
 from apps.account.models import Account
 from apps.profiling.models import ResidentProfile
 from .serializers import UserAccountSerializer
+from utils.supabase_client import supabase
+from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
+
+# ROLE_PATHS_MAP = {
+#     'admin': [
+#         '/admin/dashboard',
+        
+#     ],
+#     'Barangay Staff' : [
+        
+#     ],
+#     'resident': [
+        
+#     ], 
+#     'unverified': [
+        
+#     ],
+#     "Health Staff": [
+        
+#     ]
+# }
 
 class AuthBaseView(APIView):
     permission_classes = [AllowAny]
@@ -27,235 +50,337 @@ class AuthBaseView(APIView):
         
         return supabase_id, email
 
-class LoginView(AuthBaseView):
+
+class SignupView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         try:
-            supabase_id, email = self.validate_request_data(request.data)
+            email = request.data.get('email')
+            password = request.data.get('password')
             username = request.data.get('username')
-            profile_image = request.data.get('profile_image')
-            account = request.data.get('account')
+            resident_id = request.data.get('resident_id')
 
-            with transaction.atomic():
-                account = Account.objects.filter(
-                    Q(supabase_id=supabase_id) | Q(email=email)
-                ).first()
+            if not email or not password:
+                return Response(
+                    {'error': 'Both email and password are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-                if account:
-                    # Update existing account if needed
-                    update_fields = []
-                    if str(account.supabase_id) != supabase_id:
-                        account.supabase_id = supabase_id
-                        update_fields.append('supabase_id')
-                    if account.email != email:
-                        account.email = email
-                        update_fields.append('email')
-                    if username and not account.username:
-                        account.username = username
-                        update_fields.append('username')
-                    if profile_image and not account.profile_image:
-                        account.profile_image = profile_image
-                        update_fields.append('profile_image')
-                    
-                    if update_fields:
-                        account.save(update_fields=update_fields)
-                else:
-                    # Create new account with resident profile
+            # Check if account already exists in local database
+            if Account.objects.filter(email=email).exists():
+                return Response(
+                    {'error': 'Account with this email already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate resident_id if provided
+            resident_profile = None
+            if resident_id:
+                try:
+                    resident_profile = ResidentProfile.objects.get(rp_id=resident_id)
+                except ResidentProfile.DoesNotExist:
+                    return Response(
+                        {'error': 'Invalid resident ID provided'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            try:
+                # Create user in Supabase
+                supabase_response = supabase.auth.sign_up({
+                    "email": email,
+                    "password": password,
+                    "options": {
+                        "data": {
+                            "username": username or email.split('@')[0],
+                            "resident_id": resident_id
+                        }
+                    }
+                })
+                
+                if supabase_response.user is None:
+                    return Response(
+                        {'error': 'Failed to create user account'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Use transaction to ensure data consistency
+                with transaction.atomic():
+                    # Create account in local database
                     account = Account.objects.create(
-                        supabase_id=supabase_id,
                         email=email,
                         username=username or email.split('@')[0],
-                        profile_image=profile_image or Account._meta.get_field('profile_image').get_default()
+                        supabase_id=supabase_response.user.id,  # Store Supabase ID
+                        rp=resident_profile 
                     )
-                    ResidentProfile.objects.create(account=account)
 
-                serializer = UserAccountSerializer(account)
-                return Response(serializer.data)
+                # Check if email confirmation is required
+                requires_confirmation = not supabase_response.session
+                
+                if requires_confirmation:
+                    return Response({
+                        'message': 'Account created successfully. Please check your email for confirmation.',
+                        'requiresConfirmation': True,
+                        'user_id': account.acc_id
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    # If no confirmation required, return user data
+                    serializer = UserAccountSerializer(account)
+                    return Response({
+                        'message': 'Account created successfully',
+                        'user': serializer.data,
+                        'requiresConfirmation': False,
+                        'access_token': supabase_response.session.access_token if supabase_response.session else None
+                    }, status=status.HTTP_201_CREATED)
 
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as supabase_error:
+                logger.error(f"Supabase signup failed: {str(supabase_error)}")
+                return Response(
+                    {'error': 'Failed to create user account'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Exception as e:
+            logger.error(f"Signup error: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Account creation failed'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class LoginView(APIView):
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            password = request.data.get('password')
+
+            if not email or not password:
+                return Response(
+                    {'error': 'Both email and password are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                supabase_response = supabase.auth.sign_in_with_password({
+                    "email": email,
+                    "password": password
+                })
+                supabase_user = supabase_response.user
+                
+                if not supabase_user:
+                    return Response(
+                        {'error': 'Invalid credentials'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+                
+            except Exception as supabase_error:
+                logger.error(f"Supabase authentication failed: {str(supabase_error)}")
+                return Response(
+                    {'error': 'Authentication failed'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            # Check if account exists in local database
+            account = Account.objects.filter(email=email).first()
+            
+            if not account:
+                return Response(
+                    {'error': 'Account not found in system'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = UserAccountSerializer(account)
+            
+            if not serializer.data.get('staff'):
+                return Response(
+                    {'error': "Staff Privileges Required"}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Return success response
+            return Response({
+                'user': serializer.data,
+                'access_token': supabase_response.session.access_token,
+                'message': 'Login successful'
+            })
+
         except Exception as e:
             logger.error(f"Login error: {str(e)}", exc_info=True)
             return Response(
                 {'error': 'Authentication failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            
-class SignUpView(AuthBaseView):
-    def post(self, request):
+
+
+class UserView(APIView):
+    def get(self, request):
         try:
-            supabase_id, email = self.validate_request_data(request.data)
-            username = request.data.get('username')
-            rp_id = request.data.get('rp')  # This should be the ResidentProfile ID
-
-            with transaction.atomic():
-                # Check for existing account
-                if Account.objects.filter(Q(supabase_id=supabase_id) | Q(email=email)).exists():
-                    return Response(
-                        {'error': 'Account already exists'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-
-                # Handle resident profile association FIRST
-                resident = None
-                if rp_id:
-                    try:
-                        resident = ResidentProfile.objects.select_for_update().get(pk=rp_id)
-                        
-                        # Check if resident already has an account
-                        if hasattr(resident, 'account'):
-                            return Response(
-                                {'error': 'Resident profile already linked to another account'},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                    except ResidentProfile.DoesNotExist:
-                        return Response(
-                            {'error': 'Specified resident profile does not exist'},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-
-                # Create new account
-                account_data = {
-                    'supabase_id': supabase_id,
-                    'email': email,
-                    'username': username or email.split('@')[0]
-                }
-                
-                # Only include rp if resident exists
-                if resident:
-                    account_data['rp'] = resident
-                
-                account = Account.objects.create(**account_data)
-
-                serializer = UserAccountSerializer(account)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"Signup error: {str(e)}", exc_info=True)
-            return Response(
-                {'error': 'Registration failed. Please try again.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-# Fixed Mobile Sync View - Using Function-Based View with proper decorators
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def sync_supabase_session(request):
-    """
-    Sync Supabase session with Django backend for mobile clients
-    """
-    try:
-        # Get Supabase credentials from settings
-        supabase_url = getattr(settings, 'SUPABASE_URL', None)
-        supabase_key = getattr(settings, 'SUPABASE_ANON_KEY', None)
-        
-        if not supabase_url or not supabase_key:
-            logger.error("Supabase credentials not configured in settings")
-            return Response(
-                {'error': 'Supabase credentials not configured'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        
-        # Create Supabase client
-        supabase = create_client(supabase_url, supabase_key)
-        
-        # Extract and validate Authorization header
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return Response(
-                {'error': 'Authorization header missing or invalid'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        
-        # Extract token from header
-        token = auth_header.split(' ')[1]
-        
-        # Verify token with Supabase
-        try:
-            user_response = supabase.auth.get_user(token)
+            # Get the Supabase user from the request (set by middleware)
+            supabase_user = getattr(request, 'supabase_user', None)
             
-            if not user_response or not user_response.user:
+            if not supabase_user:
                 return Response(
-                    {'error': 'Invalid Supabase token'},
+                    {'error': 'User not found in request'},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
-            
-            supabase_user = user_response.user
+
             user_email = supabase_user.email
-            supabase_id = supabase_user.id
             
-            if not user_email:
+            # Find the corresponding account in your database
+            account = Account.objects.filter(email=user_email).first()
+            
+            if not account:
                 return Response(
-                    {'error': 'User email not found in Supabase token'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {'error': 'Account not found in system'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = UserAccountSerializer(account)
+            
+            # Check if user still has staff privileges
+            if not serializer.data.get('staff'):
+                return Response(
+                    {'error': "Staff Privileges Required"}, 
+                    status=status.HTTP_403_FORBIDDEN
                 )
             
+            return Response({
+                'user': serializer.data,
+                'message': 'User data retrieved successfully'
+            })
+            
         except Exception as e:
-            logger.error(f"Supabase token validation error: {str(e)}")
+            logger.error(f"User retrieval error: {str(e)}", exc_info=True)
             return Response(
-                {'error': 'Failed to validate Supabase token'},
-                status=status.HTTP_401_UNAUTHORIZED
+                {'error': 'Failed to retrieve user data'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-        # Handle Django user and account creation/update
-        with transaction.atomic():
-            # Get or create Django User (if you're using Django's built-in User model)
-            django_user, user_created = User.objects.get_or_create(
-                email=user_email,
-                defaults={
-                    'username': user_email.split('@')[0],
-                    'is_active': True
-                }
-            )
-            
-            # Get or create Account
-            account, account_created = Account.objects.get_or_create(
-                supabase_id=supabase_id,
-                defaults={
-                    'email': user_email,
-                    'username': user_email.split('@')[0],
-                }
-            )
-            
-            # Update account if it exists but email changed
-            if not account_created and account.email != user_email:
-                account.email = user_email
-                account.save(update_fields=['email'])
-            
-            # Create ResidentProfile if account was just created and doesn't have one
-            if account_created and not hasattr(account, 'residentprofile'):
-                ResidentProfile.objects.create(account=account)
-            
-            # Create or get Django REST Framework auth token
-            from rest_framework.authtoken.models import Token
-            django_token, token_created = Token.objects.get_or_create(user=django_user)
-            
-            # Prepare response data
-            response_data = {
-                'status': 'success',
-                'django_token': django_token.key,
-                'user_id': django_user.id,
-                'account_id': account.id,
-                'email': user_email,
-                'supabase_id': supabase_id,
-                'is_new_user': user_created,
-                'is_new_account': account_created,
-                'message': 'Successfully synced with Django backend'
-            }
-            
-            logger.info(f"Mobile sync successful for user: {user_email}")
-            return Response(response_data, status=status.HTTP_200_OK)
-            
-    except Exception as e:
-        logger.error(f"Mobile session sync error: {str(e)}", exc_info=True)
-        return Response(
-            {'error': 'Internal server error during sync', 'details': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
 
-class MobileSyncView(APIView):
-    permission_classes = [AllowAny]
+
+class RefreshView(APIView):
+    def post(self, request):
+        try:
+            # Get the Supabase user from the request (set by middleware)
+            supabase_user = getattr(request, 'supabase_user', None)
+            
+            if not supabase_user:
+                return Response(
+                    {'error': 'User not found in request'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            user_email = supabase_user.email
+            
+            # Find the corresponding account in database
+            account = Account.objects.filter(email=user_email).first()
+            
+            if not account:
+                return Response(
+                    {'error': 'Account not found in system'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = UserAccountSerializer(account)
+            
+            # Check if user still has staff privileges
+            if not serializer.data.get('staff'):
+                return Response(
+                    {'error': "Staff Privileges Required"}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            return Response({
+                'user': serializer.data,
+                'message': 'Session refreshed successfully'
+            })
+            
+        except Exception as e:
+            logger.error(f"Session refresh error: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Failed to refresh session'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class LogoutView(APIView):
+    def post(self, request):
+        try:
+            return Response({
+                'message': 'Logout successful'
+            })
+            
+        except Exception as e:
+            logger.error(f"Logout error: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Logout failed'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+class ChangePassword(APIView):
+    permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        return sync_supabase_session(request)
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+        
+        if not old_password or not new_password:
+            return Response(
+                {"error": "Both old and new passwords are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get the authenticated user's account
+        try:
+            account = Account.objects.get(email=request.user.email)
+        except Account.DoesNotExist:
+            return Response(
+                {"error": "Account not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verify old password against Django's user model
+        if not check_password(old_password, request.user.password):
+            return Response(
+                {"error": "Current password is incorrect"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if new password is the same as old password
+        if check_password(new_password, request.user.password):
+            return Response(
+                {"error": "New password must be different from current password"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Update password in Supabase first
+            supabase_response = supabase.auth.update_user({
+                "password": new_password
+            })
+            
+            if supabase_response.user:
+                # If Supabase update succeeds, update Django user
+                request.user.set_password(new_password)
+                request.user.save()
+                
+                # Update account last_password_change field if you have one
+                account.save()
+                
+                return Response(
+                    {"message": "Password updated successfully"},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"error": "Failed to update password in authentication service"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except Exception as e:
+            logger.error(f"Password change error: {str(e)}", exc_info=True)
+            return Response(
+                {"error": "An error occurred while changing password"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        

@@ -93,7 +93,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AccountMiddleware',
+    'apps.authentication.middleware.AuthCheckingMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -133,14 +133,6 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
-    },
-    'healthDB': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('SERVER2_DB_NAME'),
-        'USER': config('SERVER2_DB_USER'),
-        'PASSWORD': config('SERVER2_DB_PASSWORD'),
-        'HOST': config('SERVER2_DB_HOST'),
-        'PORT': config('SERVER2_DB_PORT'),
     }
 }
 

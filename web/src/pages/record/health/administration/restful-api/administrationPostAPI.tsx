@@ -1,6 +1,6 @@
 import { api2 } from "@/api/api";
 import { capitalize } from "@/helpers/capitalize";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelper";
 
 export const addStaffHealth = async (residentId: string, positionId: string, staffId: string) => {
   try {

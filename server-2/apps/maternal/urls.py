@@ -26,3 +26,5 @@ urlpatterns=[
     path('patient/<str:pat_id>/postpartum_records/', get_patient_postpartum_records, name='patient-postpartum-records'),
 	path('maternal-patients/', views.get_maternal_patients, name='get_maternal_patients'),
 ]
+
+
