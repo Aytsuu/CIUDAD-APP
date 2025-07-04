@@ -17,6 +17,7 @@ import { formatDate } from "@/helpers/dateHelper";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteCouncilEvent } from "./queries/delqueries";
+import { Archive } from "lucide-react";
 
 interface EditEventFormProps {
   initialValues: {
@@ -116,7 +117,6 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   }, [staffAttendees, staffList, isEditMode, selectedAttendeeDetails]);
 
   function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
-    console.log("Form submitted");
     const [hour, minute] = values.eventTime.split(":");
     const formattedTime = `${hour}:${minute}:00`;
 
@@ -131,7 +131,6 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       ...(values.staffAttendees[0] && { staff_id: values.staffAttendees[0] }),
     };
 
-    console.log("Submitting event info to updateEvent:", eventInfo);
     updateEvent(
       { ce_id: ceId, eventInfo },
       {
@@ -157,11 +156,9 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const handleNextClick = async () => {
     const isValid = await form.trigger();
     if (isValid) {
-      console.log("Form is valid, values:", form.getValues());
       setAllowModalOpen(true);
       setIsModalOpen(true);
     } else {
-      console.log("Form is invalid, errors:", form.formState.errors);
       setAllowModalOpen(false);
     }
   };
@@ -193,17 +190,15 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
     );
   };
 
-  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const handleConfirmPreview = () => {
-    setIsPreviewOpen(false);
-    handleSave();
+    setIsModalOpen(false);
   };
 
   const displayedEventCategory =
     eventCategory?.charAt(0).toUpperCase() + (eventCategory?.slice(1) || "");
 
-    const handleEditClick = (e: React.MouseEvent) => {
-    if (isArchived) return; // Prevent editing if archived
+  const handleEditClick = (e: React.MouseEvent) => {
+    if (isArchived) return;
     e.preventDefault();
     e.stopPropagation();
     setIsEditMode(true);
@@ -214,205 +209,209 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
     form.reset();
   };
 
-return (
-  <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
-    {isArchived && (
-      <div className="bg-yellow-100 text-yellow-800 p-2 mb-4 rounded-md text-center">
-        This event is archived and cannot be modified
-      </div>
-    )}
+  return (
+    <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
+      {isArchived && (
+        <div className="bg-yellow-100 text-yellow-800 p-2 mb-4 rounded-md text-center">
+          This event is archived and cannot be modified
+        </div>
+      )}
 
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div className="grid gap-4">
-          <FormInput
-            control={form.control}
-            name="eventTitle"
-            label="Event Title"
-            placeholder="Enter Event Title"
-            readOnly={!isEditMode || isArchived}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormDateTimeInput
-              control={form.control}
-              name="eventDate"
-              type="date"
-              label="Event Date"
-              readOnly={!isEditMode || isArchived}
-          />
-
-            <FormDateTimeInput
-              control={form.control}
-              name="eventTime"
-              type="time"
-              label="Event Time"
-              readOnly={!isEditMode || isArchived}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Event Category
-              </label>
-              <div className="text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-700">
-                {displayedEventCategory}
-              </div>
-            </div>
-
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <div className="grid gap-4">
             <FormInput
               control={form.control}
-              name="roomPlace"
-              label="Room / Place"
-              placeholder="Enter Room / Place"
+              name="eventTitle"
+              label="Event Title"
+              placeholder="Enter Event Title"
               readOnly={!isEditMode || isArchived}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormDateTimeInput
+                control={form.control}
+                name="eventDate"
+                type="date"
+                label="Event Date"
+                readOnly={!isEditMode || isArchived}
+              />
+
+              <FormDateTimeInput
+                control={form.control}
+                name="eventTime"
+                type="time"
+                label="Event Time"
+                readOnly={!isEditMode || isArchived}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Event Category
+                </label>
+                <div className="text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-700">
+                  {displayedEventCategory}
+                </div>
+              </div>
+
+              <FormInput
+                control={form.control}
+                name="roomPlace"
+                label="Room / Place"
+                placeholder="Enter Room / Place"
+                readOnly={!isEditMode || isArchived}
+              />
+            </div>
+
+            <FormTextArea
+              control={form.control}
+              name="eventDescription"
+              label="Event Description"
+              placeholder="Enter Event Description"
+              readOnly={!isEditMode || isArchived}
+            />
+
+            {eventCategory === "meeting" && (
+              <div>
+                <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
+                  ATTENDEES
+                </h1>
+                {isEditMode && !isArchived ? (
+                  <FormComboCheckbox
+                    control={form.control}
+                    name="staffAttendees"
+                    label="BARANGAY STAFF"
+                    options={staffOptions}
+                    readOnly={!isEditMode || isArchived}
+                  />
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Barangay Staff
+                    </label>
+                    <div className="text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-700">
+                      {selectedAttendees.length > 0 ? (
+                        <ul className="list-disc pl-5">
+                          {selectedAttendees.map((attendee, index) => (
+                            <li key={index}>{attendee.name} ({attendee.designation})</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        "No attendees selected"
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          <FormTextArea
-            control={form.control}
-            name="eventDescription"
-            label="Event Description"
-            placeholder="Enter Event Description"
-            readOnly={!isEditMode || isArchived}
-          />
-
-          {eventCategory === "meeting" && (
-            <div>
-              <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
-                ATTENDEES
-              </h1>
-              {isEditMode && !isArchived ? (
-                <FormComboCheckbox
-                  control={form.control}
-                  name="staffAttendees"
-                  label="BARANGAY STAFF"
-                  options={staffOptions}
-                  readOnly={!isEditMode || isArchived}
-                />
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Barangay Staff
-                  </label>
-                  <div className="text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-700">
-                    {selectedAttendees.length > 0 ? (
-                      <ul className="list-disc pl-5">
-                        {selectedAttendees.map((attendee, index) => (
-                          <li key={index}>{attendee.name} ({attendee.designation})</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      "No attendees selected"
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 flex justify-end gap-3">
-          {isEditMode ? (
-            <>
-              <ConfirmationModal
-                trigger={
-                  <Button
-                    type="button"
-                    className="bg-yellow-500 text-black hover:bg-yellow-600"
-                    disabled={isArchiving}
-                  >
-                    {isArchiving ? (
-                      <>
-                        Archiving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                      </>
-                    ) : (
-                      "Archive"
-                    )}
-                  </Button>
-                }
-                title="Confirm Archive"
-                description={`Are you sure you want to archive the event "${initialValues.ce_title}"? It will be moved to the archived events list.`}
-                actionLabel="Archive"
-                onClick={handleArchive}
-              />
-              <Button
-                type="button"
-                className="bg-gray-500 text-black hover:bg-gray-600"
-                onClick={handleCancelClick}
-              >
-                Cancel
-              </Button>
-              <ConfirmationModal
-                trigger={
-                  <Button
-                    type="button"
-                    className=""
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? (
-                      <>
-                        Saving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                      </>
-                    ) : (
-                      "Save"
-                    )}
-                  </Button>
-                }
-                title="Confirm Changes"
-                description="Are you sure you want to save these changes?"
-                actionLabel="Confirm"
-                onClick={form.handleSubmit(onSubmit)}
-              />
-            </>
-          ) : (
-            !isArchived && (
-              <Button
-                type="button"
-                className=""
-                onClick={handleEditClick}
-              >
-                Edit
-              </Button>
-            )
-          )}
-          {!isEditMode && eventCategory === "meeting" && !isArchived && (
-            <DialogLayout
-              trigger={
+          <div className="mt-4 flex justify-end gap-3">
+            {isEditMode ? (
+              <>
                 <Button
                   type="button"
                   className="bg-gray-500 text-black hover:bg-gray-600"
-                  onClick={handleNextClick}
+                  onClick={handleCancelClick}
                 >
-                  Preview
+                  Cancel
                 </Button>
-              }
-              className="w-full max-w-[1000px] h-full flex flex-col overflow-auto scrollbar-custom"
-              title="Attendance Sheet Preview"
-              description="Review the attendance sheet before downloading"
-              mainContent={
-                <AttendanceSheetView
-                  ce_id={ceId}
-                  selectedAttendees={selectedAttendees}
-                  activity={form.watch("eventTitle")}
-                  date={form.watch("eventDate")}
-                  time={form.watch("eventTime")}
-                  place={form.watch("roomPlace")}
-                  category={form.watch("eventCategory")}
-                  description={form.watch("eventDescription")}
-                  onConfirm={handleConfirmPreview}
+                <ConfirmationModal
+                  trigger={
+                    <Button
+                      type="button"
+                      className=""
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? (
+                        <>
+                          Saving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                        </>
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
+                  }
+                  title="Confirm Changes"
+                  description="Are you sure you want to save these changes?"
+                  actionLabel="Confirm"
+                  onClick={form.handleSubmit(onSubmit)}
                 />
-              }
-              isOpen={isModalOpen}
-              onOpenChange={handleModalOpenChange}
-            />
-          )}
-        </div>
-      </form>
-    </Form>
-  </div>
-);
+              </>
+            ) : (
+              <>
+                {!isArchived && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button
+                        type="button"
+                        className="bg-white text-red-500 hover:bg-gray-600"
+                        disabled={isArchiving}
+                      >
+                        {isArchiving ? (
+                          <>
+                            Archiving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                          </>
+                        ) : (
+                          <Archive size={16} />
+                        )}
+                      </Button>
+                    }
+                    title="Confirm Archive"
+                    description={`Are you sure you want to archive the event "${initialValues.ce_title}"? It will be moved to the archived events list.`}
+                    actionLabel="Archive"
+                    onClick={handleArchive}
+                  />
+                )}
+                {eventCategory === "meeting" && (
+                  <DialogLayout
+                    trigger={
+                      <Button
+                        type="button"
+                        className="bg-gray-500 text-black hover:bg-gray-600"
+                        onClick={handleNextClick}
+                      >
+                        Preview
+                      </Button>
+                    }
+                    className="w-full max-w-[1000px] h-full flex flex-col overflow-auto scrollbar-custom"
+                    title="Attendance Sheet Preview"
+                    description="Review the attendance sheet"
+                    mainContent={
+                      <AttendanceSheetView
+                        ce_id={ceId}
+                        selectedAttendees={selectedAttendees}
+                        activity={form.watch("eventTitle")}
+                        date={form.watch("eventDate")}
+                        time={form.watch("eventTime")}
+                        place={form.watch("roomPlace")}
+                        category={form.watch("eventCategory")}
+                        description={form.watch("eventDescription")}
+                        onConfirm={handleConfirmPreview}
+                      />
+                    }
+                    isOpen={isModalOpen}
+                    onOpenChange={handleModalOpenChange}
+                  />
+                )}
+                {!isArchived && (
+                  <Button
+                    type="button"
+                    className=""
+                    onClick={handleEditClick}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
 }
 
 export default EditEventForm;

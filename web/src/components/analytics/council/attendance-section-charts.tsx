@@ -10,7 +10,9 @@ export default function StaffAttendanceRankingChart() {
   const { data: rankingData = [], isLoading, error } = useGetStaffAttendanceRanking();
   const currentYear = new Date().getFullYear();
   const { data: councilEvents = [] } = useGetCouncilEvents();
-  const totalMeetings = councilEvents.filter((event) => event.ce_type === "meeting").length;
+  const totalMeetings = councilEvents.filter(
+    (event) => event.ce_type === "meeting" && event.ce_is_archive === false && new Date(event.ce_date).getFullYear() === currentYear
+  ).length;
   const averageMeetings = rankingData.length > 0 ? Math.round(totalMeetings / rankingData.length) : 0;
 
   const chartConfig = {
@@ -113,7 +115,7 @@ export default function StaffAttendanceRankingChart() {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                minTickGap={32}
+                minTickGap={1}
                 className="text-xs"
                 tickFormatter={(value: string) => value}
               />
