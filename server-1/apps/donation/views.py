@@ -12,7 +12,7 @@ import logging
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-
+from django.db.models import Sum 
 
 Personal = apps.get_model('profiling', 'Personal')
 
@@ -298,3 +298,12 @@ class PaymentStatus(APIView):
             
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+
+class MonetaryDonationTotalView(APIView):
+    def get(self, request):
+        # Sum all donations where category is "Monetary Donations"
+        total = Donation.objects.filter(
+            don_category="Monetary Donations"
+        ).aggregate(total=Sum('don_qty'))['total'] or 0
+        
+        return Response({'total_monetary_donations': total})

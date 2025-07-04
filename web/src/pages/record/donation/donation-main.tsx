@@ -9,11 +9,11 @@ import ClerkDonateView from "./donation-view";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Donation } from "./queries/donationFetchQueries";
 import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
-
 
 function DonationTracker() {
   const [data] = useState<Donation[]>([]);
@@ -21,6 +21,7 @@ function DonationTracker() {
   const [error] = useState<string | null>(null); 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -36,10 +37,25 @@ function DonationTracker() {
   //   deleteEntry(don_num);
   // };
 
-  // Filter data based on search query
+  const categoryOptions = [
+    { id: "all", name: "All" },
+    { id: "Monetary Donations", name: "Monetary Donations" },
+    { id: "Essential Goods", name: "Essential Goods" },
+    { id: "Medical Supplies", name: "Medical Supplies" },
+    { id: "Household Items", name: "Household Items" },
+    { id: "Educational Supplies", name: "Educational Supplies" },
+    { id: "Baby & Childcare Items", name: "Baby & Childcare Items" },
+    { id: "Animal Welfare Items", name: "Animal Welfare Items" },
+    { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid" },
+    { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies" },
+  ];
+
+  // Filter data based on search query and category
   const filteredData = donations.filter((donation) => {
     const searchString = `${donation.don_num} ${donation.don_donor} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_date}`.toLowerCase();
-    return searchString.includes(searchQuery.toLowerCase());
+    const matchesSearch = searchString.includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || donation.don_category === categoryFilter;
+    return matchesSearch && matchesCategory;
   });
 
   // Calculate pagination values
@@ -175,8 +191,8 @@ function DonationTracker() {
       <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Search and Create Section */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="relative w-full flex gap-2 mr-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+        <div className="relative w-full flex gap-2">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
             size={17}
@@ -186,6 +202,14 @@ function DonationTracker() {
             className="pl-10 bg-white w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <SelectLayout
+            className="bg-white"
+            label=""
+            placeholder="Filter by Category"
+            options={categoryOptions}
+            value={categoryFilter}
+            onChange={(value) => setCategoryFilter(value)}
           />
         </div>
         <DialogLayout

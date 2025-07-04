@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Q
+from django.db.models import Count
 from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
@@ -163,6 +163,28 @@ class RestoreAttendanceView(generics.UpdateAPIView):
         instance.save()
         return Response({"message": "Attendance sheet restored"},
                       status=status.HTTP_200_OK)
+
+class StaffAttendanceRankingView(generics.ListAPIView):
+    serializer_class = StaffAttendanceRankingSerializer
+
+    def get_queryset(self):
+        # Aggregate present attendees by atn_name for non-archived events
+        return (
+            CouncilAttendees.objects
+            .filter(
+                atn_present_or_absent='Present',
+                ce_id__ce_is_archive=False
+            )
+            .values('atn_name', 'atn_designation')
+            .annotate(attendance_count=Count('atn_id'))
+            .order_by('-attendance_count')
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        print("Queryset:", list(queryset)) # Debug log
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):

@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
 
@@ -315,3 +315,34 @@ class ProjectProposalRestoreView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=False)
+
+class ProjectProposalStatusCountView(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        # Base queryset for ProjectProposal
+        queryset = ProjectProposal.objects.filter(gpr_is_archive=False)
+
+        # Get the latest log status for each proposal
+        latest_logs = ProjectProposalLog.objects.filter(
+            gpr_id=OuterRef('gpr_id')
+        ).order_by('-gprl_date_approved_rejected')
+
+        # Annotate queryset with latest_status
+        queryset = queryset.annotate(
+            latest_status=Subquery(latest_logs.values('gprl_status')[:1])
+        )
+
+        # Aggregate counts for each status
+        status_counts = queryset.aggregate(
+            pending=Count('pk', filter=Q(latest_status='Pending')),
+            viewed=Count('pk', filter=Q(latest_status='Viewed')),
+            approved=Count('pk', filter=Q(latest_status='Approved')),
+            rejected=Count('pk', filter=Q(latest_status='Rejected'))
+        )
+
+        # Return JSON response with counts
+        return Response({
+            'pending': status_counts['pending'] or 0,
+            'viewed': status_counts['viewed'] or 0,
+            'approved': status_counts['approved'] or 0,
+            'rejected': status_counts['rejected'] or 0
+        })

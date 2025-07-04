@@ -51,7 +51,14 @@ class StaffSerializer(serializers.ModelSerializer):
         except AttributeError:
             return "Unknown"
 
+class StaffAttendanceRankingSerializer(serializers.Serializer):
+    atn_name = serializers.CharField()
+    atn_designation = serializers.CharField()
+    attendance_count = serializers.IntegerField()
 
+    class Meta:
+        fields = ['atn_name', 'atn_designation', 'attendance_count']
+        
 # ==================================  RESOLUTION =================================
 
 class ResolutionFileSerializer(serializers.ModelSerializer):
