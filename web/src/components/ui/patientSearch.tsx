@@ -7,11 +7,12 @@ import { User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
-
 export interface Patient {
   pat_id: string;
   pat_type: string;
   name?: string;
+  trans_id?: string;
+  rp_id?: string;
   personal_info?: {
     per_fname?: string;
     per_mname?: string;
@@ -20,7 +21,6 @@ export interface Patient {
     per_sex?: string;
   };
   households?: { hh_id: string }[];
-
   address?: {
     add_street?: string;
     add_barangay?: string;
@@ -29,27 +29,30 @@ export interface Patient {
     add_sitio?: string;
     full_address?: string;
   };
-  family_head_info?: {
+  family?: {
     fam_id: string;
+  };
+  family_head_info?: {
+    fam_id: string | null;
     family_heads?: {
       mother?: {
+        role?: string;
         personal_info?: {
-          per_fname?: string;
-          per_mname?: string;
-          per_lname?: string;
-          per_dob?: string;
-          per_sex?: string;
-          per_ed_attainment?: string;
+          per_fname?: string | null;
+          per_mname?: string | null;
+          per_lname?: string | null;
+          per_dob?: string | null;
+          per_sex?: string | null;
         };
       };
       father?: {
+        role?: string;
         personal_info?: {
-          per_fname?: string;
-          per_mname?: string;
-          per_lname?: string;
-          per_dob?: string;
-          per_sex?: string;
-          per_ed_attainment?: string;
+          per_fname?: string | null;
+          per_mname?: string | null;
+          per_lname?: string | null;
+          per_dob?: string | null;
+          per_sex?: string | null;
         };
       };
     };
@@ -68,6 +71,8 @@ export function PatientSearch({
   onPatientSelect,
   className,
 }: PatientSearchProps) {
+
+  
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [patients, setPatients] = useState<{

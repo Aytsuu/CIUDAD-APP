@@ -3,7 +3,7 @@ from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone
 from django.core.validators import MinValueValidator
-from apps.patientrecords.models import Patient, PatientRecord, Spouse, VitalSigns, FollowUpVisit
+from apps.patientrecords.models import Patient, PatientRecord, Spouse, VitalSigns, FollowUpVisit, BodyMeasurement, Obstetrical_History, MedicalHistory
 # from apps.healthProfiling.models import Staff
 
 # ************** prenatal **************
@@ -55,15 +55,15 @@ class Pregnancy(models.Model):
 
 class Prenatal_Form(models.Model):
     pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)
-    pf_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
-    pf_tor = models.CharField(max_length=100, default="Not Applicable")
     pf_lmp = models.DateField()
     pf_edc = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True)  # TEMPORARY to handle existing records
-    spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True, blank=True)
+
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='prenatal_form', db_column='pregnancy_id', null=True)
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True) 
+    spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True, blank=True)
+    bm_id = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='prenatal_form', db_column='bm_id', null=True, blank=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id')
 
     def save(self, *args, **kwargs):
@@ -104,16 +104,15 @@ class Previous_Pregnancy(models.Model):
 
 
 class TT_Status(models.Model):
-    pfts_id = models.BigAutoField(primary_key=True)
-    pfts_vaccine_type = models.CharField(max_length=100)
-    pfts_status = models.CharField(max_length=10)
-    pfts_date_given = models.DateField()
-    pfts_fim = models.BooleanField()
-    pfts_tdap = models.BooleanField(default=False)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_tt_status', db_column='pf_id')
+    tts_id = models.BigAutoField(primary_key=True)
+    tts_vaccine_name = models.CharField(max_length=100)
+    tts_status = models.CharField(max_length=10)
+    tts_date_given = models.DateField()
+    tts_tdap = models.BooleanField(default=False)
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='tt_status', db_column='pf_id', null=True)
 
     class Meta:
-        db_table = 'pf_tt_status'
+        db_table = 'tt_status'
 
 
 class Guide4ANCVisit(models.Model):

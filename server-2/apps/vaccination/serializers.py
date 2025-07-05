@@ -3,9 +3,10 @@ from .models import *
 from datetime import date
 from apps.inventory.serializers import VaccineStockSerializer,VacccinationListSerializer
 from apps.patientrecords.models import Patient,PatientRecord
-from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer,FollowUpVisitSerializer
-from apps.patientrecords.serializers import VitalSignsSerializer
-# serializers.py
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
+from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
+from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer
+# serializers. py
 
 class PartialUpdateMixin:
     def to_internal_value(self, data):

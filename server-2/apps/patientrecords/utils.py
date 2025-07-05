@@ -1,12 +1,9 @@
 from .models import *
 
-
-
-    
+ 
 # utils/patient_utils.py
-
 def get_completed_followup_visits(pat_id):
-  
+
     try:
         # Get all patient records for this patient
         patient_records = PatientRecord.objects.filter(pat_id=pat_id)
@@ -26,7 +23,6 @@ def get_completed_followup_visits(pat_id):
     
 
 def get_pending_followup_visits(pat_id):
-  
     try:
         # Get all patient records for this patient
         patient_records = PatientRecord.objects.filter(pat_id=pat_id)
@@ -42,6 +38,7 @@ def get_pending_followup_visits(pat_id):
         # Log the error if needed
         print(f"Error fetching completed follow-up visits: {e}")
         return FollowUpVisit.objects.none()  # Return empty queryset on error
+
 
 def get_latest_height_weight(pat_id):
     try:

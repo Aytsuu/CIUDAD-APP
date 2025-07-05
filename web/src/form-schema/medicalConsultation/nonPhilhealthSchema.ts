@@ -17,7 +17,7 @@ const positiveNumberWith2Decimals = z.preprocess(
 );
 
 // Temperature-specific validation
-const temperatureSchema = positiveNumberWith2Decimals
+export const temperatureSchema = positiveNumberWith2Decimals
   .refine((temp) => temp >= 25, {
     message: "Temperature too low (critical hypothermia)",
   })
@@ -28,7 +28,7 @@ const temperatureSchema = positiveNumberWith2Decimals
     message: "Temperature outside normal range (36.5°C-37.5°C)",
   });
 
-const heightSchema = z.preprocess(
+export const heightSchema = z.preprocess(
   (val) => (val !== '' ? Number(val) : undefined),
   z.number()
     .min(45, { message: "Below minimum human height" })
@@ -42,7 +42,7 @@ const heightSchema = z.preprocess(
 );
 
 
-const weightSchema = z.preprocess(
+export const weightSchema = z.preprocess(
   (val) => (val !== '' ? Number(val) : undefined),
   z.number()
     .min(0.5, { message: "Weight must be at least 0.5 kg" })

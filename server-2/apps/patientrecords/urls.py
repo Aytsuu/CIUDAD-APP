@@ -1,15 +1,27 @@
 from django.urls import path
-from .views import *
-from . import views
-
+from .views.patient_views import *
+from .views.vitalsigns_views import *
+from .views.obstetrical_views import *
+from .views.spouse_views import *
+from .views.followvisits_views import *
+from .views.bodymeasurement_views import *
+from .views.findings_views import *
+from .views.physicalexam_views import *
+from .views.medicalhistory_views import *
+from .views.patient_views import *
+from .views.illness_views import *
+from .views.disability_views import *
 urlpatterns = [
-    path('residents-available/', views.get_resident_profile_list, name='residents-available-list'),
+    path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
-    path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
+    path('patien-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patient/', PatientView.as_view(), name='patient'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
+
+    path('update-transient/<str:trans_id>/', UpdateTransientView.as_view(), name='update-transient-patient'),
+
 
     path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
 
@@ -37,7 +49,6 @@ urlpatterns = [
     path('pe-option/', PEOptionView.as_view(), name='pe_option'),
    
     path('medical-history/', MedicalHistoryView.as_view(), name='medical-history'),
-
    
     # UPDATE/ DELETE
     path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
@@ -49,5 +60,12 @@ urlpatterns = [
    
     path('medical-history/<int:medrec_id>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
-    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults')
+    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
+
+    #DISABLITY
+    
+    path('disability/', ListDisabilityView.as_view(), name='list-disability'),
+    path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
+    
 ]
+

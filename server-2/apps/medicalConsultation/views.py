@@ -8,7 +8,7 @@ from .serializers import *
 from datetime import datetime
 from django.db.models import Count, Max, Subquery, OuterRef, Q, F
 from apps.patientrecords.models import Patient,PatientRecord
-from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
 from apps.patientrecords.models import *
 from .utils import get_medcon_record_count
 from django.db.models import Count, Q

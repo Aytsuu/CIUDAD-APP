@@ -35,6 +35,7 @@ export const useUnvaccinatedResidents = () => {
   });
 };
 
+
 export const fetchVaccinesWithStock = () => {
   const [vaccines, setVaccines] = useState<
     {

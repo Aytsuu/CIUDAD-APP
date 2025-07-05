@@ -421,8 +421,6 @@ export default function MedicineRequestDetail() {
                       </span>
                       <span>•</span>
                       <span>{request.personal_info.per_sex}</span>
-                      <span>•</span>
-                      <span>{request.personal_info.per_status || "N/A"}</span>
                     </div>
                   </div>
                 </div>
