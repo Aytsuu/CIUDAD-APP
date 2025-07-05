@@ -1,17 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FormData } from "@/form-schema/chr-schema";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Search } from "lucide-react";
 import ChildHRPage1 from "./ChildHRPage1";
 import ChildHRPage2 from "./ChildHRPage2";
-import ChildHRPage3 from "./ChildHRPage3";
-import ChildHRPage4 from "./ChildHRPage4";
+import {api2} from "@/api/api";
+// import ChildHRPage3 from "./ChildHRPage3";
+// import ChildHRPage4 from "./ChildHRPage4";
 import LastPage from "./ChildHRPagelast";
+import { useNavigate } from "react-router";
 // Define initial form data
 const initialFormData: FormData = {
   familyNo: "",
-  pat_id: "", // Added missing property
+  pat_id: "",
+  pat_type: "",
+  rp_id: "",
+  trans_id: "",
   ufcNo: "",
   childFname: "",
   childLname: "",
@@ -20,7 +25,7 @@ const initialFormData: FormData = {
   childDob: "",
   childPob: "",
   childAge: "",
-  residenceType: "Resident", // Default value 
+  residenceType: "Resident",
   motherFname: "",
   motherLname: "",
   motherMname: "",
@@ -33,23 +38,60 @@ const initialFormData: FormData = {
   fatherAge: "",
   fatherdob: "",
   fatherOccupation: "",
-  address:"",
+  address: "",
   landmarks: "",
   dateNewbornScreening: "",
-  hasDisability: false,
   disabilityTypes: [],
   hasEdema: false,
   edemaSeverity: "",
   BFdates: [],
-  ironDates: [],
-  vaccines: [],
-  vitaminRecords: [],
+  // vaccines: [],
   vitalSigns: [],
+  // hasExistingVaccination: false,
+  // existingVaccines: [],
+  medicines: [], // Add medicines with an empty array as the default value
+  is_anemic: false, // Add is_anemic with a default value of false
+  anemic: {
+    seen: "",
+    given_iron: "",
+  },
+  birthwt: {
+    seen: "",
+    given_iron: "",
+  },
+  staff_id:"",
+  status: "recorded", // Default status
+  type_of_feeding: "", // Add type_of_feeding with a default value
+  tt_status: "", // Add tt_status with a default value
+
+};
+
+// Helper function to load from localStorage
+const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+  if (typeof window === "undefined") return defaultValue;
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : defaultValue;
 };
 
 export default function ChildHealthForm() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const navigate = useNavigate();
+  // Load state from localStorage or use defaults
+  const [currentPage, setCurrentPage] = useState(() =>
+    loadFromLocalStorage("childHealthFormCurrentPage", 1)
+  );
+
+  const [formData, setFormData] = useState<FormData>(() =>
+    loadFromLocalStorage("childHealthFormData", initialFormData)
+  );
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("childHealthFormCurrentPage", currentPage.toString());
+  }, [currentPage]);
+
+  useEffect(() => {
+    localStorage.setItem("childHealthFormData", JSON.stringify(formData));
+  }, [formData]);
 
   // Navigation handlers
   const handleNext = () => {
@@ -64,21 +106,55 @@ export default function ChildHealthForm() {
     setFormData((prev) => ({ ...prev, ...data }));
   };
 
-  const handleSubmit = () => {
-    console.log("Submitting Data:", formData);
+  
+
+
+  const handleSubmit = (submittedData: FormData) => {
+    
+
+    // try{
+
+    //   if(submittedData.pat_type == "Transient"){
+    //     const response =await api2.put("patientrecords/update-transient/", {
+
+    //     })
+
+    //   }
+
+    // }
+    // catch (error) {
+    // }
+    
+    // Here you would typically send the data to your API
+    // Example: await submitChildHealthRecord(submittedData);
+    
+    // Clear the form after submission
+    setFormData(initialFormData);
+    navigate(-1)
+    localStorage.removeItem("selectedPatient");
+    localStorage.removeItem("childHrFormData");
+    // Optionally navigate to a success page or show a success message
+    // navigate('/success');
   };
+
 
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <Link to="/invtablechr">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-          >
-            <ChevronLeft />
-          </Button>
-        </Link>
+        <Button
+          className="text-black p-2 mb-2 self-start"
+          variant={"outline"}
+          onClick={() => {
+            // Clear the stored data after submission if desired
+            localStorage.removeItem("selectedPatient");
+            localStorage.removeItem("childHrFormData");
+            setFormData(initialFormData);
+            setCurrentPage(1);
+            navigate(-1);
+          }}
+        >
+          <ChevronLeft />
+        </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Child Health Record
@@ -91,38 +167,38 @@ export default function ChildHealthForm() {
 
       {currentPage === 1 && (
         <ChildHRPage1
-          onNext2={handleNext}
+          onNext={handleNext}
           updateFormData={updateFormData}
           formData={formData}
         />
       )}
       {currentPage === 2 && (
         <ChildHRPage2
-          onPrevious1={handlePrevious}
-          onNext3={handleNext}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
           updateFormData={updateFormData}
           formData={formData}
         />
       )}
-      {currentPage === 3 && (
+      {/* {currentPage === 3 && (
         <ChildHRPage3
-          onPrevious2={handlePrevious}
-          onNext4={handleNext}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
           updateFormData={updateFormData}
           formData={formData}
         />
-      )}
-      {currentPage === 4 && (
+      )} */}
+      {/* {currentPage === 4 && (
         <ChildHRPage4
           onPrevious3={handlePrevious}
           onNext5={handleNext}
           updateFormData={updateFormData}
           formData={formData}
         />
-      )}
-      {currentPage === 5 && (
+      )} */}
+      {currentPage === 3 && (
         <LastPage
-          onPrevious4={handlePrevious}
+          onPrevious={handlePrevious}
           onSubmit={handleSubmit}
           updateFormData={updateFormData}
           formData={formData}

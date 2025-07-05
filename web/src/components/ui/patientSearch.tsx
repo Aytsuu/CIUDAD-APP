@@ -11,6 +11,8 @@ export interface Patient {
   pat_id: string;
   pat_type: string;
   name?: string;
+  trans_id?: string;
+  rp_id?: string;
   personal_info?: {
     per_fname?: string;
     per_mname?: string;
@@ -26,6 +28,9 @@ export interface Patient {
     add_province?: string;
     add_sitio?: string;
     full_address?: string;
+  };
+  family?: {
+    fam_id: string;
   };
   family_head_info?: {
     fam_id: string | null;

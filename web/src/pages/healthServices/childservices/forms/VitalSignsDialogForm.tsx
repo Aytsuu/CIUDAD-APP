@@ -6,98 +6,157 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { VitalSignSchema, VitalSignType } from "@/form-schema/chr-schema";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { FormTextArea } from "@/components/ui/form/form-text-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 
 interface VitalSignsDialogFormProps {
   onSubmit: (values: VitalSignType) => void;
   onCancel: () => void;
+  childAge?: string;
 }
 
 export function VitalSignsDialogForm({
   onSubmit,
   onCancel,
+  childAge,
 }: VitalSignsDialogFormProps) {
-  const currentDate = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
+  const currentDate = new Date().toISOString().split("T")[0];
+  const [hasFollowUp, setHasFollowUp] = useState(false);
 
   const form = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: {
-      age: "",
-      wt: 0,
-      ht: 0,
-      temp: 0,
-      date: currentDate,
-      followUpVisit: "", // Remove default value for followUpVisit
-      findings: "",
+      date: new Date(currentDate).toISOString().split("T")[0],
+      age: childAge || "",
+      wt: undefined,
+      ht: undefined,
+      temp: undefined,
+      follov_description: "",
+      followUpVisit: "",
       notes: "",
     },
   });
 
-  const formFields = [
-    { name: "age", label: "Age", type: "text" },
-    { name: "wt", label: "Weight (kg)", type: "number" },
-    { name: "ht", label: "Height (cm)", type: "number" },
-    { name: "temp", label: "Temperature (°C)", type: "number" },
-    { name: "date", label: "Date", type: "date" },
-    { name: "followUpVisit", label: "Follow Up Visit", type: "date" },
-    { name: "findings", label: "Findings", type: "text" },
-    { name: "notes", label: "Notes", type: "text" },
-  ];
+  // Fixed: Remove the custom handleSubmit and use the form's handleSubmit directly
+ 
+
+  
+      const onsubmitForm = (data: VitalSignType) => {
+        console.log("PAGE 3:", data);
+        form.reset();
+
+      };
+    
 
   return (
     <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit(
-          (data) => {
-            console.log("Form data submitted:", data); // Debugging
-            onSubmit(data);
-          },
-          (errors) => {
-            console.error("Form validation errors:", errors); // Debugging
-          }
-        )}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {formFields.map(({ name, label, type }) => (
-            <FormField
-              key={name}
+      <form className="space-y-4" onSubmit={form.handleSubmit(onsubmitForm)}>
+        <div>
+          <div className="flex gap-2 w-full justify-between">
+            <FormInput
               control={form.control}
-              name={name as keyof VitalSignType}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{label}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type={type}
-                      step={type === "number" ? "0.01" : undefined}
-                      onChange={
-                        type === "number"
-                          ? (e) => field.onChange(Number(e.target.value))
-                          : field.onChange
-                      }
-                      value={
-                        field.value as
-                          | string
-                          | number
-                          | readonly string[]
-                          | undefined
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              name="age"
+              label="Age"
+              type="text"
+              placeholder="Enter age"
+              readOnly
             />
-          ))}
+            <FormInput
+              control={form.control}
+              name="wt"
+              label="Weight (kg)"
+              type="number"
+              placeholder="Enter weight"
+            />
+            <FormInput
+              control={form.control}
+              name="ht"
+              label="Height (cm)"
+              type="number"
+              placeholder="Enter height"
+            />
+            <FormInput
+              control={form.control}
+              name="temp"
+              label="Temperature (°C)"
+              type="number"
+              placeholder="Enter temperature"
+            />
+          </div>
+
+          <div className="w-full mb-4">
+            <FormTextArea
+              control={form.control}
+              name="notes"
+              label="Notes"
+              placeholder="Enter notes"
+            />
+          </div>
+
+          <div className="col-span-1 md:col-span-2 flex items-center space-x-2 mb-4">
+            <Checkbox
+              id="hasFollowUp"
+              checked={hasFollowUp}
+              onCheckedChange={(checked) => {
+                setHasFollowUp(!!checked);
+                if (!checked) {
+                  form.setValue("follov_description", "");
+                  form.setValue("followUpVisit", "");
+                }
+              }}
+            />
+            <label
+              htmlFor="hasFollowUp"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Requires follow-up visit?
+            </label>
+          </div>
         </div>
-        <div className="flex justify-end gap-2">
-          <Button type="submit" className="bg-green-600 w-[120px] hover:bg-green-700">Add </Button>
+
+        {hasFollowUp && (
+          <>
+            <div className="flex w-full gap-4 mb-4">
+              <FormInput
+                control={form.control}
+                name="follov_description"
+                label="Follow Up Reason"
+                type="text"
+                placeholder="Enter reason for follow-up"
+                className="w-full"
+              />
+              <FormDateTimeInput
+                control={form.control}
+                name="followUpVisit"
+                label="Follow Up Visit Date"
+                type="date"
+              />
+            </div>
+          </>
+        )}
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className="px-4 py-2"
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            className="bg-green-600 hover:bg-green-700 px-4 py-2"
+          >
+            Add
+          </Button>
         </div>
       </form>
     </Form>

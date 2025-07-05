@@ -11,7 +11,7 @@ from django.http import Http404
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
-from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
+from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
 
 
@@ -320,4 +320,13 @@ class DeleteUpdatePatientRecordView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "Patient record not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-
+class UpdateTransientView(generics.RetrieveUpdateAPIView):
+    serializer_class = TransientSerializer
+    queryset = Transient.objects.all()
+    lookup_field = 'trans_id'
+    
+    def get_object(self):
+        try:
+            return super().get_object()
+        except NotFound:
+            return Response({"error": "Transient patient not found."}, status=status.HTTP_404_NOT_FOUND)

@@ -3,6 +3,7 @@ from django.db.models import Max
 from django.utils import timezone
 from decimal import Decimal
 from apps.healthProfiling.models import ResidentProfile
+from apps.administration.models import Staff
 # Create your models here.
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
@@ -159,7 +160,7 @@ class VitalSigns(models.Model):
     vital_pulse = models.CharField(max_length=100,default="N/A")
     created_at = models.DateTimeField(auto_now_add=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vital_signs',null=True)
-
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='vital_signs', null=True, blank=True)
     class Meta:
         db_table = 'vital_signs'
 
@@ -217,19 +218,19 @@ class BodyMeasurement(models.Model):
     # bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
-    
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='body_measurements', null=True, blank=True)
     class Meta:
         db_table = 'body_measurement'
            
 
-class NutritionalStatus(models.Model): 
-    nutstat_id = models.BigAutoField(primary_key=True)
-    nutstat_WFA = models.CharField(max_length=100, default="")
-    nutstat_HFA = models.CharField(max_length=100, default="")
-    nutstat_WFH = models.CharField(max_length=100, default="")
-    bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='nutritional_status', null=True, blank=True)
-    class Meta:
-        db_table = 'nutritional_status'
+# class NutritionalStatus(models.Model): 
+#     nutstat_id = models.BigAutoField(primary_key=True)
+#     nutstat_WFA = models.CharField(max_length=100, default="")
+#     nutstat_HFA = models.CharField(max_length=100, default="")
+#     nutstat_WFH = models.CharField(max_length=100, default="")
+#     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='nutritional_status', null=True, blank=True)
+#     class Meta:
+#         db_table = 'nutritional_status'
     
        
 class Illness(models.Model):
@@ -322,6 +323,7 @@ class Appointment(models.Model):
     class  Meta:
         db_table = 'appointment'
         ordering = ['-app_date', '-app_time']
+    
     
 class ListOfDisabilities(models.Model):
     disability_id = models.BigAutoField(primary_key=True)
