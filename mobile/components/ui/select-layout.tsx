@@ -151,7 +151,7 @@ export const SelectLayout: React.FC<ModalSelectProps> = ({
           }`}
           numberOfLines={1}
         >
-          {selectedOption ? capitalize(selectedOption.label) : placeholder}
+          {selectedOption ? selectedOption.label : placeholder}
         </Text>
 
         <Animated.View

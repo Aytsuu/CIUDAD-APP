@@ -8,7 +8,7 @@ from .views.sitio_views import *
 from .views.address_views import *
 from .views.request_registration_views import *
 from .views.business_views import *
-# from .views_deprecated import * # To be removed
+from .views.analytics_views import *
 
 urlpatterns = [
     # Sitio Urls
@@ -20,12 +20,10 @@ urlpatterns = [
     path("per_address/list/", PerAddressListView.as_view(), name="per-address-list"),
 
     # Personal Urls
-    # path("personal/", PersonalView.as_view(), name="personal-details-list"),
     path("personal/update/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
 
     # Family Urls
-    # path("family/", FamilyView.as_view(), name="family-details"),
     path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
     path("family/list/table/", FamilyTableView.as_view(), name="family-table"),
     path("family/list/filter/<str:hh>/", FamilyFilteredByHouseholdView.as_view(), name="filter-family-list"),
@@ -33,14 +31,11 @@ urlpatterns = [
     path("family/<str:fam_id>/members/", FamilyMembersListView.as_view(), name="family-members-list"),
     path("family/create/", FamilyCreateView.as_view(), name="family-create"),
     path("family/id/<str:rp>/", FamilyIDView.as_view(), name="retrieve-family-id"),
-    # path("family-composition/", FamilyCompositionView.as_view(), name="family-composition-details"),
-    # path("family/composition/delete/<str:fam>/<str:rp>/", FamilyCompositionDeleteView.as_view(), name="family-composition-delete"),
     path("family/role/update/<str:fam>/<str:rp>/", FamilyRoleUpdateView.as_view(), name="family-composition-update"),
     path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
 
     # Househould Urls
-    # path("household/", HouseholdView.as_view(), name="household-details"),
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
     path("household/list/table/", HouseholdTableView.as_view(), name="household-table"),
     path("household/<str:hh_id>/data/", HouseholdListView.as_view(), name="household-details"),
@@ -61,13 +56,16 @@ urlpatterns = [
     path("request/file/create/", RequestFileCreateView.as_view(), name="request-file-create"),
     path("request/link/registration/", LinkRegVerificationView.as_view(), name="link-registration-verification"),
     path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
-    # path("request/file/", RequestFileView.as_view(), name="request-files"),
+    path("request/count/", RequestCountView.as_view(), name="total-request"),
 
-    # # Business Urls
+    # Business Urls
     path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
     path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
-    # path("business/file/", BusinessFileView.as_view(), name="business-files"),
+    
+    # Analytics Urls,
+    path("card/analytics/data/", CardAnalyticsView.as_view(), name='card-analytics'),
+    path("sidebar/analytics/data/", SidebarAnalyticsView.as_view(), name="sidebar-analytics"),
 
 ]

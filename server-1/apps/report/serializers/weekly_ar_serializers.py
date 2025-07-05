@@ -31,11 +31,12 @@ class WARListSerializer(serializers.ModelSerializer):
   status = serializers.CharField(source="war_status")
   id = serializers.IntegerField(source="war_id")
   war_files = serializers.SerializerMethodField()
-  date = serializers.DateField(source="war_created_at")
+  created_at = serializers.DateField(source="war_created_at")
+  created_for = serializers.DateField(source="war_created_for")
 
   class Meta:
     model = WeeklyAccomplishmentReport
-    fields = ['id', 'date', 'status', 'war_composition', 'war_files']
+    fields = ['id', 'created_at', 'created_for', 'status', 'war_composition', 'war_files']
 
   def get_war_composition(self, obj):
     compositions = WeeklyARComposition.objects.filter(war=obj)

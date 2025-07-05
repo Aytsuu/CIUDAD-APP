@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/c
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import type { Assigned, Feature } from "./administrationTypes"
-import { formatDate } from "@/helpers/dateFormatter"
+import { formatDate } from "@/helpers/dateHelper"
 import { useAuth } from "@/context/AuthContext"
 import { useAssignFeature, useSetPermission } from "./queries/administrationAddQueries"
 import { useDeleteAssignedFeature } from "./queries/administrationDeleteQueries"

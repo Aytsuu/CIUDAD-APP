@@ -25,18 +25,15 @@ export const useAddARFile = () => {
       } catch (err) {
         throw err;
       }
-    }
+    },
   })
 }
 
 export const useAddWAR = () => {
   return useMutation({
-    mutationFn: async (data: string) => {
+    mutationFn: async (data: Record<string, any>) => {
       try {
-        const res = await api.post('report/war/create/', {
-          staff: data
-        });
-
+        const res = await api.post('report/war/create/', data);
         return res.data;
       } catch (err) {
         throw err;
@@ -67,6 +64,6 @@ export const useAddWARFile = () => {
       } catch (err) {
         throw err;
       }
-    }
+    },
   })
 }

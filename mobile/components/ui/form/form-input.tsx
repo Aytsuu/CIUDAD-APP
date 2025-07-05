@@ -32,17 +32,18 @@ export const FormInput = ({
         <View className="mb-4">
           <Text className="text-[12px] font-PoppinsRegular">{label}</Text>
           <Input
-            className={`h-[45px] font-PoppinsRegular bg-white border ${
+            className={`h-[45px] font-PoppinsRegular bg-white border text-black ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}
-            value={capitalize(value) || ""}
+            value={value || ""}
             onChangeText={onChange}
             onBlur={onBlur}
             secureTextEntry={secureTextEntry}
             keyboardType={keyboardType}
             returnKeyType={returnKeyType}
             submitBehavior={submitBehavior}
+            autoCapitalize='none'
           />
           {error && (
             <Text className="text-red-500 text-xs mt-1">{error.message}</Text>

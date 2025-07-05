@@ -1,6 +1,6 @@
-import ComplaintRecord from "@/pages/record/complaint/ComplaintRecord";
+import ComplaintRecord from "@/pages/record/complaint/complaint-record/ComplaintRecord";
 import { ComplaintReport } from "@/pages/record/complaint/ComplaintReport";
-import { ComplaintViewRecord } from "@/pages/record/complaint/ComplaintViewRecord";
+import { ComplaintViewRecord } from "@/pages/record/complaint/ComplaintReportRecord";
 import ArchiveComplaints from "@/pages/record/complaint/ComplaintArchive";
 
 export const complaint_router = [

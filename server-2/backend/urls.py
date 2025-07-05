@@ -40,3 +40,5 @@ urlpatterns = [
     # path('donation/', include('apps.donation.urls')),
     # path('gad/', include('apps.gad.urls')),   
 ]
+
+

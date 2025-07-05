@@ -12,9 +12,10 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions"
 import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useResidentsTable } from "../queries/profilingFetchQueries"
+import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ResidentRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -25,6 +26,7 @@ export default function ResidentRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
+  const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
   const { data: residentsTableData, isLoading } = useResidentsTable(
     currentPage,
     debouncedPageSize,
@@ -109,9 +111,13 @@ export default function ResidentRecords() {
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending
-                    <Badge variant="secondary" className="ml-2">
-                      -
-                    </Badge>
+                    {isLoadingRequestCount ? <Skeleton className="w-7 h-6"/> : (requestCount > 0 ?
+                      (<Badge variant="secondary" 
+                        className="ml-2 bg-orange-500/20 text-orange-600 hover:bg-orange-500/20"
+                      >
+                        {requestCount}
+                      </Badge>) : (<></>)
+                    )}
                   </Button>
                 </Link>
 

@@ -15,6 +15,7 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { formatSitio } from "@/helpers/formatSitio";
 import { useToastContext } from "@/components/ui/toast";
 import { Drawer } from "@/components/ui/drawer";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export const AddressDrawer = ({
   visible,
@@ -101,7 +102,7 @@ export const AddressDrawer = ({
       return;
     }
 
-    append(values);
+    append(capitalizeAllFields(values) as any);
     toast.success("Added!");
     handleClose();
   };

@@ -11,10 +11,13 @@ import { CircleAlert, Users, Badge, Hash, Info, CheckCircle } from "lucide-react
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useAddPosition } from "./queries/administrationAddQueries";
+import { useAddPositionHealth } from "../health/administration/queries/administrationAddQueries";
 import { useEditPosition } from "./queries/administrationUpdateQueries";
+import { useEditPositionHealth } from "../health/administration/queries/administrationUpdateQueries";
 import { renderActionButton } from "./administrationActionConfig";
 import { Type } from "./administrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
+import { usePositionGroupsHealth } from "../health/administration/queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./administrationFormats";
 
@@ -22,7 +25,9 @@ export default function NewPositionForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { mutate: addPosition, isPending: isAdding } = useAddPosition();
+  const { mutate: addPositionHealth, isPending: isAddingHealth } = useAddPositionHealth();
   const { mutate: editPosition, isPending: isUpdating } = useEditPosition();
+  const { mutate: editPositionHealth, isPending: isUpdatingHealth } = useEditPositionHealth();
   const { data: positionGroups, isLoading: isLoadingGroups } = usePositionGroups();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const location = useLocation();
@@ -40,9 +45,9 @@ export default function NewPositionForm() {
   });
 
   React.useEffect(() => {
-    if (isAdding || isUpdating) setIsSubmitting(true);
+    if (isAdding || isUpdating || isAddingHealth || isUpdatingHealth) setIsSubmitting(true);
     else setIsSubmitting(false);
-  }, [isAdding || isUpdating]);
+  }, [isAdding, isUpdating, isAddingHealth, isUpdatingHealth]);
 
   // Prevent typing negative values and 0
   React.useEffect(() => {
@@ -73,7 +78,7 @@ export default function NewPositionForm() {
     form.setValue("pos_max", String(position.pos_max));
   }, [params.data]);
 
-  // Add new position
+  // Add new position with health database integration
   const submit = React.useCallback(async () => {
     const formIsValid = await form.trigger();
     if (!formIsValid) {
@@ -86,25 +91,85 @@ export default function NewPositionForm() {
     }
 
     const values = form.getValues();
+    const staffId = user?.staff?.staff_id || "";
+
     if (formType === Type.Add) {
-      addPosition(
-        {
-          data: values,
-          staffId: user?.staff?.staff_id || ""
-        }, {
-        onSuccess: () => {
-          form.setValue('pos_title', '');
-          form.setValue('pos_max', '1');
-          form.setValue('pos_group', '');
-        },
+      // Add to both databases
+      const promises = [
+        new Promise((resolve, reject) => {
+          addPosition(
+            { data: values, staffId },
+            {
+              onSuccess: resolve,
+              onError: reject
+            }
+          );
+        }),
+        new Promise((resolve, reject) => {
+          addPositionHealth(
+            { data: values, staffId },
+            {
+              onSuccess: resolve,
+              onError: reject
+            }
+          );
+        })
+      ];
+
+      try {
+        await Promise.all(promises);
+        
+        // Reset form on success
+        form.setValue('pos_title', '');
+        form.setValue('pos_max', '1');
+        form.setValue('pos_group', '');
+        
+        toast("Position created in both databases successfully", {
+          icon: <CheckCircle size={24} className="fill-green-500 stroke-white" />
+        });
+      } catch (error) {
+        toast("Failed to create position. Please try again.", {
+          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+        });
       }
-      );
     } else {
+      // Edit in both databases
       const positionId = params.data.pos_id;
-      const values = form.getValues();
-      editPosition({ positionId: positionId, values: values });
+      
+      const promises = [
+        new Promise((resolve, reject) => {
+          editPosition(
+            { positionId, values },
+            {
+              onSuccess: resolve,
+              onError: reject
+            }
+          );
+        }),
+        new Promise((resolve, reject) => {
+          editPositionHealth(
+            { positionId, values },
+            {
+              onSuccess: resolve,
+              onError: reject
+            }
+          );
+        })
+      ];
+
+      try {
+        await Promise.all(promises);
+        
+        toast("Position updated in both databases successfully", {
+          icon: <CheckCircle size={24} className="fill-green-500 stroke-white" />
+        });
+      } catch (error) {
+        toast("Failed to update position. Please try again.", {
+          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+        });
+      }
     }
-  }, [addPosition, user, navigate]);
+  }, [addPosition, addPositionHealth, editPosition, editPositionHealth, user, formType, params.data, form]);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
@@ -160,6 +225,7 @@ export default function NewPositionForm() {
                         label="Position Title" 
                         placeholder="e.g., Secretary, BPSO"
                         className="text-base"
+                        readOnly={params?.data?.pos_is_predefined}
                       />
                       
                       <FormInput 
@@ -186,6 +252,7 @@ export default function NewPositionForm() {
                           <li>Use clear, descriptive titles that reflect the role's responsibilities</li>
                           <li>Consider future organizational needs when setting maximum holders</li>
                           <li>Ensure the position aligns with the selected group structure</li>
+                          <li>Data will be synchronized across both main and health databases</li>
                         </ul>
                       </div>
                     </div>
@@ -211,6 +278,16 @@ export default function NewPositionForm() {
                 <div className="flex items-center gap-2 text-yellow-800">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
                   <span className="text-sm">Loading position groups...</span>
+                </div>
+              </div>
+            )}
+
+            {/* Status indicator for dual database operations */}
+            {isSubmitting && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-800">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm">Synchronizing data across databases...</span>
                 </div>
               </div>
             )}

@@ -2,7 +2,7 @@ import React from "react"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { Check, CircleAlert, FileDown, Filter, Plus, Search } from "lucide-react"
+import { Check, CircleAlert, FileDown, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { ARColumns } from "../ReportColumns"
 import { useGetAcknowledgementReport, useGetWeeklyAR } from "../queries/reportFetch"
@@ -14,11 +14,12 @@ import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { formatDate, getWeekNumber } from "@/helpers/dateFormatter"
+import { formatDate, getWeekNumber } from "@/helpers/dateHelper"
 import { useNavigate } from "react-router"
 import { getSitioList } from "../../profiling/restful-api/profilingGetAPI"
 import { useLoading } from "@/context/LoadingContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function ARRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -33,7 +34,10 @@ export default function ARRecords() {
   const [isCreatingWeeklyAR, setIsCreatingWeeklyAR] = React.useState<boolean>(false);
   const [isCreatable, setIsCreatable] = React.useState<boolean>(true);
   const [reset, setReset] = React.useState<boolean>(false);
-  const { data: arReports, isLoading: isLoadingArReports } = useGetAcknowledgementReport()
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const debouncedPageSize = useDebounce(pageSize, 100)
+  const { data: arReports, isLoading: isLoadingArReports } = useGetAcknowledgementReport(
+    currentPage, debouncedPageSize, debouncedSearchQuery)
   const { data: weeklyAR, isLoading: isLoadingWeeklyAR } = useGetWeeklyAR();
   const { mutateAsync: addWAR } = useAddWAR();
   const { mutateAsync: addWARComp } = useAddWARComp();
@@ -70,8 +74,8 @@ export default function ARRecords() {
   React.useEffect(() => {
     if(warThisMonth) {
       setIsCreatable(warThisMonth?.every((war: any) => 
-        getWeekNumber(war.date) !== getWeekNumber(formatDate(now)
-      )));
+        getWeekNumber(war.date) !== getWeekNumber(formatDate(now) as string)
+      ));
     }
   }, [warThisMonth]);
 
@@ -99,7 +103,7 @@ export default function ARRecords() {
 
     // Proceed to creation
     try {
-      addWAR(user?.djangoUser?.resident_profile?.staff?.staff_id as string, {
+      addWAR({staff: user?.staff?.staff_id}, {
         onSuccess: (data) => {
           const compositions = selectedRows.map((row) => ({
             ar: row.id,
@@ -194,7 +198,7 @@ export default function ARRecords() {
               ) : (
                 <Button onClick={() => setIsCreatingWeeklyAR(true)} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Create Week {getWeekNumber(formatDate(now))} AR
+                  Create Week {getWeekNumber(formatDate(now) as string)} AR
                 </Button>
               )
             ) : (
@@ -243,10 +247,11 @@ export default function ARRecords() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+
                 <DropdownLayout
                   trigger={
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="shadow-none">
                       <FileDown className="h-4 w-4" />
                       Export
                     </Button>

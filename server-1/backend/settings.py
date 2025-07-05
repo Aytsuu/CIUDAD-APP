@@ -93,7 +93,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AccountMiddleware',
+    'apps.authentication.middleware.AuthCheckingMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -176,6 +176,7 @@ USE_TZ = True
 
 # Static files 
 STATIC_URL = 'static/'
+DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

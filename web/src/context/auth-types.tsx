@@ -1,35 +1,10 @@
-export const STAFF_TYPES = {
-  BARANGAY: 'Barangay Staff',
-  HEALTH: 'Health Staff'
-} as const;
-
-// Interfaces
-export interface Assignment {
-  id: string;
-  feat: string;
-  assi_date: string;
-  staff: Record<string, any>;
-  pos: string;
-}
-
-export interface Staff {
-  staff_id: string;
-  staff_type: typeof STAFF_TYPES[keyof typeof STAFF_TYPES] | string;
-  assignments: Assignment[];
-}
-
-export interface Resident {
-  rp_id: string;
-  staff?: Staff;
-}
-
 export interface User {
   acc_id?: string;
   supabase_id: string;
   username: string;
   email: string;
   profile_image?: string | null;
-  resident?: Resident;
+  resident?: Record<string, any>;
   staff?: Record<string, any>;
 }
 
@@ -43,7 +18,6 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signUp: (email: string, password: string, username?: string) => Promise<{ requiresConfirmation?: boolean }>;
-  signInWithGoogle: () => Promise<void>;
   refreshSession: () => Promise<void>;
   clearError: () => void;
 }

@@ -12,7 +12,8 @@ import { MediaUpload } from "@/components/ui/media-upload";
 import { MediaFile } from "./complaint-type";
 import { useMutation } from "@tanstack/react-query";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Plus, Users, X, User, AlertTriangle, FolderOpen, FileText, Calendar, MapPin, Send} from "lucide-react";
+import { Plus, Users, X, User2, AlertTriangle, FolderOpen, FileText, Calendar, MapPin, Send, UserCog2Icon} from "lucide-react";
+import { User } from "@/context/auth-types";
 
 // Form-specific interfaces
 interface FormAddress {
@@ -141,7 +142,7 @@ const useAccusedPersons = () => {
 const ComplainantSection = ({ form }: { form: any }) => (
   <div className="border rounded-md p-4 bg-white shadow-sm">
     <div className="flex items-center gap-2 mb-4">
-      <User className="w-5 h-5 text-darkBlue2" />
+      <User2 className="w-5 h-5 text-darkBlue2" />
       <h3 className="font-medium text-lg text-darkBlue2">Complainant Information</h3>
     </div>
     <div className="space-y-4">
@@ -187,7 +188,7 @@ const AccusedPersonTab = ({ person, index, isActive, canRemove, onClick, onRemov
     onClick={onClick}
   >
     <div className="flex items-center gap-2">
-      <User className="w-4 h-4" />
+      <User2 className="w-4 h-4" />
       <span className="font-medium">Person {index + 1}</span>
     </div>
     {canRemove && (
@@ -212,7 +213,7 @@ const AccusedPersonForm = ({  person,  index,  total, onUpdate }: {
   <div className="space-y-4">
     <div className="border-b pb-2">
       <h4 className="text-lg font-medium text-darkBlue2 flex items-center gap-2">
-        <User className="w-4 h-4" />
+        <UserCog2Icon className="w-4 h-4" />
         {total > 1 ? `Person ${index + 1} Details` : "Accused Person Details"}
       </h4>
       <p className="text-sm text-gray-600 mt-1">
