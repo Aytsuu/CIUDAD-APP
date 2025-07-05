@@ -19,24 +19,24 @@ from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
 
-# ROLE_PATHS_MAP = {
-#     'admin': [
-#         '/admin/dashboard',
+ROLE_PATHS_MAP = {
+    'admin': [
+        '/admin/dashboard',
         
-#     ],
-#     'Barangay Staff' : [
+    ],
+    'Barangay Staff' : [
+        'auth/'
+    ],
+    'resident': [
         
-#     ],
-#     'resident': [
+    ], 
+    'unverified': [
         
-#     ], 
-#     'unverified': [
+    ],
+    "Health Staff": [
         
-#     ],
-#     "Health Staff": [
-        
-#     ]
-# }
+    ]
+}
 
 class AuthBaseView(APIView):
     permission_classes = [AllowAny]
@@ -50,13 +50,15 @@ class AuthBaseView(APIView):
         
         return supabase_id, email
 
-
 class SignupView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         try:
             email = request.data.get('email')
             password = request.data.get('password')
             username = request.data.get('username')
+            resident_id = request.data.get('resident_id')
 
             if not email or not password:
                 return Response(
@@ -71,11 +73,28 @@ class SignupView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            # Validate resident_id if provided
+            resident_profile = None
+            if resident_id:
+                try:
+                    resident_profile = ResidentProfile.objects.get(rp_id=resident_id)
+                except ResidentProfile.DoesNotExist:
+                    return Response(
+                        {'error': 'Invalid resident ID provided'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
             try:
                 # Create user in Supabase
                 supabase_response = supabase.auth.sign_up({
                     "email": email,
-                    "password": password
+                    "password": password,
+                    "options": {
+                        "data": {
+                            "username": username or email.split('@')[0],
+                            "resident_id": resident_id
+                        }
+                    }
                 })
                 
                 if supabase_response.user is None:
@@ -84,12 +103,15 @@ class SignupView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Create account in local database
-                account = Account.objects.create(
-                    email=email,
-                    username=username or email.split('@')[0],
-                    staff=False, 
-                )
+                # Use transaction to ensure data consistency
+                with transaction.atomic():
+                    # Create account in local database
+                    account = Account.objects.create(
+                        email=email,
+                        username=username or email.split('@')[0],
+                        supabase_id=supabase_response.user.id,  # Store Supabase ID
+                        rp=resident_profile
+                    )
 
                 # Check if email confirmation is required
                 requires_confirmation = not supabase_response.session
@@ -97,8 +119,9 @@ class SignupView(APIView):
                 if requires_confirmation:
                     return Response({
                         'message': 'Account created successfully. Please check your email for confirmation.',
-                        'requiresConfirmation': True
-                    })
+                        'requiresConfirmation': True,
+                        'user_id': account.acc_id
+                    }, status=status.HTTP_201_CREATED)
                 else:
                     # If no confirmation required, return user data
                     serializer = UserAccountSerializer(account)
@@ -107,7 +130,7 @@ class SignupView(APIView):
                         'user': serializer.data,
                         'requiresConfirmation': False,
                         'access_token': supabase_response.session.access_token if supabase_response.session else None
-                    })
+                    }, status=status.HTTP_201_CREATED)
 
             except Exception as supabase_error:
                 logger.error(f"Supabase signup failed: {str(supabase_error)}")
@@ -177,7 +200,8 @@ class LoginView(APIView):
             return Response({
                 'user': serializer.data,
                 'access_token': supabase_response.session.access_token,
-                'message': 'Login successful'
+                'message': 'Login successful',
+                'supabase_token': supabase_response.session.access_token
             })
 
         except Exception as e:

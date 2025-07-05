@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from supabase import create_client
+from django.conf import settings
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
@@ -31,15 +33,10 @@ class Notification(models.Model):
         self.push_to_supabase()
         
     def push_to_supabase(self):
-        """Sync notification to Supabase for realtime updates"""
-        from supabase import create_client
-        from django.conf import settings
-        
         supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
         
         supabase.table('notification').insert({
-            'django_id': self.id,
-            'recipient_id': self.recipient.supabase_id,  # Store Supabase ID in your Account model
+            'recipient_id': self.recipient.supabase_id, 
             'title': self.title,
             'message': self.message,
             'type': self.notification_type,
@@ -57,7 +54,7 @@ class FCMToken(models.Model):
     
     class Meta:
         db_table = 'fcm_token'
-        unique_together = [['acc', 'fcm_device_id']]  
+        unique_together = [['acc', 'fcm_device_id']]   
         
 class Recipient(models.Model):
     rec_id = models.BigAutoField(primary_key=True)

@@ -26,7 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Profile() {
-  const { user } = useAuth(); // Using mock data since useAuth is not available
+  const { user } = useAuth(); 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,10 +63,7 @@ export default function Profile() {
     });
 
     try {
-      // Simulate upload process
-      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Dismiss loading toast and show success
       toast.dismiss(loadingToast);
       toast.success("🎉 Profile picture updated!", {
         description: "Your new profile picture has been saved successfully.",
@@ -127,7 +124,7 @@ export default function Profile() {
                 {/* Upload Button */}
                 <Button
                   size="icon"
-                  className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 border-2 border-background" 
+                  className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg bg-blue hover:bg-blue border-2 border-background" 
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                 >

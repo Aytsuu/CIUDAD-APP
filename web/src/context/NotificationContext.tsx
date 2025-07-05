@@ -1,133 +1,194 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { RealtimeChannel } from "@supabase/supabase-js";
-import { useAuth } from "./AuthContext";
-import supabase from "@/supabase/supabase";
-import { api } from "@/api/api";
+// import { createContext, useContext, useEffect, useState } from "react";
+// import { useAuth } from "./AuthContext";
+// import supabase from "@/supabase/supabase";
+// import { api } from "@/api/api";
 
-type Notification = {
-    id: string;
-    django_id: number;
-    title: string;
-    message: string;
-    notification_type: 'info' | 'success' | 'warning' | 'error';
-    created_at: string;
-    is_read: boolean;
-    related_object_type?: string;
-    related_object_id?: number;
-};
+// export type Notification = {
+//   id: number;
+//   title: string;
+//   message: string;
+//   is_read: boolean;
+//   recipient_id?: string;
+//   created_at?: string;
+//   django_id?: number; // Make sure Django includes this in the payload
+//   related_object_type?: string;
+// };
 
-const NotificationContext = createContext<{
-  notifications: Notification[];
-  unreadCount: number;
-  markAsRead: (id: string) => Promise<void>;
-  fetchNotifications: () => Promise<void>;
-}>({
-    notifications: [],
-    unreadCount: 0,
-    markAsRead: async () => {},
-    fetchNotifications: async () => {},
-});
+// const NotificationContext = createContext<{
+//   notifications: Notification[];
+//   unreadCount: number;
+//   isLoading: boolean;
+//   error: string | null;
+//   markAsRead: (id: number) => Promise<void>;
+//   markAllAsRead: () => Promise<void>;
+//   fetchNotifications: () => Promise<void>;
+// }>({
+//   notifications: [],
+//   unreadCount: 0,
+//   isLoading: false,
+//   error: null,
+//   markAsRead: async () => {},
+//   markAllAsRead: async () => {},
+//   fetchNotifications: async () => {},
+// });
 
-export const NotificationProvider = ({children}: {children: React.ReactNode}) => {
-    const {user} = useAuth();
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+// export const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
+//   const { user } = useAuth();
+//   const [notifications, setNotifications] = useState<Notification[]>([]);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
 
-    const fetchNotifications = async () => {
-        if (!user?.supabase_id) return;
-        
-        // First try Supabase
-        const { data: supabaseData, error } = await supabase
-            .from('notification')
-            .select('*')
-            .eq('recipient_id', user.supabase_id)
-            .order('created_at', { ascending: false });
-            
-        if (error || !supabaseData?.length) {
-            // Fallback to Django API
-            const response = await api.get('notification/list/');
-            console.log("Error data: ",response.data)
-            setNotifications(response.data);
-        } else {
-            setNotifications(supabaseData);
-        }
-    };
+//   const fetchNotifications = async () => {
+//     if (!user?.supabase_id) return;
 
-    // useEffect(() => {
-    //     if (!user?.id) return;
+//     setIsLoading(true);
+//     setError(null);
 
-    //     fetchNotifications();
+//     try {
+//       const { data: supabaseData, error: supabaseError } = await supabase
+//         .from("notification")
+//         .select("*")
+//         .eq("recipient_id", user.supabase_id)
+//         .order("created_at", { ascending: false });
 
-    //     // Setup realtime listener
-    //     const newChannel = supabase
-    //         .channel(`notification_${user.id}`)
-    //         .on(
-    //             'postgres_changes',
-    //             {
-    //                 event: '*',
-    //                 schema: 'public',
-    //                 table: 'notification',
-    //                 filter: `recipient_id=eq.${user.id}`,
-    //             },
-    //             (payload) => {
-    //                 if (payload.eventType === 'INSERT') {
-    //                     setNotifications(prev => [payload.new as Notification, ...prev]);
-    //                     // Play sound for new notifications
-    //                     new Audio('/sounds/notification.mp3').play();
-    //                 } else if (payload.eventType === 'UPDATE') {
-    //                     setNotifications(prev => 
-    //                         prev.map(n => n.id === payload.new.id ? payload.new as Notification : n)
-    //                     );
-    //                 } else if (payload.eventType === 'DELETE') {
-    //                     setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
-    //                 }
-    //             }
-    //         )
-    //         .subscribe();
+//       if (supabaseError || !supabaseData?.length) {
+//         const response = await api.get("notification/list/");
+//         setNotifications(response.data);
+//       } else {
+//         setNotifications(supabaseData);
+//       }
+//     } catch (err: any) {
+//       setError("Failed to load notifications");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
-    //     setChannel(newChannel);
+//   const markAsRead = async (id: number) => {
+//     setNotifications((prev) =>
+//       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+//     );
 
-    //     return () => {
-    //         channel?.unsubscribe();
-    //     };
-    // }, [user?.id]);
+//     await supabase.from("notification").update({ is_read: true }).eq("id", id);
 
-    const markAsRead = async (id: string) => {
-        // Optimistic update
-        setNotifications(prev =>
-            prev.map(n => n.id === id ? { ...n, is_read: true } : n)
-        );
+//     try {
+//       const notification = notifications.find((n) => n.id === id);
+//       if (notification?.django_id) {
+//         await api.patch(`/notification/${notification.django_id}/mark_read/`);
+//       }
+//     } catch (error) {
+//       console.error("Failed to sync read status with Django:", error);
+//     }
+//   };
 
-        // Update in Supabase
-        await supabase
-            .from('notification')
-            .update({ is_read: true })
-            .eq('id', id);
+//   const markAllAsRead = async () => {
+//     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
 
-        // Sync with Django
-        try {
-            const notification = notifications.find(n => n.id === id);
-            if (notification?.django_id) {
-                await api.patch(`/notification/${notification.django_id}/mark_read/`);
-                console.log("SYNC!!s")
-            }
-        } catch (error) {
-            console.error('Failed to sync read status with Django:', error);
-        }
-    };
+//     await supabase
+//       .from("notification")
+//       .update({ is_read: true })
+//       .eq("recipient_id", user?.supabase_id);
 
-    return (
-        <NotificationContext.Provider
-            value={{
-                notifications,
-                unreadCount: notifications.filter(n => !n.is_read).length,
-                markAsRead,
-                fetchNotifications,
-            }}
-        >  
-            {children}
-        </NotificationContext.Provider>
-    );
-};
+//     try {
+//       await api.patch("/notification/mark_all_read/");
+//     } catch (error) {
+//       console.error("Failed to sync mark all read with Django:", error);
+//     }
+//   };
 
-export const useNotifications = () => useContext(NotificationContext);
+//   useEffect(() => {
+//     fetchNotifications();
+//   }, [user?.supabase_id]);
+
+//   return (
+//     <NotificationContext.Provider
+//       value={{
+//         notifications,
+//         unreadCount: notifications.filter((n) => !n.is_read).length,
+//         isLoading,
+//         error,
+//         markAsRead,
+//         markAllAsRead,
+//         fetchNotifications,
+//       }}
+//     >
+//       {children}
+//     </NotificationContext.Provider>
+//   );
+// };
+
+// export const useNotifications = () => useContext(NotificationContext);
+
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { NotificationService } from '@/services/notification_services';
+import supabase from '@/supabase/supabase';
+import { useAuth } from './AuthContext';
+import { NotificationContextType, Notification } from './auth-types';
+import { AuthSession } from '@supabase/supabase-js';
+
+const NotificationContext = createContext<NotificationContextType>({
+  notifications: [],
+  unreadCount: 0,
+  markAsRead: () => {}
+})
+
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
+  children
+}) => {
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [session, setSession] = useState<AuthSession | null>(null)
+  const notificationService = NotificationService.getInstance()
+
+  useEffect(() =>{
+    supabase.auth.getSession().then(({data: { session } }) => {
+      setSession(session)
+    })
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => {
+      authListener?.subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!session?.user?.id) return
+
+    // Load initial notifications
+    const loadNotifications =async () => {
+      const initialNotifications = await notificationService.getUserNotifications(session.user.id)
+      setNotifications(initialNotifications)
+    }
+    loadNotifications
+
+    // Subscribe to realtime updates
+    notificationService.subscribeToRealtime(session.user.id, (newNotification) => {
+      setNotifications((prev: Notification[]) => [newNotification, ...prev])
+    })
+
+    return () => {
+      notificationService.unsubscribeAll()
+    }
+  }, [session])
+
+  const markAsRead = async (id: string) => {
+    if(!session?.user?.id) return
+
+    await notificationService.markAsRead(id, session.user.id)
+    setNotifications(prev => 
+    prev.map(n => n.id === id ? {...n, is_read: true} : n)
+    )
+  }
+
+  const unreadCount = notifications.filter(n => !n.is_read).length
+  
+  return(
+    <NotificationContext.Provider value={{notifications, unreadCount, markAsRead }}>
+      {children}
+    </NotificationContext.Provider>
+  )
+}
+
+export const useNotifications = () => useContext(NotificationContext)

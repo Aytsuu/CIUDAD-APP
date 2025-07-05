@@ -19,3 +19,21 @@ export interface AuthContextType {
   refreshSession: () => Promise<void>;
   clearError: () => void;
 }
+
+// Notification types
+
+export interface NotificationContextType {
+  notifications: Notification[];
+  unreadCount: number;
+  markAsRead: (id: string) => void;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: "All Staff" | "Department" | "Resident Group" | "Individual";
+  created_at: string;
+  metadata?: Record<string, any>;
+  is_read?: boolean;
+}

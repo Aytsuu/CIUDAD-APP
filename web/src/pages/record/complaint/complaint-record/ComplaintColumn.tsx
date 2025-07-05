@@ -4,6 +4,7 @@ import { Link } from "react-router"
 import { Button } from "@/components/ui/button/button"
 import { ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import ViewButton from "@/components/ui/view-button"
 
 export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
@@ -79,14 +80,9 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     cell: ({ row }) => (
       <div className="min-w-[100px]">
         <Link to={`/complaint-record/${row.original.comp_id}`} state={{ complaint: row.original }}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 hover:bg-blue-50 hover:border-blue-300 transition-colors bg-transparent"
-          >
-            View
-            <ArrowRight size={14} className="ml-1" />
-          </Button>
+          <ViewButton onClick={function (): void {
+            throw new Error("Function not implemented.")
+          } }/>
         </Link>
       </div>
     ),

@@ -1,24 +1,3 @@
-
-//  Token for authorization is not applied to these two paths since,
-//  these are entry points so basically they don't have token yet
-
-// api.interceptors.request.use(async (config) => {
-//   if (
-//     config.url?.includes("/authentication/login") ||
-//     config.url?.includes("/authentication/signup")
-//   ) {
-//     return config;
-//   }
-
-//   const {
-//     data: { session },
-//   } = await supabase.auth.getSession();
-//   if (session?.access_token) {
-//     config.headers.Authorization = `Bearer ${session.access_token}`;
-//   }
-//   return config;
-// });
-
 import axios from "axios";
 import supabase from "@/supabase/supabase";
 
@@ -38,8 +17,8 @@ export const api2 = axios.create({
 api.interceptors.request.use(async (config) => {
   // Skip auth for login and signup endpoints
   if (
-    config.url?.includes("/authentication/login") ||
-    config.url?.includes("/authentication/signup")
+    config.url?.includes("/authentication/login/") ||
+    config.url?.includes("/authentication/signup/")
   ) {
     return config;
   }
@@ -66,57 +45,40 @@ api.interceptors.request.use(async (config) => {
 });
 
 // Response interceptor to handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+// api.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     const originalRequest = error.config;
 
-    // If we get 401 and haven't already retried
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+//     // If we get 401 and haven't already retried
+//     if (error.response?.status === 401 && !originalRequest._retry) {
+//       originalRequest._retry = true;
 
-      try {
-        // Try to refresh the session
-        const { data, error: refreshError } = await supabase.auth.refreshSession();
+//       try {
+//         // Try to refresh the session
+//         const { data, error: refreshError } = await supabase.auth.refreshSession();
         
-        if (refreshError || !data.session?.access_token) {
-          // Refresh failed, redirect to login
-          console.error("Session refresh failed:", refreshError);
-          await supabase.auth.signOut();
-          // Redirect to login page here
-          // window.location.href = '/login';
-          return Promise.reject(error);
-        }
+//         if (refreshError || !data.session?.access_token) {
+//           // Refresh failed, redirect to login
+//           console.error("Session refresh failed:", refreshError);
+//           await supabase.auth.signOut();
+//           // Redirect to login page here
+//           // window.location.href = '/login';
+//           return Promise.reject(error);
+//         }
 
-        // Retry the original request with new token
-        originalRequest.headers.Authorization = `Bearer ${data.session.access_token}`;
-        return api(originalRequest);
+//         // Retry the original request with new token
+//         originalRequest.headers.Authorization = `Bearer ${data.session.access_token}`;
+//         return api(originalRequest);
         
-      } catch (refreshError) {
-        console.error("Error refreshing session:", refreshError);
-        await supabase.auth.signOut();
-        return Promise.reject(error);
-      }
-    }
+//       } catch (refreshError) {
+//         console.error("Error refreshing session:", refreshError);
+//         await supabase.auth.signOut();
+//         return Promise.reject(error);
+//       }
+//     }
 
-    return Promise.reject(error);
-  }
-);
+//     return Promise.reject(error);
+//   }
+// );
 
-// Essential error handling
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Handle 401 errors
-    if (error.response?.status === 401) {
-      console.error("Authentication expired - redirecting to login");
-      await supabase.auth.signOut();
-      window.location.href = "/login?session_expired=true";
-    }
-
-    // Always reject the error to propagate it
-    return Promise.reject(error);
-  }
-);
