@@ -14,7 +14,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
+// import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import LaboratoryResults, { createInitialLabResults, getLabResultsSummary, type LabResults } from "@/pages/healthServices/maternal/maternal-components/lab-result";
 
 

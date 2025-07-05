@@ -58,7 +58,12 @@ export interface Patient {
     };
   };
   spouse_info?: {
-    // Define spouse info structure if needed
+    spouse_info?: {
+      spouse_fname?: string
+      spouse_lname?: string
+      spouse_mname?: string
+      spouse_dob?: string
+    }
   };
 }
 

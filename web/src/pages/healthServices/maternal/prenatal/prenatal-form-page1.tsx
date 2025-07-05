@@ -28,53 +28,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { toast } from "sonner";
 import { usePatients } from "../queries/maternalFetchQueries";
-import { PatientSearch } from "@/components/ui/patientSearch";
-
-
-interface Patient {
-  pat_id: string
-  pat_type: string
-  family?: {
-    fam_id: string
-    fc_id: string
-    fc_role: string
-  }
-  personal_info?: {
-    per_fname?: string
-    per_lname?: string
-    per_mname?: string
-    per_dob?: string
-    per_sex?: string
-  }
-  address?: {
-    add_street?: string
-    add_barangay?: string
-    add_city?: string
-    add_province?: string
-    sitio?: string
-  }
-  family_head_info?: {
-    family_heads?: {
-      father?: {
-        personal_info?: {
-          per_fname?: string
-          per_mname?: string
-          per_lname?: string
-          per_dob?: string
-          per_occupation?: string
-        }
-      }
-    }
-  }
-  spouse_info?: {
-    spouse_info?: {
-      spouse_fname?: string
-      spouse_lname?: string
-      spouse_mname?: string
-      spouse_dob?: string
-    }
-  }
-}
+import { PatientSearch, Patient } from "@/components/ui/patientSearch";
 
 
 // age calculation for dob
@@ -173,7 +127,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
 
             if (address) {
                 setValue("motherPersonalInfo.address.street", address.add_street || "");
-                setValue("motherPersonalInfo.address.sitio", address.sitio || "");
+                setValue("motherPersonalInfo.address.sitio", address.add_sitio || "");
                 setValue("motherPersonalInfo.address.barangay", address.add_barangay || "");
                 setValue("motherPersonalInfo.address.city", address.add_city || "");
                 setValue("motherPersonalInfo.address.province", address.add_province || "");
@@ -191,7 +145,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                 setValue("motherPersonalInfo.husbandFName", father.per_fname || "");
                 setValue("motherPersonalInfo.husbandMName", father.per_mname || "");
                 setValue("motherPersonalInfo.husbandDob", father.per_dob || "");
-                setValue("motherPersonalInfo.occupation", father.per_occupation || "");
+                // setValue("motherPersonalInfo.occupation", father.per_occupation || "");
 
             } else{
                 setValue("motherPersonalInfo.husbandLName", "");

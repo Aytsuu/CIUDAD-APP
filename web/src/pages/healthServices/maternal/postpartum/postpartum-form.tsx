@@ -28,50 +28,8 @@ import {
 } from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
 import { toast } from "sonner"
 
-// Updated interface to match the expected Patient type
-interface Patient {
-  pat_id: string
-  pat_type: string
-  family?: {
-    fam_id: string
-    fc_id: string
-    fc_role: string
-  }
-  personal_info?: {
-    per_fname?: string
-    per_lname?: string
-    per_mname?: string
-    per_dob?: string
-    per_sex?: string
-  }
-  address?: {
-    add_street?: string
-    add_barangay?: string
-    add_city?: string
-    add_province?: string
-    sitio?: string
-  }
-  family_head_info?: {
-    family_heads?: {
-      father?: {
-        personal_info?: {
-          per_fname?: string
-          per_mname?: string
-          per_lname?: string
-          per_dob?: string
-        }
-      }
-    }
-  }
-  spouse_info?: {
-    spouse_info?: {
-      spouse_fname?: string
-      spouse_lname?: string
-      spouse_mname?: string
-      spouse_dob?: string
-    }
-  }
-}
+// Use Patient type from PatientSearch component for compatibility
+import type { Patient } from "@/components/ui/patientSearch"
 
 type PostpartumTableType = {
   date: string
@@ -200,7 +158,7 @@ export default function PostpartumFormFirstPg({
 
       if (address) {
         form.setValue("mothersPersonalInfo.address.street", address.add_street || "")
-        form.setValue("mothersPersonalInfo.address.sitio", address.sitio || "")
+        form.setValue("mothersPersonalInfo.address.sitio", address.add_sitio || "")
         form.setValue("mothersPersonalInfo.address.barangay", address.add_barangay || "")
         form.setValue("mothersPersonalInfo.address.city", address.add_city || "")
         form.setValue("mothersPersonalInfo.address.province", address.add_province || "")
