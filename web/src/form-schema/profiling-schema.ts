@@ -156,4 +156,3 @@ export const newMemberFormSchema = z.object({
   id: z.string(),
   role: z.string().min(1, "Role is required")
 })
-

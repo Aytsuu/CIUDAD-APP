@@ -115,8 +115,6 @@ export const FaceDetection = React.forwardRef<FaceDetectionCamHandle>(
                               
                               const fileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
                               const filePath = `uploads/${fileName}`;
-                              console.log(fileName);
-                              console.log(filePath);
                               const { error } = await supabase.storage
                                 .from("image-bucket")
                                 .upload(filePath, arrayBuffer as Uint8Array, {

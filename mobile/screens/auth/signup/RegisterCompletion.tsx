@@ -35,7 +35,7 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [status, setStatus] = React.useState<"success" | "failure">("success");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { getValues, setValue } = useRegistrationFormContext();
+  const { getValues, setValue, reset } = useRegistrationFormContext();
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addRequest } = useAddRequest();
   const { mutateAsync: addAddress } = useAddAddress();
@@ -56,7 +56,7 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
       const dob = getValues("verificationSchema.dob");
       const photoList = getValues("photoSchema.list");
       const {confirmPassword, ...accountInfo} = getValues("accountFormSchema")
-
+      
       addPersonal({...capitalizeAllFields(data), per_dob: dob }, {
         onSuccess: (newData) => {
           addAddress(per_addresses.list, {
@@ -78,6 +78,7 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
               setStatus("success");
               setIsSubmitting(false);
               setShowFeedback(true);
+              reset();
             },
             onError: () => {
               setIsSubmitting(false);
@@ -91,8 +92,6 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
       setShowFeedback(true);
     }
   };
-
-  console.log('Photo list:',getValues("photoSchema.list"))
 
   if (showFeedback) {
     return (

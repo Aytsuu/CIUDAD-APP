@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import React from "react"
 import { useGetActiveIR, useGetArchiveIR } from "../queries/reportFetch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function IRRecords() {
   const [activeTab, setActiveTab] = React.useState<string>("active");
@@ -22,14 +23,25 @@ export default function IRRecords() {
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [archiveCurrentPage, setArchiveCurrentPage] = React.useState<number>(1);
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedPageSize = useDebounce(pageSize, 100);
+
   // Fetch active reports
-  const { data: activeIRs, isLoading: isLoadingActiveIR } = useGetActiveIR();
+  const { data: activeIRs, isLoading: isLoadingActiveIR } = useGetActiveIR(
+    currentPage,
+    debouncedPageSize,
+    debouncedSearchQuery
+  );
   const activeIRList = React.useMemo(() => activeIRs?.results || [], [activeIRs]);
   const activeTotalCount = React.useMemo(() => activeIRs?.count || 0, [activeIRs]);
   const activeTotalPages = React.useMemo(() => Math.ceil(activeTotalCount / pageSize), [activeTotalCount, pageSize]);
 
   // Fetch archived reports
-  const { data: archiveIRs, isLoading: isLoadingArchiveIR } = useGetArchiveIR();
+  const { data: archiveIRs, isLoading: isLoadingArchiveIR } = useGetArchiveIR(
+    currentPage,
+    debouncedPageSize,
+    debouncedSearchQuery
+  );
   const archiveIRList = archiveIRs?.results || [];
   const archiveTotalCount = archiveIRs?.count || 0;
   const archiveTotalPages = Math.ceil(archiveTotalCount / archivePageSize);
@@ -144,31 +156,6 @@ export default function IRRecords() {
           </>
         )}
       </Card>
-
-      {/* Empty State */}
-      {!isLoadingData && totalCountValue === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center space-y-3">
-              <div className="mx-auto h-12 w-12 text-gray-400">
-                {isArchive ? <Archive className="h-full w-full" /> : <Search className="h-full w-full" />}
-              </div>
-              <h3 className="text-lg font-medium text-gray-900">No {isArchive ? "archived " : ""}reports found</h3>
-              <p className="text-sm text-gray-600 max-w-sm">
-                {searchValue
-                  ? `No ${isArchive ? "archived " : ""}incident reports match your search for "${searchValue}"`
-                  : !isArchive && "Get started by creating your first incident report"}
-              </p>
-              {!isArchive && (
-                <Button className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Report
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </>
   )
 

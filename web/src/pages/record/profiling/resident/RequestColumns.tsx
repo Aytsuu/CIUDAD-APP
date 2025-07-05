@@ -80,7 +80,7 @@ export const requestColumns: ColumnDef<RequestRecord>[] = [
             type: "request",
             title: "Registration Request",
             description:
-              "This is a registration request submitted by the user. Please review the details and approve or reject accordingly.",
+              "This is a registration request submitted by the user. Please review the details and approve accordingly.",
             data: row.original,
           },
         }}

@@ -98,6 +98,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     return () => subscription.unsubscribe();
   }, [form, checkDefaultValues, defaultValues]);
 
+  console.log(addresses)
+
   // ==================== HANDLERS ====================
   const validateAddresses = React.useCallback(
     (addresses: any[]) => {

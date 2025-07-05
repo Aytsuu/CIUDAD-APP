@@ -37,20 +37,9 @@ class RequestTableSerializer(serializers.ModelSerializer):
               'per_contact', 'per_edAttainment', 'per_religion', 'files', 'acc']
 
   def get_addresses(self, obj):
-    per_add = PersonalAddress.objects.filter(per=obj.per)
-    addresses = []
-    for pa in per_add:
-      address_data = {
-        'province': pa.add.add_province,
-        'city': pa.add.add_city,
-        'barangay': pa.add.add_barangay,
-        'street': pa.add.add_street,
-        'external_sitio': pa.add.add_external_sitio,
-        'sitio': pa.add.sitio.sitio_name if pa.add.sitio else None
-      }
-      addresses.append(address_data)
-    
-    return addresses
+    per_addresses = PersonalAddress.objects.filter(per=obj.per)
+    addresses = [pa.add for pa in per_addresses.select_related('add')]
+    return AddressBaseSerializer(addresses, many=True).data
   
   def get_files(self, obj):
     files = RequestFile.objects.filter(req=obj)

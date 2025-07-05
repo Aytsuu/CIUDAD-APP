@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q
 from apps.pagination import StandardResultsPagination
+from utils.email import send_email
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 
@@ -62,6 +63,21 @@ class RequestDeleteView(generics.DestroyAPIView):
   serializer_class = RequestBaseSerializer
   queryset = RequestRegistration.objects.all()
   lookup_field = 'req_id'
+
+  def delete(self, request, *args, **kwargs):
+    reason = request.query_params.get('reason', None)
+    instance = self.get_object()
+    recipient_email = instance.acc.email
+    if recipient_email:
+      context = {
+        "reason": reason,
+      }
+
+      send_email("Request Result", context, recipient_email, 'request_rejection.html')
+      self.perform_destroy(instance)
+      
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class RequestCountView(APIView):
   def get(self, request, *args, **kwargs):

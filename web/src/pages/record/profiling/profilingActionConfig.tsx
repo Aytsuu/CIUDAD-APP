@@ -14,7 +14,6 @@ export const buttonConfig = (
   setIsAssignmentOpen: (value: boolean) => void,
   setFormType: React.Dispatch<React.SetStateAction<Type>> | undefined,
   submit: () => void,
-  reject: () => void
 ) => ({
   [Origin.Administration]: {
     [Type.Viewing]: null, // No button for viewing in administration
@@ -62,6 +61,7 @@ export const buttonConfig = (
           onClick={() => {
             setFormType && setFormType(Type.Viewing);
           }}
+          type="button"
         >
           Cancel
         </Button>
@@ -73,21 +73,6 @@ export const buttonConfig = (
     ),
     [Type.Request]: (
       <div className="flex gap-2">
-        <ConfirmationModal
-          trigger={<Button
-              className="w-full sm:w-32 text-red-500 hover:text-red-500"
-              variant={"outline"}
-            >
-              <X />
-              Reject
-            </Button>
-          }
-          title="Confirm Rejection"
-          description="Do you wish to proceed rejecting this request?"
-          actionLabel="Confirm"
-          onClick={reject}
-          variant="destructive"
-        />
         <ConfirmationModal
           trigger={<Button className="w-full"> 
             <Check/>
@@ -129,7 +114,6 @@ export const renderActionButton = ({
   setIsAssignmentOpen,
   setFormType,
   submit,
-  reject, // For request
 }: {
   form?: any;
   isAssignmentOpen?: boolean;
@@ -140,7 +124,6 @@ export const renderActionButton = ({
   setIsAssignmentOpen?: (value: boolean) => void;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
-  reject?: () => void; // For request
 }) => {
   const config = buttonConfig(
     form,
@@ -149,7 +132,6 @@ export const renderActionButton = ({
     setIsAssignmentOpen || (() => {}),
     setFormType,
     submit,
-    reject || (() => {})
   );
   const originConfig = config[origin] || config.defaultOrigin;
   const button = originConfig[formType as keyof typeof originConfig] || originConfig.default;

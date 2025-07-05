@@ -102,7 +102,10 @@ export const AddressDrawer = ({
       return;
     }
 
-    append(capitalizeAllFields(values) as any);
+    append({
+      ...capitalizeAllFields(values),
+      sitio: values.sitio ? values.sitio.toLowerCase() : ''
+    } as any);
     toast.success("Added!");
     handleClose();
   };

@@ -10,10 +10,16 @@ import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { renderActionButton } from "../profilingActionConfig";
 import { Type } from "../profilingEnums";
 import { ImageModal } from "@/components/image-modal";
+import { ExternalLink, FileText, ImageIcon, ZoomIn } from "lucide-react";
 
 // Media Gallery Component
 const MediaGallery = ({ mediaFiles } : { mediaFiles: MediaUploadType}) => {
   const [selectedImage, setSelectedImage] = React.useState<MediaUploadType[number] | null>();
+
+  const handleOpenDocument = (url: string) => { 
+    // Open document in new tab
+    window.open(url, '_blank');
+  };
 
   if (!mediaFiles || mediaFiles.length === 0) {
     return (
@@ -28,25 +34,67 @@ const MediaGallery = ({ mediaFiles } : { mediaFiles: MediaUploadType}) => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {mediaFiles.map((media: any, index: any) => (
           <div key={index} className="group relative">
-            <div 
+            <div
               className="relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
-              onClick={() => setSelectedImage(media as any)}
+              onClick={() => {
+                if(media.type === 'document') handleOpenDocument(media.publicUrl)
+                else setSelectedImage(media as any)
+              }}
             >
-              <img 
-                src={media.publicUrl} 
-                alt={`Supporting document ${index + 1}`}
-                className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
-              />
+              {media.type === 'document' ? (
+                // Document preview
+                <div className="w-full aspect-square bg-gray-100 flex flex-col items-center justify-center">
+                  <FileText size={48} className="text-gray-400 mb-2" />
+                  <span className="text-xs text-gray-600 text-center px-2">
+                    {media.name || `Document ${index + 1}`}
+                  </span>
+                  {media.fileExtension && (
+                    <span className="text-xs text-gray-500 uppercase mt-1">
+                      {media.fileExtension}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                // Image preview
+                <img
+                  src={media.publicUrl}
+                  alt={`Supporting document ${index + 1}`}
+                  className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
+                  onError={(e) => {
+                    // Fallback if image fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              )}
+              
+              {/* Fallback for failed images */}
+              {media.type !== 'document' && (
+                <div className="w-full aspect-square bg-gray-100 flex flex-col items-center justify-center">
+                  <ImageIcon size={48} className="text-gray-400 mb-2" />
+                  <span className="text-xs text-gray-600 text-center px-2">
+                    Image preview unavailable
+                  </span>
+                </div>
+              )}
+              
+              {/* Hover overlay */}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200 flex items-center justify-center">
                 <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                  </svg>
+                  {media.type === 'document' ? (
+                    <ExternalLink size={40} className="text-white"/>
+                  ) : (
+                    <ZoomIn size={40} className="text-white"/>
+                  )}
                 </div>
               </div>
             </div>
+            
             <p className="text-xs text-gray-600 mt-2 text-center truncate">
-              Document {index + 1}
+              {media.type === 'document' ? 
+                (media.name || `Document ${index + 1}`) : 
+                `Image ${index + 1}`
+              }
             </p>
           </div>
         ))}
@@ -94,9 +142,6 @@ export default function BusinessProfileForm({
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
         <div className="mb-6">
           <Label className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
             Respondent Information
           </Label>
           <p className="text-sm text-gray-600 mt-1">Please provide complete personal information</p>
@@ -125,9 +170,6 @@ export default function BusinessProfileForm({
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
         <div className="mb-6">
           <Label className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
             Business Information
           </Label>
           <p className="text-sm text-gray-600 mt-1">Provide details about your business</p>
@@ -145,15 +187,12 @@ export default function BusinessProfileForm({
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
         <div className="mb-6">
           <Label className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
             Supporting Documents
           </Label>
           <p className="text-sm text-gray-600 mt-1">
             {formType !== Type.Viewing 
               ? "Upload documents that verify your reported gross sales"
-              : "Click on any image to view in full size"
+              : "Click on any file to get a full view"
             }
           </p>
         </div>
