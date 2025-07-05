@@ -34,14 +34,14 @@ interface Patient {
 }
 
 interface MaternalRecord {
-  id: number
+  id: string
   pregnancyId: string
   dateCreated: string
   address: string
   sitio: string
   type: "Transient" | "Resident"
-  recordType: "Prenatal" | "Postpartum"
-  status: "Active" | "Completed"
+  recordType: "Prenatal" | "Postpartum Care"
+  status: "Active" | "Completed" | "Pregnancy Loss"
   gestationalWeek?: number
   expectedDueDate?: string
   deliveryDate?: string
@@ -50,7 +50,7 @@ interface MaternalRecord {
 
 interface PregnancyGroup {
   pregnancyId: string
-  status: "Active" | "Completed"
+  status: "Active" | "Completed" | "Pregnancy Loss"
   startDate: string
   expectedDueDate?: string
   deliveryDate?: string
@@ -62,8 +62,8 @@ interface PregnancyGroup {
 interface PregnancyAccordionProps {
   pregnancyGroups: PregnancyGroup[]
   selectedPatient: Patient | null
-  getStatusBadge: (status: "Active" | "Completed") => JSX.Element
-  getRecordTypeBadge: (recordType: "Prenatal" | "Postpartum") => JSX.Element
+  getStatusBadge: (status: "Active" | "Completed" | "Pregnancy Loss") => JSX.Element
+  getRecordTypeBadge: (recordType: "Prenatal" | "Postpartum Care") => JSX.Element
   onCompletePregnancy?: (pregnancyId: string) => void
 }
 
@@ -86,36 +86,38 @@ export function PregnancyAccordion({
     if (onCompletePregnancy) {
       onCompletePregnancy(pregnancyId)
     } else {
-      // Default behavior - you can customize this
-      console.log(`Completing pregnancy: ${pregnancyId}`)
-      // Here you would typically make an API call to update the pregnancy status
+      console.log(`Completing pregnancy: ${pregnancyId} (no onCompletePregnancy prop provided)`)
     }
   }
 
-  // Function to determine if a record should have an update button
+  // determine if a record should have an update button
   const shouldShowUpdateButton = (
     record: MaternalRecord,
     pregnancy: PregnancyGroup,
     sortedRecords: MaternalRecord[],
   ) => {
-    const latestRecord = sortedRecords[0] // First record after sorting by date descending
+    if(pregnancy.status != "Active") {
+      return false
+    }
 
-    // If pregnancy is Active, only the latest record gets update button
+    const latestRecord = sortedRecords[0] 
+
+    // if pregnancy is Active, only the latest record gets update button
     if (pregnancy.status === "Active") {
       return record.id === latestRecord.id
     }
 
-    // If pregnancy is Completed
+    // if pregnancy is Completed, only the latest postpartum record gets update button (if exists)
     if (pregnancy.status === "Completed") {
       // Get the latest postpartum record
-      const latestPostpartumRecord = sortedRecords.find((r) => r.recordType === "Postpartum")
+      const latestPostpartumRecord = sortedRecords.find((r) => r.recordType === "Postpartum Care")
 
-      // Only the latest postpartum record gets update button (if it exists)
+      // only the latest postpartum record gets update button (if it exists)
       if (latestPostpartumRecord) {
         return record.id === latestPostpartumRecord.id
       }
 
-      // If no postpartum record exists, no update button for any record
+      // if no postpartum record exists, no update button for any record
       return false
     }
 
@@ -126,7 +128,7 @@ export function PregnancyAccordion({
     <TooltipProvider>
       <Accordion type="single" collapsible className="w-full p-4">
         {pregnancyGroups.map((pregnancy) => {
-          // Sort records once for this pregnancy
+
           const sortedRecords = pregnancy.records.sort(
             (a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
           )
@@ -157,10 +159,10 @@ export function PregnancyAccordion({
                   </div>
                   <div className="flex items-center gap-2">
                     {pregnancy.hasPrenatal && getRecordTypeBadge("Prenatal")}
-                    {pregnancy.hasPostpartum && getRecordTypeBadge("Postpartum")}
+                    {pregnancy.hasPostpartum && getRecordTypeBadge("Postpartum Care")}
                     <span className="text-sm text-gray-500">({pregnancy.records.length} records)</span>
 
-                    {/* Complete Button - Only show for Active pregnancies */}
+                    {/* complete button - only show for Active pregnancies */}
                     {pregnancy.status === "Active" && (
                       <TooltipLayout
                         trigger={

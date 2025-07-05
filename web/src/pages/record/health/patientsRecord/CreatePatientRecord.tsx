@@ -377,7 +377,7 @@ export default function CreatePatientRecord() {
 
                     {patientType === 'transient' && (
                       <div className="flex w-full items-end">
-                        <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1"> <CircleAlert/> For <i>TRANSIENT</i> please fill in the needed details below.</label>
+                        <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <i>TRANSIENT</i> please fill in the needed details below.</label>
                       </div>
                     )}
                   </div>

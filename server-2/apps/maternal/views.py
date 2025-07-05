@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
-from django.db.models import OuterRef, Exists
+from django.db.models import OuterRef, Exists, Prefetch
 from rest_framework.response import Response
 from .serializer import *
 from datetime import datetime
@@ -190,6 +190,34 @@ def get_patient_postpartum_records(request, pat_id):
             {'error': f'Failed to fetch postpartum records: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    
+@api_view(['GET'])
+def get_patient_pregnancy_records(request, pat_id):
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+        
+        pregnancies = Pregnancy.objects.filter(pat_id=patient).order_by('-created_at').prefetch_related(
+            Prefetch('prenatal_form', queryset=Prenatal_Form.objects.all().order_by('-created_at')),
+            Prefetch('postpartum_record', queryset=PostpartumRecord.objects.prefetch_related('postpartum_delivery_record', 'vital_id').order_by('-created_at'))
+        )
+
+        serializer = PregnancyDetailSerializer(pregnancies, many=True)
+        return Response(
+            serializer.data,
+            status= status.HTTP_200_OK
+        )
+    except Patient.DoesNotExist:
+        return Response(
+            {'error': f'Patient with ID {pat_id} does not exist'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f'Error fetching pregnancy records for patient: {pat_id} - {str(e)}')
+        return Response(
+            {'error': f'Failed to fetch pregnancy records: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
 
 class PrenatalRecordCreateView(generics.CreateAPIView):
     serializer_class = PrenatalFormSerializer

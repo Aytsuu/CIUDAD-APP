@@ -41,9 +41,9 @@ export default function MaternalAllRecords() {
       add_city?: string;
       add_province?: string;
       add_external_sitio?: string;
+      add_sitio?: string;
     }
-    
-    sitio?: string;
+   
     pat_type: "Transient" | "Resident";
     patrec_type?: string;
   };
@@ -101,8 +101,8 @@ export default function MaternalAllRecords() {
           add_city: address?.add_city,
           add_province: address?.add_province,
           add_external_sitio: address?.add_external_sitio,
+          add_sitio: address?.add_sitio || "N/A",
         },
-        sitio: address?.sitio || "N/A",
         pat_type: record.pat_type || "N/A",
       };
     });
@@ -179,7 +179,7 @@ export default function MaternalAllRecords() {
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
+          <div className="text-center w-full">{row.original.address?.add_sitio}</div>
         </div>
       ),
     },
@@ -218,7 +218,6 @@ export default function MaternalAllRecords() {
                             per_dob: row.original.personal_info.per_dob,
                             ageTime: row.original.personal_info.ageTime, 
                           },
-                          sitio: row.original.sitio,
                           patrec_type: row.original.patrec_type,
                         }
                       }

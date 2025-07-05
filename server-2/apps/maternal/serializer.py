@@ -12,32 +12,37 @@ class PrenatalFormSerializer(serializers.ModelSerializer):
         model = Prenatal_Form
         fields = ['pf_lmp', 'pf_edc', 'patrec_id']
 
-# illness serializer
+
+class PrenatalDetailViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Prenatal_Form
+        fields = ['pf_id', 'pf_lmp', 'pf_edc', 'created_at']
+
 
 class PreviousHospitalizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Previous_Hospitalization
         fields = '__all__'
 
+
 class PreviousPregnancySerializer(serializers.ModelSerializer):
     class Meta:
         model = Previous_Pregnancy
         fields = '__all__'
+
 
 class TTStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = TT_Status
         fields = '__all__'
 
-# class LabResultDatesSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Lab_Result_Dates
-#         fields = '__all__'
+
 
 class Guide4ANCVisitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Guide4ANCVisit
         fields = '__all__'
+
 
 class ChecklistSerializer(serializers.ModelSerializer):
     class Meta: 
@@ -45,14 +50,22 @@ class ChecklistSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
 # ************** postpartum serializers **************
-try:
-    from .models import Prenatal_Form
-    PRENATAL_FORM_EXISTS = True
-except ImportError:
-    PRENATAL_FORM_EXISTS = False
-    print("Prenatal_Form model not found, prenatal linking will be disabled")
+class PostpartumDetailViewSerializer(serializers.ModelSerializer):
+    delivery_date = serializers.SerializerMethodField()
+    vital_systolic = serializers.CharField(source='vital_id.vital_bp_systolic', read_only=True)
+    vital_diastolic = serializers.CharField(source='vital_id.vital_bp_diastolic', read_only=True)
+
+    class Meta:
+        model = PostpartumRecord
+        fields = ['ppr_id', 'ppr_lochial_discharges', 'ppr_vit_a_date_given', 'ppr_num_of_pads',
+                 'ppr_mebendazole_date_given', 'ppr_date_of_bf', 'ppr_time_of_bf', 'created_at',
+                 'delivery_date', 'vital_systolic', 'vital_diastolic']
+        
+    def get_delivery_date(self, obj):
+        delivery_record = obj.postpartum_delivery_record.first()
+        return delivery_record.ppdr_date_of_delivery if delivery_record else None
+
 
 class PostpartumDeliveryRecordSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,10 +73,12 @@ class PostpartumDeliveryRecordSerializer(serializers.ModelSerializer):
         fields = ['ppdr_date_of_delivery', 'ppdr_time_of_delivery', 'ppdr_place_of_delivery', 
                  'ppdr_attended_by', 'ppdr_outcome']
 
+
 class PostpartumAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostpartumAssessment
         fields = ['ppa_date_of_visit', 'ppa_feeding', 'ppa_findings', 'ppa_nurses_notes']
+
 
 class SpouseCreateSerializer(serializers.ModelSerializer):
     spouse_mname = serializers.CharField(required=False, allow_blank=True, default="N/A")
@@ -72,6 +87,7 @@ class SpouseCreateSerializer(serializers.ModelSerializer):
         model = Spouse
         fields = ['spouse_type', 'spouse_lname', 'spouse_fname', 'spouse_mname', 
                  'spouse_occupation', 'spouse_dob']
+
 
 class PostpartumCompleteSerializer(serializers.ModelSerializer):
     # Nested serializers for related data
@@ -213,12 +229,6 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         return value
 
-    # def find_related_prenatal_form(self, patient, delivery_date):
-    #     """
-    #     Temporarily disabled prenatal form linking to avoid database issues
-    #     """
-    #     print("Prenatal form linking temporarily disabled")
-    #     return None
 
     def handle_spouse_logic(self, patient, spouse_data):
         """
@@ -515,3 +525,15 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             representation['follow_up_visit'] = None
         
         return representation
+
+
+class PregnancyDetailSerializer(serializers.ModelSerializer):
+    prenatal_form = PrenatalDetailViewSerializer(many=True, read_only=True)
+    postpartum_record = PostpartumDetailViewSerializer(many=True, read_only=True)
+    pat_id = serializers.CharField(source='pat_id.pat_id', read_only=True)
+
+    class Meta:
+        model = Pregnancy
+        fields = ['pregnancy_id', 'status', 'created_at', 'updated_at',
+                  'prenatal_end_date', 'postpartum_end_date', 'pat_id',
+                 'prenatal_form', 'postpartum_record']

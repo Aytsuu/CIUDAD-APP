@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Search, Heart, Baby, Clock, CheckCircle } from "lucide-react"
 
@@ -19,6 +19,9 @@ import { PatientInfoCardv2 } from "@/pages/healthServices/maternal/maternal-comp
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { PregnancyAccordion } from "../maternal/maternal-components/maternal-records-accordion"
 
+import { usePregnancyDetails } from "./queries/maternalFetchQueries"
+import { Skeleton } from "@/components/ui/skeleton"
+
 interface Patient {
   pat_id: string
   age: number
@@ -36,21 +39,21 @@ interface Patient {
     add_city?: string
     add_province?: string
     add_external_sitio?: string
+    add_sitio?: string
   }
-  sitio?: string
   pat_type: string
   patrec_type?: string
 }
 
 interface MaternalRecord {
-  id: number
+  id: string
   pregnancyId: string
   dateCreated: string
   address: string
   sitio: string
   type: "Transient" | "Resident"
-  recordType: "Prenatal" | "Postpartum"
-  status: "Active" | "Completed"
+  recordType: "Prenatal" | "Postpartum Care"
+  status: "Active" | "Completed" | "Pregnancy Loss"
   gestationalWeek?: number
   expectedDueDate?: string
   deliveryDate?: string
@@ -59,7 +62,7 @@ interface MaternalRecord {
 
 interface PregnancyGroup {
   pregnancyId: string
-  status: "Active" | "Completed"
+  status: "Active" | "Completed" | "Pregnancy Loss"
   startDate: string
   expectedDueDate?: string
   deliveryDate?: string
@@ -67,6 +70,29 @@ interface PregnancyGroup {
   hasPrenatal: boolean
   hasPostpartum: boolean
 }
+
+interface PregnancyDataDetails{
+  pregnancy_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  prenatal_end_date?: string;
+  postpartum_end_date?: string;
+  pat_id: string;
+  prenatal_form?: {
+    pf_id: string;
+    pf_lmp: string;
+    pf_edc: string;
+    created_at: string;
+  }[]
+  postpartum_record?: {
+    ppr_id:string;
+    delivery_date: string | "N/A";
+    created_at: string;
+    updated_at: string;
+  }[]
+}
+
 
 export default function MaternalIndivRecords() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
@@ -83,130 +109,130 @@ export default function MaternalIndivRecords() {
     }
   }, [location.state])
 
-  // Sample data with pregnancy grouping
-  const [sampleData, setSampleData] = useState<MaternalRecord[]>([
-    {
-      id: 1,
-      pregnancyId: "PREG-2024-001",
-      dateCreated: "2024-01-15",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Resident",
-      recordType: "Prenatal",
-      status: "Active",
-      gestationalWeek: 28,
-      expectedDueDate: "2024-08-15",
-      notes: "Regular checkup, normal progress",
-    },
-    {
-      id: 2,
-      pregnancyId: "PREG-2024-001",
-      dateCreated: "2024-02-20",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Resident",
-      recordType: "Prenatal",
-      status: "Active",
-      gestationalWeek: 32,
-      expectedDueDate: "2024-08-15",
-      notes: "Follow-up visit, baby developing well",
-    },
-    {
-      id: 3,
-      pregnancyId: "PREG-2023-002",
-      dateCreated: "2023-06-10",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Resident",
-      recordType: "Prenatal",
-      status: "Completed",
-      gestationalWeek: 40,
-      expectedDueDate: "2023-09-10",
-      notes: "Full term pregnancy",
-    },
-    {
-      id: 4,
-      pregnancyId: "PREG-2023-002",
-      dateCreated: "2023-09-12",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Resident",
-      recordType: "Postpartum",
-      status: "Completed",
-      deliveryDate: "2023-09-10",
-      notes: "Normal delivery, healthy baby",
-    },
-    {
-      id: 5,
-      pregnancyId: "PREG-2022-003",
-      dateCreated: "2022-03-15",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Logarta",
-      type: "Resident",
-      recordType: "Postpartum",
-      status: "Completed",
-      deliveryDate: "2022-03-10",
-      notes: "Postpartum care completed",
-    },
-  ])
+  const { data: pregnancyData, isLoading: pregnancyDataLoading } = usePregnancyDetails(selectedPatient?.pat_id || "")
 
-  // group records by pregnancy ID
-  const groupRecordsByPregnancy = (records: MaternalRecord[]): PregnancyGroup[] => {
-    const grouped = records.reduce(
-      (acc, record) => {
-        if (!acc[record.pregnancyId]) {
-          acc[record.pregnancyId] = {
-            pregnancyId: record.pregnancyId,
-            status: record.status,
-            startDate: record.dateCreated,
-            expectedDueDate: record.expectedDueDate,
-            deliveryDate: record.deliveryDate,
-            records: [],
-            hasPrenatal: false,
-            hasPostpartum: false,
-          }
+  function calculateGestationalWeek(lmp: string, visitDate: string): number {
+    const lmpDate = new Date(lmp);
+    const visit = new Date(visitDate);
+
+    if (isNaN(lmpDate.getTime()) || isNaN(visit.getTime())) {
+      return 0; 
+    }
+
+    const diffTime = Math.abs(visit.getTime() - lmpDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.floor(diffDays / 7);
+  }
+
+  const groupPregnancies = (
+    pregnancies: PregnancyDataDetails[],
+    patientType: string,
+    patientAddress: Patient["address"] | undefined,
+  ): PregnancyGroup[] => {
+    const grouped: Record<string, PregnancyGroup> = {}
+
+    if(!pregnancies) return []
+
+    pregnancies.forEach((pregnancy) => {
+      if(!grouped[pregnancy.pregnancy_id]) {
+        grouped[pregnancy.pregnancy_id] = {
+          pregnancyId: pregnancy.pregnancy_id,
+          status: pregnancy.status as "Active" | "Completed" | "Pregnancy Loss",
+          startDate: pregnancy.created_at.split("T")[0],
+          expectedDueDate: pregnancy.prenatal_form?.[0]?.pf_edc || undefined,
+          deliveryDate: pregnancy.postpartum_record?.[0]?.delivery_date || undefined,
+          records: [],
+          hasPrenatal: false,
+          hasPostpartum: false,
         }
+      }
 
-        acc[record.pregnancyId].records.push(record)
+      const currPregnancyGroup =  grouped[pregnancy.pregnancy_id]
 
-        // Update pregnancy info
-        if (record.recordType === "Prenatal") {
-          acc[record.pregnancyId].hasPrenatal = true
-          if (record.expectedDueDate) {
-            acc[record.pregnancyId].expectedDueDate = record.expectedDueDate
-          }
+      pregnancy.prenatal_form?.forEach((pf) => {
+        const addressParts = [
+          patientAddress?.add_street,
+          patientAddress?.add_barangay,
+          patientAddress?.add_city,
+          patientAddress?.add_province
+        ].filter(Boolean);
+
+        currPregnancyGroup.records.push({
+          id: pf.pf_id,
+          pregnancyId: pregnancy.pregnancy_id,
+          dateCreated: pf.created_at.split("T")[0],
+          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
+          sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "N/A",
+          type: patientType as "Transient" | "Resident",
+          recordType: "Prenatal",
+          status: pregnancy.status as "Active" | "Completed" | "Pregnancy Loss",
+          gestationalWeek: calculateGestationalWeek(pf.pf_lmp, pf.created_at.split("T")[0]),
+          expectedDueDate: pf.pf_edc,
+          notes: `Prenatal visit on ${pf.created_at.split("T")[0]}`,
+        })
+        currPregnancyGroup.hasPrenatal = true
+        if(pf.pf_edc && !currPregnancyGroup.expectedDueDate) {
+          currPregnancyGroup.expectedDueDate = pf.pf_edc
         }
+      })
 
-        if (record.recordType === "Postpartum") {
-          acc[record.pregnancyId].hasPostpartum = true
-          if (record.deliveryDate) {
-            acc[record.pregnancyId].deliveryDate = record.deliveryDate
-          }
+      pregnancy.postpartum_record?.forEach((ppr) => {
+        const addressParts = [
+          patientAddress?.add_street,
+          patientAddress?.add_barangay,
+          patientAddress?.add_city,
+          patientAddress?.add_province
+        ].filter(Boolean);
+
+        currPregnancyGroup.records.push({
+          id: ppr.ppr_id,
+          pregnancyId: pregnancy.pregnancy_id,
+          dateCreated: ppr.created_at.split("T")[0],
+          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
+          sitio: patientAddress?.add_sitio || "N/A",
+          type: patientType as "Transient" | "Resident",
+          recordType: "Postpartum Care",
+          status: pregnancy.status as "Active" | "Completed" | "Pregnancy Loss",
+          deliveryDate: ppr.delivery_date,
+          notes: `Postpartum care on ${ppr.created_at.split("T")[0]}`,
+        })
+        currPregnancyGroup.hasPostpartum = true
+        // Update deliveryDate for the pregnancy group from postpartum record if available
+        if (ppr.delivery_date && !currPregnancyGroup.deliveryDate) {
+          currPregnancyGroup.deliveryDate = ppr.delivery_date
         }
+      })
 
-        // Update start date to earliest record
-        if (new Date(record.dateCreated) < new Date(acc[record.pregnancyId].startDate)) {
-          acc[record.pregnancyId].startDate = record.dateCreated
-        }
-
-        return acc
-      },
-      {} as Record<string, PregnancyGroup>,
-    )
-
+      currPregnancyGroup.records.sort(
+        (a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
+      )
+      
+      if(currPregnancyGroup.records.length > 0) {
+        currPregnancyGroup.startDate = currPregnancyGroup.records[0].dateCreated
+      }
+    })
     return Object.values(grouped).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
   }
+
+  // using memo for grouped pregnancies
+  const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
+    if (pregnancyData && selectedPatient) {
+      return groupPregnancies(
+        pregnancyData,
+        selectedPatient.pat_type,
+        selectedPatient.address,
+      )
+    }
+    return []
+  }, [pregnancyData, selectedPatient])
 
   const filter = [
     { id: "All", name: "All" },
     { id: "Active", name: "Active" },
     { id: "Completed", name: "Completed" },
-    { id: "Prenatal", name: "Prenatal Only" },
-    { id: "Postpartum", name: "Postpartum Only" },
   ]
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
-  const pregnancyGroups = groupRecordsByPregnancy(sampleData)
 
   const filteredGroups = pregnancyGroups.filter((group) => {
     switch (selectedFilter) {
@@ -216,30 +242,45 @@ export default function MaternalIndivRecords() {
         return group.status === "Active"
       case "Completed":
         return group.status === "Completed"
-      case "Prenatal":
-        return group.hasPrenatal && !group.hasPostpartum
-      case "Postpartum":
-        return group.hasPostpartum && !group.hasPrenatal
       default:
         return true
     }
   })
 
-  const getStatusBadge = (status: "Active" | "Completed") => {
-    return status === "Active" ? (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-        <Clock className="w-3 h-3 mr-1" />
-        Active
-      </Badge>
-    ) : (
+
+  const getStatusBadge = (status: "Active" | "Completed" | "Pregnancy Loss") => {
+    if (status === "Active") {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <Clock className="w-3 h-3 mr-1" />
+          Active
+        </Badge>
+      )
+    } else if (status === "Completed") {
+      return (
+        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Completed
+        </Badge>
+      )
+    } else if (status === "Pregnancy Loss") {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          {/* You can use a suitable icon here */}
+          <Heart className="w-3 h-3 mr-1" />
+          Pregnancy Loss
+        </Badge>
+      )
+    }
+    return (
       <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-        <CheckCircle className="w-3 h-3 mr-1" />
-        Completed
+        Unknown
       </Badge>
     )
   }
 
-  const getRecordTypeBadge = (recordType: "Prenatal" | "Postpartum") => {
+
+  const getRecordTypeBadge = (recordType: "Prenatal" | "Postpartum Care") => {
     return recordType === "Prenatal" ? (
       <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
         <Heart className="w-3 h-3 mr-1" />
@@ -253,18 +294,24 @@ export default function MaternalIndivRecords() {
     )
   }
 
-  // Handle completing a pregnancy
+  
   const handleCompletePregnancy = (pregnancyId: string) => {
-    setSampleData((prevData) =>
-      prevData.map((record) =>
-        record.pregnancyId === pregnancyId ? { ...record, status: "Completed" as const } : record,
-      ),
-    )
-
-    // Here you would typically make an API call to update the pregnancy status
     console.log(`Pregnancy ${pregnancyId} marked as completed`)
+  }
 
-    // You could also show a success message or notification here
+  if(pregnancyDataLoading) {
+    return (
+      <LayoutWithBack title="Maternal Records" description="Manage mother's individual record">
+        <div className="mb-5">
+          <PatientInfoCardv2 patient={selectedPatient} />
+        </div>
+        <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
+          <Skeleton className="h-10 w-full mb-4" />
+          <Skeleton className="h-24 w-full mb-4" />
+          <Skeleton className="h-24 w-full mb-4" />
+        </div>
+      </LayoutWithBack>
+    )
   }
 
   return (
@@ -306,10 +353,10 @@ export default function MaternalIndivRecords() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>
-                  <Link to="/prenatalform">Prenatal</Link>
+                  <Link to="/prenatalform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Prenatal</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="/postpartumform">Postpartum</Link>
+                  <Link to="/postpartumform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Postpartum</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
