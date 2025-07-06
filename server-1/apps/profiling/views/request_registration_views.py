@@ -32,9 +32,9 @@ class RequestTableView(generics.ListAPIView):
         Q(req_date__icontains=search_query) |
         Q(per__per_lname__icontains=search_query) |
         Q(per__per_fname__icontains=search_query) |
-        Q(per__per_mname__icontains=search_query) 
-      ).distinct()
-    return queryset
+        Q(per__per_mname__icontains=search_query)).distinct()
+      
+    return queryset.filter(req_is_archive=False)
 
 class RequestCreateView(generics.CreateAPIView):
   serializer_class = RequestCreateSerializer

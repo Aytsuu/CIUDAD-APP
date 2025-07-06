@@ -10,5 +10,5 @@ def update_expired_requests():
             now - timedelta(days=7, minutes=15),  # 7 days 15 mins ago
             now - timedelta(days=7)               # 7 days ago
         ),
-        is_archive=False
+        req_is_archive=False
     ).update(is_archive=True)
