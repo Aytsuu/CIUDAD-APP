@@ -124,6 +124,7 @@ class FamilyComposition(models.Model):
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
     req_date = models.DateField(auto_now_add=True)
+    is_archive = models.BooleanField(default=False)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     acc = models.ForeignKey('account.Account', on_delete=models.CASCADE)
 

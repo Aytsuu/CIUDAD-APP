@@ -14,11 +14,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useDeleteRequest } from "../../queries/profilingDeleteQueries";
 import { useNavigate } from "react-router";
 import { CircleAlert, ImageIcon, User, ZoomIn } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { ImageModal } from "@/components/image-modal";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
 import { useUpdateAccount } from "../../queries/profilingUpdateQueries";
+import { useSitioList } from "../../queries/profilingFetchQueries";
+import { formatSitio } from "../../profilingFormats";
 
 export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -27,6 +28,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: deleteRequest } = useDeleteRequest();
   const { mutateAsync: updateAccount } = useUpdateAccount();
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
   const { form, handleSubmitError, handleSubmitSuccess } = useResidentForm(
     params.data
   );
@@ -35,6 +37,112 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     MediaUploadType[number] | null
   >();
   const files = params.data?.files || [];
+
+  const formattedSitio = React.useMemo(
+    () => formatSitio(sitioList) || [],
+    [sitioList]
+  );
+
+  // ============= EXPIRATION CALCULATION ===============
+  const calculateRemainingTime = React.useMemo(() => {
+  if (!params.data?.req_date) return { days: 7, hours: 0 }; // Default to 7 days if no creation date
+  
+  const createdDate = new Date(params.data.req_date);
+  const currentDate = new Date();
+  const expirationDate = new Date(createdDate);
+  expirationDate.setDate(createdDate.getDate() + 7); // Add 7 days to creation date
+  
+  const timeDiff = expirationDate.getTime() - currentDate.getTime();
+  const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+  const hoursDiff = Math.floor((timeDiff % (1000 * 3600 * 24)) / (1000 * 3600));
+  
+  return {
+    days: Math.max(0, daysDiff),
+    hours: Math.max(0, hoursDiff),
+    isExpired: timeDiff <= 0
+  };
+}, [params.data?.req_date]);
+
+const getExpirationMessage = React.useMemo(() => {
+  const { days, hours, isExpired } = calculateRemainingTime;
+  
+  if (isExpired) {
+    return "This request has expired and will be archived.";
+  }
+  
+  if (days < 1) {
+    if (hours === 1) {
+      return "This request will automatically expire and be archived after 1 hour if not approved.";
+    } else if (hours === 0) {
+      return "This request will expire very soon if not approved.";
+    } else {
+      return `This request will automatically expire and be archived after ${hours} hours if not approved.`;
+    }
+  } else if (days === 1) {
+    return "This request will automatically expire and be archived after 1 day if not approved.";
+  } else {
+    return `This request will automatically expire and be archived after ${days} days if not approved.`;
+  }
+}, [calculateRemainingTime]);
+
+const getExpirationColor = React.useMemo(() => {
+  const { days, hours, isExpired } = calculateRemainingTime;
+  
+  if (isExpired || (days < 1 && hours <= 2)) {
+    return {
+      bg: "bg-red-50",
+      border: "border-red-200",
+      icon: "text-red-500",
+      title: "text-red-800",
+      text: "text-red-700"
+    };
+  } else if (days < 1 || days === 1) {
+    return {
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+      icon: "text-orange-500",
+      title: "text-orange-800",
+      text: "text-orange-700"
+    };
+  } else if (days <= 3) {
+    return {
+      bg: "bg-amber-50",
+      border: "border-amber-200",
+      icon: "text-amber-500",
+      title: "text-amber-800",
+      text: "text-amber-700"
+    };
+  } else {
+    return {
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      icon: "text-blue-500",
+      title: "text-blue-800",
+      text: "text-blue-700"
+    };
+  }
+}, [calculateRemainingTime]);
+
+// Update the status display in the JSX
+const getStatusDisplay = React.useMemo(() => {
+  const { days, hours, isExpired } = calculateRemainingTime;
+  
+  if (isExpired) {
+    return "EXPIRED";
+  } else if (days < 1) {
+    if (hours === 0) {
+      return "EXPIRES VERY SOON";
+    } else if (hours === 1) {
+      return "EXPIRES IN 1 HOUR";
+    } else {
+      return `EXPIRES IN ${hours} HOURS`;
+    }
+  } else if (days === 1) {
+    return "EXPIRES TODAY";
+  } else {
+    return null; // Don't show status for longer periods
+  }
+}, [calculateRemainingTime]);
 
   // ==================== HANDLERS ====================
 
@@ -82,21 +190,25 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     // ==================== RENDER ====================
     <LayoutWithBack title={params.title} description={params.description}>
       <div className="space-y-6">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className={`${getExpirationColor.bg} border ${getExpirationColor.border} rounded-lg p-4`}>
           <div className="flex items-start gap-3">
             <CircleAlert
               size={20}
-              className="text-amber-500 mt-0.5 flex-shrink-0"
+              className={`${getExpirationColor.icon} mt-0.5 flex-shrink-0`}
             />
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-amber-800">
+                <p className={`text-sm font-medium ${getExpirationColor.title}`}>
                   Request Expiration
+                  {getStatusDisplay && (
+                    <span className="ml-2 text-xs font-normal">
+                      ({getStatusDisplay})
+                    </span>
+                  )}
                 </p>
               </div>
-              <p className="text-sm text-amber-700 mt-1">
-                This request will automatically expire and be archived after
-                7 days if not approved.
+              <p className={`text-sm ${getExpirationColor.text} mt-1`}>
+                {getExpirationMessage}
               </p>
             </div>
           </div>
@@ -170,13 +282,13 @@ export default function ResidentRequestForm({ params }: { params: any }) {
               className="flex flex-col gap-4"
             >
               <PersonalInfoForm
+                formattedSitio={formattedSitio}
                 addresses={params?.data?.addresses}
                 form={form}
                 formType={Type.Request}
                 isSubmitting={isSubmitting}
                 submit={submit}
-                isReadOnly={true}
-                // setOpenRejectionDialog={setOpenRejectionDialog}
+                isReadOnly={false}
               />
             </form>
           </Form>

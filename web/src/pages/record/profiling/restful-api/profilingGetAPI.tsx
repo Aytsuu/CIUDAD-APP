@@ -11,11 +11,15 @@ export const getPerAddressesList = async () => {
 }
 
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
-export const getResidentsList = async (is_staff: boolean = false) => {
+export const getResidentsList = async (
+  is_staff: boolean = false, 
+  exclude_independent: boolean = false
+) => {
   try {
     const res = await api.get("profiling/resident/", {
       params: {
-        is_staff: is_staff
+        is_staff,
+        exclude_independent
       }
     });
     return res.data;

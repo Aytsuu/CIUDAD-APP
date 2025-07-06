@@ -39,17 +39,21 @@ export default function SoloFormLayout() {
   const { showLoading, hideLoading } = useLoading();
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(false);
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
+    false, // is_staff
+    true // exclude_independent
+  );
   const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
   const [residents, setResidents] = React.useState<any[]>([]);
-
+  const [buildingReadOnly, setBuildingReadOnly] = React.useState<boolean>(false);
+  console.log(residentsList)
   const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList]);
 
-  // ==================== SIDE EFFECTS ======================
+  // ==================== SIDE EFFECTS ====================== 
   React.useEffect(() => {
     if(isLoadingHouseholds || isLoadingResidents) {
       showLoading();
@@ -81,7 +85,12 @@ export default function SoloFormLayout() {
       building = ownedHouseholds.some((household: any) => 
         household.hh_id === householdNo) ? 'owner' : '';
 
-      form.setValue('building', building);
+      if(building === 'owner') {
+        setBuildingReadOnly(true);
+        form.setValue('building', building);
+      } else {
+        setBuildingReadOnly(false);
+      }
     }
   }, [form.watch('householdNo'), form.watch('id')])
 
@@ -144,6 +153,7 @@ export default function SoloFormLayout() {
               className="flex flex-col gap-10"
             >
               <LivingSoloForm
+                buildingReadOnly={buildingReadOnly}
                 residents={residents}
                 households={formattedHouseholds}
                 isSubmitting={isSubmitting}

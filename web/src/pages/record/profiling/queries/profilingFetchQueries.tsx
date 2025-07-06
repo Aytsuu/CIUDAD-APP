@@ -29,10 +29,13 @@ export const usePerAddressesList = () => {
 }
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
-export const useResidentsList = (is_staff: boolean = false) => {
+export const useResidentsList = (
+  is_staff: boolean = false,
+  exclude_independent: boolean = false
+) => {
   return useQuery({
-    queryKey: ['residentsList', is_staff],
-    queryFn: () => getResidentsList(is_staff),
+    queryKey: ['residentsList', is_staff, exclude_independent],
+    queryFn: () => getResidentsList(is_staff, exclude_independent),
     staleTime: 5000,
   })
 }

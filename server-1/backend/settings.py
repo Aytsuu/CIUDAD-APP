@@ -263,3 +263,10 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+
+# ========================
+# SCHEDULER
+# ========================
+SCHEDULER_AUTOSTART = True
+# SCHEDULER_AUTOSTART = not DEBUG # for production

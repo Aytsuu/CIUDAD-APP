@@ -8,7 +8,6 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { Link } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { FormInput } from "@/components/ui/form/form-input";
 
 export default function LivingSoloForm({
   residents,
@@ -16,6 +15,7 @@ export default function LivingSoloForm({
   isSubmitting,
   invalidResident,
   invalidHousehold,
+  buildingReadOnly,
   form,
   onSubmit
 }: {
@@ -24,6 +24,7 @@ export default function LivingSoloForm({
   isSubmitting: boolean;
   invalidResident: boolean;
   invalidHousehold: boolean;
+  buildingReadOnly: boolean;
   form: UseFormReturn<z.infer<typeof demographicInfoSchema>>;
   onSubmit: () => void;
 }) {
@@ -89,7 +90,7 @@ export default function LivingSoloForm({
             { id: "renter", name: "Renter" },
             { id: "other", name: "Other" },
           ]}
-          readOnly={form.watch("building") === "owner" ? true : false}
+          readOnly={buildingReadOnly}
         />
         <FormSelect
           control={form.control}
