@@ -16,26 +16,26 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
       </Badge>
     ),
   },
-  {
-    accessorKey: "comp_category",
-    header: "Category",
-    cell: ({ row }) => {
-      const category = row.original.comp_category as string
-      return (
-        <Badge
-          className={`font-medium ${
-            category === "Low"
-              ? "bg-green-100 text-green-800 hover:bg-green-200"
-              : category === "Normal"
-                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                : "bg-red-100 text-red-800 hover:bg-red-200"
-          }`}
-        >
-          {category}
-        </Badge>
-      )
-    },
-  },
+  // {
+  //   accessorKey: "comp_category",
+  //   header: "Category",
+  //   cell: ({ row }) => {
+  //     const category = row.original.comp_category as string
+  //     return (
+  //       <Badge
+  //         className={`font-medium ${
+  //           category === "Low"
+  //             ? "bg-green-100 text-green-800 hover:bg-green-200"
+  //             : category === "Normal"
+  //               ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+  //               : "bg-red-100 text-red-800 hover:bg-red-200"
+  //         }`}
+  //       >
+  //         {category}
+  //       </Badge>
+  //     )
+  //   },
+  // },
   {
     accessorKey: "comp_incident_type",
     header: "Incident Type",
@@ -52,7 +52,7 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     cell: ({ row }) => {
       const accusedPersons = row.original.accused_persons
       if (!accusedPersons || accusedPersons.length === 0) {
-        return <div className="text-gray-500 italic">No accused persons</div>
+        return <div className="text-gray-500">No accused persons</div>
       }
 
       const firstAccused = accusedPersons[0].acsd_name

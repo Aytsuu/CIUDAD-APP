@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password,
       });
       
-      console.log("Login successful:", response.data.user);
+      console.log("Login successful:", response.data);
       setUser(response.data.user);
       setIsAuthenticated(true);
       

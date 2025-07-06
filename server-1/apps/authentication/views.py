@@ -19,24 +19,24 @@ from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
 
-ROLE_PATHS_MAP = {
-    'admin': [
-        '/admin/dashboard',
+# ROLE_PATHS_MAP = {
+#     'admin': [
+#         '/admin/dashboard',
         
-    ],
-    'Barangay Staff' : [
-        'auth/'
-    ],
-    'resident': [
+#     ],
+#     'Barangay Staff' : [
+#         'auth/'
+#     ],
+#     'resident': [
         
-    ], 
-    'unverified': [
+#     ], 
+#     'unverified': [
         
-    ],
-    "Health Staff": [
+#     ],
+#     "Health Staff": [
         
-    ]
-}
+#     ]
+# }
 
 class AuthBaseView(APIView):
     permission_classes = [AllowAny]
@@ -51,8 +51,6 @@ class AuthBaseView(APIView):
         return supabase_id, email
 
 class SignupView(APIView):
-    permission_classes = [AllowAny]
-    
     permission_classes = [AllowAny]
     
     def post(self, request):

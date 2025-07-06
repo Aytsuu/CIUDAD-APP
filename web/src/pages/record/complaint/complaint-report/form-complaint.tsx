@@ -34,12 +34,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog/dialog";
 import { useAuth } from "@/context/AuthContext";
+import { useNotifications } from "@/context/NotificationContext";
 
 export const ComplaintForm = () => {
   const [step, setStep] = useState(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth()
+  const { user } = useAuth();
+  const { send } = useNotifications();
   
   const methods = useForm<ComplaintFormData>({
     resolver: zodResolver(complaintFormSchema),
@@ -206,8 +208,8 @@ export const ComplaintForm = () => {
       if (uploadedFilesData) {
         console.log("uploaded_files:", JSON.parse(uploadedFilesData as string));
       }
-      console.log("Created by: ", user?.username)
       await submitComplaint(formData);
+      await handleSendAlert();
       toast.success("Complaint submitted successfully");
       methods.reset();
       setStep(1);
@@ -222,6 +224,19 @@ export const ComplaintForm = () => {
     }
   };
 
+  const handleSendAlert = async () => {
+    await send({
+      title: "New Report Filed",
+      message: "Your request has been processed",
+      recipient_ids: [user?.acc_id || '', '13'],
+      metadata:{
+        action_url: '/home',
+        sender_name: 'System',
+        sender_avatar: `${user?.profile_image}` || '',
+      }
+    })
+  }
+
   const confirmSubmit = () => {
     const formData = methods.getValues();
     onSubmit(formData);
@@ -231,7 +246,7 @@ export const ComplaintForm = () => {
     1: ["complainant"],
     2: ["accused"],
     3: ["incident"],
-    4: ["documents"], // Make sure this matches your schema field name
+    4: ["documents"],
   };
 
   const steps = [

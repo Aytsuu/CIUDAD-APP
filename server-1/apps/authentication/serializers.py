@@ -23,7 +23,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
     def get_staff(self, obj):
         """
-        Get staff profile information through the resident profile.
+            Get staff profile information through the resident profile.
         """
         # Check if account has a resident profile
         if hasattr(obj, 'rp') or obj.rp:

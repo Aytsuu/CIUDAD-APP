@@ -5,19 +5,12 @@ from supabase import create_client
 from django.conf import settings
 
 class Notification(models.Model):
-    NOTIFICATION_TYPES = (
-        ('info', 'Information'),
-        ('success', 'Success'),
-        ('warning', 'Warning'),
-        ('error', 'Error'),
-    )
-    
-    recipient = models.ForeignKey('account.Account', on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    message = models.TextField()
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='info')
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    notif_id = models.BigAutoField(primary_key=True)
+    notif_title = models.CharField(max_length=255, null=False)
+    notif_message = models.TextField()
+    notif_created_at = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(default=dict, blank=True, null=False)
+    sender = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name='notification')
     
     # Generic relation to link to any model
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
@@ -25,26 +18,37 @@ class Notification(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-notif_created_at']
         db_table = 'notification'
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+            models.Index(fields=['sender']),
+        ]
         
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.push_to_supabase()
-        
+    def mark_as_read(self):
+        self.is_read = True
+        self.read_at = timezone.now()
+        self.save()
+
     def push_to_supabase(self):
-        supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+        supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         
-        supabase.table('notification').insert({
-            'recipient_id': self.recipient.supabase_id, 
-            'title': self.title,
-            'message': self.message,
-            'type': self.notification_type,
+        data = {
+            'django_id': self.notif_id,
+            'title': self.notif_title,
+            'message': self.notif_message,
+            'created_at': self.notif_created_at.isoformat(),
+            'sender_id': {
+                'supabase_id': self.sender.supabase_id,
+                'username': self.sender.username,
+                'email': self.sender.email,
+                'profile_image': self.sender.profile_image if self.sender.profile_image else None,
+            },
             'is_read': self.is_read,
-            'created_at': self.created_at.isoformat(),
-            'related_object_type': self.content_type.model if self.content_type else None,
-            'related_object_id': self.object_id
-        }).execute()
+            'metadata': self.metadata
+        }
+    
+        supabase.table('notification').upsert(data).execute()
 
 class FCMToken(models.Model):
     acc = models.OneToOneField('account.Account', on_delete=models.CASCADE, related_name="fcm_token")
@@ -58,9 +62,9 @@ class FCMToken(models.Model):
         
 class Recipient(models.Model):
     rec_id = models.BigAutoField(primary_key=True)
-    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name="received_notification")
     is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name="recipient")
+    notif = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name='recipient')
     
     class Meta: 
         db_table = 'recipient'

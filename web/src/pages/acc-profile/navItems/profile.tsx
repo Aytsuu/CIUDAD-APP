@@ -124,7 +124,7 @@ export default function Profile() {
                 {/* Upload Button */}
                 <Button
                   size="icon"
-                  className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg bg-blue hover:bg-blue border-2 border-background" 
+                  className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg border-2 border-background" 
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                 >

@@ -97,7 +97,7 @@ export const AccusedInfo = () => {
                 key={field.id}
                 className={`flex items-center px-3 py-2 cursor-pointer rounded-md transition-colors whitespace-nowrap ${
                   activeTab === index 
-                    ? 'bg-blue text-white shadow-sm' 
+                    ? 'bg-blue-500 text-white shadow-sm' 
                     : 'bg-ashGray/40 text-black/50 hover:bg-gray-200'
                 }`}
                 onClick={() => setActiveTab(index)}
