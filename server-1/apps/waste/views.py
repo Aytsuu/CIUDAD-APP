@@ -405,7 +405,7 @@ class DriverPersonnelAPIView(APIView):
         allowed_positions = ["Waste Driver", "Truck Driver", "Driver"]  
         
         drivers = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title__in=allowed_positions
+            staff__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
             'staff__pos',
             'staff__rp__per'
@@ -420,7 +420,7 @@ class CollectorPersonnelAPIView(APIView):
         allowed_positions = ["Waste Collector", "Collector"]  
         
         collectors = WastePersonnel.objects.filter( 
-            staff_id__pos__pos_title__in=allowed_positions
+            staff__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
             'staff__pos',
             'staff__rp__per'
@@ -442,7 +442,7 @@ class WasteCollectorView(generics.ListCreateAPIView):
 class WatchmanView(generics.GenericAPIView): 
     def get(self, request, *args, **kwargs):
         watchmen = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title="Watchman"  
+            staff__pos__pos_title="Watchman"  
         ).select_related(
             'staff__pos',
             'staff__rp__per'
