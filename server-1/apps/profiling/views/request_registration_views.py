@@ -16,7 +16,7 @@ class RequestTableView(generics.ListAPIView):
     queryset = RequestRegistration.objects.select_related(
       'per'
     ).prefetch_related(
-      'per__personaladdress_set__add'
+      'per__personal_addresses__add'
     ).only(
       'req_id',
       'req_date',

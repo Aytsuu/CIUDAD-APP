@@ -62,7 +62,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                     Q(per__personal_addresses__add__sitio__sitio_name__icontains=search_query)
                 ).distinct()
 
-        return queryset.order_by('per__per_lname', 'per__per_fname')
+        return queryset.order_by('rp_id')
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
     serializer_class = ResidentPersonalCreateSerializer

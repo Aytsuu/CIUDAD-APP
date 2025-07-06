@@ -20,10 +20,13 @@ import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
 import { useUpdateAccount } from "../../queries/profilingUpdateQueries";
 import { useSitioList } from "../../queries/profilingFetchQueries";
 import { formatSitio } from "../../profilingFormats";
+import { useDispatch } from "react-redux";
+import { accountCreated } from "@/redux/addRegSlice";
 
 export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user } = useAuth();
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: deleteRequest } = useDeleteRequest();
@@ -175,7 +178,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
               {
                 onSuccess: () => {
                   deleteRequest(params.data.req_id);
-                  navigate(-1);
+                  dispatch(accountCreated(true));
                   handleSubmitSuccess(
                     "Request has been approved",
                     `/resident/additional-registration`,

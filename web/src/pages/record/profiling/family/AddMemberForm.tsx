@@ -35,7 +35,7 @@ export default function AddMemberForm({
   const formattedResidents = React.useMemo(() => 
     formatResidents(residentsWithFamExclusion)
   , [residentsWithFamExclusion]);
-  const defaultValues = React.useRef(generateDefaultValues(newMemberFormSchema)).current;
+  const defaultValues = generateDefaultValues(newMemberFormSchema);
   const form = useForm<z.infer<typeof newMemberFormSchema>>({
     resolver: zodResolver(newMemberFormSchema),
     defaultValues,
@@ -54,26 +54,27 @@ export default function AddMemberForm({
       return;
     }
 
-    const role = form.getValues().role;
-    const newComposition = await addFamilyComposition([{
+    const values = form.getValues();
+    addFamilyComposition([{
       "fam": familyId,
-      "fc_role": role,
+      "fc_role": values.role,
       "rp": residentId
     }], {
-      onSuccess: () => {
+      onSuccess: (newComposition) => {
         setIsOpenDialog(false);
         setIsSubmitting(false);
         setCompositions((prev: any) => [
           ...prev,
-          newComposition
-        ])
-        }
+          newComposition[0]
+        ]);
+      }
     });
   };
 
   if(isLoadingResidents) {
     return <Loader2 className="animate-spin" />
   }
+  
 
   return (
     <Form {...form}>

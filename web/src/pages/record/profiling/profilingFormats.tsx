@@ -11,7 +11,7 @@ export const formatResidents = (residents: any) => {
     name: (
       <div className="flex gap-4 items-center">
         <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
-          #{resident.rp_id}
+          {resident.rp_id}
         </span>
         {resident.name}
       </div>

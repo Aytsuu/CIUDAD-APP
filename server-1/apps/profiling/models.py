@@ -167,7 +167,7 @@ class BusinessFile(models.Model):
     bf_path = models.CharField(max_length=500)
     bf_url = models.URLField()
     bf_created_at = models.DateTimeField(auto_now_add=True)
-    bus = models.ForeignKey(Business, on_delete=models.CASCADE)
+    bus = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_files')
 
     class Meta:
         db_table = 'business_file'
