@@ -77,6 +77,14 @@ class Template(models.Model):
     temp_filename = models.CharField(max_length=100)
     temp_body = models.TextField(null=True, blank=True) 
     temp_is_archive = models.BooleanField(default=False)
+    
+    pr_id = models.ForeignKey(
+        'treasurer.Purpose_And_Rates',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        db_column='pr_id'
+    )    
 
     class Meta:
         db_table = 'template'
