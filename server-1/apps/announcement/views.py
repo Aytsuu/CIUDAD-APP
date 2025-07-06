@@ -1,4 +1,3 @@
-
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -56,7 +55,8 @@ class AnnouncementRecipientView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         if 'recipients' in request.data:
-            serializer = BulkAnnouncementRecipientSerializer(data=request.data)
+            # ✅ Pass the request context to the serializer
+            serializer = BulkAnnouncementRecipientSerializer(data=request.data, context={'request': request})
             if serializer.is_valid():
                 serializer.save()
                 return Response({"message": "Recipients created successfully"}, status=status.HTTP_201_CREATED)
@@ -67,7 +67,6 @@ class AnnouncementRecipientView(generics.ListCreateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class AnnouncementRecipientDetailView(generics.RetrieveUpdateDestroyAPIView):

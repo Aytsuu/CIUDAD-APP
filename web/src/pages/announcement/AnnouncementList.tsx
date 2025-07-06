@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { type Announcement, useDeleteAnnouncement } from "./queries/announcementDeleteQueries"
 import { useGetAnnouncement } from "./queries/announcementFetchQueries"
+import { Button } from "@/components/ui/button/button"
 
 function AnnouncementTracker() {
   const [data] = useState<Announcement[]>([])
@@ -102,9 +103,9 @@ function AnnouncementTracker() {
 
           <DialogLayout
             trigger={
-              <div className="flex items-center bg-blue py-2 px-4 text-white text-sm rounded-md gap-2 shadow-sm hover:bg-blue/90 cursor-pointer">
+              <Button>
                 <Plus size={16} /> Add Announcement
-              </div>
+              </Button>
             }
             className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
             title=""
