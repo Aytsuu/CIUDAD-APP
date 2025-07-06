@@ -36,4 +36,5 @@ export const features: FeatureType[] = [
     icon: <HeartPulse className="text-white"/>,
     route: ""
   },
+
 ]
