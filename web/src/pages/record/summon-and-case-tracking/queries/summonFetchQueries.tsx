@@ -4,7 +4,7 @@ import { getServiceChargeRequest, getCaseDetails } from "../requestAPI/summonGet
 export type ServiceChargeRequest = {
     sr_id: string;
     complainant_name: string;
-    accused_names: string;
+    accused_names: string[];
     incident_type: string;
     allegation: string;
     status: string;
