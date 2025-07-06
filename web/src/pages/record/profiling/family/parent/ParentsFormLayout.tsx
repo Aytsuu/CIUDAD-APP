@@ -39,8 +39,7 @@ export default function ParentsFormLayout({
     if (isValid) {
       onSubmit();
     } else {
-      toast("Family Registration", {
-        description: "Must have atleast one parent.",
+      toast("Must have atleast one parent", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
         style: {
           border: '1px solid rgb(225, 193, 193)',

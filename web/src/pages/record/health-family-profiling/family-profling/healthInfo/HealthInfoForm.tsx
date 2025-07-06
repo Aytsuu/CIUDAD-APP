@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo } from "react"
 import { Form } from "@/components/ui/form/form"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form"
 import { z } from "zod"
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox"
@@ -13,19 +13,16 @@ export default function HealthInfoForm({
   prefix,
   title,
 }: {
-  residents: any
   form: UseFormReturn<z.infer<typeof familyFormSchema>>
-  selectedResidentId: string
-  onSelect: React.Dispatch<React.SetStateAction<string>>
   prefix: "motherInfo.motherHealthInfo"
   title: string
 }) {
   // Watch the method field with proper type safety
   const selectedMethods = form.watch(`${prefix}.method`) as string[] || []
   
-  // Memoize the noFamilyPlanningSelected check
+  // Memoize the noFamilyPlanningSelected check (checking lowercase since FormComboCheckbox stores lowercase)
   const noFamilyPlanningSelected = useMemo(
-    () => selectedMethods.includes("noFamPlanning"),
+    () => selectedMethods.includes("nofamplanning"), // lowercase to match FormComboCheckbox behavior
     [selectedMethods]
   )
 
@@ -33,18 +30,23 @@ export default function HealthInfoForm({
     // If "No Family Planning" is selected, clear any other methods and clear the source
     if (noFamilyPlanningSelected) {
       if (selectedMethods.length > 1) {
-        form.setValue(`${prefix}.method`, ["noFamPlanning"])
+        form.setValue(`${prefix}.method`, ["nofamplanning"]) // lowercase
       }
       // Clear the source field when no family planning is selected
       form.setValue(`${prefix}.source`, "")
     }
+    // If other family planning methods are selected and "No Family Planning" gets added, 
+    // remove "No Family Planning" to allow multiple selections
+    else if (selectedMethods.length > 1 && selectedMethods.includes("nofamplanning")) {
+      const filteredMethods = selectedMethods.filter(method => method !== "nofamplanning")
+      form.setValue(`${prefix}.method`, filteredMethods)
+    }
   }, [noFamilyPlanningSelected, selectedMethods, form, prefix])
 
-  // Memoize the show condition
-  const showFamilyPlanningSource = useMemo(
-    () => selectedMethods.length > 0 && !noFamilyPlanningSelected,
-    [selectedMethods, noFamilyPlanningSelected]
-  )
+  // Memoize the show condition - only show if methods are selected AND it's not "No Family Planning"
+  const showFamilyPlanningSource = useMemo(() => {
+    return selectedMethods.length > 0 && !selectedMethods.includes("nofamplanning") // lowercase
+  }, [selectedMethods])
 
   return (
     <div className="bg-white rounded-lg p-4">

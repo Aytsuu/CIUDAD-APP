@@ -282,12 +282,17 @@ const items: MenuItem[] = [
     url: "/report",
   },
   {
+    title: "Summon & Case Tracker",
+    url: "/summon-and-case-tracking"
+  },
+  {
     title: "GAD",
     subItems: true,
     url: "/",
     items: [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposals", url: "/gad-project-proposal"},
+      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
     ],
   },
@@ -338,6 +343,10 @@ const items: MenuItem[] = [
     url: "/waste-illegaldumping-report",
   },
   {
+    title: "Waste Personnel & Collection Vehicle",
+    url: "/waste-personnel"
+  },
+  {
     title: "Announcement",
     url: "/announcement",
   },
@@ -346,6 +355,7 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+      { title: "Administrations", url: "/health-administration" },
       { title: "Doctor", url: "/mainMedicalForm" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },
@@ -353,12 +363,17 @@ const items: MenuItem[] = [
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Vaccination", url: "/allRecordsForVaccine" },
+      { title: "Patients Record", url: "/patients-record-main" },
+      { title: "Family Profiling", url: "/family-profiling-main" },
+      
+      
       {
         title: "Inventory",
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
+          {title: "Transactions List", url: "/transactionMainInventoryList" },
         ],
       },
       {

@@ -8,6 +8,8 @@ export interface User {
   staff?: Record<string, any>;
 }
 
+
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;

@@ -16,11 +16,29 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 
 urlpatterns = [
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('admin/', admin.site.urls),
     path('inventory/', include('apps.inventory.urls')),
     path('health-profiling/', include("apps.healthProfiling.urls")),
+    path('maternal/', include('apps.maternal.urls')),
+    path('animalbites/', include("apps.animalbites.urls")),
     path('vaccination/', include("apps.vaccination.urls")),
+    path('family-planning/', include("apps.familyplanning.urls")),
+    path('patientrecords/', include("apps.patientrecords.urls")),
     
+    # path('user/', include('apps.account.urls')),
+    # path('waste/', include('apps.waste.urls')),
+    # path('profiling/', include("apps.profiling.urls")),
+    path('administration/', include("apps.administration.urls")),
+    # path('file/', include('apps.file.urls')),
+    # path('treasurer/', include('apps.treasurer.urls')),
+    # path('donation/', include('apps.donation.urls')),
+    # path('gad/', include('apps.gad.urls')),   
 ]
+
+

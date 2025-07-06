@@ -4,20 +4,21 @@ import { useFieldArray, UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button/button';
 import { Form } from '@/components/ui/form/form';
 import { FormInput } from '@/components/ui/form/form-input';
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormSelect } from '@/components/ui/form/form-select';
-import { Plus } from 'lucide-react';
-import { familyFormSchema } from "@/form-schema/family-form-schema";
-
+import { CircleAlert, Plus } from 'lucide-react';
+import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
 import { DependentRecord } from '../../profilingTypes';
+import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Link } from 'react-router';
 
-export default function DependentForm({ form, residents, selectedParents, dependents, title}: {
+export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any; 
   selectedParents: string[];
   dependents: DependentRecord[];
-  title: string;
 }) {
 
   // Initialize field array
@@ -39,21 +40,22 @@ export default function DependentForm({ form, residents, selectedParents, depend
   React.useEffect(() => {
 
     // Get values
-    const searchedResidentId = form.watch('dependentsInfo.new.id')
-    const searchedResident = residents.default?.find((value: any) => 
-      value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]  
+    const selectedResident = form.watch('dependentsInfo.new.id')
+    const searchedResident = residents.default.find((value: any) => 
+      value.rp_id === selectedResident?.split(" ")[0]  
     );
+    const personalInfo = searchedResident?.personal_info;
 
     // Condition to populate the fields if true, otherwise empty
-    if (searchedResident && !selectedParents.includes(searchedResidentId.split(" ")[0])) {
+    if (personalInfo && !selectedParents.includes(selectedResident.split(" ")[0])) {
       form.setValue('dependentsInfo.new', {
-        id: searchedResidentId || '',
-        lastName: searchedResident.per.per_lname || '',
-        firstName: searchedResident.per.per_fname || '',
-        middleName: searchedResident.per.per_mname || '',
-        suffix: searchedResident.per.per_suffix || '',
-        dateOfBirth: searchedResident.per.per_dob || '',
-        sex: searchedResident.per.per_sex || '',
+        id: selectedResident || '',
+        lastName: personalInfo.per_lname || '',
+        firstName: personalInfo.per_fname || '',
+        middleName: personalInfo.per_mname || '',
+        suffix: personalInfo.per_suffix || '',
+        dateOfBirth: personalInfo.per_dob || '',
+        sex: personalInfo.per_sex || '',
       });
     } else {
       resetForm();
@@ -63,6 +65,19 @@ export default function DependentForm({ form, residents, selectedParents, depend
   // Handle adding dependent to the list
   const handleAddDependent = () => {
     const newDependent = form.getValues('dependentsInfo.new');
+    const isDefault = Object.values(newDependent).every((value) => value === '')
+    if (isDefault) {
+      toast('Please select a resident to add as a dependent.', {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
+      })
+      return;
+    }
     append(newDependent);
     resetForm();
   };
@@ -82,21 +97,30 @@ export default function DependentForm({ form, residents, selectedParents, depend
 
   return (
     <div className="grid gap-3">
-      <div>
-        <h2 className="font-semibold text-lg">{title}</h2>
+      <div className="mb-4">
+        <h2 className="font-semibold text-lg">Dependents Information</h2>
         <p className="text-xs text-black/50">Review all fields before proceeding</p>
       </div>
+
       <Form {...form}>
         <form className='grid gap-4'>
           <Combobox 
-            
             options={filteredResidents}
             value={form.watch('dependentsInfo.new.id')}
             onChange={(value) => form.setValue('dependentsInfo.new.id', value)}
-            placeholder='Search for resident...'
+            placeholder='Select a resident'
             triggerClassName='w-1/3'
             contentClassName='w-[28rem]'
-            emptyMessage='No resident found'
+            emptyMessage={
+              <div className="flex gap-2 justify-center items-center">
+                <Label className="font-normal text-[13px]">No resident found.</Label>
+                <Link to="/resident/form">
+                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                    Register
+                  </Label>
+                </Link>
+              </div>
+            }
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <FormInput control={form.control} name="dependentsInfo.new.lastName" label="Last Name" readOnly />
@@ -106,7 +130,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
             <FormSelect control={form.control} name="dependentsInfo.new.sex" label="Sex" options={[
                 { id: 'male', name: 'Male' },
                 { id: 'female', name: 'Female' },
-              ]} readOnly/>
+            ]} readOnly/>
             <FormDateTimeInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" type="date" readOnly />
             <div className="flex items-end">
               <Button type="button" onClick={handleAddDependent} className="bg-green-600 hover:bg-green-700 text-white">

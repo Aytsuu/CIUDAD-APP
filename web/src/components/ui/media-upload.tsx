@@ -21,6 +21,7 @@ export const MediaUpload = ({
   activeVideoId,
   setMediaFiles,
   setActiveVideoId,
+  onFileRemoved, // Add optional prop
 }: {
   title: string;
   description: string;
@@ -28,6 +29,7 @@ export const MediaUpload = ({
   activeVideoId: string;
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>;
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
+  onFileRemoved?: (id: string) => void; // Optional callback
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { handleFileChange, handleRemoveFile } = useInstantFileUpload(
@@ -64,7 +66,7 @@ export const MediaUpload = ({
               {media.type === "video" ? (
                 <div className="w-full h-full">
                   <video
-                    src={media.previewUrl}
+                    src={media.publicUrl}
                     className="object-cover w-full h-full"
                     controls={activeVideoId === media.id}
                     muted={activeVideoId !== media.id}
@@ -83,7 +85,7 @@ export const MediaUpload = ({
                 </div>
               ) : media.type === "image" ? (
                 <img
-                  src={media.previewUrl}
+                  src={media.status === "uploading" ? media.previewUrl : media.publicUrl}
                   alt="Preview"
                   className="object-cover w-full h-full"
                 />

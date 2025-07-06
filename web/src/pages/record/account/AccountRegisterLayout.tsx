@@ -23,6 +23,7 @@ export default function AccountRegistrationLayout() {
   const params = React.useMemo(()=> location.state?.params, [location.state])
   const residentId = React.useMemo(()=> params.residentId, [params]);
   const { mutateAsync: addAccount } = useAddAccount();
+
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(accountFormSchema)).current;
   const form = useForm<z.infer<typeof accountFormSchema>>({
@@ -31,27 +32,33 @@ export default function AccountRegistrationLayout() {
   });
 
   const submit = async () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     const formIsValid = await form.trigger();
-    if(!formIsValid) {
+    if (!formIsValid) {
       setIsSubmitting(false);
       toast("Please fill out all required fields", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
       });
       return;
-    };
-
+    }
+  
     const accountInfo = form.getValues();
-    addAccount({ 
-      accountInfo: accountInfo,
-      residentId: residentId
-    }, {
-      onSuccess: () => {
-        dispatch(accountCreated(true));
-        safeNavigate.back()
-      }
-    });
-    
+  
+    try {
+      await addAccount({
+        accountInfo,
+        residentId
+      });
+  
+      dispatch(accountCreated(true));
+      safeNavigate.back();
+    } catch (error) {
+      toast("Failed to create account. Please try again.", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

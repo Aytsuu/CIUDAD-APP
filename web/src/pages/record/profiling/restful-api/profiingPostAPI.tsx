@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelper";
 import { capitalize } from "@/helpers/capitalize";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
@@ -24,36 +24,22 @@ export const addPersonalAddress = async (data: Record<string, any>[]) => {
   }
 }
 
-// POST request for resident_profile model 
-export const addResidentProfile = async (personalId: string, staffId: string) => {
-  try {
-    const res = await api.post("profiling/resident/create/", {
-      rp_date_registered: formatDate(new Date()),
-      per: personalId,
-      staff: staffId,
-    });
-
-    return res.data;
-  } catch (err) {
-    throw err;
-  }
-}; 
-
 // POST request for resident_profile combined with personal model 
 export const addResidentAndPersonal = async (personalInfo: Record<string, any>, staffId: string) => {
   try {
     const res = await api.post("profiling/resident/create/combined/", {
       per: {
-        per_lname: personalInfo.per_lname,
-        per_fname: personalInfo.per_fname,
+        per_id: +personalInfo.per_id || null,
+        per_lname: personalInfo.per_lname || null,
+        per_fname: personalInfo.per_fname || null,
         per_mname: personalInfo.per_mname || null,
         per_suffix: personalInfo.per_suffix || null,
-        per_dob: formatDate(personalInfo.per_dob),
-        per_sex: personalInfo.per_sex,
-        per_status: personalInfo.per_status,
+        per_dob: formatDate(personalInfo.per_dob) || null,
+        per_sex: personalInfo.per_sex || null,
+        per_status: personalInfo.per_status || null,
         per_edAttainment: personalInfo.per_edAttainment || null,
-        per_religion: personalInfo.per_religion,
-        per_contact: personalInfo.per_contact,
+        per_religion: personalInfo.per_religion || null,
+        per_contact: personalInfo.per_contact || null,
       },
       staff: staffId || null
     })
@@ -118,54 +104,18 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
 };
 
 // POST request for business model 
-export const addBusiness = async (businessInfo: Record<string, string>, staffId: string) => {
+export const addBusiness = async (data: Record<string, any>) => {
   try {
-    console.log({
-      bus_name: businessInfo.bus_name,
-      bus_gross_sales: parseFloat(businessInfo.bus_gross_sales),
-      bus_province: "Cebu",
-      bus_city: "Cebu City",
-      bus_barangay: "San Roque",
-      bus_street: businessInfo.bus_street,
-      bus_respondentLname: businessInfo.bus_respondentLname,
-      bus_respondentFname: businessInfo.bus_respondentFname,
-      bus_respondentMname: businessInfo.bus_respondentMname,
-      bus_respondentSex: businessInfo.bus_respondentSex,
-      bus_respondentDob: businessInfo.bus_respondentDob,
-      bus_date_registered: formatDate(new Date()),
-      sitio_id: businessInfo.sitio,
-      staff_id: staffId,
-    })
-    const res = await api.post("profiling/business/", {
-      bus_name: businessInfo.bus_name,
-      bus_gross_sales: parseFloat(businessInfo.bus_gross_sales),
-      bus_province: "Cebu",
-      bus_city: "Cebu City",
-      bus_barangay: "San Roque",
-      bus_street: businessInfo.bus_street,
-      bus_respondentLname: businessInfo.bus_respondentLname,
-      bus_respondentFname: businessInfo.bus_respondentFname,
-      bus_respondentMname: businessInfo.bus_respondentMname,
-      bus_respondentSex: businessInfo.bus_respondentSex,
-      bus_respondentDob: businessInfo.bus_respondentDob,
-      bus_date_registered: formatDate(new Date()),
-      sitio_id: businessInfo.sitio,
-      staff_id: staffId,
-    });
-
+    const res = await api.post("profiling/business/create/", data);
     return res.data;
   } catch (err) {
     throw err;
   }
 };
 
-export const addBusinessFile = async (businessId: string, fileId: string) => {
+export const addBusinessFile = async (data: Record<string, any>[]) => {
   try {
-    const res = await api.post('profiling/business/file/', {
-      bus: businessId,
-      file: fileId
-    });
-
+    const res = await api.post('profiling/business/file/create/', data);
     return res.data
   } catch (err) {
     throw err;

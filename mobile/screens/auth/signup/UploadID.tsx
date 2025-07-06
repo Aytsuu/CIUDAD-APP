@@ -12,23 +12,24 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
 import { useToastContext } from "@/components/ui/toast";
 import { useFieldArray } from "react-hook-form";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
 const idOptions: {label: string, value: string}[] = [
-  {label: "Driver's License", value: "driverLicense"},
-  {label: "UMID", value: "umid"},
-  {label: "Philhealth ID", value: "philhealthID"},
-  {label: "Passport", value: "passportID"},
-  {label: "SSS ID", value: "sssID"},
-  {label: "Voter's ID", value: "votersID"},
-  {label: "National ID", value: "nationalID"},
-  {label: "HDMF (Pag-ibig ID)", value: "pagibigID"},
-  {label: "Other", value: "other"}
+  {label: "Driver's License", value: "Driver's License"},
+  {label: "UMID", value: "UMID"},
+  {label: "Philhealth ID", value: "Philhealth ID"},
+  {label: "Passport", value: "Passport"},
+  {label: "SSS ID", value: "SSS ID"},
+  {label: "Voter's ID", value: "Voter's ID"},
+  {label: "National ID", value: "National ID"},
+  {label: "HDMF (Pag-ibig ID)", value: "HDMF (Pag-ibig ID)"},
+  {label: "Other", value: "Other"}
 ];
 
 export default function UploadID() {
   const router = useRouter();
   const { toast } = useToastContext();
-  const {control, trigger, getValues, setValue} = useRegistrationFormContext();
+  const {control, trigger, getValues, setValue, reset } = useRegistrationFormContext();
   const [selectedImage, setSelectedImage] = React.useState<Record<string, any>>({});
 
   const { append } = useFieldArray({
@@ -37,15 +38,16 @@ export default function UploadID() {
   });
 
   React.useEffect(() => {
-    if(selectedImage.rf_type) {
+    if(selectedImage.type) {
       append({
-        rf_name: selectedImage.rf_name,
-        rf_type: selectedImage.rf_type,
-        rf_path: selectedImage.rf_path,
-        rf_url: selectedImage.rf_url,
+        rf_name: selectedImage.name,
+        rf_type: selectedImage.type,
+        rf_path: selectedImage.path,
+        rf_url: selectedImage.url,
         rf_is_id: true,
         rf_id_type: getValues("uploadIdSchema.selected")
       })
+      console.log(getValues('photoSchema.list'))
     }
   }, [selectedImage])
 
@@ -58,15 +60,17 @@ export default function UploadID() {
       return;
     }
 
-    if(!selectedImage.rf_type) {
+    if(!selectedImage.type) {
       toast.error("Upload a photo of your valid ID")
       return;
     }
-
     router.push("/(auth)/take-a-photo")
   };
 
-  console.log("Selected Image:", selectedImage);
+  const handleClose = () => {
+    reset();
+    router.replace("/(auth)");
+  };
 
   return (
     <_ScreenLayout
@@ -80,15 +84,16 @@ export default function UploadID() {
       }
       headerBetweenAction={<Text className="text-[13px]">Valid ID</Text>}
       customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={<X size={20} className="text-gray-700" />}
+          variant="destructive"
+          onPress={handleClose}
+        />
       }
     >
-      <View className="flex-1 justify-between gap-6">
+      <View className="flex-1 justify-between gap-6 px-5">
         <View className="flex-1 gap-6">
           
           {/* ID Type Selection */}

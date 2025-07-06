@@ -22,14 +22,16 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     household_no = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
-    
+    age = serializers.SerializerMethodField()
+    gender = serializers.CharField(source='per.per_sex')
+
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 
-                  'household_no', 'family_no', 'has_account']
+                  'age', 'gender', 'household_no', 'family_no', 'has_account']
     
     def get_mname(self, obj):
-        return obj.per.per_mname if obj.per.per_mname else '-'
+        return obj.per.per_mname if obj.per.per_mname else ''
     
     def get_household_no(self, obj):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
@@ -43,6 +45,15 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     
     def get_has_account(self, obj):
         return hasattr(obj, 'account')
+    
+    def get_age(self, obj):
+        dob = obj.per.per_dob
+        today = datetime.today().date()
+
+        age = today.year - dob.year - (
+        (today.month, today.day) < (dob.month, dob.day)
+    )
+        return age
 
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
@@ -51,8 +62,8 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResidentProfile
-        fields = ['per', 'staff', 'rp_id', 'rp_date_registered']
-        read_only_fields = ['rp_id', 'rp_date_registered']
+        fields = ['per', 'staff', 'rp_id']
+        read_only_fields = ['rp_id']
         extra_kwargs = {
             'staff': {'required': False}
         }
@@ -61,16 +72,18 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):   
         # Extract personal data
         personal_data = validated_data.pop('per')
-        
-        # Create Personal record
-        personal_serializer = PersonalBaseSerializer(data=personal_data)
-        personal_serializer.is_valid(raise_exception=True)
-        personal = personal_serializer.save()
+        per = personal_data.pop('per_id', None)
+        if per:
+            personal = Personal.objects.get(per_id=per)
+        else:
+            # Create Personal record
+            personal_serializer = PersonalBaseSerializer(data=personal_data)
+            personal_serializer.is_valid(raise_exception=True)
+            personal = personal_serializer.save()
 
         # Create ResidentProfile record
         resident_profile = ResidentProfile.objects.create(
             rp_id = self.generate_resident_no(),
-            rp_date_registered = timezone.now().date(),
             per = personal,
             staff_id = validated_data.get('staff', None)
         )

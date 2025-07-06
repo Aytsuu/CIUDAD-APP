@@ -1,24 +1,21 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { BusinessRecord } from "../profilingTypes";
-import { Button } from "@/components/ui/button/button";
-import { CircleChevronRight } from "lucide-react";
-import { Link } from "react-router";
-import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router";
+import { getSitioList } from "../restful-api/profilingGetAPI";
+import { useLoading } from "@/context/LoadingContext";
+import ViewButton from "@/components/ui/view-button";
 
-export const businessColumns = (
-  businesses: Record<string, any>,
-  sitio: Record<string, string>
-): ColumnDef<BusinessRecord>[] => [
+export const businessColumns: ColumnDef<BusinessRecord>[] = [
   {
-    accessorKey: "id",
+    accessorKey: "bus_id",
     header: "Business No.",
   },
   {
-    accessorKey: "name",
+    accessorKey: "bus_name",
     header: "Business Name",
   },
   {
-    accessorKey: "grossSales",
+    accessorKey: "bus_gross_sales",
     header: "Gross Sales",
   },
   {
@@ -26,51 +23,53 @@ export const businessColumns = (
     header: "Sitio",
   },
   {
-    accessorKey: "street",
+    accessorKey: "bus_street",
     header: "Street",
   },
   {
     accessorKey: "respondent",
     header: "Respondent",
+    cell: ({ row }) => (
+      (`${row.original.bus_respondentLname}, ${row.original.bus_respondentFname}` 
+        + ` ${row.original.bus_respondentMname ? `${row.original.bus_respondentMname[0]}.` : ''}`)
+    )
   },
   {
-    accessorKey: "dateRegistered",
+    accessorKey: "bus_date_registered",
     header: "Date Registered",
-  },
-  {
-    accessorKey: "registeredBy",
-    header: "Registered By",
   },
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
-      <Link
-        to="/business/form"
-        state={{
-          params: {
-            type: "viewing",
-            sitio: sitio,
-            business: businesses.find(
-              (business: any) => business.bus_id == row.original.id
-            ),
-          },
-        }}
-      >
-        <div className="group flex justify-center items-center gap-2 px-3 py-2
-                  rounded-lg border-none shadow-none hover:bg-muted
-                  transition-colors duration-200 ease-in-out">
-          <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                  transition-colors duration-200 ease-in-out">
-            View
-          </Label> 
-          <CircleChevronRight
-            size={35}
-            className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-                group-hover:stroke-white transition-all duration-200 ease-in-out"
-          />
-        </div>
-      </Link>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const {showLoading, hideLoading} = useLoading();
+
+      const handleViewClick = async () => {
+        showLoading();
+        try {
+          const sitio = await getSitioList();
+          if(sitio) {
+            navigate("/business/form", {
+              state: {
+                params: {
+                  type: "viewing",
+                  sitio: sitio,
+                  business: row.original
+                }
+              }
+            })
+            hideLoading();
+          }
+        } catch (err) {
+          hideLoading();
+          throw new Error(err as string);
+        }
+      }
+      
+      return (
+        <ViewButton onClick={handleViewClick}/>
+      )
+    },
   },
 ];

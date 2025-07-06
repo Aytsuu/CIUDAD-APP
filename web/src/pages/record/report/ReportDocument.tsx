@@ -2,16 +2,18 @@ import React from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { ARDocTemplate } from "./template/ARDocTemplate"
 import { WARDocTemplate } from "./template/WARDocTemplate"
-import { CircleAlert, FileText, Upload } from "lucide-react"
+import { CircleAlert, FileText, Upload, Loader2, CircleCheck, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Input } from "@/components/ui/input"
 import { useInstantFileUpload } from "@/hooks/use-file-upload"
 import { useLocation } from "react-router"
-import { getDateTimeFormat } from "@/helpers/dateFormatter"
+import { getDateTimeFormat } from "@/helpers/dateHelper"
 import { useAddARFile, useAddWARFile } from "./queries/reportAdd"
 import { useAuth } from "@/context/AuthContext"
-import { a } from "node_modules/framer-motion/dist/types.d-B50aGbjN"
+import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "sonner"
+import { LoadButton } from "@/components/ui/button/load-button"
 
 export default function ReportDocument() {
   const { user } = useAuth();
@@ -21,6 +23,7 @@ export default function ReportDocument() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const data = React.useMemo(() => params?.data, [params]);
   const type = React.useMemo(() => params?.type, [params]);
+  const [ isUploading, setIsUploading ] = React.useState<boolean>(false);
 
   // For Acknolwedgement Report Document
   const { mutateAsync: addARFile } = useAddARFile();
@@ -41,8 +44,33 @@ export default function ReportDocument() {
     , '_blank');
   };
 
+  const successFeedback = () => {
+    toast("Document uploaded successfully", {
+      icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+    });
+    data.status = "Signed";
+    setIsUploading(false);
+  }
+
+  const errorFeedback = () => {
+    toast("Failed to upload document. Please try again.", {
+      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      style: {
+        border: '1px solid rgb(225, 193, 193)',
+        padding: '16px',
+        color: '#b91c1c',
+        background: '#fef2f2',
+      },
+      action: {
+        label: <X size={14} className="bg-transparent"/>,
+        onClick: () => toast.dismiss(),
+      },
+    });
+    setIsUploading(false);
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Uploading...')
+    setIsUploading(true);
     const files = Array.from(e.target.files || []);
     if(files.length === 0) return;
     const newFile = {
@@ -58,8 +86,6 @@ export default function ReportDocument() {
 
     const { publicUrl, storagePath } = await uploadFile(newFile.file);
     if (publicUrl) {
-
-      console.log(type)
       
       if (type === "AR") {
         // Adding signed document for acknolwedgement report
@@ -69,10 +95,13 @@ export default function ReportDocument() {
           'arf_path': storagePath,
           'arf_url': publicUrl,
           'ar': data.id,
-          'staff': user?.staff.staff_id
+          'staff': user?.staff?.staff_id
         }], {
           onSuccess: () => {
-            
+            successFeedback();
+          },
+          onError: () => {
+            errorFeedback()
           }
         })
       } else {
@@ -83,10 +112,13 @@ export default function ReportDocument() {
           'warf_path': storagePath,
           'warf_url': publicUrl,
           'war': data.id,
-          'staff': user?.staff.staff_id
+          'staff': user?.staff?.staff_id
         }], {
           onSuccess: () => {
-
+            successFeedback();
+          },
+          onError: () => {
+            errorFeedback()
           }
         })
       }
@@ -124,7 +156,7 @@ export default function ReportDocument() {
 
               <div className="space-y-3 pt-2">
                 <h3 className="text-sm font-medium">Actions</h3>
-                {data.status === "Unsigned" ? (<>
+                {data.status === "Unsigned" ? (!isUploading ? (<>
                   <Input
                     type="file"
                     ref={fileInputRef}
@@ -141,6 +173,8 @@ export default function ReportDocument() {
                       <span className="text-[13px] font-medium">Upload signed document</span>
                   </label>
                 </>) : (
+                  <LoadButton className="w-full">Uploading...</LoadButton> 
+                )) : (
                   <>
                     <label 
                       className="flex justify-center items-center cursor-pointer bg-buttonBlue 
@@ -158,7 +192,7 @@ export default function ReportDocument() {
                 <h3 className="text-sm font-medium">Document Info</h3>
                 <div className="grid grid-cols-2 gap-1 text-xs">
                   <span className="text-muted-foreground">Created:</span>
-                  <span>{data.date}</span>
+                  <span>{data.created_at || data.date}</span>
                   <span className="text-muted-foreground">Document ID:</span>
                   <span>{data.id}</span>
                 </div>
@@ -185,6 +219,7 @@ export default function ReportDocument() {
                 time_completed: comp.ar.ar_time_completed,
                 result: comp.ar.ar_result
               }))}
+              reportPeriod={data?.reportPeriod}
             />
             }
         </div>

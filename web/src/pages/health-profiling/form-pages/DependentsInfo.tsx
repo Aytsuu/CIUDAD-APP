@@ -581,6 +581,11 @@ export default function DependentsForm({ onSubmit, initialData }: DependentsForm
             </div>
           </div>
         </div>
+        <div className="flex justify-end mt-6">
+          <Button type="button" onClick={handleMainFormSubmit}>
+            Submit All Records
+          </Button>
+        </div>
       </Form>
     </div>
   )

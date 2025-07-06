@@ -1,58 +1,43 @@
 import { Label } from "@/components/ui/label";
+import { capitalize } from "@/helpers/capitalize";
 
 // Format residents for searching
-export const formatResidents = (params: any, isHousehold: boolean) => {
-  if (!params.residents) return [];
+export const formatResidents = (residents: any) => {
+  if (!residents) return [];
 
   // Begin formatting
-  const formatted = params.residents.map((resident: any) => ({
-    id: `${resident.rp_id} ${resident.per.per_fname} ${resident.per.per_mname} ${resident.per.per_lname}`,
+  return residents.map((resident: any) => ({
+    id: `${resident.rp_id} ${resident.name}`,
     name: (
       <div className="flex gap-4 items-center">
         <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
           #{resident.rp_id}
         </span>
-        {`${resident.per.per_lname}, ${resident.per.per_fname} ${
-          resident.per.per_mname ? resident.per.per_mname.charAt(0) + "." : ""
-        }`}
+        {resident.name}
       </div>
     ),
+    per_id: resident.personal_info.per_id
   }));
 
-  // Filter unassigned residents for household registration
-  if (isHousehold) {
-    const filtered = formatted.filter(
-      (resident: any) =>
-        !params.households?.some(
-          (household: any) => household.rp.rp_id === resident.id.split(" ")[0]
-        )
-    );
-
-    return filtered;
-  }
-
-  return formatted;
 };
 
 // Format sitio for searching
-export const formatSitio = (params: any) => {
-  if (!params.sitio) return [];
+export const formatSitio = (sitio: any) => {
+  if (!sitio) return [];
 
-  const sitioList = params.sitio.map(
+  return sitio.map(
     (item: { sitio_id: string; sitio_name: string }) => ({
-      id: String(item.sitio_id),
+      id: item.sitio_id,
       name: item.sitio_name,
     })
   );
-
-  return sitioList;
 };
 
 // Format households for searching
-export const formatHouseholds = (params: any) => {
-  if (!params.households) return [];
+export const formatHouseholds = (households: any) => {
+  if (!households) return [];
 
-  return params.households.map((household: any) => ({
+  return households.map((household: any) => ({
     id: household.hh_id,
     name: (
       <div className="flex gap-4 items-center">
@@ -61,13 +46,44 @@ export const formatHouseholds = (params: any) => {
         </span>
         <div className="flex items-center gap-2">
           <Label>Head:</Label>
-          {`${household.rp.per.per_lname}, ${household.rp.per.per_fname}, ${
-            household.rp.per.per_mname
-              ? household.rp.per.per_mname.charAt(0) + "."
-              : ""
-          }`}
+          {household.head}
         </div>
       </div>
     ),
   }));
 };
+
+export const formatAddresses = (addresses: any) => {
+  if(!addresses) return [];
+
+  return addresses.map( (item: {
+      per: string,
+      add: string,
+      add_sitio: string,
+      add_street: string,
+    }, idx: number) => ({
+      per_id: item.per,
+      add_id: item.add,
+      id: `address ${idx+1} - ${item.add_sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
+      name: `Address ${idx+1} - ${capitalize(item.add_sitio)}, ${item.add_street}`, 
+    })
+  )
+}
+
+export const formatFamiles = (families: any) => {
+  if (!families) return [];
+
+  return families.map((family: any, idx: number) => ({
+    id: family.fam_id,
+    name: (
+      <div className="flex gap-4 items-center">
+        <span>
+          {`(${idx + 1}) Family ID`}
+        </span>
+        <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
+          {family.fam_id}
+        </span>
+      </div>
+    ),
+  }));
+}

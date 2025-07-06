@@ -11,9 +11,13 @@ export const getPerAddressesList = async () => {
 }
 
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
-export const getResidentsList = async () => {
+export const getResidentsList = async (is_staff: boolean = false) => {
   try {
-    const res = await api.get("profiling/resident/");
+    const res = await api.get("profiling/resident/", {
+      params: {
+        is_staff: is_staff
+      }
+    });
     return res.data;
   } catch (err) {
     throw err;
@@ -198,9 +202,15 @@ export const getRequests = async (page: number, pageSize: number, searchQuery: s
 };
 
 // ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
-export const getBusinesses = async () => {
+export const getBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
   try {
-    const res = await api.get("profiling/business/");
+    const res = await api.get("profiling/business/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
     return res.data;
   } catch (err) {
     throw err;

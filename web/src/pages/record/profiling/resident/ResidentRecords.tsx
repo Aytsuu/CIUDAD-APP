@@ -12,31 +12,43 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions"
 import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useResidentsTable } from "../queries/profilingFetchQueries"
+import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ResidentRecords() {
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
+  const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
   const { data: residentsTableData, isLoading } = useResidentsTable(
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
   )
 
+  const residents = residentsTableData?.results || [];
+  const totalCount = residentsTableData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
   React.useEffect(() => {
     setCurrentPage(1)
   }, [debouncedSearchQuery])
 
-  const residents = residentsTableData?.results || [];
-  const totalCount = residentsTableData?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  React.useEffect(() => {
+    if(isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading])
 
+  // ----------------- HANDLERS --------------------
   const handleExport = (type: "csv" | "excel" | "pdf") => {
     switch (type) {
       case "csv":
@@ -52,49 +64,9 @@ export default function ResidentRecords() {
   }
 
   return (
+    // ----------------- RENDER --------------------
     <MainLayoutComponent title="Resident Profiling" description="Manage and view all residents in your community">
       <div className="space-y-6">
-        {/* Header Section with Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Residents</p>
-                  <p className="text-2xl font-bold">{totalCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <ClockArrowUp className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Active
-                </Badge>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold">+{Math.max(0, totalCount - 50)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Search and Actions */}
         <Card>
           <CardHeader className="pb-4">
@@ -139,9 +111,13 @@ export default function ResidentRecords() {
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending
-                    <Badge variant="secondary" className="ml-2">
-                      12
-                    </Badge>
+                    {isLoadingRequestCount ? <Skeleton className="w-7 h-6"/> : (requestCount > 0 ?
+                      (<Badge variant="secondary" 
+                        className="ml-2 bg-orange-500/20 text-orange-600 hover:bg-orange-500/20"
+                      >
+                        {requestCount}
+                      </Badge>) : (<></>)
+                    )}
                   </Button>
                 </Link>
 
@@ -213,7 +189,7 @@ export default function ResidentRecords() {
                       params: {
                         origin: "create",
                         title: "Resident Registration",
-                        Description: "Provide the necessary details, and complete the registration.",
+                        description: "Provide the necessary details, and complete the registration.",
                       },
                     }}
                   >
@@ -235,7 +211,7 @@ export default function ResidentRecords() {
             {!isLoading && residents.length > 0 && (
               <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-                  Showing <span className="font-medium">{(currentPage - 1) * (pageSize + 1)}</span> -{" "}
+                  Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
                   <span className="font-medium">{totalCount}</span> residents
                 </p>

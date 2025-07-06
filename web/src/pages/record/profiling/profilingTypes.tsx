@@ -69,22 +69,33 @@ export type SitioRecord = {
 }
 
 export type RequestRecord = {
-  id: string;
-  lname: string;
-  fname: string;
-  mname: string;
-  suffix: string;
-  requestDate: string;
+  req_id: string;
+  per_lname: string;
+  per_fname: string;
+  per_mname: string;
+  per_suffix: string;
+  per_sex: string;
+  per_dob: string;
+  per_status: string;
+  per_contact: string;
+  per_edAttainment: string;
+  per_religion: string;
+  addresses: Record<string, any>[];
+  files: Record<string, any>[]
+  req_date: string;
 }
 
 export type BusinessRecord = {
-  id: string;
-  name: string;
-  grossSales: string;
+  bus_id: string;
+  bus_name: string;
+  bus_gross_sales: string;
   sitio: string;
-  street: string;
-  respondent: string;
-  dateRegistered: string;
-  registeredBy: string;
+  bus_street: string;
+  bus_respondentLname: string;
+  bus_respondentFname: string;
+  bus_respondentMname: string;
+  bus_date_registered: string;
+  bus_registered_by: string;
+  files: Record<string, any>[];
 }
 

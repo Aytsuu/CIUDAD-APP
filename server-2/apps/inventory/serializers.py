@@ -2,6 +2,17 @@ from rest_framework import serializers
 from .models import *
 from datetime import date  # Add this import
 
+
+
+class PartialUpdateMixin:
+    def to_internal_value(self, data):
+        if self.instance:
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
+
+
 class MedicineListSerializers(serializers.ModelSerializer):
     class Meta: 
         model = Medicinelist
@@ -17,6 +28,8 @@ class CommodityListSerializers(serializers.ModelSerializer):
         model = CommodityList
         fields = '__all__'
          
+         
+ 
 class CategorySerializers(serializers.ModelSerializer):
     class Meta:
         model=Category
@@ -248,6 +261,7 @@ class VacccinationListSerializer(serializers.ModelSerializer):
 class VaccineStockSerializer(serializers.ModelSerializer):
     vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
     vaccinelist = VacccinationListSerializer(source='vac_id', read_only = True)
+    inv_details = InventorySerializers(source='inv_id', read_only=True)
     # Foreign keys (required for creation but optional for updates)
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
     vac_id = serializers.PrimaryKeyRelatedField(queryset=VaccineList.objects.all())
@@ -255,6 +269,7 @@ class VaccineStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = VaccineStock
         fields = '__all__'
+        
         
     def to_internal_value(self, data):
         """Allow partial updates but require all fields for creation."""

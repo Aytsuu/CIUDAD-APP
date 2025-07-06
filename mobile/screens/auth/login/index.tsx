@@ -41,7 +41,7 @@ export default function SignInScreen() {
   useEffect(() => {
     if (isAuthenticated && user) {
       toast.success("Welcome back!");
-      // router.replace("/dashboard");
+      router.replace('/(tabs)');
     }
   }, [isAuthenticated, user, router, toast]);
 
@@ -79,8 +79,11 @@ export default function SignInScreen() {
   };
 
   return (
-    <ScreenLayout showExitButton={false}>
-      <View className="flex-1">
+    <ScreenLayout 
+      showExitButton={false}
+      showBackButton={false}
+    >
+      <View className="flex-1 px-5">
         <View className="items-center mt-7">
           <Image source={require("@/assets/images/Logo.png")} className="w-24 h-24" />
         </View>

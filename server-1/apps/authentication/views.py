@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny 
 from rest_framework.decorators import api_view, permission_classes
 from django.db import transaction
 from rest_framework.authtoken.models import Token
@@ -51,6 +51,8 @@ class AuthBaseView(APIView):
         return supabase_id, email
 
 class SignupView(APIView):
+    permission_classes = [AllowAny]
+    
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -213,6 +215,8 @@ class LoginView(APIView):
 
 
 class UserView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
         try:
             # Get the Supabase user from the request (set by middleware)

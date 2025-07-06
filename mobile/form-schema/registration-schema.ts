@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const passwordFormat = z.string()
-  .min(8, { message: "Password must be at least 8 characters long" })
+  .min(8, { message: "Password must be at least 6 characters long" })
   .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
   .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
   .regex(/[0-9]/, { message: "Password must contain at least one number" })
@@ -11,7 +11,7 @@ export const accountFormSchema = z.object({
     .min(1, "Username is required")
     .min(6, "Username must be atleast 6 letters"),
   email: z.string()
-    .email({ message: "Invalid email address" }),
+    .email("Invalid email address"),
   password: passwordFormat,
   confirmPassword: z.string()
     .min(1, "Confirm Password is required")
@@ -27,13 +27,7 @@ export const accountUpdateSchema = z.object({
     .email({ message: "Invalid email address" })
     .optional(  ),
 
-  newPassword: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters long" })
-    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
-    .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
-    .regex(/[0-9]/, { message: "Password must contain at least one number" })
-    .optional(),
+  newPassword: passwordFormat,
 
   profile_image: z
     .instanceof(File, { message: "Please upload a file" })
@@ -52,7 +46,7 @@ export const accountUpdateSchema = z.object({
 });
 
 export const verificationSchema = z.object({
-  dob: z.string().date()
+  dob: z.string().date("Date of birth must be a valid date")
 });
 
 export const fileSchema = z.object({

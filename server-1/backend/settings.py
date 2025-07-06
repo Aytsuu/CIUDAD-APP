@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'corsheaders',
-    'channels',
     
     # Local apps
     'apps.administration',
@@ -80,7 +79,7 @@ INSTALLED_APPS = [
     'apps.notification',
     'apps.announcement',
     'apps.authentication',
-    
+    'apps.gad',
     'backend.firebase.notifications',
     'detection'
 ]
@@ -124,6 +123,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = 'backend.asgi.application'
 
 # ========================
+# EMAIL CONFIGURATION
+# ========================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+
+# ========================
 # DATABASE CONFIGURATION
 # ========================
 DATABASES = {
@@ -163,6 +176,7 @@ USE_TZ = True
 
 # Static files 
 STATIC_URL = 'static/'
+DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

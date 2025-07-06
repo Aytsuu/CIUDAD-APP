@@ -9,7 +9,7 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
 export default function TakeAPhoto() {
   const {control} = useRegistrationFormContext();
-  const [photo, setPhoto] = React.useState<Record<string, any>>();
+  const [photo, setPhoto] = React.useState<Record<string, any> | null>(null);
   const [isDetecting, setIsDetecting] = React.useState(false);
   const [detectionStatus, setDetectionStatus] = React.useState<string>("");
   const [retryCount, setRetryCount] = React.useState(0);

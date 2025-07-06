@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date
 
 class ReportType(models.Model):
     rt_id = models.BigAutoField(primary_key=True)
@@ -15,8 +16,8 @@ class IncidentReport(models.Model):
   ir_date = models.DateField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
-  # rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE)
-  # add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
+  rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE)
+  add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'incident_report'
@@ -30,13 +31,13 @@ class AcknowledgementReport(models.Model):
   ar_time_completed = models.TimeField()
   ar_action_taken = models.TextField()
   ar_result = models.TextField()
-  ar_created_at = models.DateField(auto_now_add=True)
+  ar_created_at = models.DateField(default=date.today)
   ar_status = models.CharField(max_length=20, default='Unsigned')
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
-  # add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
-  # staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
+  add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
+  staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'acknowledgement_report'
@@ -54,13 +55,14 @@ class ARFile(models.Model):
 
 class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
-  war_created_at = models.DateField(auto_now_add=True)
+  war_created_at = models.DateField(default=date.today)
+  war_created_for = models.DateField(default=date.today)
   war_status = models.CharField(max_length=50, default='Unsigned')
   war_is_archive = models.BooleanField(default=False)
-  # staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
+  staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
-    db_table = 'weekly_acknowledgement_report'
+    db_table = 'weekly_accomplishment_report'
 
 class WARFile(models.Model):
   warf_id = models.BigAutoField(primary_key=True)
@@ -98,6 +100,9 @@ class ReportTemplate(models.Model):
   rte_logoRight = models.URLField(null=True)
   rte_headerText = models.TextField(null=True)
   rte_type = models.CharField(max_length=50, null=True)
+  rte_prepared_by = models.CharField(max_length=100, null=True)
+  rte_recommended_by = models.CharField(max_length=100, null=True)
+  rte_approved_by = models.CharField(max_length=100, null=True)
   
   class Meta:
     db_table = "report_template"

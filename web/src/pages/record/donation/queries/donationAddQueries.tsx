@@ -6,12 +6,10 @@ import { postdonationreq } from "../request-db/donationPostRequest";
 
 export type DonationInput = {
   don_num?: number;
-  don_donorfname: string;
-  don_donorlname: string;
+  don_donor: string;
   don_item_name: string;
-  don_qty: number | string;
+  don_qty: string;
   don_category: string;
-  don_receiver: string;
   don_description?: string;
   don_date: string;
 };

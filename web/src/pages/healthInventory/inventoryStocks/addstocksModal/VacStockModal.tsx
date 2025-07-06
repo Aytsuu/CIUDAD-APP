@@ -61,6 +61,7 @@ export default function VaccineStockForm() {
   // Watch form values
   const solvent = form.watch("solvent");
   const vialBoxCount = form.watch("qty") || 0;
+  const dosesPcsCount = form.watch("volume") || 0;
 
   const onSubmit = async (data: VaccineStockType) => {
     console.log("Submitting:", data);
@@ -133,7 +134,7 @@ export default function VaccineStockForm() {
             {solvent === "diluent" && (
               <FormInput control={form.control} name="volume" label="Dosage (ml)" type="number" />
             )}
-          </div>
+          </div> 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormInput control={form.control} name="qty" label={solvent === "doses" ? "Number of Vials" : "Number of Containers"} type="number"/>

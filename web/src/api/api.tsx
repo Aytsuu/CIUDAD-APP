@@ -23,26 +23,26 @@ api.interceptors.request.use(async (config) => {
     return config;
   }
 
-  try {
-    // Get current session
-    const { data: { session }, error } = await supabase.auth.getSession();
+//   try {
+//     // Get current session
+//     const { data: { session }, error } = await supabase.auth.getSession();
     
-    if (error) {
-      console.error("Error getting session:", error);
-      return config;
-    }
+//     if (error) {
+//       console.error("Error getting session:", error);
+//       return config;
+//     }
     
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
-    } else {
-      console.warn("No access token found in session");
-    }
-  } catch (error) {
-    console.error("Error in request interceptor:", error);
-  }
+//     if (session?.access_token) {
+//       config.headers.Authorization = `Bearer ${session.access_token}`;
+//     } else {
+//       console.warn("No access token found in session");
+//     }
+//   } catch (error) {
+//     console.error("Error in request interceptor:", error);
+//   }
   
-  return config;
-});
+//   return config;
+// });
 
 // Response interceptor to handle auth errors
 // api.interceptors.response.use(

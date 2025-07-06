@@ -2,7 +2,7 @@ import React from "react"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { Check, CircleAlert, FileDown, Filter, Plus, Search } from "lucide-react"
+import { Check, CircleAlert, FileDown, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { ARColumns } from "../ReportColumns"
 import { useGetAcknowledgementReport, useGetWeeklyAR } from "../queries/reportFetch"
@@ -14,12 +14,15 @@ import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { formatDate, getWeekNumber } from "@/helpers/dateFormatter"
+import { formatDate, getWeekNumber } from "@/helpers/dateHelper"
 import { useNavigate } from "react-router"
 import { getSitioList } from "../../profiling/restful-api/profilingGetAPI"
 import { useLoading } from "@/context/LoadingContext"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function ARRecords() {
+  // ----------------- STATE INITIALIZATION --------------------
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
@@ -31,7 +34,10 @@ export default function ARRecords() {
   const [isCreatingWeeklyAR, setIsCreatingWeeklyAR] = React.useState<boolean>(false);
   const [isCreatable, setIsCreatable] = React.useState<boolean>(true);
   const [reset, setReset] = React.useState<boolean>(false);
-  const { data: arReports, isLoading: isLoadingArReports } = useGetAcknowledgementReport()
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const debouncedPageSize = useDebounce(pageSize, 100)
+  const { data: arReports, isLoading: isLoadingArReports } = useGetAcknowledgementReport(
+    currentPage, debouncedPageSize, debouncedSearchQuery)
   const { data: weeklyAR, isLoading: isLoadingWeeklyAR } = useGetWeeklyAR();
   const { mutateAsync: addWAR } = useAddWAR();
   const { mutateAsync: addWARComp } = useAddWARComp();
@@ -52,12 +58,24 @@ export default function ARRecords() {
       }
     })
   ), [weeklyAR]);
+
+  const compositions = React.useMemo(() => (
+    weeklyAR?.reduce((acc: any[], war: any) => 
+      acc.concat(war.war_composition)
+    , [])
+  ), [weeklyAR])
+
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoadingArReports) showLoading();
+    else hideLoading();
+  }, [isLoadingArReports])
   
   React.useEffect(() => {
     if(warThisMonth) {
       setIsCreatable(warThisMonth?.every((war: any) => 
-        getWeekNumber(war.date) !== getWeekNumber(formatDate(now)
-      )));
+        getWeekNumber(war.date) !== getWeekNumber(formatDate(now) as string)
+      ));
     }
   }, [warThisMonth]);
 
@@ -85,7 +103,7 @@ export default function ARRecords() {
 
     // Proceed to creation
     try {
-      addWAR(user?.staff.staff_id, {
+      addWAR({staff: user?.staff?.staff_id}, {
         onSuccess: (data) => {
           const compositions = selectedRows.map((row) => ({
             ar: row.id,
@@ -180,7 +198,7 @@ export default function ARRecords() {
               ) : (
                 <Button onClick={() => setIsCreatingWeeklyAR(true)} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Create Week {getWeekNumber(formatDate(now))} AR
+                  Create Week {getWeekNumber(formatDate(now) as string)} AR
                 </Button>
               )
             ) : (
@@ -227,16 +245,13 @@ export default function ARRecords() {
                     className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                <Button variant="outline" className="gap-2 whitespace-nowrap">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                </Button>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+
                 <DropdownLayout
                   trigger={
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="shadow-none">
                       <FileDown className="h-4 w-4" />
                       Export
                     </Button>
@@ -257,22 +272,20 @@ export default function ARRecords() {
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span>Show</span>
-                <Input
-                  type="number"
-                  min="1"
-                  max="100"
-                  className="w-16 h-8 text-center border-gray-200"
-                  value={pageSize}
-                  onChange={(e) => {
-                    const value = Number.parseInt(e.target.value)
-                    if (value >= 1 && value <= 100) {
-                      setPageSize(value)
-                      setCurrentPage(1) // Reset to first page
-                    }
-                  }}
-                />
-                <span>entries</span>
+                <span className="text-sm font-medium text-gray-700">Show</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">entries</span>
               </div>
 
               <div className="text-sm text-gray-600">
@@ -292,7 +305,7 @@ export default function ARRecords() {
             <div className="border-t overflow-hidden">
               <div className="overflow-x-auto">
                 <DataTable
-                  columns={ARColumns(isCreatingWeeklyAR)}
+                  columns={ARColumns(isCreatingWeeklyAR, compositions)}
                   data={ARList}
                   onSelectedRowsChange={onSelectedRowsChange}
                   isLoading={isLoadingArReports || isLoadingWeeklyAR}

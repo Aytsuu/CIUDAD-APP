@@ -17,6 +17,7 @@ import {
   useAddAddress,
   useAddPerAddress,
 } from "../../queries/profilingAddQueries";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -131,7 +132,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
         {
           personalId: params.data.personalInfo.per_id,
           values: {
-            ...values,
+            ...capitalizeAllFields(values),
             per_addresses: isAddressAdded
               ? addresses.slice(0, data.per_addresses.length)
               : addresses,
@@ -142,6 +143,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
             handleSubmitSuccess("Profile updated successfully");
             setIsSubmitting(false);
             setFormType(Type.Viewing);
+            params.data.personalInfo = capitalizeAllFields(values);
             params.data.personalInfo.per_addresses = addresses;
           },
         }

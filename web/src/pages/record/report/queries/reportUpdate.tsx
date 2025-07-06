@@ -1,7 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/api";
 
 export const useUpdateTemplate = () => {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({data, type} : {
       data: Record<string, any>, 
@@ -13,6 +14,20 @@ export const useUpdateTemplate = () => {
       } catch (err) {
         throw err;
       }
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['reportTemplate'], (old: any[] = []) => {
+        old.map((template) => {
+          if(template.rte_id == updated.rte_id) {
+            return {
+              ...template,
+              updated
+            }
+          }
+          return template;
+        })
+      })
+      queryClient.invalidateQueries({queryKey: ['reportTemplate']})
     }
   })
 }
