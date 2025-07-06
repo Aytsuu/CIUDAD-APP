@@ -18,25 +18,51 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                 queryset=FamilyComposition.objects.select_related(
                     'fam',
                     'fam__hh',
-                ).only('fam')),
+                ).only(
+                    'fam',
+                    'fam__hh__hh_id', # Only what's needed for search
+                )),
+            Prefetch('per__personal_addresses',
+                queryset=PersonalAddress.objects.select_related(
+                    'add',
+                    'add__sitio',
+                ).only(
+                    'add__sitio__sitio_name',  # Only what's needed for search
+                ))
         ).only(
           'rp_id',
           'rp_date_registered',
           'per__per_lname',
           'per__per_fname',
           'per__per_mname',
+          'per__per_sex',
+          'per__per_dob'
         )
 
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
-            queryset = queryset.filter(
-                Q(per__per_lname__icontains=search_query) |
-                Q(per__per_fname__icontains=search_query) |
-                Q(per__per_mname__icontains=search_query) |
-                Q(rp_id__icontains=search_query) |
-                Q(family_compositions__fam__hh__hh_id__icontains=search_query)).distinct()
+            if search_query.isdigit():
+                queryset = queryset.filter(
+                    Q(rp_id__icontains=search_query) |
+                    Q(family_compositions__fam__hh__hh_id__icontains=search_query)
+                ).distinct()
+            else:
+                # Split name into parts for more accurate matching
+                name_parts = search_query.split()
+                name_q = Q()
+                for part in name_parts:
+                    name_q &= (
+                        Q(per__per_lname__icontains=part) |
+                        Q(per__per_fname__icontains=part) |
+                        Q(per__per_mname__icontains=part)
+                    )
+                
+                queryset = queryset.filter(
+                    name_q |
+                    Q(per__personal_addresses__add__sitio__sitio_name__icontains=search_query)
+                ).distinct()
 
-        return queryset
+        return queryset.order_by('per__per_lname', 'per__per_fname')
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
     serializer_class = ResidentPersonalCreateSerializer

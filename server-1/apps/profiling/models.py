@@ -23,6 +23,9 @@ class Address(models.Model):
 
     class Meta:
         db_table = 'address'
+        indexes = [
+            models.Index(fields=['sitio']),
+        ]
 
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
@@ -57,7 +60,7 @@ class Personal(models.Model):
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
 
     class Meta:
@@ -72,6 +75,7 @@ class ResidentProfile(models.Model):
     class Meta:
         db_table = 'resident_profile'
         indexes = [
+            models.Index(fields=['rp_id']),
             models.Index(fields=['per']),
             models.Index(fields=['rp_date_registered'])
         ]
