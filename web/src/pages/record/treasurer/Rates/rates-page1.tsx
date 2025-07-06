@@ -1,4 +1,3 @@
-// ... All your imports remain the same
 import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import RatesFormPage1 from "./forms/rates-form-page1"

@@ -98,6 +98,7 @@ export const getGarbageAcceptedRequest = async () => {
             garb_location: item.garb_location || '',
             garb_waste_type: item.garb_waste_type || '',
             garb_created_at: item.garb_created_at || '',
+            garb_additional_notes: item.garb_additional_notes,
             dec_date: item.dec_date || null,
             truck_id: item.truck_id || null,
             driver_id: item.driver_id || null,
