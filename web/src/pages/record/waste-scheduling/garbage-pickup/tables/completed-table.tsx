@@ -1,19 +1,15 @@
 import { useState } from "react";
-import { ColumnDef } from "@tanstack/react-table";
+import { Eye, ImageIcon, Search, Circle, Check } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Eye, Image, FileInput, Search, Circle, Check } from "lucide-react";
-import { DataTable } from "@/components/ui/table/data-table";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown/dropdown-menu";
-import { Button } from "@/components/ui/button/button";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useGetGarbageCompleteRequest, type GarbageRequestComplete } from "../queries/GarbageRequestFetchQueries";
-import { formatTimestamp } from "@/helpers/timestampformatter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatTimestamp } from "@/helpers/timestampformatter";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Label } from "@/components/ui/label";
 import { formatTime } from "@/helpers/timeFormatter";
 import { Input } from "@/components/ui/input";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Card } from "@/components/ui/card/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useGetGarbageCompleteRequest, type GarbageRequestComplete } from "../queries/GarbageRequestFetchQueries";
 
 type ViewMode = 'partial' | 'full';
 
@@ -56,88 +52,17 @@ export default function CompletedTable() {
     setSelectedAssignment(assignment);
   };
 
-  const getCommonColumns = (): ColumnDef<GarbageRequestComplete>[] => [
-    { accessorKey: "garb_requester", header: "Requester" },
-    { accessorKey: "sitio_name", header: "Sitio" },
-    { accessorKey: "garb_location", header: "Location" },
-    { accessorKey: "garb_waste_type", header: "Waste Type" },
-    { 
-      accessorKey: "garb_created_at", 
-      header: "Request Date",
-      cell: ({ getValue }) => {
-        const date = getValue() as string;
-        return date ? formatTimestamp(date) : 'N/A';
-      }
-    },
-    { 
-      accessorKey: "conf_staff_conf_date", 
-      header: "Staff Confirmed Date",
-      cell: ({ getValue }) => {
-        const date = getValue() as string;
-        return date ? formatTimestamp(date) : 'N/A';
-      }
-    },
-  ];
-
-  const getFullCompletionColumns = (): ColumnDef<GarbageRequestComplete>[] => [
-    { 
-      accessorKey: "conf_resident_conf_date", 
-      header: "Resident Confirmed Date",
-      cell: ({ getValue }) => {
-        const date = getValue() as string;
-        return date ? formatTimestamp(date) : 'N/A';
-      }
-    },
-  ];
-
-  const ActionsCell = ({ row }: { row: any }) => (
-    <div className="flex justify-center gap-2">
-      <TooltipLayout
-        trigger={
-          <div 
-            className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-3 rounded cursor-pointer"
-            onClick={() => handleViewAssignment(row.original)}
-          >
-            <Eye size={16} />
-          </div>
-        }
-        content="View Assignment"
-      />
-      <TooltipLayout
-          trigger={
-              <div className="flex justify-center gap-2">
-                  <DialogLayout
-                  trigger={<div className="bg-stone-200 hover:bg-stone-300 text-sm text-gray-500 px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"><Image size={16} /></div>}
-                  title="Request Image"
-                  mainContent={
-                      <div className="flex justify-center items-center w-full h-full p-4">
-                      <img
-                          src={row.original.file_url} alt="Rejected request"
-                          className="max-w-full max-h-[500px] object-contain rounded-md shadow"
-                      />
-                      </div>
-                  }
-                  />  
-              </div>
-          }
-          content="View Image"
-      />
-    </div>
-  );
-
-  const columns: ColumnDef<GarbageRequestComplete>[] = [
-    ...getCommonColumns(),
-    ...(viewMode === 'full' ? getFullCompletionColumns() : []),
-    { id: "actions", header: "Action", cell: ActionsCell }
-  ];
-
   if (isLoading) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
         <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
         <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full opacity-30" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -237,54 +162,124 @@ export default function CompletedTable() {
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <FileInput size={16} /> Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-              <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-              <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
-      {/* Entries per page selector - moved up here */}
-      <div className="flex justify-between p-3 border-t">
-        <div className="flex items-center gap-2">
-          <p className="text-xs sm:text-sm">Show</p>
-          <Input
-            type="number"
-            className="w-14 h-8"
-            min={1}
-            value={pageSize}
-            onChange={(e) => {
-              const v = +e.target.value;
-              setPageSize(v >= 1 ? v : 1);
-              setCurrentPage(1);
-            }}
-          />
-          <p className="text-xs sm:text-sm">Entries</p>
-        </div>
-      </div>
+      {/* Cards Container */}
+      <div className="p-6 pt-0">
+        {filteredData.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No completed requests found.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {paginatedData.map((request) => (
+              <Card key={request.garb_id} className="hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-start gap-6 p-6">
+                  {/* Left Section - Main Info */}
+                  <div className="flex-shrink-0 min-w-0 w-64">
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="font-semibold text-base text-gray-900 truncate">{request.garb_requester}</h3>
+                        <p className="text-sm text-gray-500 mt-1">{request.sitio_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                        <p className="text-sm font-medium text-gray-900 mt-1">{request.garb_location}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Waste Type</p>
+                        <p className="text-sm font-medium text-gray-900 mt-1">{request.garb_waste_type}</p>
+                      </div>
+                    </div>
+                  </div>
 
-      {/* Table */}
-      <DataTable columns={columns} data={paginatedData} />
+                  {/* Middle Section - Dates */}
+                  <div className="flex-shrink-0 min-w-0 w-48">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Request Date</p>
+                        <p className="text-sm font-medium text-gray-900 mt-1">
+                          {formatTimestamp(request.garb_created_at)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Staff Confirmed</p>
+                        <p className="text-sm font-medium text-gray-900 mt-1">
+                          {formatTimestamp(request.conf_staff_conf_date || '')}
+                        </p>
+                      </div>
+                      {viewMode === 'full' && (
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Resident Confirmed</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {formatTimestamp(request.conf_resident_conf_date || '')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-      {/* Pagination Controls - simplified version */}
-      <div className="flex flex-col sm:flex-row justify-between items-center p-3 border-t gap-3">
-        <p className="text-xs sm:text-sm text-gray-600">
-          Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-        </p>
-        {filteredData.length > 0 && (
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={(page) => setCurrentPage(page)}
-          />
+                  {/* Right Section - Status Indicator */}
+                  <div className="flex-1 min-w-0">
+                    <div className="h-full flex items-center justify-center">
+                      <div className={`rounded-full px-4 py-2 text-sm font-medium ${
+                        viewMode === 'full' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {viewMode === 'full' ? 'Fully Completed' : 'Partially Completed'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex-shrink-0">
+                    <div className="flex gap-2">
+                      {/* View Assignment */}
+                      <TooltipLayout
+                        trigger={
+                          <div
+                            className="bg-white hover:bg-gray-100 border text-black p-2.5 rounded-lg cursor-pointer transition-colors"
+                            onClick={() => handleViewAssignment(request)}
+                          >
+                            <Eye size={16} />
+                          </div>
+                        }
+                        content="View Assignment"
+                      />
+
+                      {/* View Image */}
+                      <TooltipLayout
+                        trigger={
+                          <div>
+                            <DialogLayout
+                              trigger={
+                                <div className="bg-stone-200 hover:bg-stone-300 text-gray-500 p-2.5 rounded-lg cursor-pointer transition-colors">
+                                  <ImageIcon size={16} />
+                                </div>
+                              }
+                              title="Request Image"
+                              mainContent={
+                                <div className="flex justify-center items-center w-full h-full p-6">
+                                  <img
+                                    src={request.file_url || "/placeholder.svg"}
+                                    alt="Request"
+                                    className="max-w-full max-h-[600px] object-contain rounded-lg shadow-lg"
+                                  />
+                                </div>
+                              }
+                            />
+                          </div>
+                        }
+                        content="View Image"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>

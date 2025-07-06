@@ -56,7 +56,7 @@ function GarbagePickupRequestMain() {
           </TabsTrigger>
         </TabsList>
 
-        <div className="bg-white rounded-lg shadow-sm mt-6 dl">
+        <div className="bg-white rounded-lg shadow-sm mt-6 dl mb-5">
           <TabsContent value="pending">
             <PendingTable/>
           </TabsContent>

@@ -35,8 +35,6 @@ export default function AcceptedTable() {
     return searchString.includes(searchQuery.toLowerCase())
   })
 
-  console.log('add notes:', acceptedReqData.map(request => request.garb_additional_notes));
-
   const totalPages = Math.ceil(filteredData.length / pageSize)
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
