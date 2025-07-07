@@ -86,8 +86,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
         }
         const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
         const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-        const totalIncome = Number(currentYearBudget.gbudy_income) || 0;
-        const remainingBalance = initialBudget - totalExpenses + totalIncome;
+        const remainingBalance = initialBudget - totalExpenses;
         if (data.budgetData.gbud_actual_expense > remainingBalance) {
           throw new Error(
             `Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`

@@ -66,17 +66,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
     yearBudgets || []
   );
 
-  // Debug logs
-  useEffect(() => {
-    if (budgetEntry) {
-      console.log("Budget Entry Data:", budgetEntry);
-      console.log("Files:", budgetEntry.files);
-      console.log("Income Particulars:", budgetEntry.gbud_inc_particulars);
-      console.log("Income Amount:", budgetEntry.gbud_inc_amt);
-      console.log("Type:", budgetEntry.gbud_type);
-    }
-  }, [budgetEntry]);
-
   // Calculate remaining balance
   const calculateRemainingBalance = (): number => {
     if (!yearBudgets || !year) return 0;
@@ -249,6 +238,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       return;
     }
 
+    const newRemainingBalance = values.gbud_type === "Expense"
+    ? remainingBalance - (values.gbud_actual_expense || 0)
+    : null;
+
     if (values.gbud_type === "Expense") {
       const actualExpense = values.gbud_actual_expense ?? 0;
       const proposedBudget = values.gbud_proposed_budget ?? 0;
@@ -282,6 +275,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_proposed_budget: values.gbud_proposed_budget,
         gbud_actual_expense: values.gbud_actual_expense,
         gbud_reference_num: values.gbud_reference_num,
+        gbud_remaining_bal: newRemainingBalance,
         gdb_id: values.gdb_id,
       }),
       gbudy: values.gbudy,
@@ -296,6 +290,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       budgetData,
       files: mediaFiles,
       filesToDelete: removedFiles,
+      remainingBalance,
     });
 
     updateBudget(
@@ -304,6 +299,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         budgetData,
         files: mediaFiles,
         filesToDelete, // Use only explicitly removed files
+        remainingBalance,
       },
       {
         onSuccess: () => {
@@ -351,303 +347,316 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
               <div className="text-red-600 text-sm">Error: {apiError}</div>
             )}
 
-            <FormSelect
-              control={form.control}
-              name="gbud_type"
-              label="Type"
-              options={[
-                { id: "Income", name: "Income" },
-                { id: "Expense", name: "Expense" },
-              ]}
-              readOnly={true}
-            />
-            <FormInput
-              control={form.control}
-              name="gbud_datetime"
-              label={`Date (${year} only)`}
-              type="datetime-local"
-              placeholder="Select date"
-              readOnly={!isEditing}
-            />
-            <FormInput
-              control={form.control}
-              name="gbud_add_notes"
-              label="Description"
-              placeholder="Enter notes (if any)"
-              readOnly={!isEditing}
-            />
-            {budgetEntry.gbud_type === "Income" ? (
-              <>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">
-                    Income Particulars
-                  </label>
-                  {!isEditing ? (
-                    <div className="p-2 border rounded">
-                      {budgetEntry.gbud_inc_particulars || "N/A"}
-                    </div>
-                  ) : (
-                    <FormField
-                      control={form.control}
-                      name="gbud_inc_particulars"
-                      render={({ field }) => (
-                        <Popover
-                          open={openCombobox}
-                          onOpenChange={setOpenCombobox}
-                        >
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openCombobox}
-                              className="w-full justify-between"
-                            >
-                              {field.value || "Select particulars..."}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[400px] p-0">
-                            <Command>
-                              <CommandInput
-                                placeholder="Search particulars..."
-                                onValueChange={(value) => {
-                                  if (!incomeParticulars?.includes(value)) {
-                                    field.onChange(value);
-                                  }
-                                }}
-                              />
-                              <CommandList>
-                                <CommandEmpty>
-                                  No particulars found.
-                                </CommandEmpty>
-                                <CommandGroup>
-                                  {incomeParticularsLoading ? (
-                                    <CommandItem disabled>
-                                      Loading...
-                                    </CommandItem>
-                                  ) : (
-                                    incomeParticulars?.map((particular) => (
-                                      <CommandItem
-                                        key={particular}
-                                        value={particular}
-                                        onSelect={() => {
-                                          field.onChange(particular);
-                                          setOpenCombobox(false);
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            field.value === particular
-                                              ? "opacity-100"
-                                              : "opacity-0"
-                                          )}
-                                        />
-                                        {particular}
-                                      </CommandItem>
-                                    ))
-                                  )}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                    />
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Income Amount</label>
-                  {!isEditing ? (
-                    <div className="p-2 border rounded">
-                      {budgetEntry.gbud_inc_amt
-                        ? `₱${Number(
-                            budgetEntry.gbud_inc_amt
-                          ).toLocaleString()}`
-                        : "N/A"}
-                    </div>
-                  ) : (
-                    <FormInput
-                      control={form.control}
-                      name="gbud_inc_amt"
-                      type="number"
-                      placeholder="Enter amount"
-                      label=""
-                    />
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">
-                    Expense Particulars
-                  </label>
-                  <div className="text-[0.9rem] indent-1">
-                    <FormField
-                      control={form.control}
-                      name="gbud_exp_particulars"
-                      render={({ field }) => (
-                        <>
-                          {isEditing ? (
-                            <select
-                              {...field}
-                              className="w-full p-2 border rounded"
-                              value={field.value || ""}
-                              onChange={(e) => {
-                                const selectedItem = expenseItems?.find(
-                                  (item) => item.gdb_name === e.target.value
-                                );
-                                field.onChange(e.target.value);
-                                form.setValue(
-                                  "gdb_id",
-                                  selectedItem?.gdb_id || null
-                                );
-                              }}
-                            >
-                              <option value="">Select expense item...</option>
-                              {expenseItems?.map((item) => (
-                                <option key={item.gdb_id} value={item.gdb_name}>
-                                  {item.gdb_name}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div className="p-2 border rounded">
-                              {field.value || "N/A"}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    />
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <FormSelect
+                  control={form.control}
+                  name="gbud_type"
+                  label="Type"
+                  options={[
+                    { id: "Income", name: "Income" },
+                    { id: "Expense", name: "Expense" },
+                  ]}
+                  readOnly={true}
+                />
+              </div>
+              <div>
                 <FormInput
                   control={form.control}
-                  name="gbud_proposed_budget"
-                  label="Proposed Budget"
-                  type="number"
-                  placeholder="Enter proposed budget"
+                  name="gbud_datetime"
+                  label={`Date (${year} only)`}
+                  type="datetime-local"
+                  placeholder="Select date"
                   readOnly={!isEditing}
                 />
-                <FormInput
-                  control={form.control}
-                  name="gbud_actual_expense"
-                  label="Actual Expense"
-                  type="number"
-                  placeholder="Enter actual expense"
-                  readOnly={!isEditing}
-                />
-                <FormInput
-                  control={form.control}
-                  name="gbud_reference_num"
-                  label="Reference Number"
-                  placeholder="Enter reference number"
-                  readOnly={!isEditing}
-                />
-                {isEditing ? (
-                  <MediaUpload
-                    title="Supporting Documents"
-                    description="Upload proof of transaction. Note: Removed files are deleted immediately and cannot be undone unless you cancel editing."
-                    mediaFiles={mediaFiles}
-                    setMediaFiles={setMediaFiles}
-                    activeVideoId={activeVideoId}
-                    setActiveVideoId={setActiveVideoId}
-                    onFileRemoved={(removedId) => {
-                      setRemovedFiles((prev) => {
-                        if (prev.includes(removedId)) {
-                          console.log(
-                            `File ID ${removedId} already marked for removal`
-                          );
-                          return prev;
-                        }
-                        return [...prev, removedId];
-                      });
-                    }}
-                  />
-                ) : mediaFiles.length > 0 ? (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium">
-                      Supporting Doc(s)
+              </div>
+              <div>
+                {budgetEntry.gbud_type === "Income" ? (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">
+                      Income Particulars
                     </label>
-                    {mediaFiles.map((file) => (
-                      <div key={file.id} className="border rounded-md p-2">
-                        <img
-                          src={file.publicUrl}
-                          alt="Receipt"
-                          className="max-h-60 object-contain w-full"
-                        />
+                    {!isEditing ? (
+                      <div className="p-2 border rounded">
+                        {budgetEntry.gbud_inc_particulars || "N/A"}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-2 border rounded text-sm text-gray-500">
-                    No supporting docs uploaded
-                  </div>
-                )}
-                {currentYearBudget && (
-                  <div className="p-4 border rounded bg-gray-50">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Current Budget:</span>
-                      <span>
-                        ₱
-                        {(currentYearBudget.gbudy_budget || 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Total Expenses:</span>
-                      <span>
-                        ₱
-                        {(
-                          currentYearBudget.gbudy_expenses || 0
-                        ).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Total Income:</span>
-                      <span>
-                        ₱
-                        {(currentYearBudget.gbudy_income || 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-bold">
-                      <span>Remaining Balance:</span>
-                      <span>₱{remainingBalance.toLocaleString()}</span>
-                    </div>
-                    {(form.watch("gbud_actual_expense") ||
-                      form.watch("gbud_proposed_budget")) && (
-                      <>
-                        <div className="flex justify-between mt-2">
-                          <span className="font-medium">After This Entry:</span>
-                          <span
-                            className={
-                              form.watch("gbud_actual_expense") &&
-                              form.watch("gbud_actual_expense") >
-                                remainingBalance
-                                ? "text-red-500"
-                                : ""
-                            }
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="gbud_inc_particulars"
+                        render={({ field }) => (
+                          <Popover
+                            open={openCombobox}
+                            onOpenChange={setOpenCombobox}
                           >
-                            ₱
-                            {(
-                              remainingBalance -
-                              (form.watch("gbud_actual_expense") || 0)
-                            ).toLocaleString()}
-                          </span>
-                        </div>
-                        {form.watch("gbud_actual_expense") &&
-                          form.watch("gbud_actual_expense")>
-                            remainingBalance && (
-                            <div className="mt-2 text-red-500 font-medium">
-                              Warning: This expense will exceed your remaining
-                              budget!
-                            </div>
-                          )}
-                      </>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={openCombobox}
+                                className="w-full justify-between"
+                              >
+                                {field.value || "Select particulars..."}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[400px] p-0">
+                              <Command>
+                                <CommandInput
+                                  placeholder="Search particulars..."
+                                  onValueChange={(value) => {
+                                    if (!incomeParticulars?.includes(value)) {
+                                      field.onChange(value);
+                                    }
+                                  }}
+                                />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    No particulars found.
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {incomeParticularsLoading ? (
+                                      <CommandItem disabled>
+                                        Loading...
+                                      </CommandItem>
+                                    ) : (
+                                      incomeParticulars?.map((particular) => (
+                                        <CommandItem
+                                          key={particular}
+                                          value={particular}
+                                          onSelect={() => {
+                                            field.onChange(particular);
+                                            setOpenCombobox(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              field.value === particular
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                          {particular}
+                                        </CommandItem>
+                                      ))
+                                    )}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      />
                     )}
                   </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">
+                      Expense Particulars
+                    </label>
+                    <div className="text-[0.9rem] indent-1">
+                      <FormField
+                        control={form.control}
+                        name="gbud_exp_particulars"
+                        render={({ field }) => (
+                          <>
+                            {isEditing ? (
+                              <select
+                                {...field}
+                                className="w-full p-2 border rounded"
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  const selectedItem = expenseItems?.find(
+                                    (item) => item.gdb_name === e.target.value
+                                  );
+                                  field.onChange(e.target.value);
+                                  form.setValue(
+                                    "gdb_id",
+                                    selectedItem?.gdb_id || null
+                                  );
+                                }}
+                              >
+                                <option value="">Select expense item...</option>
+                                {expenseItems?.map((item) => (
+                                  <option key={item.gdb_id} value={item.gdb_name}>
+                                    {item.gdb_name}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <div className="p-2 border rounded">
+                                {field.value || "N/A"}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      />
+                    </div>
+                  </div>
                 )}
-              </>
-            )}
+              </div>
+            </div>
+            <div className="flex flex-col gap-4">
+              <FormInput
+                control={form.control}
+                name="gbud_add_notes"
+                label="Description"
+                placeholder="Enter notes (if any)"
+                readOnly={!isEditing}
+              />
+              {budgetEntry.gbud_type === "Income" ? (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">Income Amount</label>
+                    {!isEditing ? (
+                      <div className="p-2 border rounded">
+                        {budgetEntry.gbud_inc_amt
+                          ? `₱${Number(
+                              budgetEntry.gbud_inc_amt
+                            ).toLocaleString()}`
+                          : "N/A"}
+                      </div>
+                    ) : (
+                      <FormInput
+                        control={form.control}
+                        name="gbud_inc_amt"
+                        type="number"
+                        placeholder="Enter amount"
+                        label=""
+                      />
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <FormInput
+                    control={form.control}
+                    name="gbud_proposed_budget"
+                    label="Proposed Budget"
+                    type="number"
+                    placeholder="Enter proposed budget"
+                    readOnly={!isEditing}
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="gbud_actual_expense"
+                    label="Actual Expense"
+                    type="number"
+                    placeholder="Enter actual expense"
+                    readOnly={!isEditing}
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="gbud_reference_num"
+                    label="Reference Number"
+                    placeholder="Enter reference number"
+                    readOnly={!isEditing}
+                  />
+                  {isEditing ? (
+                    <MediaUpload
+                      title="Supporting Documents"
+                      description="Upload proof of transaction. Note: Removed files are deleted immediately and cannot be undone unless you cancel editing."
+                      mediaFiles={mediaFiles}
+                      setMediaFiles={setMediaFiles}
+                      activeVideoId={activeVideoId}
+                      setActiveVideoId={setActiveVideoId}
+                      onFileRemoved={(removedId) => {
+                        setRemovedFiles((prev) => {
+                          if (prev.includes(removedId)) {
+                            console.log(
+                              `File ID ${removedId} already marked for removal`
+                            );
+                            return prev;
+                          }
+                          return [...prev, removedId];
+                        });
+                      }}
+                    />
+                  ) : mediaFiles.length > 0 ? (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium">
+                        Supporting Doc(s)
+                      </label>
+                      {mediaFiles.map((file) => (
+                        <div key={file.id} className="border rounded-md p-2">
+                          <img
+                            src={file.publicUrl}
+                            alt="Receipt"
+                            className="max-h-60 object-contain w-full"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2 border rounded text-sm text-gray-500">
+                      No supporting docs uploaded
+                    </div>
+                  )}
+                  {currentYearBudget && (
+                    <div className="p-4 border rounded bg-gray-50">
+                      <div className="flex justify-between">
+                        <span className="font-medium">Current Budget:</span>
+                        <span>
+                          ₱
+                          {(currentYearBudget.gbudy_budget || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Expenses:</span>
+                        <span>
+                          ₱
+                          {(
+                            currentYearBudget.gbudy_expenses || 0
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Income:</span>
+                        <span>
+                          ₱
+                          {(currentYearBudget.gbudy_income || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>Remaining Balance:</span>
+                        <span>₱{remainingBalance.toLocaleString()}</span>
+                      </div>
+                      {(form.watch("gbud_actual_expense") ||
+                        form.watch("gbud_proposed_budget")) && (
+                        <>
+                          <div className="flex justify-between mt-2">
+                            <span className="font-medium">After This Entry:</span>
+                            <span
+                              className={
+                                form.watch("gbud_actual_expense") &&
+                                form.watch("gbud_actual_expense") >
+                                  remainingBalance
+                                  ? "text-red-500"
+                                  : ""
+                              }
+                            >
+                              ₱
+                              {(
+                                remainingBalance -
+                                (form.watch("gbud_actual_expense") || 0)
+                              ).toLocaleString()}
+                            </span>
+                          </div>
+                          {form.watch("gbud_actual_expense") &&
+                            form.watch("gbud_actual_expense") >
+                              remainingBalance && (
+                              <div className="mt-2 text-red-500 font-medium">
+                                Warning: This expense will exceed your remaining
+                                budget!
+                              </div>
+                            )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
             <div className="mt-4 flex justify-end gap-3">
               {isEditing ? (
                 <>
