@@ -1562,19 +1562,11 @@ function TemplateCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   //Fetch mutation
   const { data: purposeRatesList = [] } = useGetPurposeRates();
 
-  console.log("OPTIONS BEFORE FILTER: ", purposeRatesList)
-
-  // const purposeRatesOptions = purposeRatesList.map(purposeList => ({
-  //     id: String(purposeList.pr_id),  
-  //     name: purposeList.pr_purpose 
-  // }));
-
+  
   const purposeRatesOptions = purposeRatesList.filter(purpose => purpose.pr_is_archive == false).map(purpose => ({
       id: String(purpose.pr_id),  
       name: purpose.pr_purpose 
   }));
-
-  console.log("OPTIONS: ", purposeRatesOptions)
 
 
 
