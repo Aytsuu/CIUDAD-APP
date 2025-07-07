@@ -130,7 +130,7 @@ function GADBudgetTrackerMain() {
                     </div>
                     <div className="flex flex-col sm:flex-row">
                       <Label className="w-[12rem]">Remaining Balance:</Label>
-                      <Label className="text-yellow-600">Php {remainingBal}.00</Label>
+                      <Label className="text-yellow-600">Php {remainingBal}</Label>
                     </div>
                     
                     <div className="mt-4">
