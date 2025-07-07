@@ -178,21 +178,17 @@ function BudgetTracker() {
     }
 
     // Find the most recent entry with an explicit remaining balance
-    const entriesWithBalance = activeEntries.filter(
-      (entry) =>
-        entry.gbud_remaining_bal !== undefined &&
-        entry.gbud_remaining_bal !== null
+    const latestExpenseWithBalance = [...activeEntries]
+    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())
+    .find(entry => 
+      entry.gbud_type === "Expense" && 
+      entry.gbud_remaining_bal !== undefined && 
+      entry.gbud_remaining_bal !== null
     );
 
-    // If we have entries with explicit balances, return the latest one
-    if (entriesWithBalance.length > 0) {
-      const latestWithBalance = entriesWithBalance.reduce((latest, current) =>
-        new Date(current.gbud_datetime) > new Date(latest.gbud_datetime)
-          ? current
-          : latest
-      );
-      return latestWithBalance.gbud_remaining_bal || 0;
-    }
+    if (latestExpenseWithBalance) {
+    return latestExpenseWithBalance.gbud_remaining_bal || 0;
+  }
 
     // Fallback: Calculate balance from scratch
     let balance = currentYearBudget ? Number(currentYearBudget) : 0;
@@ -205,14 +201,12 @@ function BudgetTracker() {
     );
 
     sortedEntries.forEach((entry) => {
-      if (entry.gbud_type === "Income") {
-        balance += entry.gbud_inc_amt || 0;
-      } else if (entry.gbud_type === "Expense") {
-        const amount =
-          entry.gbud_actual_expense ?? entry.gbud_proposed_budget ?? 0;
-        balance -= amount;
-      }
-    });
+    if (entry.gbud_type === "Expense") {
+      const amount =
+        entry.gbud_actual_expense ?? entry.gbud_proposed_budget ?? 0;
+      balance -= amount;
+    }
+  });
 
     return balance;
   };
