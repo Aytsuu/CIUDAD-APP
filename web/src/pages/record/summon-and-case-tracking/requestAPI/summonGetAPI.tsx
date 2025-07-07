@@ -19,3 +19,13 @@ export const getCaseDetails = async (srId: string) => {
         console.error(err)
     }
 }
+
+export const getServiceChargeTemplates = async () => {
+    try{
+
+        const res = await api.get('council/service-charge-templates/')
+        return res.data
+    } catch (err){
+        console.error(err)
+    }
+}

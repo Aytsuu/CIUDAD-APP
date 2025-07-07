@@ -36,6 +36,8 @@ class TemplateSerializer(serializers.ModelSerializer):
         model = Template
         fields = '__all__'
 
+        
+
 Staff = apps.get_model('administration', 'Staff')
 
 

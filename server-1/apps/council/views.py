@@ -221,6 +221,15 @@ class TemplateView(generics.ListCreateAPIView):
     queryset = Template.objects.all()
 
 
+class ServiceChargeTemplateListView(generics.ListAPIView):
+    serializer_class = TemplateSerializer
+
+    def get_queryset(self):
+        return Template.objects.filter(
+            temp_is_archive=False,
+            pr_id__pr_category="Service Charge"
+        )
+
 #UPDATE TEMPLATE
 class UpdateTemplateView(generics.RetrieveUpdateAPIView):
     serializer_class = TemplateSerializer
