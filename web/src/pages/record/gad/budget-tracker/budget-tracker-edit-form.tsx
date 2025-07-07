@@ -287,15 +287,16 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       gbudy: values.gbudy,
     };
 
+    const filesToDelete = removedFiles
+      .filter((id) => id.startsWith("receipt-")) // Only include receipt- IDs
+      .map((id) => id.replace("receipt-", "")); // Strip prefix to get numeric gbf_id
+
     console.log("Update Payload:", {
       gbud_num,
       budgetData,
       files: mediaFiles,
       filesToDelete: removedFiles,
     });
-    const filesToDelete = removedFiles.map((id) =>
-      id.startsWith("receipt-") ? id.replace("receipt-", "") : id
-    );
 
     updateBudget(
       {
@@ -358,7 +359,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                 { id: "Income", name: "Income" },
                 { id: "Expense", name: "Expense" },
               ]}
-              readOnly={!isEditing}
+              readOnly={true}
             />
             <FormInput
               control={form.control}
@@ -634,7 +635,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                           </span>
                         </div>
                         {form.watch("gbud_actual_expense") &&
-                          form.watch("gbud_actual_expense") >
+                          form.watch("gbud_actual_expense")>
                             remainingBalance && (
                             <div className="mt-2 text-red-500 font-medium">
                               Warning: This expense will exceed your remaining

@@ -12,30 +12,15 @@ import AddEventFormSchema from "@/form-schema/council/addevent-schema";
 import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useUpdateCouncilEvent, useUpdateAttendees } from "./queries/updatequeries";
-import { useGetStaffList, useGetAttendees, Staff } from "./queries/fetchqueries";
+import { useGetStaffList, useGetAttendees, Staff, EditEventFormProps } from "./queries/fetchqueries";
+import type { EventCategory } from "./queries/fetchqueries";
 import { formatDate } from "@/helpers/dateHelper";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteCouncilEvent } from "./queries/delqueries";
 import { Archive } from "lucide-react";
 
-interface EditEventFormProps {
-  initialValues: {
-    ce_id: number;
-    ce_title: string;
-    ce_date: string;
-    ce_time: string;
-    ce_place: string;
-    ce_type: string;
-    ce_description: string;
-    ce_is_archive?: boolean;
-    staff_id?: string | null;
-    attendees?: { name: string; designation: string; present_or_absent?: string }[];
-  };
-  onClose: () => void;
-}
-
-type EventCategory = "meeting" | "activity" | undefined;
+const normalizeString = (str: string) => str.trim().toLowerCase();
 
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const isArchived = initialValues.ce_is_archive || false;
@@ -50,8 +35,29 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const { mutate: updateEvent, isPending: isUpdating } = useUpdateCouncilEvent();
   const { mutate: updateAttendees } = useUpdateAttendees();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-  const { data: attendees = [] } = useGetAttendees(ceId);
+  const { data: attendees = [], isLoading: isAttendeesLoading } = useGetAttendees(ceId);
   const { mutate: deleteCouncilEvent, isPending: isArchiving } = useDeleteCouncilEvent();
+
+  const initialStaffIds = useMemo(() => {
+    if (!attendees.length || !staffList.length) return [];
+    return attendees
+      .map((attendee) => {
+        const staff = staffList.find(
+          (s) =>
+            normalizeString(s.full_name) === normalizeString(attendee.atn_name) &&
+            normalizeString(s.position_title) === normalizeString(attendee.atn_designation)
+        );
+        if (!staff) {
+          console.warn(`No staff found for attendee: ${attendee.atn_name} (${attendee.atn_designation})`);
+        }
+        return staff?.staff_id;
+      })
+      .filter((id): id is string => id !== undefined);
+  }, [attendees, staffList]);
+
+  console.log("Attendees from API:", attendees);
+  console.log("Staff list:", staffList);
+  console.log("Computed initialStaffIds:", initialStaffIds);
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -64,21 +70,32 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
         : undefined) as EventCategory,
       eventTime: initialValues.ce_time || "",
       eventDescription: initialValues.ce_description || "",
-      staffAttendees: initialValues.staff_id ? [initialValues.staff_id] : [],
+      staffAttendees: [],
     },
   });
 
+  useEffect(() => {
+    if (!isStaffLoading && !isAttendeesLoading) {
+      console.log("Updating form with initialStaffIds:", initialStaffIds);
+      form.reset({
+        ...form.getValues(),
+        staffAttendees: initialStaffIds,
+      });
+    }
+  }, [initialStaffIds, isStaffLoading, isAttendeesLoading, form]);
+
   const eventCategory = form.watch("eventCategory");
+  const staffAttendees = useWatch({ control: form.control, name: "staffAttendees" });
+
+  console.log("Form staffAttendees:", staffAttendees);
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
       id: staff.staff_id,
       name: `${staff.full_name} (${staff.position_title})`,
-      original: staff
+      original: staff,
     }));
   }, [staffList]);
-
-  const staffAttendees = useWatch({ control: form.control, name: "staffAttendees" });
 
   const selectedAttendeeDetails = useMemo(() => {
     return attendees.map((attendee) => ({
@@ -90,27 +107,33 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
 
   const getStaffById = (id: string): Staff | undefined => {
     const normalizedId = String(id).toUpperCase().trim();
-    return staffList.find(s => s.staff_id === normalizedId);
+    return staffList.find((s) => s.staff_id === normalizedId);
   };
 
   useEffect(() => {
     if (isEditMode) {
+      console.log("staffAttendees in edit mode:", staffAttendees);
       const newAttendees = staffAttendees
-        .map((id: string) => {
+        .map((id) => {
           const staff = getStaffById(id);
           if (!staff) {
             console.warn(`Staff with ID ${id} not found`);
             return null;
           }
+          const existingAttendee = selectedAttendeeDetails.find(
+            (a) =>
+              normalizeString(a.name) === normalizeString(staff.full_name) &&
+              normalizeString(a.designation) === normalizeString(staff.position_title)
+          );
           return {
             name: staff.full_name,
             designation: staff.position_title || "No Designation",
-            present_or_absent: "Present"
+            present_or_absent: existingAttendee?.present_or_absent,
           };
         })
-        .filter(Boolean);
-      
-      setSelectedAttendees(newAttendees.length ? newAttendees : selectedAttendeeDetails);
+        .filter((item): item is { name: string; designation: string; present_or_absent?: string } => item !== null);
+
+      setSelectedAttendees(newAttendees);
     } else {
       setSelectedAttendees(selectedAttendeeDetails);
     }
@@ -120,10 +143,16 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
     const [hour, minute] = values.eventTime.split(":");
     const formattedTime = `${hour}:${minute}:00`;
 
+    const formattedDate = formatDate(values.eventDate);
+    if (formattedDate === null) {
+      form.setError("eventDate", { message: "Invalid date format" });
+      return;
+    }
+
     const eventInfo = {
       ce_title: values.eventTitle.trim(),
       ce_place: values.roomPlace.trim(),
-      ce_date: formatDate(values.eventDate),
+      ce_date: formattedDate,
       ce_time: formattedTime,
       ce_type: values.eventCategory || "meeting",
       ce_description: values.eventDescription.trim(),
@@ -135,15 +164,23 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       { ce_id: ceId, eventInfo },
       {
         onSuccess: () => {
-          if (selectedAttendees.length) {
+          if (staffAttendees.length) {
             updateAttendees({
               ce_id: ceId,
-              attendees: selectedAttendees.map((a) => ({
-                atn_name: a.name,
-                atn_designation: a.designation,
-                atn_present_or_absent: a.present_or_absent || "Present",
-                ce_id: ceId,
-              })),
+              attendees: staffAttendees.map((id) => {
+                const staff = getStaffById(id);
+                return {
+                  atn_name: staff?.full_name || "Unknown",
+                  atn_designation: staff?.position_title || "No Designation",
+                  atn_present_or_absent:
+                    selectedAttendees.find(
+                      (a) =>
+                        normalizeString(a.name) === normalizeString(staff?.full_name || "") &&
+                        normalizeString(a.designation) === normalizeString(staff?.position_title || "")
+                    )?.present_or_absent || "Present",
+                  ce_id: ceId,
+                };
+              }),
             });
           }
           setIsEditMode(false);
@@ -166,16 +203,8 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const handleModalOpenChange = (open: boolean) => {
     if (!open) {
       setIsModalOpen(false);
-      form.reset();
     } else if (allowModalOpen) {
       setIsModalOpen(true);
-    }
-  };
-
-  const handleSave = async () => {
-    const isValid = await form.trigger();
-    if (isValid) {
-      form.handleSubmit(onSubmit)();
     }
   };
 
@@ -206,7 +235,17 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
 
   const handleCancelClick = () => {
     setIsEditMode(false);
-    form.reset();
+    form.reset({
+      eventTitle: initialValues.ce_title || "",
+      eventDate: initialValues.ce_date || "",
+      roomPlace: initialValues.ce_place || "",
+      eventCategory: (["meeting", "activity"].includes(initialValues.ce_type)
+        ? initialValues.ce_type
+        : undefined) as EventCategory,
+      eventTime: initialValues.ce_time || "",
+      eventDescription: initialValues.ce_description || "",
+      staffAttendees: initialStaffIds,
+    });
   };
 
   return (
@@ -279,13 +318,20 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                   ATTENDEES
                 </h1>
                 {isEditMode && !isArchived ? (
-                  <FormComboCheckbox
-                    control={form.control}
-                    name="staffAttendees"
-                    label="BARANGAY STAFF"
-                    options={staffOptions}
-                    readOnly={!isEditMode || isArchived}
-                  />
+                  isStaffLoading || isAttendeesLoading ? (
+                    <div>Loading attendees...</div>
+                  ) : (
+                    <div>
+                      <FormComboCheckbox
+                        control={form.control}
+                        name="staffAttendees"
+                        label="BARANGAY STAFF"
+                        options={staffOptions}
+                        readOnly={!isEditMode || isArchived}
+                        maxDisplayValues={2}
+                      />
+                    </div>
+                  )
                 ) : (
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">

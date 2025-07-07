@@ -18,7 +18,7 @@ const personnelSections = [
     dataKey: "Waste Collector",
   },
   {
-    title: "Operational Collection Vehicles",
+    title: "Total Collection Vehicles",
     description: "",
     dataKey: "Trucks",
     statusKey: "Operational",

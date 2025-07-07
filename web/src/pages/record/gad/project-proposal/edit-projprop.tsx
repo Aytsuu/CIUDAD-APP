@@ -452,7 +452,7 @@ export const EditProjectProposalForm: React.FC<
                 }}
                 setActiveVideoId={setActiveVideoId}
               />
-              {headerImageUrl && (
+              {/* {headerImageUrl && (
                 <div className="mt-2 flex flex-col sm:flex-row gap-2 items-center">
                   <img
                     src={headerImageUrl}
@@ -472,7 +472,7 @@ export const EditProjectProposalForm: React.FC<
                     Remove Image
                   </Button>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div>
