@@ -52,8 +52,8 @@ const Legend = ({ legendItems, onColorChange }: LegendProps) => {
           {/* Color Square (div) to Open Color Picker */}
           <div
             onClick={() => {
-              setOpenColorPicker(item.label); // Open the color picker for this item
-              setSelectedColor(item.color); // Set the selected color to the current item's color
+              // setOpenColorPicker(item.label);
+              // setSelectedColor(item.color);
             }}
             style={{
               width: "24px",
