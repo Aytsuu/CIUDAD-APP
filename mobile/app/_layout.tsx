@@ -9,6 +9,8 @@ import { NAV_THEME } from '@/lib/constants';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui/toast';
+import { AuthProvider } from "@/contexts/AuthContext";
+import * as NavigationBar from 'expo-navigation-bar';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -39,10 +41,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={LIGHT_THEME}>
-      <StatusBar backgroundColor="#ECF8FF" style="dark" />
+      <StatusBar backgroundColor="transparent" style="dark" />
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <Stack initialRouteName='(treasurer)'>
+          <Stack initialRouteName='(auth)'>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="(health)" options={{ headerShown: false }} />
