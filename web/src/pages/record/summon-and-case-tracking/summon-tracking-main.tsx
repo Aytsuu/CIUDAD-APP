@@ -140,7 +140,11 @@ function SummonTrackingMain(){
                                             
                                             <div className={styles.cardInfoRow}>
                                                 <p className={styles.cardContent}>Accused: </p>
-                                                <p className={styles.cardInfo}>{item.accused_names}</p>
+                                                <p className={styles.cardInfo}>
+                                                    {Array.isArray(item.accused_names) 
+                                                    ? item.accused_names.join(', ') 
+                                                    : item.accused_names}
+                                                </p>
                                             </div>
 
                                             <div className={styles.cardInfoRow}>

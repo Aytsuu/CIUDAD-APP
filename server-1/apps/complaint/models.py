@@ -41,7 +41,7 @@ class ComplaintAccused(models.Model):
 class Complaint_File(models.Model):
     cf_id = models.BigAutoField(primary_key=True)
     comp = models.ForeignKey(Complaint, related_name='complaint_file', on_delete=models.CASCADE)
-    file = models.ForeignKey('file.File', related_name='complaint_file', on_delete=models.CASCADE)
+    file = models.ForeignKey('file.File', on_delete=models.CASCADE, related_name='complaint_complaint_files')
     
     class Meta:
         db_table = 'complaint_file'
