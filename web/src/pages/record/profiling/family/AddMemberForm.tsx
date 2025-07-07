@@ -60,7 +60,7 @@ export default function AddMemberForm({
       "fc_role": values.role,
       "rp": residentId
     }], {
-      onSuccess: (newComposition) => {
+      onSuccess: (newComposition) => {3
         setIsOpenDialog(false);
         setIsSubmitting(false);
         setCompositions((prev: any) => [

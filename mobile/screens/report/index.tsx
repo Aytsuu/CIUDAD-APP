@@ -11,7 +11,7 @@ export default () => {
   {
     title: 'Incident Report', 
     description: 'File a report for incidents or emergencies in your area.', 
-    route: '/(report)/incident/records'
+    route: '/(report)/incident/form'
   },
   {
     title: 'Acknowledgement Report', 
@@ -22,6 +22,11 @@ export default () => {
     title: 'Weekly Accomplishment Report', 
     description: 'Check your weekly accomplishment reports', 
     route: '/(report)/weekly-ar/records'
+  },
+  {
+    title: 'Securado Report', 
+    description: 'Monitor securado reports.', 
+    route: ''
   },
   {
     title: 'Waste Report', 

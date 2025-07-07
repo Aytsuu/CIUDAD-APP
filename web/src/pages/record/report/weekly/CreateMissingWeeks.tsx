@@ -10,7 +10,7 @@ import { Calendar, MapPin, FileText, CheckCircle2, Loader2, Plus, Check } from "
 import React from "react"
 import { useLocation } from "react-router"
 import { useGetARByDate } from "../queries/reportFetch"
-import { formatDate, lastDayOfTheWeek, monthNameToNumber } from "@/helpers/dateHelper"
+import { formatDate, getRangeOfDaysInWeek, lastDayOfTheWeek, monthNameToNumber } from "@/helpers/dateHelper"
 import { useAddWAR, useAddWARComp } from "../queries/reportAdd"
 import { toast } from "sonner"
 import { useAuth } from "@/context/AuthContext"
@@ -22,8 +22,18 @@ export default function CreateMissingWeeks() {
   const year = React.useMemo(() => params?.year || new Date().getFullYear(), [params])
   const month = React.useMemo(() => params?.month || "", [params])
   const week = React.useMemo(() => params?.week || 0, [params])
+  const range = React.useMemo(() => 
+    getRangeOfDaysInWeek(week, month, year, true) as {start_day: number, end_day: number}, 
+  [year, month, week])
 
-  const { data: ARByDate, isLoading } = useGetARByDate(year, monthNameToNumber(month) as number)
+  console.log(range)
+
+  const { data: ARByDate, isLoading } = useGetARByDate(
+    year, 
+    monthNameToNumber(month) as number, 
+    range?.start_day, 
+    range?.end_day
+  )
   const { mutateAsync: addWAR } = useAddWAR();
     const { mutateAsync: addWARComp } = useAddWARComp();
   
@@ -104,7 +114,7 @@ export default function CreateMissingWeeks() {
               <FileText className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold mb-2">No AR Reports Found</h3>
               <p className="text-muted-foreground">
-                No acknowledgment reports found for {month} {year}.
+                No acknowledgment reports found for {month} {year}, Week {week}.
               </p>
             </div>
           </CardContent>
