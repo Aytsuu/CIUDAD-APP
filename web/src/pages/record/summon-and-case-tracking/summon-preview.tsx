@@ -16,6 +16,12 @@ interface SummonPreviewProps {
   withSummon?: boolean;
   paperSize?: string;
   margin?: string;
+  summonData?: {               
+    reason: string;
+    hearingDate: string;
+    hearingTime: string;
+    sr_id: string;
+  };
 }
 
 function SummonPreview({
@@ -28,7 +34,8 @@ function SummonPreview({
   withSignature,
   withSummon = false,
   paperSize = "letter",
-  margin = "normal"
+  margin = "normal",
+  summonData
 }: SummonPreviewProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
