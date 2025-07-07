@@ -17,12 +17,12 @@ export const ComplainantInfo = () => {
         <h3 className="text-base font-semibold text-black/70">
           Personal Information *
         </h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         <FormField
           control={control}
           name="complainant.firstName"
           render={({ field }: any) => (
-            <FormItem>
+            <FormItem className="col-span-4">
               <FormLabel className="font-semibold text-black/50 ">
                 First Name *
               </FormLabel>
@@ -36,9 +36,25 @@ export const ComplainantInfo = () => {
 
         <FormField
           control={control}
+          name="complainant.middleName"
+          render={({ field }: any) => (
+            <FormItem className="col-span-4">
+              <FormLabel className="font-semibold text-black/50 ">
+                Middle Name
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Santos" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
           name="complainant.lastName"
           render={({ field }: any) => (
-            <FormItem>
+            <FormItem className="col-span-3">
               <FormLabel className="font-semibold text-black/50 ">
                 Last Name *
               </FormLabel>
@@ -52,14 +68,14 @@ export const ComplainantInfo = () => {
 
         <FormField
           control={control}
-          name="complainant.middleName"
+          name="complainant.suffix"
           render={({ field }: any) => (
-            <FormItem>
+            <FormItem className="col-span-1">
               <FormLabel className="font-semibold text-black/50 ">
-                Middle Name
+                Suffix
               </FormLabel>
               <FormControl>
-                <Input placeholder="Santos" {...field} />
+                <Input placeholder="Jr." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -68,7 +84,7 @@ export const ComplainantInfo = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
+        {/* <FormField
           control={control}
           name="complainant.contactNumber"
           render={({ field }: any) => (
@@ -108,80 +124,111 @@ export const ComplainantInfo = () => {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-4">
         <h3 className="text-base font-semibold text-black/70">
           Address Information *
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={control}
-            name="complainant.address.street"
-            render={({ field }: any) => (
-              <FormItem>
-                <FormLabel className="font-semibold text-black/50 ">
-                  Street *
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder="123 Main St" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name="complainant.address.barangay"
-            render={({ field }: any) => (
-              <FormItem>
-                <FormLabel className="font-semibold text-black/50 ">
-                  Barangay *
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder="Barangay 1" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        
+        {/* Address fields in single line with separators */}
+        <div className="space-y-2">
+          <FormLabel className="font-semibold text-black/50">
+            Sitio / Barangay / Municipality / Province * 
+          </FormLabel>
+          <div className="flex items-center border-2 border-gray-300 rounded-lg p-1 bg-white ">
+            <FormField
+              control={control}
+              name="complainant.address.street"
+              render={({ field }: any) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input 
+                      placeholder="123 Main St" 
+                      {...field} 
+                      className="border-none shadow-none p-0 h-8"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <span className="mx-2 text-gray-400 font-medium">/</span>
+            <FormField
+              control={control}
+              name="complainant.address.barangay"
+              render={({ field }: any) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input 
+                      placeholder="Barangay 1" 
+                      {...field} 
+                      className="border-none shadow-none p-0 h-8"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <span className="mx-2 text-gray-400 font-medium">/</span>
+            <FormField
+              control={control}
+              name="complainant.address.city"
+              render={({ field }: any) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input 
+                      placeholder="Cebu" 
+                      {...field} 
+                      className="border-none shadow-none p-0 h-8"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <span className="mx-2 text-gray-400 font-medium">/</span>
+            <FormField
+              control={control}
+              name="complainant.address.province"
+              render={({ field }: any) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input 
+                      placeholder="Province" 
+                      {...field} 
+                      className="border-none shadow-none  p-0 h-8"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          {/* Show validation messages for address fields */}
+          <div className="space-y-1">
+            <FormField
+              control={control}
+              name="complainant.address.street"
+              render={() => <FormMessage />}
+            />
+            <FormField
+              control={control}
+              name="complainant.address.barangay"
+              render={() => <FormMessage />}
+            />
+            <FormField
+              control={control}
+              name="complainant.address.city"
+              render={() => <FormMessage />}
+            />
+            <FormField
+              control={control}
+              name="complainant.address.province"
+              render={() => <FormMessage />}
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={control}
-            name="complainant.address.city"
-            render={({ field }: any) => (
-              <FormItem>
-                <FormLabel className="font-semibold text-black/50 ">
-                  City *
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder="Cebu" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name="complainant.address.province"
-            render={({ field }: any) => (
-              <FormItem>
-                <FormLabel className="font-semibold text-black/50 ">
-                  Province *
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder="Cebu Province" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+        {/* Sitio field on its own line */}
+        {/* <div>
           <FormField
             control={control}
             name="complainant.address.sitio"
@@ -197,7 +244,7 @@ export const ComplainantInfo = () => {
               </FormItem>
             )}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -8,4 +8,5 @@ urlpatterns = [
     path('<int:comp_id>/restore', restore_complaint, name='complaint-restore'),
     path('<int:pk>/archive/', archive_complaint, name='archive-complaint'),
     path('archived/', archived_complaints, name='archived-complaints'),
+    path('<int:comp_id>/issue-raise/', ServiceChargeRequestCreateView.as_view(), name='archived-complaints'),
 ]

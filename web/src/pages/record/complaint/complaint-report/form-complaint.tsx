@@ -24,7 +24,7 @@ import {
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { BsChevronLeft } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Add useNavigate import
 import {
   Dialog,
   DialogContent,
@@ -42,11 +42,11 @@ export const ComplaintForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { send } = useNotifications();
-  
+  const navigate = useNavigate(); // Add navigate hook
+
   const methods = useForm<ComplaintFormData>({
     resolver: zodResolver(complaintFormSchema),
-    defaultValues: {
-    },
+    defaultValues: {},
   });
 
   const nextStep = async () => {
@@ -96,7 +96,7 @@ export const ComplaintForm = () => {
       const formData = new FormData();
 
       const complainantData = {
-        name: `${data.complainant.firstName} ${data.complainant.lastName}`,
+        name: `${data.complainant.firstName} ${data.complainant.middleName} ${data.complainant.lastName} ${data.complainant.suffix}`,
         address: {
           province: data.complainant.address.province,
           city: data.complainant.address.city,
@@ -119,7 +119,7 @@ export const ComplaintForm = () => {
       formData.append("complainant", JSON.stringify(complainantData));
 
       const accusedData = data.accused.map((acc) => ({
-        name: `${acc.firstName} ${acc.lastName}`,
+        name: `${acc.firstName} ${acc.middleName} ${acc.lastName} ${acc.suffix}`,
         address: {
           province: acc.address.province,
           city: acc.address.city,
@@ -208,10 +208,15 @@ export const ComplaintForm = () => {
       if (uploadedFilesData) {
         console.log("uploaded_files:", JSON.parse(uploadedFilesData as string));
       }
+
       await submitComplaint(formData);
       await handleSendAlert();
+
       toast.success("Complaint submitted successfully");
       methods.reset();
+      setTimeout(() => {
+        navigate("/blotter-record");
+      }, 1000);
       setStep(1);
       setShowConfirmModal(false);
     } catch (error) {
@@ -226,16 +231,16 @@ export const ComplaintForm = () => {
 
   const handleSendAlert = async () => {
     await send({
-      title: "New Report Filed",
+      title: "Complaint Report Filed",
       message: "Your request has been processed",
-      recipient_ids: [user?.acc_id || '', '13'],
-      metadata:{
-        action_url: '/home',
-        sender_name: 'System',
-        sender_avatar: `${user?.profile_image}` || '',
-      }
-    })
-  }
+      recipient_ids: [user?.acc_id || ""],
+      metadata: {
+        action_url: "/home",
+        sender_name: "System",
+        sender_avatar: `${user?.profile_image}` || "",
+      },
+    });
+  };
 
   const confirmSubmit = () => {
     const formData = methods.getValues();

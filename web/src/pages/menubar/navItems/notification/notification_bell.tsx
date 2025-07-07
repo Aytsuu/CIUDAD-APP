@@ -73,11 +73,13 @@ export const NotificationBell: React.FC = () => {
     }
   }
 
-  const filteredNotifications = notifications.filter(notification => {
-    if (filter === 'unread') return !notification.is_read
-    if (filter === 'read') return notification.is_read
-    return true
-  })
+  const filteredNotifications = notifications
+    .filter(notification => {
+      if (filter === 'unread') return !notification.is_read
+      if (filter === 'read') return notification.is_read
+      return true
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort by newest first
 
   const handleNotificationClick = (notification: Notification) => {
     // Don't mark as read if clicking on menu

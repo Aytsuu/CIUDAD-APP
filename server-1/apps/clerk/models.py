@@ -88,7 +88,7 @@ class ServiceChargeRequest(models.Model):
     sr_type = models.CharField(null=True, blank=True)
     sr_decision_date    = models.DateTimeField(null=True, blank=True)
     # staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, db_column='staff_id', null=True)
-    comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+    comp = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
 
     parent_summon = models.ForeignKey(
         'self',

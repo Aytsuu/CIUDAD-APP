@@ -3,6 +3,7 @@ from .serializers import ComplaintSerializer
 from apps.profiling.models import Address
 from apps.profiling.models import Sitio
 from apps.file.models import File
+from apps.clerk.models import ServiceChargeRequest
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -246,3 +247,34 @@ def restore_complaint(request, pk):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         
+
+class ServiceChargeRequestCreateView(APIView):
+    @transaction.atomic
+    def post(self, request, comp_id):
+        try:
+            complaint = Complaint.objects.get(comp_id=comp_id)
+            
+            # Create the ServiceChargeRequest
+            service_request = ServiceChargeRequest.objects.create(
+                comp=complaint,
+                sr_status="PENDING", 
+                sr_type="ISSUE_RAISED",
+                sr_payment_status="UNPAID"
+            )
+            
+            return Response({
+                'sr_id': service_request.sr_id,
+                'status': 'success',
+                'message': 'Service charge request created successfully'
+            }, status=status.HTTP_201_CREATED)
+            
+        except Complaint.DoesNotExist:
+            return Response(
+                {'error': 'Complaint not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

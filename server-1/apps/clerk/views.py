@@ -9,7 +9,11 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargeRequestSerializer
 
     def get_queryset(self):
-        return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon")
+        return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon").select_related(
+            'comp__cpnt'  
+        ).prefetch_related(
+            'comp__complaintaccused_set__acsd'  
+        )
 
 class FileActionrequestView(generics.ListCreateAPIView):
     serializer_class = FileActionRequestSerializer
@@ -22,8 +26,13 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         return ServiceChargeRequest.objects.filter(
             sr_payment_status="Paid",
-            sr_type = "Summon"
-        ).select_related('comp__cpnt')
+            sr_type="Summon"
+        ).select_related(
+            'comp__cpnt'
+        ).prefetch_related(
+            'comp__complaintaccused_set__acsd',
+            'caseactivity_set__srf'
+        )
     
     def get_object(self):
         try:

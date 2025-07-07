@@ -41,16 +41,16 @@ export const ReviewInfo = () => {
         <div className="space-y-1">
           <p className="font-semibold text-black/80">Full Name</p>
           <p className="text-lg font-medium text-gray-900">
-            {person.firstName} {person.lastName}
+            {person.firstName} {person.middleName} {person.lastName}
           </p>
         </div>
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <p className="font-semibold text-black/80">Contact Number</p>
           <div className="flex items-center gap-2">
             <Phone className="h-4 w-4 text-gray-400" />
             <p className="text-gray-900">{person.contactNumber || "Not provided"}</p>
           </div>
-        </div>
+        </div> */}
       </div>
       <div className="space-y-1">
         <p className="font-semibold text-black/80">Address</p>
@@ -80,16 +80,16 @@ export const ReviewInfo = () => {
               <div className="space-y-1">
                 <p className="font-semibold text-black/80">Full Name</p>
                 <p className="text-normal text-black">
-                  {data.complainant?.firstName} {data.complainant?.lastName}
+                  {data.complainant?.firstName} {data.complainant?.middleName} {data.complainant?.lastName} {data.complainant?.suffix}
                 </p>
               </div>
-              <div className="space-y-1">
+              {/* <div className="space-y-1">
                 <p className="font-semibold text-black/80">Contact Number</p>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-400" />
                   <p className="text-gray-900">{data.complainant?.contactNumber || "Not provided"}</p>
                 </div>
-              </div>
+              </div> */}
             </div>
             <Separator />
             <div className="space-y-1">
@@ -144,7 +144,7 @@ export const ReviewInfo = () => {
                               {index + 1}
                             </div>
                             <span className="hidden sm:inline">
-                              {person.firstName} {person.lastName}
+                              {person.lastName}
                             </span>
                             <span className="sm:hidden">
                               Person {index + 1}
@@ -172,13 +172,13 @@ export const ReviewInfo = () => {
                           {data.accused[0].firstName} {data.accused[0].lastName}
                         </p>
                       </div>
-                      <div className="space-y-1">
+                      {/* <div className="space-y-1">
                         <p className="font-semibold text-black/80">Contact Number</p>
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-gray-400" />
                           <p className="text-gray-900">{data.accused[0].contactNumber || "Not provided"}</p>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                     <Separator className="my-4" />
                     <div className="space-y-1">

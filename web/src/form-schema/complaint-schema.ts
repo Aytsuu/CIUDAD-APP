@@ -17,18 +17,19 @@ export const personSchema = z.object({
   lastName: z.string().min(1, "Last name is required").max(50),
   middleName: z.string().max(50).optional(),
   suffix: z.string().max(10).optional(),
-  contactNumber: z.string()
-    .min(11, "Contact number must be 11 digits")
-    .max(11, "Contact number must be 11 digits")
-    .regex(phoneRegex, "Invalid Philippine mobile number (09XXXXXXXXX)"),
-  email: z.string()
-    .regex(emailRegex, "Invalid email format")
-    .optional()
-    .or(z.literal("")),
+  // contactNumber: z.string()
+  //   .min(11, "Contact number must be 11 digits")
+  //   .max(11, "Contact number must be 11 digits")
+  //   .regex(phoneRegex, "Invalid Philippine mobile number (09XXXXXXXXX)"),
+  // email: z.string()
+  //   .regex(emailRegex, "Invalid email format")
+  //   .optional()
+  //   .or(z.literal("")),
   address: addressSchema,
 });
 
-export const accusedPersonSchema = personSchema.omit({ email: true });
+// export const accusedPersonSchema = personSchema.omit({ email: true });
+export const accusedPersonSchema = personSchema;
 
 export const incidentTypeEnum = z.enum([
   "Theft",

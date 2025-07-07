@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import *
 
-class AccusedNameSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComplaintAccused
-        fields = ['acsd']
-        depth = 1  # To get the name of the accused from the Accused model
+# class AccusedNameSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ComplaintAccused
+#         fields = ['acsd']
+#         depth = 1  # To get the name of the accused from the Accused model
 
 class ServiceChargeRequestSerializer(serializers.ModelSerializer):
     complainant_name = serializers.SerializerMethodField()
@@ -17,7 +17,7 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceChargeRequest
-        fields = [''
+        fields = [
                 'sr_id', 
                 'complainant_name', 
                 'accused_names', 
@@ -36,8 +36,8 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
         if not obj.comp:
             return []
 
-        accused_links = ComplaintAccused.objects.filter(comp=obj.comp)
-        return [accused.acsd.acsd_name for accused in accused_links]
+        accused_links = obj.comp.complaintaccused_set.all()
+        return [link.acsd.acsd_name for link in accused_links if link.acsd]
 
 class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
     class Meta:

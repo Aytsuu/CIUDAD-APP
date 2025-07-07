@@ -28,3 +28,8 @@ export const restoreComplaint = (id: string) => {
 export const deleteComplaint = (id: string) => {
   return api.delete(`/complaint/${id}/`);
 };
+
+
+export const raiseIssue = (compId : number) => {
+  return api.post(`/complaint/${compId}/issue-raise/`)
+};
