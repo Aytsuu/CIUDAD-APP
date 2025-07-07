@@ -38,6 +38,7 @@ export const useGetTemplateRecord = () => {
 export type PurposeRates = {
     pr_id: string;
     pr_purpose: string;
+    pr_is_archive: boolean;
 }
 
 export const useGetPurposeRates= () => {

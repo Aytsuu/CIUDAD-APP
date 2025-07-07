@@ -77,7 +77,7 @@ class ResolutionSerializer(serializers.ModelSerializer):
 class PurposeRatesListViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Purpose_And_Rates
-        fields = ['pr_id', 'pr_purpose']
+        fields = ['pr_id', 'pr_purpose', 'pr_is_archive']
 
 # class ResolutionSerializer(serializers.ModelSerializer):
 #     rf_id = serializers.SerializerMethodField()

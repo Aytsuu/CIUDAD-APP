@@ -20,6 +20,7 @@ export const getPurposeRates = async () => {
     try {
 
         const res = await api.get('council/purpose-rates-view/');
+        console.log("GETTTTT REQ PURPOSE: ", res)
         return res.data;
         
     } catch (err) {
