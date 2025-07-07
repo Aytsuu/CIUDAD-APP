@@ -44,7 +44,7 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
         const res = await api.post('waste/waste-collection-sched/', {
             wc_date: formatDate(collectionInfo.date),
             wc_time: collectionInfo.time,
-            wc_add_info: collectionInfo.additionalInstructions,
+            wc_add_info: collectionInfo.additionalInstructions || "None",
             wc_is_archive: false,
             staff: collectionInfo.staff_id,
             sitio: collectionInfo.selectedSitios,
