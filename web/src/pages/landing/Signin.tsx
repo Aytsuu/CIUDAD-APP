@@ -172,7 +172,7 @@ export default function SignIn() {
             </form>
           </Form>
 
-          <div className="relative">
+          {/* <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -181,7 +181,7 @@ export default function SignIn() {
                 Or continue with
               </span>
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

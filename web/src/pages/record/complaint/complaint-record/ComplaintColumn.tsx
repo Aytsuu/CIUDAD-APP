@@ -4,6 +4,7 @@ import { Link } from "react-router"
 import { Button } from "@/components/ui/button/button"
 import { ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import ViewButton from "@/components/ui/view-button"
 
 export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
@@ -15,26 +16,26 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
       </Badge>
     ),
   },
-  {
-    accessorKey: "comp_category",
-    header: "Category",
-    cell: ({ row }) => {
-      const category = row.original.comp_category as string
-      return (
-        <Badge
-          className={`font-medium ${
-            category === "Low"
-              ? "bg-green-100 text-green-800 hover:bg-green-200"
-              : category === "Normal"
-                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                : "bg-red-100 text-red-800 hover:bg-red-200"
-          }`}
-        >
-          {category}
-        </Badge>
-      )
-    },
-  },
+  // {
+  //   accessorKey: "comp_category",
+  //   header: "Category",
+  //   cell: ({ row }) => {
+  //     const category = row.original.comp_category as string
+  //     return (
+  //       <Badge
+  //         className={`font-medium ${
+  //           category === "Low"
+  //             ? "bg-green-100 text-green-800 hover:bg-green-200"
+  //             : category === "Normal"
+  //               ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+  //               : "bg-red-100 text-red-800 hover:bg-red-200"
+  //         }`}
+  //       >
+  //         {category}
+  //       </Badge>
+  //     )
+  //   },
+  // },
   {
     accessorKey: "comp_incident_type",
     header: "Incident Type",
@@ -51,7 +52,7 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     cell: ({ row }) => {
       const accusedPersons = row.original.accused_persons
       if (!accusedPersons || accusedPersons.length === 0) {
-        return <div className="text-gray-500 italic">No accused persons</div>
+        return <div className="text-gray-500">No accused persons</div>
       }
 
       const firstAccused = accusedPersons[0].acsd_name
@@ -79,14 +80,9 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     cell: ({ row }) => (
       <div className="min-w-[100px]">
         <Link to={`/complaint-record/${row.original.comp_id}`} state={{ complaint: row.original }}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 hover:bg-blue-50 hover:border-blue-300 transition-colors bg-transparent"
-          >
-            View
-            <ArrowRight size={14} className="ml-1" />
-          </Button>
+          <ViewButton onClick={function (): void {
+            throw new Error("Function not implemented.")
+          } }/>
         </Link>
       </div>
     ),

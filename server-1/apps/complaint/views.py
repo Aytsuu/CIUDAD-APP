@@ -1,171 +1,158 @@
 from rest_framework import generics, permissions
 from .serializers import ComplaintSerializer
 from apps.profiling.models import Address
+from apps.profiling.models import Sitio
 from apps.file.models import File
+from apps.clerk.models import ServiceChargeRequest
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import *
 from apps.notification.models import Notification
 import json
 import logging
 from rest_framework.decorators import api_view, permission_classes
-
+from utils.supabase_client import supabase
+from django.db import transaction
+import uuid
 logger = logging.getLogger(__name__)
 
+
 class ComplaintCreateView(APIView):
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    # permission_classes = [permissions.IsAuthenticated]
     
+    def _create_file_records(self, complaint, uploaded_files_data):
+        """Create file records from uploaded Supabase URLs"""
+        try:
+            created_files = []
+            
+            for file_data in uploaded_files_data:
+                complaint_file = Complaint_File.objects.create(
+                    comp_file_name=file_data.get('name'),
+                    comp_file_type=file_data.get('type', 'document'),
+                    comp_file_path=file_data.get('publicUrl'),
+                    supabase_path=file_data.get('storagePath'),
+                    file_size=file_data.get('size', 0),
+                    comp=complaint
+                )
+                created_files.append(complaint_file)
+                print(f"File record created: {complaint_file.comp_file_id}")
+            
+            return created_files
+            
+        except Exception as e:
+            logger.error(f"Error creating file records: {str(e)}")
+            raise Exception(f"File record creation failed: {str(e)}")
+        
+    @transaction.atomic
     def post(self, request):
         try:
-            # Parse JSON data from FormData
             complainant_data = json.loads(request.data.get('complainant', '{}'))
             accused_list = json.loads(request.data.get('accused', '[]'))
+            uploaded_files_data = json.loads(request.data.get('uploaded_files', '[]'))
             
-            # Get media files - handle both File objects and URLs
-            media_files = request.FILES.getlist('media_files')  # For File objects
-            media_urls = request.data.getlist('media_urls', [])  # For URLs
+            print(f"Received {len(uploaded_files_data)} uploaded file URLs")
+            for i, file_data in enumerate(uploaded_files_data):
+                print(f"File {i}: {file_data.get('name')}, URL: {file_data.get('publicUrl')}")
+
+            # Create complaint and related objects
+            complaint = self._create_complaint(request, complainant_data)
+            self._create_accused(complaint, accused_list)
             
-            # Process complainant
-            address_data = complainant_data.get('address', {})
-            
-            complainant_address = Address.objects.create(
-                add_province=address_data.get('add_province', ''),
-                add_city=address_data.get('add_city', ''),
-                add_barangay=address_data.get('add_barangay', ''),
-                add_street=address_data.get('add_street', ''),
-                add_external_sitio=address_data.get('add_external_sitio', ''),
-                sitio_id=address_data.get('sitio')
-            )
-            
-            complainant = Complainant.objects.create(
-                cpnt_name=complainant_data.get('name', ''),
-                add=complainant_address
-            )
-            
-            # Create single complaint
-            complaint = Complaint.objects.create(
-                comp_incident_type=request.data.get('incident_type', ''),
-                comp_datetime=request.data.get('datetime', ''),
-                comp_allegation=request.data.get('allegation', ''),
-                comp_category=request.data.get('category', 'Normal'),
-                cpnt=complainant
-            )
-            
-            # Process accused persons
-            for accused_data in accused_list:
-                accused_address_data = accused_data.get('address', {})
-                accused_address = Address.objects.create(
-                    add_province=accused_address_data.get('add_province', ''),
-                    add_city=accused_address_data.get('add_city', ''),
-                    add_barangay=accused_address_data.get('add_barangay', ''),
-                    add_street=accused_address_data.get('add_street', ''),
-                    add_external_sitio=accused_address_data.get('add_external_sitio', ''),
-                    sitio_id=accused_address_data.get('sitio')
-                )
-                
-                accused = Accused.objects.create(
-                    acsd_name=accused_data.get('name', ''),
-                    add=accused_address
-                )
-                
-                ComplaintAccused.objects.create(
-                    comp=complaint,
-                    acsd=accused
-                )
-            
-            # Process media files (File objects)
-            for file_obj in media_files:
-                file_name = file_obj.name
-                file_type = file_name.split('.')[-1].lower()
-                
-                # Map file extension to type
-                if file_type in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
-                    file_type = 'image'
-                elif file_type in ['mp4', 'mov', 'avi', 'webm']:
-                    file_type = 'video'
-                elif file_type == 'pdf':
-                    file_type = 'pdf'
-                else:
-                    file_type = 'document'
-                
-                # Save file to your storage and get URL
-                # (Implement your file storage logic here)
-                file_url = f"/media/{file_name}"  # Example URL
-                
-                new_file = File.objects.create(
-                    file_name=file_name,
-                    file_type=file_type,
-                    file_path=file_url,
-                    file_url=file_url
-                )
-                
-                Complaint_File.objects.create(
-                    comp=complaint,
-                    file=new_file
-                )
-            
-            # Process media URLs
-            for file_url in media_urls:
-                if not file_url:
-                    continue
-                    
-                file_name = file_url.split('/')[-1].split('?')[0]
-                file_type = file_name.split('.')[-1].lower()
-                
-                # Map file extension to type
-                if file_type in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
-                    file_type = 'image'
-                elif file_type in ['mp4', 'mov', 'avi', 'webm']:
-                    file_type = 'video'
-                elif file_type == 'pdf':
-                    file_type = 'pdf'
-                else:
-                    file_type = 'document'
-                
-                new_file = File.objects.create(
-                    file_name=file_name,
-                    file_type=file_type,
-                    file_path=file_url,
-                    file_url=file_url
-                )
-                
-                Complaint_File.objects.create(
-                    comp=complaint,
-                    file=new_file
-                )
-            
-            try:
-                Notification.objects.create(
-                    recipient=request.user,
-                    title="Complaint Submitted",
-                    message=f"Your complaint #{complaint.comp_id} has been registered",
-                    notification_type="success",
-                    content_object=complaint
-                )
-            except Exception as e:
-                logger.error(f"Notification creation failed: {str(e)}")
-                
+            # Create file records from uploaded URLs
+            created_files = []
+            if uploaded_files_data:
+                try:
+                    created_files = self._create_file_records(complaint, uploaded_files_data)
+                except Exception as file_error:
+                    logger.error(f"Failed to create file records: {str(file_error)}")
+                    # You might want to decide whether to fail the entire complaint or continue
+                    pass
+
             return Response({
                 'comp_id': complaint.comp_id,
                 'status': 'success',
-                'message': 'Complaint created successfully'
+                'message': 'Complaint created successfully',
+                'created_files': len(created_files),
+                'total_files': len(uploaded_files_data)
             }, status=status.HTTP_201_CREATED)
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {str(e)}")
-            return Response({
-                'error': f'Invalid JSON data: {str(e)}',
-                'status': 'error'
-            }, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
-            logger.error(f"Error creating complaint: {str(e)}", exc_info=True)
+            logger.error(f"Error creating complaint: {str(e)}")
             return Response({
                 'error': str(e),
-                'status': 'error',
-                'details': 'Check server logs for more information'
+                'status': 'error'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+    def _create_complaint(self, request, complainant_data):
+        address_data = complainant_data.get('address', {})
+        
+        # Handle sitio field properly
+        sitio_id = address_data.pop('sitio', None)
+        sitio_instance = None
+        
+        if sitio_id:
+            try:
+                sitio_instance = Sitio.objects.get(sitio_id=sitio_id)
+            except Sitio.DoesNotExist:
+                address_data['add_external_sitio'] = sitio_id
+        
+        # Create address with proper field names
+        address = Address.objects.create(
+            add_province=address_data.get('province'),
+            add_city=address_data.get('city'),
+            add_barangay=address_data.get('barangay'),
+            add_street=address_data.get('street'),
+            add_external_sitio=address_data.get('add_external_sitio'),
+            sitio=sitio_instance
+        )
+        
+        complainant = Complainant.objects.create(
+            cpnt_name=complainant_data.get('name'),
+            add=address
+        )
+        
+        return Complaint.objects.create(
+            comp_incident_type=request.data.get('incident_type'),
+            comp_datetime=request.data.get('datetime'),
+            comp_allegation=request.data.get('allegation'),
+            comp_category=request.data.get('category', 'Normal'),
+            cpnt=complainant
+        )
+
+    def _create_accused(self, complaint, accused_list):
+        for accused_data in accused_list:
+            address_data = accused_data.get('address', {})
+            
+            # Handle sitio field properly
+            sitio_id = address_data.pop('sitio', None)
+            sitio_instance = None
+            
+            if sitio_id:
+                try:
+                    sitio_instance = Sitio.objects.get(sitio_id=sitio_id)
+                except Sitio.DoesNotExist:
+                    # Handle case where sitio doesn't exist
+                    address_data['add_external_sitio'] = sitio_id
+            
+            # Create address with proper field names
+            address = Address.objects.create(
+                add_province=address_data.get('province'),
+                add_city=address_data.get('city'),
+                add_barangay=address_data.get('barangay'),
+                add_street=address_data.get('street'),
+                add_external_sitio=address_data.get('add_external_sitio'),
+                sitio=sitio_instance
+            )
+            
+            accused = Accused.objects.create(
+                acsd_name=accused_data.get('name'),
+                add=address
+            )
+            ComplaintAccused.objects.create(comp=complaint, acsd=accused)
+    
             
 class ComplaintListView(generics.ListAPIView):
     serializer_class = ComplaintSerializer
@@ -260,3 +247,34 @@ def restore_complaint(request, pk):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         
+
+class ServiceChargeRequestCreateView(APIView):
+    @transaction.atomic
+    def post(self, request, comp_id):
+        try:
+            complaint = Complaint.objects.get(comp_id=comp_id)
+            
+            # Create the ServiceChargeRequest
+            service_request = ServiceChargeRequest.objects.create(
+                comp=complaint,
+                sr_status="PENDING", 
+                sr_type="ISSUE_RAISED",
+                sr_payment_status="UNPAID"
+            )
+            
+            return Response({
+                'sr_id': service_request.sr_id,
+                'status': 'success',
+                'message': 'Service charge request created successfully'
+            }, status=status.HTTP_201_CREATED)
+            
+        except Complaint.DoesNotExist:
+            return Response(
+                {'error': 'Complaint not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

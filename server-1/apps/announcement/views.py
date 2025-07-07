@@ -1,10 +1,16 @@
-from rest_framework import generics,status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .models import *
-from .serializers import *
-from django.db import transaction
 
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import Announcement, AnnouncementFile, AnnouncementRecipient
+from .serializers import (
+    AnnouncementBaseSerializer,
+    AnnouncementFileSerializer,
+    AnnouncementRecipientSerializer,
+    BulkAnnouncementRecipientSerializer,
+    AnnouncementRecipientFilteredSerializer
+)
+from django.db import transaction
 
 
 class AnnouncementView(generics.ListCreateAPIView):
@@ -21,22 +27,19 @@ class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
 class AnnouncementFileCreateView(generics.CreateAPIView):
     queryset = AnnouncementFile.objects.all()
     serializer_class = AnnouncementFileSerializer
+
     @transaction.atomic
     def create(self, request, *args, **kwargs):
-      serializer = self.get_serializer(data=request.data, many=True)
-      serializer.is_valid(raise_exception=True)
+        serializer = self.get_serializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
 
-      # Prepare model instances
-      instances = [
-          AnnouncementFile(**item)
-          for item in serializer.validated_data
-      ]
-      created_instances = AnnouncementFile.objects.bulk_create(instances)
+        instances = [
+            AnnouncementFile(**item) for item in serializer.validated_data
+        ]
+        created_instances = AnnouncementFile.objects.bulk_create(instances)
 
-      if len(created_instances) > 0 and created_instances[0].pk is not None:
-          return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
-      return Response(status=status.HTTP_201_CREATED) 
 
 class AnnouncementFileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = AnnouncementFile.objects.all()
@@ -48,8 +51,23 @@ class AnnouncementRecipientView(generics.ListCreateAPIView):
 
     def get_serializer_class(self):
         if self.request.method == 'POST' and isinstance(self.request.data, dict) and 'recipients' in self.request.data:
-            return BulkAnnouncementRecipientSerializer
+            return BulkAnnouncementRecipientSerializer  # ✅ must return this
         return AnnouncementRecipientSerializer
+
+    def create(self, request, *args, **kwargs):
+        if 'recipients' in request.data:
+            serializer = BulkAnnouncementRecipientSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "Recipients created successfully"}, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = AnnouncementRecipientSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class AnnouncementRecipientDetailView(generics.RetrieveUpdateDestroyAPIView):

@@ -3,9 +3,9 @@ from django.template.loader import render_to_string
 from django.conf import settings
 
 
-def send_email(subject, context, recipient_email, template):
+def send_email(subject, context, recipient_email):
     try:
-        html_message = render_to_string(f'template/email/{template}', context)
+        html_message = render_to_string("emails/announcement_email.html", context)
         email = EmailMultiAlternatives(
             subject=subject,
             body=html_message,
