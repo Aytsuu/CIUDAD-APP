@@ -17,6 +17,15 @@ urlpatterns=[
 
     path("template/", TemplateView.as_view(), name="document-template"),
     path("update-template/<int:temp_id>/", UpdateTemplateView.as_view(), name="update-document-template"),
+
+    path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
+    path('mom-area-of-focus/', MOMAreaOfFocusView.as_view(), name='mom-area-of-focus'),
+    path('mom-file/', MOMFileView.as_view(), name='mom-file'),
+    path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
+    path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
+    path('update-mom-file/<int:momf_id>/', UpdateMOMFileView.as_view(), name="update-mom-file"),
+    path('delete-mom-area-of-focus/<int:mom_id>/', DeleteMOMAreaOfFocusView.as_view(), name='delete-mom-area-of-focus'),
+    path('mom-supp-doc/', MOMSuppDocView.as_view(), name='mom-supp-doc',)
     path('delete-template/<int:temp_id>/', DeleteTemplateView.as_view(), name='delete-document-template'), 
     path('update-template-pr-id/', update_template_pr_id, name='update-template-pr-id'),
     
