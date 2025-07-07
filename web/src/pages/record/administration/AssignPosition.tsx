@@ -160,7 +160,7 @@ export default function AssignPosition({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
         <div className="flex items-center space-x-3">

@@ -23,8 +23,6 @@ export const buttonConfig = (
           <Check />
           Finish
         </Button>}
-        title="Position Assignment"
-        description="Assign a position to complete the registration"
         mainContent={
           <AssignPosition
             close={() => {
@@ -35,6 +33,7 @@ export const buttonConfig = (
         }
         isOpen={isAssignmentOpen}
         onOpenChange={setIsAssignmentOpen}
+        className="p-0"
       />) : (
         <Button type="submit" className="px-12">
           <Check />
