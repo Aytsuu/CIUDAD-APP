@@ -3,6 +3,7 @@ from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from .models import *
 from django.apps import apps
+from django.db import transaction
 
 @receiver(post_save, sender='treasurer.Budget_Plan')
 def sync_income_expense_main(sender, instance, created, **kwargs):
@@ -72,8 +73,9 @@ def delete_related_records(sender, instance, **kwargs):
     ).delete()
 
 
-@receiver(post_save, sender=Purpose_And_Rates)
-def delete_template_on_archive(sender, instance, **kwargs):
-    if instance.pr_is_archive:
-        Template = apps.get_model('council', 'Template')
-        Template.objects.filter(pr_id=instance.pr_id).delete()
+# @receiver(post_save, sender=Purpose_And_Rates)
+# def delete_template_on_archive(sender, instance, **kwargs):
+#     print('isdeleting', instance.is_deleting)
+#     if instance.pr_is_archive and hasattr(instance, 'is_deleting') and instance.is_deleting:
+#         Template = apps.get_model('council', 'Template')
+#         Template.objects.filter(pr_id=instance.pr_id).delete()

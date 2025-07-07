@@ -37,7 +37,6 @@ class Migration(migrations.Migration):
                 ('gbud_amount', models.DecimalField(decimal_places=2, max_digits=10)),
                 ('gbud_add_notes', models.CharField(max_length=200, null=True)),
                 ('gbud_receipt', models.CharField(blank=True, default='')),
-                ('gbud_receipt', models.CharField(blank=True, default='')),
                 ('gbudy_num', models.ForeignKey(db_column='gbudy_num', on_delete=django.db.models.deletion.CASCADE, related_name='transactions', to='gad.gad_budget_year')),
             ],
             options={

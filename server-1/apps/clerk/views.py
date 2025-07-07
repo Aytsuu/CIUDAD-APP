@@ -5,9 +5,7 @@ from rest_framework import status
 from .models import ClerkCertificate, ClerkBusinessPermit, DocumentsPDF
 from .serializers import ClerkCertificateSerializer, ClerkBusinessPermitSerializer, ClerkDocumentPDFSerializer
 from supabase import create_client, Client 
-
 from django.conf import settings
-
 import tempfile
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile

@@ -15,12 +15,28 @@ from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
-@api_view(['PATCH'])
-def update_template_pr_id(request):
-    old_id = request.data.get("old_pr_id")
-    new_id = request.data.get("new_pr_id")
-    Template.objects.filter(pr_id=old_id).update(pr_id=new_id)
-    return Response({"status": "updated"})
+class UpdateTemplateByPrIdView(generics.UpdateAPIView):
+    def update(self, request, *args, **kwargs):
+        old_id = request.data.get("old_pr_id")
+        new_id = request.data.get("new_pr_id")
+        
+        try:
+            new_purpose_rate = get_object_or_404(Purpose_And_Rates, pk=new_id)
+            templates = Template.objects.filter(pr_id=old_id)
+            
+            updated_count = templates.update(pr_id=new_purpose_rate)  # More efficient bulk update
+            
+            return Response({
+                "status": "updated",
+                "count": updated_count,
+                "message": f"Updated {updated_count} template(s)"
+            })
+            
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class CouncilSchedulingView(generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
@@ -228,6 +244,22 @@ class DeleteTemplateView(generics.DestroyAPIView):
         temp_id = self.kwargs.get('temp_id')
         return get_object_or_404(Template, temp_id=temp_id) 
 
+
+
+class DeleteTemplateByPrIdView(generics.DestroyAPIView):
+    serializer_class = TemplateSerializer
+    queryset = Template.objects.all()
+
+    def delete(self, request, *args, **kwargs):
+        pr_id = kwargs.get('pr_id')
+        deleted_count, _ = Template.objects.filter(pr_id=pr_id).delete()
+        
+        if deleted_count == 0:
+            return Response(
+                {"detail": "No templates found with this pr_id."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
  # =================================  RESOLUTION =================================

@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny
 from .models import Budget_Plan_Detail, Budget_Plan
 from rest_framework.views import APIView
 
+
 class BudgetPlanView(generics.ListCreateAPIView):
     serializer_class = BudgetPlanSerializer
     queryset = Budget_Plan.objects.all()
