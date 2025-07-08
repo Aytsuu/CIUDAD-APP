@@ -282,7 +282,10 @@ class BusinessSerializer(serializers.ModelSerializer):
         model = Business
         fields = [
             'bus_id',
+            'bus_name',
             'bus_gross_sales',
+            'bus_respondentLname', 
+            'bus_respondentFname',  
             'bus_respondentMname',
             'bus_respondentSex',
             'bus_respondentDob',

@@ -36,7 +36,10 @@ class Invoice(models.Model):
 
 class Business(models.Model):
     bus_id = models.BigIntegerField(primary_key=True)
+    bus_name = models.CharField(max_length=255)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
+    bus_respondentLname = models.CharField(max_length=100)  
+    bus_respondentFname = models.CharField(max_length=100)  
     bus_respondentMname = models.CharField(max_length=100)
     bus_respondentSex = models.CharField(max_length=100)
     bus_respondentDob = models.DateField()

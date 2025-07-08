@@ -41,8 +41,8 @@ export const columns: ColumnDef<PermitClearance>[] = [
     {
         accessorKey: "purpose",
         header: "Purpose",
-        cell: ({ row }) => row.original.purposes.join(", ") // Convert array to string
-      },
+        cell: ({ row }) => row.original.req_sales_proof || ""
+    },
     { accessorKey: "requestor", header: "Requestor"},
     { accessorKey: "reqDate",
         header: ({ column }) => (
@@ -163,7 +163,8 @@ type PermitClearance = {
     requestor: string,
     reqDate: string,
     claimDate: string,
-    paymentStat: "Paid" | "Pending"
+    paymentStat: "Paid" | "Pending",
+    req_sales_proof?: string
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -198,9 +199,23 @@ function PermitClearance(){
 
     const filteredData = selectedFilter === "All" ? (permitClearances || [])
     : (permitClearances || []).filter((item: any) => item.req_payment_status === selectedFilter);
-    
 
-    
+    // Map backend data to frontend columns
+    const mappedData = (filteredData || []).map((item: any) => ({
+        businessName: item.business_details?.bus_name || "",
+        address: item.business_details?.bus_respondentAddress || "",
+        grossSales: item.business_details?.bus_gross_sales || "",
+        purposes: item.purposes || [],
+        requestor: item.business_details?.bus_respondentFname && item.business_details?.bus_respondentLname
+            ? `${item.business_details.bus_respondentFname} ${item.business_details.bus_respondentLname}`
+            : "",
+        reqDate: item.req_request_date,
+        claimDate: item.req_claim_date,
+        paymentStat: item.req_payment_status,
+        req_sales_proof: item.req_sales_proof,
+        ...item
+    }));
+
     return(
         <div className="w-full h-full">
             <div className="flex flex-col gap-3 mb-3">
@@ -268,7 +283,7 @@ function PermitClearance(){
                             </div>
                     </div>    
 
-                    <DataTable columns={columns} data={filteredData}></DataTable>
+                    <DataTable columns={columns} data={mappedData}></DataTable>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
