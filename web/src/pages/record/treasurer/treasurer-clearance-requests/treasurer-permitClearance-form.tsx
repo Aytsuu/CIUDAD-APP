@@ -29,7 +29,7 @@ function PermitClearanceForm() {
             requestor: "",
             address: "",
             grossSales: "",
-            purposes: "",
+            purposes: [],
         },
     })
 
@@ -137,7 +137,7 @@ function PermitClearanceForm() {
                                             options={purposeOptions}
                                             label=""
                                             placeholder="Select a purpose"
-                                            value={field.value}
+                                            value={Array.isArray(field.value) ? field.value[0] || "" : field.value}
                                             onChange={field.onChange}
                                         />
                                     </FormControl>

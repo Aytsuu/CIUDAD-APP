@@ -254,401 +254,180 @@
 #         ]
 
 from rest_framework import serializers
-from .models import *
-from apps.profiling.models import *
-from apps.complaint.models import *
-from datetime import datetime
-from apps.profiling.models import *
-from apps.complaint.models import *
-from datetime import datetime
+from .models import ClerkCertificate, IssuedCertificate, BusinessPermitRequest, IssuedBusinessPermit, Business, Invoice
+from apps.profiling.models import ResidentProfile
+from apps.file.models import File
+import logging
 
-class AddressDetailsSerializer(serializers.ModelSerializer):
-    formatted_address = serializers.SerializerMethodField()
-    sitio_name = serializers.CharField(source='sitio.sitio_name', allow_null=True)
-    
+logger = logging.getLogger(__name__)
+
+class FileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = 'profiling.Address'
-        model = 'profiling.Address'
+        model = File
+        fields = ['file_id', 'file_name', 'file_type', 'file_path', 'file_url']
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invoice
         fields = [
-            'add_province',
-            'add_city',
-            'add_barangay',
-            'add_street',
-            'sitio_name',
-            'add_external_sitio',
-            'formatted_address'
-            'formatted_address'
+            'inv_num',
+            'inv_serial_num',
+            'inv_date',
+            'inv_amount',
+            'inv_nat_of_collection'
         ]
-    
-    def get_formatted_address(self, obj):
-        sitio = obj.sitio.sitio_name if obj.sitio else obj.add_external_sitio
-        parts = [
-            sitio,
-            obj.add_street,
-            f"Barangay {obj.add_barangay}",
-            obj.add_city,
-            obj.add_province
-        ]
-        return ', '.join(filter(None, parts))
-        
-class CaseSuppDocSerializer(serializers.ModelSerializer):
-class CaseSuppDocSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CaseSuppDoc
-        fields = '__all__'
-        model = CaseSuppDoc
-        fields = '__all__'
 
-class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
+class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ServiceChargeRequestFile
-        fields = '__all__'
-
-class CaseActivitySerializer(serializers.ModelSerializer):
-    srf_detail = ServiceChargeRequestFileSerializer(source='srf', read_only=True)
-    supporting_documents = CaseSuppDocSerializer(
-        source='supporting_docs',
-        many=True,
-        read_only=True
-    )
-    formatted_hearing_datetime = serializers.SerializerMethodField()
-    formatted_hearing_datetime = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CaseActivity
+        model = Business
         fields = [
-            'ca_id',
-            'ca_reason',
-            'ca_hearing_date',
-            'ca_hearing_time',
-            'formatted_hearing_datetime',
-            'ca_mediation',
-            'ca_date_of_issuance',
-            'srf_detail',
-            'supporting_documents'
-        ]
-    
-    def get_formatted_hearing_datetime(self, obj):
-        return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
-        fields = [
-            'ca_id',
-            'ca_reason',
-            'ca_hearing_date',
-            'ca_hearing_time',
-            'formatted_hearing_datetime',
-            'ca_mediation',
-            'ca_date_of_issuance',
-            'srf_detail',
-            'supporting_documents'
-        ]
-    
-    def get_formatted_hearing_datetime(self, obj):
-        return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
-
-class AccusedDetailsSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
-    
-    class Meta:
-        model = Accused
-        fields = [
-            'acsd_id', 
-            'acsd_name',
-            'acsd_age',
-            'acsd_gender',
-            'acsd_description',
-            'address'
-        ]
-        fields = [
-            'acsd_id', 
-            'acsd_name',
-            'acsd_age',
-            'acsd_gender',
-            'acsd_description',
-            'address'
+            'bus_id',
+            'bus_name',
+            'bus_gross_sales',
+            'bus_province',
+            'bus_city',
+            'bus_barangay',
+            'bus_street',
+            'bus_respondentLname',
+            'bus_respondentFname',
+            'bus_respondentMname',
+            'bus_respondentSex',
+            'bus_respondentDob',
+            'bus_date_registered',
+            'sitio_id',
+            'staff_id'
         ]
 
-class ComplaintAccusedSerializer(serializers.ModelSerializer):
-    acsd = AccusedDetailsSerializer()
-    
-    class Meta:
-        model = ComplaintAccused
-        fields = ['acsd']
+class IssuedCertificateSerializer(serializers.ModelSerializer):
+    file_details = FileSerializer(source='file', read_only=True)
+    requester = serializers.SerializerMethodField()
+    purpose = serializers.SerializerMethodField()
+    fileUrl = serializers.SerializerMethodField()
+    dateIssued = serializers.DateField(source='ic_date_of_issuance', format="%Y-%m-%d")
 
-class ComplainantDetailsSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
-    
-    class Meta:
-        model = Complainant
-        fields = [
-            'cpnt_id',
-            'cpnt_name',
-            'cpnt_gender',
-            'cpnt_age',
-            'cpnt_number',
-            'cpnt_relation_to_respondent',
-            'address'
-        ]
-
-class ComplaintComplainantSerializer(serializers.ModelSerializer):
-    cpnt = ComplainantDetailsSerializer()
-    
-    class Meta:
-        model = ComplaintComplainant
-        fields = ['cpnt']
-
-class ComplaintFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Complaint_File
-        fields = [
-            'comp_file_id',
-            'comp_file_name',
-            'comp_file_type',
-            'comp_file_path',
-            'file_size'
-        ]
-
-class ComplainantDetailsSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
-    
-    class Meta:
-        model = Complainant
-        fields = [
-            'cpnt_id',
-            'cpnt_name',
-            'cpnt_gender',
-            'cpnt_age',
-            'cpnt_number',
-            'cpnt_relation_to_respondent',
-            'address'
-        ]
-
-class ComplaintComplainantSerializer(serializers.ModelSerializer):
-    cpnt = ComplainantDetailsSerializer()
-    
-    class Meta:
-        model = ComplaintComplainant
-        fields = ['cpnt']
-
-class ComplaintFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Complaint_File
-        fields = [
-            'comp_file_id',
-            'comp_file_name',
-            'comp_file_type',
-            'comp_file_path',
-            'file_size'
-        ]
-
-class ComplaintSerializer(serializers.ModelSerializer):
-    complainants = serializers.SerializerMethodField()
-    complainants = serializers.SerializerMethodField()
-    accused = serializers.SerializerMethodField()
-    files = ComplaintFileSerializer(source='complaint_file', many=True, read_only=True)
-    formatted_incident_datetime = serializers.SerializerMethodField()
-    files = ComplaintFileSerializer(source='complaint_file', many=True, read_only=True)
-    formatted_incident_datetime = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Complaint
-        fields = [
-            'comp_id',
-            'comp_incident_type',
-            'comp_allegation',
-            'comp_datetime',
-            'formatted_incident_datetime',
-            'comp_location',
-            'comp_created_at',
-            'complainants',
-            'accused',
-            'files'
-            'formatted_incident_datetime',
-            'comp_location',
-            'comp_created_at',
-            'complainants',
-            'accused',
-            'files'
-        ]
-    
-    def get_complainants(self, obj):
-        complainant_links = ComplaintComplainant.objects.filter(comp=obj)
-        serializer = ComplaintComplainantSerializer(complainant_links, many=True)
-        return [item['cpnt'] for item in serializer.data]
-    
-    def get_complainants(self, obj):
-        complainant_links = ComplaintComplainant.objects.filter(comp=obj)
-        serializer = ComplaintComplainantSerializer(complainant_links, many=True)
-        return [item['cpnt'] for item in serializer.data]
-    
-    def get_accused(self, obj):
-        accused_links = ComplaintAccused.objects.filter(comp=obj)
-        serializer = ComplaintAccusedSerializer(accused_links, many=True)
-        return [item['acsd'] for item in serializer.data]
-    
-    def get_formatted_incident_datetime(self, obj):
+    def get_requester(self, obj):
         try:
-            return datetime.strptime(obj.comp_datetime, "%Y-%m-%d %H:%M:%S").strftime("%B %d, %Y at %I:%M %p")
-        except:
-            return obj.comp_datetime
+            if obj.certificate and obj.certificate.rp and obj.certificate.rp.per:
+                person = obj.certificate.rp.per
+                return f"{person.per_fname} {person.per_lname}"
+            return "Unknown"
+        except Exception as e:
+            logger.error(f"Error getting requester: {str(e)}")
+            return "Unknown"
 
-class ServiceChargeRequestSerializer(serializers.ModelSerializer):
-    complainant_names = serializers.SerializerMethodField()
-    accused_names = serializers.SerializerMethodField()
-    incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
-    allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
-    formatted_decision_date = serializers.SerializerMethodField()
-    formatted_request_date = serializers.SerializerMethodField()
-
-    
-    def get_formatted_incident_datetime(self, obj):
+    def get_purpose(self, obj):
         try:
-            return datetime.strptime(obj.comp_datetime, "%Y-%m-%d %H:%M:%S").strftime("%B %d, %Y at %I:%M %p")
-        except:
-            return obj.comp_datetime
+            if obj.certificate and obj.certificate.req_type:
+                return obj.certificate.req_type
+            return "Not specified"
+        except Exception as e:
+            logger.error(f"Error getting purpose: {str(e)}")
+            return "Not specified"
 
-class ServiceChargeRequestSerializer(serializers.ModelSerializer):
-    complainant_names = serializers.SerializerMethodField()
-    accused_names = serializers.SerializerMethodField()
-    incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
-    allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
-    formatted_decision_date = serializers.SerializerMethodField()
-    formatted_request_date = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 
-            'sr_code',
-            'complainant_names', 
-            'accused_names', 
-            'incident_type', 
-            'allegation',
-            'sr_status',
-            'sr_payment_status',
-            'sr_type',
-            'formatted_decision_date',
-            'formatted_request_date'
-        ]
-
-    def get_complainant_names(self, obj):
-        if not obj.comp:
-            return []
-        return [c.cpnt_name for c in obj.comp.complainant.all()]
-    
-    def get_accused_names(self, obj):
-        if not obj.comp:
-            return []
-        return [ca.acsd.acsd_name for ca in obj.comp.complaintaccused_set.all()]
-    
-    def get_formatted_decision_date(self, obj):
-        if obj.sr_decision_date:
-            return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-        return None
-    
-    def get_formatted_request_date(self, obj):
-        return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 
-            'sr_code',
-            'complainant_names', 
-            'accused_names', 
-            'incident_type', 
-            'allegation',
-            'sr_status',
-            'sr_payment_status',
-            'sr_type',
-            'formatted_decision_date',
-            'formatted_request_date'
-        ]
-
-    def get_complainant_names(self, obj):
-        if not obj.comp:
-            return []
-        return [c.cpnt_name for c in obj.comp.complainant.all()]
-    
-    def get_accused_names(self, obj):
-        if not obj.comp:
-            return []
-        return [ca.acsd.acsd_name for ca in obj.comp.complaintaccused_set.all()]
-    
-    def get_formatted_decision_date(self, obj):
-        if obj.sr_decision_date:
-            return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-        return None
-    
-    def get_formatted_request_date(self, obj):
-        return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
-
-class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-    complaint = ComplaintSerializer(source='comp', read_only=True)
-    case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
-    file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
-    parent_summon = ServiceChargeRequestSerializer(read_only=True)
-    formatted_request_date = serializers.SerializerMethodField()
-    formatted_decision_date = serializers.SerializerMethodField()
-
-    complaint = ComplaintSerializer(source='comp', read_only=True)
-    case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
-    file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
-    parent_summon = ServiceChargeRequestSerializer(read_only=True)
-    formatted_request_date = serializers.SerializerMethodField()
-    formatted_decision_date = serializers.SerializerMethodField()
+    def get_fileUrl(self, obj):
+        try:
+            if obj.file:
+                return obj.file.file_url
+            return None
+        except Exception as e:
+            logger.error(f"Error getting file URL: {str(e)}")
+            return None
 
     class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id',
-            'sr_code',
-            'sr_status',
-            'sr_payment_status',
-            'sr_type',
-            'formatted_request_date',
-            'formatted_decision_date',
-            'sr_payment_status',
-            'sr_type',
-            'formatted_request_date',
-            'formatted_decision_date',
-            'sr_decision_date',
-            'complaint',
-            'case_activities',
-            'file_action_file',
-            'parent_summon'
-        ]
-    
-    def get_formatted_request_date(self, obj):
-        return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
-    
-    def get_formatted_decision_date(self, obj):
-        if obj.sr_decision_date:
-            return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-        return None
+        model = IssuedCertificate
+        fields = ['ic_id', 'dateIssued', 'requester', 'purpose', 'fileUrl', 'file_details']
 
-            'case_activities',
-            'file_action_file',
-            'parent_summon'
-        ]
-    
-    def get_formatted_request_date(self, obj):
-        return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
-    
-    def get_formatted_decision_date(self, obj):
-        if obj.sr_decision_date:
-            return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-        return None
+class ClerkCertificateSerializer(serializers.ModelSerializer):
+    resident_details = serializers.SerializerMethodField()
+    invoice = serializers.SerializerMethodField()
 
-class FileActionRequestSerializer(serializers.ModelSerializer):
+    def get_resident_details(self, obj):
+        try:
+            if obj.rp and obj.rp.per:
+                return {
+                    'per_fname': obj.rp.per.per_fname,
+                    'per_lname': obj.rp.per.per_lname
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Error getting resident details: {str(e)}")
+            return None
+
+    def get_invoice(self, obj):
+        try:
+            invoice = obj.clerk_invoices.first()
+            if invoice:
+                return InvoiceSerializer(invoice).data
+            return None
+        except Exception as e:
+            logger.error(f"Error getting invoice: {str(e)}")
+            return None
+
     class Meta:
-        model = ServiceChargeRequest
+        model = ClerkCertificate
         fields = [
-            'sr_id',
-            'sr_code',
-            'sr_id',
-            'sr_code',
-            'sr_type',
-            'sr_payment_status',
-            'parent_summon',
-            'file_action_file',
-            'comp'
-            'comp'
+            'cr_id',
+            'resident_details',
+            'req_type',
+            'req_request_date',
+            'req_claim_date',
+            'req_payment_status',
+            'req_pay_method',
+            'req_transac_id',
+            'invoice'
         ]
+
+class BusinessPermitSerializer(serializers.ModelSerializer):
+    permit_req_no = serializers.CharField(source='bpr_id')
+    business_details = BusinessSerializer(source='business', read_only=True)
+    issued_permit = serializers.SerializerMethodField()
+
+    def get_issued_permit(self, obj):
+        try:
+            issued_permit = IssuedBusinessPermit.objects.get(permit_request=obj)
+            return IssuedBusinessPermitSerializer(issued_permit).data
+        except IssuedBusinessPermit.DoesNotExist:
+            return None
+
+    class Meta:
+        model = BusinessPermitRequest
+        fields = [
+            'permit_req_no',
+            'business_details',
+            'req_sales_proof',
+            'req_pay_method',
+            'req_request_date',
+            'req_claim_date',
+            'req_status',
+            'req_payment_status',
+            'req_transac_id',
+            'issued_permit'
+        ]
+
+class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
+    file_details = FileSerializer(source='file', read_only=True)
+    business_name = serializers.SerializerMethodField()
+    fileUrl = serializers.SerializerMethodField()
+    dateIssued = serializers.DateField(source='ibp_date_of_issuance', format="%Y-%m-%d")
+
+    def get_business_name(self, obj):
+        try:
+            if obj.permit_request and obj.permit_request.business:
+                return obj.permit_request.business.bus_name
+            return "Unknown"
+        except Exception as e:
+            logger.error(f"Error getting business name: {str(e)}")
+            return "Unknown"
+
+    def get_fileUrl(self, obj):
+        try:
+            if obj.file:
+                return obj.file.file_url
+            return None
+        except Exception as e:
+            logger.error(f"Error getting file URL: {str(e)}")
+            return None
+
+    class Meta:
+        model = IssuedBusinessPermit
+        fields = ['ibp_id', 'dateIssued', 'business_name', 'fileUrl', 'file_details']
