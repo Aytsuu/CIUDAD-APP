@@ -11,7 +11,7 @@ import RatesForm from "@/pages/record/treasurer/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
 import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main"; 
 import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-main";
-// import ReceiptPage from "@/pages/record/treasurer/Receipts/receipts-main";
+import ReceiptPage from "@/pages/record/treasurer/Receipts/receipts-main";
 import BudgetPlanParent from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanParent";
 import ViewBudgetPlanHistory from "@/pages/record/treasurer/treasurer-budgetplan/viewAHistory";
 
@@ -72,8 +72,8 @@ export const treasurer_router = [
         path: 'treasurer-rates',
         element: <RatesForm/>
     },
-    // {
-    //     path: 'treasurer-receipts',
-    //     element: <ReceiptPage/>
-    // },
+    {
+        path: 'treasurer-receipts',
+        element: <ReceiptPage/>
+    },
 ]
