@@ -334,6 +334,7 @@ const items: MenuItem[] = [
           { title: "Rates", url: "/treasurer-rates" },
         ],
       },
+      { title: "Receipts", url: "/treasurer-receipts" },
     ],
   },
   {
