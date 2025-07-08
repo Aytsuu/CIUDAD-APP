@@ -129,7 +129,7 @@ export default function RejectedTable() {
                     <div className="h-full">
                       <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Rejection Reason</p>
                       <div className="bg-gray-50 rounded-lg p-3 h-full min-h-[80px]">
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        <p className="text-sm text-red-600 leading-relaxed whitespace-pre-wrap">
                           {request.dec_reason}
                         </p>
                       </div>

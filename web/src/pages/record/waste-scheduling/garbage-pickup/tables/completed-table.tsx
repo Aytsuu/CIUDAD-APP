@@ -219,18 +219,8 @@ export default function CompletedTable() {
                       )}
                     </div>
                   </div>
-
-                  {/* Right Section - Status Indicator */}
+                  
                   <div className="flex-1 min-w-0">
-                    <div className="h-full flex items-center justify-center">
-                      <div className={`rounded-full px-4 py-2 text-sm font-medium ${
-                        viewMode === 'full' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {viewMode === 'full' ? 'Fully Completed' : 'Partially Completed'}
-                      </div>
-                    </div>
                   </div>
 
                   {/* Action Buttons */}
