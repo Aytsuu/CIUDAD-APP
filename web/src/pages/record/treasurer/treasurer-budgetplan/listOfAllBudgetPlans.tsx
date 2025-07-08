@@ -223,7 +223,7 @@ function BudgetPlan() {
         <div className="w-full h-full">
             <div className="flex flex-col gap-3 mb-4">
                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                    <div>San Roque Budget Plan</div>
+                    <div>Budget Plan</div>
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
                     Efficiently oversee and allocate your budget to optimize financial planning and sustainability.
