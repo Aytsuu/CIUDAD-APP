@@ -122,7 +122,7 @@ export default function StaffAttendanceRankingChart() {
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tickMargin={8}
+                tickMargin={1}
                 className="text-xs"
                 tickFormatter={(value: number) => value.toString()}
               />

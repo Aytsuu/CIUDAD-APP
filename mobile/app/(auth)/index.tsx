@@ -6,7 +6,8 @@ import IllegalDumpCreateForm from "@/screens/report/illegal-dumping/resident/ill
 import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
 import BudgetPlanMain from "@/screens/treasurer/budget-plan/budget-plan-main";
 import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
+import ReceiptPage from "@/screens/treasurer/receipt/receipt-main";
 
 export default () => {
-    return <PurposeAndRatesMain/>
+    return <IncomeExpenseMain/>
 }

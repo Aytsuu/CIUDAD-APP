@@ -276,6 +276,7 @@ class PaymentStatus(APIView):
                 Donation.objects.get_or_create(
                     od_transaction=donation,
                     defaults={
+                        'don_num': donation.od_transaction_id,
                         'don_item_name': "E-money",
                         'don_qty': donation.od_amount,
                         'don_description': "Sent thru an online payment channel",

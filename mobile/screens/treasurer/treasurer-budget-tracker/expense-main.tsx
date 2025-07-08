@@ -1199,7 +1199,7 @@ const ExpenseTracking = () => {
     setSelectedTab(option.value);
     if (option.value === 'income') {
       router.push({
-        pathname: '/treasurer/budget-tracker/budget-income-main',
+        pathname: '/(treasurer)/budget-tracker/budget-income-main',
         params: {
           budYear: year,
           totalInc: totInc.toString(),
@@ -1210,7 +1210,7 @@ const ExpenseTracking = () => {
 
   const handleEdit = (item: any) => {
     router.push({
-      pathname: '/treasurer/budget-tracker/budget-expense-edit',
+      pathname: '/(treasurer)/budget-tracker/budget-expense-edit',
       params: {
         iet_num: Number(item.iet_num),
         iet_serial_num: item.iet_serial_num || '',
@@ -1237,7 +1237,7 @@ const ExpenseTracking = () => {
 
   const handleCreate = () => {
     router.push({
-      pathname: '/treasurer/budget-tracker/budget-expense-create',
+      pathname: '/(treasurer)/budget-tracker/budget-expense-create',
       params: {
         budYear: year,
         totalBud: totBud.toString(),
@@ -1425,7 +1425,7 @@ const ExpenseTracking = () => {
       showBackButton={true}
       showExitButton={false}
       customLeftAction={
-        <TouchableOpacity onPress={() => router.push('/treasurer/budget-tracker/budget-income-expense-main')}>
+        <TouchableOpacity onPress={() => router.push('/(treasurer)/budget-tracker/budget-income-expense-main')}>
           <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
