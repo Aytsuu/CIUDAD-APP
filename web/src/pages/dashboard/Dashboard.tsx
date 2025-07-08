@@ -1,19 +1,34 @@
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { GADExpenseSidebar, GADIncomeSidebar } from "@/components/analytics/gad/btracker-sidebar";
+import { ProjPropPendingSectionCards } from "@/components/analytics/gad/projprop-section-cards";
+import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
+import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
+import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
 
-export default function Dashboard(){
-
-    return (
-        <div className="w-full h-full flex flex-col">
-            {/* Header Section */}
-            <div className="flex flex-col justify-center mb-4">
-                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-                Dashboard
-                </h1>
-                <p className="text-xs sm:text-sm text-darkGray">
-                Overview of key metrics, data, and insights
-                </p>
-            </div>
-
-            <hr className="border-gray mb-6 sm:mb-8" />
+export default function Dashboard() {
+  return (
+    <MainLayoutComponent
+      title="Dashboard"
+      description="Overview of key metrics, data, and insights"
+    >
+      <div className="w-full flex gap-2">
+        <div className="w-full grid gap-2">
+          <div className="grid grid-cols-5">
+            <DonationSectionCards/>
+            <ProjPropPendingSectionCards/>
+            <WastePersonnelCards/>
+          </div>
+          <div className="grid">
+            <StaffAttendanceRankingChart/>
+          </div>
         </div>
-    )
+        <div className="grid gap-2">
+          <GADExpenseSidebar/>
+          <GADIncomeSidebar/>
+          <CouncilEventsSidebar/>
+        </div>
+      </div>
+    </MainLayoutComponent>
+  );
 }

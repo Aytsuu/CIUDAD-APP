@@ -3,7 +3,7 @@ import { useToastContext } from "@/components/ui/toast";
 import { postdonationreq, putdonationreq, getdonationreq, getPersonalList } from "./requests";
 
 export type DonationInput = {
-  don_num?: number;
+  don_num?: string;
   don_donor: string;
   don_item_name: string;
   don_qty: string;
@@ -30,7 +30,7 @@ export const useAddDonation = (onSuccess?: () => void) => {
 };
 
 export type Donation = {
-  don_num: number;
+  don_num: string;
   don_donor: string;
   don_item_name: string;
   don_qty: string;
@@ -78,7 +78,7 @@ export const useUpdateDonation = (onSuccess?: () => void) => {
   const { toast } = useToastContext();
   
   return useMutation({
-    mutationFn: ({ don_num, donationInfo }: { don_num: number; donationInfo: Partial<Donation> }) => 
+    mutationFn: ({ don_num, donationInfo }: { don_num: string; donationInfo: Partial<Donation> }) => 
       putdonationreq(don_num, donationInfo),
     onSuccess: (updatedData, variables) => {
       queryClient.setQueryData(["donations"], (old: Donation[] = []) => 

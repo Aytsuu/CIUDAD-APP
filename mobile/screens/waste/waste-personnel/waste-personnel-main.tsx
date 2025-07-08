@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  RefreshControl
 } from "react-native";
 import {
   Shield,
@@ -68,12 +69,17 @@ export default function WastePersonnelMain() {
 
   const searchQuery = watchSearch("searchQuery");
 
-  const { data: trucks = [], isLoading: isTrucksLoading } = useTrucks();
-  const { data: personnel = [], isLoading: isPersonnelLoading } =
-    usePersonnel();
-
+  const { data: trucks = [], isLoading: isTrucksLoading, refetch } = useTrucks();
+  const { data: personnel = [], isLoading: isPersonnelLoading } = usePersonnel();
   const deleteTruckMutation = useDeleteTruck();
   const restoreTruckMutation = useRestoreTruck();
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   const personnelData = {
     Watchman: personnel.filter((p) => p.position === "Watchman"),
@@ -104,12 +110,12 @@ export default function WastePersonnelMain() {
   );
 
   const handleAddTruck = () => {
-    router.push("/waste/waste-personnel/waste-truck-create");
+    router.push("/(waste)/waste-personnel/waste-truck-create");
   };
 
   const handleEditTruck = (truck: TruckData) => {
     router.push({
-      pathname: "/waste/waste-personnel/waste-truck-edit",
+      pathname: "/(waste)/waste-personnel/waste-truck-edit",
       params: { id: truck.truck_id },
     });
   };
@@ -156,11 +162,12 @@ export default function WastePersonnelMain() {
       headerBetweenAction={<Text className="text-[13px]">Waste Personnel and Collection Vehicle Management</Text>}
       showExitButton={false}
       headerAlign="left"
-      scrollable={true}
+      scrollable={false}
       keyboardAvoiding={true}
       contentPadding="medium"
       loadingMessage='Loading...'
     >
+    <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <View className="bg-white px-4 py-3">
           <TouchableOpacity onPress={() => router.back()}>
             <Text className="text-xs text-white">← BACK</Text>
@@ -409,6 +416,7 @@ export default function WastePersonnelMain() {
             </View>
           )}
         </ScrollView>
+      </ScrollView>
     </ScreenLayout>
   );
 }

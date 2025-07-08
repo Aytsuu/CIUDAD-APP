@@ -5,11 +5,13 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  RefreshControl, ScrollView
 } from 'react-native';
 import { Search, Calendar, X, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useGetGADYearBudgets } from './queries/yearqueries';
 import ScreenLayout from '@/screens/_ScreenLayout';
+import { Input } from '@/components/ui/input';
 
 const GADBudgetTrackerMain = () => {
   const router = useRouter();
@@ -44,6 +46,14 @@ const GADBudgetTrackerMain = () => {
   const handleRefresh = () => {
     refetch();
   };
+
+  const [refreshing, setRefreshing] = useState(false)
+  
+    const onRefresh = async () => {
+      setRefreshing(true)
+      await refetch()
+      setRefreshing(false)
+    }
 
 
   if (isError) {
@@ -86,13 +96,14 @@ const GADBudgetTrackerMain = () => {
       showExitButton={false}
       loading={isLoading}
       loadingMessage='Loading...'
+      scrollable={false}
       >
-        
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       {/* Search Bar */}
       <View className="mb-4">
         <View className="relative">
           <Search className="absolute left-3 top-3.5 text-gray-500" size={17} />
-          <TextInput
+          <Input
             placeholder="Search by year"
             className="pl-10 w-full bg-white text-sm rounded-lg p-2 border border-gray-300"
             value={searchQuery}
@@ -185,6 +196,7 @@ const GADBudgetTrackerMain = () => {
           </Text>
         )}
       </View>
+      </ScrollView>
     </ScreenLayout>
   );
 };

@@ -1,4 +1,3 @@
-// ... All your imports remain the same
 import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import RatesFormPage1 from "./forms/rates-form-page1"
@@ -101,31 +100,41 @@ function RatesPage1({ onNext2 }: { onNext2?: () => void }) {
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
                             trigger={
-                                <DialogLayout
-                                    trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16} /></div>}
-                                    title="Edit Annual Gross Sales"
-                                    description="Update annual gross sales to keep records accurate."
-                                    mainContent={
-                                        <RatesEditFormPage1
-                                            ags_id={agsId}
-                                            ags_maximum={row.original.ags_maximum}
-                                            ags_minimum={row.original.ags_minimum}
-                                            ags_rate={row.original.ags_rate}
-                                            onSuccess={() => setEditingRowId(null)}
-                                        />
-                                    }
-                                    isOpen={editingRowId === Number(agsId)}
-                                    onOpenChange={(open) => setEditingRowId(open ? Number(agsId) : null)}
-                                />
+                                <div>
+                                    <DialogLayout
+                                        trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16} /></div>}
+                                        title="Edit Annual Gross Sales"
+                                        description="Update annual gross sales to keep records accurate."
+                                        mainContent={
+                                            <RatesEditFormPage1
+                                                ags_id={agsId}
+                                                ags_maximum={row.original.ags_maximum}
+                                                ags_minimum={row.original.ags_minimum}
+                                                ags_rate={row.original.ags_rate}
+                                                onSuccess={() => setEditingRowId(null)}
+                                            />
+                                        }
+                                        isOpen={editingRowId === Number(agsId)}
+                                        onOpenChange={(open) => setEditingRowId(open ? Number(agsId) : null)}
+                                    />
+                                </div>
                             }
                             content="Edit"
                         />
-                        <ConfirmationModal
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
-                            title="Confirm Delete"
-                            description="Are you sure you want to delete this record?"
-                            actionLabel="Confirm"
-                            onClick={() => handleDelete(Number(agsId))}
+
+                        <TooltipLayout
+                            trigger={
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
+                                        title="Confirm Delete"
+                                        description="Are you sure you want to delete this record?"
+                                        actionLabel="Confirm"
+                                        onClick={() => handleDelete(Number(agsId))}
+                                    />
+                                </div>
+                              }
+                            content="Delete"
                         />
                     </div>
                 )

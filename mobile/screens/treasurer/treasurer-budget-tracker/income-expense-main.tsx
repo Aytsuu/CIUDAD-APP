@@ -228,7 +228,7 @@ const IncomeExpenseMain = () => {
 
   const handleCardClick = (year: string, totalBud: number, totalExp: number, totalInc: number) => {
     router.push({
-      pathname: '/treasurer/budget-tracker/budget-expense-main',
+      pathname: '/(treasurer)/budget-tracker/budget-expense-main',
       params: {
         type: 'viewing',
         budYear: year,
@@ -326,7 +326,7 @@ const IncomeExpenseMain = () => {
               )}
               activeOpacity={0.8}
             >
-              <View className="bg-white rounded-lg p-4 border border-gray-200">
+              <View className="bg-white rounded-lg p-4 border border-gray-200 mb-3">
                 {/* Card Header */}
                 <View className="flex-row justify-between items-center mb-4">
                   <View className="flex-row items-center">

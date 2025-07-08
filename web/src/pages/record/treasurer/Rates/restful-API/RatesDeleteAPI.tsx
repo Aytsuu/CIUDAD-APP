@@ -17,8 +17,10 @@ export const deletePurposeAndRate= async (pr_id: number) => {
     try{
 
         const res = await api.put(`treasurer/delete-purpose-and-rate/${pr_id}/`, {
-            pr_is_archive: true
+            pr_is_archive: true,
         })
+
+        const res2 = await api.delete(`council/delete-template-with-pr-id/${pr_id}/`)
         return res.data
     } catch(error){
         console.error(error)

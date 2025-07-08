@@ -598,9 +598,16 @@ function IncomeandExpenseTracking() {
         },
         { 
             accessorKey: "iet_amount", 
-            header: "Amount" ,
+            header: "Proposed Amount" ,
             cell: ({row}) => (
                 <div>₱{row.getValue("iet_amount")}</div>
+            )
+        },
+        {
+            accessorKey: "iet_actual_amount", 
+            header: "Actual Amount" ,
+            cell: ({row}) => (
+                <div>₱{row.getValue("iet_actual_amount")}</div>
             )
         },
         // {

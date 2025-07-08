@@ -510,6 +510,7 @@ function GADProjectProposal() {
                       onClick={() => handleViewProject(project)}
                     />
                     {viewMode === "active" ? (
+                      project.status !== 'Viewed' && (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -525,7 +526,7 @@ function GADProjectProposal() {
                           type="warning"
                         />
                       </>
-                    ) : (
+                    )) : (
                       <>
                         <ConfirmationModal
                           trigger={

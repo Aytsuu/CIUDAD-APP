@@ -81,18 +81,19 @@ export default function WasteTruckEdit() {
   if (isTruckLoading) {
     return (
       <ScreenLayout
-        loadingMessage="Loading truck data..."
         customLeftAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={30} color="black" />
-          </TouchableOpacity>
-        }
-        headerBetweenAction={<Text className="text-[13px]">Edit Truck Info</Text>}
-      >
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-        </View>
-      </ScreenLayout>
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+      showExitButton={false}
+      headerAlign="left"
+      scrollable={true}
+      keyboardAvoiding={true}
+      contentPadding="medium"
+      loadingMessage="Loading..."
+     ><Text>Loading...</Text></ScreenLayout>
     );
   }
 
@@ -101,18 +102,18 @@ export default function WasteTruckEdit() {
     return (
       <ScreenLayout
         customLeftAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={30} color="black" />
-          </TouchableOpacity>
-        }
-        headerBetweenAction={<Text className="text-[13px]">Edit Truck Info</Text>}
-      >
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-red-500 text-base">
-            {error ? error.message : 'Truck not found'}
-          </Text>
-        </View>
-      </ScreenLayout>
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+      showExitButton={false}
+      headerAlign="left"
+      scrollable={true}
+      keyboardAvoiding={true}
+      contentPadding="medium"
+      loadingMessage="Loading..."
+     ><Text>No Truck Data</Text></ScreenLayout>
     );
   }
 

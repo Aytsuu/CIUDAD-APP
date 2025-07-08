@@ -503,7 +503,7 @@ function ExpenseEdit() {
   const { data: budgetItems = [] } = useBudgetItems(years);
 
   const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
-  const totBud = matchedYearData?.ie_main_tot_budget ?? 0;
+  const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
 
   console.log("EDIT EXP: ", totBud )

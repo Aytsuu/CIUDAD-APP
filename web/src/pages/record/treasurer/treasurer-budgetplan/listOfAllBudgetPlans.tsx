@@ -132,30 +132,31 @@ function BudgetPlan() {
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
                             trigger={
-                                <Link
-                                    to="/treasurer-budgetplan-view"
-                                    state={{ type: "viewing", planId }}
-                                >
-                                    <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                                        <Eye size={16} />
-                                    </div>
-                                </Link>
+                                <div>
+                                    <Link to="/treasurer-budgetplan-view" state={{ type: "viewing", planId }} >
+                                        <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                                            <Eye size={16} />
+                                        </div>
+                                    </Link>
+                                </div>
                             }
                             content="View"
                         />
                         <TooltipLayout
                             trigger={
-                                <ConfirmationModal
-                                    trigger={
-                                        <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                                            <Archive size={16} />
-                                        </div>
-                                    }
-                                    title="Archive Budget Plan"
-                                    description="This budget plan will be moved to archive. You can restore it later if needed."
-                                    actionLabel="Archive"
-                                    onClick={() => handleArchive(planId!)}
-                                />
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={
+                                            <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                                                <Archive size={16} />
+                                            </div>
+                                        }
+                                        title="Archive Budget Plan"
+                                        description="This budget plan will be moved to archive. You can restore it later if needed."
+                                        actionLabel="Archive"
+                                        onClick={() => handleArchive(planId!)}
+                                    />
+                                </div>
                             }
                             content="Archive"
                         />
@@ -178,33 +179,37 @@ function BudgetPlan() {
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
                             trigger={
-                                <ConfirmationModal
-                                    trigger={
-                                        <div className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
-                                            <ArchiveRestore size={16} />
-                                        </div>
-                                    }
-                                    title="Restore Budget Plan"
-                                    description="This will restore the budget plan and the details."
-                                    actionLabel="Restore"
-                                    onClick={() => handleRestore(planId!)}
-                                />
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={
+                                            <div className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+                                                <ArchiveRestore size={16} />
+                                            </div>
+                                        }
+                                        title="Restore Budget Plan"
+                                        description="This will restore the budget plan and the details."
+                                        actionLabel="Restore"
+                                        onClick={() => handleRestore(planId!)}
+                                    />
+                                </div>
                             }
                             content="Restore"
                         />
                         <TooltipLayout
                             trigger={
-                                <ConfirmationModal
-                                    trigger={
-                                        <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                                            <Trash size={16} />
-                                        </div>
-                                    }
-                                    title="Delete Budget Plan"
-                                    description="This will permanently delete the budget plan. This action cannot be undone."
-                                    actionLabel="Delete"
-                                    onClick={() => handleDelete(planId!, planYear)}
-                                />
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={
+                                            <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                                                <Trash size={16} />
+                                            </div>
+                                        }
+                                        title="Delete Budget Plan"
+                                        description="This will permanently delete the budget plan. This action cannot be undone."
+                                        actionLabel="Delete"
+                                        onClick={() => handleDelete(planId!, planYear)}
+                                    />
+                                </div>
                             }
                             content="Delete"
                         />
@@ -218,7 +223,7 @@ function BudgetPlan() {
         <div className="w-full h-full">
             <div className="flex flex-col gap-3 mb-4">
                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                    <div>San Roque Budget Plan</div>
+                    <div>Budget Plan</div>
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
                     Efficiently oversee and allocate your budget to optimize financial planning and sustainability.

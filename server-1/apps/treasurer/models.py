@@ -107,14 +107,6 @@ class Income_Image(models.Model):
     infi_path = models.CharField(max_length=500, null=True)
     infi_url = models.CharField(max_length=500, null=True)
 
-    file = models.ForeignKey(
-        'file.File',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='file_id'
-    )
-
     inf_num = models.ForeignKey(
         Income_File_Folder,
         on_delete=models.SET_NULL,
@@ -159,14 +151,6 @@ class Disbursement_Image(models.Model):
     disf_name = models.CharField(max_length=255, null=True)  # File name
     disf_path = models.CharField(max_length=500, null=True)  # File path
     disf_url = models.CharField(max_length=500, null=True)   # File URL
-
-    file = models.ForeignKey(
-        'file.File',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='file_id'
-    )
 
     dis_num = models.ForeignKey(
         Disbursement_File_Folder,

@@ -1,28 +1,27 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { CheckCircle, XCircle, Image, FileInput, Search } from "lucide-react";
-import AcceptPickupRequest from "../assignment-form";
-import RejectPickupForm from "../reject-request-form";
-import type { GarbageRequestPending } from "../queries/GarbageRequestFetchQueries";
-import { useGetGarbagePendingRequest } from "../queries/GarbageRequestFetchQueries";
-import { DataTable } from "@/components/ui/table/data-table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatTimestamp } from "@/helpers/timestampformatter";
-import { DropdownMenu,DropdownMenuTrigger,DropdownMenuItem,DropdownMenuContent} from "@/components/ui/dropdown/dropdown-menu";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/input";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useState } from "react"
+import DialogLayout from "@/components/ui/dialog/dialog-layout"
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
+import { CheckCircle, XCircle, ImageIcon, Search } from "lucide-react"
+import AcceptPickupRequest from "../assignment-form"
+import RejectPickupForm from "../reject-request-form"
+import { useGetGarbagePendingRequest } from "../queries/GarbageRequestFetchQueries"
+import { Skeleton } from "@/components/ui/skeleton"
+import { formatTimestamp } from "@/helpers/timestampformatter"
+import { formatTime } from "@/helpers/timeFormatter"
+import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card/card"
+import { useEffect } from "react"
 
-export default function PendingTable() {
-  const [acceptedRowId, setAcceptedRowId] = useState<number | null>(null);
-  const [rejectedRowId, setRejectedRowId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+export default function PendingCards() {
+  const [acceptedRowId, setAcceptedRowId] = useState<number | null>(null)
+  const [rejectedRowId, setRejectedRowId] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
-  const { data: pendingReqData = [], isLoading } = useGetGarbagePendingRequest();
+  const { data: pendingReqData = [], isLoading } = useGetGarbagePendingRequest()
+
+  useEffect(() => {
+    console.log("File URLs:", pendingReqData.map(req => req.file_url));
+  }, [pendingReqData]);
 
   const filteredData = pendingReqData.filter((request) => {
     const searchString = `
@@ -32,104 +31,9 @@ export default function PendingTable() {
       ${request.garb_pref_date} 
       ${request.garb_pref_time} 
       ${request.garb_additional_notes}
-    `.toLowerCase();
-    return searchString.includes(searchQuery.toLowerCase());
-  });
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const columns: ColumnDef<GarbageRequestPending>[] = [
-    { accessorKey: "garb_requester", header: "Requester" },
-    { accessorKey: "sitio_name", header: "Sitio" },
-    { accessorKey: "garb_location", header: "Location" },
-    { accessorKey: "garb_waste_type", header: "Waste Type" },
-    { accessorKey: "garb_pref_date", header: "Preferred Date" },
-    { accessorKey: "garb_pref_time", header: "Preferred Time" },
-    {
-      accessorKey: "garb_created_at",
-      header: "Request Date",
-      cell: ({ row }) => formatTimestamp(row.original.garb_created_at),
-    },
-    { accessorKey: "garb_additional_notes", header: "Additional Notes" },
-    {
-      accessorKey: "actions",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          {/* View Image */}
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-3 rounded cursor-pointer">
-                    <Image size={16} />
-                  </div>
-                }
-                mainContent={row.original.file_url}
-              />
-            }
-            content="View Image"
-          />
-
-          {/* Accept Request */}
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#17AD00] hover:bg-[#17AD00]/80 text-white px-4 py-3 rounded cursor-pointer flex items-center">
-                    <CheckCircle size={16} />
-                  </div>
-                }
-                title="Schedule & Assign for Pickup"
-                description="Set date, time, team and vehicle for garbage pickup."
-                mainContent={
-                  <AcceptPickupRequest
-                    garb_id={row.original.garb_id}
-                    onSuccess={() => setAcceptedRowId(null)}
-                  />
-                }
-                isOpen={acceptedRowId === Number(row.original.garb_id)}
-                onOpenChange={(open) =>
-                  setAcceptedRowId(open ? Number(row.original.garb_id) : null)
-                }
-              />
-            }
-            content="Accept"
-          />
-
-          {/* Reject Request */}
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-3 rounded cursor-pointer flex items-center">
-                    <XCircle size={16} />
-                  </div>
-                }
-                title="Confirm Rejection"
-                description="Reject the selected garbage pickup request. A reason is required before confirming this action."
-                mainContent={
-                  <RejectPickupForm
-                    garb_id={row.original.garb_id}
-                    onSuccess={() => setRejectedRowId(null)}
-                  />
-                }
-                isOpen={rejectedRowId === Number(row.original.garb_id)}
-                onOpenChange={(open) =>
-                  setRejectedRowId(open ? Number(row.original.garb_id) : null)
-                }
-              />
-            }
-            content="Reject"
-          />
-        </div>
-      ),
-    },
-  ];
+    `.toLowerCase()
+    return searchString.includes(searchQuery.toLowerCase())
+  })
 
   if (isLoading) {
     return (
@@ -137,92 +41,193 @@ export default function PendingTable() {
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
         <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
         <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full opacity-30" />
+          ))}
+        </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm mt-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
-        <h2 className="text-lg font-medium text-gray-800">
-          Pending Requests ({filteredData.length})
-        </h2>
-
-        {/* Search + Export */}
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={17}
-            />
-            <Input
-              placeholder="Search..."
-              className="pl-10 bg-white w-full"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
+      <div className="bg-white rounded-lg shadow-sm mt-6">
+        {/* Header with Count, Search, and Export Button */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
+          {/* Left side - Title and Count */}
+          <div className="flex items-center space-x-2">
+            <h2 className="text-lg font-medium text-gray-800">Pending Requests ({filteredData.length})</h2>
           </div>
+          {/* Right side - Search and Export Button */}
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+              <Input
+                placeholder="Search..."
+                className="pl-10 bg-white w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
-                <FileInput size={16} />
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-              <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-              <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Horizontal Cards Container */}
+        <div className="p-6 pt-0">
+          {filteredData.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No pending requests found.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredData.map((request) => (
+                <Card key={request.garb_id} className="hover:shadow-lg transition-shadow duration-200">
+                  <div className="flex items-start gap-6 p-6">
+                    {/* Left Section - Main Info */}
+                    <div className="flex-shrink-0 min-w-0 w-64">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-semibold text-base text-gray-900 truncate">{request.garb_requester}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{request.sitio_name}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">{request.garb_location}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Waste Type</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">{request.garb_waste_type}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Middle Section - Dates and Times */}
+                    <div className="flex-shrink-0 min-w-0 w-48">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Preferred Date</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {request.garb_pref_date || "Not specified"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Preferred Time</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {formatTime(request.garb_pref_time) || "Not specified"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Request Date</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">
+                            {formatTimestamp(request.garb_created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Section - Additional Notes (Flexible) */}
+                    <div className="flex-1 min-w-0">
+                      {request.garb_additional_notes && (
+                        <div className="h-full">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Additional Notes</p>
+                          <div className="bg-gray-50 rounded-lg p-3 h-full min-h-[80px]">
+                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                              {request.garb_additional_notes}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex-shrink-0">
+                      <div className="flex gap-2">
+                        {/* View Image */}
+                        <TooltipLayout
+                          trigger={
+                            <div>
+                              <DialogLayout
+                                trigger={
+                                  <div className="bg-stone-200 hover:bg-stone-300 text-gray-500 p-2.5 rounded-lg cursor-pointer transition-colors">
+                                    <ImageIcon size={16} />
+                                  </div>
+                                }
+                                title="Request Image"
+                                mainContent={
+                                  <div className="flex justify-center items-center w-full h-full p-6">
+                                    <img
+                                      src={request.file_url || "/placeholder.svg"}
+                                      alt="Request"
+                                      className="max-w-full max-h-[600px] object-contain rounded-lg shadow-lg"
+                                    />
+                                  </div>
+                                }
+                              />
+                            </div>
+                          }
+                          content="View Image"
+                        />
+
+                        {/* Accept Request */}
+                        <TooltipLayout
+                          trigger={
+                            <div>
+                              <DialogLayout
+                                trigger={
+                                  <div className="bg-green-600 hover:bg-green-700 text-white p-2.5 rounded-lg cursor-pointer transition-colors">
+                                    <CheckCircle size={16} />
+                                  </div>
+                                }
+                                title="Schedule & Assign for Pickup"
+                                description="Set date, time, team and vehicle for garbage pickup."
+                                mainContent={
+                                  <AcceptPickupRequest
+                                    garb_id={request.garb_id}
+                                    onSuccess={() => setAcceptedRowId(null)}
+                                  />
+                                }
+                                isOpen={acceptedRowId === Number(request.garb_id)}
+                                onOpenChange={(open) => setAcceptedRowId(open ? Number(request.garb_id) : null)}
+                              />
+                            </div>
+                          }
+                          content="Accept"
+                        />
+
+                        {/* Reject Request */}
+                        <TooltipLayout
+                          trigger={
+                            <div>
+                              <DialogLayout
+                                trigger={
+                                  <div className="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-lg cursor-pointer transition-colors">
+                                    <XCircle size={16} />
+                                  </div>
+                                }
+                                title="Confirm Rejection"
+                                description="Reject the selected garbage pickup request. A reason is required before confirming this action."
+                                mainContent={
+                                  <RejectPickupForm
+                                    garb_id={request.garb_id}
+                                    onSuccess={() => setRejectedRowId(null)}
+                                  />
+                                }
+                                isOpen={rejectedRowId === Number(request.garb_id)}
+                                onOpenChange={(open) => setRejectedRowId(open ? Number(request.garb_id) : null)}
+                              />
+                            </div>
+                          }
+                          content="Reject"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Entries Selector */}
-      <div className="flex justify-between p-3 border-t">
-        <div className="flex items-center gap-2">
-          <p className="text-xs sm:text-sm">Show</p>
-          <Input
-            type="number"
-            className="w-14 h-8"
-            min="1"
-            value={pageSize}
-            onChange={(e) => {
-              const value = +e.target.value;
-              setPageSize(value >= 1 ? value : 1);
-              setCurrentPage(1);
-            }}
-          />
-          <p className="text-xs sm:text-sm">Entries</p>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div>
-        <DataTable columns={columns} data={paginatedData} />
-      </div>
-
-      {/* Footer Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center p-3 border-t gap-3">
-        <p className="text-xs sm:text-sm text-gray-600">
-          Showing {(currentPage - 1) * pageSize + 1}-
-          {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-          {filteredData.length} rows
-        </p>
-        {filteredData.length > 0 && (
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={(page) => setCurrentPage(page)}
-          />
-        )}
-      </div>
-    </div>
-  );
+  )
 }

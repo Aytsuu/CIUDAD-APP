@@ -15,107 +15,12 @@ import {
   getDisbursementImages, createFolder,
   updateDisbursementFolder, updateIncomeFolder,
   updateDisbursementImage, updateIncomeImage,
-  deleteIncomeFolder, deleteDisbursementFolder
+  restoreDisbursementFolder, restoreIncomeFolder,
+  permanentDeleteDisbursementFolder, permanentDeleteIncomeFolder
 } from "./requests";
 import { useToastContext } from "@/components/ui/toast";
 import { api } from "@/api/api";
 import { router } from "expo-router";
-
-// export const useCreateImage = (isIncome: boolean, folderId: number | null) => {
-//   const queryClient = useQueryClient();
-//   const { toast } = useToastContext();
-
-//   return useMutation({
-//     mutationFn: async (data: {
-//       upload_date: string;
-//       type: string;
-//       name: string;
-//       path: string;
-//       url: string;
-//     }) => {
-//       if (!folderId) throw new Error("No folder selected");
-      
-//       const payload = {
-//         ...data,
-//         folder: folderId
-//       };
-      
-//       return isIncome 
-//         ? createIncomeImage(payload)
-//         : createDisbursementImage(payload);
-//     },
-//     onSuccess: (_, variables, context) => {
-//       const type = isIncome ? "income" : "disbursement";
-//       queryClient.invalidateQueries({ queryKey: [`${type}Images`] });
-//       toast.success(`Image created successfully`);
-//     },
-//     onError: (error: Error) => {
-//       toast.error(`Failed to create image: ${error.message}`);
-//     }
-//   });
-// };
-
-export const useCreateImage = (isIncome: boolean, folderId: number | null) => {
-  const queryClient = useQueryClient()
-  const { toast } = useToastContext()
-
-  return useMutation({
-    mutationFn: async (data: { upload_date: string; type: string; name: string; path: string; url: string }) => {
-      if (!folderId || isNaN(folderId)) {
-        console.error("Invalid folderId:", folderId)
-        throw new Error("No valid folder selected")
-      }
-      const payload = isIncome
-        ? {
-            upload_date: data.upload_date,
-            type: data.type,
-            name: data.name,
-            inf_num: folderId,
-            path: data.path,
-            url: data.url,
-          }
-        : {
-            upload_date: data.upload_date,
-            type: data.type,
-            name: data.name,
-            dis_num: folderId,
-            path: data.path,
-            url: data.url,
-          };
-      console.log("Final payload sent to API:", payload)
-      return isIncome ? createIncomeImage(payload as { upload_date: string; type: string; name: string; path: string; url: string; inf_num: number })
-        : createDisbursementImage(payload as { upload_date: string; type: string; name: string; path: string; url: string; dis_num: number });
-    },
-    onSuccess: (_, variables, context) => {
-      const type = isIncome ? "income" : "disbursement"
-      queryClient.invalidateQueries({ queryKey: [`${type}Images`] })
-      toast.success(`Image created successfully`)
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to create image: ${error.message}`)
-    },
-  })
-}
-
-// export const useCreateFolder = () => {
-//   const queryClient = useQueryClient();
-//   const { toast } = useToastContext();
-
-//   return useMutation({
-//     mutationFn: async (data) => {
-//       const folderData = await createFolder(data);
-//       return folderData;
-//     },
-//     onSuccess: (data) => {
-//       const type = data.type === "income" ? "income" : "disbursement";
-//       queryClient.invalidateQueries({ queryKey: [`${type}Folders`] });
-//       toast.success(`Folder "${data.name}" created successfully`);
-//     },
-//     onError: (error) => {
-//       toast.error(`Failed to create folder: ${error.message}`);
-//     },
-//   });
-// };
 
 export const useCreateFolder = () => {
   const queryClient = useQueryClient();
@@ -129,7 +34,7 @@ export const useCreateFolder = () => {
     onSuccess: (data: CreateFolderResponse) => {
       const type = data.type === "income" ? "income" : "disbursement";
       queryClient.invalidateQueries({ queryKey: [`${type}Folders`] });
-      toast.success(`Folder "${data.name}" created successfully`);
+      toast.success(`Folder created successfully`);
     },
     onError: (error: Error) => {
       toast.error(`Failed to create folder: ${error.message}`);
@@ -421,28 +326,6 @@ export type DisbursementImage = {
   dis_name: string;
 };
 
-// export const useGetIncomeImages = (archive: boolean = false) => {
-//   return useQuery<IncomeImage[], Error>({
-//     queryKey: ["incomeImages", archive],
-//     queryFn: () => getIncomeImages(archive).catch((error) => {
-//       console.error("Error fetching income images:", error);
-//       throw error;
-//     }),
-//     staleTime: 1000 * 60 * 5, // 5 minutes
-//   });
-// };
-
-// export const useGetDisbursementImages = (archive: boolean = false) => {
-//   return useQuery<DisbursementImage[], Error>({
-//     queryKey: ["disbursementImages", archive],
-//     queryFn: () => getDisbursementImages(archive).catch((error) => {
-//       console.error("Error fetching disbursement images:", error);
-//       throw error;
-//     }),
-//     staleTime: 1000 * 60 * 5, // 5 minutes
-//   });
-// };
-
 export const useGetIncomeImages = (archive: boolean = false, folderId: number | undefined = undefined) => {
   return useQuery<IncomeImage[], Error>({
     queryKey: ["incomeImages", archive, folderId],
@@ -526,11 +409,11 @@ export const useUpdateFolder = () => {
       const updateFn = type === "income" ? updateIncomeFolder : updateDisbursementFolder;
       const payload = type === "income"
         ? {
-            inf_name: data.name.trim(),
+            inf_name: data.name,
             inf_year: data.year,
           }
         : {
-            dis_name: data.name.trim(),
+            dis_name: data.name,
             dis_year: data.year,
           };
       return await updateFn(id, payload as any);
@@ -605,52 +488,13 @@ export const useUpdateImage = () => {
   })
 }
 
-export const uploadIncomeImage = async (data: {
-  upload_date: string;
-  type: string;
-  name: string;
-  path: string;
-  url: string;
-  folder: number;
-}) => {
-  const res = await api.post('treasurer/income-tab/images/', {
-    upload_date: data.upload_date,
-    type: data.type,
-    name: data.name,
-    infi_path: data.path,
-    infi_url: data.url,
-    inf_num: data.folder,
-    infi_is_archive: false
-  });
-  return res.data;
-};
-
-export const uploadDisbursementImage = async (data: {
-  upload_date: string;
-  type: string;
-  name: string;
-  path: string;
-  url: string;
-  folder: number;
-}) => {
-  const res = await api.post('treasurer/disbursement-tab/images/', {
-    upload_date: data.upload_date,
-    type: data.type,
-    name: data.name,
-    disf_path: data.path,
-    disf_url: data.url,
-    dis_num: data.folder,
-    disf_is_archive: false
-  });
-  return res.data;
-};
 
 export const useUploadImage = (isIncome: boolean) => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: (data: {
+    mutationFn: async (data: {
       upload_date: string;
       type: string;
       name: string;
@@ -658,9 +502,29 @@ export const useUploadImage = (isIncome: boolean) => {
       url: string;
       folder: number;
     }) => {
-      return isIncome 
-        ? uploadIncomeImage(data)
-        : uploadDisbursementImage(data);
+      const payload = isIncome
+        ? {
+            infi_upload_date: data.upload_date,
+            infi_type: data.type,
+            infi_name: data.name,
+            infi_path: data.path,
+            infi_url: data.url,
+            inf_num: data.folder,
+          }
+        : {
+            disf_upload_date: data.upload_date,
+            disf_type: data.type,
+            disf_name: data.name,
+            disf_path: data.path,
+            disf_url: data.url,
+            dis_num: data.folder,
+          };
+
+      const endpoint = isIncome 
+        ? 'treasurer/income-tab/images/' 
+        : 'treasurer/disbursement-tab/images/';
+      
+      return api.post(endpoint, payload);
     },
     onSuccess: () => {
       const type = isIncome ? "income" : "disbursement";
@@ -673,28 +537,70 @@ export const useUploadImage = (isIncome: boolean) => {
   });
 };
 
-export const useDeleteFolder = (isIncome: boolean) => {
+export const usePermanentDeleteIncomeFolder = () => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();
+
   return useMutation({
-    mutationFn: (id: number) => isIncome ? deleteIncomeFolder(id) : deleteDisbursementFolder(id),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: [isIncome ? "incomeImages" : "disbursementImages"] });
-      const previousImages = queryClient.getQueryData<ImageItem[]>([isIncome ? "incomeImages" : "disbursementImages"]);
-      queryClient.setQueryData<ImageItem[]>([isIncome ? "incomeImages" : "disbursementImages"], (old = []) =>
-        old.filter(image => (isIncome ? (image as IncomeImage).inf_num : (image as DisbursementImage).dis_num) !== id)
-      );
-      return { previousImages };
-    },
+    mutationFn: permanentDeleteIncomeFolder,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [isIncome ? "incomeImages" : "disbursementImages"] });
-      toast.success("Folder deleted successfully");
+      toast.success("Income folder and all images deleted");
+      queryClient.invalidateQueries({ queryKey: ["incomeFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["incomeImages"] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete folder: ${error.message}`);
+      toast.error(`Failed to delete income folder: ${error.message}`);
+    }
+  });
+};
+
+export const usePermanentDeleteDisbursementFolder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: permanentDeleteDisbursementFolder,
+    onSuccess: () => {
+      toast.success("Disbursement folder and all images deleted");
+      queryClient.invalidateQueries({ queryKey: ["disbursementFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["disbursementImages"] });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [isIncome ? "incomeImages" : "disbursementImages"] });
+    onError: (error: Error) => {
+      toast.error(`Failed to delete disbursement folder: ${error.message}`);
+    }
+  });
+};
+
+export const useRestoreIncomeFolder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: restoreIncomeFolder,
+    onSuccess: () => {
+      toast.success("Income folder and all images restored");
+      queryClient.invalidateQueries({ queryKey: ["incomeFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["incomeImages"] });
     },
+    onError: (error: Error) => {
+      toast.error(`Failed to restore income folder: ${error.message}`);
+    }
+  });
+};
+
+export const useRestoreDisbursementFolder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: restoreDisbursementFolder,
+    onSuccess: () => {
+      toast.success("Disbursement folder and all images restored");
+      queryClient.invalidateQueries({ queryKey: ["disbursementFolders"] });
+      queryClient.invalidateQueries({ queryKey: ["disbursementImages"] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to restore disbursement folder: ${error.message}`);
+    }
   });
 };

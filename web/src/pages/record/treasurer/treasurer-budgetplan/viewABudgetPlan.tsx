@@ -230,13 +230,20 @@ function ViewBudgetPlan(){
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
 
-                
-                <Link to={'/budgetplan-forms'}
-                    state={{budgetData: fetchedData, isEdit: true, from: 'view', plan_id: planId}} > 
-                    <Button>
-                        <Pen size={16} /> <span>Edit</span>
-                    </Button>
-                </Link>
+                {fetchedData?.plan_year  === String(new Date().getFullYear()) && (
+                    <Link to="/budgetplan-forms" state={{
+                            budgetData: fetchedData,
+                            isEdit: true,
+                            from: 'view',
+                            plan_id: planId
+                        }}
+                    >
+                        <Button>
+                            <Pen size={16} /> <span>Edit</span>
+                        </Button>
+                    </Link>
+                )}
+
             </div>
 
             <TabsList className="grid w-full grid-cols-2">

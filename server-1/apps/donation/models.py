@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import date
 from django.conf import settings
+import uuid
 
 class OnlineDonation(models.Model):
     PAYMENT_CHOICES = [
@@ -25,7 +26,15 @@ class OnlineDonation(models.Model):
         db_table = 'online_donation'
 
 class Donation(models.Model):
-    don_num = models.BigAutoField(primary_key=True)
+    don_num = models.CharField(primary_key=True, unique=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.don_num:  # If no ID provided
+            if self.od_transaction:  # PayMongo case
+                self.don_num = self.od_transaction.od_transaction_id
+            else:  # Manual donation case
+                self.don_num = f"DON-{uuid.uuid4().hex[:10].upper()}"
+        super().save(*args, **kwargs)
 
     od_transaction = models.OneToOneField(
         OnlineDonation,
@@ -38,9 +47,9 @@ class Donation(models.Model):
     don_item_name = models.CharField(max_length=100, default='')
     don_donor = models.CharField(max_length=100, default='Anonymous')
     don_qty = models.IntegerField(default=1)
-    don_description = models.CharField(max_length=200, null=True)
+    don_description = models.CharField(max_length=200, null=True, blank=True)
     don_category = models.CharField(max_length=100, default='')
-    don_date = models.DateField(auto_now_add=True)
+    don_date = models.DateField(default=date.today)
 
     staff = models.ForeignKey(
         'administration.Staff',

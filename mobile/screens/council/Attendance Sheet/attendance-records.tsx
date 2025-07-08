@@ -5,6 +5,8 @@ import {
   SafeAreaView,
   TouchableOpacity,
   TextInput,
+  ScrollView,
+  RefreshControl
 } from 'react-native';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGetCouncilEvents, useGetAttendanceSheets } from '../ce-events/queries';
@@ -24,9 +26,16 @@ interface AttendanceRecord {
 
 const AttendanceRecords = () => {
   const router = useRouter();
-  const { data: councilEvents = [], isLoading, error } = useGetCouncilEvents();
+  const { data: councilEvents = [], isLoading, error, refetch } = useGetCouncilEvents();
   const { data: attendanceSheets = [] } = useGetAttendanceSheets();
   const [searchTerm, setSearchTerm] = useState("");
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   const filteredTableData: AttendanceRecord[] = React.useMemo(() => {
     const data = councilEvents
@@ -85,10 +94,11 @@ const AttendanceRecords = () => {
         headerBetweenAction={<Text className="text-[13px]">Attendance Records</Text>}
         showExitButton={false}
         headerAlign="left"
-        scrollable={true}
+        scrollable={false}
         keyboardAvoiding={true}
         contentPadding="medium"
     >
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {/* Search Bar */}
         <View className="mt-2 px-4 pt-4 pb-2">
           <View className="relative mb-4" onStartShouldSetResponder={() => true}>
@@ -116,13 +126,13 @@ const AttendanceRecords = () => {
               accessibilityRole="button"
             >
               <Card
-                className={`bg-[#07143F] border-gray-200 ${
+                className={`bg-white rounded-lg p-4 border border-gray-200 ${
                   index === filteredTableData.length - 1 ? 'mb-0' : 'mb-4'
                 }`}
               >
                 <CardHeader className="pb-3">
                   <View className="flex-row items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-white flex-1 pr-2">
+                    <CardTitle className="text-lg font-semibold text-black flex-1 pr-2">
                       {record.attMettingTitle}
                     </CardTitle>
                     {/* <TouchableOpacity
@@ -135,12 +145,12 @@ const AttendanceRecords = () => {
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  <Text className="text-sm text-white leading-5 mb-4">
+                  <Text className="text-sm text-black leading-5 mb-4">
                     {record.attMeetingDescription}
                   </Text>
 
                   <View className="border-t border-gray-200 pt-3">
-                    <Text className="text-sm font-medium text-white">
+                    <Text className="text-sm font-medium text-black">
                       Date of Meeting: {record.attMeetingDate}
                     </Text>
                   </View>
@@ -157,6 +167,7 @@ const AttendanceRecords = () => {
               </Text>
             </View>
           )}
+          </ScrollView>
     </ScreenLayout>
   );
 };

@@ -168,7 +168,7 @@ const CLCreateEvent = () => {
         headerBetweenAction={<Text className="text-[13px]">Schedule Events</Text>}
         showExitButton={false}
         headerAlign="left"
-        keyboardAvoiding={true}
+        keyboardAvoiding={false}
         contentPadding="medium"
       scrollable={false}
     >

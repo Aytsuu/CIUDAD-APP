@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api"
 
 export const addSupportDocument = async (gprId: number, fileData: {
   psd_url: string;

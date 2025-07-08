@@ -9,20 +9,7 @@ urlpatterns = [
     path("waste-collection-staff/", WasteCollectionStaffView.as_view(), name="waste-collection-staff-list"),
 
     # Waste COLLECTION Schedule View
-    # Waste COLLECTION Schedule View
     path("waste-collection-sched/", WasteCollectionSchedView.as_view(), name="waste-collection-sched-list"),
-    path("waste-collection-sched-full/", WasteCollectionSchedFullDataView.as_view(), name="waste-collection-sched-full"),
-
-    # Waste COLLECTION Assign Collectors
-    path('waste-ass-collectors/', WasteCollectorView.as_view(), name='waste-ass-collectors'),   
-    path('waste-ass-collectors/list/', WasteCollectorListView.as_view(), name='waste-ass-collectors-list'),
-
-    # Waste COLLECTION UPDATE
-    path("waste-collection-sched/<int:wc_num>/", WasteCollectionSchedUpdateView.as_view(), name="waste-collection-sched-update"),
-    path('waste-ass-collectors/<int:wasc_id>/', WasteCollectorDeleteView.as_view(), name='waste-ass-collectors-delete'),
-
-    # Waste COLLECTION DELETE
-    path('waste-collection-sched-delete/<int:wc_num>/', WasteCollectionSchedDeleteView.as_view(), name='waste-ass-schedule-delete'),
     path("waste-collection-sched-full/", WasteCollectionSchedFullDataView.as_view(), name="waste-collection-sched-full"),
 
     # Waste COLLECTION Assign Collectors

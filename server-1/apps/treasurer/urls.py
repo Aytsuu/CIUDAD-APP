@@ -16,19 +16,20 @@ urlpatterns=[
     path('budget-plan-and-detail-history/<int:bph_id>/', BudgetPlanAndDetailHistoryView.as_view(), name='budget-plan-and-detail-history'),
 
     #Income and Disbursement URL
-        # Income Folder URLs
+    # Income Folder URLs
     path('income-tab/folders/', IncomeFolderListView.as_view()),
     path('income-tab/folders/<int:inf_num>/', IncomeFolderDetailView.as_view()),
-    path('income-tab/folders/<int:inf_num>/restore/', RestoreIncomeFolderView.as_view()),
-        # Disbursement Folder URLs
+    path('income-tab/folders/<int:pk>/permanent-delete/', PermanentDeleteFolder.as_view()),
+    # Disbursement Folder URLs
     path('disbursement-tab/folders/', DisbursementFolderListView.as_view()),
     path('disbursement-tab/folders/<int:dis_num>/', DisbursementFolderDetailView.as_view()),
-    path('disbursement-tab/folders/<int:dis_num>/restore/', RestoreDisbursementFolderView.as_view()),
-        # Image URLs (shared for both archive/delete via query params)
+    path('disbursement-tab/folders/<int:pk>/permanent-delete/', PermanentDeleteFolder.as_view()),
+    # Image URLs (shared for both archive/delete via query params)
     path('income-tab/images/', Income_ImageListView.as_view()),
     path('income-tab/images/<int:infi_num>/', Income_ImageView.as_view()),
     path('disbursement-tab/images/', Disbursement_ImageListView.as_view()),
     path('disbursement-tab/images/<int:disf_num>/', Disbursement_ImageView.as_view()),
+
     
     #EXPENSE URL
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),

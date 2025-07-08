@@ -8,7 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog/dialog";
-import { useAddProjectProposal, useAddSupportDocument} from "./queries/addqueries";
+import {
+  useAddProjectProposal,
+  useAddSupportDocument,
+} from "./queries/addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import {
   Command,
@@ -282,41 +285,84 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     yPos += sectionGap + lineHeight;
 
     yPos = addSectionTitle("Project Title:", yPos);
-    yPos = addTextWithPageBreak(projectTitle || "Untitled", margin, yPos, pageWidth - margin * 2);
+    yPos = addTextWithPageBreak(
+      projectTitle || "Untitled",
+      margin,
+      yPos,
+      pageWidth - margin * 2
+    );
     yPos += sectionGap;
 
     yPos = addSectionTitle("Background:", yPos);
-    yPos = addTextWithPageBreak(background || "No background provided", margin, yPos, pageWidth - margin * 2);
+    yPos = addTextWithPageBreak(
+      background || "No background provided",
+      margin,
+      yPos,
+      pageWidth - margin * 2
+    );
     yPos += sectionGap;
 
     yPos = addSectionTitle("Objectives:", yPos);
-    if (objectives.length === 0 || objectives.every(obj => !obj.trim())) {
-      yPos = addTextWithPageBreak("No objectives provided", margin + 10, yPos, pageWidth - margin * 2 - 10);
+    if (objectives.length === 0 || objectives.every((obj) => !obj.trim())) {
+      yPos = addTextWithPageBreak(
+        "No objectives provided",
+        margin + 10,
+        yPos,
+        pageWidth - margin * 2 - 10
+      );
     } else {
       objectives.forEach((obj) => {
         if (obj.trim()) {
-          yPos = addTextWithPageBreak(`• ${obj}`, margin + 10, yPos, pageWidth - margin * 2 - 10);
+          yPos = addTextWithPageBreak(
+            `• ${obj}`,
+            margin + 10,
+            yPos,
+            pageWidth - margin * 2 - 10
+          );
         }
       });
     }
     yPos += sectionGap;
 
     yPos = addSectionTitle("Participants:", yPos);
-    if (participants.length === 0 || participants.every(p => !p.category.trim())) {
-      yPos = addTextWithPageBreak("No participants provided", margin, yPos, pageWidth - margin * 2);
+    if (
+      participants.length === 0 ||
+      participants.every((p) => !p.category.trim())
+    ) {
+      yPos = addTextWithPageBreak(
+        "No participants provided",
+        margin,
+        yPos,
+        pageWidth - margin * 2
+      );
     } else {
       participants.forEach((participant) => {
         if (participant.category.trim()) {
           const text = `${participant.count || "0"} ${participant.category}`;
-          yPos = addTextWithPageBreak(text, margin, yPos, pageWidth - margin * 2);
+          yPos = addTextWithPageBreak(
+            text,
+            margin,
+            yPos,
+            pageWidth - margin * 2
+          );
         }
       });
     }
     yPos += sectionGap;
 
     yPos = addSectionTitle("Date and Venue:", yPos);
-    yPos = addTextWithPageBreak(date || "No date provided", margin, yPos, pageWidth - margin * 2);
-    yPos = addTextWithPageBreak(venue || "No venue provided", margin, yPos, pageWidth - margin * 2);
+    yPos = addTextWithPageBreak(
+      date || "No date provided",
+      margin,
+      yPos,
+      pageWidth - margin * 2
+    );
+    yPos = addTextWithPageBreak(
+      venue || "No venue provided",
+      margin,
+      yPos,
+      pageWidth - margin * 2
+    );
     yPos += sectionGap;
 
     yPos = addSectionTitle("Budgetary Requirements:", yPos);
@@ -367,13 +413,19 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     yPos = addTableRow(["Name", "Pax", "Amount", "Total"], yPos, true);
 
     let grandTotal = 0;
-    if (budgetItems.length === 0 || budgetItems.every(item => !item.name.trim())) {
+    if (
+      budgetItems.length === 0 ||
+      budgetItems.every((item) => !item.name.trim())
+    ) {
       yPos = addTableRow(["No budget items provided", "", "", ""], yPos);
     } else {
       budgetItems.forEach((item) => {
         if (item.name.trim()) {
           const amount = parseFloat(item.amount) || 0;
-          const paxCount = item.pax.trim() && item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1;
+          const paxCount =
+            item.pax.trim() && item.pax.includes("pax")
+              ? parseInt(item.pax) || 1
+              : 1;
           const total = paxCount * amount;
           grandTotal += total;
           yPos = addTableRow(
@@ -395,7 +447,11 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         "",
         "",
         "TOTAL",
-        grandTotal ? `P ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "P 0.00",
+        grandTotal
+          ? `P ${grandTotal.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+            })}`
+          : "P 0.00",
       ],
       yPos
     );
@@ -403,7 +459,12 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     yPos += sectionGap;
 
     yPos = addSectionTitle("Monitoring Evaluation:", yPos);
-    yPos = addTextWithPageBreak(monitoringEvaluation || "No evaluation provided", margin, yPos, pageWidth - margin * 2);
+    yPos = addTextWithPageBreak(
+      monitoringEvaluation || "No evaluation provided",
+      margin,
+      yPos,
+      pageWidth - margin * 2
+    );
     yPos += sectionGap;
 
     const preparedBy = signatories.filter((s) => s.type === "prepared");
@@ -472,11 +533,13 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       setIsPreviewOpen(true);
     } else {
       doc.save(
-        `${(projectTitle || "proposal").replace(/[^a-z0-9]/gi, "_").toLowerCase()}_proposal.pdf`
+        `${(projectTitle || "proposal")
+          .replace(/[^a-z0-9]/gi, "_")
+          .toLowerCase()}_proposal.pdf`
       );
     }
   };
-  
+
   const closePreview = () => {
     if (pdfPreview) URL.revokeObjectURL(pdfPreview);
     setIsPreviewOpen(false);
@@ -486,17 +549,18 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     try {
       setErrorMessage(null);
 
-      const headerImage = mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+      const headerImage =
+        mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
 
       // Process supporting documents
-      const validSupportDocs = supportingDocs.filter(doc => 
-      doc.status === 'uploaded' && 
-      doc.publicUrl && 
-      doc.storagePath &&
-      doc.file?.name &&
-      doc.file?.type
-    );
-
+      const validSupportDocs = supportingDocs.filter(
+        (doc) =>
+          doc.status === "uploaded" &&
+          doc.publicUrl &&
+          doc.storagePath &&
+          doc.file?.name &&
+          doc.file?.type
+      );
 
       const proposalData = {
         projectTitle: data.projectTitle,
@@ -515,66 +579,66 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
       // First create the proposal
       const proposalResponse = await addMutation.mutateAsync(proposalData);
-      
+
       // Then add support docs if any
-       if (validSupportDocs.length > 0) {
-      await Promise.all(
-        validSupportDocs.map(doc => {
-          const fileData = {
-            psd_url: doc.publicUrl!,
-            psd_path: doc.storagePath!,
-            psd_name: doc.file.name,
-            psd_type: doc.file.type
-          };
-          return addSupportDocMutation.mutateAsync({
-            gprId: proposalResponse.gprId,
-            fileData
-          });
-        })
-      );
-    }
+      if (validSupportDocs.length > 0) {
+        await Promise.all(
+          validSupportDocs.map((doc) => {
+            const fileData = {
+              psd_url: doc.publicUrl!,
+              psd_path: doc.storagePath!,
+              psd_name: doc.file.name,
+              psd_type: doc.file.type,
+            };
+            return addSupportDocMutation.mutateAsync({
+              gprId: proposalResponse.gprId,
+              fileData,
+            });
+          })
+        );
+      }
 
       form.reset();
       setMediaFiles([]);
       setSupportingDocs([]);
       setHeaderImageUrl(null);
       onSuccess();
-    
-  }  catch (error) {
+    } catch (error) {
       console.error("Error in handleSave:", error);
       setErrorMessage(
-      "Failed to save proposal. Please check the form data and try again."
+        "Failed to save proposal. Please check the form data and try again."
       );
     }
   };
 
   useEffect(() => {
     if (existingProposal) {
-    const suppDocs = existingProposal.gprSuppDocs?.map((url: string) => ({
-        id: `img-${Math.random().toString(36).substr(2, 9)}`,
-        type: 'image' as const,
-        publicUrl: url,
-        status: 'uploaded' as const,
-        previewUrl: url,
-        file: new File([], url.split('/').pop() || 'image.jpg'),
-      })) || [];
-    
-    setSupportingDocs(suppDocs);
+      const suppDocs =
+        existingProposal.gprSuppDocs?.map((url: string) => ({
+          id: `img-${Math.random().toString(36).substr(2, 9)}`,
+          type: "image" as const,
+          publicUrl: url,
+          status: "uploaded" as const,
+          previewUrl: url,
+          file: new File([], url.split("/").pop() || "image.jpg"),
+        })) || [];
 
-    if (existingProposal?.gpr_header_img) {
-      setHeaderImageUrl(existingProposal.gpr_header_img);
-      setMediaFiles([
-        {
-          id: "existing",
-          type: "image",
-          file: new File([], "existing.jpg"),
-          publicUrl: existingProposal.gpr_header_img,
-          status: "uploaded",
-          previewUrl: existingProposal.gpr_header_img,
-        },
-      ]);
+      setSupportingDocs(suppDocs);
+
+      if (existingProposal?.gpr_header_img) {
+        setHeaderImageUrl(existingProposal.gpr_header_img);
+        setMediaFiles([
+          {
+            id: "existing",
+            type: "image",
+            file: new File([], "existing.jpg"),
+            publicUrl: existingProposal.gpr_header_img,
+            status: "uploaded",
+            previewUrl: existingProposal.gpr_header_img,
+          },
+        ]);
+      }
     }
-  }
   }, [existingProposal]);
 
   useEffect(() => {
@@ -600,7 +664,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
               type="radio"
               name="paperSize"
               checked={paperSize === "a4"}
-              onChange={() => {setValue("paperSize", "a4");}}
+              onChange={() => {
+                setValue("paperSize", "a4");
+              }}
             />
             A4
           </label>
@@ -609,7 +675,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
               type="radio"
               name="paperSize"
               checked={paperSize === "letter"}
-              onChange={() => {setValue("paperSize", "letter");}}
+              onChange={() => {
+                setValue("paperSize", "letter");
+              }}
             />
             Letter
           </label>
@@ -618,7 +686,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
               type="radio"
               name="paperSize"
               checked={paperSize === "legal"}
-              onChange={() => {setValue("paperSize", "legal");}}
+              onChange={() => {
+                setValue("paperSize", "legal");
+              }}
             />
             Legal
           </label>
@@ -636,7 +706,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 Header Image (optional)
               </label>
               <MediaUpload
-                title="Header Image"
+                title=""
                 description="Upload an image for the proposal header"
                 mediaFiles={mediaFiles}
                 activeVideoId={activeVideoId}
@@ -653,8 +723,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   });
                 }}
                 setActiveVideoId={setActiveVideoId}
+                maxFiles={1}
               />
-              {headerImageUrl && (
+              {/* {headerImageUrl && (
                 <div className="mt-2 flex flex-col sm:flex-row gap-2 items-center">
                   <img
                     src={headerImageUrl}
@@ -674,7 +745,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                     Remove Image
                   </Button>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div>
@@ -682,7 +753,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 Supporting Documents (optional)
               </label>
               <MediaUpload
-                title="Supporting Documents"
+                title=""
                 description="Upload any supporting documents for your proposal"
                 mediaFiles={supportingDocs}
                 activeVideoId={activeVideoId}
@@ -717,7 +788,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
               </label>
               <div className="space-y-2">
                 {objectives.map((_, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row gap-2 items-center">
+                  <div
+                    key={index}
+                    className="flex flex-col sm:flex-row gap-2 items-center"
+                  >
                     <FormInput
                       control={control}
                       name={`objectives.${index}`}
@@ -762,7 +836,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                     <FormSelect
                       control={control}
                       name={`participants.${index}.category`}
-                      label="Category"
+                      label=""
                       options={participantCategories.map((cat) => ({
                         id: cat,
                         name: cat,
@@ -771,7 +845,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                     <FormInput
                       control={control}
                       name={`participants.${index}.count`}
-                      label="Count"
+                      label=""
                       placeholder="Count"
                       type="number"
                     />
@@ -779,7 +853,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="mt-8"
                       onClick={() => removeParticipant(index)}
                       disabled={participants.length <= 1}
                     >
@@ -949,7 +1022,25 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                                       }
                                     }}
                                   />
-                                  <CommandList>
+                                  <CommandList
+                                    className="max-h-64 overflow-auto"
+                                    onWheel={(e) => {
+                                      e.stopPropagation();
+                                      const el = e.currentTarget;
+                                      if (
+                                        e.deltaY > 0 &&
+                                        el.scrollTop >=
+                                          el.scrollHeight - el.clientHeight
+                                      ) {
+                                        return;
+                                      }
+                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
+                                        return;
+                                      }
+                                      e.preventDefault();
+                                      el.scrollTop += e.deltaY;
+                                    }}
+                                  >
                                     <CommandEmpty>
                                       No staff found. Enter name manually.
                                     </CommandEmpty>
@@ -992,7 +1083,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                               label=""
                               placeholder=""
                               type="text"
-                              className="mb-2 p-0"
+                              className=" p-0"
                             />
                           </div>
                           <Button
@@ -1077,7 +1168,25 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                                       }
                                     }}
                                   />
-                                  <CommandList>
+                                  <CommandList
+                                    className="max-h-64 overflow-auto"
+                                    onWheel={(e) => {
+                                      e.stopPropagation();
+                                      const el = e.currentTarget;
+                                      if (
+                                        e.deltaY > 0 &&
+                                        el.scrollTop >=
+                                          el.scrollHeight - el.clientHeight
+                                      ) {
+                                        return;
+                                      }
+                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
+                                        return;
+                                      }
+                                      e.preventDefault();
+                                      el.scrollTop += e.deltaY;
+                                    }}
+                                  >
                                     <CommandEmpty>
                                       No staff found. Enter name manually.
                                     </CommandEmpty>
@@ -1120,7 +1229,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                               label=""
                               placeholder=""
                               type="text"
-                              className="mb-2 p-0"
+                              className="p-0"
                             />
                           </div>
                           <Button
