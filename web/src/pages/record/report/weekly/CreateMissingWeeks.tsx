@@ -273,7 +273,7 @@ export default function CreateMissingWeeks() {
         <div className="flex justify-end">
           <Button
             onClick={handleCreateWeeklyReport}
-            disabled={selectedReports.length === 0 || isCreating}
+            disabled={selectedReports.length === 0 || isCreating} 
             size="lg"
             className="min-w-[200px]"
           >
