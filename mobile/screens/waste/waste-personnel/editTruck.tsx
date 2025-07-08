@@ -93,7 +93,7 @@ export default function WasteTruckEdit() {
       keyboardAvoiding={true}
       contentPadding="medium"
       loadingMessage="Loading..."
-     >Loading</ScreenLayout>
+     ><Text>Loading...</Text></ScreenLayout>
     );
   }
 
@@ -113,7 +113,7 @@ export default function WasteTruckEdit() {
       keyboardAvoiding={true}
       contentPadding="medium"
       loadingMessage="Loading..."
-     >No Truck Data</ScreenLayout>
+     ><Text>No Truck Data</Text></ScreenLayout>
     );
   }
 
