@@ -53,6 +53,7 @@ export default function RootLayout() {
             <Stack.Screen name="council" options={{ headerShown: false }} />
             <Stack.Screen name="(treasurer)" options = {{headerShown: false}}/>
             <Stack.Screen name="(waste)" options = {{headerShown: false}}/>
+            <Stack.Screen name="(request)" options = {{headerShown: false}}/>
             <Stack.Screen name="gad" options = {{headerShown: false}}/>
             <Stack.Screen name="+not-found" />
           </Stack>
