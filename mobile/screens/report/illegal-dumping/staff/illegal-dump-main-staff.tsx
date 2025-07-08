@@ -1227,7 +1227,7 @@ export default function WasteIllegalDumping() {
 
     const handleView = async (item: any) => {
         router.push({
-            pathname: '/waste/illegal-dumping/staff/illegal-dump-view-staff',
+            pathname: '/(waste)/illegal-dumping/staff/illegal-dump-view-staff',
             params: {
                 rep_id: item.rep_id,
                 rep_matter: item.rep_matter,

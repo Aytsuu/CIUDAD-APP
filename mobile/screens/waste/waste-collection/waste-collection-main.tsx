@@ -1479,7 +1479,7 @@ const WasteCollectionMain = () => {
 
   const handleEdit = (item: any) => {
     router.push({
-      pathname: '/waste/waste-collection/waste-col-edit',
+      pathname: '/(waste)/waste-collection/waste-col-edit',
       params: { 
         wc_num: item.wc_num.toString(),
         date: item.wc_date,
@@ -1664,7 +1664,7 @@ const WasteCollectionMain = () => {
       <View className="flex-row justify-end pb-4 pt-4 px-4">
         <TouchableOpacity
           className="bg-blue-500 flex-row items-center px-3 py-3 rounded-full"
-          onPress={() => router.push('/waste/waste-collection/waste-col-create')}
+          onPress={() => router.push('/(waste)/waste-collection/waste-col-create')}
         >
           <Plus size={20} className="text-white" />
         </TouchableOpacity>
