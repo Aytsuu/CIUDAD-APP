@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { ColumnDef } from "@tanstack/react-table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { FileInput, Search, Plus, Trash, Pen, History} from "lucide-react";
 import { Button } from "@/components/ui/button/button";
@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useArchiveHotspot, useDeleteHotspot } from "./queries/hotspotDeleteQueries";
+import { useDeleteHotspot } from "./queries/hotspotDeleteQueries";
 import { formatTime } from "@/helpers/timeFormatter";
 
 function WasteHotspotMain() {
@@ -160,22 +160,6 @@ function WasteHotspotMain() {
                             <p className="text-xs sm:text-sm">Show</p>
                             <Input type="number" className="w-14 h-8" defaultValue="10" />
                             <p className="text-xs sm:text-sm">Entries</p>
-                        </div>
-
-                        <div>
-                            <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                <FileInput />
-                                Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                            </DropdownMenuContent>
-                            </DropdownMenu>                    
                         </div>
                     </div>
                     
