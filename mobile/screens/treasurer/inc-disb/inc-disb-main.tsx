@@ -319,7 +319,7 @@ const IncomeandDisbursementMain = () => {
                 onPress={(e) => {
                   e.stopPropagation();
                   router.push({
-                    pathname: "/treasurer/inc-disbursement/inc-disb-edit",
+                    pathname: "/(treasurer)/inc-disbursement/inc-disb-edit",
                     params: { id: album.id.toString(), type: album.type },
                   });
                 }}
@@ -442,7 +442,6 @@ const IncomeandDisbursementMain = () => {
       keyboardAvoiding={true}
       contentPadding="medium"
     >
-      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <View className="flex-1 p-4">
         <View className="flex flex-col gap-4 mb-4">
           <View className="flex-row justify-between items-center">
@@ -510,7 +509,7 @@ const IncomeandDisbursementMain = () => {
             </View>
             <TouchableOpacity
               className="bg-blue-600 px-4 py-2 rounded-md"
-              onPress={() => router.push("/treasurer/inc-disbursement/inc-disb-create")}
+              onPress={() => router.push("/(treasurer)/inc-disbursement/inc-disb-create")}
             >
               <Text className="text-white text-base font-semibold">Create New</Text>
             </TouchableOpacity>
@@ -534,6 +533,12 @@ const IncomeandDisbursementMain = () => {
               initialNumToRender={10}
               maxToRenderPerBatch={10}
               windowSize={11}
+              refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+              />
+            }
             />
           )}
         </View>
@@ -660,7 +665,6 @@ const IncomeandDisbursementMain = () => {
           </View>
         </Modal>
       </View>
-      </ScrollView>
     </ScreenLayout>
   );
 };

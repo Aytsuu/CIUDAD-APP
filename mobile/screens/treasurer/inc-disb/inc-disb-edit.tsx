@@ -205,7 +205,7 @@ const EditFolderForm = () => {
         );
 
         router.push({
-          pathname: "/treasurer/inc-disbursement/inc-disb-main",
+          pathname: "/(treasurer)/inc-disbursement/inc-disb-main",
           params: { isIncome: (data.type === "income").toString(), folderId },
         });
       } else {
@@ -218,7 +218,7 @@ const EditFolderForm = () => {
         const newFolderId =
           data.type === "income" ? newFolder.inf_num : newFolder.dis_num;
         router.push({
-          pathname: "/treasurer/inc-disbursement/inc-disb-main",
+          pathname: "/(treasurer)/inc-disbursement/inc-disb-main",
           params: {
             isIncome: (data.type === "income").toString(),
             folderId: newFolderId.toString(),
