@@ -30,7 +30,6 @@ export const getCollectors = async () => {
         throw err;
     }
 }
-
 export const getGarbagePendingRequest = async () => {
     try {
         const { data } = await api.get('waste/garbage-pickup-request-pending/', {
@@ -48,7 +47,7 @@ export const getGarbagePendingRequest = async () => {
             garb_pref_time: item.garb_pref_time,
             garb_created_at: item.garb_created_at,
             garb_additional_notes: item.garb_additional_notes,
-            file_url: item.file?.file_url || '',
+            file_url: item.file_url || '',
             sitio_name: item.sitio_name || ''
 
         }));

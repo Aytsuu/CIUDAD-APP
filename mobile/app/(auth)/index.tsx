@@ -13,5 +13,5 @@ import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staf
 import WasteCollectionMain from "@/screens/waste/waste-collection/waste-collection-main";
 
 export default () => {
-    return <TemplateMainPage/>
+    return <GarbagePickupMain/>
 }

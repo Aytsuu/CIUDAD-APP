@@ -10,6 +10,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card/card"
+import { useEffect } from "react"
 
 export default function PendingCards() {
   const [acceptedRowId, setAcceptedRowId] = useState<number | null>(null)
@@ -17,6 +18,10 @@ export default function PendingCards() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const { data: pendingReqData = [], isLoading } = useGetGarbagePendingRequest()
+
+  useEffect(() => {
+    console.log("File URLs:", pendingReqData.map(req => req.file_url));
+  }, [pendingReqData]);
 
   const filteredData = pendingReqData.filter((request) => {
     const searchString = `
@@ -144,7 +149,7 @@ export default function PendingCards() {
                             <div>
                               <DialogLayout
                                 trigger={
-                                  <div className="bg-white hover:bg-gray-100 border text-black p-2.5 rounded-lg cursor-pointer transition-colors">
+                                  <div className="bg-stone-200 hover:bg-stone-300 text-gray-500 p-2.5 rounded-lg cursor-pointer transition-colors">
                                     <ImageIcon size={16} />
                                   </div>
                                 }

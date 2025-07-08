@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
-import { X, Search, Info, ChevronRight } from "lucide-react-native";
+import { View, Text, TouchableOpacity, ScrollView} from "react-native";
+import { Search, Info, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useGetGarbageCompleteRequest } from "../queries/garbagePickupStaffFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
-import { SelectLayout } from "@/components/ui/select-layout";
 import { useRouter } from "expo-router";
 
 export default function CompletedGarbageRequest() {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
 import { CheckCircle, XCircle, X, Search, Info } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";

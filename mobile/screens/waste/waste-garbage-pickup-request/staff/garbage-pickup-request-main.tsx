@@ -6,6 +6,7 @@ import PendingGarbageRequest from "./tabs/pending-tab";
 import AcceptedGarbagePickupRequest from "./tabs/accepted-tab";
 import RejectedGarbageRequest from "./tabs/rejected-tab";
 import CompletedGarbageRequest from "./tabs/completed-tab";
+import PageLayout from "@/screens/_PageLayout";
 
 const PendingTable = () => (
   <View className="flex-1">
@@ -51,96 +52,94 @@ export default function GarbagePickupMain() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white pt-10 px-4">
-      {/* Header */}
-      <View className="gap-4 mb-4">
-        <TouchableOpacity onPress={() => router.back()} className="w-6">
-          <ChevronLeft size={24} color="black" />
-        </TouchableOpacity>
-        <View>
-          <Text className="text-xl text-[#2a3a61] font-semibold">
-            Garbage Pickup Requests
-          </Text>
-          <Text className="text-sm text-gray-500">
-            Manage garbage pickup requests.
-          </Text>
-        </View>
-      </View>
+      <PageLayout
+            leftAction={
+                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+                    <ChevronLeft size={24} className="text-gray-700" />
+                </TouchableOpacity>
+            }
+            headerTitle={<Text className="text-gray-900 text-[13px]">Garbage Pickup Requests</Text>}
+            rightAction={
+                <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
+            }
+      >
 
       {/* Tabs */}
-      <View className="flex-row justify-between mb-4 bg-white rounded-lg p-1 border border-gray-100">
-        <TouchableOpacity onPress={() => setActiveTab("pending")}
-          className={`flex-1 py-2 px-2 rounded-md ${
-            activeTab === "pending"
-              ? "bg-yellow-100 border border-yellow-300"
-              : ""
-          }`}
-        >
-          <Text
-            className={`text-center font-medium ${
-              activeTab === "pending" ? "text-yellow-800" : "text-gray-600"
+      <View className = "px-4">
+        <View className="flex-row justify-between mb-4 bg-white rounded-lg p-1 border border-gray-100">
+          <TouchableOpacity onPress={() => setActiveTab("pending")}
+            className={`flex-1 py-2 px-2 rounded-md ${
+              activeTab === "pending"
+                ? "bg-yellow-100 border border-yellow-300"
+                : ""
             }`}
           >
-            Pending
-          </Text>
-        </TouchableOpacity>
+            <Text
+              className={`text-center font-medium ${
+                activeTab === "pending" ? "text-yellow-800" : "text-gray-600"
+              }`}
+            >
+              Pending
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setActiveTab("accepted")}
-          className={`flex-1 py-2 px-2 rounded-md ${
-            activeTab === "accepted"
-              ? "bg-[#5B72CF]/20 border border-[#5B72CF]"
-              : ""
-          }`}
-        >
-          <Text
-            className={`text-center font-medium ${
-              activeTab === "accepted" ? "text-[#5B72CF]" : "text-gray-600"
+          <TouchableOpacity
+            onPress={() => setActiveTab("accepted")}
+            className={`flex-1 py-2 px-2 rounded-md ${
+              activeTab === "accepted"
+                ? "bg-[#5B72CF]/20 border border-[#5B72CF]"
+                : ""
             }`}
           >
-            Accepted
-          </Text>
-        </TouchableOpacity>
+            <Text
+              className={`text-center font-medium ${
+                activeTab === "accepted" ? "text-[#5B72CF]" : "text-gray-600"
+              }`}
+            >
+              Accepted
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setActiveTab("completed")}
-          className={`flex-1 py-2 px-2 rounded-md ${
-            activeTab === "completed"
-              ? "bg-green-100 border border-green-300"
-              : ""
-          }`}
-        >
-          <Text
-            className={`text-center font-medium ${
-              activeTab === "completed" ? "text-green-800" : "text-gray-600"
+          <TouchableOpacity
+            onPress={() => setActiveTab("completed")}
+            className={`flex-1 py-2 px-2 rounded-md ${
+              activeTab === "completed"
+                ? "bg-green-100 border border-green-300"
+                : ""
             }`}
           >
-            Completed
-          </Text>
-        </TouchableOpacity>
+            <Text
+              className={`text-center font-medium ${
+                activeTab === "completed" ? "text-green-800" : "text-gray-600"
+              }`}
+            >
+              Completed
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setActiveTab("rejected")}
-          className={`flex-1 py-2 px-2 rounded-md ${
-            activeTab === "rejected"
-              ? "bg-red-100 border border-red-300"
-              : ""
-          }`}
-        >
-          <Text
-            className={`text-center font-medium ${
-              activeTab === "rejected" ? "text-red-800" : "text-gray-600"
+          <TouchableOpacity
+            onPress={() => setActiveTab("rejected")}
+            className={`flex-1 py-2 px-2 rounded-md ${
+              activeTab === "rejected"
+                ? "bg-red-100 border border-red-300"
+                : ""
             }`}
           >
-            Rejected
-          </Text>
-        </TouchableOpacity>
+            <Text
+              className={`text-center font-medium ${
+                activeTab === "rejected" ? "text-red-800" : "text-gray-600"
+              }`}
+            >
+              Rejected
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tab Content */}
       <View className="flex-1 bg-white rounded-lg shadow-sm p-4">
         {renderTabContent()}
       </View>
-    </SafeAreaView>
+    </PageLayout>
   );
 }
