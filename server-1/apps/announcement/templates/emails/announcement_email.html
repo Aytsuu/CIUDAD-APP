@@ -67,10 +67,7 @@
             margin-bottom: 0;
         }
         
-        .info-section {
-            margin: 20px 0;
-        }
-        
+    
         .info-item {
             margin: 8px 0;
         }
@@ -134,27 +131,7 @@
         
         <div class="content">
           
-            <div class="info-section">
-                <div class="info-item">
-                    <span class="info-label">Type:</span> {{ ann_type|capfirst }}
-                </div>
-                
-                <div class="info-item">
-                    <span class="info-label">Delivery Mode:</span> {{ ar_mode|join:", " }}
-                </div>
-                
-                {% if positions %}
-                <div class="info-item">
-                    <span class="info-label">Target Positions:</span> {{ positions|join:", " }}
-                </div>
-                {% endif %}
-                
-                {% if ar_age %}
-                <div class="info-item">
-                    <span class="info-label">Age Group:</span> {{ ar_age|join:", " }}
-                </div>
-                {% endif %}
-            </div>
+
             
             <div class="details-section">
                 <p>{{ ann_details }}</p>

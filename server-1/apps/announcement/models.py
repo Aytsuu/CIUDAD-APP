@@ -50,6 +50,7 @@ class AnnouncementRecipient(models.Model):
         choices=[
             ('email', 'Email'),
             ('sms', 'SMS'),
+            ('public', 'Public'),
         ]
     )
 

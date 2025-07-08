@@ -298,6 +298,7 @@ const AnnouncementCreate = () => {
                     options={[
                       { id: "sms", name: "SMS" },
                       { id: "email", name: "Email" },
+                      { id: "public", name: "Public" },
                     ]}
                   />
                 </div>
