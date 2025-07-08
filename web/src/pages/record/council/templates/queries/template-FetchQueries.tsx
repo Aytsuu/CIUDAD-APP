@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTemplateRecord } from "../request/template-GetRequest";
+import { getPurposeRates } from "../request/template-GetRequest";
 
 
 
@@ -16,7 +17,9 @@ export type TemplateRecord = {
     temp_margin: string;
     temp_filename: string;
     temp_body: string;
-    temp_is_archive: string;
+    temp_is_archive: boolean;
+    pr_id: number;
+    staff_id: number;
 };
   
 
@@ -28,3 +31,20 @@ export const useGetTemplateRecord = () => {
         staleTime: 1000 * 60 * 30, // 30 minutes stale time
     });
 };
+
+
+
+
+export type PurposeRates = {
+    pr_id: string;
+    pr_purpose: string;
+    pr_is_archive: boolean;
+}
+
+export const useGetPurposeRates= () => {
+    return useQuery<PurposeRates[]>({
+        queryKey: ["purposeRates"], 
+        queryFn: getPurposeRates,
+        staleTime: 1000 * 60 * 30,
+    });
+}

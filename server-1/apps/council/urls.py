@@ -31,6 +31,8 @@ urlpatterns=[
     path('delete-mom-area-of-focus/<int:mom_id>/', DeleteMOMAreaOfFocusView.as_view(), name='delete-mom-area-of-focus'),
     path('mom-supp-doc/', MOMSuppDocView.as_view(), name='mom-supp-doc'),
     
+    path("purpose-rates-view/", PurposeRatesListView.as_view(), name="purpose-rates-list"),
+
     # RESOLUTION
     path("resolution/", ResolutionView.as_view(), name="council-resolution"),
     path("update-resolution/<int:res_num>/", UpdateResolutionView.as_view(), name="update-resolution"),

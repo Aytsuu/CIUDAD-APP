@@ -2,6 +2,7 @@
 from rest_framework import serializers
 from .models import *
 from django.apps import apps
+from apps.treasurer.models import Purpose_And_Rates
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,6 +83,12 @@ class ResolutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resolution
         fields = '__all__'
+
+
+class PurposeRatesListViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Purpose_And_Rates
+        fields = ['pr_id', 'pr_purpose', 'pr_is_archive']
 
 # class ResolutionSerializer(serializers.ModelSerializer):
 #     rf_id = serializers.SerializerMethodField()

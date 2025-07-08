@@ -342,6 +342,12 @@ class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = ResolutionSupDocsSerializer
     lookup_field = 'rsd_id'     
 
+
+class PurposeRatesListView(generics.ListCreateAPIView):
+    queryset = Purpose_And_Rates.objects.all()
+    serializer_class = PurposeRatesListViewSerializer
+    
+
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
