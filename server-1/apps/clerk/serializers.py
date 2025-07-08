@@ -282,20 +282,15 @@ class BusinessSerializer(serializers.ModelSerializer):
         model = Business
         fields = [
             'bus_id',
-            'bus_name',
             'bus_gross_sales',
-            'bus_province',
-            'bus_city',
-            'bus_barangay',
-            'bus_street',
-            'bus_respondentLname',
-            'bus_respondentFname',
             'bus_respondentMname',
             'bus_respondentSex',
             'bus_respondentDob',
             'bus_date_registered',
-            'sitio_id',
-            'staff_id'
+            'staff_id',
+            'add_id',
+            'bus_respondentAddress',
+            'bus_respondentContact',
         ]
 
 class IssuedCertificateSerializer(serializers.ModelSerializer):

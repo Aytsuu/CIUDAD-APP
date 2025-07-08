@@ -23,6 +23,7 @@ urlpatterns = [
     
     # Personal Clearances and Payment URLs
     path('personal-clearances/', get_personal_clearances, name='personal-clearances-list'),
+    path('permit-clearances/', get_permit_clearances, name='permit-clearances-list'),
     path('payment/create/<str:cr_id>/', create_payment_intent, name='create-payment-intent'),
     path('payment/webhook/', webhook_payment_status, name='payment-webhook'),
 ]

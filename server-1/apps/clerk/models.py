@@ -36,24 +36,19 @@ class Invoice(models.Model):
 
 class Business(models.Model):
     bus_id = models.BigIntegerField(primary_key=True)
-    bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
-    bus_province = models.CharField(max_length=100)
-    bus_city = models.CharField(max_length=100)
-    bus_barangay = models.CharField(max_length=100)
-    bus_street = models.CharField(max_length=100)
-    bus_respondentLname = models.CharField(max_length=100)
-    bus_respondentFname = models.CharField(max_length=100)
     bus_respondentMname = models.CharField(max_length=100)
     bus_respondentSex = models.CharField(max_length=100)
     bus_respondentDob = models.DateField()
     bus_date_registered = models.DateField()
-    sitio_id = models.CharField(max_length=100)  
-    staff_id = models.CharField(max_length=50) 
+    staff_id = models.CharField(max_length=50)
+    add_id = models.CharField(max_length=50)
+    bus_respondentAddress = models.CharField(max_length=255)
+    bus_respondentContact = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'business'
-        managed = False  # This tells Django that this table is managed externally
+        managed = False
 
 class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(max_length=10, primary_key=True)

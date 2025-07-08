@@ -562,6 +562,46 @@ def get_personal_clearances(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+@api_view(['GET'])
+def get_permit_clearances(request):
+    try:
+        permits = BusinessPermitRequest.objects.select_related(
+            'business'
+        ).prefetch_related(
+            Prefetch('issuedbusinesspermit_set', queryset=IssuedBusinessPermit.objects.select_related('file'))
+        ).only(
+            'bpr_id',
+            'req_pay_method',
+            'req_request_date',
+            'req_claim_date',
+            'req_sales_proof',
+            'req_status',
+            'req_payment_status',
+            'req_transac_id',
+            'business__bus_id',
+            'business__bus_gross_sales',
+            'business__bus_respondentMname',
+            'business__bus_respondentSex',
+            'business__bus_respondentDob',
+            'business__bus_date_registered',
+            'business__staff_id',
+            'business__add_id',
+            'business__bus_respondentAddress',
+            'business__bus_respondentContact',
+        ).all()
+        serializer = BusinessPermitSerializer(permits, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        logger.error(f"Error in get_permit_clearances: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return Response(
+            {
+                "error": str(e),
+                "detail": "An error occurred while retrieving permit clearances"
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 @api_view(['POST'])
 def create_payment_intent(request, cr_id):
     try:

@@ -13,7 +13,8 @@ import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
-
+import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
+import { useQuery } from "@tanstack/react-query";
 
 
 const styles = {
@@ -181,7 +182,12 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 
 function PermitClearance(){
-    const data = PermitClearanceRecords;
+    // Fetch data from backend
+    const { data: permitClearances, isLoading, error } = useQuery({
+        queryKey: ["permitClearances"],
+        queryFn: getPermitClearances
+    });
+
     const filter = [
         { id: "All", name: "All" },
         { id: "Pending", name: "Pending" },
@@ -190,8 +196,8 @@ function PermitClearance(){
 
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
-    const filteredData = selectedFilter === "All" ? data 
-    : data.filter((item) => item.paymentStat === selectedFilter);
+    const filteredData = selectedFilter === "All" ? (permitClearances || [])
+    : (permitClearances || []).filter((item: any) => item.req_payment_status === selectedFilter);
     
 
     
