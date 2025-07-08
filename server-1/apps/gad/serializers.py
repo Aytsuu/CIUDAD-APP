@@ -150,3 +150,34 @@ class StaffSerializer(serializers.ModelSerializer):
 
     def get_position(self, obj):
         return obj.pos.pos_title if hasattr(obj, 'pos') and obj.pos else ""
+
+# ===========================================================================================================
+
+class GADDevelopmentBudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DevelopmentBudget
+        fields = ['gdb_id', 'gdb_name', 'gdb_pax', 'gdb_price']
+class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
+    budgets = GADDevelopmentBudgetSerializer(many=True, required=False)
+
+    class Meta:
+        model = DevelopmentPlan
+        fields = '__all__'
+
+    def create(self, validated_data):
+        budgets_data = validated_data.pop('budgets', [])
+        plan = DevelopmentPlan.objects.create(**validated_data)
+        for budget in budgets_data:
+            DevelopmentPlan.objects.create(dev=plan, **budget)
+        return plan
+
+    def update(self, instance, validated_data):
+        budgets_data = validated_data.pop('budgets', [])
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        # Remove old budgets and add new ones
+        instance.budgets.all().delete()
+        for budget in budgets_data:
+            DevelopmentBudget.objects.create(dev=instance, **budget)
+        return instance

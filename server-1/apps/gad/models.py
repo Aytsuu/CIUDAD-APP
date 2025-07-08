@@ -232,3 +232,5 @@ class ProposalSuppDoc(models.Model):
 
     class Meta:
         db_table = 'proposal_supp_doc'
+
+        
