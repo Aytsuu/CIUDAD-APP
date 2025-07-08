@@ -126,13 +126,13 @@ const AttendanceRecords = () => {
               accessibilityRole="button"
             >
               <Card
-                className={`bg-[#07143F] border-gray-200 ${
+                className={`bg-white rounded-lg p-4 border border-gray-200 ${
                   index === filteredTableData.length - 1 ? 'mb-0' : 'mb-4'
                 }`}
               >
                 <CardHeader className="pb-3">
                   <View className="flex-row items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-white flex-1 pr-2">
+                    <CardTitle className="text-lg font-semibold text-black flex-1 pr-2">
                       {record.attMettingTitle}
                     </CardTitle>
                     {/* <TouchableOpacity
@@ -145,12 +145,12 @@ const AttendanceRecords = () => {
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  <Text className="text-sm text-white leading-5 mb-4">
+                  <Text className="text-sm text-black leading-5 mb-4">
                     {record.attMeetingDescription}
                   </Text>
 
                   <View className="border-t border-gray-200 pt-3">
-                    <Text className="text-sm font-medium text-white">
+                    <Text className="text-sm font-medium text-black">
                       Date of Meeting: {record.attMeetingDate}
                     </Text>
                   </View>

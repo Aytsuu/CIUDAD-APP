@@ -24,7 +24,7 @@ const DonationTracker = () => {
   const filteredData = useMemo(() => {
     return donations.filter((donation: Donation) => {
       const searchableText = [
-        donation.don_num?.toString(),
+        donation.don_num,
         donation.don_donor,
         donation.don_item_name,
         donation.don_category,
@@ -46,7 +46,7 @@ const DonationTracker = () => {
     }
   }
 
-  const handleViewDonation = (donationNum: number) => {
+  const handleViewDonation = (donationNum: string) => {
     console.log("Navigating to view donation:", donationNum)
     try {
       router.push({
@@ -108,10 +108,10 @@ const DonationTracker = () => {
               accessibilityRole="button"
               activeOpacity={0.7}
             >
-              <Card className={`bg-[#07143F] border-gray-200 ${index === filteredData.length - 1 ? "mb-0" : "mb-4"}`}>
+              <Card className={`bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100 ${index === filteredData.length - 1 ? "mb-0" : "mb-4"}`}>
                 <CardHeader className="pb-3">
                   <View className="flex-row items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-white flex-1 pr-2">
+                    <CardTitle className="text-lg font-semibold text-black flex-1 pr-2">
                       {donation.don_item_name}
                     </CardTitle>
                     <TouchableOpacity
@@ -124,12 +124,12 @@ const DonationTracker = () => {
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  <Text className="text-sm text-white leading-5 mb-4">Donor: {donation.don_donor}</Text>
+                  <Text className="text-sm text-black leading-5 mb-4">Donor: {donation.don_donor}</Text>
                   <View className="border-t border-gray-200 pt-3">
-                    <Text className="text-sm font-medium text-white">Category: {donation.don_category}</Text>
-                    <Text className="text-sm font-medium text-white">Quantity: {donation.don_qty}</Text>
-                    <Text className="text-sm font-medium text-white">Date: {donation.don_date}</Text>
-                    <Text className="text-sm font-medium text-white">Reference No: {donation.don_num}</Text>
+                    <Text className="text-sm font-medium text-black">Category: {donation.don_category}</Text>
+                    <Text className="text-sm font-medium text-black">Quantity: {donation.don_qty}</Text>
+                    <Text className="text-sm font-medium text-black">Date: {donation.don_date}</Text>
+                    <Text className="text-sm font-medium text-blac">Reference No: {donation.don_num}</Text>
                   </View>
                 </CardContent>
               </Card>
