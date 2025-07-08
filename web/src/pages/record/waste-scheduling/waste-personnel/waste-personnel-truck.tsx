@@ -372,7 +372,7 @@ const WastePersonnel = () => {
               </button>
             </div>
 
-            <div className="relative w-full flex gap-2 mr-2 max-w-md">
+            {/* <div className="relative w-full flex gap-2 mr-2 max-w-md">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
                 size={17}
@@ -383,7 +383,7 @@ const WastePersonnel = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+            </div> */}
 
             {truckViewMode === "active" && (
               <Button
