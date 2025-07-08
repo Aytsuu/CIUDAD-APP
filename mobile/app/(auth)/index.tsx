@@ -12,5 +12,5 @@ import GarbagePickupForm from "@/screens/waste/waste-garbage-pickup-request/resi
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 
 export default () => {
-    return <GarbagePickupMain/>
+    return <IncomeExpenseMain/>
 }
