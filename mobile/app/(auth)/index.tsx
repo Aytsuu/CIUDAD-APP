@@ -7,7 +7,10 @@ import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-
 import BudgetPlanMain from "@/screens/treasurer/budget-plan/budget-plan-main";
 import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
 import ReceiptPage from "@/screens/treasurer/receipt/receipt-main";
+import WasteHotspotMain from "@/screens/waste/waste-hotspot/waste-hotspot-main";
+import GarbagePickupForm from "@/screens/waste/waste-garbage-pickup-request/resident/garbage-pickup-form";
+import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 
 export default () => {
-    return <PurposeAndRatesMain/>
+    return <GarbagePickupMain/>
 }

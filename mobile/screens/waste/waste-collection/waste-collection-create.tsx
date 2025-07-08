@@ -146,6 +146,7 @@ function WasteColCreate() {
               label="Date"
               name="date"
               type="date"
+              minimumDate={new Date(Date.now() + 86400000)}
             />
 
             <FormDateTimeInput
