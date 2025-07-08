@@ -110,12 +110,12 @@ export default function WastePersonnelMain() {
   );
 
   const handleAddTruck = () => {
-    router.push("/waste/waste-personnel/waste-truck-create");
+    router.push("/(waste)/waste-personnel/waste-truck-create");
   };
 
   const handleEditTruck = (truck: TruckData) => {
     router.push({
-      pathname: "/waste/waste-personnel/waste-truck-edit",
+      pathname: "/(waste)/waste-personnel/waste-truck-edit",
       params: { id: truck.truck_id },
     });
   };
