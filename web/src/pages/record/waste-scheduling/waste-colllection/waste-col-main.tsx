@@ -398,8 +398,8 @@ function WasteCollectionMain() {
                                         <Eye size={16} />
                                     </div>
                                 }
-                                className="max-w-[50%] max-h-[90%] overflow-auto p-7"
-                                title=""
+                                className="max-w-[50%] max-h-[90%] overflow-auto p-10"
+                                title="Update Waste Collection"
                                 description=""
                                 mainContent={
                                     <div className="flex flex-col">
@@ -495,9 +495,9 @@ function WasteCollectionMain() {
                           <Plus size={16} className="mr-1" /> Create
                       </div>
                   }
-                  className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                  title="Create New Schedule"
-                  description=""
+                  className="max-w-[55%] h-[540px] p-10 flex flex-col overflow-auto scrollbar-custom"
+                  title="Schedule Waste Collection"
+                  description="Schedule new waste collection"
                   mainContent={<WasteColSched onSuccess={() => setIsDialogOpen(false)} />}
               />
           </div>

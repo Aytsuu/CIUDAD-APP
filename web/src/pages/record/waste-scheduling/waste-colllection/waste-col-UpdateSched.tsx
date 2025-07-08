@@ -166,8 +166,7 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, wc_is_archi
 
     return (
         <Form {...form}>
-            <form onSubmit={(e) => e.preventDefault()} className="p-4 sm:p-6 max-w-4xl mx-auto">
-                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">UPDATE WASTE COLLECTION</Label>
+            <form onSubmit={(e) => e.preventDefault()}>
 
                 <div className="grid grid-cols-2 gap-4 pt-5">
                     {/* Sitio Selection */}

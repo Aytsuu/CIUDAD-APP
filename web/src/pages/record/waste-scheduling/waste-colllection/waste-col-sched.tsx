@@ -126,8 +126,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 max-w-4xl mx-auto">
-                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">SCHEDULE WASTE COLLECTION</Label>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
 
                 <div className="grid grid-cols-2 gap-4 pt-5">
                     {/* Sitio Selection */}
