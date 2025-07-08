@@ -1,5 +1,5 @@
 import { SafeAreaView, Text, ScrollView, View, FlatList, TextInput, Pressable, TouchableOpacity } from "react-native";
-import { Search, Archive, Trash2, ArchiveRestore } from "lucide-react-native";
+import { Archive, Trash2, ArchiveRestore } from "lucide-react-native";
 import React from "react";
 import { usegetBudgetPlan } from "./queries/budgetPlanFetchQueries"
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -9,10 +9,14 @@ import { useArchiveBudgetPlan, useRestoreBudgetPlan } from "./queries/budgetPlan
 import { useDeleteBudgetPlan } from "./queries/budgetPlanDeleteQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useRouter } from "expo-router";
+import PageLayout from "@/screens/_PageLayout";
+import {Search} from "@/lib/icons/Search"
+import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 
 
 export default function BudgetPlanMain() {
-    const [searchQuery, setSearchQuery] = React.useState('');
+    const [searchQuery, setSearchQuery] = React.useState<string>("")
+    const [showSearch, setShowSearch] = React.useState<boolean>(false)
     const router = useRouter();
     const {data: fetchedData = [], isLoading} = usegetBudgetPlan();
     const [activeTab, setActiveTab] = React.useState<'active' | 'archive'>('active');
@@ -53,11 +57,10 @@ export default function BudgetPlanMain() {
         })
     }
 
-   // Update the renderBudgetPlanCard function to wrap the card in a TouchableOpacity
+ 
 const renderBudgetPlanCard = (item: BudgetPlanType, isArchived: boolean = false) => (
     <TouchableOpacity 
         onPress={() => handleOpenPlan(item.plan_id|| 0)}
-        // onPress={() => alert(item.plan_id)}
         activeOpacity={0.8}
     >
         <Card
@@ -149,32 +152,22 @@ const renderBudgetPlanCard = (item: BudgetPlanType, isArchived: boolean = false)
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-                <View className="px-4 py-4 mt-4">
-                    <Text className="font-semibold text-xl text-[#2a3a61] mt-5">
-                        Budget Plan
-                    </Text>
-                    <Text className="text-sm text-gray-500 mt-1">
-                        Efficiently oversee and allocate your budget to optimize financial planning and sustainability.
-                    </Text>
-                </View>
-
-                <View className="px-4">
-                    <View className="relative mb-3">
-                        <Search className="absolute left-3 top-3 text-gray-500" size={17}/>
-                        <TextInput 
-                            placeholder="Search by year or budget amount..." 
-                            value={searchQuery} 
-                            onChangeText={setSearchQuery} 
-                            className="pl-10 w-full h-10 bg-white text-base rounded-lg p-2 border border-gray-300" 
-                        />
-                    </View>
-                </View>
-
+        <PageLayout
+            leftAction={
+                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+                <ChevronLeft size={24} className="text-gray-700" />
+                </TouchableOpacity>
+            }
+            headerTitle={<Text className="text-gray-900 text-[13px]">Budget Plan</Text>}
+            rightAction={
+                <TouchableOpacity onPress={() => setShowSearch(!showSearch)} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center" >
+                <Search size={22} className="text-gray-700" />
+                </TouchableOpacity>
+            }
+            >
                 <View className="px-4">
                     <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'active' | 'archive')}>
-                        <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
+                        <TabsList className="bg-blue-50 mb-5 flex-row justify-between">
                             <TabsTrigger value="active" className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
                                 <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
                                     Active
@@ -221,7 +214,6 @@ const renderBudgetPlanCard = (item: BudgetPlanType, isArchived: boolean = false)
                         </TabsContent>
                     </Tabs>
                 </View>
-            </ScrollView>
-        </SafeAreaView>
+        </PageLayout>
     );
 }

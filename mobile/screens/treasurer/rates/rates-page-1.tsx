@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator, FlatList, ScrollView,} from 'react-native';
-import { Plus, Edit3, Trash2, History, CheckCircle, XCircle, Search,} from 'lucide-react-native';
+import { View, Text, TouchableOpacity ,ActivityIndicator, FlatList, ScrollView,} from 'react-native';
+import { Plus, Edit3, Trash2, History, CheckCircle, XCircle} from 'lucide-react-native';
 import { useGetAnnualGrossSales, type AnnualGrossSales } from './queries/ratesFetchQueries';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -8,6 +8,8 @@ import { useRouter } from 'expo-router';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useDeleteAnnualGrossSales } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function RatesPage1() {
   const router = useRouter();
@@ -67,10 +69,7 @@ export default function RatesPage1() {
     showStatus: boolean = false,
     showActions: boolean = false
   ) => (
-    <Card
-      key={item.ags_id}
-      className="mb-3 border-2 border-gray-200 shadow-sm bg-white"
-    >
+    <Card key={item.ags_id} className="mb-3 border-2 border-gray-200 shadow-sm bg-white">
       <CardHeader className="pb-3">
         <View className="flex-row justify-between items-start">
           <View className="flex-1 mr-3">
@@ -97,18 +96,15 @@ export default function RatesPage1() {
 
           {showActions && (
             <View className="flex-row space-x-4 gap-2">
-              <Pressable 
-                className="bg-blue-50 p-2 rounded-lg"
-                onPress={() => handleEdit(item)}
-              >
+              <TouchableOpacity  className="bg-blue-50 p-2 rounded-lg" onPress={() => handleEdit(item)}>
                 <Edit3 size={16} color="#3b82f6" />
-              </Pressable>
+              </TouchableOpacity>
 
               <ConfirmationModal
                 trigger={ 
-                  <Pressable className="bg-red-50 p-2 rounded-lg">
+                  <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
                     <Trash2 size={16} color="#ef4444" />
-                  </Pressable>
+                  </TouchableOpacity>
                 }
                 title="Confirm Delete"
                 description="Are you sure you want to delete this record? This action will set the record to inactive state and cannot be undone."
@@ -142,54 +138,48 @@ export default function RatesPage1() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Header */}
+    <View className="flex-1 bg-white ">
+      {/* Header */}
+      <View className="mb-4">
         <Text className="font-bold text-xl text-[#1a2332] text-center mb-1">
           Barangay Clearance For Business Permit Based on Annual Gross Sales For Receipts
         </Text>
         <View className="h-1 bg-gradient-to-r from-[#2a3a61] to-[#4f46e5] rounded-full" />
+      </View>
 
-        {/* Search and Add */}
-        <View className="mb-4">
-          <View className="relative mb-3">
-            <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-            <TextInput
-              placeholder="Search..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="pl-10 w-full h-10 bg-white text-base rounded-lg p-2 border border-gray-300"
-            />
-          </View>
-          <Pressable
-            onPress={handleCreate}
-            className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md"
-          >
+      {/* Search and Add */}
+      <View className="mb-4">
+        <View className="relative mb-3">
+          <Input placeholder="Search..." value={searchQuery} onChangeText={setSearchQuery} className="bg-white text-black rounded-lg p-2 border border-gray-300 pl-10"/>
+        </View>
+        
+        <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
             <Plus size={20} color="white" />
             <Text className="text-white ml-2 font-semibold">Add</Text>
-          </Pressable>
-        </View>
+        </Button>
+      </View>
 
-        {/* Tabs */}
-        <Tabs  value={activeTab} onValueChange={val => setActiveTab(val as 'active' | 'archive')} >
-        <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
-          <TabsTrigger  value="active"  className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'active' | 'archive')} className="flex-1">
+        <TabsList className="bg-blue-50 mb-5 flex-row justify-between">
+          <TabsTrigger value="active" className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
             <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
               Active
             </Text>
           </TabsTrigger>
-          <TabsTrigger  value="archive" className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`} >
+          <TabsTrigger value="archive" className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
             <View className="flex-row items-center justify-center">
-               <History  size={16} className="mr-1" color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'}/>
-                <Text className={`${ activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500' } pl-1`}>
-                  History
-                </Text>
+              <History size={16} className="mr-1" color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'}/>
+              <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
+                History
+              </Text>
             </View>
           </TabsTrigger>
         </TabsList>
 
-          {/* Active Tab */}
-          <TabsContent value="active">
+        {/* Active Tab */}
+        <TabsContent value="active" className="flex-1">
+          <ScrollView  className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}showsVerticalScrollIndicator={false} >
             <FlatList
               data={filteredData}
               renderItem={({ item }) => renderRateCard(item, false, true)}
@@ -199,10 +189,12 @@ export default function RatesPage1() {
                 <Text className="text-center text-gray-500 py-4">No rates found</Text>
               }
             />
-          </TabsContent>
+          </ScrollView>
+        </TabsContent>
 
-          {/* History Tab */}
-          <TabsContent value="archive">
+        {/* History Tab */}
+        <TabsContent value="archive" className="flex-1">
+          <ScrollView  className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false} >
             <FlatList
               data={filteredData}
               renderItem={({ item }) => renderRateCard(item, true, false)}
@@ -212,9 +204,9 @@ export default function RatesPage1() {
                 <Text className="text-center text-gray-500 py-4">No rates found</Text>
               }
             />
-          </TabsContent>
-        </Tabs>
-      </ScrollView>
-    </SafeAreaView>
+          </ScrollView>
+        </TabsContent>
+      </Tabs>
+    </View>
   );
 }

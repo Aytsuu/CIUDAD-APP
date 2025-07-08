@@ -57,7 +57,7 @@ function BudgetPlanHistory({ planId }: { planId: string }) {
           size={17}
         />
         <Input 
-          placeholder="Search by year, date, or amount..." 
+          placeholder="Search..." 
           className="pl-10 w-full bg-white text-sm" 
           value={searchTerm}
           onChange={(e) => {
