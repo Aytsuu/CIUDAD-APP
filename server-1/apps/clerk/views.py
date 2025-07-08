@@ -669,4 +669,46 @@ def webhook_payment_status(request):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+<<<<<<< HEAD
 >>>>>>> e82204304 (update)
+=======
+class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
+    serializer_class = ServiceChargeRequestDetailSerializer
+    lookup_field = 'sr_id'
+    
+    def get_queryset(self):
+        return ServiceChargeRequest.objects.filter(
+            sr_payment_status="Paid",
+            sr_type="Summon"
+        ).select_related(
+            'comp__cpnt'
+        ).prefetch_related(
+            'comp__complaintaccused_set__acsd',
+            'case__srf'
+        )
+    
+    def get_object(self):
+        try:
+            return super().get_object()
+        except ServiceChargeRequest.DoesNotExist:
+            raise NotFound("Service charge request not found")
+        
+
+class CaseActivityView(generics.ListCreateAPIView):
+    serializer_class = CaseActivitySerializer
+    queryset = CaseActivity.objects.all()
+
+
+class UpdateServiceChargeRequestView(generics.UpdateAPIView):
+    serializer_class = ServiceChargeRequestSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+>>>>>>> cf00d9390 (update)

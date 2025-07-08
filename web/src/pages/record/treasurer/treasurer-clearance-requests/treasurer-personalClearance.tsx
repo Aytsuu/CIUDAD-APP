@@ -126,15 +126,36 @@ export const columns: ColumnDef<PersonalClearance>[] = [
         accessorKey: "req_payment_status",
         header: "Payment Status",
         cell: ({ row }) => {
-            const paymentStatus = row.original.req_payment_status;
+            const paymentStatus = row.original.req_payment_status as string;
+            let bg = "bg-[#ffeaea]";
+            let text = "text-[#b91c1c]";
+            let border = "border border-[#f3dada]";
+            let label = paymentStatus;
+
+            if (paymentStatus === "Paid") {
+                bg = "bg-[#eaffea]";
+                text = "text-[#15803d]";
+                border = "border border-[#b6e7c3]";
+                label = "Paid";
+            } else if (paymentStatus === "Pending") {
+                bg = "bg-[#ffeaea]";
+                text = "text-[#b91c1c]";
+                border = "border border-[#f3dada]";
+                label = "Pending";
+            } else if (paymentStatus === "Failed") {
+                bg = "bg-[#ffeaea]";
+                text = "text-[#b91c1c]";
+                border = "border border-[#f3dada]";
+                label = "Failed";
+            }
+
             return (
-                <div className={`text-center px-2 py-1 rounded-full ${
-                    paymentStatus === "Paid" ? "bg-green-100 text-green-800" :
-                    paymentStatus === "Pending" ? "bg-yellow-100 text-yellow-800" :
-                    "bg-red-100 text-red-800"
-                }`}>
-                    {paymentStatus}
-                </div>
+                <span
+                    className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+                    style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+                >
+                    {label}
+                </span>
             );
         }
     },

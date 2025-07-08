@@ -70,7 +70,37 @@ export const columns: ColumnDef<PermitClearance>[] = [
             <div className="">{row.getValue("claimDate")}</div>
         )
     },
-    { accessorKey: "paymentStat", header: "Payment Status"},
+    { accessorKey: "paymentStat", 
+      header: "Payment Status",
+      cell: ({ row }) => {
+        const value = row.getValue("paymentStat") as string;
+        let bg = "bg-[#ffeaea]";
+        let text = "text-[#b91c1c]";
+        let border = "border border-[#f3dada]";
+        let label = value;
+
+        if (value === "Paid") {
+          bg = "bg-[#eaffea]";
+          text = "text-[#15803d]";
+          border = "border border-[#b6e7c3]";
+          label = "Paid";
+        } else if (value === "Pending") {
+          bg = "bg-[#ffeaea]";
+          text = "text-[#b91c1c]";
+          border = "border border-[#f3dada]";
+          label = "Pending";
+        }
+
+        return (
+          <span
+            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+          >
+            {label}
+          </span>
+        );
+      }
+    },
     { accessorKey: "action", 
       header: "Action",
       cell: ({}) =>(
