@@ -32,7 +32,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ClerkDonateViewProps = {
-  don_num: number;
+  don_num: string;
   onSaveSuccess?: () => void;
 };
 

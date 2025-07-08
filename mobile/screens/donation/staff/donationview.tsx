@@ -35,7 +35,7 @@ const DonationView = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const donation = donations.find(
-    (d: Donation) => d.don_num.toString() === don_num?.toString()
+    (d: Donation) => d.don_num === don_num
   );
 
   const { control, handleSubmit, watch, setValue, reset } = useForm({
