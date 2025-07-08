@@ -62,7 +62,7 @@ const CreateFolderForm = () => {
       );
     }
       router.push({
-        pathname: "/treasurer/inc-disbursement/inc-disb-main",
+        pathname: "/(treasurer)/inc-disbursement/inc-disb-main",
         params: { 
           isIncome: (data.type === "income").toString(), 
           folderId: newFolderId.toString() 
