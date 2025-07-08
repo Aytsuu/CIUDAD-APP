@@ -1,28 +1,36 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import PersonalClearanceFormSchema from "@/form-schema/personalClearance-schema";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
-function PersonalClearanceForm(){
+const purposeOptions = [
+    { id: "1", name: "Employment" },
+    { id: "2", name: "NSO/SSS/GSIS" },
+    { id: "3", name: "Hospitalization/ CHAMP" },
+    { id: "4", name: "Birth Certificate" },
+    { id: "5", name: "Medical Assistance" },
+    { id: "6", name: "Residency" },
+];
+
+function PersonalClearanceForm() {
+    const form = useForm<z.infer<typeof PersonalClearanceFormSchema>>({
+        resolver: zodResolver(PersonalClearanceFormSchema),
+        defaultValues: {
+            serialNo: "",
+            requester: "",
+            purposes: "",
+        },
+    });
 
     const onSubmit = (values: z.infer<typeof PersonalClearanceFormSchema>) => {
         console.log(values)
     };
 
-    const form = useForm<z.infer<typeof PersonalClearanceFormSchema>>({
-        resolver: zodResolver(PersonalClearanceFormSchema),
-            defaultValues: {
-                serialNo: "",
-                requester: "",
-                purposes: [], 
-            },
-        });
-
-        return (
+    return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-7">
                 
@@ -62,39 +70,23 @@ function PersonalClearanceForm(){
                         name="purposes"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Select a purpose:</FormLabel>
-
-                                {/* Bordered box for checkboxes */}
-                                <div className="flex flex-col gap-3 border border-gray-300 p-2">
-                                    {[
-                                        "Employment",
-                                        "NSO/SSS/GSIS",
-                                        "Hospitalization/ CHAMP",
-                                        "Birth Certificate",
-                                        "Medical Assistance",
-                                        "Residency",
-                                    ].map((purpose) => (
-                                        <div key={purpose} className="flex items-center gap-2">
-                                            <Checkbox
-                                                checked={field.value?.includes(purpose)}
-                                                onCheckedChange={(checked: boolean) => {
-                                                    field.onChange(
-                                                        checked
-                                                            ? [...field.value, purpose] // Add selected purpose
-                                                            : field.value.filter((p: string) => p !== purpose) // Remove unselected purpose
-                                                    );
-                                                }}
-                                            />
-                                            <FormLabel>{purpose}</FormLabel>
-                                        </div>
-                                    ))}
-                                </div>
-                                <FormMessage className="mt-2" />
+                                <FormLabel>Select purpose(s):</FormLabel>
+                                <FormControl>
+                                    <SelectLayout
+                                        {...field}
+                                        className="w-full"
+                                        options={purposeOptions}
+                                        label=""
+                                        placeholder="Select purpose(s)"
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
                 </div>
-
 
                 {/* Submit Button */}
                 <div className="flex justify-end">
@@ -102,7 +94,7 @@ function PersonalClearanceForm(){
                 </div>
             </form>
         </Form>
-        );
-};
+    );
+}
 
 export default PersonalClearanceForm;
