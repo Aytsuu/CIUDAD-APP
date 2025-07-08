@@ -180,12 +180,6 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       gbudy: values.gbudy,
     };
 
-    // Log the data being sent to the server
-    console.log("Data sent to createBudget:", {
-      budgetData,
-      files: mediaFiles,
-    });
-
     createBudget(
       {
         budgetData,
@@ -210,20 +204,6 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       <div className="grid gap-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            {/* Error displays */}
-            {Object.keys(form.formState.errors).length > 0 && (
-              <div className="text-red-500 text-sm">
-                Please fix double check your input
-                {/* <ul>
-                  {Object.entries(form.formState.errors).map(([field, error]) => (
-                    <li key={field}>
-                      {field}: {error?.message}
-                    </li>
-                  ))}
-                </ul> */}
-              </div>
-            )}
-
             {/* Form fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -423,16 +403,24 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
               )}
             </div>
             <div className="mt-4 flex justify-end gap-3">
+              {/* Error displays */}
+            {Object.keys(form.formState.errors).length > 0 && (
+              <div className="text-red-500 text-sm">
+                Please fix double check your input
+                {/* <ul>
+                  {Object.entries(form.formState.errors).map(([field, error]) => (
+                    <li key={field}>
+                      {field}: {error?.message}
+                    </li>
+                  ))}
+                </ul> */}
+              </div>
+            )}
               <Button
                 type="submit"
-                className="bg-blue hover:bg-blue hover:opacity-[95%]"
-                disabled={
-                  Object.keys(form.formState.errors).length > 0 ||
-                  isPending ||
-                  (typeWatch === "Expense" &&
-                    ((form.getValues("gbud_actual_expense") || 0) > remainingBalance ||
-                      (form.getValues("gbud_proposed_budget") || 0) > remainingBalance))
-                }
+                className=" hover:bg-blue hover:opacity-[95%]"
+                // disabled={!isFormValid || isPending}
+                disabled={isPending}
               >
                 {isPending ? "Saving..." : "Save"}
               </Button>

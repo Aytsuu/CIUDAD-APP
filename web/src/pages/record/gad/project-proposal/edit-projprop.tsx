@@ -29,7 +29,11 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { ProjectProposal, ProjectProposalInput, SupportDoc } from "./queries/fetchqueries";
+import {
+  ProjectProposal,
+  ProjectProposalInput,
+  SupportDoc,
+} from "./queries/fetchqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export interface EditProjectProposalFormProps {
@@ -249,10 +253,13 @@ export const EditProjectProposalForm: React.FC<
 
     try {
       setErrorMessage(null);
-      const headerImage = mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+      const headerImage =
+        mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
 
-      const validSupportDocs = supportingDocs
-        .filter((doc): doc is {
+      const validSupportDocs = supportingDocs.filter(
+        (
+          doc
+        ): doc is {
           id: string;
           type: "image" | "video" | "document";
           file: File;
@@ -260,18 +267,20 @@ export const EditProjectProposalForm: React.FC<
           storagePath: string;
           status: "uploaded";
           previewUrl?: string;
-        } => (
-          doc.status === 'uploaded' && 
-          !!doc.publicUrl && 
+        } =>
+          doc.status === "uploaded" &&
+          !!doc.publicUrl &&
           !!doc.storagePath &&
           !!doc.file?.name &&
           !!doc.file?.type
-        ));
+      );
 
       // Preserve all existing supportDocs and include new ones, default to empty array if undefined
       const existingSupportDocs = initialValues.supportDocs || [];
       const updatedSupportDocs = validSupportDocs.map((doc) => {
-        const existingDoc = existingSupportDocs.find(d => d.psd_url === doc.publicUrl);
+        const existingDoc = existingSupportDocs.find(
+          (d) => d.psd_url === doc.publicUrl
+        );
         return {
           psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
           psd_url: doc.publicUrl,
@@ -283,8 +292,11 @@ export const EditProjectProposalForm: React.FC<
       });
 
       // Identify new documents to add via mutation
-      const newDocs = updatedSupportDocs.filter(doc =>
-        !existingSupportDocs.some(existing => existing.psd_id === doc.psd_id)
+      const newDocs = updatedSupportDocs.filter(
+        (doc) =>
+          !existingSupportDocs.some(
+            (existing) => existing.psd_id === doc.psd_id
+          )
       );
 
       // Update existing supportDocs for PUT
@@ -312,13 +324,14 @@ export const EditProjectProposalForm: React.FC<
         gpr_header_img: headerImage,
         staffId: initialValues.staffId || null,
         gprIsArchive: initialValues.gprIsArchive || false,
-        supportDocs: existingSupportDocs.map(doc => ({
-          psd_id: doc.psd_id,
-          psd_url: doc.psd_url,
-          psd_name: doc.psd_name,
-          psd_type: doc.psd_type,
-          psd_is_archive: doc.psd_is_archive,
-        })) || [], // Only existing docs with valid psdId for PUT
+        supportDocs:
+          existingSupportDocs.map((doc) => ({
+            psd_id: doc.psd_id,
+            psd_url: doc.psd_url,
+            psd_name: doc.psd_name,
+            psd_type: doc.psd_type,
+            psd_is_archive: doc.psd_is_archive,
+          })) || [], // Only existing docs with valid psdId for PUT
       };
 
       const fullProposal: ProjectProposal = {
@@ -341,7 +354,7 @@ export const EditProjectProposalForm: React.FC<
       // Add new documents via mutation before updating the proposal
       if (newDocs.length > 0) {
         await Promise.all(
-          newDocs.map(doc =>
+          newDocs.map((doc) =>
             addSupportDocMutation.mutateAsync({
               gprId,
               fileData: {
@@ -362,13 +375,12 @@ export const EditProjectProposalForm: React.FC<
       });
 
       onSuccess(fullProposal);
-
     } catch (error: any) {
       console.error("Error in handleSave:", error);
       setErrorMessage(
         error.response?.data?.detail ||
-        error.message ||
-        "Failed to save proposal. Please check the form data and try again."
+          error.message ||
+          "Failed to save proposal. Please check the form data and try again."
       );
     }
   };
@@ -750,7 +762,25 @@ export const EditProjectProposalForm: React.FC<
                                       }
                                     }}
                                   />
-                                  <CommandList>
+                                  <CommandList
+                                    className="max-h-64 overflow-auto"
+                                    onWheel={(e) => {
+                                      e.stopPropagation();
+                                      const el = e.currentTarget;
+                                      if (
+                                        e.deltaY > 0 &&
+                                        el.scrollTop >=
+                                          el.scrollHeight - el.clientHeight
+                                      ) {
+                                        return;
+                                      }
+                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
+                                        return;
+                                      }
+                                      e.preventDefault();
+                                      el.scrollTop += e.deltaY;
+                                    }}
+                                  >
                                     <CommandEmpty>
                                       No staff found. Enter name manually.
                                     </CommandEmpty>
@@ -878,7 +908,25 @@ export const EditProjectProposalForm: React.FC<
                                       }
                                     }}
                                   />
-                                  <CommandList>
+                                  <CommandList
+                                    className="max-h-64 overflow-auto"
+                                    onWheel={(e) => {
+                                      e.stopPropagation();
+                                      const el = e.currentTarget;
+                                      if (
+                                        e.deltaY > 0 &&
+                                        el.scrollTop >=
+                                          el.scrollHeight - el.clientHeight
+                                      ) {
+                                        return;
+                                      }
+                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
+                                        return;
+                                      }
+                                      e.preventDefault();
+                                      el.scrollTop += e.deltaY;
+                                    }}
+                                  >
                                     <CommandEmpty>
                                       No staff found. Enter name manually.
                                     </CommandEmpty>
