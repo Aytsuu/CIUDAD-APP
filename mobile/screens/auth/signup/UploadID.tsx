@@ -1,70 +1,76 @@
 import "@/global.css";
-
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Button } from "@/components/ui/button";
-import _ScreenLayout from "@/screens/_ScreenLayout";
+import React from "react";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import MediaPicker from "@/components/ui/media-picker";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { X } from "@/lib/icons/X"
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { X } from "@/lib/icons/X";
 import { useToastContext } from "@/components/ui/toast";
-import { useFieldArray } from "react-hook-form";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import { CaptureAndVerifyID, CAVIDCamHandle } from "./CaptureAndVerifyID";
+import PageLayout from "@/screens/_PageLayout";
 
-const idOptions: {label: string, value: string}[] = [
-  {label: "Driver's License", value: "Driver's License"},
-  {label: "UMID", value: "UMID"},
-  {label: "Philhealth ID", value: "Philhealth ID"},
-  {label: "Passport", value: "Passport"},
-  {label: "SSS ID", value: "SSS ID"},
-  {label: "Voter's ID", value: "Voter's ID"},
-  {label: "National ID", value: "National ID"},
-  {label: "HDMF (Pag-ibig ID)", value: "HDMF (Pag-ibig ID)"},
-  {label: "Other", value: "Other"}
+const idOptions: { label: string; value: string }[] = [
+  { label: "Driver's License", value: "Driver's License" },
+  { label: "UMID", value: "UMID" },
+  { label: "Philhealth ID", value: "Philhealth ID" },
+  { label: "Passport", value: "Passport" },
+  { label: "SSS ID", value: "SSS ID" },
+  { label: "Voter's ID", value: "Voter's ID" },
+  { label: "National ID", value: "National ID" },
+  { label: "HDMF (Pag-ibig ID)", value: "HDMF (Pag-ibig ID)" },
+  { label: "Other", value: "Other" },
 ];
 
 export default function UploadID() {
   const router = useRouter();
   const { toast } = useToastContext();
-  const {control, trigger, getValues, setValue, reset } = useRegistrationFormContext();
-  const [selectedImage, setSelectedImage] = React.useState<Record<string, any>>({});
-
-  const { append } = useFieldArray({
-    control: control,
-    name: "photoSchema.list",
-  });
+  const { control, watch, reset } = useRegistrationFormContext();
+  const [isScanning, setIsScanning] = React.useState<boolean>(false);
+  const [scanStatus, setScanStatus] = React.useState<string>("");
+  const [isCaptureMode, setIsCaptureMode] = React.useState<boolean>(true);
+  const cameraRef = React.useRef<CAVIDCamHandle>(null);
 
   React.useEffect(() => {
-    if(selectedImage.type) {
-      append({
-        rf_name: selectedImage.name,
-        rf_type: selectedImage.type,
-        rf_path: selectedImage.path,
-        rf_url: selectedImage.url,
-        rf_is_id: true,
-        rf_id_type: getValues("uploadIdSchema.selected")
-      })
+    const subscription = watch((value, { name, type }) => {
+    if (name === 'uploadIdSchema.selected') {
+      const hasSelected = value.uploadIdSchema?.selected !== "";
+      if (hasSelected) {
+        console.log('camera mode');
+        setIsCaptureMode(true);
+      }
     }
-  }, [selectedImage])
+  });
+  
+  return () => subscription.unsubscribe();
+  }, [watch])
 
-  const handleSubmit = async () => {
-    const formIsValid = await trigger([
-      "uploadIdSchema.selected"
-    ]);
-
-    if(!formIsValid) {
+  const attemptIDCapture = React.useCallback(async () => {
+    if (!cameraRef.current || isScanning) {
       return;
     }
 
-    if(!selectedImage.type) {
-      toast.error("Upload a photo of your valid ID")
-      return;
+    setIsScanning(true);
+    setScanStatus("Scanning your ID card...");
+
+    try {
+      const matched = await cameraRef.current.capturePhoto();
+      console.log(matched)
+      if (matched) {
+        router.push({
+          pathname: "/(auth)/take-a-photo",
+          params: {
+            kyc_id: +matched
+          }
+        });
+      } else {
+        setScanStatus("Matching Failed.");
+      }
+    } finally {
+      setIsScanning(false);
     }
-    router.push("/(auth)/take-a-photo")
-  };
+  }, [isScanning]);
 
   const handleClose = () => {
     reset();
@@ -72,8 +78,8 @@ export default function UploadID() {
   };
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -81,8 +87,12 @@ export default function UploadID() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Valid ID</Text>}
-      customRightAction={
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">
+          Resident Records
+        </Text>
+      }
+      rightAction={
         <ConfirmationModal
           title="Exit Registration"
           description="Are you sure you want to exit? Your progress will be lost."
@@ -94,64 +104,59 @@ export default function UploadID() {
     >
       <View className="flex-1 justify-between gap-6 px-5">
         <View className="flex-1 gap-6">
-          
-          {/* ID Type Selection */}
-          <View className="gap-3">
-            <View className="flex-row items-center gap-2">
-              <View className="w-full mb-4 pb-2 border-b border-gray-200">
-                <Text className="text-lg font-PoppinsSemiBold text-gray-800">Upload ID</Text>
-                <Text className="text-sm text-gray-600 font-PoppinsRegular">It is required to upload a valid ID.</Text>
-              </View>
-            </View>
-            
-            <FormSelect 
-              control={control}
-              name="uploadIdSchema.selected"
-              options={idOptions}
-              placeholder="Choose your ID type..."
-              label="Select ID Type"
-            />
-          </View>
+            {/* Upload ID Section */}
+            <View className="flex-1 relative">
+              <CaptureAndVerifyID ref={cameraRef} />
+              {/* Status Overlay */}
+              {(isScanning || scanStatus) && (
+                <View className="absolute bottom-32 left-0 right-0 items-center px-6">
+                  <View className="bg-black bg-opacity-75 rounded-2xl px-6 py-4 max-w-sm">
+                    {isScanning && (
+                      <View className="flex-row items-center justify-center mb-2">
+                        <ActivityIndicator size="small" color="white" />
+                        <Text className="text-white ml-2 font-medium">
+                          Scanning...
+                        </Text>
+                      </View>
+                    )}
 
-          {/* Upload ID Section */}
-          <View className="gap-3">
-            <View className="flex-row items-center gap-2">
-              <Text className="text-lg font-semibold text-gray-900">Upload ID Photo</Text>
+                    <Text className="text-white text-center text-sm">
+                      {scanStatus}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
-            
-            <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <MediaPicker 
-                selectedImage={selectedImage}
-                setSelectedImage={setSelectedImage}
-              />
-              
-              {/* Upload Tips */}
-              <View className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <Text className="text-sm font-medium text-blue-900 mb-1">
-                  📸 Photo Tips:
-                </Text>
-                <Text className="text-sm text-blue-800">
-                  • Ensure all text is clearly readable{'\n'}
-                  • Avoid glare and shadows{'\n'}
-                  • Include all four corners of the ID
-                </Text>
-              </View>
+            <View className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <Text className="text-sm font-medium text-blue-900 mb-1">
+                📸 Scanning Tips:
+              </Text>
+              <Text className="text-sm text-blue-800">
+                • Ensure all text is clearly readable{"\n"}• Avoid glare and
+                shadows{"\n"}• Include all four corners of the ID
+              </Text>
             </View>
-          </View>
-        </View>
 
-        {/* Fixed Bottom Button */}
-        <View className="pt-4 pb-8 bg-white border-t border-gray-100">
-          <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-            <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue to Photo</Text>
-          </Button>
-
-          {/* Helper Text */}
-          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
-            All information will be kept secure and confidential
-          </Text>
+            {/* Bottom Controls */}
+            <View className="flex-row justify-center items-center space-x-4">
+              {/* Manual Capture Button */}
+              <TouchableOpacity
+                onPress={attemptIDCapture}
+                className={`flex-1 max-w-xs py-4 rounded-2xl bg-blue-600 active:bg-blue-700}`}
+              >
+                <View className="flex-row items-center justify-center">
+                  {isScanning ? (
+                    <ActivityIndicator size="small" color="gray" />
+                  ) : (
+                    <Text className="text-white font-semibold text-lg">
+                      Capture ID
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            </View>
         </View>
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }

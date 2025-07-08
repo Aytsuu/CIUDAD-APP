@@ -9,6 +9,7 @@ from .views.address_views import *
 from .views.request_registration_views import *
 from .views.business_views import *
 from .views.analytics_views import *
+from .views.kyc_views import *
 
 urlpatterns = [
     # Sitio Urls
@@ -68,5 +69,8 @@ urlpatterns = [
     # Analytics Urls,
     path("card/analytics/data/", CardAnalyticsView.as_view(), name='card-analytics'),
     path("sidebar/analytics/data/", SidebarAnalyticsView.as_view(), name="sidebar-analytics"),
-
+    
+    # KYC
+    path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
+    path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
 ]

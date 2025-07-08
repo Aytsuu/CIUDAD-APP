@@ -66,6 +66,16 @@ export const postFaceData = async (data: Record<string, any>) => {
   }
 }
 
+export const postDocumentData = async (data: Record<string, any>) => {
+  try {
+    const res = await api.post("profiling/kyc/match-document/", data);
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
+
 export const addAccount = async (accountInfo: Record<string, string>, residentId: string) => {
   try {
     const response = await api.post('authentication/signup/', {
