@@ -12,9 +12,17 @@ import { CircleAlert, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
-import { useAddFamilyHealth, useAddFamilyCompositionHealth } from "../queries/profilingAddQueries";
+import { 
+  useAddFamily, 
+  useAddFamilyComposition,
+} from "../../../profiling/queries/profilingAddQueries";
+import {
+  useAddFamilyHealth,
+  useAddFamilyCompositionHealth 
+} from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { useAddRespondentHealth, useAddPerAdditionalDetailsHealth, useAddMotherHealthInfo } from "../queries/profilingAddQueries";
 
 export default function DependentsInfoLayout({
   form,
@@ -23,12 +31,13 @@ export default function DependentsInfoLayout({
   dependentsList,
   setDependentsList,
   back,
+  defaultValues,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
   selectedParents: string[];
   dependentsList: DependentRecord[];
-  setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
+  setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>;
   defaultValues: Record<string, any>;
   back: () => void;
 }) {
@@ -36,8 +45,19 @@ export default function DependentsInfoLayout({
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const { user } = useAuth();
   const { safeNavigate } = useSafeNavigate(); 
+  
+  // Main database hooks
+  const { mutateAsync: addFamily } = useAddFamily();
+  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
+  
+  // Health database hooks
   const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
   const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
+  // Add hooks for respondent and health details
+  const { mutateAsync: addRespondent } = useAddRespondentHealth();
+  const { mutateAsync: addPerAdditionalDetails } = useAddPerAdditionalDetailsHealth();
+  const { mutateAsync: addMotherHealthInfo } = useAddMotherHealthInfo();
+
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   React.useEffect(() => {
@@ -117,8 +137,7 @@ export default function DependentsInfoLayout({
 
     if(dependentsList.length === 0){
       setIsSubmitting(false);
-      toast('Family Registration', {
-        description: "Must have atleast one dependent.",
+      toast('Must have atleast one dependent.', {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
         style: {
           border: '1px solid rgb(225, 193, 193)',
@@ -130,49 +149,194 @@ export default function DependentsInfoLayout({
       return;
     }
 
-    // Get form values
-    const demographicInfo = form.getValues().demographicInfo;
-    const dependentsInfo = form.getValues().dependentsInfo.list;
+    try {
+      // Get form values
+      const demographicInfo = form.getValues().demographicInfo;
+      const dependentsInfo = form.getValues().dependentsInfo.list;
+      const respondentInfo = form.getValues().respondentInfo;
+      const healthDetails = respondentInfo?.perAddDetails || {};
 
-    // Store information to the database
-    const family = await addFamilyHealth({
-      demographicInfo: demographicInfo, 
-      staffId: user?.staff?.staff_id || ""
-    });
+      // Debugging output
+      console.log('Respondent Info:', respondentInfo);
+      console.log('Health Details:', healthDetails);
 
-    let bulk_composition: {
-      fam: string, 
-      fc_role: string, 
-      rp: string}[] = [];
+      // Store information to the main database
+      const family = await addFamily({
+        demographicInfo: demographicInfo, 
+        staffId: user?.staff?.staff_id || ""
+      });
 
-    selectedParents.map((parentId, index) => {
-      if(!parentId) return;
-      bulk_composition = [
-        ...bulk_composition,
-        {
+      // Store information to the health database
+      const familyHealth = await addFamilyHealth({
+        demographicInfo: demographicInfo, 
+        staffId: user?.staff?.staff_id || ""
+      });
+
+      // --- Respondent and health details submission ---
+      try {
+        // 1. Respondent
+        if (respondentInfo?.id) {
+          const residentProfileId = respondentInfo.id.split(' ')[0];
+          if (residentProfileId) {
+            await addRespondent({ rp: residentProfileId });
+            await addPerAdditionalDetails({
+              rp: residentProfileId,
+              hrd_bloodType: healthDetails.bloodType,
+              hrd_philhealth_id: healthDetails.philHealthId,
+              hrd_covid_vax_status: healthDetails.covidVaxStatus,
+            });
+          } else {
+            console.warn('Invalid respondentInfo.id, skipping respondent/health insert.');
+          }
+        } else {
+          console.warn('No respondentInfo.id found, skipping respondent/health insert.');
+        }
+
+        // 2. Parents (Mother, Father, Guardian)
+        for (let index = 0; index < selectedParents.length; index++) {
+          const parentId = selectedParents[index];
+          if (!parentId) continue;
+          let parentRoleField: "motherInfo" | "fatherInfo" | "guardInfo" | "" = "";
+          if (PARENT_ROLES[index] === 'Mother') parentRoleField = 'motherInfo';
+          else if (PARENT_ROLES[index] === 'Father') parentRoleField = 'fatherInfo';
+          else if (PARENT_ROLES[index] === 'Guardian') parentRoleField = 'guardInfo';
+          if (!parentRoleField) continue;
+          const parentInfo = form.getValues(parentRoleField as "motherInfo" | "fatherInfo" | "guardInfo");
+          const parentHealthDetails = (typeof parentInfo === 'object' && parentInfo?.perAddDetails) ? parentInfo.perAddDetails : {};
+          // Insert like respondent: always insert if parentId exists
+          await addPerAdditionalDetails({
+            rp: parentId,
+            hrd_bloodType: parentHealthDetails.bloodType,
+            hrd_philhealth_id: parentHealthDetails.philHealthId,
+            hrd_covid_vax_status: parentHealthDetails.covidVaxStatus,
+          });
+        }
+      } catch (err) {
+        console.error('Error inserting respondent or health details:', err);
+      }
+
+      let bulk_composition: {
+        fam: string, 
+        fc_role: string, 
+        rp: string}[] = [];
+
+      let bulk_composition_health: {
+        fam: string, 
+        fc_role: string, 
+        rp: string}[] = [];
+
+      // Prepare composition data for both databases
+      selectedParents.forEach((parentId, index) => {
+        if(!parentId) return;
+        
+        const compositionData = {
           fam: family.fam_id,
           fc_role: PARENT_ROLES[index],
           rp: parentId
-        }
-      ]
-    });
+        };
+        const compositionHealthData = {
+          fam: familyHealth.fam_id,
+          fc_role: PARENT_ROLES[index],
+          rp: parentId
+        };
+        
+        bulk_composition.push(compositionData);
+        bulk_composition_health.push(compositionHealthData);
+      });
 
-    dependentsInfo.map((dependent) => {
-      bulk_composition = [
-        ...bulk_composition,
-        {
+      dependentsInfo.forEach((dependent) => {
+        const dependentId = dependent.id?.split(" ")[0] as string;
+        
+        const compositionData = {
           fam: family.fam_id,
           fc_role: 'Dependent',
-          rp: dependent.id?.split(" ")[0] as string
-        }
-      ]
-    })
+          rp: dependentId
+        };
+        const compositionHealthData = {
+          fam: familyHealth.fam_id,
+          fc_role: 'Dependent',
+          rp: dependentId
+        };
+        
+        bulk_composition.push(compositionData);
+        bulk_composition_health.push(compositionHealthData);
+      });
 
-    addFamilyCompositionHealth(bulk_composition,{
-      onSuccess: () => {
-        safeNavigate.back();
+      // Insert into main database
+      await addFamilyComposition(bulk_composition);
+      
+      // Insert into health database
+      await addFamilyCompositionHealth(bulk_composition_health);
+
+      // --- Insert Mother's Health Info (if present) ---
+      const motherInfo = form.getValues("motherInfo");
+      const motherHealthInfo = motherInfo?.motherHealthInfo || {};
+      const motherId = motherInfo?.id?.split(" ")[0];
+      if (motherId && familyHealth?.fam_id && Object.keys(motherHealthInfo).length > 0) {
+        // Map to backend field names and types
+        const motherPayload = {
+          rp: motherId,
+          fam: familyHealth.fam_id, // use fam instead of family_composition
+          mhi_healthRisk_class: motherHealthInfo.healthRiskClass || "",
+          mhi_immun_status: motherHealthInfo.immunizationStatus || "",
+          mhi_famPlan_method: Array.isArray(motherHealthInfo.method) ? motherHealthInfo.method.join(",") : (motherHealthInfo.method || ""),
+          mhi_famPlan_source: motherHealthInfo.source || "",
+        };
+        console.log('Mother Health Info Payload:', motherPayload);
+        try {
+          await addMotherHealthInfo(motherPayload);
+        } catch (err) {
+          // Robust error trapping for any error shape
+          let errorMsg = 'Unknown error';
+          if (err && typeof err === 'object') {
+            if ('response' in err && err.response) {
+              if (typeof err.response === 'object' && 'data' in err.response) {
+                errorMsg = JSON.stringify(err.response.data);
+              } else {
+                errorMsg = JSON.stringify(err.response);
+              }
+            } else if ('data' in err) {
+              errorMsg = JSON.stringify(err.data);
+            } else if ('message' in err) {
+              errorMsg = (err as any).message;
+            } else {
+              errorMsg = JSON.stringify(err);
+            }
+          } else if (typeof err === 'string') {
+            errorMsg = err;
+          }
+          console.error('Mother Health Info API Error:', errorMsg, err);
+          toast('Mother Health Info Error', {
+            description: errorMsg,
+            icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+            style: {
+              border: '1px solid rgb(225, 193, 193)',
+              padding: '16px',
+              color: '#b91c1c',
+              background: '#fef2f2',
+            },
+          });
+          throw err; // rethrow to trigger the main error handler
+        }
       }
-    });
+
+      // Success - navigate back
+      safeNavigate.back();
+      
+    } catch (error) {
+      console.error('Family registration failed:', error);
+      setIsSubmitting(false);
+      toast('Family Registration Failed', {
+        description: "Registration failed. Please try again.",
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
+      });
+    }
   }
 
   return (

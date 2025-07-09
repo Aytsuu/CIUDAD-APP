@@ -17,7 +17,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
   selectedParents: string[];
   dependentsList: DependentRecord[];
   onSelect: React.Dispatch<React.SetStateAction<string>>
-  prefix: 'motherInfo' | 'fatherInfo' | 'guardInfo';
+  prefix: 'motherInfo' | 'fatherInfo' | 'guardInfo' | 'respondentInfo';
   title: string;
 }) {
 
@@ -108,7 +108,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
             }
           />
 
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-4 gap-4">
             <FormInput control={form.control} name={`${prefix}.lastName`} label="Last Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly />

@@ -10,6 +10,9 @@ import {
   addPersonalAddressHealth,
   addResidentAndPersonalHealth,
   addResidentProfileHealth,
+  addRespondentHealth,
+  addPerAdditionalDetailsHealth,
+  addMotherHealthInfo
 } from "../restful-api/profiingPostAPI";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
@@ -119,6 +122,45 @@ export const useAddHouseholdHealth = () => {
       queryClient.invalidateQueries({ queryKey: ["householdsHealth"] });
 
       toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+    },
+  });
+};
+
+export const useAddRespondentHealth = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => addRespondentHealth(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["respondentsHealth"] });
+      toast("Respondent added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+    },
+  });
+};
+
+export const useAddPerAdditionalDetailsHealth = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => addPerAdditionalDetailsHealth(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["perAdditionalDetailsHealth"] });
+      toast("Health details added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+    },
+  });
+};
+
+export const useAddMotherHealthInfo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => addMotherHealthInfo(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["motherHealthInfo"] });
+      toast("Mother's health info added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
       });
     },

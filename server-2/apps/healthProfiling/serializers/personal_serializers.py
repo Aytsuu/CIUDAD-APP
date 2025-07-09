@@ -99,3 +99,8 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
+
+class HealthRelatedDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthRelatedDetails
+        fields = '__all__'

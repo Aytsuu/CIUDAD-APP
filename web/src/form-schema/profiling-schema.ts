@@ -106,6 +106,7 @@ export const familyFormSchema = z.object({
     per_mname: z.string().optional(),
     per_sex: z.string().optional(),
   }),
+  respondentInfo: parentInfoSchema,
   motherInfo: parentInfoSchema.extend({
       motherHealthInfo: motherHealthInfo.optional(),
   }),

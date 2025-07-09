@@ -102,17 +102,21 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
     per_addresses = serializers.SerializerMethodField()
+    per_additional_details = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
         fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_addresses']
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_addresses', 'per_additional_details']
         read_only_fields = fields
     
     def get_per_addresses(self, obj):
         per_addresses = PersonalAddress.objects.filter(per=obj.per)
         addresses = [pa.add for pa in per_addresses.select_related('add')]
         return AddressBaseSerializer(addresses, many=True).data
+    def get_per_additional_details(self, obj):
+        details = HealthRelatedDetails.objects.filter(rp=obj).first()
+        return HealthRelatedDetailsSerializer(details).data if details else None
 
 class ResidentProfileListSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()

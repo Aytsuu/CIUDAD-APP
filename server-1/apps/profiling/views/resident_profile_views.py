@@ -52,7 +52,7 @@ class ResidentProfileListExcludeFamView(generics.ListAPIView):
     
     def get_queryset(self):
         excluded_fam_id = self.kwargs.get('fam_id', None)
-        is_staff = self.request.query_params.get('is_staff', False).lower() == "true"
+        is_staff = self.request.query_params.get('is_staff', "False").lower() == "true"
         if excluded_fam_id:
             return ResidentProfile.objects.filter(~Q(family_compositions__fam_id=excluded_fam_id))
         

@@ -123,10 +123,35 @@ export const addHouseholdHealth = async (householdInfo: Record<string, string>, 
     }
 };
 
+// POST request for respondents table
+export const addRespondentHealth = async (data: Record<string, any>) => {
+  try {
+    const res = await api2.post("health-profiling/respondents/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
 
+// POST request for per_additional_details table
+export const addPerAdditionalDetailsHealth = async (data: Record<string, any>) => {
+  try {
+    const res = await api2.post("health-profiling/per_additional_details/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
 
-
-
-
+// POST request for mother health info table
+export const addMotherHealthInfo = async (data: Record<string, any>) => {
+  try {
+    // send fam instead of family_composition
+    const res = await api2.post("health-profiling/mother-health-info/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
 
 // ----------------------------------------------------------------------------------------------------------------------------

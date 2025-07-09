@@ -1,7 +1,7 @@
 import { api2 } from "@/api/api";
 
 
-export const updateProfile = async (
+export const updateProfileHealth = async (
   perId: string,
   data: Record<string, string>
 ) => {
@@ -16,7 +16,7 @@ export const updateProfile = async (
 };
 
 
-export const updateFamily = async (
+export const updateFamilyHealth = async (
   data: Record<string, any>,
   familyId: string
 ) => {
@@ -28,7 +28,7 @@ export const updateFamily = async (
     }
 }
 
-export const updateFamilyRole = async (familyId: string, residentId: string, fc_role: string | null) => {
+export const updateFamilyRoleHealth = async (familyId: string, residentId: string, fc_role: string | null) => {
   try {
     const res = await api2.put(`health-profiling/family/role/update/${familyId}/${residentId}/`, {
       fc_role
@@ -39,7 +39,7 @@ export const updateFamilyRole = async (familyId: string, residentId: string, fc_
   }
 }
 
-export const updateHousehold = async (householdInfo: Record<string, any>) => {
+export const updateHouseholdHealth = async (householdInfo: Record<string, any>) => {
   try {
     const res = await api2.put(`health-profiling/household/update/${householdInfo.hh_id}/`, {
       rp: householdInfo.householdHead.split(" ")[0],

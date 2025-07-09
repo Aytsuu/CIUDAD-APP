@@ -79,13 +79,13 @@ class ResidentProfile(models.Model):
     
 class RespondentsInfo(models.Model):
     ri_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='respondents_info')
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='respondents_info')
  
     class Meta:
         db_table = 'respondents_info'
 
     def __str__(self):
-        return f"{self.per} (Respondent ID: {self.ri_id})"
+        return f"{self.rp} (Respondent ID: {self.ri_id})"
 
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
@@ -141,19 +141,19 @@ class RequestRegistration(models.Model):
 
 class HealthRelatedDetails(models.Model):
     hrd_id = models.BigAutoField(primary_key=True)
-    hrd_blood_type = models.CharField(max_length=5)
-    hrd_philhealth_id = models.CharField(max_length=50)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    hrd_bloodType = models.CharField(max_length=5, null=True, blank=True)
+    hrd_philhealth_id = models.CharField(max_length=50, null=True, blank=True)
+    hrd_covid_vax_status = models.CharField(max_length=50, null=True, blank=True)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, blank=True)
     
-
     class Meta:
-        db_table = 'health_related_details'
+        db_table = 'per_additional_details'
 
 class Dependents_Over_Five(models.Model):
     dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
     # dep = models.ForeignKey(Dependent, on_delete=models.CASCADE)
     fc = models.ForeignKey(FamilyComposition, on_delete=models.CASCADE)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'dep_over_five'
@@ -241,6 +241,22 @@ class RequestFile(models.Model):
  
     class Meta:
         db_table = 'request_file'
+
+class MotherHealthInfo(models.Model):
+    mhi_id = models.BigAutoField(primary_key=True)
+    mhi_healthRisk_class = models.CharField(max_length=50, null=True, blank=True)
+    mhi_immun_status = models.CharField(max_length=50, null=True, blank=True)
+    mhi_famPlan_method = models.CharField(max_length=100, null=True, blank=True)
+    mhi_famPlan_source = models.CharField(max_length=100, null=True, blank=True)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='mother_health_infos')
+    fam = models.ForeignKey('Family', on_delete=models.CASCADE, related_name='mother_health_infos', null=True, blank=True)
+
+    # Add other fields as needed
+
+    class Meta:
+        db_table = 'mother_health_info'
+        unique_together = ('rp', 'fam')
+        
 
 
 

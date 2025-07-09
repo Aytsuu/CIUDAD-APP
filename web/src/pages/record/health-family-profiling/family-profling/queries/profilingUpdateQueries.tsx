@@ -1,54 +1,54 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateFamily, updateFamilyRole, updateHousehold, updateProfile } from "../restful-api/profilingPutAPI";
+import { updateFamilyHealth, updateFamilyRoleHealth, updateHouseholdHealth, updateProfileHealth } from "../restful-api/profilingPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 
-export const useUpdateHousehold = () => {
+export const useUpdateHouseholdHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (householdInfo: Record<string, any>) => updateHousehold(householdInfo), 
+    mutationFn: (householdInfo: Record<string, any>) => updateHouseholdHealth(householdInfo), 
     onSuccess: () => {
       toast("Record updated successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
       });
 
-      queryClient.invalidateQueries({queryKey: ['households']});
+      queryClient.invalidateQueries({queryKey: ['householdsHealth']});
     }
   })
 }
 
 
-export const useUpdateFamilyRole = () => {
+export const useUpdateFamilyRoleHealth = () => {
   return useMutation({
     mutationFn: ({ familyId, residentId, fc_role } : {
       familyId: string;
       residentId: string;
       fc_role: string | null;
-    }) => updateFamilyRole(familyId, residentId, fc_role)
+    }) => updateFamilyRoleHealth(familyId, residentId, fc_role)
   })
 }
-export const useUpdateProfile = () => {
+export const useUpdateProfileHealth = () => {
   return useMutation({
     mutationFn: ({ personalId, values} : { 
       personalId: string;
       values: Record<string, any>;
-    }) => updateProfile(personalId, values),
+    }) => updateProfileHealth(personalId, values),
   });
 };
 
-export const useUpdateFamily = () => {
+export const useUpdateFamilyHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({data, familyId} : {
       data: Record<string, any>;
       familyId: string;
       oldHouseholdId?: string;
-    }) => updateFamily(data, familyId),
+    }) => updateFamilyHealth(data, familyId),
     onSuccess: (newData, variables) => {
       const { data, familyId, oldHouseholdId} = variables;
 
       // Update families list
-      queryClient.setQueryData(['families'], (old: any[] = []) => (
+      queryClient.setQueryData(['familiesHealth'], (old: any[] = []) => (
         old.map(family => {
           if(family.fam_id === familyId) {
             return {
@@ -65,7 +65,7 @@ export const useUpdateFamily = () => {
         })
       ))
 
-      queryClient.setQueryData(['households'], (old: any[] = []) => (
+      queryClient.setQueryData(['householdsHealth'], (old: any[] = []) => (
         old.map(house => {
           // Remove the family from previous household
           if(house.hh_id === oldHouseholdId) {
@@ -91,8 +91,8 @@ export const useUpdateFamily = () => {
         })
       ))
 
-      queryClient.invalidateQueries({queryKey: ['households']});
-      queryClient.invalidateQueries({queryKey: ['families']});
+      queryClient.invalidateQueries({queryKey: ['householdsHealth']});
+      queryClient.invalidateQueries({queryKey: ['familiesHealth']});
     }
   })
 }

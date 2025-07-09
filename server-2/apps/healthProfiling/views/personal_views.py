@@ -14,3 +14,7 @@ class PersonalUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PersonalUpdateSerializer
     queryset = Personal.objects.all()
     lookup_field = 'per_id'
+
+class HealthRelatedDetailsCreateView(generics.CreateAPIView):
+    queryset = HealthRelatedDetails.objects.all()
+    serializer_class = HealthRelatedDetailsSerializer

@@ -31,6 +31,9 @@ export default function ParentsFormLayout({
   onSubmit: () => void;
   back: () => void;
 }) {
+  // Add state for respondent selection
+  const [selectedRespondentId, setSelectedRespondentId] = React.useState("");
+
   const submit = React.useCallback(() => {
     const isValid = Object.values(selectedParents).some(
       (value) => value !== ""
@@ -55,14 +58,14 @@ export default function ParentsFormLayout({
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
       <div className="space-y-6">
-        {/* Guardian's Information */}
+        {/* Respondent's Information */}
         <ParentsForm
           residents={residents}
           form={form}
           dependentsList={dependentsList}
           selectedParents={[selectedParents.mother, selectedParents.father]}
-          onSelect={setSelectedGuardianId}
-          prefix="guardInfo"
+          onSelect={setSelectedRespondentId}
+          prefix="respondentInfo"
           title="Respondent's Information"
         />
 

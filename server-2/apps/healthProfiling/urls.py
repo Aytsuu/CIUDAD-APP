@@ -55,6 +55,11 @@ urlpatterns = [
     path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListExcludeFamView.as_view(), name="resident-list-with exclusions"),
     path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
 
+    path('respondents/create/', RespondentsInfoCreateView.as_view(), name='respondents-create'),
+    path('per_additional_details/create/', HealthRelatedDetailsCreateView.as_view(), name='health-details-create'),
+    path('mother-health-info/', MotherHealthInfoListView.as_view(), name='mother-health-info-list'),
+    path('mother-health-info/<int:pk>/', MotherHealthInfoView.as_view(), name='mother-health-info-detail'),
+
     # Request Urls
     # path("request/", RequestRegistrationView.as_view(), name="request-details"),
     # path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('healthProfiling', '0003_delete_patient'),
+        # ('healthProfiling', '0003_delete_patient'),
         ('patientrecords', '0016_patient_per_id'),
     ]
 
