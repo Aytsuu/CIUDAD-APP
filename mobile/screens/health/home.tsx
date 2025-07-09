@@ -15,9 +15,9 @@ const Homepage = () => {
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
     { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },
     { name: 'Medicine Requests', route: '/admin-medicinerequest/admin-medicinerequest', icon: Pill },
-    { name: 'Patients Records', route: '/patients-records', icon: Users },
+    { name: 'Patients Records', route: '/admin/patientsrecord/patientsrecord', icon: Users },
     { name: 'Schedules', route: 'appointments/schedules', icon: Calendar },
-    { name: 'Inventory', route: 'inventory/medicine', icon: Archive },
+    { name: 'Inventory', route: '/inventory/medicine', icon: Archive },
   ];
 
   return (

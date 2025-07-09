@@ -1,6 +1,6 @@
-import MedicineInventory from "@/screens/health/inventory/medicines"
+import InventoryAdmin from "@/screens/health/inventory/medicine"
 
 
 export default () => {
-    return <MedicineInventory/>
+    return <InventoryAdmin/>
 }

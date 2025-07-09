@@ -93,7 +93,7 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({ visible, appointment,
   if (!appointment) return null
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
+    <Modal visible={visible}  transparent={true} onRequestClose={onClose}>
       <View className="flex-1 bg-black/50 justify-end">
         <View className="bg-white rounded-t-3xl p-6 max-h-[80%]">
           {/* Header */}
@@ -144,7 +144,7 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({ visible, appointment,
           </View>
 
           {/* Action Buttons */}
-          <View className="flex-row space-x-3">
+          <View className="flex-row gap-4">
             <TouchableOpacity onPress={onClose} className="flex-1 bg-[#263D67]/10 rounded-xl py-4">
               <Text className="text-[#263D67] text-center font-PoppinsMedium">Cancel</Text>
             </TouchableOpacity>

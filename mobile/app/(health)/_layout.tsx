@@ -3,9 +3,10 @@ import { Stack } from "expo-router";
 export default () => {
     return (
         <Stack>
+            <Stack.Screen name="admin/patientsrecord/patientsrecord" options={{ headerShown: false }} />
             <Stack.Screen name="medconsultation/med-landing" options={{ headerShown: false }} />
-            {/* <Stack.Screen name="medconsultation/consultationpage" options={{ headerShown: false }} /> */}
-            {/* <Stack.Screen name="medconsultation/setschedule" options={{ headerShown: false}} /> */}
+            <Stack.Screen name="medconsultation/consultationpage" options={{ headerShown: false }} />
+            <Stack.Screen name="medconsultation/setschedule" options={{ headerShown: false}} />
             <Stack.Screen name="maternal/maternal-landing" options={{ headerShown: false }} /> 
             <Stack.Screen name="appointments/schedules" options={{ headerShown: false }} />
             <Stack.Screen name="my-records/all-records" options={{ headerShown: false }} />

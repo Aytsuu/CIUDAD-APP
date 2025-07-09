@@ -117,9 +117,9 @@ const SetSchedule = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       
       {/* Header */}
-      <View className='bg-blue-600 px-6 pt-12 pb-6'>
-        <Text className='text-2xl font-bold text-white'>Medical Consultation</Text>
-        <Text className='text-blue-100 mt-1'>Schedule your appointment with our health professionals</Text>
+      <View className='bg-white px-6 mt-10 pt-12 pb-6'>
+        <Text className='text-2xl font-bold text-blue-900'>Medical Consultation</Text>
+        <Text className='text-blue-900 mt-1'>Schedule your appointment with our health professionals</Text>
       </View>
 
       <ScrollView className='flex-1 px-6' showsVerticalScrollIndicator={false}>

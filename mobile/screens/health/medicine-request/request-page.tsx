@@ -16,7 +16,6 @@ export type MedicineDisplay = {
   minv_dsg_unit: string; // Dosage unit
   description?: string; // Optional: from backend
   minv_qty_avail: number; // Available stock
-  // You might also have inv_id, med_id, etc., but they are not directly displayed here
 };
 
 

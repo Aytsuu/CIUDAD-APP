@@ -24,20 +24,22 @@ export default function InventoryAdmin() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
   const [inventoryData, setInventoryData] = React.useState<InventoryItem[]>([])
-  const [isError, setIsError] = React.useState(true)
+  const [hasError, setHasError] = React.useState(false) // Changed to boolean
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null) // To store specific error message
   const [showFilters, setShowFilters] = React.useState(false)
   const [page, setPage] = React.useState(1)
   const itemsPerPage = 10
 
-  const fetchInventoryData = async () => {
+  const fetchInventoryData = React.useCallback(async () => {
     setIsLoading(true);
-    setIsError(null);
+    setHasError(false); // Reset error state
+    setErrorMessage(null); // Clear any previous error messages
 
     try {
       const endpoints = [
-        { name: 'medicines', url: '/inventory/medicineinventorylist/' },
-        { name: 'commodities', url: '/inventory/commodityinventorylist/' },
-        { name: 'firstaid', url: '/inventory/firstaidinventorylist/' },
+        { name: 'medicines', url: '/inventory/medicinelist/' },
+        { name: 'commodities', url: '/inventory/commoditylist/' },
+        { name: 'firstaid', url: '/inventory/firstaidlist/' },
         { name: 'vaccines', url: '/inventory/vaccine_stocks/' },
         { name: 'immunization', url: '/inventory/immunization_stock/' },
       ];
@@ -48,8 +50,9 @@ export default function InventoryAdmin() {
         try {
           const response = await api2.get(endpoint.url);
           results.push({ name: endpoint.name, data: response.data, success: true });
-        } catch (endpointError) {
-          results.push({ name: endpoint.name, data: [], success: false, error: endpointError });
+        } catch (endpointError: any) {
+          console.error(`Error fetching ${endpoint.name}:`, endpointError);
+          results.push({ name: endpoint.name, data: [], success: false, error: endpointError.message || 'Unknown error' });
         }
       }
 
@@ -141,23 +144,35 @@ export default function InventoryAdmin() {
       }
 
       setInventoryData(allInventory);
-    } catch (error) {
-      setIsError(true);
+
+      const failedEndpoints = results.filter(r => !r.success);
+      if (failedEndpoints.length > 0) {
+        setHasError(true);
+        setErrorMessage(`Failed to load data for: ${failedEndpoints.map(f => f.name).join(', ')}`);
+      } else {
+        setHasError(false);
+        setErrorMessage(null);
+      }
+
+    } catch (error: any) {
+      console.error("Overall fetch inventory error:", error);
+      setHasError(true);
+      setErrorMessage(error.message || "Failed to load inventory data. Please try again later.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     await fetchInventoryData();
     setRefreshing(false);
     setPage(1);
-  };
+  }, [fetchInventoryData]);
 
   React.useEffect(() => {
     fetchInventoryData();
-  }, []);
+  }, [fetchInventoryData]);
 
   const categories = [
     { id: 'all', name: 'All' },
@@ -175,11 +190,11 @@ export default function InventoryAdmin() {
     { id: 'in_stock', name: 'In Stock' },
   ];
 
-  const getStockStatus = (stock: number, minStock: number) => {
+  const getStockStatus = React.useCallback((stock: number, minStock: number) => {
     if (stock <= 0) return { text: 'Out of Stock', color: '#EF4444', status: 'out_of_stock' };
     if (stock <= minStock) return { text: 'Low Stock', color: '#F59E0B', status: 'low_stock' };
     return { text: 'In Stock', color: '#10B981', status: 'in_stock' };
-  };
+  }, []);
 
   const filteredInventory = React.useMemo(() => {
     return inventoryData
@@ -194,12 +209,12 @@ export default function InventoryAdmin() {
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.batchNumber.toLowerCase().includes(searchQuery.toLowerCase())
       );
-  }, [selectedCategory, selectedStockFilter, searchQuery, inventoryData]);
+  }, [selectedCategory, selectedStockFilter, searchQuery, inventoryData, getStockStatus]);
 
   const paginatedInventory = React.useMemo(() => {
     const startIndex = (page - 1) * itemsPerPage;
     return filteredInventory.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredInventory, page]);
+  }, [filteredInventory, page, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
 
@@ -211,7 +226,7 @@ export default function InventoryAdmin() {
       inStock: inventoryData.filter(item => item.stock > item.minStock).length,
       showingItems: `${Math.min(page * itemsPerPage, filteredInventory.length)} of ${filteredInventory.length}`
     }
-  }, [inventoryData, page, filteredInventory]);
+  }, [inventoryData, page, filteredInventory.length, itemsPerPage]);
 
   if (isLoading) {
     return (
@@ -224,14 +239,14 @@ export default function InventoryAdmin() {
     )
   }
 
-  if (isError) {
+  if (hasError) { // Changed from isError to hasError
     return (
       <View className="flex-1 justify-center items-center p-4 bg-gradient-to-br from-red-50 to-pink-100">
         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
           <AlertTriangle size={48} color="#EF4444" />
           <Text className="text-red-500 text-xl font-bold mb-2 mt-4">Error</Text>
           <Text className="text-gray-700 text-center leading-6">
-            {isError || "Failed to load inventory data. Please try again later."}
+            {errorMessage || "Failed to load inventory data. Please try again later."}
           </Text>
           <TouchableOpacity onPress={fetchInventoryData} className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
             <Text className="text-white font-semibold">Retry</Text>
@@ -259,7 +274,7 @@ export default function InventoryAdmin() {
         {/* Search and Filter Bar */}
         <View className="px-4 pb-4">
           <View className="flex-row items-center space-x-3">
-            <View className="flex-1 mt-4 flex-row items-center p-1  border border-gray-200 bg-gray-100 rounded-2xl  shadow-sm">
+            <View className="flex-1 mt-4 flex-row items-center p-1 border border-gray-200 bg-gray-100 rounded-2xl shadow-sm">
               <Search size={20} color="#6B7280" />
               <TextInput
                 className="flex-1 ml-3 text-gray-800 font-medium"
@@ -390,7 +405,7 @@ export default function InventoryAdmin() {
           ) : (
             <FlatList
               data={paginatedInventory}
-              keyExtractor={(item) => `item-${item.category}-${item.id}`}
+              keyExtractor={(item) => `${item.category}-${item.id}`}
               scrollEnabled={false}
               renderItem={({ item }) => {
                 const stockStatus = getStockStatus(item.stock, item.minStock);
