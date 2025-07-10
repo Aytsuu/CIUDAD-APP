@@ -64,21 +64,6 @@ class RequestDeleteView(generics.DestroyAPIView):
   queryset = RequestRegistration.objects.all()
   lookup_field = 'req_id'
 
-  def delete(self, request, *args, **kwargs):
-    reason = request.query_params.get('reason', None)
-    instance = self.get_object()
-    recipient_email = instance.acc.email
-    if recipient_email:
-      context = {
-        "reason": reason,
-      }
-
-      send_email("Request Result", context, recipient_email, 'request_rejection.html')
-      self.perform_destroy(instance)
-      
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class RequestCountView(APIView):
   def get(self, request, *args, **kwargs):
     return Response(RequestRegistration.objects.count())
