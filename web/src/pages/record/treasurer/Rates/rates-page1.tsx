@@ -17,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 
-function RatesPage1({ onNext2 }: { onNext2?: () => void }) {
+function RatesPage1() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
@@ -172,7 +172,7 @@ function RatesPage1({ onNext2 }: { onNext2?: () => void }) {
 
     return (
         <div className='bg-snow w-full h-full'>
-            <div className='bg-white p-4 drop-shadow rounded-lg'>
+            <div className='bg-white drop-shadow rounded-lg'>
                 <div className='p-7 flex flex-col justify-end gap-7'>
                     <div className="flex flex-row items-center justify-between flex-wrap gap-4">
                         <h2 className='font-bold'>
@@ -306,12 +306,6 @@ function RatesPage1({ onNext2 }: { onNext2?: () => void }) {
                         </TabsContent>
                     </Tabs>
                 </div>
-            </div>
-
-            <div className="flex justify-end mt-5">
-                <Button type="button" onClick={onNext2} className="w-[100px]">
-                    Next
-                </Button>
             </div>
         </div>
     )
