@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -17,6 +18,16 @@ type Page2Props = {
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
   historicalBFdates: string[]
+  patientHistoricalDisabilities: {
+    id: number
+    pd_id: number
+    status: string
+    disability_details: {
+      disability_id: number
+      disability_name: string
+      created_at: string
+    }
+  }[] // Type for historical disabilities
   mode: "newchildhealthrecord" | "edit"
 }
 
@@ -26,10 +37,10 @@ export default function ChildHRPage2({
   updateFormData,
   formData,
   historicalBFdates,
+  patientHistoricalDisabilities, // Destructure the prop
   mode,
 }: Page2Props) {
   const isEditMode = mode === "edit"
-
   const form = useForm<FormData>({
     resolver: zodResolver(ChildDetailsSchema),
     mode: "onChange",
@@ -42,13 +53,14 @@ export default function ChildHRPage2({
       tt_status: formData.tt_status || "",
     },
   })
-
   const { handleSubmit, reset, watch, setValue, getValues, formState } = form
   const { errors, isValid, isSubmitting } = formState
-
   const BFdates = watch("BFdates")
   const [currentBFDate, setCurrentBFDate] = useState<string>("")
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
+
+  // Extract historical disability IDs for the DisabilityComponent
+  const historicalDisabilityIds = patientHistoricalDisabilities.map((d) => d.disability_details.disability_id)
 
   // Reset form when formData changes (important for edit mode)
   useEffect(() => {
@@ -134,29 +146,29 @@ export default function ChildHRPage2({
   }
 
   const handleAddDate = () => {
-    if (!currentBFDate) return;
-  
+    if (!currentBFDate) return
     // Convert to consistent format
-    const formattedDate = formatMonthYear(currentBFDate);
-    
+    const formattedDate = formatMonthYear(currentBFDate)
+
     // Get current dates from form
-    const currentDates = getValues("BFdates") || [];
-  
+    const currentDates = getValues("BFdates") || []
+
     // Update dates array
-    const updatedDates = editingIndex !== null
-      ? currentDates.map((date, i) => i === editingIndex ? formattedDate : date)
-      : [...currentDates, formattedDate];
-  
+    const updatedDates =
+      editingIndex !== null
+        ? currentDates.map((date, i) => (i === editingIndex ? formattedDate : date))
+        : [...currentDates, formattedDate]
+
     // Update form state
     setValue("BFdates", updatedDates, {
       shouldValidate: true,
       shouldDirty: true,
-    });
-  
+    })
+
     // Reset editing state
-    setEditingIndex(null);
-    setCurrentBFDate("");
-  };
+    setEditingIndex(null)
+    setCurrentBFDate("")
+  }
 
   const handleEditDate = (index: number) => {
     const currentBFDates = getValues("BFdates") || []
@@ -200,7 +212,7 @@ export default function ChildHRPage2({
         >
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Medical Information */}
+            {/* Left Column - Medical Information (sidebar-like) */}
             <div className="space-y-6">
               {/* Newborn Screening Card */}
               <CardLayout
@@ -224,7 +236,170 @@ export default function ChildHRPage2({
                   </div>
                 }
               />
+
+              {/* Breastfeeding Section */}
+              <CardLayout
+                title={
+                  <div className="flex items-center gap-2 text-lg text-gray-800">
+                    <Baby className="h-5 w-5 text-pink-600" />
+                    Exclusive Breastfeeding Monitoring
+                  </div>
+                }
+                description=""
+                content={
+                  <div className="space-y-6">
+                    <div className="w-[200px] mt-5">
+                      <FormSelect
+                        control={form.control}
+                        name="type_of_feeding"
+                        label="Type of feeding"
+                        readOnly={isEditMode}
+                        options={[
+                          { id: "exclusive_bf", name: "Exclusive Breastfeeding" },
+                          { id: "mixed_bf", name: "Mixed Breastfeeding" },
+                          { id: "formula", name: "Formula Feeding" },
+                        ]}
+                      />
+                    </div>
+                    {/* Add/Edit Date Section */}
+                    <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                      <div className="flex flex-col sm:flex-row gap-4 items-end">
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {editingIndex !== null ? "Edit BF Date" : "Add BF Date"}
+                          </label>
+                          <input
+                            type="month"
+                            value={currentBFDate}
+                            onChange={(e) => setCurrentBFDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleAddDate}
+                          disabled={!currentBFDate}
+                          className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                        >
+                          {editingIndex !== null ? (
+                            <>
+                              <Pencil className="h-4 w-4" />
+                              Update
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4" />
+                              Add
+                            </>
+                          )}
+                        </Button>
+                        {editingIndex !== null && (
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setEditingIndex(null)
+                              setCurrentBFDate("")
+                            }}
+                            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg"
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {/* Historical Dates */}
+                    {historicalBFdates?.length > 0 && (
+                      <div className="bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="bg-white px-4 py-3 border-b border-gray-200">
+                          <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Previous BF Checks
+                          </h3>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          {historicalBFdates.map((date, index) => (
+                            <div
+                              key={`hist-${index}`}
+                              className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Calendar className="h-4 w-4 text-blue-500" />
+                                <span className="text-sm font-medium">{date}</span>
+                              </div>
+                              <span className="text-xs text-gray-500">Existing</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Newly Added Dates */}
+                    {(BFdates ?? []).length > 0 ? (
+                      <div className="bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="bg-white px-4 py-3 border-b border-gray-200">
+                          <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            New BF Checks
+                          </h3>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          {(BFdates ?? []).map((date, index) => (
+                            <div
+                              key={`new-${index}`}
+                              className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:shadow-sm"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Calendar className="h-4 w-4 text-green-500" />
+                                <span className="text-sm font-medium">{date}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  onClick={() => handleEditDate(index)}
+                                  className="p-2 text-blue-500 bg-white"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  onClick={() => handleDeleteDate(index)}
+                                  className="p-2 text-red-500 hover:bg-red-50 bg-white"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      (!historicalBFdates || historicalBFdates.length === 0) && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Baby className="h-8 w-8 mx-auto mb-2" />
+                          <p>No BF dates recorded yet</p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                }
+              />
+
+              {/* TT Status */}
+              <FormSelect
+                control={form.control}
+                name="tt_status"
+                label="TT Status"
+                readOnly={isEditMode}
+                options={[
+                  { id: "none", name: "None" },
+                  { id: "TT1", name: "TT1" },
+                  { id: "TT2", name: "TT2" },
+                  { id: "TT3", name: "TT3" },
+                  { id: "TT4", name: "TT4" },
+                  { id: "TT5", name: "TT5" },
+                ]}
+              />
             </div>
+
             {/* Right Column - Disability Information */}
             <div className="space-y-6">
               <CardLayout
@@ -237,6 +412,28 @@ export default function ChildHRPage2({
                 description=""
                 content={
                   <div className="p-4">
+                    {/* Display Historical Disabilities */}
+                    {patientHistoricalDisabilities && patientHistoricalDisabilities.length > 0 && (
+                      <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                          <Check className="h-4 w-4" />
+                          Patient's Historical Disabilities
+                        </h3>
+                        <ul className="space-y-2">
+                          {patientHistoricalDisabilities.map((disability, index) => (
+                            <li key={index} className="flex items-center gap-2 text-sm text-gray-700">
+                              <span className="font-medium">
+                                {disability.disability_details?.disability_name || "N/A"}
+                              </span>
+                              {/* {disability.status && (
+                                <span className="text-xs text-gray-500 capitalize">({disability.status})</span>
+                              )} */}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     <FormLabel className="text-sm font-medium leading-none text-gray-700 mb-4 block">
                       Does the child have any known disabilities?
                     </FormLabel>
@@ -252,7 +449,7 @@ export default function ChildHRPage2({
                                 field.onChange(selected)
                               }}
                               isRequired={false}
-                              // readOnly={isEditMode}
+                              historicalDisabilityIds={historicalDisabilityIds} // Pass the historical IDs
                             />
                             <FormMessage />
                           </FormItem>
@@ -264,165 +461,7 @@ export default function ChildHRPage2({
               />
             </div>
           </div>
-          {/* Breastfeeding Section */}
-          <div className="space-y-6">
-           {/* Breastfeeding Section */}
-<CardLayout
-  title={
-    <div className="flex items-center gap-2 text-lg text-gray-800">
-      <Baby className="h-5 w-5 text-pink-600" />
-      Exclusive Breastfeeding Monitoring
-    </div>
-  }
-  description=""
-  content={
-    <div className="space-y-6">
-      <div className="w-[200px] mt-5">
-        <FormSelect
-          control={form.control}
-          name="type_of_feeding"
-          label="Type of feeding"
-          readOnly={isEditMode}
-          options={[
-            { id: "exclusive_bf", name: "Exclusive Breastfeeding" },
-            { id: "mixed_bf", name: "Mixed Breastfeeding" },
-            { id: "formula", name: "Formula Feeding" },
-          ]}
-        />
-      </div>
 
-      {/* Add/Edit Date Section */}
-      <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
-        <div className="flex flex-col sm:flex-row gap-4 items-end">
-          <div className="flex-1 min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {editingIndex !== null ? "Edit BF Date" : "Add BF Date"}
-            </label>
-            <input
-              type="month"
-              value={currentBFDate}
-              onChange={(e) => setCurrentBFDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            />
-          </div>
-          <Button
-            type="button"
-            onClick={handleAddDate}
-            disabled={!currentBFDate}
-            className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            {editingIndex !== null ? (
-              <>
-                <Pencil className="h-4 w-4" />
-                Update
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                Add
-              </>
-            )}
-          </Button>
-          {editingIndex !== null && (
-            <Button
-              type="button"
-              onClick={() => {
-                setEditingIndex(null);
-                setCurrentBFDate("");
-              }}
-              className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg"
-            >
-              Cancel
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Historical Dates */}
-      {historicalBFdates?.length > 0 && (
-        <div className="bg-gray-50 rounded-lg border border-gray-200">
-          <div className="bg-white px-4 py-3 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Previous BF Checks
-            </h3>
-          </div>
-          <div className="p-4 space-y-3">
-            {historicalBFdates.map((date, index) => (
-              <div key={`hist-${index}`} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-medium">{date}</span>
-                </div>
-                <span className="text-xs text-gray-500">Existing</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Newly Added Dates */}
-      {(BFdates ?? []).length > 0 ? (
-        <div className="bg-gray-50 rounded-lg border border-gray-200">
-          <div className="bg-white px-4 py-3 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              New BF Checks
-            </h3>
-          </div>
-          <div className="p-4 space-y-3">
-            {(BFdates ?? []).map((date, index) => (
-              <div key={`new-${index}`} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:shadow-sm">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium">{date}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    onClick={() => handleEditDate(index)}
-                    className="p-2 text-blue-500 bg-white"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => handleDeleteDate(index)}
-                    className="p-2 text-red-500 hover:bg-red-50 bg-white"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        (!historicalBFdates || historicalBFdates.length === 0) && (
-          <div className="text-center py-8 text-gray-500">
-            <Baby className="h-8 w-8 mx-auto mb-2" />
-            <p>No BF dates recorded yet</p>
-          </div>
-        )
-      )}
-    </div>
-  }
-/>
-          </div>
-          <FormSelect
-            control={form.control}
-            name="tt_status"
-            label="TT Status"
-            readOnly={isEditMode}
-            options={[
-              { id: "none", name: "None" },
-              { id: "TT1", name: "TT1" },
-              { id: "TT2", name: "TT2" },
-              { id: "TT3", name: "TT3" },
-              { id: "TT4", name: "TT4" },
-              { id: "TT5", name: "TT5" },
-            ]}
-          />
           {/* Navigation Buttons */}
           <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
             <Button

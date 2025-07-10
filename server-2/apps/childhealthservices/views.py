@@ -1,10 +1,11 @@
 from rest_framework import generics
+from rest_framework.views import APIView
 from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound
-
+from .utils import get_childhealth_record_count
 from .models import *
 
 
@@ -96,3 +97,29 @@ class IndivChildHealthHistoryView(generics.ListAPIView):
     def get_queryset(self):
         chrec_id = self.kwargs['chrec_id']
         return ChildHealthrecord.objects.filter(chrec_id=chrec_id).order_by('-created_at')  # Optional: most recent first
+    
+    
+class GeChildHealthRecordCountView(APIView):
+    def get(self, request, pat_id):
+        try:
+            count = get_childhealth_record_count(pat_id)
+            return Response({'pat_id': pat_id, 'childhealthrecord_count': count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ChildHealthRecordByPatIDView(APIView):
+    def get(self, request, pat_id):
+        """
+        GET /api/child-health-records/by-patient/<pat_id>/
+        """
+        try:
+            chrec = ChildHealthrecord.objects.get(
+                patrec__pat_id=pat_id,
+                patrec__patrec_type="Child Health Record"
+            )
+        except ChildHealthrecord.DoesNotExist:
+            return Response({"detail": "Child health record not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ChildHealthrecordSerializerFull(chrec)
+        return Response(serializer.data)
+        

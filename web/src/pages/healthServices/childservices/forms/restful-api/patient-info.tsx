@@ -186,7 +186,7 @@ export async function createPatientDisability(payload: {
 
 
 export async function updatePatientDisabilityStatus(payload: {
-  id: number
+  pd_id: number
   disability_id?: string
   patrec_id?: string
 }[]) {

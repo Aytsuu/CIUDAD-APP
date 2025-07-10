@@ -11,7 +11,7 @@ from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,Med
 class ChildHealthrecord(models.Model):
     
     chrec_id =models.BigAutoField(primary_key=True)
-    chr_date = models.DateField(blank=True, null=True)
+    # chr_date = models.DateField(blank=True, null=True)
     ufc_no = models.CharField(max_length=100, blank=True, null=True)
     family_no=models.CharField(max_length=100, blank=True, null=True)
     mother_occupation = models.CharField(max_length=100, blank=True, null=True)

@@ -14,9 +14,10 @@ urlpatterns = [
     path('nutritional-status/', NutritionalStatusView.as_view(), name='nutritional-status'),
     path('exclusive-bf-check/', ExclusiveBFCheckView.as_view(), name='exclusive-bf-check'),
     path('immunization-history/', ChildHealthImmunizationHistoryView.as_view(), name='immunization-history'),
-   path('child-vitalsigns/', ChildHealthVitalSignsView.as_view(), name='child-vitalsigns'),
-   
-   
+    path('child-vitalsigns/', ChildHealthVitalSignsView.as_view(), name='child-vitalsigns'),
+    
+    path('child-health-record-count/<str:pat_id>/', GeChildHealthRecordCountView.as_view(), name='child-health-record-count'),
+    path('child-health-records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
 
 ]
 

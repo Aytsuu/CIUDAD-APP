@@ -162,15 +162,10 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
         return PatientDisablitySerializerBase(disabilities, many=True).data
 
 class ChildHealthrecordSerializerFull(serializers.ModelSerializer):
-    # patrec_details = PatientRecordSerializer(source='patrec', read_only=True)
-    # staff_details = StaffTableSerializer(source='staff', read_only=True)
-    
+ 
     # Include all related histories with their full details
     child_health_histories = ChildHealthHistoryFullSerializer(many=True, read_only=True)
-    
-    # # Directly include fields that might be useful at the record level
-    # disabilities = serializers.SerializerMethodField()
-    
+ 
     class Meta:
         model = ChildHealthrecord
         fields = "__all__"

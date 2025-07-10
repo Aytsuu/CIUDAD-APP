@@ -10,7 +10,7 @@ import { addMedicineTransaction } from "@/pages/healthInventory/inventoryStocks/
 import {
   createMedicineRecord,
   createPatientRecord,
-} from "../restful-api/postAPI";
+} from "@/pages/healthServices/medicineservices/restful-api/postAPI";
 export interface MedicineRequestData {
   pat_id: string;
   medicines: {

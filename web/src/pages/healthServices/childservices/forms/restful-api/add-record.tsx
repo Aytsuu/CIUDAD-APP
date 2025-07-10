@@ -15,10 +15,10 @@ import {
   createChildVitalSign,
   createNutritionalStatus,
 } from "./vitalsignsAPI";
-import  {processMedicineRequest} from "@/pages/healthServices/medicineservices/queries/processSubmit";
+import  {processMedicineRequest} from "./medicineAPI";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
-
+import { api2 } from "@/api/api";
 export interface AddRecordArgs {
   submittedData: FormData;
   staff: string | null;
@@ -53,7 +53,7 @@ export async function addChildHealthRecord({
   const patrec_id = newPatrec.patrec_id;
   // Create child health record
   const newChrec = await createChildHealthRecord({
-    chr_date: submittedData.childDob,
+    // chr_date: submittedData.childDob,
     ufc_no: submittedData.ufcNo || "",
     family_no: submittedData.familyNo || "",
     place_of_delivery_type: submittedData.placeOfDeliveryType,
@@ -173,17 +173,7 @@ export async function addChildHealthRecord({
     });
   }
 
-  // Handle medicines
-  if (submittedData.medicines && submittedData.medicines.length > 0) {
-    await processMedicineRequest({
-      pat_id: submittedData.pat_id,
-      medicines: submittedData.medicines.map(med => ({
-        minv_id: med.minv_id,
-        medrec_qty: med.medrec_qty,
-        reason: med.reason || ""
-      }))
-    },staff || null);
-  }
+
 
   // Handle anemia
   if (submittedData.is_anemic) {
@@ -198,6 +188,35 @@ export async function addChildHealthRecord({
       updated_at: new Date().toISOString(),
     });
   }
+
+    // // Handle medicines
+    // if (submittedData.medicines && submittedData.medicines.length > 0) {
+    //   await processMedicineRequest({
+    //     pat_id: submittedData.pat_id,
+    //     medicines: submittedData.medicines.map(med => ({
+    //       minv_id: med.minv_id,
+    //       medrec_qty: med.medrec_qty,
+    //       reason: med.reason || ""
+    //     }))
+    //   },staff || null);
+    // }
+  
+ // Handle medicines
+      // Handle medicines
+      if (submittedData.medicines && submittedData.medicines.length > 0) {
+       await processMedicineRequest(
+         {
+           pat_id: submittedData.pat_id,
+           medicines: submittedData.medicines.map((med) => ({
+             minv_id: med.minv_id,
+             medrec_qty: med.medrec_qty,
+             reason: med.reason || "",
+           })),
+         },
+         staff || null,
+         current_chhist_id // assuming you have this in submittedData
+       );
+     }
 
   return {
     patrec_id,
@@ -228,6 +247,7 @@ export const useChildHealthRecordMutation = () => {
     mutationFn: addChildHealthRecord,
     onSuccess: () => {
       toast.success("Child health record created successfully!");
+         
       navigate(-1);
     },
     onError: (error: unknown) => {

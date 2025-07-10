@@ -49,7 +49,7 @@ export const vaccination = [
     element:<AgeGroupForm/>
   },
   {
-    path:"addAgeGroupForm",
+    path:"age-group-management",
     element:<AddAgeGroupForm/>
   }
 

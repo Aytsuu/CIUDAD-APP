@@ -3,7 +3,7 @@ import { api2 } from "@/api/api"
 // --- Child Health Record (chrec) Operations ---
 
 export async function createChildHealthRecord(payload: {
-  chr_date: string
+  // chr_date: string
   ufc_no: string
   family_no: string
   place_of_delivery_type: string

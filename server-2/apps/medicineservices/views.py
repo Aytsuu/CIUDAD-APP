@@ -10,8 +10,7 @@ from .utils import *
 from rest_framework.exceptions import ValidationError
 from django.db import transaction, IntegrityError
 from django.utils.timezone import now
-
-
+from apps.childhealthservices.models import ChildHealthSupplements,ChildHealth_History
 class PatientMedicineRecordsView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
     
@@ -228,5 +227,52 @@ class MedicineRequestItemDelete(generics.DestroyAPIView):
         medreqitem_id = self.kwargs['medreqitem_id']
         return MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
 
-    
+
+
+class ChildServiceMedicineRecordView(generics.CreateAPIView):
+    """
+    API endpoint for creating medicine records for child health services
+    """
+    serializer_class = MedicineRecordSerialzer
+    queryset = MedicineRecord.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {"error": "An unexpected error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def perform_create(self, serializer):
+        chhist_id = self.request.data.get('chhist')
         
+        if not chhist_id:
+            raise ValidationError({
+                "chhist": "This field is required for child health medicine records"
+            })
+
+        try:
+            # Validate and save the medicine record
+            medrec = serializer.save()
+
+            # Verify the child health history exists
+            chhist = ChildHealth_History.objects.get(pk=chhist_id)
+            
+            # Create the relationship record
+            ChildHealthSupplements.objects.create(
+                chhist=chhist,
+                medrec=medrec
+            )
+
+        except ChildHealth_History.DoesNotExist:
+            raise ValidationError({
+                "chhist": "Invalid child health history ID provided"
+            })
+        except Exception as e:
+            raise ValidationError({
+                "error": f"Failed to create record: {str(e)}"
+            })

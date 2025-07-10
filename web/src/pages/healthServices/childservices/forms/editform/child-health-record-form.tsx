@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
@@ -24,6 +23,7 @@ export type Medicine = {
   dosageUnit?: string
   form?: string
 }
+
 const initialFormData: FormData = {
   familyNo: "",
   pat_id: "",
@@ -121,9 +121,7 @@ export default function ChildHealthRecordForm() {
   const { user } = useAuth()
   const staffId = user?.staff?.staff_id
   const position = user?.staff?.pos?.pos_title
-  // console.log(position)
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false) // Keep local state for loading spinner
   const newchildhealthrecordMutation = useChildHealthRecordMutation()
   const updatechildhealthrecordmutation = useUpdateChildHealthRecordMutation()
   const [error, setError] = useState<string | null>(null)
@@ -145,10 +143,21 @@ export default function ChildHealthRecordForm() {
   const [latestHistoricalNoteContent, setLatestHistoricalNoteContent] = useState<string>("")
   const [latestHistoricalFollowUpDescription, setLatestHistoricalFollowUpDescription] = useState<string>("")
   const [latestHistoricalFollowUpDate, setLatestHistoricalFollowUpDate] = useState<string>("")
-  // historicalMedicines already holds all historical medicines, no need for 'nonTodays' distinction
   const [historicalMedicines, setHistoricalMedicines] = useState<Medicine[]>([])
+  const [patientHistoricalDisabilities, setPatientHistoricalDisabilities] = useState<
+    {
+      id: number
+      pd_id: number
+      status: string
+      disability_details: {
+        disability_id: number
+        disability_name: string
+        created_at: string
+      }
+    }[]
+  >([])
   const [originalDisabilityRecords, setOriginalDisabilityRecords] = useState<
-    { id: number; pd_id: string; status: string }[]
+    { id: number; pd_id: number; status: string }[]
   >([])
 
   useEffect(() => {
@@ -179,7 +188,6 @@ export default function ChildHealthRecordForm() {
 
   const transformApiDataToFormData = (chhistRecord: any): FormData => {
     console.log("🔍 Starting transformation with raw chhistRecord:", chhistRecord)
-
     if (!chhistRecord) {
       console.error("❌ chhistRecord is empty or not in expected format.")
       return {} as FormData
@@ -227,7 +235,7 @@ export default function ChildHealthRecordForm() {
       address: patient?.address?.full_address || "",
       landmarks: patient?.address?.landmarks || "",
       dateNewbornScreening: chrecDetails.newborn_screening || "",
-      disabilityTypes: chhistRecord.disabilities?.map((d: any) => d.disability_details?.disability_id) || [],
+      disabilityTypes: [], // As per user request, not retrieving into form's editable state
       edemaSeverity: "None",
       BFdates: [],
       vitalSigns: [],
@@ -260,6 +268,7 @@ export default function ChildHealthRecordForm() {
         if (!chrecId || !chhistId) {
           throw new Error("Missing chrecId or chhistId in location state for edit mode")
         }
+
         const response = await api2.get(`/child-health/history/${chrecId}/`)
         console.log("📡 API Response (raw data received):", response.data)
 
@@ -272,7 +281,16 @@ export default function ChildHealthRecordForm() {
         const allHistoricalMedicines: Medicine[] = []
         const allHistoricalNutritionalStatuses: any[] = []
         const allHistoricalBFdates: string[] = []
-        const allOriginalDisabilityRecords: { id: number; pd_id: string; status: string }[] = []
+        const allPatientHistoricalDisabilities: {
+          id: number
+          pd_id: number
+          status: string
+          disability_details: {
+            disability_id: number
+            disability_name: string
+            created_at: string
+          }
+        }[] = []
 
         // Iterate through all child_health_histories to aggregate data
         chrecRecord.child_health_histories?.forEach((history: any) => {
@@ -310,6 +328,7 @@ export default function ChildHealthRecordForm() {
               form: supp.medrec_details?.minv_details?.minv_form || "",
             })) || []
           allHistoricalMedicines.push(...medicinesFromHistory)
+
           // Aggregate Nutritional Statuses
           const nutritionalStatusFromHistory = history.nutrition_statuses?.[0]
             ? {
@@ -333,14 +352,15 @@ export default function ChildHealthRecordForm() {
           const BFdatesFromHistory = history.exclusive_bf_checks?.map((check: any) => check.ebf_date) || []
           allHistoricalBFdates.push(...BFdatesFromHistory)
 
-          // Aggregate Disabilities
+          // Aggregate Disabilities from all historical records, including disability_details
           const disabilitiesFromHistory =
             history.disabilities?.map((d: any) => ({
-              id: d.disability_details?.disability_id?.toString() || "",
-              pd_id: d.pd_id?.toString() || "",
+              id: d.disability_details?.disability_id || "",
+              pd_id: Number(d.pd_id) || "",
               status: d.status || "active",
+              disability_details: d.disability_details, // Include the full details object
             })) || []
-          allOriginalDisabilityRecords.push(...disabilitiesFromHistory)
+          allPatientHistoricalDisabilities.push(...disabilitiesFromHistory)
         })
 
         // Set the aggregated historical data
@@ -348,18 +368,25 @@ export default function ChildHealthRecordForm() {
         setHistoricalMedicines(allHistoricalMedicines)
         setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses)
         setHistoricalBFdates(allHistoricalBFdates)
-        setOriginalDisabilityRecords(allOriginalDisabilityRecords)
+        setPatientHistoricalDisabilities(allPatientHistoricalDisabilities) // Set all historical disabilities
 
         // Keep the logic for the *currently edited* chhistRecord to populate the form data
         const selectedChhistRecord = chrecRecord.child_health_histories?.find(
           (history: any) => history.chhist_id === Number.parseInt(chhistId),
         )
-
         if (!selectedChhistRecord) {
           throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`)
         }
-
         setApiData(selectedChhistRecord) // This is the specific record being edited
+
+        // Extract disabilities specifically from the selectedChhistRecord for originalDisabilityRecords
+        const disabilitiesForSelectedRecord =
+          selectedChhistRecord.disabilities?.map((d: any) => ({
+            id: d.disability_details?.disability_id || "",
+            pd_id: Number(d.pd_id) || "",
+            status: d.status || "active",
+          })) || []
+        setOriginalDisabilityRecords(disabilitiesForSelectedRecord) // Set only relevant disabilities for update logic
 
         // Update latest historical note/follow-up based on the *selected* chhistRecord
         if (selectedChhistRecord.child_health_notes && selectedChhistRecord.child_health_notes.length > 0) {
@@ -394,16 +421,21 @@ export default function ChildHealthRecordForm() {
   }
 
   const handleSubmit = async (submittedData: FormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true) // Set submitting to true at the start
     setError(null)
     try {
+      console.log("Submitted data received in ChildHealthRecordForm:", submittedData)
+      console.log("Medicines in submittedData:", submittedData.medicines)
+
       if (isNewchildhealthrecord) {
-        newchildhealthrecordMutation.mutate({
+        await newchildhealthrecordMutation.mutateAsync({
+          // Use mutateAsync
           submittedData: submittedData,
           staff: staffId || null,
         })
       } else {
-        updatechildhealthrecordmutation.mutate({
+        await updatechildhealthrecordmutation.mutateAsync({
+          // Use mutateAsync
           submittedData: submittedData,
           staff: staffId || null,
           todaysHistoricalRecord: historicalVitalSigns.find((vital) => isToday(vital.date)),
@@ -412,17 +444,18 @@ export default function ChildHealthRecordForm() {
         })
       }
 
-      // Clear local storage and reset state after successful submission
+      // Clear local storage and reset state ONLY after successful submission
       localStorage.removeItem("selectedPatient")
       localStorage.removeItem(`childHealthFormData_${isEditMode ? "edit" : "newchildhealthrecord"}`)
       localStorage.removeItem(`childHealthFormCurrentPage_${isEditMode ? "edit" : "newchildhealthrecord"}`)
       setFormData(initialFormData)
       setCurrentPage(1)
-      navigate(-1)
+      // Navigation is handled by the onSuccess callback in the mutation hooks
     } catch (Error) {
       console.error("Error submitting form:", Error)
+      // Error handling is already done by the onError callback in the mutation hooks
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false) // Ensure submitting is set to false in finally
     }
   }
 
@@ -480,6 +513,7 @@ export default function ChildHealthRecordForm() {
           </p>
         </div>
       </div>
+
       {currentPage === 1 && (
         <ChildHRPage1
           onNext={() => setCurrentPage(2)}
@@ -495,6 +529,7 @@ export default function ChildHealthRecordForm() {
           updateFormData={updateFormData}
           formData={formData}
           historicalBFdates={historicalBFdates}
+          patientHistoricalDisabilities={patientHistoricalDisabilities} // Pass the historical disabilities
           mode={mode || "newchildhealthrecord"}
         />
       )}
@@ -518,7 +553,7 @@ export default function ChildHealthRecordForm() {
           historicalNutritionalStatus={historicalNutritionalStatus}
           latestHistoricalNoteContent={latestHistoricalNoteContent}
           latestHistoricalFollowUpDescription={latestHistoricalFollowUpDescription}
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting} // Pass the local isSubmitting state
           latestHistoricalFollowUpDate={latestHistoricalFollowUpDate}
           historicalMedicines={historicalMedicines}
           mode={mode || "newchildhealthrecord"}

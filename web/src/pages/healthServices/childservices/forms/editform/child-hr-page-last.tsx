@@ -1,5 +1,4 @@
 "use client"
-
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
@@ -22,7 +21,6 @@ import type { ColumnDef } from "@tanstack/react-table" // Corrected import for C
 import { DataTable } from "@/components/ui/table/data-table" // Corrected import path for DataTable
 import { Pencil, Activity, Pill, Loader2 } from "lucide-react" // Ensure icons are imported
 import { useMemo, useEffect, useState } from "react" // Ensure all hooks are imported
-
 export const NUTRITIONAL_STATUS_DESCRIPTIONS = {
   wfa: {
     N: "Normal",
@@ -48,25 +46,21 @@ export const NUTRITIONAL_STATUS_DESCRIPTIONS = {
     SAM: "Severe Acute Malnutrition",
   },
 }
-
 const calculateCurrentAge = (birthDate: string) => {
   if (!birthDate) return ""
   return calculateAgeFromDOB(birthDate).ageString
 }
-
 const isToday = (dateString: string) => {
   if (!dateString) return false
   const today = new Date().toISOString().split("T")[0]
   const checkDate = dateString.split("T")[0]
   return today === checkDate
 }
-
 const getLatestVitalSigns = (vitalSigns: VitalSignType[] | undefined) => {
   if (!vitalSigns || vitalSigns.length === 0) return null
   const sorted = [...vitalSigns].sort((a, b) => new Date(b.date || "").getTime() - new Date(a.date || "").getTime())
   return sorted[0]
 }
-
 interface LastPageProps {
   onPrevious: () => void
   onSubmit: (data: FormData) => void
@@ -79,9 +73,8 @@ interface LastPageProps {
   latestHistoricalFollowUpDate?: string
   historicalMedicines?: Medicine[]
   mode: "newchildhealthrecord" | "edit"
-  isSubmitting: boolean
+  isSubmitting: boolean // This prop is now correctly managed by parent
 }
-
 export default function LastPage({
   onPrevious,
   onSubmit,
@@ -94,44 +87,37 @@ export default function LastPage({
   latestHistoricalFollowUpDate = "",
   historicalMedicines = [],
   mode,
-  isSubmitting,
+  isSubmitting, // Use this prop directly
 }: LastPageProps) {
   const isEditMode = mode === "edit"
   const currentAge = useMemo(() => calculateCurrentAge(formData.childDob), [formData.childDob])
-
   const todaysHistoricalRecord = useMemo(() => {
     return historicalVitalSigns.find((vital) => isToday(vital.date))
   }, [historicalVitalSigns])
-
   const [newVitalSigns, setNewVitalSigns] = useState<VitalSignType[]>(() => {
     if (isEditMode && todaysHistoricalRecord) {
       return [{ ...todaysHistoricalRecord }]
     }
     return []
   })
-
   const nonTodaysHistoricalVitalSigns = useMemo(() => {
     return historicalVitalSigns.filter((vital) => !isToday(vital.date))
   }, [historicalVitalSigns])
-
   const combinedVitalSignsForTable = useMemo(() => {
     return newVitalSigns.map((vital, index) => ({
       ...vital,
       originalIndex: index,
     }))
   }, [newVitalSigns])
-
   const shouldHideAddForm = useMemo(() => {
     return isEditMode && newVitalSigns.length > 0 && isToday(newVitalSigns[0].date)
   }, [newVitalSigns, isEditMode])
-
   const latestOverallVitalSign = useMemo(() => {
     if (newVitalSigns.length > 0) {
       return newVitalSigns[0]
     }
     return getLatestVitalSigns(historicalVitalSigns)
   }, [newVitalSigns, historicalVitalSigns])
-
   const [currentPage, setCurrentPage] = useState(1)
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null)
   const [editingData, setEditingData] = useState<VitalSignType | null>(null)
@@ -141,9 +127,7 @@ export default function LastPage({
     { id: "+3", name: "+3" },
     { id: "none", name: "None" },
   ])
-
   const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock()
-
   const form = useForm<FormData>({
     resolver: zodResolver(ChildHealthFormSchema),
     defaultValues: {
@@ -158,7 +142,6 @@ export default function LastPage({
       edemaSeverity: "none",
     },
   })
-
   const vitalSignForm = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: {
@@ -172,7 +155,6 @@ export default function LastPage({
       notes: "",
     },
   })
-
   const editForm = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: {
@@ -186,7 +168,6 @@ export default function LastPage({
       notes: "",
     },
   })
-
   const {
     control,
     watch,
@@ -194,18 +175,19 @@ export default function LastPage({
     handleSubmit,
     formState: { errors },
   } = form
-
   const {
     control: editFormControl,
     setValue: editFormSetValue,
     handleSubmit: editFormHandleSubmit,
     formState: { errors: editFormErrors },
   } = editForm
-
   const selectedMedicines = watch("medicines")
   const currentStatus = watch("status")
   const nutritionalStatus = watch("nutritionalStatus")
-
+  const chhistCreatedAt = formData.created_at // Get the created_at date from formData
+  const shouldHideLowBirthWeightFollowUp = useMemo(() => {
+    return isEditMode && chhistCreatedAt && isToday(chhistCreatedAt)
+  }, [isEditMode, chhistCreatedAt])
   // Find the latest historical nutritional status if available
   const latestHistoricalNutritionalStatus = useMemo(() => {
     if (!historicalNutritionalStatus || historicalNutritionalStatus.length === 0) return null
@@ -214,23 +196,18 @@ export default function LastPage({
     )
     return sorted[0]
   }, [historicalNutritionalStatus])
-
   const hasSevereMalnutrition = useMemo(() => {
     // Prioritize the current form's nutritional status if it has data
     const currentNutritionalStatus =
       Object.keys(nutritionalStatus || {}).length > 0 ? nutritionalStatus : latestHistoricalNutritionalStatus // Use the latest historical if current is empty
-
     if (!currentNutritionalStatus) return false
-
     const { wfa, lhfa, wfh, muac_status } = currentNutritionalStatus
     return wfa === "SUW" || lhfa === "SST" || wfh === "SW" || muac_status === "SAM"
   }, [nutritionalStatus, latestHistoricalNutritionalStatus])
-
   useEffect(() => {
     setValue("vitalSigns", newVitalSigns)
     updateFormData({ vitalSigns: newVitalSigns })
   }, [newVitalSigns, setValue, updateFormData])
-
   useEffect(() => {
     vitalSignForm.reset({
       date: new Date().toISOString().split("T")[0],
@@ -243,11 +220,9 @@ export default function LastPage({
       notes: "",
     })
   }, [currentAge, latestOverallVitalSign, vitalSignForm])
-
   const canSubmit = useMemo(() => {
     return newVitalSigns && newVitalSigns.length > 0
   }, [newVitalSigns])
-
   const handleMedicineSelectionChange = (
     selectedMedicines: {
       minv_id: string
@@ -261,7 +236,6 @@ export default function LastPage({
       medicines: validMedicines,
     })
   }
-
   const handleUpdateVitalSign = (index: number, values: VitalSignType) => {
     const updatedVitalSigns = [...newVitalSigns]
     updatedVitalSigns[index] = values
@@ -269,7 +243,6 @@ export default function LastPage({
     setEditingRowIndex(null)
     setEditingData(null)
   }
-
   const handleAddVitalSign = (values: VitalSignType) => {
     const updatedVitalSigns = [...newVitalSigns, values]
     setNewVitalSigns(updatedVitalSigns)
@@ -284,31 +257,29 @@ export default function LastPage({
       notes: "",
     })
   }
-
   const handleDeleteVitalSign = (index: number) => {
     const updatedVitalSigns = [...newVitalSigns]
     updatedVitalSigns.splice(index, 1)
     setNewVitalSigns(updatedVitalSigns)
   }
-
   const handleNutritionalStatusChange = (status: NutritionalStatusType) => {
     setValue("nutritionalStatus", status)
     updateFormData({ nutritionalStatus: status })
   }
-
   const handleFormSubmit = handleSubmit(
     (data) => {
+      console.log("Submitting form data:", data)
+      console.log("Medicines being submitted from LastPage:", data.medicines)
       if (!canSubmit) {
         console.error("Cannot submit: No vital signs added")
         return
       }
-      onSubmit(data)
+      onSubmit(data) // Call the onSubmit prop from the parent
     },
     (errors) => {
       console.error("Form validation failed:", errors)
     },
   )
-
   const columns = useMemo<ColumnDef<VitalSignType>[]>(
     () => [
       {
@@ -496,7 +467,6 @@ export default function LastPage({
     ],
     [editingRowIndex, editingData, editFormControl, editFormHandleSubmit, editFormSetValue],
   )
-
   const historicalMedicineColumns = useMemo<ColumnDef<Medicine>[]>(
     () => [
       {
@@ -520,9 +490,8 @@ export default function LastPage({
     ],
     [medicineStocksOptions],
   )
-
   return (
-    <div className="mx-auto my-10 w-full max-w-6xl rounded-lg bg-white p-4 shadow md:p-6 lg:p-8">
+    <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
       <Form {...form}>
         <form onSubmit={handleFormSubmit} className="space-y-6">
           {Object.keys(errors).length > 0 && (
@@ -531,7 +500,6 @@ export default function LastPage({
               <pre className="mt-2 text-sm text-red-700">{JSON.stringify(errors, null, 2)}</pre>
             </div>
           )}
-
           {!canSubmit && (
             <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
               <h4 className="font-medium text-yellow-800">⚠️ Required Information Missing</h4>
@@ -540,7 +508,6 @@ export default function LastPage({
               </p>
             </div>
           )}
-
           {historicalNutritionalStatus && historicalNutritionalStatus.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-green-200 bg-green-50">
               <div className="border-b border-green-200 bg-white px-4 py-3">
@@ -640,7 +607,6 @@ export default function LastPage({
               </div>
             </div>
           )}
-
           {nonTodaysHistoricalVitalSigns && nonTodaysHistoricalVitalSigns.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
               <div className="border-b border-gray-200 bg-white px-4 py-3">
@@ -713,7 +679,6 @@ export default function LastPage({
               </div>
             </div>
           )}
-
           {!shouldHideAddForm && (
             <div className="rounded-lg border bg-blue-50 p-4">
               <h3 className="mb-4 text-lg font-bold">Add New Vital Signs</h3>
@@ -757,6 +722,7 @@ export default function LastPage({
                       name="notes"
                       label="Notes"
                       placeholder="Enter notes"
+                      rows={3}
                     />
                   </div>
                   <div className="flex w-full gap-4">
@@ -788,14 +754,12 @@ export default function LastPage({
               </Form>
             </div>
           )}
-
           <div className="pb-10">
             <h3 className="mb-4 text-lg font-bold">Vital Signs Records (Today's Entry)</h3>
             <Form {...editForm}>
               <DataTable columns={columns} data={combinedVitalSignsForTable || []} />
             </Form>
           </div>
-
           <div className="mb-10 rounded-lg border bg-gray-50 p-4">
             <h3 className="mb-4 text-lg font-bold">Health Status</h3>
             <div className="mb-4">
@@ -824,7 +788,8 @@ export default function LastPage({
             </div>
             {latestOverallVitalSign &&
               latestOverallVitalSign.wt &&
-              Number.parseFloat(String(latestOverallVitalSign.wt)) < 2.5 && (
+              Number.parseFloat(String(latestOverallVitalSign.wt)) < 2.5 &&
+              !shouldHideLowBirthWeightFollowUp && ( // Apply the new condition here
                 <div className="mt-4">
                   <h4 className="mb-2 font-medium">
                     Low Birth Weight Follow-up (Latest Weight: {latestOverallVitalSign.wt} kg)
@@ -858,7 +823,6 @@ export default function LastPage({
               </div>
             )}
           </div>
-
           {historicalMedicines && historicalMedicines.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
               <div className="border-b border-gray-200 bg-white px-4 py-3">
@@ -872,7 +836,6 @@ export default function LastPage({
               </div>
             </div>
           )}
-
           <div className="mb-10 rounded-lg border bg-blue-50 p-4">
             <h3 className="mb-4 text-lg font-bold">Medicine Prescription</h3>
             <div className="grid grid-cols-1 gap-6">
@@ -894,7 +857,6 @@ export default function LastPage({
               )}
             </div>
           </div>
-
           {(latestOverallVitalSign || (newVitalSigns && newVitalSigns.length > 0)) && (
             <div className="mb-10">
               <NutritionalStatusCalculator
@@ -915,7 +877,6 @@ export default function LastPage({
               />
             </div>
           )}
-
           <div className="mb-10 rounded-lg border bg-purple-50 p-4">
             <h3 className="mb-4 text-lg font-bold">Record Purpose & Status</h3>
             <FormField
@@ -978,7 +939,11 @@ export default function LastPage({
             <Button type="button" variant="outline" onClick={onPrevious} className="w-[100px] bg-transparent">
               Previous
             </Button>
-            <Button type="submit" className="w-[100px]" disabled={!canSubmit || isSubmitting}>
+            <Button
+              type="submit"
+              className="w-[100px]"
+              disabled={!canSubmit || isSubmitting} // Use the isSubmitting prop
+            >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
