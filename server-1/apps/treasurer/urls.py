@@ -33,9 +33,13 @@ urlpatterns=[
     
     #EXPENSE URL
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
-    path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
     path('update-income-expense-tracking/<int:iet_num>/', UpdateIncomeExpenseView.as_view(), name='treasurer-income-expense-tracking-update'),
     path('income-expense-tracking/<int:iet_num>/', DeleteIncomeExpenseView.as_view(), name = 'treasurer-income-expense-tracking-delete'),
+    path('expense-particular/', ExpenseParticulartView.as_view(), name='treasurer-expense-particular'),
+    path('get-expense_particular/', GetExpenseParticularsView.as_view(), name='current-year-expense-particular'),
+    path('update-expense-particular/<int:year>/<int:exp_id>/', UpdateExpenseParticularView.as_view(), name = 'treasurer-update-expense-particular'),
+
+    path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
     path('update-budget-detail/<int:year>/<int:dtl_id>/', UpdateBudgetPlanDetailView.as_view(), name = 'treasurer-update-budget-plan-detail'),
 
     #INCOME URL

@@ -129,6 +129,16 @@ class Disbursement_Folder_Serializer(serializers.ModelSerializer):
 
 # ------- INCOME_EXPENSE FILE
 
+class Expense_ParticularSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Expense_Particular
+        fields = '__all__'
+        extra_kwargs = {
+            'plan': {'required': False},
+            'exp_budget_item': {'required': False},
+            'exp_budget_category': {'required': False},
+        }
+
 class Income_Expense_FileSerializers(serializers.ModelSerializer):
     class Meta:
         model = Income_Expense_File

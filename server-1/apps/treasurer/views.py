@@ -352,6 +352,40 @@ class Disbursement_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIVie
             
 # -------------------------------- INCOME & EXPENSE ------------------------------------
 
+class ExpenseParticulartView(generics.ListCreateAPIView):
+    serializer_class = Expense_ParticularSerializers
+    queryset = Expense_Particular.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        if isinstance(request.data, list): 
+            serializer = self.get_serializer(data=request.data, many=True) 
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            return super().create(request, *args, **kwargs) 
+        
+class UpdateExpenseParticularView(generics.RetrieveUpdateAPIView):
+    serializer_class = Expense_ParticularSerializers
+    lookup_field = 'exp_id'
+
+    def get_queryset(self):
+        year = self.kwargs['year']
+        queryset = Expense_Particular.objects.filter(plan__plan_year=year)
+
+        if not queryset.exists():
+            raise NotFound(detail=f"No budget plan found for the year {year}.")
+
+        return queryset
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True) 
+        return super().update(request, *args, **kwargs)
+    
+
 class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = Budget_Plan_DetailSerializer
     lookup_field = 'dtl_id'
@@ -380,7 +414,7 @@ class Income_Expense_TrackingView(generics.ListCreateAPIView):
         year = self.request.query_params.get('year', datetime.now().year)
         return Income_Expense_Tracking.objects.filter(
             Q(iet_datetime__year=year)
-        ).select_related('dtl_id').prefetch_related('files')
+        ).select_related('exp_id').prefetch_related('files')
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):
@@ -435,6 +469,22 @@ class GetParticularsView(generics.ListAPIView):
         print(f"No plan found for year {year}")
         return Budget_Plan_Detail.objects.none()
 
+
+class GetExpenseParticularsView(generics.ListAPIView):
+    serializer_class = Expense_ParticularSerializers
+
+    def get_queryset(self):
+        year = self.request.query_params.get('year', timezone.now().year)
+        print(f"Using year: {year} (type: {type(year)})")
+        # Get the current year's budget plan
+        current_plan = Budget_Plan.objects.filter(plan_year=str(year)).first()
+        
+        if current_plan:
+            # Return all details for the current year's plan
+            print(f"Found plan for year {year}")
+            return Expense_Particular.objects.filter(plan=current_plan)
+        print(f"No plan found for year {year}")
+        return Expense_Particular.objects.none()
     
 
 
