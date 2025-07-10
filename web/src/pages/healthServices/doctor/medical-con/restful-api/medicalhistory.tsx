@@ -5,7 +5,6 @@ export const createMedicalHistory = async (
   data: Array<{
     patrec: number;
     ill: number;
-    medrec: number;
     created_at: string;
   }>
 ) => {
@@ -18,9 +17,9 @@ export const createMedicalHistory = async (
   }
 };
 
-export const deleteMedicalHistory = async (medrec_id: string) => {
+export const deleteMedicalHistory = async (patrec: string) => {
   try {
-    await api2.delete(`patientrecords/medical-history/${medrec_id}`);
+    await api2.delete(`patientrecords/medical-history/${Number(patrec)}`);
   } catch (error) {
     console.error("Error deleting medical history:", error);
     throw error;

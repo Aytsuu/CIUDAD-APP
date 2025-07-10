@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react"
-import type { NutritionalStatusType } from "@/form-schema/chr-schema"
-import { NUTRITIONAL_STATUS_DESCRIPTIONS } from "@/form-schema/chr-schema"
+import type { NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema"
+import { NUTRITIONAL_STATUS_DESCRIPTIONS } from "@/form-schema/chr-schema/chr-schema"
 
 interface NutritionalStatusCalculatorProps {
   weight?: number
@@ -271,50 +271,7 @@ export function NutritionalStatusCalculator({
           </div>
         </div>
 
-        {/* Overall Status Summary */}
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Nutritional Status Summary</h4>
-          <div className="text-sm text-blue-800">
-            {!weight || !height || !age ? (
-              <p>Complete vital signs data required for nutritional assessment.</p>
-            ) : (
-              <div className="space-y-1">
-                <p>
-                  • Weight for Age:{" "}
-                  {nutritionalStatus.wfa
-                    ? NUTRITIONAL_STATUS_DESCRIPTIONS.wfa[
-                        nutritionalStatus.wfa as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.wfa
-                      ]
-                    : "Not assessed"}
-                </p>
-                <p>
-                  • Height for Age:{" "}
-                  {nutritionalStatus.lhfa
-                    ? NUTRITIONAL_STATUS_DESCRIPTIONS.lhfa[
-                        nutritionalStatus.lhfa as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.lhfa
-                      ]
-                    : "Not assessed"}
-                </p>
-                <p>
-                  • Weight for Height:{" "}
-                  {nutritionalStatus.wfh
-                    ? NUTRITIONAL_STATUS_DESCRIPTIONS.wfh[
-                        nutritionalStatus.wfh as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.wfh
-                      ]
-                    : "Not assessed"}
-                </p>
-                <p>
-                  • MUAC Status:{" "}
-                  {nutritionalStatus.muac_status
-                    ? NUTRITIONAL_STATUS_DESCRIPTIONS.muac[
-                        nutritionalStatus.muac_status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.muac
-                      ]
-                    : "Not assessed"}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+      
       </CardContent>
     </Card>
   )

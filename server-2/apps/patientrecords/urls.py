@@ -14,7 +14,7 @@ from .views.disability_views import *
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
-    path('patien-record/', PatientRecordView.as_view(), name='patient-record'),
+    path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patient/', PatientView.as_view(), name='patient'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
 
@@ -56,7 +56,7 @@ urlpatterns = [
     path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
     path('body-measurements/<int:body_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
    
-    path('medical-history/<int:medrec_id>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
+    path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
     path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
 

@@ -233,7 +233,7 @@ export default function AllMedicalForm() {
         height: parseFloat(data.height?.toFixed(2)),
         weight: parseFloat(data.weight?.toFixed(2)),
         age: calculateAge(selectedPatientData?.personal_info?.per_dob),
-        bmi: parseFloat(bmiValue.toFixed(2)),
+        // bmi: parseFloat(bmiValue.toFixed(2)),
         created_at: new Date().toISOString(),
         patrec: patrec,
       });

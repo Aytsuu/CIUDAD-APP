@@ -9,7 +9,10 @@ export const useMedicineRequestMutation = () => {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: processMedicineRequest,
+    mutationFn: (data: any) => {
+      const staffId = "someStaffId"; // Replace with actual logic to get staffId
+      return processMedicineRequest(data, staffId);
+    },
     onSuccess: () => {
       toast.success("All medicine records submitted successfully!");
       navigate(-1);

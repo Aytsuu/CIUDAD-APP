@@ -4,7 +4,6 @@ import { CircleAlert } from 'lucide-react';
 import { 
   getVaccineStock, 
   getVaccinationHistory,
-  createPatientRecord, 
   createVaccinationRecord, 
   createVaccinationHistory, 
   createVitalSigns, 
@@ -21,7 +20,7 @@ import { VaccineSchemaType, VitalSignsType } from '@/form-schema/vaccineSchema';
 import { api2 } from '@/api/api';
 import { Dispatch, SetStateAction } from 'react';
 import { useNavigate } from 'react-router';
-
+import {createPatientRecord }  from "@/pages/healthServices/restful-api-patient/createPatientRecord" 
 
 
 // Mutation for deducting vaccine stock
@@ -100,7 +99,7 @@ export const useSubmitStep1 = () => {
         let vacrec_id: string | null = null;
 
         try {
-          const patientRecord = await createPatientRecord(data.pat_id);
+          const patientRecord = await createPatientRecord(data.pat_id,"Vaccination Record");
           patrec_id = patientRecord.patrec_id;
 
           if (!patrec_id) {
@@ -223,7 +222,7 @@ export const useSubmitStep2 = () => {
         if (vac_type === "routine") {
           await updateFollowUpVisit(oldFollowv_id, "completed");
 
-          const patientRec = await createPatientRecord(patientId);
+          const patientRec = await createPatientRecord(patientId,"Vaccination Record");
           newpatrec_id = patientRec.patrec_id;
 
           if (!newpatrec_id) {

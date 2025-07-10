@@ -3,7 +3,7 @@ from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
 from django.core.validators import MinValueValidator
-
+from apps.administration.models import Staff
 # kene,e
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
@@ -159,6 +159,7 @@ class MedicineInventory(models.Model):
     # committed_qty = models.PositiveIntegerField(default=0)  # Ensure non-negative
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,  db_column='inv_id')
     med_id = models.ForeignKey('Medicinelist', on_delete=models.PROTECT, db_column='med_id')
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
     # APP NA END
     # min_qty_to_display = models.PositiveIntegerField(default=0)
     # set_low_stock = models.PositiveBigIntegerField(default=0)
@@ -174,8 +175,8 @@ class MedicineTransactions(models.Model):
     mdt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    
-    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,  db_column='minv_id')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
+    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,related_name='medicine_transaction',  db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'
@@ -204,7 +205,8 @@ class CommodityTransaction(models.Model):
     comt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,  db_column='cinv_id')
+    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,related_name='commodity_transaction',  db_column='cinv_id')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='commodity_transaction', null=True, blank=True)  
 
     class Meta:
         db_table = 'commodity_transaction'
@@ -227,7 +229,6 @@ class FirstAidInventory(models.Model):
         db_table = 'firstaid_inventory'
         
   
-
 class FirstAidTransactions(models.Model):
     fat_id =models.BigAutoField(primary_key=True)
     fat_qty = models.CharField(max_length=100)
@@ -235,6 +236,7 @@ class FirstAidTransactions(models.Model):
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='firstaid_transaction', null=True, blank=True)  
 
     class Meta:
         db_table = 'firstaid_transaction'

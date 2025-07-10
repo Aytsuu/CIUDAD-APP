@@ -23,7 +23,7 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
 import { useMedicineRequestMutation } from "./queries/postQueries";
-
+import { useAuth } from "@/context/AuthContext";
 interface Patient {
   pat_id: string;
   name: string;
@@ -34,6 +34,8 @@ interface Patient {
 export default function IndivPatNewMedRecForm() {
   const navigate = useNavigate();
   const location = useLocation();
+  const {user} = useAuth();
+  const staffId = user?.staff?.staff_id || null; // Ensure staffId is set to null if not available
   const [selectedPatientData, setSelectedPatientData] =
     useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -97,7 +99,7 @@ export default function IndivPatNewMedRecForm() {
           reason: med.reason || "No reason provided",
         })),
       };
-      await submitMedicineRequest(requestData);
+      await submitMedicineRequest(requestData,staffId);
       setIsConfirming(false);
     },
     [selectedMedicines, submitMedicineRequest]

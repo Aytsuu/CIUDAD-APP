@@ -12,7 +12,9 @@ export interface Patient {
   pat_type: string;
   name?: string;
   trans_id?: string;
-  rp_id?: string;
+  rp_id?: {
+    rp_id?:string;
+  };
   personal_info?: {
     per_fname?: string;
     per_mname?: string;

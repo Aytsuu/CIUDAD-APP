@@ -34,6 +34,7 @@ export default function PendingDisplayMedicalConsultation() {
     localStorage.removeItem("soapFormMedicines");
     navigate(-1);
   }, [navigate]);
+  
 
   useEffect(() => {
     if (!patientData || !MedicalConsultation) {

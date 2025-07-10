@@ -9,8 +9,8 @@ import {
 import { addFirstAidTransaction } from "@/pages/healthInventory/inventoryStocks/REQUEST/FirstAid/restful-api/FirstAidPostAPI";
 import {
   createFirstaidRecord,
-  createPatientRecord,
 } from "../restful-api/postAPI";
+import {createPatientRecord} from  "@/pages/healthServices/restful-api-patient/createPatientRecord"
 
 export interface FirstaidRequest {
   pat_id: string;
@@ -27,7 +27,7 @@ export const processFirstRequest = async (data: FirstaidRequest) => {
   for (const fa of data.firstaid) {
     try {
       // 1. Create patient record
-      const patientRecord = await createPatientRecord(data.pat_id);
+      const patientRecord = await createPatientRecord(data.pat_id,"First Aid Record");
       if (!patientRecord?.patrec_id) {
         throw new Error(
           "Failed to create patient record: No patrec_id returned"

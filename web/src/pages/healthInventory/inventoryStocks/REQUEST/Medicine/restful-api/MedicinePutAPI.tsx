@@ -1,8 +1,7 @@
 import {api2}  from "@/api/api";
 
-
 export const updateMedicineStocks = async (id: number, data: Record<string, any>) => {
-    try {
+  try {
       const res = await api2.put(`inventory/update_medicinestocks/${id}/`, data);
       return res.data;
     } catch (err: any) {

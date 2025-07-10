@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useMemo, useState, useRef } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Pencil, Trash } from "lucide-react"
@@ -9,15 +8,22 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ChildHealthFormSchema, type FormData,NutritionalStatusType, type VitalSignType, VitalSignSchema } from "@/form-schema/chr-schema"
+import {
+  ChildHealthFormSchema,
+  type FormData,
+  type NutritionalStatusType,
+  type VitalSignType,
+  VitalSignSchema,
+} from "@/form-schema/chr-schema/chr-schema"
 import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
+import { FormSelect } from "@/components/ui/form/form-select"
 import { MedicineDisplay } from "@/components/ui/medicine-display"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
 import { Label } from "@/components/ui/label"
-import { NutritionalStatusCalculator } from "./nutritional-status-calculator" // Corrected import path
+import { NutritionalStatusCalculator } from "../nutritional-status-calculator" // Corrected import path
 import { calculateAgeFromDOB } from "@/helpers/mmddwksAgeCalculator" // Corrected import path
 
 export default function LastPage({
@@ -36,13 +42,19 @@ export default function LastPage({
   const [currentPage, setCurrentPage] = useState(1)
   const [isManualEdit, setIsManualEdit] = useState(false)
   const prevSelectedMedicinesRef = useRef<typeof formData.medicines>()
-  const [hasFollowUp, setHasFollowUp] = useState(false)
+  // Removed hasFollowUp state
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null)
   const [editingData, setEditingData] = useState<VitalSignType | null>(null)
-  const [editHasFollowUp, setEditHasFollowUp] = useState(false)
+  // Removed editHasFollowUp state
   // Add state to track if vital signs have been added
   const [hasAddedVitalSigns, setHasAddedVitalSigns] = useState(false)
-
+  // Edema severity options
+  const [edemaSeverity] = useState([
+    { id: "+1", name: "+1" },
+    { id: "+2", name: "+2" },
+    { id: "+3", name: "+3" },
+    { id: "none", name: "none" },
+  ])
   const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock()
 
   const form = useForm<FormData>({
@@ -54,9 +66,10 @@ export default function LastPage({
       anemic: formData.anemic || { seen: "", given_iron: "" },
       birthwt: formData.birthwt || { seen: "", given_iron: "" },
       medicines: formData.medicines || [],
-      supplementSummary: formData.supplementSummary || "",
+      // supplementSummary: formData.supplementSummary || "",
       status: formData.status || "",
       nutritionalStatus: formData.nutritionalStatus || {},
+      edemaSeverity: formData.edemaSeverity || "none",
     },
   })
 
@@ -99,6 +112,19 @@ export default function LastPage({
 
   const selectedMedicines = watch("medicines")
   const currentStatus = watch("status")
+  const nutritionalStatus = watch("nutritionalStatus")
+
+  // Check if there's severe malnutrition that requires edema screening
+  const hasSevereMalnutrition = useMemo(() => {
+    if (!nutritionalStatus) return false
+    const { wfa, lhfa, wfh, muac_status } = nutritionalStatus
+    return (
+      wfa === "SUW" || // Severely Underweight
+      lhfa === "SST" || // Severely Stunted
+      wfh === "SW" || // Severely Wasted
+      muac_status === "SAM" // Severe Acute Malnutrition
+    )
+  }, [nutritionalStatus])
 
   // Check if vital signs have been added on component mount
   useEffect(() => {
@@ -108,15 +134,20 @@ export default function LastPage({
   }, [vitalSigns]) // Added vitalSigns to dependency array
 
   useEffect(() => {
-    const subscription = watch((value) => {
+    const subscription = watch((value: any) => {
       updateFormData(value as Partial<FormData>)
     })
     return () => subscription.unsubscribe()
   }, [watch, updateFormData])
 
   useEffect(() => {
-    const hasLowBirthWeight = vitalSigns?.some((vs) => Number.parseFloat(String(vs.wt)) < 2.5) || false
+    const hasLowBirthWeight = vitalSigns?.some((vs: any) => Number.parseFloat(String(vs.wt)) < 2.5) || false
     setIsLowBirthWeight(hasLowBirthWeight)
+  }, [vitalSigns])
+
+  // Check if form can be submitted (vital signs required)
+  const canSubmit = useMemo(() => {
+    return vitalSigns && vitalSigns.length > 0
   }, [vitalSigns])
 
   // Simplified medicine selection handler
@@ -129,7 +160,6 @@ export default function LastPage({
   ) => {
     setIsManualEdit(false)
     setValue("medicines", selectedMedicines)
-
     // Generate summary with medicine name, dosage, and form
     const summary = selectedMedicines
       .map((selectedMed) => {
@@ -140,11 +170,8 @@ export default function LastPage({
         return `Medicine ID: ${selectedMed.minv_id} (Qty: ${selectedMed.medrec_qty}) - Reason: ${selectedMed.reason}`
       })
       .join("\n")
-
-    setValue("supplementSummary", summary)
     updateFormData({
       medicines: selectedMedicines,
-      supplementSummary: summary,
     })
   }
 
@@ -173,7 +200,6 @@ export default function LastPage({
       followUpVisit: "",
       notes: "",
     })
-    setHasFollowUp(false)
   }
 
   const handleDeleteVitalSign = (index: number) => {
@@ -195,6 +221,10 @@ export default function LastPage({
 
   const handleFormSubmit = handleSubmit(
     (data) => {
+      if (!canSubmit) {
+        console.error("Cannot submit: No vital signs added")
+        return
+      }
       console.log("Form validation passed! Submitting data:", data)
       onSubmit(data)
     },
@@ -296,38 +326,25 @@ export default function LastPage({
             return (
               <div className="space-y-2 min-w-[250px]">
                 <FormTextArea control={editForm.control} name="notes" label="" placeholder="Enter notes" rows={3} />
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="editHasFollowUp"
-                    checked={editHasFollowUp}
-                    onCheckedChange={(checked) => {
-                      setEditHasFollowUp(!!checked)
-                      if (!checked) {
-                        editForm.setValue("follov_description", "")
-                        editForm.setValue("followUpVisit", "")
-                      }
-                    }}
+                {/* Removed Checkbox for "Requires follow-up visit?" */}
+                {/* The follow-up fields are now always visible when editing */}
+                <>
+                  <FormInput
+                    control={editForm.control}
+                    name="follov_description"
+                    label="Follow-up reason" // Added label for clarity
+                    type="text"
+                    placeholder="Follow-up reason"
+                    className="w-full"
                   />
-                  <label
-                    htmlFor="editHasFollowUp"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Requires follow-up visit?
-                  </label>
-                </div>
-                {editHasFollowUp && (
-                  <>
-                    <FormInput
-                      control={editForm.control}
-                      name="follov_description"
-                      label=""
-                      type="text"
-                      placeholder="Follow-up reason"
-                      className="w-full"
-                    />
-                    <FormDateTimeInput control={editForm.control} name="followUpVisit" label="" type="date" />
-                  </>
-                )}
+                  <FormDateTimeInput
+                    control={editForm.control}
+                    name="followUpVisit"
+                    label="Follow-up date"
+                    type="date"
+                  />{" "}
+                  {/* Added label for clarity */}
+                </>
               </div>
             )
           }
@@ -358,7 +375,7 @@ export default function LastPage({
                     handleUpdateVitalSign(row.index, data)
                     setEditingRowIndex(null)
                     setEditingData(null)
-                    setEditHasFollowUp(false)
+                    // Removed setEditHasFollowUp(false)
                   })}
                   className="bg-green-600 hover:bg-green-700 px-2 py-1 text-xs"
                 >
@@ -370,7 +387,7 @@ export default function LastPage({
                   onClick={() => {
                     setEditingRowIndex(null)
                     setEditingData(null)
-                    setEditHasFollowUp(false)
+                    // Removed setEditHasFollowUp(false)
                   }}
                   className="px-2 py-1 text-xs"
                 >
@@ -387,8 +404,7 @@ export default function LastPage({
                 onClick={() => {
                   setEditingRowIndex(row.index)
                   setEditingData({ ...row.original })
-                  const hasExistingFollowUp = !!(row.original.follov_description || row.original.followUpVisit)
-                  setEditHasFollowUp(hasExistingFollowUp)
+                  // Removed setEditHasFollowUp(hasExistingFollowUp)
                   editForm.reset({
                     date: row.original.date,
                     age: row.original.age,
@@ -417,7 +433,7 @@ export default function LastPage({
         },
       },
     ],
-    [editingRowIndex, editingData, editForm, editHasFollowUp],
+    [editingRowIndex, editingData, editForm], // Removed editHasFollowUp from dependencies
   )
 
   return (
@@ -430,7 +446,15 @@ export default function LastPage({
               <pre className="text-red-700 text-sm mt-2">{JSON.stringify(errors, null, 2)}</pre>
             </div>
           )}
-
+          {/* Warning message when no vital signs are added */}
+          {!canSubmit && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+              <h4 className="text-yellow-800 font-medium">⚠️ Required Information Missing</h4>
+              <p className="text-yellow-700 text-sm mt-1">
+                Please add at least one vital sign record before submitting the form.
+              </p>
+            </div>
+          )}
           {!hasAddedVitalSigns && (
             <div className="p-4 border rounded-lg bg-blue-50">
               <h3 className="font-bold text-lg mb-4">Add New Vital Signs</h3>
@@ -475,43 +499,24 @@ export default function LastPage({
                       placeholder="Enter notes"
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="hasFollowUp"
-                      checked={hasFollowUp}
-                      onCheckedChange={(checked) => {
-                        setHasFollowUp(!!checked)
-                        if (!checked) {
-                          vitalSignForm.setValue("follov_description", "")
-                          vitalSignForm.setValue("followUpVisit", "")
-                        }
-                      }}
+                  {/* Removed Checkbox for "Requires follow-up visit?" */}
+                  {/* The follow-up fields are now always visible */}
+                  <div className="flex w-full gap-4">
+                    <FormInput
+                      control={vitalSignForm.control}
+                      name="follov_description"
+                      label="Follow Up Reason"
+                      type="text"
+                      placeholder="Enter reason for follow-up"
+                      className="w-full"
                     />
-                    <label
-                      htmlFor="hasFollowUp"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Requires follow-up visit?
-                    </label>
+                    <FormDateTimeInput
+                      control={vitalSignForm.control}
+                      name="followUpVisit"
+                      label="Follow Up Visit Date"
+                      type="date"
+                    />
                   </div>
-                  {hasFollowUp && (
-                    <div className="flex w-full gap-4">
-                      <FormInput
-                        control={vitalSignForm.control}
-                        name="follov_description"
-                        label="Follow Up Reason"
-                        type="text"
-                        placeholder="Enter reason for follow-up"
-                        className="w-full"
-                      />
-                      <FormDateTimeInput
-                        control={vitalSignForm.control}
-                        name="followUpVisit"
-                        label="Follow Up Visit Date"
-                        type="date"
-                      />
-                    </div>
-                  )}
                   <div className="flex justify-end">
                     <Button
                       type="button"
@@ -525,14 +530,12 @@ export default function LastPage({
               </Form>
             </div>
           )}
-
           <div className="pb-10">
             <h3 className="font-bold text-lg mb-4">Vital Signs Records</h3>
             <Form {...editForm}>
               <DataTable columns={columns} data={vitalSigns || []} />
             </Form>
           </div>
-
           <div className="mb-10 p-4 border rounded-lg bg-gray-50">
             <h3 className="font-bold text-lg mb-4">Health Status</h3>
             <div className="mb-4">
@@ -563,7 +566,7 @@ export default function LastPage({
               <div className="mt-4">
                 <h4 className="font-medium mb-2">
                   Low Birth Weight Follow-up (Weight:{" "}
-                  {vitalSigns?.find((vs) => Number.parseFloat(String(vs.wt)) < 2.5)?.wt || "N/A"} kg)
+                  {vitalSigns?.find((vs: any) => Number.parseFloat(String(vs.wt)) < 2.5)?.wt || "N/A"} kg)
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
@@ -572,23 +575,35 @@ export default function LastPage({
               </div>
             )}
           </div>
-
           {/* Conditional Nutritional Status Display */}
           {hasAddedVitalSigns && (
             <div className="mb-10">
-                 <div className="mb-10">
-            <NutritionalStatusCalculator
-              weight={vitalSigns?.[vitalSigns.length - 1]?.wt}
-              height={vitalSigns?.[vitalSigns.length - 1]?.ht}
-              age={formData.childAge}
-              muac={watch("nutritionalStatus")?.muac}
-              onStatusChange={handleNutritionalStatusChange}
-              initialStatus={watch("nutritionalStatus")}
-            />
-          </div>
+              <NutritionalStatusCalculator
+                weight={vitalSigns?.[vitalSigns.length - 1]?.wt}
+                height={vitalSigns?.[vitalSigns.length - 1]?.ht}
+                age={formData.childAge}
+                muac={watch("nutritionalStatus")?.muac}
+                onStatusChange={handleNutritionalStatusChange}
+                initialStatus={watch("nutritionalStatus")}
+              />
             </div>
           )}
-
+          {/* Conditional Edema Assessment - Only show when severe malnutrition is detected */}
+          {hasSevereMalnutrition && (
+            <div className="mt-6 p-4 border border-orange-200 rounded-lg bg-orange-50">
+              <h4 className="font-medium mb-4 text-orange-800">
+                🚨 Severe Malnutrition Detected - Edema Assessment Required
+              </h4>
+              <div className="ml-6 p-3">
+                <FormSelect
+                  control={control}
+                  name="edemaSeverity"
+                  label="Edema Severity Level"
+                  options={edemaSeverity}
+                />
+              </div>
+            </div>
+          )}
           <div className="mb-10 p-4 border rounded-lg bg-gray-50">
             <h3 className="font-semibold text-lg md:text-xl mb-4">Medicine Prescription</h3>
             <div className="grid grid-cols-1 gap-6">
@@ -608,22 +623,11 @@ export default function LastPage({
                   onPageChange={setCurrentPage}
                 />
               )}
-              <div className="space-y-2">
-                <FormTextArea
-                  control={control}
-                  name="supplementSummary"
-                  label="Supplement Summary"
-                  placeholder="Summary of prescribed medicines will appear here"
-                  className="min-h-[120px] w-full"
-                />
-              </div>
             </div>
           </div>
-
           {/* Healthcare Provider Status Selection */}
           <div className="p-4 border rounded-lg bg-purple-50">
             <h3 className="font-bold text-lg mb-4">Record Purpose & Status</h3>
-
             <FormField
               control={control}
               name="status"
@@ -658,7 +662,6 @@ export default function LastPage({
                 </FormItem>
               )}
             />
-
             {/* Status Confirmation */}
             {currentStatus && (
               <div
@@ -678,17 +681,15 @@ export default function LastPage({
                     : "Record only - No further action required"}
               </div>
             )}
-
             {!currentStatus && (
               <div className="mt-4 text-sm text-gray-500 italic">Please select the purpose for this health record.</div>
             )}
           </div>
-
           <div className="flex w-full justify-end gap-2">
             <Button type="button" variant="outline" onClick={onPrevious} className="w-[100px] bg-transparent">
               Previous
             </Button>
-            <Button type="submit" className="w-[100px]">
+            <Button type="submit" className="w-[100px]" disabled={!canSubmit}>
               Submit
             </Button>
           </div>

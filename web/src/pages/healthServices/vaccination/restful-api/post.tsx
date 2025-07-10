@@ -8,51 +8,7 @@ export const getVaccineStock = async (vaccineTypeId: string) => {
   return response.data;
 };
 
-export const createPatientRecord = async (pat_id: string) => {
-  try {
-    console.log("Sending request to create patient record:", {
-      patrec_type: "Vaccination",
-      pat_id,
-      created_at: new Date().toISOString()
-    });
 
-    const response = await api2.post("patientrecords/patient-record/", {
-      patrec_type: "Vaccination",
-      pat_id: pat_id,
-      created_at: new Date().toISOString(),
-    });
-
-    console.log("API Response:", response.data);
-    return response.data;
-
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // Handle 400 Bad Request specifically
-      if (error.response?.status === 400) {
-        console.error("Bad Request Details:", {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers
-        });
-        
-        // Extract validation errors if available
-        const validationErrors = error.response.data;
-        throw new Error(`Validation failed: ${JSON.stringify(validationErrors)}`);
-      }
-
-      // Handle other HTTP errors
-      console.error("API Error:", {
-        message: error.message,
-        code: error.code,
-        config: error.config
-      });
-    } else {
-      console.error("Unexpected Error:", error);
-    }
-    
-    throw error; // Re-throw for calling code
-  }
-};
 
 export const createVaccinationRecord = async (
   patrec_id: string,

@@ -247,10 +247,8 @@ export default function SoapForm() {
         const medicalHistoryData = data.selectedIllnesses.map((illnessId) => ({
           patrec: MedicalConsultation?.patrec,
           ill: illnessId,
-          medrec: MedicalConsultation.medrec_id,
           created_at: new Date().toISOString(),
         }))
-
         await createMedicalHistory(medicalHistoryData)
         medHistoryCreated = true
       }
@@ -262,8 +260,8 @@ export default function SoapForm() {
     } catch (error) {
       console.error("Error saving documentation:", error)
       try {
-        if (medHistoryCreated && MedicalConsultation?.medrec_id) {
-          await deleteMedicalHistory(MedicalConsultation.medrec_id)
+        if (medHistoryCreated && MedicalConsultation?.patrec) {
+          await deleteMedicalHistory(MedicalConsultation.patrec)
         }
         if (findingId) {
           await updateMedicalConsultation(MedicalConsultation.medrec_id, "pending")

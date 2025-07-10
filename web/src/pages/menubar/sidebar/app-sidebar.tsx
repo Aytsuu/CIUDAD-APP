@@ -366,7 +366,7 @@ const items: MenuItem[] = [
       { title: "Patients Record", url: "/patients-record-main" },
 
       { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Child Services", url: "/allChildHRTable" },
+      { title: "Child Services", url: "/all-child-health-records" },
       { title: "Maternal Services", url: "/maternalrecords" },
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation Services", url: "/allMedRecords" },

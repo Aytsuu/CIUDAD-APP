@@ -35,19 +35,19 @@ class Transient(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     
-    # 🟢 MOTHER fields
+    # MOTHER fields
     mother_fname = models.CharField(max_length=100, null=True, blank=True)
     mother_lname = models.CharField(max_length=100, null=True, blank=True)
     mother_mname = models.CharField(max_length=100, null=True, blank=True)
-    mother_occupation = models.CharField(max_length=100, null=True, blank=True)
+    # mother_occupation = models.CharField(max_length=100, null=True, blank=True)
     mother_age = models.CharField(max_length=100, null=True, blank=True)
     mother_dob = models.DateField(null=True, blank=True)
 
-    # 🟢 FATHER fields
+    # FATHER fields
     father_fname = models.CharField(max_length=100, null=True, blank=True)
     father_lname = models.CharField(max_length=100, null=True, blank=True)
     father_mname = models.CharField(max_length=100, null=True, blank=True)
-    father_occupation = models.CharField(max_length=100, null=True, blank=True)
+    # father_occupation = models.CharField(max_length=100, null=True, blank=True)
     father_age = models.CharField(max_length=100, null=True, blank=True)
     father_dob = models.DateField(null=True, blank=True)
 
@@ -214,7 +214,7 @@ class BodyMeasurement(models.Model):
     age = models.CharField(max_length=100 ,default="")
     height = models.DecimalField(max_digits=5, decimal_places=2,default=Decimal('0.00'))
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
-    bmi = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
+    # bmi = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
     # bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
@@ -258,8 +258,9 @@ class Finding(models.Model):
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True)
-    medrec = models.ForeignKey("medicalConsultation.MedicalConsultation_Record", on_delete=models.CASCADE, related_name='medical_history', null=True)
-
+    # medrec = models.ForeignKey("medicalConsultation.MedicalConsultation_Record", on_delete=models.CASCADE, related_name='medical_history', null=True)
+    patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
+    created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'medical_history'  
         
@@ -339,6 +340,14 @@ class PatientDisablity(models.Model):
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='patient_disabilities')
     disability = models.ForeignKey(ListOfDisabilities, on_delete=models.CASCADE, related_name='patient_disabilities')
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("active", "Active"),
+            ("resolve", "Resolve")
+        ],
+        default="active"
+    )
 
     class Meta:
-        db_table = 'patient_disability'
+        db_table = 'patient_disability_history'

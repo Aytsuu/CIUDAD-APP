@@ -11,7 +11,6 @@ import {
   createMedicineRecord,
   createPatientRecord,
 } from "../restful-api/postAPI";
-
 export interface MedicineRequestData {
   pat_id: string;
   medicines: {
@@ -22,13 +21,13 @@ export interface MedicineRequestData {
 }
 
 
-export const processMedicineRequest = async (data: MedicineRequestData) => {
+export const processMedicineRequest = async (data: MedicineRequestData,staffId:string | null) => {
   const results = [];
-
+ 
   for (const med of data.medicines) {
     try {
       // 1. Create patient record
-      const patientRecord = await createPatientRecord(data.pat_id);
+      const patientRecord = await createPatientRecord(data.pat_id,"Medicine Record");
       if (!patientRecord?.patrec_id) {
         throw new Error(
           "Failed to create patient record: No patrec_id returned"
@@ -61,11 +60,13 @@ export const processMedicineRequest = async (data: MedicineRequestData) => {
 
       await updateMedicineStocks(parseInt(med.minv_id, 10), {
         minv_qty_avail: newQty,
+        staff:staffId || null,
       });
 
       // Update inventory timestamp if exists
       if (inv_id) {
         await updateInventoryTimestamp(inv_id);
+        
       }
 
       const transactionPayload = {
@@ -73,6 +74,7 @@ export const processMedicineRequest = async (data: MedicineRequestData) => {
         mdt_action: "Deducted (Medicine Request)",
         mdt_staff: 1, // You might want to get this from auth/session
         minv_id: parseInt(med.minv_id, 10),
+        staff:staffId||null
       };
 
       await addMedicineTransaction(transactionPayload);
@@ -86,6 +88,8 @@ export const processMedicineRequest = async (data: MedicineRequestData) => {
         reason: med.reason || null,
         requested_at: new Date().toISOString(),
         fulfilled_at: new Date().toISOString(),
+        staff: staffId || null,
+
         // req_type: "WALK IN",
         // status: "RECORDED",
       };

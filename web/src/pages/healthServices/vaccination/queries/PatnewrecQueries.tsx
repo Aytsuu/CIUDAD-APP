@@ -4,7 +4,7 @@ import { CircleAlert } from "lucide-react";
 import {
   getVaccineStock,
   createAntigenStockTransaction,
-  createPatientRecord,
+  
   createVaccinationRecord,
   createVaccinationHistory,
   createVitalSigns,
@@ -24,7 +24,7 @@ import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "../Calculatenextvisit";
 import {checkVaccineStatus} from "../restful-api/fetch";
-
+import {createPatientRecord} from "@/pages/healthServices/restful-api-patient/createPatientRecord"
 // Mutation for Step 1 submission
 export const useSubmitStep1 = () => {
   const queryClient = useQueryClient();
@@ -50,12 +50,11 @@ export const useSubmitStep1 = () => {
       const response = await checkVaccineStatus(data.pat_id,parseInt(vac_id, 10));
       if (response?.exists) {throw new Error("Patient already has this vaccine in their record.");}
 
-
       if (assignmentOption === "other") {
         let patrec_id: string | null = null;
         let vacrec_id: string | null = null;
         try {
-          const patientRecord = await createPatientRecord(data.pat_id);
+          const patientRecord = await createPatientRecord(data.pat_id, "Vaccination Record");
           patrec_id = patientRecord.patrec_id;
 
           if (!patrec_id) {
@@ -157,7 +156,7 @@ export const useSubmitStep2 = () => {
         if (response?.exists) {throw new Error("Patient already has this vaccine in their record.");}
 
 
-        const patientRecord = await createPatientRecord(pat_id ?? "");
+        const patientRecord = await createPatientRecord(pat_id ?? "" , "Vaccination Record");
         patrec_id = patientRecord.patrec_id;
 
         // const status = maxDoses === 1 ? "completed" : "partially vaccinated";
