@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import NonComDiseaseForm from "./NonComDiseaseForm";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -28,16 +28,19 @@ type PersonInfo = {
 
 export default function NoncomDiseaseFormLayout({
   form,
-  residents,
+  familyMembers, // Changed from residents to familyMembers
   selectedResidentId,
   setSelectedResidentId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  residents: any;
+  familyMembers: PersonInfo[]; // Family members from composition
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const ncdRecords = form.watch("ncdRecords.list");
+  
+  // Ensure familyMembers is always an array
+  const safeFamilyMembers = familyMembers || [];
   
   // Updated columns with lifestyle risk and maintenance status
   const columns: ColumnDef<PersonInfo>[] = [
@@ -99,7 +102,13 @@ export default function NoncomDiseaseFormLayout({
       <div className="space-y-6">
         {/* Respondents Information */}
         <NonComDiseaseForm
-          residents={residents}
+          residents={{
+            default: safeFamilyMembers,
+            formatted: safeFamilyMembers.map(member => ({
+              ...member,
+              id: `${member.id} - ${member.firstName} ${member.lastName}`
+            }))
+          }}
           form={form}
           selectedResidentId={selectedResidentId}
           onSelect={setSelectedResidentId}

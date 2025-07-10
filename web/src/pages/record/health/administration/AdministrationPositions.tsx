@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Link, useNavigate } from "react-router";
 import { Action, Type } from "./administrationEnums";
-import { useDeletePosition } from "./queries/administrationDeleteQueries";
+import { useDeletePosition } from "../../administration/queries/administrationDeleteQueries";
 import {
   ChevronRight,
   Ellipsis,

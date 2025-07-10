@@ -1,4 +1,5 @@
 
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFamFilteredByHouseHealth,
@@ -119,9 +120,48 @@ export const useFamilyMembersHealth = (familyId: string) => {
   return useQuery({
     queryKey: ["familyMembersHealth", familyId],
     queryFn: () => getFamilyMembersHealth(familyId),
+    enabled: !!familyId, // Only run when familyId exists
     staleTime: 5000,
   })
 }
+
+// Combined hook to get family members with full resident details
+export const useFamilyMembersWithResidentDetails = (familyId: string) => {
+  const { data: familyMembers } = useFamilyMembersHealth(familyId);
+  const { data: allResidents } = useResidentsListHealth();
+
+  return React.useMemo(() => {
+    // Debug logging
+    console.log('Family ID for fetch:', familyId);
+    console.log('Family Members API Response:', familyMembers);
+    console.log('All Residents API Response:', allResidents);
+
+    // Return empty array if no familyId or if data is not available
+    if (!familyId || !familyMembers || !allResidents) return [];
+
+    // Ensure familyMembers is an array
+    const familyMembersArray = Array.isArray(familyMembers) ? familyMembers : [];
+    const allResidentsArray = Array.isArray(allResidents) ? allResidents : [];
+
+    if (familyMembersArray.length === 0 || allResidentsArray.length === 0) return [];
+
+    // Extract rp_ids from family members
+    const memberIds = familyMembersArray.map((member: any) => {
+      const rpId = member.rp?.rp_id || member.rp_id || member.id;
+      return rpId;
+    }).filter(Boolean); // Remove any undefined/null values
+    
+    console.log('Extracted Member IDs:', memberIds);
+    
+    // Filter residents to get only family members
+    const familyMembersWithDetails = allResidentsArray.filter((resident: any) => 
+      memberIds.includes(resident.rp_id)
+    );
+    console.log('Family Members with Details:', familyMembersWithDetails);
+
+    return familyMembersWithDetails;
+  }, [familyId, familyMembers, allResidents]);
+};
 export const useFamFilteredByHouseHealth = (householdId: string) => {
   return useQuery({
     queryKey: ["famFilteredByHouseHealth", householdId],

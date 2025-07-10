@@ -1,6 +1,6 @@
 import React from 'react';
 import { BsFillPersonFill, BsFillPeopleFill, BsCheckLg, BsFillPersonPlusFill } from 'react-icons/bs';
-import { MdGroupWork } from "react-icons/md";
+import { MdGroupWork, MdHome } from "react-icons/md";
 import { IconType } from 'react-icons';
 
 interface ProgressProps {
@@ -19,9 +19,10 @@ interface StepIconProps {
 }
 
 const STEPS: readonly Step[] = [
-  { label: "Demographic", minProgress: 30, icon: MdGroupWork },
-  { label: "Parent", minProgress: 60, icon: BsFillPeopleFill },
-  { label: "Dependent", minProgress: 100, icon: BsFillPersonPlusFill }
+  { label: "Demographic", minProgress: 25, icon: MdGroupWork },
+  { label: "Parent", minProgress: 50, icon: BsFillPeopleFill },
+  { label: "Dependent", minProgress: 75, icon: BsFillPersonPlusFill },
+  { label: "Household Info", minProgress: 100, icon: MdHome },
 ] as const;
 
 const StepIcon: React.FC<StepIconProps> = ({ progress, step }) => {

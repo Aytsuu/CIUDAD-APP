@@ -259,8 +259,12 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { formatHouseholds, formatResidents } from "./profilingFormats";
 import { DependentRecord } from "./profilingTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useHouseholdsListHealth, useResidentsListHealth } from "./family-profling/queries/profilingFetchQueries";
+import { useHouseholdsListHealth, useResidentsListHealth, useFamilyMembersWithResidentDetails } from "./family-profling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
+import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
+import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
+import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
+import { Separator } from "@/components/ui/separator";
 
 export default function FamilyProfileForm() {
   const { showLoading, hideLoading } = useLoading();
@@ -270,8 +274,9 @@ export default function FamilyProfileForm() {
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
-  const [selectedGuardianId, setSelectedGuardianId] =
-    React.useState<string>("");
+  const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
+  const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
+  const [famId, setFamId] = React.useState<string>(""); // Add fam_id state
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
@@ -282,6 +287,15 @@ export default function FamilyProfileForm() {
  
   const formattedResidents = React.useMemo(() => formatResidents(residentsListHealth), [residentsListHealth]);
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsListHealth), [householdsListHealth]);
+
+  // Fetch family members for household info step using famId
+  const familyMembersHealth = useFamilyMembersWithResidentDetails(famId);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('Family ID:', famId);
+    console.log('Family Members:', familyMembersHealth);
+  }, [famId, familyMembersHealth]);
 
   React.useEffect(() => {
       if(isLoadingHouseholds || isLoadingResidents) {
@@ -300,14 +314,17 @@ export default function FamilyProfileForm() {
     setCurrentStep((prev) => prev - 1);
   }, []);
 
-  // Calculate progress based on current step
+
+  // Calculate progress based on current step (4 steps)
   const calculateProgress = React.useCallback(() => {
     switch (currentStep) {
       case 1:
-        return 30;
+        return 25;
       case 2:
-        return 60;
+        return 50;
       case 3:
+        return 75;
+      case 4:
         return 100;
       default:
         return 0;
@@ -322,6 +339,7 @@ export default function FamilyProfileForm() {
         <Card className="w-full">
           <div className="pt-10">
             <ProgressWithIcon progress={calculateProgress()} />
+           
           </div>
           {currentStep === 1 && (
             <DemographicForm
@@ -351,6 +369,28 @@ export default function FamilyProfileForm() {
             />
           )}
           {currentStep === 3 && (
+            // <DependentsInfoLayout
+            //   form={form}
+            //   residents={{
+            //     default: residentsListHealth,
+            //     formatted: formattedResidents,
+            //   }}
+            //   selectedParents={[
+            //     selectedMotherId,
+            //     selectedFatherId,
+            //     selectedGuardianId,
+            //   ]}
+            //   dependentsList={dependentsList}
+            //   setDependentsList={setDependentsList}
+            //   defaultValues={defaultValues}
+            //   back={() => prevStep()}
+            //   nextStep={() => {
+            //     // After dependents registration, you should set famId from backend response here
+            //     // For now, just continue to next step
+            //     nextStep();
+            //   }}
+            //   setFamId={setFamId} // Pass setFamId to DependentsInfoLayout
+            // />
             <DependentsInfoLayout
               form={form}
               residents={{
@@ -368,6 +408,38 @@ export default function FamilyProfileForm() {
               back={() => prevStep()}
             />
           )}
+          {/* {currentStep === 4 && (
+            <>
+              <EnvironmentalFormLayout
+                form={form}
+                residents={{
+                  default: residentsListHealth,
+                  formatted: formattedResidents,
+                }}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+              <div className="flex items-center justify-between px-10">
+                <Separator />
+              </div>
+              <NoncomDiseaseFormLayout
+                form={form}
+                familyMembers={familyMembersHealth || []}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+              <div className="flex items-center justify-between px-10">
+                <Separator />
+              </div>
+              <TbSurveilanceInfoLayout
+                form={form}
+                residents={familyMembersHealth || []}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+            </>
+          )} */}
+          
         </Card>
 
     </LayoutWithBack>

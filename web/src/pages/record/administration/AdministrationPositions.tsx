@@ -9,6 +9,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { useNavigate } from "react-router"
 import { Action, Type } from "./administrationEnums"
 import { useDeletePosition } from "./queries/administrationDeleteQueries"
+import { useDeletePositionHealth } from "../health/administration/queries/administrationDeleteQueries" // Add this import
 import { ChevronRight, ChevronDown, Ellipsis, Trash, Loader2, Plus, Pen, Users, FolderOpen } from "lucide-react"
 
 export default function AdministrationPositions({
@@ -22,7 +23,11 @@ export default function AdministrationPositions({
 }) {
   const navigate = useNavigate()
   const { mutateAsync: deletePosition, isPending: isDeleting } = useDeletePosition()
+  const { mutateAsync: deletePositionHealth, isPending: isDeletingHealth } = useDeletePositionHealth()
   const [openCategories, setOpenCategories] = React.useState<Set<string>>(new Set())
+
+  // Check if any deletion is in progress
+  const isDeletingAny = isDeleting || isDeletingHealth
 
   // Group positions by category
   const groupedPositions = React.useMemo(() => {
@@ -70,11 +75,23 @@ export default function AdministrationPositions({
     [selectedPosition],
   )
 
-  const handleDelete = React.useCallback(() => {
-    deletePosition(selectedPosition, {
-      onSuccess: () => setSelectedPosition(""),
-    })
-  }, [selectedPosition, deletePosition])
+  const handleDelete = React.useCallback(async () => {
+    if (!selectedPosition) return
+    
+    try {
+      // Execute both deletions in parallel
+      await Promise.all([
+        deletePosition(selectedPosition),
+        deletePositionHealth(selectedPosition)
+      ])
+      
+      // Clear selection after successful deletion
+      setSelectedPosition("")
+    } catch (error) {
+      console.error("Error deleting position:", error)
+      // Handle error appropriately - you might want to show a toast notification
+    }
+  }, [selectedPosition, deletePosition, deletePositionHealth, setSelectedPosition])
 
   const handleEdit = React.useCallback(() => {
     navigate("position", {
@@ -203,7 +220,7 @@ export default function AdministrationPositions({
 
                           <div className="flex items-center gap-2">
                             {position.pos_id === selectedPosition ? (
-                              !isDeleting ? (
+                              !isDeletingAny ? (
                                 <DropdownLayout
                                   trigger={
                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

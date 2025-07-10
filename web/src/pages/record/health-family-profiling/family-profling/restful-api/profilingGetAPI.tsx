@@ -107,13 +107,14 @@ export const getFamilyID = async (residentId: string) => {
 }
 
 export const getFamilyMembersHealth = async (familyId: string) => {
-  if(!familyId) return;
+  if(!familyId) return [];
 
   try { 
     const res = await api2.get(`health-profiling/family/${familyId}/members/`)
-    return res.data
+    return res.data || [];
   } catch (err) {
-    throw err;
+    console.error('Error fetching family members:', err);
+    return [];
   }
 }
 

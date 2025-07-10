@@ -194,12 +194,12 @@
 //                   <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
 //                   <h3 className="text-lg font-medium text-gray-900 mb-2">
 //                     {searchQuery 
-//                       ? `No ${activeTab === "profile" ? "residents" : "health records"} found` 
-//                       : `No ${activeTab === "profile" ? "residents" : "health records"} yet`}
+//                       ? `No ${activeTab === "profile" ? "residents" : "Residents"} found` 
+//                       : `No ${activeTab === "profile" ? "residents" : "Residents"} yet`}
 //                   </h3>
 //                   <p className="text-gray-500 mb-4">
 //                     {searchQuery
-//                       ? `No ${activeTab === "profile" ? "residents" : "health records"} match "${searchQuery}". Try adjusting your search.`
+//                       ? `No ${activeTab === "profile" ? "residents" : "Residents"} match "${searchQuery}". Try adjusting your search.`
 //                       : `Get started by ${activeTab === "profile" ? "registering your first resident" : "checking the health profiling section"}.`}
 //                   </p>
 //                   {!searchQuery && activeTab === "profile" && (
@@ -246,7 +246,7 @@
 //                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
 //                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
 //                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
-//                   <span className="font-medium">{totalCount}</span> {activeTab === "profile" ? "residents" : "health records"}
+//                   <span className="font-medium">{totalCount}</span> {activeTab === "profile" ? "residents" : "Residents"}
 //                 </p>
 
 //                 {totalPages > 0 && (
@@ -509,12 +509,12 @@ export default function ResidentRecords() {
                   <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     {searchQuery 
-                      ? `No ${activeTab === "profile" ? "residents" : "health records"} found` 
-                      : `No ${activeTab === "profile" ? "residents" : "health records"} yet`}
+                      ? `No ${activeTab === "profile" ? "residents" : "Residents"} found` 
+                      : `No ${activeTab === "profile" ? "residents" : "Residents"} yet`}
                   </h3>
                   <p className="text-gray-500 mb-4">
                     {searchQuery
-                      ? `No ${activeTab === "profile" ? "residents" : "health records"} match "${searchQuery}". Try adjusting your search.`
+                      ? `No ${activeTab === "profile" ? "residents" : "Residents"} match "${searchQuery}". Try adjusting your search.`
                       : `Get started by ${activeTab === "profile" ? "registering your first resident" : "checking the health profiling section"}.`}
                   </p>
                   {!searchQuery && activeTab === "profile" && (
@@ -561,7 +561,7 @@ export default function ResidentRecords() {
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
-                  <span className="font-medium">{totalCount}</span> {activeTab === "profile" ? "residents" : "health records"}
+                  <span className="font-medium">{totalCount}</span> {activeTab === "profile" ? "residents" : "Residents"}
                 </p>
 
                 {totalPages > 0 && (

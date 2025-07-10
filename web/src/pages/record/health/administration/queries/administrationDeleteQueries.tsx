@@ -3,7 +3,7 @@ import { deleteAssignedFeatureHealth, deletePositionHealth } from "../restful-ap
 import { api2 } from "@/api/api";
 
 // Deleting
-export const useDeletePosition = () => {
+export const useDeletePositionHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deletePositionHealth,
@@ -15,7 +15,7 @@ export const useDeletePosition = () => {
   });
 };
 
-export const useDeleteAssignedFeature = () => {
+export const useDeleteAssignedFeatureHealth = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({positionId, featureId} : {

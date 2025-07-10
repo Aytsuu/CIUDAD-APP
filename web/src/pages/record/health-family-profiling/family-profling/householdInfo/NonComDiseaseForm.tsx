@@ -2,7 +2,7 @@ import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
@@ -25,11 +25,12 @@ export default function NonComDiseaseForm({
   title: string;
 }) {
   const filteredResidents = React.useMemo(() => {
+    if (!residents?.formatted) return [];
     return residents.formatted.filter((resident: any) => {
       const residentId = resident.id.split(" ")[0];
       return residentId !== selectedResidentId;
     });
-  }, [residents.formatted, selectedResidentId]);
+  }, [residents?.formatted, selectedResidentId]);
 
   // Get the current value for the new NCD record
   const newNcdRecord = form.watch(`${prefix}.new`);

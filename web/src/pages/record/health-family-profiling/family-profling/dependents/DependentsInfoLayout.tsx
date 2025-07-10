@@ -32,6 +32,8 @@ export default function DependentsInfoLayout({
   setDependentsList,
   back,
   defaultValues,
+  nextStep, // <-- add nextStep prop
+  setFamId, // <-- add setFamId prop
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -40,6 +42,8 @@ export default function DependentsInfoLayout({
   setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>;
   defaultValues: Record<string, any>;
   back: () => void;
+  nextStep?: () => void; // <-- add nextStep prop type
+  setFamId?: React.Dispatch<React.SetStateAction<string>>; // <-- add setFamId prop type
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
@@ -171,6 +175,11 @@ export default function DependentsInfoLayout({
         demographicInfo: demographicInfo, 
         staffId: user?.staff?.staff_id || ""
       });
+
+      // Set the family ID for use in household info step
+      if (setFamId && familyHealth?.fam_id) {
+        setFamId(familyHealth.fam_id);
+      }
 
       // --- Respondent and health details submission ---
       try {
@@ -321,7 +330,11 @@ export default function DependentsInfoLayout({
       }
 
       // Success - navigate back
-      safeNavigate.back();
+      if (nextStep) {
+        nextStep();
+      } else {
+        safeNavigate.back();
+      }
       
     } catch (error) {
       console.error('Family registration failed:', error);

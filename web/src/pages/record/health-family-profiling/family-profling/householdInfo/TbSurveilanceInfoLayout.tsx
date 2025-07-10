@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import TbSurveilanceForm from "./TbSurveilanceForm";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -32,11 +32,23 @@ export default function TbSurveilanceInfoLayout({
   setSelectedResidentId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  residents: any;
+  residents: PersonInfo[]; // Family members array
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const tbRecords = form.watch("tbRecords.list");
+  
+  // Ensure residents is always an array
+  const safeResidents = residents || [];
+  
+  // Structure residents data for the form
+  const structuredResidents = {
+    default: safeResidents,
+    formatted: safeResidents.map(member => ({
+      ...member,
+      id: `${member.id} - ${member.firstName} ${member.lastName}`
+    }))
+  };
   
   const columns: ColumnDef<PersonInfo>[] = [
     { 
@@ -89,7 +101,7 @@ export default function TbSurveilanceInfoLayout({
       <div className="space-y-6">
         {/* TB Surveillance Information */}
         <TbSurveilanceForm
-          residents={residents}
+          residents={structuredResidents}
           form={form}
           selectedResidentId={selectedResidentId}
           onSelect={setSelectedResidentId}

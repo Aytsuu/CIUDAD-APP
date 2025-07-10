@@ -96,6 +96,39 @@ export const householdHeadSchema = z.object({
   middleName: z.string(),
   sex: z.string(),
 });
+export const personInfoSchema = z.object({
+  id: z.string(),
+  lastName: z.string(),
+  firstName: z.string(),
+  middleName: z.string(),
+  suffix: z.string(),
+  sex: z.string(),
+  dateOfBirth: z.string(),
+  contact: z.string(),
+});
+
+export const environmentalFormSchema = z.object({
+  waterSupply: z.string().min(1, "Water supply type is required"),
+  facilityType: z.string().min(1, "At least one sanitary facility must be selected"),
+  sanitaryFacilityType: z.string().optional(),
+  unsanitaryFacilityType: z.string().optional(),
+  toiletFacilityType: z.string(),
+  wasteManagement: z.string().min(1, )
+
+});
+
+export const ncdFormSchema = z.object({
+  riskClassAgeGroup: z.string(),
+  comorbidities: z.string(),
+  lifestyleRisk: z.string(),
+  inMaintenance: z.string(),
+})
+export const tbSurveilanceSchema = z.object({
+  srcAntiTBmeds: z.string(),
+  noOfDaysTakingMeds: z.string(),
+  tbStatus: z.string(),
+
+})
 
 
 export const familyFormSchema = z.object({
@@ -115,6 +148,24 @@ export const familyFormSchema = z.object({
   dependentsInfo: z.object({
     list: z.array(dependentSchema).default([]),
     new: dependentSchema,
+  }),
+  environmentalForm: environmentalFormSchema,
+  
+  ncdRecords: z.object({
+    list: z.array(personInfoSchema.extend({
+      ncdFormSchema: ncdFormSchema.optional()
+    })).default([]),
+    new: personInfoSchema.extend({
+      ncdFormSchema: ncdFormSchema.optional()
+    })
+  }),
+  tbRecords: z.object({
+    list: z.array(personInfoSchema.extend({
+      tbSurveilanceSchema: tbSurveilanceSchema.optional()
+    })).default([]),
+    new: personInfoSchema.extend({
+      tbSurveilanceSchema: tbSurveilanceSchema.optional()
+    })
   }),
 });
 
