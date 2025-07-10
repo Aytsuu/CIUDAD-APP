@@ -12,6 +12,16 @@ import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/Stoc
 export const getColumns = (
   handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<FirstAidStocksRecord>[] => [
+
+  {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => (
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+        {row.original.inv_id}
+      </div>
+    )
+  },
   {
     accessorKey: "firstAidInfo",
     header: "Item Name",

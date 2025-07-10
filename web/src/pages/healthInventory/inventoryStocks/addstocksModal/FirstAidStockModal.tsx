@@ -18,8 +18,10 @@ import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPost
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-
+import { useAuth } from "@/context/AuthContext";
 export default function () {
+  const {user}=useAuth()
+  const staff_id = user?.staff?.staff_id
   const form = useForm<FirstAidStockType>({
     resolver: zodResolver(FirstAidStockSchema),
     defaultValues: {
@@ -62,7 +64,7 @@ export default function () {
   const confirmAdd = () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit(formData);
+    submit({ data: formData, staff_id });
   };
 
   return (

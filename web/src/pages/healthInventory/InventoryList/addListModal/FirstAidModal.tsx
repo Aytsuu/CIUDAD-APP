@@ -26,9 +26,12 @@ import { Button } from "@/components/ui/button/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
-
+import { useAuth } from "@/context/AuthContext";
 export default function FirstAidModal() {
   const navigate = useNavigate();
+
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id;
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
@@ -59,7 +62,7 @@ export default function FirstAidModal() {
   const confirmAdd = async () => {
     const formData = form.getValues();
     setIsAddConfirmationOpen(false);
-    addFirstAidMutation(formData);
+    addFirstAidMutation({ data: formData, staff_id });
   };
 
   const isDuplicateFirstAid = (
@@ -99,7 +102,6 @@ export default function FirstAidModal() {
         });
         return;
       }
-
       setNewFirstAidName(data.fa_name);
       setIsAddConfirmationOpen(true);
     } catch (err) {

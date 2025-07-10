@@ -1,6 +1,6 @@
 import {api2}  from "@/api/api";
 
-export const addMedicineInventory = async (data: Record<string, any>, inv_id: string) => {
+export const addMedicineInventory = async (data: Record<string, any>, inv_id: string,staff:string) => {
   try {
     if (!data.medicineID) {
       throw new Error("Medicine ID is required.");
@@ -21,6 +21,7 @@ export const addMedicineInventory = async (data: Record<string, any>, inv_id: st
       minv_qty_avail: minv_qty_avail,
       med_id:data.medicineID,
       inv_id,
+      staff: staff ||null
     });
 
     if (res.data.error) {

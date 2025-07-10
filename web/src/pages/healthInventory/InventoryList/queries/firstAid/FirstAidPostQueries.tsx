@@ -7,7 +7,7 @@ import { FirstAidType } from "@/form-schema/inventory/lists/inventoryListSchema"
 export const useAddFirstAid = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: FirstAidType) => addFirstAid(data),
+    mutationFn: ({ data, staff_id }: { data: FirstAidType; staff_id: string }) => addFirstAid(data, staff_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["firstAid"] });
     },

@@ -23,6 +23,8 @@ interface ImmunizationData {
   vaccineName: string;
 }
 
+
+
 export default function EditImmunizationSupplies() {
   const location = useLocation();
   const navigate = useNavigate();

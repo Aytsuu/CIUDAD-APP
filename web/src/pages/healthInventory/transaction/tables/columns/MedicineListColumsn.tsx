@@ -4,8 +4,14 @@ import { MedicineRecords } from "../type";
 
 
 export const Medcolumns = (): ColumnDef<MedicineRecords>[] => [
-  // { accessorKey: "mdt_id", header: "Medicine ID" },
   {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => (
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+        {row.original.inv_id}{" "}
+      </div>
+    ),},  {
     accessorKey: "med_name",
     header: "Medicine Name",
     cell: ({ row }) => {

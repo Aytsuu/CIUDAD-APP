@@ -23,7 +23,7 @@ export const addCommodityInventory = async (
 
 export const addCommodityTransaction = async (
   string_qty: string,
-  staffId: number,
+  staffId: string,
   cinv_id: number,
   action: string
 ) => {
@@ -35,7 +35,7 @@ export const addCommodityTransaction = async (
     const res = await api2.post("inventory/commoditytransaction/", {
       comt_qty: string_qty,
       comt_action: action,
-      staff: staffId,
+      staff: staffId || null,
       cinv_id: cinv_id,
     });
 

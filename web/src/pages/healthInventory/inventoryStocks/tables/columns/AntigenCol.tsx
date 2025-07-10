@@ -11,8 +11,43 @@ export const getStockColumns = (
   handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<StockRecords>[] => [
   {
+    accessorKey: "created_at",
+    header: "Date",
+    cell: ({ row }) => {
+      console.log("Row data:", row.original); // Debugging
+      const dateString = row.original.created_at;
+      
+      if (!dateString) {
+        return <div className="text-center text-gray-400">N/A</div>;
+      }
+  
+      try {
+        const date = new Date(dateString);
+        return (
+          <div className="text-center">
+            {date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        );
+      } catch (error) {
+        console.error("Invalid date format:", dateString);
+        return <div className="text-center text-red-400">Invalid Date</div>;
+      }
+    }
+  },
+  {
     accessorKey: "inv_id",
     header: "ID",
+    cell: ({ row }) => (
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+        {row.original.inv_id}
+      </div>
+    )
   },
   {
     accessorKey: "batchNumber",
@@ -323,7 +358,7 @@ export const getStockColumns = (
               <Minus size={15} />
             </Link>
           </Button>
-
+{/* 
           <Button variant="outline" disabled={expired} asChild>
             <Link
               to={isVaccine ? "/editVaccineStock" : "/editImzSupplyStock"}
@@ -331,7 +366,7 @@ export const getStockColumns = (
             >
               <Plus size={16} />
             </Link>
-          </Button>
+          </Button> */}
 
           <Button
             variant="destructive"
