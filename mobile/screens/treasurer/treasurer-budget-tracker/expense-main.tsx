@@ -1216,8 +1216,8 @@ const ExpenseTracking = () => {
         iet_serial_num: item.iet_serial_num || '',
         iet_datetime: item.iet_datetime || '',
         iet_entryType: item.iet_entryType || 'Expense',
-        iet_particular_id: String(item.dtl_id),
-        iet_particulars_name: String(item.dtl_budget_item),
+        iet_particular_id: String(item.exp_id),
+        iet_particulars_name: String(item.exp_budget_item),
         iet_amount: item.iet_amount || '0',
         iet_actual_amount: item.iet_actual_amount || '0',
         iet_additional_notes: item.iet_additional_notes || '',
@@ -1251,7 +1251,7 @@ const ExpenseTracking = () => {
   };
 
   const handleArchive = async (item: any) => {
-    const matchingBudgetItem = budgetItems.find(budget => budget.id === item.dtl_id.toString());
+    const matchingBudgetItem = budgetItems.find(budget => budget.id === item.exp_id.toString());
     let totalBudget = 0.00;
     let totalExpense = 0.00;
     let proposedBud = 0.00;
@@ -1275,7 +1275,7 @@ const ExpenseTracking = () => {
     const allValues = {
       iet_num: item.iet_num,
       iet_is_archive: true,
-      dtl_id: item.dtl_id,
+      exp_id: item.exp_id,
       year: Number(year),
       totalBudget, 
       totalExpense, 
@@ -1286,7 +1286,7 @@ const ExpenseTracking = () => {
   };
 
   const handleRestore = async (item: any) => {
-    const matchingBudgetItem = budgetItems.find(budget => budget.id === item.dtl_id.toString());
+    const matchingBudgetItem = budgetItems.find(budget => budget.id === item.exp_id.toString());
     let totalBudget = 0.00;
     let totalExpense = 0.00;
     let proposedBud = 0.00;
@@ -1310,7 +1310,7 @@ const ExpenseTracking = () => {
     const allValues = {
       iet_num: item.iet_num,
       iet_is_archive: false,
-      dtl_id: item.dtl_id,
+      exp_id: item.exp_id,
       year: Number(year),
       totalBudget, 
       totalExpense, 
@@ -1373,7 +1373,7 @@ const ExpenseTracking = () => {
       <CardContent className="space-y-2">
         <View className="flex-row justify-between">
           <Text className="text-gray-600">Particulars:</Text>
-          <Text>{item.dtl_budget_item}</Text>
+          <Text>{item.exp_budget_item}</Text>
         </View>
         <View className="flex-row justify-between">
           <Text className="text-gray-600">Amount:</Text>
