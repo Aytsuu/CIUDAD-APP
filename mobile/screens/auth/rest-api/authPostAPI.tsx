@@ -58,7 +58,7 @@ export const addRequest = async (data: Record<string, any>) => {
 
 export const postFaceData = async (data: Record<string, any>) => {
   try {
-    const res = await api.post("api/detection/face/", data);
+    const res = await api.post("profiling/kyc/face-match/", data);
     return res.data;
   } catch (err) {
     console.error(err);
