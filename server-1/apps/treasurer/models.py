@@ -190,6 +190,16 @@ class Invoice(models.Model):
 
 #======================================================================================
 
+class Expense_Particular(models.Model):
+    exp_id = models.BigAutoField(primary_key = True)
+    exp_budget_item = models.CharField(max_length=200)
+    exp_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    exp_budget_category = models.CharField(max_length=200)
+    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='expense_particulars')
+    class Meta: 
+        db_table = 'expense_particular'    
+        
+
 class Income_Expense_Tracking(models.Model):
     iet_num = models.BigAutoField(primary_key=True)
     iet_serial_num = models.CharField(max_length=100, default='DEFAULT_SERIAL') 
@@ -200,7 +210,7 @@ class Income_Expense_Tracking(models.Model):
     iet_additional_notes = models.CharField(max_length=100)
     iet_receipt_image = models.CharField(null=True, blank=True)
     iet_is_archive = models.BooleanField(default=False)
-    dtl_id = models.ForeignKey('budget_plan_detail', on_delete=models.CASCADE)
+    exp_id = models.ForeignKey('expense_particular', on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "income_expense_tracking"

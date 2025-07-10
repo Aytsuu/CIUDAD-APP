@@ -129,6 +129,16 @@ class Disbursement_Folder_Serializer(serializers.ModelSerializer):
 
 # ------- INCOME_EXPENSE FILE
 
+class Expense_ParticularSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Expense_Particular
+        fields = '__all__'
+        extra_kwargs = {
+            'plan': {'required': False},
+            'exp_budget_item': {'required': False},
+            'exp_budget_category': {'required': False},
+        }
+
 class Income_Expense_FileSerializers(serializers.ModelSerializer):
     class Meta:
         model = Income_Expense_File
@@ -151,7 +161,7 @@ class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):
 #         fields = '__all__'
 
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
-    dtl_budget_item = serializers.CharField(source='dtl_id.dtl_budget_item', read_only=True)
+    exp_budget_item = serializers.CharField(source='exp_id.exp_budget_item', read_only=True)
     files = Income_Expense_FileSimpleSerializer(many=True, read_only=True)  # Add this line
     
     class Meta:

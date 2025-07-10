@@ -4,7 +4,7 @@ import { archiveOrRestoreExpense } from "../request/income-ExpenseTrackingDelete
 import { archiveOrRestoreIncome } from "../request/income-ExpenseTrackingDeleteRequest";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeMain } from "../request/income-ExpenseTrackingPostRequest";
-import { updateBudgetPlanDetail } from "../request/income-ExpenseTrackingPostRequest";
+import { updateExpenseParticular } from "../request/income-ExpenseTrackingPostRequest";
 import { deleteIncome } from "../request/income-ExpenseTrackingDeleteRequest";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
@@ -89,7 +89,7 @@ export const useDeleteIncomeExpense = () => {
 interface ArchivePayload {
   iet_num: number;
   iet_is_archive: boolean;
-  dtl_id: number;
+  exp_id: number;
   year: number;
   totalBudget: number;
   totalExpense: number;
@@ -114,10 +114,11 @@ export const useArchiveOrRestoreExpense = (onSuccess?: () => void) => {
 
 
       // 3. Update the budget plan detail
-      await updateBudgetPlanDetail(data.dtl_id, {
+      await updateExpenseParticular(data.exp_id, {
         years: data.year,
-        dtl_proposed_budget: data.proposedBud,
+        exp_proposed_budget: data.proposedBud,
       });
+
 
       return data.iet_num;
     },
