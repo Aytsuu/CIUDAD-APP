@@ -68,10 +68,10 @@ export default function AnnouncementListPage() {
           </View>
 
           <View className="mb-2 self-start">
-  <Text className="text-gray-600 text-sm bg-gray-100 px-2 py-1 rounded-full">
-    {item.ann_type?.toUpperCase()}
-  </Text>
-</View>
+            <Text className="text-gray-600 text-sm bg-gray-100 px-2 py-1 rounded-full">
+              {item.ann_type?.toUpperCase()}
+            </Text>
+          </View>
           <View>
             <Text className="text-gray-500 text-xs">
               Files: {item.files?.length > 0 ? `${item.files.length} file(s)` : 'None'}
@@ -87,7 +87,7 @@ export default function AnnouncementListPage() {
 
         <TouchableOpacity
           onPress={() => deleteAnnouncement(String(item.ann_id))}
-          className="flex-row items-center justify-center mt-3 bg-red-500 px-3 py-2 rounded-lg">        
+          className="flex-row items-center justify-center mt-3 bg-red-500 px-3 py-2 rounded-lg">
           <Text className="text-white text-sm font-medium">Delete</Text>
         </TouchableOpacity>
       </Card>
@@ -98,7 +98,13 @@ export default function AnnouncementListPage() {
     <PageLayout
       leftAction={
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/'); 
+            }
+          }}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
           <ChevronLeft size={24} className="text-gray-700" />

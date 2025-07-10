@@ -9,6 +9,7 @@ import BarangayCouncil from '@/pages/landing/BarangayCouncil';
 import MobileApp from '@/pages/landing/MobileApp';
 import { RouteObject } from 'react-router';
 import Health from '@/pages/landing/Health';
+import Announcements from '@/pages/landing/announcements';
 
 
 export const landing_router: RouteObject[] = [
@@ -51,6 +52,10 @@ export const landing_router: RouteObject[] = [
       {
         path: "sign-in",
         element: <SignIn />
+      },
+      {
+        path: "announcements",
+        element: <Announcements/>
       }
     ]
   }

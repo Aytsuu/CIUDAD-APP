@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useGetAnnouncement, useGetAnnouncementRecipient } from './queries';
+import { useGetAnnouncement} from './queries';
 import PageLayout from '@/screens/_PageLayout';
 
 export default function AnnouncementViewPage() {
@@ -10,12 +10,8 @@ export default function AnnouncementViewPage() {
   const { ann_id } = useLocalSearchParams();
 
   const { data: announcements = [] } = useGetAnnouncement();
-  const { data: recipients = [] } = useGetAnnouncementRecipient();
 
   const announcement = announcements.find((a) => a.ann_id === Number(ann_id));
-  const announcementRecipients = recipients.filter(
-    (rec: any) => rec.announcement_id === Number(ann_id)
-  );
 
   if (!announcement) {
     return (
@@ -52,27 +48,6 @@ export default function AnnouncementViewPage() {
           </Text>
           <Text className="text-gray-600">End: {announcement.ann_end_at || 'No end date'}</Text>
         </View>
-
-        {/* Recipients */}
-        {announcementRecipients.length > 0 && (
-          <View className="mb-6">
-            <Text className="text-lg font-bold text-gray-900 mb-4">Recipients</Text>
-            {announcementRecipients.map((rec: any) => (
-              <View
-                key={rec.ar_id}
-                className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm"
-              >
-                <Text className="text-gray-800 font-medium mb-1">
-                  Position: <Text className="font-bold">{rec.position_title || 'N/A'}</Text>
-                </Text>
-                <Text className="text-gray-600 mb-1">
-                  Delivery: {rec.ar_mode?.toUpperCase()}
-                </Text>
-                <Text className="text-gray-600">Age Group: {rec.ar_age || 'All'}</Text>
-              </View>
-            ))}
-          </View>
-        )}
 
         {/* Files */}
         {announcement.files?.length > 0 && (

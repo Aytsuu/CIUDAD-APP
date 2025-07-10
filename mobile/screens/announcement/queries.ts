@@ -14,60 +14,48 @@ export const useGetAnnouncement = () => {
   });
 };
 
-export const useGetAnnouncementRecipient = () => {
-  return useQuery({
-    queryKey: ["recipients"],
-    queryFn: async () => {
-      const response = await api.get("announcement/create-recipient/"); // ✅ This is correct
-      const data = response.data?.data ?? response.data ?? [];
-      return Array.isArray(data) ? data : [];
+
+export const usePostAnnouncement = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (values: Record<string, any>) => {
+      const res = await api.post("announcement/create/", values);
+      return res.data;
     },
-    staleTime: 1000 * 60 * 5,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
   });
 };
 
+export const usePostAnnouncementRecipient = () => {
+  const queryClient = useQueryClient();
 
-// export const usePostAnnouncement = () => {
-//   const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: any) => {
+      const res = await api.post("announcement/create-recipient/", values);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recipients"] });
+    },
+  });
+};
 
-//   return useMutation({
-//     mutationFn: async (values: Record<string, any>) => {
-//       const res = await api.post("announcement/create/", values);
-//       return res.data;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["announcements"] });
-//     },
-//   });
-// };
+export const usePostAnnouncementFiles = () => {
+  const queryClient = useQueryClient();
 
-// export const usePostAnnouncementRecipient = () => {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async (values: any) => {
-//       const res = await api.post("announcement/create-recipient/", values);
-//       return res.data;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["recipients"] });
-//     },
-//   });
-// };
-
-// export const usePostAnnouncementFiles = () => {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async (files: any[]) => {
-//       const res = await api.post("announcement/upload-files/", files);
-//       return res.data;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["announcements"] });
-//     },
-//   });
-// };
+  return useMutation({
+    mutationFn: async (files: any[]) => {
+      const res = await api.post("announcement/upload-files/", files);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
+  });
+};
 
 export const useDeleteAnnouncement = () => {
   const queryClient = useQueryClient();
