@@ -85,6 +85,7 @@ class Income_File_Folder(models.Model):
     inf_num = models.BigAutoField(primary_key=True)
     inf_year = models.CharField(max_length=4)
     inf_name = models.CharField(max_length=100, default='')
+    inf_desc = models.CharField(default='', null=True)
     inf_is_archive = models.BooleanField(default=False)
 
     staff = models.ForeignKey(
@@ -100,7 +101,7 @@ class Income_File_Folder(models.Model):
 
 class Income_Image(models.Model):
     infi_num = models.BigAutoField(primary_key=True)
-    infi_upload_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
+    infi_upload_date = models.CharField(default=date.today)
     infi_is_archive = models.BooleanField(default=False)
     infi_type = models.CharField(max_length=100, null=True)
     infi_name = models.CharField(max_length=255, null=True)
@@ -131,6 +132,7 @@ class Disbursement_File_Folder(models.Model):
     dis_num = models.BigAutoField(primary_key=True)
     dis_year = models.CharField(max_length=4)
     dis_name = models.CharField(max_length=100, default='')
+    dis_desc = models.CharField(default='', null=True)
     dis_is_archive = models.BooleanField(default=False)
 
     staff = models.ForeignKey(
@@ -145,7 +147,7 @@ class Disbursement_File_Folder(models.Model):
 
 class Disbursement_Image(models.Model):
     disf_num = models.BigAutoField(primary_key=True)
-    disf_upload_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
+    disf_upload_date = models.CharField(default=date.today)
     disf_is_archive = models.BooleanField(default=False)
     disf_type = models.CharField(max_length=100, null=True)  # File type (e.g., image/jpeg)
     disf_name = models.CharField(max_length=255, null=True)  # File name

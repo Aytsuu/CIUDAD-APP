@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from 'react-router';
 import CardLayout from "@/components/ui/card/card-layout";
-import { Calendar, Search, X } from 'lucide-react';
+import { Calendar, Search } from 'lucide-react';
 import { Progress } from "@/components/ui/progress"; 
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,7 +90,7 @@ function IncomeExpenseMain() {
                                                 <div>{tracker.ie_main_year} Budget Overview</div>
                                             </h1>
                                         </div>
-                                        <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
+                                        {/* <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} /> */}
                                     </div>
                                 }
                                 description=""

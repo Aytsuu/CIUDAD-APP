@@ -12,6 +12,8 @@ export type Album = {
   is_archive: boolean; // Derived from all images
   inf_name?: string;
   dis_name?: string;
+  inf_desc?: string;
+  dis_desc?: string;
 };
 
 export type ImageItem =
@@ -31,6 +33,7 @@ export type IncomeImage = {
   inf_year: string;
   infi_is_archive: boolean;
   inf_name: string;
+  inf_desc?: string;
 };
 
 export const useGetIncomeImages = (archive: boolean = false, folderId?: number) => {
@@ -58,6 +61,7 @@ export type DisbursementImage = {
   dis_year: string;
   disf_is_archive: boolean;
   dis_name: string;
+  dis_desc?: string;
 };
 
 export const useGetDisbursementImages = (archive: boolean = false, folderId?: number) => {
@@ -77,6 +81,7 @@ export type IncomeFolder = {
   inf_year: string;   
   inf_name: string;       
   inf_is_archive: boolean;   
+  inf_desc?: string;
 };
 
 export type DisbursementFolder = {
@@ -84,6 +89,7 @@ export type DisbursementFolder = {
   dis_year: string;       
   dis_name: string;  
   dis_is_archive: boolean;  
+  dis_desc?: string;
 };
 
 export const useGetIncomeFolder = (inf_num: number | null) => {

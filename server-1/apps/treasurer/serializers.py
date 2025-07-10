@@ -82,7 +82,7 @@ class BudgetPlanHistorySerializer(serializers.ModelSerializer):
 class Income_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Income_File_Folder
-        fields = ['inf_num', 'inf_year', 'inf_name', 'inf_is_archive', 'staff']
+        fields = ['inf_num', 'inf_year', 'inf_name', 'inf_is_archive','inf_desc', 'staff']
         read_only_fields = ['inf_is_archive']
 
 class Income_ImageSerializers(serializers.ModelSerializer):
@@ -90,9 +90,10 @@ class Income_ImageSerializers(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     inf_year = serializers.CharField(source='inf_num.inf_year', read_only=True)
     inf_name = serializers.CharField(source='inf_num.inf_name', read_only=True)
+    inf_desc = serializers.CharField(source='inf_num.inf_desc', read_only=True)
     class Meta:
         model = Income_Image
-        fields = ['infi_num', 'infi_upload_date', 'infi_is_archive', 'infi_type', 'infi_name', 'infi_path', 'infi_url', 'inf_num', 'staff_name', 'inf_year', 'inf_name']
+        fields = ['infi_num', 'infi_upload_date', 'infi_is_archive', 'infi_type', 'infi_name', 'infi_path', 'infi_url', 'inf_num', 'staff_name', 'inf_year', 'inf_name','inf_desc']
         extra_kwargs = {
             'inf_num': {'required': True},
             'infi_name': {'required': True},
@@ -106,9 +107,10 @@ class Disbursement_ImageSerializers(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     dis_year = serializers.CharField(source='dis_num.dis_year', read_only=True)
     dis_name = serializers.CharField(source='dis_num.dis_name', read_only=True)
+    dis_desc = serializers.CharField(source='dis_num.dis_desc', read_only=True)
     class Meta:
         model = Disbursement_Image
-        fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name']
+        fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name','dis_desc']
         extra_kwargs = {
             'dis_num': {'required': True},
             'disf_name': {'required': True},
@@ -120,7 +122,7 @@ class Disbursement_ImageSerializers(serializers.ModelSerializer):
 class Disbursement_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Disbursement_File_Folder
-        fields = ['dis_num', 'dis_year', 'dis_name', 'dis_is_archive', 'staff']
+        fields = ['dis_num', 'dis_year', 'dis_name', 'dis_desc', 'dis_is_archive', 'staff']
         read_only_fields = ['dis_is_archive']
 
 

@@ -383,6 +383,14 @@ const getDeleteAllDescription = (album: Album) => {
                       : (album.images[0] as DisbursementImage)
                           .disf_upload_date || "N/A"}
                   </p>
+                  <p className="text-xs text-gray-500">
+                    Description:{" "}
+                    {album.images[0]?.type === "income"
+                      ? (album.images[0] as IncomeImage).inf_desc ||
+                        "N/A"
+                      : (album.images[0] as DisbursementImage)
+                          .dis_desc || "N/A"}
+                  </p>
                 </div>
 
                 <div className="mt-3 flex flex-row justify-between items-center gap-2">
