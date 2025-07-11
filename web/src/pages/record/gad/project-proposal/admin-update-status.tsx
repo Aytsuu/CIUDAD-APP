@@ -171,6 +171,19 @@ const handleUpdateStatus = () => {
   const isReasonRequired = newStatus === "Approved" || newStatus === "Rejected";
   const isUpdateDisabled = !newStatus || newStatus === selectedProject?.status || (isReasonRequired && !reason?.trim());
 
+  // Calculate total budget of all displayed projects
+  const totalBudget = filteredProjects.reduce((sum, project) => {
+    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
+
+    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
+      const amount = item.amount || 0;
+      const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
+      return projectSum + (paxCount * amount);
+    }, 0);
+
+    return sum + projectTotal;
+  }, 0);
+
   if (isLoading) {
     return (
       <div className="bg-snow w-full h-full p-4">
@@ -248,6 +261,21 @@ const handleUpdateStatus = () => {
         </div>
       </div>
 
+      {/* Dynamic Total Budget Display */}
+        <div className="flex justify-end mt-2 mb-2">
+          <div className="bg-blue-50 px-4 py-2 rounded-lg">
+            <span className="font-medium text-blue-800">
+              Grand Total:{" "}
+              <span className="font-bold text-green-700">
+                ₱{new Intl.NumberFormat('en-US', { 
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2 
+                }).format(totalBudget)}
+              </span>
+            </span>
+          </div>
+        </div>
+
       <div className="flex flex-col mt-4 gap-4">
         {filteredProjects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
@@ -285,6 +313,26 @@ const handleUpdateStatus = () => {
                       Date: {project.date || "No date provided"}
                     </span>
                   </div>
+                  <span className="text-xs text-gray-500 underline">
+                       Total Budget: ₱{
+                          project.budgetItems && project.budgetItems.length > 0
+                            ? new Intl.NumberFormat('en-US', { 
+                                style: 'decimal', 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              }).format(
+                                project.budgetItems.reduce((grandTotal, item) => {
+                                  const amount = item.amount || 0;
+                                  const paxCount = 
+                                    item.pax?.includes("pax") 
+                                      ? parseInt(item.pax) || 1 
+                                      : 1;
+                                  return grandTotal + (paxCount * amount);
+                                }, 0)
+                              )
+                            : "N/A"
+                        }
+                    </span>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex flex-col gap-1">
                       <span
