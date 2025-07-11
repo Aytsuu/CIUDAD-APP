@@ -23,6 +23,7 @@ import {
 import ViewProjectProposal from "./view-projprop";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
 import type { ProposalStatus } from "./queries/updatequeries";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 function AdminGADProjectProposal() {
   const style = {
@@ -61,6 +62,8 @@ function AdminGADProjectProposal() {
   const [reason, setReason] = useState<string | null>(null);
   const updateStatusMutation = useUpdateProjectProposalStatus();
   const [isPdfLoading, setIsPdfLoading] = useState(true);
+  const [pageSize, setPageSize] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -103,19 +106,52 @@ function AdminGADProjectProposal() {
       return title.includes(search) || background.includes(search);
     });
 
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredProjects.length / pageSize);
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const handleViewProject = (project: ProjectProposal) => {
-    if (selectedProject?.gprId === project.gprId && isViewDialogOpen) return;
+  if (selectedProject?.gprId === project.gprId && isViewDialogOpen) return;
 
-    setIsViewDialogOpen(false);
-    setSelectedProject(null);
-    setNewStatus(null);
-    setReason(null);
+  setIsViewDialogOpen(false);
+  setSelectedProject(null);
 
+  // Automatically set to "Viewed" if current status is "Pending"
+  if (project.status === "Pending") {
+    updateStatusMutation.mutate(
+      { 
+        gprId: project.gprId, 
+        status: "Viewed", // This is now type-safe
+        reason: "Project viewed by admin" 
+      },
+      {
+        onSuccess: () => {
+          // Create a new object with the correct type
+          const updatedProject: ProjectProposal = {
+            ...project,
+            status: "Viewed", // Explicitly typed
+            statusReason: "Project viewed by admin"
+          };
+          setSelectedProject(updatedProject);
+          setIsViewDialogOpen(true);
+        },
+        onError: (error) => {
+          console.error("Failed to update status to Viewed:", error);
+          setSelectedProject(project); // Original project has correct types
+          setIsViewDialogOpen(true);
+        }
+      }
+    );
+  } else {
     setTimeout(() => {
-      setSelectedProject(project);
+      setSelectedProject(project); // Original project has correct types
       setIsViewDialogOpen(true);
     }, 50);
-  };
+  }
+};
 
   const closePreview = () => {
     setIsViewDialogOpen(false);
@@ -146,7 +182,7 @@ function AdminGADProjectProposal() {
     }
   };
 
-const handleUpdateStatus = () => {
+  const handleUpdateStatus = () => {
     if (!selectedProject?.gprId || !newStatus || newStatus === selectedProject.status) return;
 
     updateStatusMutation.mutate(
@@ -262,27 +298,28 @@ const handleUpdateStatus = () => {
       </div>
 
       {/* Dynamic Total Budget Display */}
-        <div className="flex justify-end mt-2 mb-2">
-          <div className="bg-blue-50 px-4 py-2 rounded-lg">
-            <span className="font-medium text-blue-800">
-              Grand Total:{" "}
-              <span className="font-bold text-green-700">
-                ₱{new Intl.NumberFormat('en-US', { 
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2 
-                }).format(totalBudget)}
-              </span>
+      <div className="flex justify-end mt-2 mb-2">
+        <div className="bg-blue-50 px-4 py-2 rounded-lg">
+          <span className="font-medium text-blue-800">
+            Grand Total:{" "}
+            <span className="font-bold text-green-700">
+              ₱{new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2 
+              }).format(totalBudget)}
             </span>
-          </div>
+          </span>
         </div>
+      </div>
 
       <div className="flex flex-col mt-4 gap-4">
-        {filteredProjects.length === 0 && (
+
+        {paginatedProjects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No project proposals found.
           </div>
         )}
-        {filteredProjects.map((project: ProjectProposal, index: number) => {
+        {paginatedProjects.map((project: ProjectProposal, index: number) => {
           const status = project.status.toLowerCase() as keyof typeof style.projStat;
           const reason = project.statusReason || "No reason provided";
 
@@ -314,25 +351,25 @@ const handleUpdateStatus = () => {
                     </span>
                   </div>
                   <span className="text-xs text-gray-500 underline">
-                       Total Budget: ₱{
-                          project.budgetItems && project.budgetItems.length > 0
-                            ? new Intl.NumberFormat('en-US', { 
-                                style: 'decimal', 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              }).format(
-                                project.budgetItems.reduce((grandTotal, item) => {
-                                  const amount = item.amount || 0;
-                                  const paxCount = 
-                                    item.pax?.includes("pax") 
-                                      ? parseInt(item.pax) || 1 
-                                      : 1;
-                                  return grandTotal + (paxCount * amount);
-                                }, 0)
-                              )
-                            : "N/A"
-                        }
-                    </span>
+                    Total Budget: ₱{
+                      project.budgetItems && project.budgetItems.length > 0
+                        ? new Intl.NumberFormat('en-US', { 
+                            style: 'decimal', 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          }).format(
+                            project.budgetItems.reduce((grandTotal, item) => {
+                              const amount = item.amount || 0;
+                              const paxCount = 
+                                item.pax?.includes("pax") 
+                                  ? parseInt(item.pax) || 1 
+                                  : 1;
+                              return grandTotal + (paxCount * amount);
+                            }, 0)
+                          )
+                        : "N/A"
+                    }
+                  </span>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex flex-col gap-1">
                       <span
@@ -341,7 +378,7 @@ const handleUpdateStatus = () => {
                         {project.status || "Pending"}
                       </span>
                       <span className="text-xs text-gray-400">
-                        Remarks: {reason}
+                        Remark(s): {reason}
                       </span>
                     </div>
                     <div>
@@ -364,6 +401,24 @@ const handleUpdateStatus = () => {
             />
           );
         })}
+
+        {/* Pagination Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+          <p className="text-xs sm:text-sm text-darkGray">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
+            {filteredProjects.length} rows
+          </p>
+          {filteredProjects.length > 0 && (
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
@@ -413,18 +468,18 @@ const handleUpdateStatus = () => {
               <SelectLayout
                 className="bg-white mt-1 w-full"
                 placeholder="Select Status"
-                options={filter.filter(f => f.id !== "All")}
+                options={filter.filter(f => f.id !== "All" && f.id !== "Viewed")}
                 value={newStatus || ""}
                 onChange={(value: string) => {
                   setNewStatus(value as ProposalStatus);
-                  if (value !== "Approved" && value !== "Rejected") {
+                  if (value !== "Approved" && value !== "Rejected" && value !== "Amend") {
                     setReason(null);
                   }
                 }}
               />
             </div>
 
-            {(newStatus === "Approved" || newStatus === "Rejected") && (
+            {(newStatus === "Approved" || newStatus === "Rejected" || newStatus === "Amend") && (
               <div>
                 <Label className="text-sm font-medium">Reason for {newStatus}</Label>
                 <textarea
@@ -435,7 +490,7 @@ const handleUpdateStatus = () => {
                 />
                 {isReasonRequired && !reason?.trim() && (
                   <p className="text-red-500 text-xs mt-1">
-                    Reason is required for {newStatus} status.
+                    Remarks is required for {newStatus} status.
                   </p>
                 )}
               </div>

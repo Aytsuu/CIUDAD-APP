@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs } from "../api/getreq";
+import { ProposalStatus } from "./updatequeries";
 
 export type ProjectProposalLog = {
   gprlId: number;
@@ -35,7 +36,7 @@ export type ProjectProposal = {
   gprIsArchive: boolean;
   staffId: number | null;
   staffName: string;
-  status: "Pending" | "Amend" |"Approved" | "Rejected" | "Viewed";
+  status: ProposalStatus;
   statusReason: string | null;
   logs: ProjectProposalLog[];
   paperSize: "a4" | "letter" | "legal";

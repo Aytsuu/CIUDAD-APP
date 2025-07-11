@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
 import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs } from "../api/getreq"
 
+export type ProposalStatus = "Pending" | "Amend" | "Approved" | "Rejected" | "Viewed";
+
 export type ProjectProposalLog = {
   gprlId: number
   gprlDateApprovedRejected: string
   gprlReason: string | null
   gprlDateSubmitted: string
-  gprlStatus: "Pending" | "Approved" | "Rejected" | "Viewed"
+  gprlStatus: ProposalStatus
   staffId: number | null
 }
 
@@ -35,7 +37,7 @@ export type ProjectProposal = {
   gprIsArchive: boolean
   staffId: number | null
   staffName: string
-  status: "Pending" | "Approved" | "Rejected" | "Viewed"
+  status: ProposalStatus
   statusReason: string | null
   logs: ProjectProposalLog[]
   paperSize: "a4" | "letter" | "legal"
