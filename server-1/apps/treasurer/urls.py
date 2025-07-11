@@ -10,6 +10,7 @@ urlpatterns=[
     path('budget-plan/<int:plan_id>/', DeleteRetrieveBudgetPlanAndDetails.as_view(), name='treasurer-manage-budget-plan'),
     path('update-budget-plan/<int:plan_id>/', UpdateBudgetPlan.as_view(), name='treasurer-update-budget-plan'),
     path('update-budget-details/<int:dtl_id>/', UpdateBudgetDetails.as_view(), name='treasurer-update-budget-details'),
+    path('budget-plan-file/', BudgetPlanFileView.as_view(), name = 'budget-plan-file'),
     path('budget-plan-history/', BudgetPlanHistoryView.as_view(), name='budget-plan-history'),
     path('budget-plan-detail-history/', BudgetPlanDetailHistoryView.as_view(), name= 'budget-plan-detail-history'),
     path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryRetrieveView.as_view(), name='budget-plan-history-records'),

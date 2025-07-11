@@ -21,6 +21,12 @@ class BudgetPlanSerializer(serializers.ModelSerializer):
     def get_details(self, obj):
         return Budget_Plan_DetailSerializer(obj.budget_detail.all(), many=True).data
     
+
+class BudgetPlanFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BudgetPlan_File
+        fields = '__all__'
+    
 # class BudgetPlanDetailHistorySerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Budget_Plan_Detail_History

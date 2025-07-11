@@ -37,6 +37,34 @@ class Budget_Plan_Detail(models.Model):
         db_table = 'budget_plan_detail'
 
 
+class BudgetPlan_File(models.Model):
+    bpf_id = models.BigAutoField(primary_key=True)
+    bpf_upload_date = models.DateTimeField(auto_now_add=True)
+    bpf_type = models.CharField(max_length=100, null=True)
+    bpf_name = models.CharField(max_length=255, null=True)
+    bpf_path = models.CharField(max_length=500, null=True)
+    bpf_url = models.CharField(max_length=500, null=True)
+
+    plan_id = models.ForeignKey(
+        Budget_Plan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='plan_id'
+    )
+
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+
+    class Meta:
+        db_table = 'budget_plan_file'
+
+
 class Budget_Plan_History(models.Model):
     bph_id = models.BigAutoField(primary_key=True)
     plan = models.ForeignKey('Budget_Plan', on_delete=models.CASCADE, related_name='history')

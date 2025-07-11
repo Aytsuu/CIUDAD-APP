@@ -253,6 +253,9 @@ function ViewBudgetPlan(){
                 <TabsTrigger value="history" onClick={() => setActiveTab("history")}>
                     Revision History
                 </TabsTrigger>
+                 <TabsTrigger value="documents" onClick={() => setActiveTab("documents")}>
+                    Supporting Documents
+                </TabsTrigger>
             </TabsList>
 
             <TabsContent value="current" className={styles.tabContent}>
