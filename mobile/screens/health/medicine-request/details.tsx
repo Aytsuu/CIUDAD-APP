@@ -283,12 +283,12 @@ export default function MedicineDetailsScreen() {
                   <Text className="text-sm font-medium">{medicine.category}</Text>
                   <Text className="text-sm font-medium text-gray-700">Type: {medicine.medicine_type}</Text>
                 </View>
-                <View className="flex-row items-center mt-2">
+                {/* <View className="flex-row items-center mt-2">
                     <View className={`w-2 h-2 rounded-full mr-2 ${medicine.minv_qty_avail > 0 ? "bg-green-500" : "bg-red-500"}`} />
                     <Text className={`text-sm font-medium ${medicine.minv_qty_avail > 0 ? "text-green-700" : "text-red-700"}`}>
                         {medicine.minv_qty_avail > 0 ? `${medicine.minv_qty_avail} in stock` : "Out of Stock"}
                     </Text>
-                </View>
+                </View> */}
               </View>
             </View>
 
@@ -306,12 +306,12 @@ export default function MedicineDetailsScreen() {
             )}
 
             {/* Description */}
-            {medicine.description && (
+            {/* {medicine.description && (
                 <View className="mb-4">
                 <Text className="text-gray-700 font-medium mb-2">Description</Text>
                 <Text className="text-gray-600 leading-6">{medicine.description}</Text>
                 </View>
-            )}
+            )} */}
           </View>
 
           {/* Request Form Card */}

@@ -96,7 +96,7 @@ const PatientsRecordScreen = () => {
 
   return (
     <View className="flex-1 bg-gray-50 p-4">
-      <View className="mb-4">
+      <View className="mb-4 mt-14">
         <Text className="text-2xl font-bold text-gray-900">Patients Records</Text>
         <Text className="text-sm text-gray-600">View all patients and their availed services</Text>
       </View>

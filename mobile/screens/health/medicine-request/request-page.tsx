@@ -216,7 +216,7 @@ export default function MedicineRequestScreen() {
                         </Text>
                       )}
                       <View className="mt-2">
-                        <Text
+                        {/* <Text
                           className={`text-sm font-semibold ${
                             medicine.minv_qty_avail > 0 ? "text-green-600" : "text-red-600"
                           }`}
@@ -224,7 +224,7 @@ export default function MedicineRequestScreen() {
                           {medicine.minv_qty_avail > 0
                             ? `${medicine.minv_qty_avail} in stock`
                             : "Out of stock"}
-                        </Text>
+                        </Text> */}
                       </View>
                     </View>
                     <View className="ml-4">
