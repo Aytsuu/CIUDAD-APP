@@ -179,17 +179,19 @@ function GADProjectProposal() {
     projStat: {
       pending: "text-blue",
       approved: "text-green-500",
-      rejected: "text-red",
+      amend: "text-yellow-500",
+      rejected: "text-red-500",
       viewed: "text-darkGray",
     },
   };
 
   const filter = [
     { id: "All", name: "All" },
-    { id: "Approved", name: "Approved" },
     { id: "Pending", name: "Pending" },
-    { id: "Rejected", name: "Rejected" },
     { id: "Viewed", name: "Viewed" },
+    { id: "Amend", name: "Amend" },
+    { id: "Approved", name: "Approved" },
+    { id: "Rejected", name: "Rejected" },
   ];
 
   const {
@@ -579,7 +581,7 @@ function GADProjectProposal() {
                         {project.status || "Pending"}
                       </span>
                       <span className="text-xs text-gray-400">
-                        Reason: {reason}
+                        Remarks: {reason}
                       </span>
                     </div>
                     <div>

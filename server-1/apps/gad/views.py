@@ -234,7 +234,7 @@ class UpdateProposalStatusView(generics.GenericAPIView):
                 return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
 
             # Only set gprl_date_approved_rejected for Approved or Rejected statuses
-            date_approved_rejected = timezone.now() if status in ["Pending","Viewed","Approved", "Rejected"] else None
+            date_approved_rejected = timezone.now() if status in ["Pending","Viewed","Amend","Approved", "Rejected"] else None
 
             # Create a new log entry
             ProjectProposalLog.objects.create(
@@ -335,6 +335,7 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
         status_counts = queryset.aggregate(
             pending=Count('pk', filter=Q(latest_status='Pending')),
             viewed=Count('pk', filter=Q(latest_status='Viewed')),
+            amend=Count('pk', filter=Q(latest_status='Amend')),
             approved=Count('pk', filter=Q(latest_status='Approved')),
             rejected=Count('pk', filter=Q(latest_status='Rejected'))
         )
@@ -343,6 +344,7 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
         return Response({
             'pending': status_counts['pending'] or 0,
             'viewed': status_counts['viewed'] or 0,
+            'amend': status_counts['amend'] or 0,
             'approved': status_counts['approved'] or 0,
             'rejected': status_counts['rejected'] or 0
         })

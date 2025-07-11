@@ -81,7 +81,6 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     logs = ProjectProposalLogSerializer(many=True, read_only=True)
 
-
     def get_status(self, obj):
         return obj.current_status
 
@@ -91,7 +90,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gpr_id', 'gpr_title', 'gpr_background', 'gpr_date', 'gpr_venue',
             'gpr_monitoring', 'gpr_header_img', 'gpr_created', 'gpr_is_archive',
             'gpr_objectives', 'gpr_participants', 'gpr_budget_items', 'gpr_signatories',
-            'staff', 'status', 'logs', 'gpr_page_size'
+            'staff', 'status', 'logs', 'gpr_page_size', 'gbud'
         ]
         extra_kwargs = {
             'gpr_id': {'read_only': True},
@@ -101,7 +100,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 'write_only': True
             }
         }
-
+    
     def to_representation(self, instance):
         data = super().to_representation(instance)
         return {

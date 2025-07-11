@@ -6,7 +6,7 @@ export type ProjectProposalLog = {
   gprlDateApprovedRejected: string;
   gprlReason: string | null;
   gprlDateSubmitted: string;
-  gprlStatus: "Pending" | "Approved" | "Rejected" | "Viewed";
+  gprlStatus: "Pending" | "Amend" |"Approved" | "Rejected" | "Viewed";
   staffId: number | null;
 };
 
@@ -35,11 +35,16 @@ export type ProjectProposal = {
   gprIsArchive: boolean;
   staffId: number | null;
   staffName: string;
-  status: "Pending" | "Approved" | "Rejected" | "Viewed";
+  status: "Pending" | "Amend" |"Approved" | "Rejected" | "Viewed";
   statusReason: string | null;
   logs: ProjectProposalLog[];
   paperSize: "a4" | "letter" | "legal";
   supportDocs: SupportDoc[];
+  current_budget_balance?: number | null;
+  gbud?: {
+    gbud_num: number;
+    gbud_remaining_bal: number;
+  }
 };
 
 export type ProjectProposalInput = {
