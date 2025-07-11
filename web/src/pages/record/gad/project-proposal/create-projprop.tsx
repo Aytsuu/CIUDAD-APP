@@ -37,6 +37,8 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
+import { Wallet } from "lucide-react";
+import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 
 export interface ProjectProposalFormProps {
   onSuccess: () => void;
@@ -62,9 +64,16 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const addSupportDocMutation = useAddSupportDocument();
-
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
+
+  // Display remaining balance from budget tracker
+  const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
+  const latestExpenseWithBalance = budgetEntries
+    .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
+  const availableBudget = latestExpenseWithBalance ? Number(latestExpenseWithBalance.gbud_remaining_bal) : null;
+  
 
   // Initialize react-hook-form
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
@@ -893,9 +902,25 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Budgetary Requirements
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium">Budgetary Requirements</label>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Wallet className="h-4 w-4 text-blue-600" />
+                  <span>Available Funds:</span>
+                  {isBudgetLoading ? (
+                    <span className="text-gray-500">Loading...</span>
+                  ) : availableBudget != null ? (
+                    <span className="font-mono text-red-500">
+                      ₱{availableBudget.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">No expense records</span>
+                  )}
+                </div>
+              </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 font-medium text-sm">
                   <span>Name</span>

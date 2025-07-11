@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Wallet } from "lucide-react";
 import { useUpdateProjectProposal } from "./queries/updatequeries";
 import { useAddSupportDocument } from "./queries/addqueries";
 import { useDeleteSupportDocument } from "./queries/delqueries";
@@ -35,6 +35,7 @@ import {
   SupportDoc,
 } from "./queries/fetchqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 
 export interface EditProjectProposalFormProps {
   onSuccess: (data: ProjectProposal) => void;
@@ -61,8 +62,14 @@ export const EditProjectProposalForm: React.FC<
   const updateMutation = useUpdateProjectProposal();
   const addSupportDocMutation = useAddSupportDocument();
   const deleteSupportDocMutation = useDeleteSupportDocument();
-
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
+
+  // Display remaining balance from budget tracker
+  const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
+  const latestExpenseWithBalance = budgetEntries
+    .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
+  const availableBudget = latestExpenseWithBalance ? Number(latestExpenseWithBalance.gbud_remaining_bal) : null;
 
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     resolver: zodResolver(ProjectProposalSchema),
@@ -633,9 +640,25 @@ export const EditProjectProposalForm: React.FC<
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Budgetary Requirements
-              </label>
+             <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium">Budgetary Requirements</label>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Wallet className="h-4 w-4 text-blue-600" />
+                  <span>Available Funds:</span>
+                  {isBudgetLoading ? (
+                    <span className="text-gray-500">Loading...</span>
+                  ) : availableBudget != null ? (
+                    <span className="font-mono text-red-500">
+                      ₱{availableBudget.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">No expense records</span>
+                  )}
+                </div>
+              </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 font-medium text-sm">
                   <span>Name</span>

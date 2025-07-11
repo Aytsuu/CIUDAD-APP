@@ -22,26 +22,26 @@ import {
 } from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "./view-projprop";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
-
-// Define the allowed status values as a type
-type ProposalStatus = "Pending" | "Approved" | "Rejected" | "Viewed";
+import type { ProposalStatus } from "./queries/updatequeries";
 
 function AdminGADProjectProposal() {
   const style = {
     projStat: {
       pending: "text-blue",
+      amend: "text-yellow-500",
       approved: "text-green-500",
-      rejected: "text-red",
+      rejected: "text-red-500",
       viewed: "text-darkGray",
     },
   };
 
   const filter = [
     { id: "All", name: "All" },
-    { id: "Approved", name: "Approved" },
     { id: "Pending", name: "Pending" },
-    { id: "Rejected", name: "Rejected" },
     { id: "Viewed", name: "Viewed" },
+    { id: "Amend", name: "Amend" },
+    { id: "Approved", name: "Approved" },
+    { id: "Rejected", name: "Rejected" },
   ];
 
   const {
@@ -293,7 +293,7 @@ const handleUpdateStatus = () => {
                         {project.status || "Pending"}
                       </span>
                       <span className="text-xs text-gray-400">
-                        Reason: {reason}
+                        Remarks: {reason}
                       </span>
                     </div>
                     <div>

@@ -126,6 +126,7 @@ class ProjectProposal(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
+        ('Amend', 'Amend'),
     ]
 
     gpr_id = models.BigAutoField(primary_key=True)
@@ -147,6 +148,14 @@ class ProjectProposal(models.Model):
         null=True,
         blank=True,
         db_column='staff_id'
+    )
+    
+    gbud = models.ForeignKey(
+        GAD_Budget_Tracker,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='gbud_num'
     )
     
     gpr_created = models.DateField(default=date.today)
