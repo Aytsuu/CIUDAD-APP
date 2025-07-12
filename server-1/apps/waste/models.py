@@ -96,6 +96,27 @@ class WasteReport_File(models.Model):
     class Meta:
         db_table = 'waste_report_file'
 
+
+class WasteReportResolve_File(models.Model):
+    wrsf_id = models.BigAutoField(primary_key=True)
+    wrsf_name = models.CharField(max_length=255)
+    wrsf_type = models.CharField(max_length=100)
+    wrsf_path = models.CharField(max_length=500)
+    wrsf_url = models.CharField(max_length=500)
+
+    rep_id = models.ForeignKey(
+        WasteReport,
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True,
+        related_name='waste_report_rslv_file',
+        db_column='rep_id'
+    )
+
+    class Meta:
+        db_table = 'waste_report_rslv_file'
+        
+
 class WastePersonnel(models.Model):
     wstp_id = models.BigAutoField(primary_key=True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)

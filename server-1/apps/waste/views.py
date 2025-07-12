@@ -178,6 +178,17 @@ class WasteReportFileView(generics.ListCreateAPIView):
             queryset = queryset.filter(rep_num=rep_num)
         return queryset
 
+class WasteReportResolveFileView(generics.ListCreateAPIView):
+    serializer_class = WasteReportResolveFileSerializer
+    queryset = WasteReportResolve_File.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        rep_num = self.request.query_params.get('rep_num')
+        if rep_num:
+            queryset = queryset.filter(rep_num=rep_num)
+        return queryset
+
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
     queryset = WasteReport.objects.all()

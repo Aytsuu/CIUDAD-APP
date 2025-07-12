@@ -274,6 +274,12 @@ class WasteReportFileSerializer(serializers.ModelSerializer):
         model = WasteReport_File
         fields = '__all__'
 
+
+class WasteReportResolveFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WasteReportResolve_File
+        fields = '__all__'        
+
         
 class WasteReportSerializer(serializers.ModelSerializer):
     rep_complainant = serializers.SerializerMethodField()

@@ -36,7 +36,8 @@ urlpatterns = [
 
     # Waste Report File
     path("waste-rep-file/", WasteReportFileView.as_view(), name="waste-report-file"),
-    
+    path("waste-rep-rslv-file/", WasteReportResolveFileView.as_view(), name="waste-report-resolve-file"),
+
     path('waste-personnel/', WastePersonnelView.as_view(), name='waste-personnel'),
     path('waste-trucks/', WasteTruckView.as_view(), name='waste-truck'),
     path('waste-trucks/<int:pk>/', WasteTruckDetailView.as_view(), name='waste-truck-detail'),
