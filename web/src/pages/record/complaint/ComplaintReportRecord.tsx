@@ -103,7 +103,7 @@ export function ComplaintViewRecord() {
         <div className="flex flex-row mb-4 sm:mb-0">
           <div className="flex items-center mr-4">
             <Button className="text-black p-2 self-start" variant="outline">
-              <Link to="/blotter-record">
+              <Link to="/complaint">
                 <BsChevronLeft />
               </Link>
             </Button>

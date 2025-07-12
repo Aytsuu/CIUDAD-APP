@@ -50,7 +50,7 @@ export default function ComplaintFilterBar({ searchQuery, setSearchQuery, timeFi
           )}
         </div>
         
-        <Link to="/complaint-report" className="sm:ml-auto">
+        <Link to="/complaint/report" className="sm:ml-auto">
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-2 h-10 px-4 rounded-lg">
             <Plus size={16} />
             <span className="hidden sm:inline">New Report</span>
@@ -95,7 +95,7 @@ export default function ComplaintFilterBar({ searchQuery, setSearchQuery, timeFi
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Link to="/complaint-archive">
+        <Link to="/complaint/archive">
           <Button
             variant="outline"
             className="border-gray-200 hover:bg-gray-50 hover:border-gray-300 flex items-center gap-2 h-8 px-3 transition-all duration-200 rounded-lg bg-transparent font-medium text-black/70"

@@ -350,7 +350,7 @@ const ArchiveComplaints = () => {
           {/* Column 1 - Button */}
           <div className="flex items-center">
             <Button className="text-black p-2" variant="outline">
-              <Link to="/blotter-record">
+              <Link to="/complaint">
                 <BsChevronLeft />
               </Link>
             </Button>

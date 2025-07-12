@@ -270,8 +270,8 @@ const items: MenuItem[] = [
     ],
   },
   {
-    title: "Blotter",
-    url: "/blotter-record",
+    title: "Complaint",
+    url: "/complaint",
   },
   {
     title: "Team",

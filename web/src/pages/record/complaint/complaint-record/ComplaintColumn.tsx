@@ -1,8 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Complaint } from "../complaint-type"
 import { Link } from "react-router"
-import { Button } from "@/components/ui/button/button"
-import { ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import ViewButton from "@/components/ui/view-button"
 
@@ -79,7 +77,7 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     header: "Action",
     cell: ({ row }) => (
       <div className="min-w-[100px]">
-        <Link to={`/complaint-record/${row.original.comp_id}`} state={{ complaint: row.original }}>
+        <Link to={`/complaint/${row.original.comp_id}`} state={{ complaint: row.original }}>
           <ViewButton onClick={function (): void {
             throw new Error("Function not implemented.")
           } }/>

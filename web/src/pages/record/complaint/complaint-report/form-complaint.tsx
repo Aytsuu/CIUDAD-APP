@@ -292,7 +292,7 @@ export const ComplaintForm = () => {
                 className="text-black p-2 flex items-center justify-center"
                 variant="outline"
               >
-                <Link to="/blotter-record">
+                <Link to="/complaint">
                   <BsChevronLeft />
                 </Link>
               </Button>

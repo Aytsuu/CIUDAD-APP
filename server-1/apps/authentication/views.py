@@ -19,25 +19,6 @@ from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
 
-# ROLE_PATHS_MAP = {
-#     'admin': [
-#         '/admin/dashboard',
-        
-#     ],
-#     'Barangay Staff' : [
-#         'auth/'
-#     ],
-#     'resident': [
-        
-#     ], 
-#     'unverified': [
-        
-#     ],
-#     "Health Staff": [
-        
-#     ]
-# }
-
 class AuthBaseView(APIView):
     permission_classes = [AllowAny]
     
@@ -66,7 +47,7 @@ class SignupView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Check if account already exists in local database
+            # Checking if account already exists in local database
             if Account.objects.filter(email=email).exists():
                 return Response(
                     {'error': 'Account with this email already exists'},
@@ -152,7 +133,6 @@ class LoginView(APIView):
         try:
             email = request.data.get('email')
             password = request.data.get('password')
-
             if not email or not password:
                 return Response(
                     {'error': 'Both email and password are required'},
@@ -165,7 +145,6 @@ class LoginView(APIView):
                     "password": password
                 })
                 supabase_user = supabase_response.user
-                
                 if not supabase_user:
                     return Response(
                         {'error': 'Invalid credentials'},
@@ -195,8 +174,7 @@ class LoginView(APIView):
                     {'error': "Staff Privileges Required"}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
-            
-            # Return success response
+
             return Response({
                 'user': serializer.data,
                 'access_token': supabase_response.session.access_token,
@@ -228,7 +206,7 @@ class UserView(APIView):
 
             user_email = supabase_user.email
             
-            # Find the corresponding account in your database
+            # Find the corresponding account in database
             account = Account.objects.filter(email=user_email).first()
             
             if not account:

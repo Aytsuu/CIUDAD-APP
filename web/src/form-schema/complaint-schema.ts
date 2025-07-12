@@ -31,6 +31,16 @@ export const personSchema = z.object({
 // export const accusedPersonSchema = personSchema.omit({ email: true });
 export const accusedPersonSchema = personSchema;
 
+export const accusedPersonSchema1 = z.object({
+  firstName: z.string().min(1, "First name is required").max(50),
+  lastName: z.string().min(1, "Last name is required").max(50),
+  middleName: z.string().max(50).optional(),
+  suffix: z.string().max(10).optional(),
+  alias: z.string().optional(),
+  description: z.string().optional(),
+  address: addressSchema,
+})
+
 export const incidentTypeEnum = z.enum([
   "Theft",
   "Assault",

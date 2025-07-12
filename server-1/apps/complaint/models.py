@@ -42,8 +42,8 @@ class Complaint_File(models.Model):
     comp_file_id = models.BigAutoField(primary_key=True)
     comp_file_name = models.CharField(max_length=255)
     comp_file_type = models.CharField(max_length=10)
-    comp_file_path = models.URLField(max_length=512)  # Stores Supabase URL
-    supabase_path = models.CharField(max_length=255)  # Stores internal Supabase path
+    comp_file_path = models.URLField(max_length=512) 
+    supabase_path = models.CharField(max_length=255) 
     file_size = models.PositiveIntegerField(help_text="File size in bytes")
     comp = models.ForeignKey(
         Complaint, 

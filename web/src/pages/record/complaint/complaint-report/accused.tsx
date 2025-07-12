@@ -47,6 +47,8 @@ export const AccusedInfo = () => {
       middleName: "",
       lastName: "",
       suffix: "",
+      alias: "",
+      
       address: {
         street: "",
         barangay: "",

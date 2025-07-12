@@ -257,9 +257,9 @@ class ServiceChargeRequestCreateView(APIView):
             # Create the ServiceChargeRequest
             service_request = ServiceChargeRequest.objects.create(
                 comp=complaint,
-                sr_status="PENDING", 
-                sr_type="ISSUE_RAISED",
-                sr_payment_status="UNPAID"
+                sr_status="Ongoing", 
+                sr_type="Summon",
+                sr_payment_status="Unpaid"
             )
             
             return Response({
