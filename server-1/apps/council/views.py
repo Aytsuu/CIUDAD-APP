@@ -201,7 +201,6 @@ class StaffAttendanceRankingView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        print("Queryset:", list(queryset)) # Debug log
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
