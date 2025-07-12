@@ -14,6 +14,8 @@ import { BudgetPlanDetail } from "./budgetPlanInterfaces";
 import { usegetBudgetPlanDetail } from "./queries/budgetplanFetchQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BudgetPlanHistory from "./budgetPlanHistory";
+import BudgetPlanSuppDocs from "./budgetplanSuppDocs";
+
 
 const styles = {
     mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -246,7 +248,7 @@ function ViewBudgetPlan(){
 
             </div>
 
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="current" onClick={() => setActiveTab("current")}>
                     Current Budget Plan
                 </TabsTrigger>
@@ -325,6 +327,10 @@ function ViewBudgetPlan(){
             <TabsContent value="history" className={styles.tabContent}>
                 {/* History Content */}
                 <BudgetPlanHistory planId={planId}/>
+            </TabsContent>
+
+            <TabsContent value="documents" className={styles.tabContent}>
+                <BudgetPlanSuppDocs plan_id={fetchedData?.plan_id || 0}/>
             </TabsContent>
         </Tabs>
     );

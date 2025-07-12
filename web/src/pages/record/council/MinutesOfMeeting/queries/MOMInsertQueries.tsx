@@ -3,13 +3,9 @@ import { toast } from "sonner";
 import { insertMinutesOfMeeting } from "../restful-API/MOMPostAPI";
 import { CircleCheck } from "lucide-react";
 import { MediaUploadType } from "@/components/ui/media-upload";
-import minutesOfMeetingFormSchema from "@/form-schema/council/minutesOfMeetingSchema";
+import {minutesOfMeetingFormSchema} from "@/form-schema/council/minutesOfMeetingSchema";
 import { z } from "zod";
 
-// type MOMSubmissionData = {
-//   values: z.infer<typeof minutesOfMeetingFormSchema>;
-//   mediaFiles: MediaUploadType;
-// };
 
 export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
