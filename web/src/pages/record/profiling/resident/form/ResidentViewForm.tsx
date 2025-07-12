@@ -18,6 +18,7 @@ import {
   useAddPerAddress,
 } from "../../queries/profilingAddQueries";
 import { capitalizeAllFields } from "@/helpers/capitalize";
+import { useAddAddressHealth, useAddPerAddressHealth } from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -36,6 +37,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
+  // Add health database mutations
+  const { mutateAsync: addHealthAddress } = useAddAddressHealth();
+  const { mutateAsync: addHealthPerAddress } = useAddPerAddressHealth();
 
   const family = familyMembers?.results || [];
   const formattedSitio = React.useMemo(
@@ -122,6 +126,10 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
               // Link personal address
               addPersonalAddress(per_addresses);
+
+              // Double update: also update health database
+              addHealthAddress(addresses.slice(data.per_addresses.length, addresses.length));
+              addHealthPerAddress(per_addresses);
             },
           }
         );
