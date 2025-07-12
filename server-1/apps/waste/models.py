@@ -30,7 +30,7 @@ class WasteCollectionStaff(models.Model):
 
 class WasteReport(models.Model):
     rep_id = models.BigAutoField(primary_key=True)
-    rep_image = models.CharField(default="none", null=True, blank=True)
+    # rep_image = models.CharField(default="none", null=True, blank=True)
     rep_matter = models.CharField(default="none")
     rep_location = models.CharField(default="none")
     rep_add_details = models.CharField(max_length=200, null=True)
@@ -41,7 +41,7 @@ class WasteReport(models.Model):
     rep_status = models.CharField(max_length=100, default="pending")
     rep_date = models.DateTimeField(null=True)
     rep_date_resolved = models.DateTimeField(null=True)
-    rep_resolved_img = models.CharField(null=True, blank=True)
+    # rep_resolved_img = models.CharField(null=True, blank=True)
 
     sitio_id = models.ForeignKey(
         'profiling.Sitio', 
@@ -115,7 +115,7 @@ class WasteReportResolve_File(models.Model):
 
     class Meta:
         db_table = 'waste_report_rslv_file'
-        
+
 
 class WastePersonnel(models.Model):
     wstp_id = models.BigAutoField(primary_key=True)
