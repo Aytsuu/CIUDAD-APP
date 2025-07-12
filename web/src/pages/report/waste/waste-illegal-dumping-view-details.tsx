@@ -285,11 +285,18 @@ function WasteIllegalDumpingDetails({
               </span>
               
               <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2 relative">
-                <img
-                  src={waste_report_file[currentImageIndex].wrf_url}
-                  alt="Report evidence"
-                  className="w-full h-full object-cover"
-                />
+                <a 
+                  href={waste_report_file[currentImageIndex].wrf_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full h-full"
+                >
+                  <img
+                    src={waste_report_file[currentImageIndex].wrf_url}
+                    alt="Report evidence"
+                    className="w-full h-full object-cover cursor-pointer"
+                  />
+                </a>
                 
                 {/* Navigation Arrows */}
                 {waste_report_file.length > 1 && (
