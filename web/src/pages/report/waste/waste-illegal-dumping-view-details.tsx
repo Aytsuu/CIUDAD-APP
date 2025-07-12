@@ -175,7 +175,8 @@
 
 
 
-
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
@@ -219,7 +220,20 @@ function WasteIllegalDumpingDetails({
   waste_report_file
 }: WasteReportDetailsProps) {
 
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const isResolved = !!rep_date_resolved || rep_status === "resolved";
+
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === waste_report_file.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? waste_report_file.length - 1 : prevIndex - 1
+    );
+  };
 
   const getStatusStyle = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -264,17 +278,36 @@ function WasteIllegalDumpingDetails({
         {/* Images Container */}
         <div className="lg:w-1/2 space-y-6">
           {/* Original Report Image */}
-          {waste_report_file[0].wrf_url && (
+          {waste_report_file.length > 0 && (
             <div className="w-full relative">
-              <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700">
-                Report Evidence
+              <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700 z-10">
+                Report Evidence ({currentImageIndex + 1}/{waste_report_file.length})
               </span>
-              <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2">
+              
+              <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2 relative">
                 <img
-                  src={waste_report_file[0].wrf_url}
+                  src={waste_report_file[currentImageIndex].wrf_url}
                   alt="Report evidence"
                   className="w-full h-full object-cover"
                 />
+                
+                {/* Navigation Arrows */}
+                {waste_report_file.length > 1 && (
+                  <>
+                    <button 
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 p-2 rounded shadow hover:bg-opacity-100"
+                    >
+                      <ChevronLeft size={12}/>
+                    </button>
+                    <button 
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 p-2 rounded shadow hover:bg-opacity-100"
+                    >
+                      <ChevronRight size={12}/>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
