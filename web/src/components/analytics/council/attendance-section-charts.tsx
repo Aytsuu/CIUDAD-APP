@@ -2,8 +2,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TrendingUp, BarChart3, AlertCircle } from "lucide-react";
+import { TrendingUp, BarChart3 } from "lucide-react";
 import { useGetStaffAttendanceRanking, useGetCouncilEvents } from "./ce-event-analytics-queries";
 
 export default function StaffAttendanceRankingChart() {
@@ -26,10 +25,9 @@ export default function StaffAttendanceRankingChart() {
     return (
       <Card className="w-full">
         <CardContent className="flex items-center justify-center py-8">
-          <Alert variant="destructive" className="max-w-md">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Failed to load attendance data. Please try again later.</AlertDescription>
-          </Alert>
+          <div className="text-center text-destructive">
+            Failed to load attendance data. Please try again later.
+          </div>
         </CardContent>
       </Card>
     );
@@ -98,51 +96,51 @@ export default function StaffAttendanceRankingChart() {
             </p>
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
+          <ChartContainer config={chartConfig} className="aspect-auto h-[350px] w-full">
             <BarChart
-              accessibilityLayer
+              layout="vertical"
               data={rankingData}
               margin={{
                 top: 20,
                 right: 20,
-                left: 20,
+                left: 10,
                 bottom: 20,
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/30" />
-              <XAxis
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="stroke-muted/30" />
+              <YAxis
                 dataKey="atn_name"
+                type="category"
+                width={120}
                 tickLine={false}
                 axisLine={false}
-                tickMargin={8}
-                minTickGap={1}
-                className="text-xs"
-                tickFormatter={(value: string) => value}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value: string) => 
+                  value.length > 20 ? `${value.substring(0, 17)}...` : value
+                }
               />
-              <YAxis
+              <XAxis
+                type="number"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={1}
                 className="text-xs"
-                tickFormatter={(value: number) => value.toString()}
               />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
                     className="w-[180px] border shadow-lg"
                     labelFormatter={(value: string) => value}
-                    formatter={(value: number, name: string, props: any) => {
-                      return [
-                        `Designation: ${props.payload?.atn_designation || 'N/A'}`,
-                      ];
-                    }}
+                    formatter={(value: number, name: string, props: any) => [
+                      `Designation: ${props.payload?.atn_designation || 'N/A'}`
+                    ]}
                   />
                 }
               />
               <Bar
                 dataKey="attendance_count"
                 fill="var(--color-attendance_count)"
-                radius={[4, 4, 0, 0]}
+                radius={[0, 4, 4, 0]}
                 className="hover:opacity-80 transition-opacity"
               />
             </BarChart>
