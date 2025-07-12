@@ -7,22 +7,39 @@ import { useUpdateWasteReport } from "./queries/waste-ReportUpdateQueries";
 interface WasteReportResolvedProps{
     rep_id: number
     is_resolve: boolean
+    onSuccess?: () => void;
 }
 
-function WasteReportResolved( { rep_id, is_resolve }: WasteReportResolvedProps){
+interface ResolvedImage {
+    name: string;
+    type: string;
+    path: string;
+    url: string;
+}
+
+function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportResolvedProps){
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const [resolvedImg, setResolvedImg] = useState<string>(""); 
+    const [resolvedImages, setResolvedImages] = useState<ResolvedImage[]>([]);
 
 
-    const { mutate: updateRep } = useUpdateWasteReport(rep_id);
+    const { mutate: updateRep } = useUpdateWasteReport(rep_id, onSuccess);
 
     // Update form when media files change
     useEffect(() => {
-        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-            setResolvedImg(mediaFiles[0].publicUrl);
+        if (mediaFiles.length > 0) {
+            const validImages = mediaFiles
+                .filter(file => file.publicUrl)
+                .map(file => ({
+                    name: file.file?.name || '',
+                    type: file.file?.type || '',
+                    path: file.storagePath || '',
+                    url: file.publicUrl || ''
+                }));
+            
+            setResolvedImages(validImages);
         } else {
-            setResolvedImg("");
+            setResolvedImages([]);
         }
     }, [mediaFiles]);
 
@@ -32,10 +49,11 @@ function WasteReportResolved( { rep_id, is_resolve }: WasteReportResolvedProps){
         // Prepare the update data
         const updateData = {
             rep_status: "resolved",
-            rep_resolved_img: resolvedImg
+            rep_resolved_img: resolvedImages 
         };
         
         updateRep(updateData);
+        // console.log("RESOLVE DATA: ", updateData)
     };
 
     return(
@@ -47,6 +65,7 @@ function WasteReportResolved( { rep_id, is_resolve }: WasteReportResolvedProps){
                 activeVideoId={activeVideoId}
                 setMediaFiles={setMediaFiles}
                 setActiveVideoId={setActiveVideoId}
+                maxFiles={3}
             />
             <div className="flex justify-end pt-16">
                 <ConfirmationModal

@@ -423,10 +423,10 @@ function WasteIllegalDumping() {
                     rep_status={row.original.rep_status}
                     rep_date={row.original.rep_date}
                     rep_date_resolved={row.original.rep_date_resolved}   
-                    rep_resolved_img={row.original.rep_resolved_img}   
                     sitio_id={row.original.sitio_id}
                     sitio_name={row.original.sitio_name}
-                    waste_report_file={row.original.waste_report_file}          
+                    waste_report_file={row.original.waste_report_file}   
+                    waste_report_rslv_file={row.original.waste_report_rslv_file}       
                   />
                 </div>
               }
