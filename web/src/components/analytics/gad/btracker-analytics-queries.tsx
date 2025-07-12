@@ -69,7 +69,7 @@ export const useQuarterlyBudget = (year: string) => {
         type: entry.gbud_type,
         amount: entry.gbud_type === 'Income' 
           ? entry.gbud_inc_amt 
-          : entry.gbud_actual_expense ?? entry.gbud_proposed_budget
+          : entry.gbud_actual_expense
       })));
 
       return QUARTERS.map((quarter) => {
@@ -88,7 +88,7 @@ export const useQuarterlyBudget = (year: string) => {
             } else {
               const amount = entry.gbud_actual_expense !== null 
                 ? Number(entry.gbud_actual_expense)
-                : Number(entry.gbud_proposed_budget) || 0;
+                : 0;
               result.expense += amount;
             }
           }

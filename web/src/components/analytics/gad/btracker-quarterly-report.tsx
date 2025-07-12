@@ -69,7 +69,7 @@ export function GADQuarterlyBudgetChart() {
           </div>
           <div className="border rounded-lg p-4">
             <Label className="text-muted-foreground">Total Income</Label>
-            <div className="text-2xl font-bold text-green-600">₱{yearlySummary.gbudy_income.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-[#2563EB]">₱{yearlySummary.gbudy_income.toLocaleString()}</div>
           </div>
           <div className="border rounded-lg p-4">
             <Label className="text-muted-foreground">Total Expenses</Label>
@@ -111,12 +111,12 @@ export function GADQuarterlyBudgetChart() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip 
-                  formatter={(value) => [`₱${value.toLocaleString()}`, value === 'income' ? 'Income' : 'Expense']}
+                                <Tooltip 
+                  formatter={(value, name) => [`₱${value.toLocaleString()}`, name]}
                   labelFormatter={(label) => `${label} Quarter`}
                 />
                 <Legend />
-                <Bar dataKey="income" fill="#4ade80" name="Income" />
+                <Bar dataKey="income" fill="#2563EB" name="Income" />
                 <Bar dataKey="expense" fill="#f87171" name="Expense" />
               </BarChart>
             </ResponsiveContainer>
@@ -134,7 +134,7 @@ export function GADQuarterlyBudgetChart() {
                     </span>
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center text-green-500">
+                    <div className="flex items-center text-[#2563EB]">
                       <TrendingUp className="h-4 w-4 mr-1" />
                       <span>₱{quarter.income.toLocaleString()}</span>
                     </div>
