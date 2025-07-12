@@ -34,12 +34,26 @@ class BudgetPlanDetailView(generics.ListCreateAPIView):
 class BudgetPlanFileView(generics.ListCreateAPIView):
     serializer_class = BudgetPlanFileSerializer
     queryset = BudgetPlan_File.objects.all()
-   
+
+class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
+    serializer_class = BudgetPlanFileSerializer
+
+    def get_queryset(self):
+        plan_id = self.kwargs.get('plan_id')
+        if plan_id:
+            # Use the exact field name from your model
+            return BudgetPlan_File.objects.filter(plan_id=plan_id)
+        return BudgetPlan_File.objects.all()
+    
+class DeleteBudgetPlanFile(generics.RetrieveDestroyAPIView):
+    queryset = BudgetPlan_File.objects.all()
+    serializer_class = BudgetPlanFileSerializer
+    lookup_field = 'bpf_id'
+
 class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):
     queryset = Budget_Plan.objects.all()
     serializer_class = BudgetPlanSerializer
     lookup_field = 'plan_id'
-
 
 class UpdateBudgetPlan(generics.UpdateAPIView):
     serializer_class = BudgetPlanSerializer

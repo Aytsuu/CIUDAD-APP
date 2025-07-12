@@ -27,11 +27,6 @@ class BudgetPlanFileSerializer(serializers.ModelSerializer):
         model = BudgetPlan_File
         fields = '__all__'
     
-# class BudgetPlanDetailHistorySerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Budget_Plan_Detail_History
-#         fields = '__all__'
-
 class BudgetPlanDetailHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Budget_Plan_Detail_History
@@ -71,19 +66,6 @@ class BudgetPlanHistorySerializer(serializers.ModelSerializer):
             'detail_history',
         ]
 
-# class BudgetPlanHistorySerializer(serializers.ModelSerializer):
-#     detail_history = BudgetPlanDetailHistorySerializer(source='history', many=True)
-
-#     class Meta:
-#         model = Budget_Plan_History
-#         fields = '__all__'
-
-# class BudgetPlanHistoryWithDetailsSerializer(serializers.ModelSerializer):
-#     detail_history = BudgetPlanDetailHistorySerializer(source='history', many=True)
-
-#     class Meta:
-#         model = Budget_Plan_History
-#         fields = '__all__'
 
 class Income_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
