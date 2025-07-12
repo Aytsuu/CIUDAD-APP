@@ -78,17 +78,20 @@ export const VitalSignSchema = z.object({
 })
 
 export const HealthStatusSchema = z.object({
-  is_anemic: z.boolean().optional().default(false),
   anemic: z
     .object({
       seen: z.string().optional(),
       given_iron: z.string().optional(),
+      is_anemic: z.boolean().optional().default(false),
+      date_completed: z.string().optional(), // Date when anemia status was completed
+
     })
     .optional(),
   birthwt: z
     .object({
       seen: z.string().optional(),
       given_iron: z.string().optional(),
+      date_completed: z.string().optional(), // Date when birth weight status was completed
     })
     .optional(),
 })

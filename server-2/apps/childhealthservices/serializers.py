@@ -67,7 +67,7 @@ class ChildHealthSupplementsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ChildHealthSupplementStatusSerializer(serializers.ModelSerializer):
-    chsupp_details = ChildHealthSupplementsSerializer(source='chsupplement', read_only=True)
+    # chsupp_details = ChildHealthSupplementsSerializer(source='chsupplement', read_only=True)
     
     class Meta:
         model = ChildHealthSupplementsStatus
@@ -113,8 +113,6 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
     child_health_supplements = ChildHealthSupplementsSerializer(many=True, read_only=True)
     exclusive_bf_checks = ExclusiveBFCheckSerializer(many=True, read_only=True)
     immunization_tracking = ChildHealthImmunizationHistorySerializer(many=True, read_only=True)
-    
-    # Supplements statuses nested within supplements
     supplements_statuses =ChildHealthSupplementStatusSerializer(many=True, read_only=True)
     nutrition_statuses = serializers.SerializerMethodField()
     disabilities = serializers.SerializerMethodField()  # 🔷 ADD THIS
@@ -124,7 +122,7 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
         model = ChildHealth_History
         fields = [
             'chhist_id',            
-            'disabilities',  # 🔷 INCLUDE HERE
+            'disabilities', 
             'created_at',
             'tt_status',
             'status',
@@ -139,14 +137,7 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
             'nutrition_statuses',
         ]
 
-    def get_supplements_statuses(self, obj):
-        # fetch statuses for each supplement
-        supplements = obj.child_health_supplements.all()
-        statuses = []
-        for supp in supplements:
-            for stat in supp.statuses.all():
-                statuses.append(ChildHealthSupplementStatusSerializer(stat).data)
-        return statuses
+   
 
     def get_nutrition_statuses(self, obj):
         # fetch nutritional status for each vital sign
@@ -162,89 +153,8 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
         return PatientDisablitySerializerBase(disabilities, many=True).data
 
 class ChildHealthrecordSerializerFull(serializers.ModelSerializer):
- 
-    # Include all related histories with their full details
     child_health_histories = ChildHealthHistoryFullSerializer(many=True, read_only=True)
- 
     class Meta:
         model = ChildHealthrecord
         fields = "__all__"
-    #     fields = [
-    #         'chrec_id',
-    #         'chr_date',
-    #         'ufc_no',
-    #         'family_no',
-    #         'mother_occupation',
-    #         'father_occupation',
-    #         'type_of_feeding',
-    #         'newborn_screening',
-    #         'place_of_delivery_type',
-    #         'birth_order',
-    #         'pod_location',
-    #         'created_at',
-    #         'updated_at',
-    #         'staff',
-    #         'staff_details',
-    #         'patrec',
-    #         'patrec_details',
-    #         'child_health_histories',
-    #         'disabilities',
-    #     ]
-    
-    # def get_disabilities(self, obj):
-    #     patrec = obj.patrec
-    #     disabilities = patrec.patient_disabilities.all()
-    #     return PatientDisablitySerializerBase(disabilities, many=True).data
-    
-    
-    
-    # "child_health_notes": [
-    #                 {
-    #                     "chnotes_id": 61,
-    #                     "chhist_details": {
-    #                         "chhist_id": 64,
-    #                         "created_at": "2025-07-09T18:22:55.513168Z",
-    #                         "tt_status": "TT5",
-    #                         "status": "recorded",
-    #                         "chrec": 67
-    #                     },
-    #                     "followv_details": {
-    #                         "followv_id": 98,
-    #                         "followv_date": "2025-07-04",
-    #                         "followv_status": "pending",
-    #                         "followv_description": "Chilsdads",
-    #                         "created_at": "2025-07-09T18:22:58.757529Z",
-    #                         "updated_at": "2025-07-09T18:22:58.757529Z",
-    #                         "patrec": 259
-    #                     },
-    #                     "staff_details": {
-    #                         "staff_id": "00003250624",
-    #                         "pos": {
-    #                             "pos_id": 7,
-    #                             "pos_title": "Barangay Health Workers",
-    #                             "pos_max": 10,
-    #                             "pos_group": "Barangay Health Staffs",
-    #                             "staff": "00001250623"
-    #                         },
-    #                         "rp": {
-    #                             "rp_id": "00003250624",
-    #                             "per": {
-    #                                 "per_id": 29,
-    #                                 "per_lname": "Tabanao",
-    #                                 "per_fname": "Christian",
-    #                                 "per_mname": "Abe",
-    #                                 "per_suffix": null,
-    #                                 "per_dob": "2004-02-24",
-    #                                 "per_sex": "Male",
-    #                                 "per_status": "Single",
-    #                                 "per_edAttainment": "College",
-    #                                 "per_religion": "Roman Catholic",
-    #                                 "per_contact": "09811231123"
-    #                             },
-    #                             "rp_date_registered": "2025-06-24",
-    #                             "staff": "00001250623"
-    #                         },
-    #                         "assignments": [],
-    #                         "staff_assign_date": "2025-06-26",
-    #                         "staff_type": "Health Staff",
-    #                         "mana
+   

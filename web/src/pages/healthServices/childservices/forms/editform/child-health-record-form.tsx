@@ -60,10 +60,11 @@ const initialFormData: FormData = {
   BFdates: [],
   vitalSigns: [],
   medicines: [],
-  is_anemic: false,
   anemic: {
     seen: "",
     given_iron: "",
+    is_anemic: false,
+
   },
   birthwt: {
     seen: "",
@@ -233,16 +234,16 @@ export default function ChildHealthRecordForm() {
       fatherdob: familyHeadInfo?.family_heads?.father?.personal_info?.per_dob || "",
       fatherOccupation: chrecDetails?.father_occupation || "",
       address: patient?.address?.full_address || "",
-      landmarks: patient?.address?.landmarks || "",
+      landmarks: chhistRecord?.landmarks || "",
       dateNewbornScreening: chrecDetails.newborn_screening || "",
       disabilityTypes: [], // As per user request, not retrieving into form's editable state
       edemaSeverity: "None",
       BFdates: [],
       vitalSigns: [],
       medicines: [],
-      is_anemic: false,
-      anemic: { seen: "", given_iron: "" },
-      birthwt: { seen: "", given_iron: "" },
+      // is_anemic: false,
+      anemic: { seen: "", given_iron: "",is_anemic: false,date_completed:"" },
+      birthwt: { seen: "", given_iron: "",date_completed:"" },
       status: chhistRecord.status || "recorded",
       type_of_feeding: chrecDetails?.type_of_feeding || "",
       tt_status: chhistRecord.tt_status || "",

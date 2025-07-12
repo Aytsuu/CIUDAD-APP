@@ -44,11 +44,40 @@ export async function addChildHealthRecord({
     throw new Error("Transient ID is required for transient residents");
   }
 
+   // Transient update handling
+   if (submittedData.residenceType === "Transient") {
+    try {
+      const transRes = await api2.patch(`patientrecords/update-transient/${submittedData.trans_id}/`, {
+        mother_fname: submittedData.motherFname || null,
+        mother_lname: submittedData.motherLname || null,
+        mother_mname: submittedData.motherMname || null,
+        mother_age: submittedData.motherAge || null,
+        mother_dob: submittedData.motherdob || null,
+        father_fname: submittedData.fatherFname || null,
+        father_lname: submittedData.fatherLname || null,
+        father_mname: submittedData.fatherMname || null,
+        father_age: submittedData.fatherAge || null,
+        father_dob: submittedData.fatherdob || null,
+      })
+      if (transRes.status !== 200) {
+        throw new Error("Failed to update transient information")
+      }
+      console.log("Transient updated successfully:", transRes.data)
+    } catch (transientError) {
+      console.error("Transient update error:", transientError)
+      if (transientError instanceof Error) {
+        throw new Error(`Failed to update transient: ${transientError.message}`)
+      } else {
+        throw new Error("Failed to update transient: Unknown error")
+      }
+    }
+  }
+
   // Create patient record
   const newPatrec = await createPatientRecord(
     submittedData.pat_id,
-    "Child Health Record"
-    
+    "Child Health Record",
+    staff 
   );
   const patrec_id = newPatrec.patrec_id;
   // Create child health record
@@ -65,6 +94,7 @@ export async function addChildHealthRecord({
     newborn_screening: submittedData.dateNewbornScreening || "",
     staff: staff || null,
     patrec: patrec_id,
+    landmarks: submittedData.landmarks || null,
   });
   const chrec_id = newChrec.chrec_id;
 
@@ -93,16 +123,18 @@ export async function addChildHealthRecord({
     followv_id = newFollowUp.followv_id;
   }
 
-  // Create health notes
-  const newNotes = await createChildHealthNotes({
-    chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    followv: followv_id,
-    chhist: current_chhist_id,
-    staff: staff || null,
-  });
-  const chnotes_id = newNotes.chnotes_id;
+  // Create health notes if there are notes added
+  if (submittedData.vitalSigns?.[0]?.notes) {
+    const newNotes = await createChildHealthNotes({
+      chn_notes: submittedData.vitalSigns[0].notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      followv: followv_id,
+      chhist: current_chhist_id,
+      staff: staff || null,
+    });
+    const chnotes_id = newNotes.chnotes_id;
+  }
 
   // Create body measurements
   const newBMI = await createBodyMeasurement({
@@ -167,7 +199,8 @@ export async function addChildHealthRecord({
       chhist: current_chhist_id,
       created_at: new Date().toISOString(),
       birthwt: Number(submittedData.vitalSigns?.[0]?.wt) ,
-      date_completed : null
+      date_completed : null,
+      is_anemic: false,
 
      
     });
@@ -176,7 +209,7 @@ export async function addChildHealthRecord({
 
 
   // Handle anemia
-  if (submittedData.is_anemic) {
+  if (submittedData.anemic?.is_anemic == true) {
     await createSupplementStatus({
       status_type: "anemic",
       date_seen: submittedData.anemic?.seen || null,
@@ -186,6 +219,8 @@ export async function addChildHealthRecord({
       birthwt: Number(submittedData.vitalSigns?.[0]?.wt) ,
       date_completed : null,
       updated_at: new Date().toISOString(),
+      is_anemic: submittedData.anemic?.is_anemic || false,
+
     });
   }
 

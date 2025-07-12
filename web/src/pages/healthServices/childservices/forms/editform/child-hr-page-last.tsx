@@ -109,8 +109,9 @@ export default function LastPage({
       originalIndex: index,
     }))
   }, [newVitalSigns])
+  
   const shouldHideAddForm = useMemo(() => {
-    return isEditMode && newVitalSigns.length > 0 && isToday(newVitalSigns[0].date)
+    return isEditMode  && formData.created_at && isToday(formData.created_at)
   }, [newVitalSigns, isEditMode])
   const latestOverallVitalSign = useMemo(() => {
     if (newVitalSigns.length > 0) {
@@ -133,9 +134,10 @@ export default function LastPage({
     defaultValues: {
       ...formData,
       vitalSigns: newVitalSigns,
-      is_anemic: false,
-      anemic: { seen: "", given_iron: "" },
-      birthwt: { seen: "", given_iron: "" },
+      // is_anemic: false,
+      anemic: { seen: "", given_iron: "" ,     is_anemic: false,date_completed:""
+      },
+      birthwt: { seen: "", given_iron: "" ,date_completed:""},
       medicines: [],
       status: "recorded",
       nutritionalStatus: {},
@@ -767,7 +769,7 @@ export default function LastPage({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                   control={control}
-                  name="is_anemic"
+                  name="anemic.is_anemic"
                   render={({ field }) => (
                     <FormItem className="flex items-center space-x-2">
                       <FormControl>
@@ -778,7 +780,7 @@ export default function LastPage({
                     </FormItem>
                   )}
                 />
-                {watch("is_anemic") && (
+                {watch("anemic.is_anemic") && (
                   <>
                     <FormDateTimeInput control={control} name="anemic.seen" label="Date Anemia Detected" type="date" />
                     <FormDateTimeInput control={control} name="anemic.given_iron" label="Date Iron Given" type="date" />

@@ -99,7 +99,7 @@ export default function IndivPatNewMedRecForm() {
           reason: med.reason || "No reason provided",
         })),
       };
-      await submitMedicineRequest(requestData,staffId);
+      await submitMedicineRequest({ data: requestData, staff_id: staffId });
       setIsConfirming(false);
     },
     [selectedMedicines, submitMedicineRequest]

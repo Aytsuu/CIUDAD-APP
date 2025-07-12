@@ -19,7 +19,7 @@ class ChildHealthrecord(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     type_of_feeding=models.CharField(max_length=100, blank=True, null=True)
     newborn_screening = models.DateField(null=True, blank=True)  # Newborn screening date
-
+    landmarks=models.CharField(max_length=100, blank=True, null=True)
     place_of_delivery_type = models.CharField(
         max_length=30,
         blank=False,
@@ -107,10 +107,10 @@ class ChildHealthSupplementsStatus(models.Model):
     status_type = models.CharField(choices=[('birthwt', 'Birth Weight'), ('anemic', 'Anemic')])
     date_seen = models.CharField(max_length=100, blank=True, null=True)
     date_given_iron = models.CharField(max_length=100, blank=True, null=True)
-    chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='supplementstatus')
+    chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='supplements_statuses')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) 
-    
+    is_anemic = models.BooleanField(default=False)  # Indicates if the child is anemic
     class Meta:
         db_table = 'child_health_supplements_status'
               

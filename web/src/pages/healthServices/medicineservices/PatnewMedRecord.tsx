@@ -26,7 +26,7 @@ import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
 import { useMedicineRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
-
+import { useAuth } from "@/context/AuthContext";
 interface Patient {
   pat_id: string;
   pat_type: string;
@@ -61,7 +61,8 @@ export default function PatNewMedRecForm() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } = useMedicineRequestMutation();
-
+  const {user}=useAuth()
+  const staff_id = user?.staff?.staff_id
   const handlePatientSelect = (patient: Patient | null, patientId: string) => {
     setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
@@ -113,8 +114,7 @@ export default function PatNewMedRecForm() {
             reason: med.reason || "No reason provided",
           })),
         };
-
-        await submitMedicineRequest(requestData);
+        await submitMedicineRequest({ data: requestData, staff_id });
       } catch (error) {
         console.error("Error in onSubmit handler:", error);
         toast.error("Failed to submit request");
@@ -124,6 +124,7 @@ export default function PatNewMedRecForm() {
     },
     [selectedMedicines, submitMedicineRequest]
   );
+  
 
   const totalSelectedQuantity = selectedMedicines.reduce(
     (sum, med) => sum + med.medrec_qty,

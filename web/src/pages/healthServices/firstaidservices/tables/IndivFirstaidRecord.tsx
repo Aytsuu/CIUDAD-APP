@@ -150,9 +150,7 @@ export default function IndivFirstAidRecords() {
             <div className="text-xs text-gray-500">
               Category: {row.original.finv_details?.fa_detail?.catlist || "N/A"}
             </div>
-            <div className="text-xs text-gray-500">
-              ID: {row.original.finv_details?.fa_detail?.fa_id || "N/A"}
-            </div>
+            
           </div>
         </div>
       ),
@@ -205,7 +203,7 @@ export default function IndivFirstAidRecords() {
   return (
     <>
       <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <Button
             className="text-black p-2 mb-2 self-start"
             variant={"outline"}

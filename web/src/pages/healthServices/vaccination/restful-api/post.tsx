@@ -12,6 +12,7 @@ export const getVaccineStock = async (vaccineTypeId: string) => {
 
 export const createVaccinationRecord = async (
   patrec_id: string,
+  staff_id: string | null = null,
   // status: "forwarded" | "completed" | "partially vaccinated",
   totalDoses: number
 ) => {
@@ -22,6 +23,7 @@ export const createVaccinationRecord = async (
     vacrec_totaldose: totalDoses,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    staff: staff_id || null, // Ensure staff_id is parsed as an integer
   });
   return response.data;
 };
@@ -34,6 +36,7 @@ export const createVaccinationHistory = async (
   age:string,
   vital_id: string | null = null,
   followv_id: string | null = null,
+  staff_id: string | null = null
   
 ) => {
   try {
@@ -48,6 +51,7 @@ export const createVaccinationHistory = async (
       vacStck_id: parseInt(vacStck_id, 10),
       assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
       followv: followv_id,
+      // staff:staff_id|| null
     });
     return response.data;
   } catch (error) {
@@ -178,14 +182,14 @@ export const deleteVaccinationHistory = async (vachist_id: string) => {
 
 export const createAntigenStockTransaction = async (
   vacStck_id: number,
+  staff_id: string,
   qty: string = "1 dose",
   action: string = "Administered",
-  staffId: number = 1
 ) => {
   const transactionPayload = {
     antt_qty: qty,
     antt_action: action,
-    staff: staffId,
+    staff: staff_id,
     vacStck_id: vacStck_id,
   };
 

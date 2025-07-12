@@ -5,16 +5,22 @@ import axios from "axios";
 import { toast } from "sonner";
 import { processFirstRequest } from "./processSubmit";
 
+interface FirstRequestVariables {
+  data: any;
+  staff_id: string;
+}
+
 export const useFirstRequestMutation = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: processFirstRequest,
+    mutationFn: ({ data, staff_id }: FirstRequestVariables) => 
+      processFirstRequest(data, staff_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["firstaidcount"] });
       queryClient.invalidateQueries({ queryKey: ["firstAidRecords"] });
       queryClient.invalidateQueries({ queryKey: ["patientFirstAidDetails"] });
-      toast.success(" First records submitted successfully!");
+      toast.success("First records submitted successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {

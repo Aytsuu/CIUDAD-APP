@@ -300,6 +300,8 @@ export async function updateChildHealthRecord({
         created_at: new Date().toISOString(),
         birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
         date_completed: null,
+        is_anemic: false,
+
       });
     }
 
@@ -321,7 +323,7 @@ export async function updateChildHealthRecord({
     }
 
     // Handle anemia
-    if (submittedData.is_anemic) {
+    if (submittedData.anemic?.is_anemic == true) {
       await createSupplementStatus({
         status_type: "anemic",
         date_seen: submittedData.anemic?.seen || null,
@@ -331,6 +333,7 @@ export async function updateChildHealthRecord({
         birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
         date_completed: null,
         updated_at: new Date().toISOString(),
+        is_anemic: submittedData.anemic?.is_anemic || false,
       });
     }
   }

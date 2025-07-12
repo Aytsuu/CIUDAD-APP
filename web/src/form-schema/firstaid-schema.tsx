@@ -17,7 +17,7 @@ import { z } from "zod";
 
 export const FirstaidRequestSchema = z.object({
   finv_id: z.string().min(1, "Firstaid ID is required"),
-  qty: z.number().min(1, "Quantity must be at least 1"),
+  qty: z.number().int().min(0), // Changed from min(1) to min(0)
   reason: z.string().optional()
 });
 

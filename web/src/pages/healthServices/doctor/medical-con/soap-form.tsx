@@ -29,6 +29,7 @@ import { IllnessComponent } from "@/components/ui/add-search-illness"
 import { TreatmentReceipt } from "@/components/ui/treatment-receipt"
 import SoapFormSkeleton from "@/pages/healthServices/skeleton/soap-form-skeleton"
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
+import { useAuth } from "@/context/AuthContext"
 
 const soapSchema = z.object({
   subj_summary: z.string().min(1, "Subjective summary is required"),
@@ -59,6 +60,9 @@ interface ExamSection {
 export default function SoapForm() {
   const navigate = useNavigate()
   const location = useLocation()
+  const {user}=useAuth()
+  const staff =user?.staff?.staff_id || null
+
   const { patientData, MedicalConsultation } = location.state || {}
   const [currentPage, setCurrentPage] = useState(1)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
@@ -203,12 +207,14 @@ export default function SoapForm() {
     console.log("Form submission data:", data)
 
     try {
+
+      // const staff: string = useAuth()?.user?.staff_id || null;
       const findingResponse = await createFindings({
         assessment_summary: data.assessment_summary || "",
         plantreatment_summary: data.plantreatment_summary || "",
         subj_summary: data.subj_summary || "",
         obj_summary: data.obj_summary || "",
-      })
+      }, staff)
 
       findingId = findingResponse.find_id
 

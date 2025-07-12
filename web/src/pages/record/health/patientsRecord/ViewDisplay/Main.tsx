@@ -402,10 +402,10 @@ console.log("formaated child data",formattedChildHealthData)
     toast("Edit cancelled. No changes were made.")
   }
 
-  if (isLoading || isLoadingChildHealthRecords) {
-    // Combined loading states
-    return <PatientRecordSkeleton /> // Use the new Skeleton component
-  }
+  // if (isLoading || isLoadingChildHealthRecords) {
+  //   // Combined loading states
+  //   return <PatientRecordSkeleton /> // Use the new Skeleton component
+  // }
 
   if (isError) {
     return (

@@ -1,6 +1,5 @@
 import AllChildHealthRecords from "@/pages/healthServices/childservices/childhealthRecords/ChildHR_all_records"
 import InvChildHealthRecords from "@/pages/healthServices/childservices/childhealthRecords/ChildHR_inv_records"
-import ChildHealthForm from "@/pages/healthServices/childservices/forms/backup/AddChildHRForm";
 import ChildHealthViewing from "@/pages/healthServices/childservices/childHR-viewing";
 import ChildHealthRecordForm from "@/pages/healthServices/childservices/forms/editform/child-health-record-form";
 import ChildHealthHistoryDetail from "@/pages/healthServices/childservices/childhealthRecords/ViewRecords";
@@ -16,11 +15,7 @@ export const childHealthServices = [
         path: "//child-health-records" ,
         element: <InvChildHealthRecords/>
     },
-    {
-        path:'/newAddChildHRForm',
-        element: <ChildHealthForm/>
-
-    },
+    
     {
         path: "/childHealthViewing",
         element: <ChildHealthViewing/>

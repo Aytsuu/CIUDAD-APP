@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card/card";
-import { ChevronLeft, ClipboardList, Scale } from "lucide-react";
+import { ChevronLeft, ClipboardList, Stethoscope } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -209,10 +209,11 @@ export default function DisplayMedicalConsultation() {
 
 
           {/* Consultation History Section */}
-          <div className="mt-8">
+          <div className="mt-10">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <Stethoscope className="text-blue"/>  
               <h2 className="font-bold text-base sm:text-lg ">
-                Consultation History
+            Consultation History
               </h2>
             </div>
 

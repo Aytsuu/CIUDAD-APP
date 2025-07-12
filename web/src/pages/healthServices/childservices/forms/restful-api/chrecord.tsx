@@ -15,6 +15,7 @@ export async function createChildHealthRecord(payload: {
   newborn_screening: string
   staff: string | null
   patrec: string
+  landmarks: string | null
 }) {
   try {
     const response = await api2.post("child-health/records/", payload)
@@ -114,6 +115,7 @@ export async function createSupplementStatus(payload: {
   updated_at?: string
   birthwt: number
    date_completed : string | null
+   is_anemic?: boolean
 
  
 }) {

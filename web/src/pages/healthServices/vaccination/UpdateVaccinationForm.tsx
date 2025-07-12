@@ -28,12 +28,16 @@ import {
 } from "./queries/UpdateVaccinationQueries";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { useAuth } from "@/context/AuthContext";
+
 
 export default function UpdateVaccinationForm() {
   const navigate = useNavigate();
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
     "self"
   );
+  const { user } = useAuth();
+  const staff_id =user?.staff?.staff_id
   const [isStep1ConfirmOpen, setIsStep1ConfirmOpen] = useState(false);
   const [isStep2ConfirmOpen, setIsStep2ConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -134,6 +138,7 @@ export default function UpdateVaccinationForm() {
 
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
       await submitStep1.mutateAsync({
+        staff_id,
         data,
         assignmentOption,
         form: {
@@ -146,6 +151,7 @@ export default function UpdateVaccinationForm() {
 
   const onSubmitStep2 = async (data: VitalSignsType) => {
       await submitStep2.mutateAsync({
+        staff_id,
         data,
         patientId: patientData.pat_id,
         vaccinationData: Vaccination,

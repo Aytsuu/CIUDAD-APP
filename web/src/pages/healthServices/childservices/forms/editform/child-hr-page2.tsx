@@ -47,7 +47,7 @@ export default function ChildHRPage2({
     defaultValues: {
       ...formData,
       disabilityTypes: formData.disabilityTypes || [],
-      BFdates: formData.BFdates || [], // Use formData.BFdates instead of empty array
+      BFdates: formData.BFdates || [], // Initialized here
       dateNewbornScreening: formData.dateNewbornScreening || "",
       type_of_feeding: formData.type_of_feeding || "",
       tt_status: formData.tt_status || "",

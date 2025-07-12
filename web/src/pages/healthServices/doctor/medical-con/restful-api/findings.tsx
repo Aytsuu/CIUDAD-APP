@@ -7,11 +7,13 @@ export const createFindings = async (data: {
     plantreatment_summary: string;
     subj_summary: string;
     obj_summary: string;
-  }) => {
+  },staff: string     
+) => {
     try {
     const response = await api2.post("patientrecords/findings/", {
       ...data,
       created_at: new Date().toISOString(),
+      staff
     });
       if (!response.data?.find_id) {
         throw new Error("Failed to retrieve the finding ID from the response");

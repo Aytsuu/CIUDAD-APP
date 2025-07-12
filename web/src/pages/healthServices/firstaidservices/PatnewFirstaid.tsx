@@ -27,9 +27,9 @@ import { RequestSummary } from "@/components/ui/firstaid-summary";
 import { useFirstRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-
+import { useAuth } from "@/context/AuthContext";
 interface Patient {
-  pat_id: number;
+  pat_id: string;
   pat_type: string;
   name?: string;
   personal_info?: {
@@ -58,6 +58,8 @@ export default function PatNewFirstaidRecForm() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] =
     useState(false);
+    const{user}=useAuth()
+    const staff_id=user?.staff?.staff_id
   const { firstAidStocksOptions, isLoading: isFirstAidLoading } =
     fetchFirstaidsWithStock();
   const [selectedFirstAids, setSelectedFirstAids] = useState<
@@ -96,11 +98,7 @@ export default function PatNewFirstaidRecForm() {
   }, []);
 
   const handlePreview = useCallback(() => {
-    if (
-      !selectedPatientId ||
-      selectedFirstAids.length === 0 ||
-      hasInvalidQuantities
-    ) {
+    if (!selectedPatientId || selectedFirstAids.length === 0) {
       toast.error("Please complete all required fields");
       return;
     }
@@ -119,35 +117,50 @@ export default function PatNewFirstaidRecForm() {
     form.setValue("firstaid", selectedFirstAids);
   }, [selectedFirstAids, form]);
 
-  const onSubmit = useCallback(
-    async (data: FirstaidRequestArrayType) => {
-      setIsConfirming(true);
-      const requestData = {
-        pat_id: data.pat_id,
-        firstaid: selectedFirstAids.map((med) => ({
-          finv_id: med.finv_id,
-          qty: med.qty,
-          reason: med.reason || "No reason provided",
-        })),
-      };
-      await submitFirstaidRequest(requestData);
-      setIsConfirming(false);
-      setIsSubmitConfirmationOpen(false);
-    },
-    [selectedFirstAids, submitFirstaidRequest, navigate]
-  );
+ 
+  // In your form component
+const onSubmit = useCallback(
+  async (data: FirstaidRequestArrayType) => {
+    setIsConfirming(true);
+    setIsSubmitConfirmationOpen(false);
 
-  const handleConfirmSubmit = () => {
-    setIsSubmitConfirmationOpen(false); // Close the dialog immediately
-    form.handleSubmit(onSubmit)(); // Trigger the form submission
-  };
+    // Remove the zero quantity filter - now we'll process all items
+    const requestData = {
+      pat_id: data.pat_id,
+      firstaid: data.firstaid.map((med) => ({
+        finv_id: med.finv_id,
+        qty: med.qty,
+        reason: med.reason || "No reason provided",
+      })),
+    };
+
+    try {
+      await submitFirstaidRequest({ 
+        data: requestData, 
+        staff_id: staff_id 
+      });
+    
+
+    } catch (error) {
+      toast.error("Failed to submit first aid request");
+    } finally {
+      setIsConfirming(false);
+    }
+  },
+  [submitFirstaidRequest, navigate, staff_id]
+);
+
+const handleConfirmSubmit = () => {
+  // Remove the non-zero quantity check
+  setIsSubmitConfirmationOpen(true);
+};
+
+  
 
   const totalSelectedQuantity = selectedFirstAids.reduce(
     (sum, fa) => sum + fa.qty,
     0
   );
-
-  const hasInvalidQuantities = selectedFirstAids.some((fa) => fa.qty < 1);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,10 +175,10 @@ export default function PatNewFirstaidRecForm() {
           </Button>
           <div className="flex-col items-center">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Medicine Request
+              First Aid Request
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
+              Request first aid items for a patient
             </p>
           </div>
         </div>
@@ -204,7 +217,6 @@ export default function PatNewFirstaidRecForm() {
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
                   />
-                  
                 </div>
               )}
             </div>
@@ -229,9 +241,7 @@ export default function PatNewFirstaidRecForm() {
             </div>
           )}
 
-          {(!selectedPatientId ||
-            selectedFirstAids.length === 0 ||
-            hasInvalidQuantities) && (
+          {(!selectedPatientId || selectedFirstAids.length === 0) && (
             <div className="mx-3 mb-4 mt-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
@@ -240,16 +250,12 @@ export default function PatNewFirstaidRecForm() {
                     <p className="text-sm font-medium text-amber-900">
                       {!selectedPatientId
                         ? "Patient Required"
-                        : selectedFirstAids.length === 0
-                        ? "First Aid Items Required"
-                        : "Invalid Quantities"}
+                        : "First Aid Items Required"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
                       {!selectedPatientId
                         ? "Please select a patient to continue with the request."
-                        : selectedFirstAids.length === 0
-                        ? "Please select at least one first aid item to submit the request."
-                        : "Please ensure all quantities are at least 1."}
+                        : "Please select at least one first aid item to submit the request."}
                     </p>
                   </div>
                 </div>
@@ -272,7 +278,6 @@ export default function PatNewFirstaidRecForm() {
                   disabled={
                     !selectedPatientId ||
                     selectedFirstAids.length === 0 ||
-                    hasInvalidQuantities ||
                     isFirstAidLoading
                   }
                   className="w-full sm:w-auto px-6 text-white order-1 sm:order-2"
@@ -311,8 +316,8 @@ export default function PatNewFirstaidRecForm() {
             isOpen={isSubmitConfirmationOpen}
             onOpenChange={setIsSubmitConfirmationOpen}
             onConfirm={form.handleSubmit(onSubmit)}
-            title="Submit Medicine Request"
-            description="Are you sure you want to submit this medicine request? This action will process the request and update the inventory."
+            title="Submit First Aid Request"
+            description="Are you sure you want to submit this first aid request? This action will process the request and update the inventory."
           />
         </div>
       </div>

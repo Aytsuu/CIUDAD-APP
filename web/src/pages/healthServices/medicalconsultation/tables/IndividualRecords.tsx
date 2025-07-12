@@ -16,11 +16,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMedconRecordById } from "../restful-api/GetMedicalRecord";
 import { Toaster } from "sonner";
-import {
-  
-  Syringe,
-  AlertCircle,
-} from "lucide-react";
+import { Syringe, AlertCircle } from "lucide-react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 
@@ -214,7 +210,9 @@ export default function InvMedicalConRecords() {
         <div className="flex justify-center gap-2">
           <Link
             to="/DisplayMedicalConsultation"
-            state={{ params: { MedicalConsultation: row.original, patientData } }}
+            state={{
+              params: { MedicalConsultation: row.original, patientData },
+            }}
           >
             <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
               View
@@ -281,41 +279,40 @@ export default function InvMedicalConRecords() {
           </div>
         )}
 
-        <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 border rounded-md flex items-center justify-center shadow-sm">
-              <Syringe className="h-5 w-5 text-blue-600" />
+        <div className="w-full hidden lg:flex justify-between items-center mb-4 gap-6">
+          {/* Total Medical Consultations */}
+          <div className=" flex  gap-2 items-center p-2 ">
+            <div className=" flex items-center justify-center ">
+              <Syringe className="h-6 w-6 text-blue" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800">
+              <p className="text-sm font-medium text-gray-800 pr-2">
                 Total Medical Consultations
               </p>
-              <p className="text-3xl font-bold text-gray-900">
+              
+            </div>
+            <p className="text-2xl font-bold text-gray-900">
                 {formatMedicalData().length}
               </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="flex gap-x-2">
-              <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                  size={17}
-                />
-                <Input
-                  placeholder="Search records..."
-                  className="pl-10 w-72 bg-white"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
           </div>
 
-          <div>
+          {/* Search and Actions */}
+          <div className="flex flex-1 justify-between items-center gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search records..."
+                className="pl-10 w-full bg-white"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* New Consultation Button */}
             <Button className="w-full sm:w-auto">
               <Link to="/IndivMedicalForm" state={{ params: { patientData } }}>
                 New Consultation Record

@@ -249,7 +249,7 @@ export default function InvChildHealthRecords() {
                   },
                 }}
               >
-                <Button >Update</Button>
+                <Button>Update</Button>
               </Link>
             )}
           </div>
@@ -282,31 +282,29 @@ export default function InvChildHealthRecords() {
 
   return (
     <div className="w-full bg-snow">
+      <div className="flex flex-col sm:flex-row gap-4 ">
+        <Button
+          className="text-black p-2 mb-2 self-start"
+          variant={"outline"}
+          onClick={() => navigate(-1)}
+        >
+          <ChevronLeft />
+        </Button>
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Child Health Hisotry Records
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Manage and view child's health history
+          </p>
+        </div>
+      </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
 
-       <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Button
-                  className="text-black p-2 mb-2 self-start"
-                  variant={"outline"}
-                  onClick={() => navigate(-1)}
-                >
-                  <ChevronLeft />
-                </Button>
-                <div className="flex-col items-center mb-4">
-                  <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-                  Child Health Hisotry Records
-                  </h1>
-                  <p className="text-xs sm:text-sm text-darkGray">
-                  Manage and view child's health history
-                  </p>
-                </div>
-              </div>
-              <hr className="border-gray mb-5 sm:mb-8" />
-    
-      
       <div className="mb-5">
         <ChildHealthRecordCard child={childData} />
       </div>
-    
+
       {/* Wrap the DataTable with TooltipProvider */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">

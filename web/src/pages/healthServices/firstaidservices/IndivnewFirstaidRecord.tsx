@@ -16,18 +16,28 @@ import {
 import { toast } from "sonner";
 import { fetchFirstaidsWithStock } from "./restful-api/fetchAPI";
 import { z } from "zod";
-import {
-  FirstaidRequestArraySchema,
-  FirstaidRequestArrayType,
-} from "@/form-schema/firstaid-schema";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { FirstAidDisplay } from "@/components/ui/first-aid-display";
 import { RequestSummary } from "@/components/ui/firstaid-summary";
 import { useFirstRequestMutation } from "./queries/postQueries";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"; // Import the ConfirmationDialog
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { useAuth } from "@/context/AuthContext";
+// Updated schema to allow zero quantities
+const FirstaidRequestArraySchema = z.object({
+  pat_id: z.string(),
+  firstaid: z.array(
+    z.object({
+      finv_id: z.string(),
+      qty: z.number().int().min(0), // Changed from min(1) to min(0)
+      reason: z.string().optional(),
+    })
+  ),
+});
+
+type FirstaidRequestArrayType = z.infer<typeof FirstaidRequestArraySchema>;
 
 interface Patient {
-  pat_id: number;
+  pat_id: string;
   pat_type: string;
   name?: string;
   personal_info?: {
@@ -50,20 +60,19 @@ interface Patient {
 export default function IndivPatNewFirstAidRecForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false); // State for dialog
-  const { firstAidStocksOptions, isLoading: isFirstAidLoading } =
-    fetchFirstaidsWithStock();
+  const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false);
+  const { firstAidStocksOptions, isLoading: isFirstAidLoading } = fetchFirstaidsWithStock();
   const [selectedFirstAids, setSelectedFirstAids] = useState<
     { finv_id: string; qty: number; reason: string }[]
   >([]);
+  const {user} = useAuth()
+  const staff_id =user?.staff?.staff_id
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { mutateAsync: submitFirstaidRequest, isPending: isSubmitting } =
-    useFirstRequestMutation();
+  const { mutateAsync: submitFirstaidRequest, isPending: isSubmitting } = useFirstRequestMutation();
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -74,13 +83,7 @@ export default function IndivPatNewFirstAidRecForm() {
   }, [location.state]);
 
   const handleSelectedFirstAidChange = useCallback(
-    (
-      updatedFirstAids: {
-        finv_id: string;
-        qty: number;
-        reason: string;
-      }[]
-    ) => {
+    (updatedFirstAids: { finv_id: string; qty: number; reason: string }[]) => {
       setSelectedFirstAids(updatedFirstAids);
     },
     []
@@ -91,11 +94,7 @@ export default function IndivPatNewFirstAidRecForm() {
   }, []);
 
   const handlePreview = useCallback(() => {
-    if (
-      !selectedPatientData ||
-      selectedFirstAids.length === 0 ||
-      hasInvalidQuantities
-    ) {
+    if (!selectedPatientData || selectedFirstAids.length === 0) {
       toast.error("Please complete all required fields");
       return;
     }
@@ -114,43 +113,50 @@ export default function IndivPatNewFirstAidRecForm() {
     form.setValue("firstaid", selectedFirstAids);
   }, [selectedFirstAids, form]);
 
-  const onSubmit = useCallback(
-    async (data: FirstaidRequestArrayType) => {
-      setIsConfirming(true);
+ // In your form component
+const onSubmit = useCallback(
+  async (data: FirstaidRequestArrayType) => {
+    setIsConfirming(true);
+    setIsSubmitConfirmationOpen(true);
 
-      const requestData = {
-        pat_id: data.pat_id,
-        firstaid: selectedFirstAids.map((fa) => ({
-          finv_id: fa.finv_id,
-          qty: fa.qty,
-          reason: fa.reason || "No reason provided",
-        })),
-      };
+    
+    // Remove the zero quantity filter - now we'll process all items
+    const requestData = {
+      pat_id: data.pat_id,
+      firstaid: data.firstaid.map((med) => ({
+        finv_id: med.finv_id,
+        qty: med.qty,
+        reason: med.reason || "No reason provided",
+      })),
+    };
 
-      try {
-        await submitFirstaidRequest(requestData);
-      } catch (error) {
-        toast.error("Failed to submit first aid request");
-      } finally {
-        setIsConfirming(false);
-        setIsSubmitConfirmationOpen(false); // Close dialog
-      }
-    },
-    [selectedFirstAids, submitFirstaidRequest, navigate]
-  );
+    try {
+      await submitFirstaidRequest({ 
+        data: requestData, 
+        staff_id: staff_id 
+      });
+
+    } catch (error) {
+      toast.error("Failed to submit first aid request");
+    } finally {
+      setIsConfirming(false);
+      setIsSubmitConfirmationOpen(false);
+    }
+  },
+  [submitFirstaidRequest, navigate, staff_id]
+);
+
+const handleConfirmSubmit = () => {
+  // Remove the non-zero quantity check
+  setIsSubmitConfirmationOpen(true);
+};
 
   const totalSelectedQuantity = selectedFirstAids.reduce(
     (sum, fa) => sum + fa.qty,
     0
   );
 
-  const hasInvalidQuantities = selectedFirstAids.some((fa) => fa.qty < 1);
-
-  // Handler for opening the confirmation dialog
-  const handleConfirmSubmit = () => {
-    setIsSubmitConfirmationOpen(true);
-  };
-
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -218,7 +224,6 @@ export default function IndivPatNewFirstAidRecForm() {
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
                   />
-                 
                 </div>
               )}
             </div>
@@ -243,9 +248,7 @@ export default function IndivPatNewFirstAidRecForm() {
             </div>
           )}
 
-          {(!selectedPatientData ||
-            selectedFirstAids.length === 0 ||
-            hasInvalidQuantities) && (
+          {(!selectedPatientData || selectedFirstAids.length === 0) && (
             <div className="mx-3 mb-4 mt-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
@@ -254,16 +257,12 @@ export default function IndivPatNewFirstAidRecForm() {
                     <p className="text-sm font-medium text-amber-900">
                       {!selectedPatientData
                         ? "Patient Required"
-                        : selectedFirstAids.length === 0
-                        ? "First Aid Items Required"
-                        : "Invalid Quantities"}
+                        : "First Aid Items Required"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
                       {!selectedPatientData
                         ? "Please select a patient first from the first aid records page."
-                        : selectedFirstAids.length === 0
-                        ? "Please select at least one first aid item to submit the request."
-                        : "Please ensure all quantities are at least 1."}
+                        : "Please select at least one first aid item to submit the request."}
                     </p>
                   </div>
                 </div>
@@ -286,7 +285,6 @@ export default function IndivPatNewFirstAidRecForm() {
                   disabled={
                     !selectedPatientData ||
                     selectedFirstAids.length === 0 ||
-                    hasInvalidQuantities ||
                     isFirstAidLoading
                   }
                   className="w-full sm:w-auto px-6 text-white order-1 sm:order-2"
@@ -303,7 +301,7 @@ export default function IndivPatNewFirstAidRecForm() {
                     Back to Edit
                   </Button>
                   <Button
-                    onClick={handleConfirmSubmit} // Open dialog instead of submitting
+                    onClick={handleConfirmSubmit}
                     disabled={isConfirming}
                     className="w-full sm:w-auto px-6 text-white order-1 sm:order-2 bg-green-600 hover:bg-green-700"
                   >
@@ -321,7 +319,6 @@ export default function IndivPatNewFirstAidRecForm() {
             </div>
           </div>
 
-          {/* Add ConfirmationDialog */}
           <ConfirmationDialog
             isOpen={isSubmitConfirmationOpen}
             onOpenChange={setIsSubmitConfirmationOpen}
