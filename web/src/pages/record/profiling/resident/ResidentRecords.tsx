@@ -122,12 +122,12 @@ export default function ResidentRecords() {
                 </Link>
 
                 <Link
-                  to="/resident/form"
+                  to="/resident/registration"
                   state={{
                     params: {
                       origin: "create",
                       title: "Resident Registration",
-                      Description: "Provide the necessary details, and complete the registration.",
+                      description: "Provide the necessary details, and complete the registration.",
                     },
                   }}
                   className="flex-1 sm:flex-none"

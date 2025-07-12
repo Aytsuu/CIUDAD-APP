@@ -16,6 +16,7 @@ import { formatResidents } from "../profilingFormats";
 import { useAddFamilyComposition } from "../queries/profilingAddQueries";
 import { toast } from "sonner";
 import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
+import { capitalize } from "@/helpers/capitalize";
 
 export default function AddMemberForm({ 
   familyId, 
@@ -57,7 +58,7 @@ export default function AddMemberForm({
     const values = form.getValues();
     addFamilyComposition([{
       "fam": familyId,
-      "fc_role": values.role,
+      "fc_role": capitalize(values.role),
       "rp": residentId
     }], {
       onSuccess: (newComposition) => {3

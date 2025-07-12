@@ -13,6 +13,7 @@ import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLa
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
 import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
+import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
 
 export const profiling_router = [
   // Account
@@ -29,6 +30,10 @@ export const profiling_router = [
   {
     path: "resident/form",
     element: <ResidentFormLayout />,
+  },
+  {
+    path: "resident/registration",
+    element: <RegistrationLayout />,
   },
   {
     path: "resident/view",

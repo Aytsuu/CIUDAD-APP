@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { ArrowUpDown, CircleAlert, UserRoundPlus } from "lucide-react";
+import { ArrowUpDown, CircleAlert, Store, UserRoundPlus } from "lucide-react";
 import { ResidentAdditionalRecord, ResidentRecord } from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -97,6 +97,20 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
           />
         </div>)
     },
+  },
+  {
+    accessorKey: "business_owner",
+    header: "Business Owner",
+    cell: ({ row }) => (
+      <div className="flex justify-center items-center">
+        {row.original.business_owner === true ? (
+        <Store className="w-4 h-4 text-green-500"/>
+        ) : (
+          <div className="w-2 h-2 rounded-full bg-red-500"/>
+        )}
+      </div>
+      
+    ),
   },
   {
     accessorKey: "lname",
