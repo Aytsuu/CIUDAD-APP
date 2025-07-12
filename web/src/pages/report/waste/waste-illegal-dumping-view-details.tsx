@@ -175,7 +175,8 @@
 
 
 
-
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
@@ -193,12 +194,15 @@ interface WasteReportDetailsProps {
   rep_status: string;
   rep_date: string;
   rep_date_resolved: string;
-  rep_resolved_img: string;
   sitio_id: number;
   sitio_name: string;
   waste_report_file: {
       wrf_id: number;
       wrf_url: string;
+  }[];
+  waste_report_rslv_file: {
+      wrsf_id: number;
+      wrsf_url: string;
   }[];
 }
 
@@ -213,13 +217,45 @@ function WasteIllegalDumpingDetails({
   rep_date,
   rep_contact,
   rep_date_resolved,
-  rep_resolved_img,
   sitio_id,
   sitio_name,
-  waste_report_file
+  waste_report_file,
+  waste_report_rslv_file
 }: WasteReportDetailsProps) {
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImageResIndex, setCurrentImageResIndex] = useState(0);
   const isResolved = !!rep_date_resolved || rep_status === "resolved";
+
+  //Report Evidence Images
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === waste_report_file.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? waste_report_file.length - 1 : prevIndex - 1
+    );
+  };
+
+
+  //Resolution Evidence Images
+  const nextResImage = () => {
+    setCurrentImageResIndex((prevResIndex) => 
+      prevResIndex === waste_report_rslv_file.length - 1 ? 0 : prevResIndex + 1
+    );
+  };
+
+  const prevResImage = () => {
+    setCurrentImageResIndex((prevResIndex) => 
+      prevResIndex === 0 ? waste_report_rslv_file.length - 1 : prevResIndex - 1
+    );
+  };  
+
+
 
   const getStatusStyle = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -263,34 +299,86 @@ function WasteIllegalDumpingDetails({
       <div className="flex flex-col lg:flex-row gap-6 h-full">
         {/* Images Container */}
         <div className="lg:w-1/2 space-y-6">
-          {/* Original Report Image */}
-          {waste_report_file[0].wrf_url && (
+          {/* Report Evidence Image */}
+          {waste_report_file.length > 0 && (
             <div className="w-full relative">
-              <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700">
-                Report Evidence
+              <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700 z-10">
+                Report Evidence ({currentImageIndex + 1}/{waste_report_file.length})
               </span>
-              <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2">
-                <img
-                  src={waste_report_file[0].wrf_url}
-                  alt="Report evidence"
-                  className="w-full h-full object-cover"
-                />
+              
+              <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2 relative">
+                <a 
+                  href={waste_report_file[currentImageIndex].wrf_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full h-full"
+                >
+                  <img
+                    src={waste_report_file[currentImageIndex].wrf_url}
+                    alt="Report evidence"
+                    className="w-full h-full object-cover cursor-pointer"
+                  />
+                </a>
+                
+                {/* Navigation Arrows */}
+                {waste_report_file.length > 1 && (
+                  <>
+                    <button 
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 p-2 rounded shadow-lg hover:bg-opacity-100"
+                    >
+                      <ChevronLeft size={12}/>
+                    </button>
+                    <button 
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 p-2 rounded shadow-lg hover:bg-opacity-100"
+                    >
+                      <ChevronRight size={12}/>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
           
-          {/* Resolved Image - only show if exists */}
-          {rep_resolved_img && (
+          {/* Resolution Evidence Image - only show if exists */}
+          {waste_report_rslv_file.length > 0 && (
             <div className="w-full relative">
-              <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700">
-                Resolution Evidence
+              <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700 z-10">
+                Resolution Evidence ({currentImageResIndex + 1}/{waste_report_rslv_file.length})
               </span>
-              <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2">
-                <img
-                  src={rep_resolved_img}
-                  alt="Resolution evidence"
-                  className="w-full h-full object-cover"
-                />
+              
+              <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2 relative">
+                <a 
+                  href={waste_report_rslv_file[currentImageResIndex].wrsf_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full h-full"
+                >
+                  <img
+                    src={waste_report_rslv_file[currentImageResIndex].wrsf_url}
+                    alt="Report evidence"
+                    className="w-full h-full object-cover cursor-pointer"
+                  />
+                </a>
+                
+                {/* Navigation Arrows */}
+                {waste_report_rslv_file.length > 1 && (
+                  <>
+                    <button 
+                      onClick={prevResImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 p-2 rounded shadow-lg hover:bg-opacity-100"
+                    >
+                      <ChevronLeft size={12}/>
+                    </button>
+                    <button 
+                      onClick={nextResImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 p-2 rounded shadow-lg hover:bg-opacity-100"
+                    >
+                      <ChevronRight size={12}/>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -364,7 +452,7 @@ function WasteIllegalDumpingDetails({
                 className="max-w-[30%] h-[340px] flex flex-col overflow-auto"
                 title="Proof of Resolution"
                 description="Please provide an image"
-                mainContent={<WasteReportResolved rep_id={rep_id} is_resolve={isResolved}/>}
+mainContent={<WasteReportResolved rep_id={rep_id} is_resolve={isResolved} onSuccess={() => setIsDialogOpen(false)}/>}
               />
             </div>
           </div>

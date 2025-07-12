@@ -274,10 +274,17 @@ class WasteReportFileSerializer(serializers.ModelSerializer):
         model = WasteReport_File
         fields = '__all__'
 
+
+class WasteReportResolveFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WasteReportResolve_File
+        fields = '__all__'        
+
         
 class WasteReportSerializer(serializers.ModelSerializer):
     rep_complainant = serializers.SerializerMethodField()
     waste_report_file = WasteReportFileSerializer(many=True, read_only=True)
+    waste_report_rslv_file = WasteReportResolveFileSerializer(many=True, read_only=True)
     sitio_name = serializers.CharField(source='sitio_id.sitio_name', allow_null=True, default=None) 
 
     class Meta:
@@ -285,9 +292,9 @@ class WasteReportSerializer(serializers.ModelSerializer):
         fields = [
             'rep_id', 'rep_matter', 'rep_location', 'rep_add_details',
             'rep_violator', 'rep_anonymous', 'rep_contact', 'rep_status', 
-            'rep_date', 'rep_date_resolved', 'rep_resolved_img', 
-            'rep_complainant', 'waste_report_file', 'sitio_name', 'sitio_id',
-            'staff_id', 'rp_id'
+            'rep_date', 'rep_date_resolved', 'rep_complainant', 'waste_report_file', 
+            'waste_report_rslv_file', 'sitio_name', 'sitio_id', 'staff_id', 
+            'rp_id'
         ]
     
     def get_rep_complainant(self, obj):

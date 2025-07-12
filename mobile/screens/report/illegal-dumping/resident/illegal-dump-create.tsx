@@ -155,7 +155,7 @@ export default function IllegalDumpCreateForm() {
               <MultiImageUploader
                 mediaFiles={mediaFiles}
                 setMediaFiles={setMediaFiles}
-                maxFiles={1}
+                maxFiles={3}
               />
             </View>
 

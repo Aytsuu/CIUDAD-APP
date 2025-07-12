@@ -5,6 +5,7 @@ import { ProjPropPendingSectionCards } from "@/components/analytics/gad/projprop
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
 import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
+import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
 
 export default function Dashboard() {
   return (
@@ -21,6 +22,7 @@ export default function Dashboard() {
           </div>
           <div className="grid">
             <StaffAttendanceRankingChart/>
+            <GADQuarterlyBudgetChart/>
           </div>
         </div>
         <div className="grid gap-2">

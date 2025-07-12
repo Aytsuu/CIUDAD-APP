@@ -195,8 +195,10 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
             ProjectProposalLog.objects.create(
                 gpr=instance,
                 gprl_status=new_status,
-                staff=instance.staff,
-                gprl_reason=reason
+                gprl_reason=reason,
+                gprl_date_approved_rejected=date_approved_rejected,
+                gprl_date_submitted=timezone.now(),
+                staff=instance.staff
             )
         return Response(serializer.data)
     
@@ -233,8 +235,8 @@ class UpdateProposalStatusView(generics.GenericAPIView):
             if status not in dict(ProjectProposal.STATUS_CHOICES):
                 return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Only set gprl_date_approved_rejected for Approved or Rejected statuses
-            date_approved_rejected = timezone.now() if status in ["Pending","Viewed","Amend","Approved", "Rejected"] else None
+            # Always set gprl_date_approved_rejected for any status change
+            date_approved_rejected = timezone.now()
 
             # Create a new log entry
             ProjectProposalLog.objects.create(
@@ -324,12 +326,13 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
         # Get the latest log status for each proposal
         latest_logs = ProjectProposalLog.objects.filter(
             gpr_id=OuterRef('gpr_id')
-        ).order_by('-gprl_date_approved_rejected')
-
+        ).order_by('-gprl_id')
+        
         # Annotate queryset with latest_status
         queryset = queryset.annotate(
             latest_status=Subquery(latest_logs.values('gprl_status')[:1])
         )
+        
 
         # Aggregate counts for each status
         status_counts = queryset.aggregate(
@@ -339,7 +342,7 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             approved=Count('pk', filter=Q(latest_status='Approved')),
             rejected=Count('pk', filter=Q(latest_status='Rejected'))
         )
-
+        print("Status Counts:", status_counts)
         # Return JSON response with counts
         return Response({
             'pending': status_counts['pending'] or 0,
