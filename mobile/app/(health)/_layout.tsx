@@ -19,9 +19,9 @@ export default () => {
             <Stack.Screen name="medicine-request/confirmation" options={{ headerShown: false }} />
             <Stack.Screen name="medicine-request/details" options={{ headerShown: false }} />
             <Stack.Screen name="animalbite/animalbite" options={{ headerShown: false }} />
-            <Stack.Screen name="inventory/medicine" options={{ headerShown: false }} />
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="home" options={{ headerShown: false }} />
+            <Stack.Screen name="inventory/medicine" options={{ headerShown: false }} />
             <Stack.Screen name="admin/medicinerequest/medicinerequest" options={{ headerShown: false }} />
             <Stack.Screen name="admin/animalbites/individual" options={{ headerShown: false }} />
             <Stack.Screen name="admin/animalbites/overall" options={{ headerShown: false }} />

@@ -2,7 +2,7 @@ import React, { useMemo } from "react"
 import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { ChevronLeft, User, FileText, AlertCircle, Package, Clock, Shield, Activity } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
-import { router, useLocalSearchParams } from "expo-router"
+import { Link, useLocalSearchParams } from "expo-router"
 import { usePatientRecordsByPatId } from "../restful-api/animalbites/db-request/get-query"
 import { format } from "date-fns"
 
@@ -32,10 +32,8 @@ export default function AnimalBiteIndividualScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>()
   const [refreshing, setRefreshing] = React.useState(false)
 
-  // Use the correct hook to fetch records for a specific patient ID
   const { data: records, isLoading, isError, error, refetch } = usePatientRecordsByPatId(patientId)
 
-  // Extract patient's general information from the first record
   const patientInfo = useMemo(() => {
     if (records && records.length > 0) {
       const firstRecord = records[0]
@@ -97,8 +95,8 @@ export default function AnimalBiteIndividualScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <View className="bg-white p-8 rounded-2xl shadow-lg items-center">
+      <View className="flex-1 justify-center items-center bg-blue-50">
+        <View className="bg-white p-8 rounded-2xl items-center shadow-sm">
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading patient records...</Text>
         </View>
@@ -108,51 +106,54 @@ export default function AnimalBiteIndividualScreen() {
 
   if (isError) {
     return (
-      <View className="flex-1 justify-center items-center p-4 bg-gradient-to-br from-red-50 to-pink-100">
+      <View className="flex-1 justify-center items-center p-4 bg-red-50">
         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
           <AlertCircle size={48} color="#EF4444" />
           <Text className="text-red-500 text-xl font-bold mb-2 mt-4">Error</Text>
           <Text className="text-gray-700 text-center leading-6">
             Failed to load patient records. {error?.message || "Please try again later."}
           </Text>
-          <TouchableOpacity onPress={() => router.back()} className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
-            <Text className="text-white font-semibold">Go Back</Text>
-          </TouchableOpacity>
+          <Link href="/admin/animalbites" asChild>
+            <TouchableOpacity className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
+              <Text className="text-white font-semibold">Go Back</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
       </View>
     )
   }
 
-  // Handle case where patientId is not found or no records for that ID
   if (!patientId || !patientInfo) {
     return (
-      <View className="flex-1 justify-center items-center p-4 bg-gradient-to-br from-gray-50 to-blue-100">
+      <View className="flex-1 justify-center items-center p-4 bg-gray-50">
         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
           <Package size={48} color="#9CA3AF" />
           <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">No Patient Records Found</Text>
           <Text className="text-gray-500 text-center leading-6">
             The patient ID '{patientId || "N/A"}' did not yield any records, or is invalid.
           </Text>
-          <TouchableOpacity onPress={() => router.back()} className="mt-6 px-6 py-3 bg-blue-500 rounded-xl">
-            <Text className="text-white font-semibold">Go Back</Text>
-          </TouchableOpacity>
+          <Link href="/admin/animalbites" asChild>
+            <TouchableOpacity className="mt-6 px-6 py-3 bg-blue-500 rounded-xl">
+              <Text className="text-white font-semibold">Go Back</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
       </View>
     )
   }
 
   return (
-    <View className="flex-1 bg-gradient-to-br from-blue-50 p-2 to-indigo-100">
+    <View className="flex-1 bg-blue-50">
       {/* Header */}
-      <View className="bg-white shadow-lg">
+      <View className="bg-white shadow-sm">
         <View className="flex-row items-center p-4 pt-12">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 mr-3 bg-gray-100 rounded-full">
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
+          <Link href="/admin/animalbites" asChild>
+            <TouchableOpacity className="p-2 mr-3 bg-gray-100 rounded-full">
+              <ChevronLeft size={24} color="#374151" />
+            </TouchableOpacity>
+          </Link>
           <View className="flex-1">
-            <Text className="text-xl font-bold text-gray-800">
-              Animal Bites Record
-            </Text>
+            <Text className="text-xl font-bold text-gray-800">Animal Bites Record</Text>
           </View>
         </View>
       </View>
@@ -160,11 +161,10 @@ export default function AnimalBiteIndividualScreen() {
       <ScrollView
         className="flex-1"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        showsVerticalScrollIndicator={false}
       >
         {/* Patient Information Card */}
         <View className="p-4">
-          <View className="bg-white rounded-2xl shadow-sm border border-gray-300 overflow-hidden">
+          <View className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {/* Patient Header */}
             <View className="bg-blue-600 p-6">
               <View className="flex-row items-center">
@@ -177,14 +177,14 @@ export default function AnimalBiteIndividualScreen() {
                   <Text className="text-white text-2xl font-bold mb-1">
                     {patientInfo.patient_fname} {patientInfo.patient_mname} {patientInfo.patient_lname}
                   </Text>
-                  <Text className="text-blue-100 text-sm" > ID: {patientInfo.patient_id}</Text>
+                  <Text className="text-blue-100 text-sm">ID: {patientInfo.patient_id}</Text>
                 </View>
               </View>
             </View>
 
             <View className="flex-row gap-4">
               {/* Age & Gender */}
-                <View className="flex-1 bg-white rounded-xl m-5 ">
+              <View className="flex-1 bg-white rounded-lg m-4">
                 <View className="flex-row items-center mb-2">
                   <User size={18} color="#6B7280" />
                   <Text className="text-gray-600 text-sm ml-2 font-medium">Age & Gender</Text>
@@ -195,20 +195,22 @@ export default function AnimalBiteIndividualScreen() {
               </View>
 
               {/* Patient Type */}
-              <View className="flex-1 bg-white rounded-xl m-5">
+              <View className="flex-1 bg-white rounded-lg m-4">
                 <View className="flex-row items-center mb-2">
                   <Shield size={18} color="#6B7280" />
                   <Text className="text-gray-600 text-sm ml-2 font-medium">Patient Type</Text>
                 </View>
                 <View
-                  className={`px-3 py-1 rounded-full self-start ${patientInfo.patient_type === "Transient"
+                  className={`px-3 py-1 rounded-full self-start ${
+                    patientInfo.patient_type === "Transient"
                       ? "bg-orange-100 border border-orange-200"
                       : "bg-green-100 border border-green-200"
-                    }`}
+                  }`}
                 >
                   <Text
-                    className={`text-sm font-semibold ${patientInfo.patient_type === "Transient" ? "text-orange-700" : "text-green-700"
-                      }`}
+                    className={`text-sm font-semibold ${
+                      patientInfo.patient_type === "Transient" ? "text-orange-700" : "text-green-700"
+                    }`}
                   >
                     {patientInfo.patient_type}
                   </Text>
@@ -220,7 +222,7 @@ export default function AnimalBiteIndividualScreen() {
 
         {/* Records Summary */}
         <View className="px-4 mb-4">
-          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-300 ">
+          <View className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <View className="flex-row items-center mb-4">
               <Activity size={24} color="#3B82F6" />
               <Text className="text-xl font-bold text-gray-800 ml-3">Records Summary</Text>
@@ -232,13 +234,13 @@ export default function AnimalBiteIndividualScreen() {
               </View>
               <View className="items-center">
                 <Text className="text-3xl font-bold text-green-600">
-                  {records?.filter((r: { exposure_type: string }) => r.exposure_type?.toLowerCase() === "bite").length || 0}
+                  {records?.filter((r) => r.exposure_type?.toLowerCase() === "bite").length || 0}
                 </Text>
                 <Text className="text-gray-600 text-sm">Bite Incidents</Text>
               </View>
               <View className="items-center">
                 <Text className="text-3xl font-bold text-orange-600">
-                  {records?.filter((r: { exposure_type: string }) => r.exposure_type?.toLowerCase() === "non-bite").length || 0}
+                  {records?.filter((r) => r.exposure_type?.toLowerCase() === "non-bite").length || 0}
                 </Text>
                 <Text className="text-gray-600 text-sm">Non-bite Incidents</Text>
               </View>
@@ -247,23 +249,23 @@ export default function AnimalBiteIndividualScreen() {
         </View>
 
         {/* Referral History */}
-        <View className="px-4 pb-6">
+        <View className="px-4 pb-6 ">
           <View className="flex-row items-center mb-4 mt-5">
             <FileText size={24} color="#374151" />
             <Text className="text-xl font-bold text-gray-800 ml-3">Referral History</Text>
           </View>
 
           {records && records.length > 0 ? (
-            <View className="space-y-4 gap-5 ">
-              {records.map((record: { exposure_type: string; bite_id: boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.Key | null | undefined; referral_date: string; record_created_at: string; biting_animal: any; exposure_site: any; actions_taken: any; referral_sender: any; referral_receiver: any; referredby: any }) => {
+            <View className="space-y-4">
+              {records.map((record) => {
                 const exposureColors = getExposureTypeColor(record.exposure_type)
                 return (
                   <View
-                    key={record.bite_id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-300 overflow-hidden"
+                    key={`record-${record.bite_id}-${record.referral_date}`}
+                    className="bg-white mb-4  rounded-xl shadow-sm border border-gray-200 overflow-hidden"
                   >
                     {/* Compact Record Header */}
-                    <View className="flex-row justify-between items-center p-4 border-b border-gray-100">
+                    <View className="flex-row  justify-between items-center p-4 border-b border-gray-100">
                       <View className="flex-row items-center">
                         <View className={`${exposureColors.bg} p-2 rounded-lg mr-3`}>
                           <FileText size={18} className={exposureColors.text} />
@@ -293,8 +295,6 @@ export default function AnimalBiteIndividualScreen() {
                           <Text className="text-gray-600 text-sm mb-1">Exposure Site</Text>
                           <Text className="text-gray-800 font-medium">{record.exposure_site || "N/A"}</Text>
                         </View>
-
-                        
                       </View>
 
                       <View className="mb-3">
@@ -327,7 +327,7 @@ export default function AnimalBiteIndividualScreen() {
               })}
             </View>
           ) : (
-            <View className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 items-center">
+            <View className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 items-center">
               <Clock size={48} color="#D1D5DB" />
               <Text className="text-gray-600 text-lg font-bold mb-2 mt-4">No Records Found</Text>
               <Text className="text-gray-500 text-center leading-6">

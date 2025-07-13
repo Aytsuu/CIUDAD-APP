@@ -1,4 +1,4 @@
-import InventoryAdmin from "@/screens/health/inventory/medicine"
+import InventoryAdmin from "@/screens/health/admin/admin-inventory/medicine"
 
 
 export default () => {

@@ -4,7 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Acti
 import { router } from "expo-router"
 import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill, Filter, X } from "lucide-react-native"
 import { useGlobalCartState, Medicine as CartMedicineType } from "./cart-state" // Import useGlobalCartState and Medicine type from cart-state
-import { useMedicines } from "../inventory/queries/medicine/MedicineFetchQueries" // Ensure this path is correct
+import { useMedicines } from "../admin/admin-inventory/queries/medicine/MedicineFetchQueries" // Ensure this path is correct
 
 // Type definition for medicines displayed on this page (matches backend response from MedicineInventorySerializer)
 export type MedicineDisplay = {
