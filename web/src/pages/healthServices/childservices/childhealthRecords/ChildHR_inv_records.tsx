@@ -237,7 +237,7 @@ export default function InvChildHealthRecords() {
             </Link>
             {isLatest && (
               <Link
-                to="/child-health-record/edit"
+                to="/child-health-record/addnewchildhealthrecord"
                 state={{
                   params: {
                     chhistId: originalRecord?.chhist_id,
@@ -245,7 +245,7 @@ export default function InvChildHealthRecords() {
                     originalRecord,
                     patientData: childData,
                     chrecId: childData?.chrec_id,
-                    mode: "edit", // This is the key part
+                    mode: "addnewchildhealthrecord", // This is the key part
                   },
                 }}
               >

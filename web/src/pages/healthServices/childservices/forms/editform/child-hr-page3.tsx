@@ -43,7 +43,7 @@ type Page3Props = {
   updateFormData: (data: Partial<VaccineType>) => void;
   formData: VaccineType;
   position: string;
-  mode: "edit" | "newchildhealthrecord";
+  mode: "addnewchildhealthrecord" | "newchildhealthrecord" | "immunization";
 };
 
 const fetchVaccinesWithStock = async () => {
@@ -727,7 +727,7 @@ export default function ChildHRPage3({
                   <AlertCircle className="h-6 w-6 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Vaccination records can only be edited by midwives
+                  Vaccination records can only be addnewchildhealthrecorded by midwives
                 </h3>
                 <p className="text-gray-600 mb-4">
                   Please contact a midwife to update vaccination records

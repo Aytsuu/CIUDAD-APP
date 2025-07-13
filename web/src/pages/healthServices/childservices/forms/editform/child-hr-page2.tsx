@@ -28,7 +28,7 @@ type Page2Props = {
       created_at: string
     }
   }[] // Type for historical disabilities
-  mode: "newchildhealthrecord" | "edit"
+  mode: "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization"
 }
 
 export default function ChildHRPage2({
@@ -40,7 +40,7 @@ export default function ChildHRPage2({
   patientHistoricalDisabilities, // Destructure the prop
   mode,
 }: Page2Props) {
-  const isEditMode = mode === "edit"
+  const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord" || mode === "immunization"
   const form = useForm<FormData>({
     resolver: zodResolver(ChildDetailsSchema),
     mode: "onChange",
@@ -53,7 +53,8 @@ export default function ChildHRPage2({
       tt_status: formData.tt_status || "",
     },
   })
-  const { handleSubmit, reset, watch, setValue, getValues, formState } = form
+  
+  const { handleSubmit, reset, watch, setValue, getValues, formState, control } = form
   const { errors, isValid, isSubmitting } = formState
   const BFdates = watch("BFdates")
   const [currentBFDate, setCurrentBFDate] = useState<string>("")
@@ -62,7 +63,14 @@ export default function ChildHRPage2({
   // Extract historical disability IDs for the DisabilityComponent
   const historicalDisabilityIds = patientHistoricalDisabilities.map((d) => d.disability_details.disability_id)
 
-  // Reset form when formData changes (important for edit mode)
+  // Debug form state
+  useEffect(() => {
+    console.log("Form errors:", errors)
+    console.log("Form is valid:", isValid)
+    console.log("Form values:", getValues())
+  }, [errors, isValid, getValues])
+
+  // Reset form when formData changes (important for addnewchildhealthrecord mode)
   useEffect(() => {
     console.log("🔄 ChildHRPage2: Resetting form with formData:", formData)
     const resetData = {
@@ -90,10 +98,12 @@ export default function ChildHRPage2({
 
   const handleNext = async (data: FormData) => {
     try {
+      console.log("Submitting form with data:", data)
       const finalData = {
         ...data,
         disabilityTypes: data.disabilityTypes || [],
       }
+
       updateFormData(finalData)
       onNext()
     } catch (error) {
@@ -146,28 +156,49 @@ export default function ChildHRPage2({
   }
 
   const handleAddDate = () => {
-    if (!currentBFDate) return
-    // Convert to consistent format
-    const formattedDate = formatMonthYear(currentBFDate)
+    if (!currentBFDate) {
+      console.log("No current BF date provided")
+      return
+    }
+    
+    try {
+      // Convert to consistent format
+      const formattedDate = formatMonthYear(currentBFDate)
+      console.log("Formatted date:", formattedDate)
 
-    // Get current dates from form
-    const currentDates = getValues("BFdates") || []
+      // Get current dates from form
+      const currentDates = getValues("BFdates") || []
+      console.log("Current BF dates:", currentDates)
 
-    // Update dates array
-    const updatedDates =
-      editingIndex !== null
-        ? currentDates.map((date, i) => (i === editingIndex ? formattedDate : date))
-        : [...currentDates, formattedDate]
+      // Check for duplicates
+      if (editingIndex === null && currentDates.includes(formattedDate)) {
+        console.log("Duplicate date detected")
+        alert("This date has already been added")
+        return
+      }
 
-    // Update form state
-    setValue("BFdates", updatedDates, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
+      // Update dates array
+      const updatedDates =
+        editingIndex !== null
+          ? currentDates.map((date, i) => (i === editingIndex ? formattedDate : date))
+          : [...currentDates, formattedDate]
 
-    // Reset editing state
-    setEditingIndex(null)
-    setCurrentBFDate("")
+      console.log("Updated dates:", updatedDates)
+
+      // Update form state
+      setValue("BFdates", updatedDates, {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+
+      // Reset editing state
+      setEditingIndex(null)
+      setCurrentBFDate("")
+      
+      console.log("BF dates updated successfully")
+    } catch (error) {
+      console.error("Error adding BF date:", error)
+    }
   }
 
   const handleEditDate = (index: number) => {
@@ -189,6 +220,11 @@ export default function ChildHRPage2({
       setEditingIndex(null)
       setCurrentBFDate("")
     }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null)
+    setCurrentBFDate("")
   }
 
   const handlePrevious = () => {
@@ -230,7 +266,7 @@ export default function ChildHRPage2({
                       name="dateNewbornScreening"
                       label="Date of Newborn Screening"
                       type="date"
-                      readOnly={isEditMode}
+                      readOnly={isaddnewchildhealthrecordMode}
                     />
                     <FormMessage />
                   </div>
@@ -253,7 +289,7 @@ export default function ChildHRPage2({
                         control={form.control}
                         name="type_of_feeding"
                         label="Type of feeding"
-                        readOnly={isEditMode}
+                        readOnly={isaddnewchildhealthrecordMode}
                         options={[
                           { id: "exclusive_bf", name: "Exclusive Breastfeeding" },
                           { id: "mixed_bf", name: "Mixed Breastfeeding" },
@@ -261,52 +297,63 @@ export default function ChildHRPage2({
                         ]}
                       />
                     </div>
-                    {/* Add/Edit Date Section */}
-                    <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
-                      <div className="flex flex-col sm:flex-row gap-4 items-end">
-                        <div className="flex-1 min-w-0">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            {editingIndex !== null ? "Edit BF Date" : "Add BF Date"}
-                          </label>
-                          <input
-                            type="month"
-                            value={currentBFDate}
-                            onChange={(e) => setCurrentBFDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={handleAddDate}
-                          disabled={!currentBFDate}
-                          className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                        >
-                          {editingIndex !== null ? (
-                            <>
-                              <Pencil className="h-4 w-4" />
-                              Update
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="h-4 w-4" />
-                              Add
-                            </>
-                          )}
-                        </Button>
-                        {editingIndex !== null && (
-                          <Button
-                            type="button"
-                            onClick={() => {
-                              setEditingIndex(null)
-                              setCurrentBFDate("")
-                            }}
-                            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg"
-                          >
-                            Cancel
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+
+                    {/* BF Dates Form Field */}
+                    <FormField
+                      control={control}
+                      name="BFdates"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Breastfeeding Check Dates</FormLabel>
+                          {/* Add/Edit Date Section */}
+                          <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                            <div className="flex flex-col sm:flex-row gap-4 items-end">
+                              <div className="flex-1 min-w-0">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  {editingIndex !== null ? "Edit BF Date" : "Add BF Date"}
+                                </label>
+                                <input
+                                  type="month"
+                                  value={currentBFDate}
+                                  onChange={(e) => setCurrentBFDate(e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                  disabled={isaddnewchildhealthrecordMode}
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                onClick={handleAddDate}
+                                disabled={!currentBFDate || isaddnewchildhealthrecordMode}
+                                className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                              >
+                                {editingIndex !== null ? (
+                                  <>
+                                    <Pencil className="h-4 w-4" />
+                                    Update
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="h-4 w-4" />
+                                    Add
+                                  </>
+                                )}
+                              </Button>
+                              {editingIndex !== null && (
+                                <Button
+                                  type="button"
+                                  onClick={handleCancelEdit}
+                                  className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg"
+                                >
+                                  Cancel
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     {/* Historical Dates */}
                     {historicalBFdates?.length > 0 && (
                       <div className="bg-gray-50 rounded-lg border border-gray-200">
@@ -326,12 +373,13 @@ export default function ChildHRPage2({
                                 <Calendar className="h-4 w-4 text-blue-500" />
                                 <span className="text-sm font-medium">{date}</span>
                               </div>
-                              <span className="text-xs text-gray-500">Existing</span>
+                              <span className="text-xs text-gray-500">Historical</span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
+
                     {/* Newly Added Dates */}
                     {(BFdates ?? []).length > 0 ? (
                       <div className="bg-gray-50 rounded-lg border border-gray-200">
@@ -355,7 +403,8 @@ export default function ChildHRPage2({
                                 <Button
                                   type="button"
                                   onClick={() => handleEditDate(index)}
-                                  className="p-2 text-blue-500 bg-white"
+                                  className="p-2 text-blue-500 bg-white hover:bg-blue-50"
+                                  disabled={isaddnewchildhealthrecordMode}
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
@@ -363,6 +412,7 @@ export default function ChildHRPage2({
                                   type="button"
                                   onClick={() => handleDeleteDate(index)}
                                   className="p-2 text-red-500 hover:bg-red-50 bg-white"
+                                  disabled={isaddnewchildhealthrecordMode}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -388,7 +438,7 @@ export default function ChildHRPage2({
                 control={form.control}
                 name="tt_status"
                 label="TT Status"
-                readOnly={isEditMode}
+                readOnly={isaddnewchildhealthrecordMode}
                 options={[
                   { id: "none", name: "None" },
                   { id: "TT1", name: "TT1" },
@@ -425,9 +475,6 @@ export default function ChildHRPage2({
                               <span className="font-medium">
                                 {disability.disability_details?.disability_name || "N/A"}
                               </span>
-                              {/* {disability.status && (
-                                <span className="text-xs text-gray-500 capitalize">({disability.status})</span>
-                              )} */}
                             </li>
                           ))}
                         </ul>
@@ -462,6 +509,14 @@ export default function ChildHRPage2({
             </div>
           </div>
 
+          {/* Debug Information (remove in production) */}
+          <div className="bg-gray-100 p-4 rounded-lg text-xs">
+            <p><strong>Debug Info:</strong></p>
+            <p>Form Valid: {isValid ? "Yes" : "No"}</p>
+            <p>BF Dates: {JSON.stringify(BFdates)}</p>
+            <p>Errors: {JSON.stringify(errors)}</p>
+          </div>
+
           {/* Navigation Buttons */}
           <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
             <Button
@@ -474,7 +529,11 @@ export default function ChildHRPage2({
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !isValid} 
+              className="flex items-center gap-2"
+            >
               {isSubmitting ? "Processing..." : "Continue"}
               <ChevronLeft className="h-4 w-4 rotate-180 ml-2" />
             </Button>

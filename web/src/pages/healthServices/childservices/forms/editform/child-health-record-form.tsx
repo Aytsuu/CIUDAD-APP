@@ -10,9 +10,10 @@ import LastPage from "./child-hr-page-last"
 import { api2 } from "@/api/api"
 import { useAuth } from "@/context/AuthContext"
 import type { FormData, VitalSignType } from "@/form-schema/chr-schema/chr-schema"
+import type { CHSSupplementStat } from "./types" // Updated import path
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator"
-import { useChildHealthRecordMutation } from "../restful-api/add-record"
-import { useUpdateChildHealthRecordMutation } from "../restful-api/edit-record"
+import { useChildHealthRecordMutation } from "../restful-api/newchildhealthrecord"
+import { useUpdateChildHealthRecordMutation } from "../restful-api/addnewchildhealthrecord"
 
 export type Medicine = {
   minv_id: string
@@ -64,7 +65,6 @@ const initialFormData: FormData = {
     seen: "",
     given_iron: "",
     is_anemic: false,
-
   },
   birthwt: {
     seen: "",
@@ -94,30 +94,15 @@ export const isToday = (dateString: string) => {
   return today === checkDate
 }
 
-export function areDifferent(val1: any, val2: any): boolean {
-  if (val1 === val2) return false
-  if (val1 === null || val1 === undefined || val1 === "") {
-    return !(val2 === null || val2 === undefined || val2 === "")
-  }
-  if (val2 === null || val2 === undefined || val2 === "") {
-    return !(val1 === null || val1 === undefined || val1 === "")
-  }
-  if (typeof val1 === "number" && typeof val2 === "number") {
-    return val1 !== val2
-  }
-  if (typeof val1 === "string" && typeof val2 === "string") {
-    return val1.trim() !== val2.trim()
-  }
-  return true
-}
+
 
 export default function ChildHealthRecordForm() {
   const location = useLocation()
   const navigate = useNavigate()
   const params = useParams()
-  const mode = params.mode as "newchildhealthrecord" | "edit" | undefined
+  const mode = params.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization" | undefined
   const { chrecId, chhistId, patId } = location.state?.params || {}
-  const isEditMode = mode === "edit"
+  const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord"
   const isNewchildhealthrecord = mode === "newchildhealthrecord"
   const { user } = useAuth()
   const staffId = user?.staff?.staff_id
@@ -128,19 +113,22 @@ export default function ChildHealthRecordForm() {
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(() => {
     const storedPage = localStorage.getItem(
-      `childHealthFormCurrentPage_${isEditMode ? "edit" : "newchildhealthrecord"}`,
+      `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
     )
     return storedPage ? Number.parseInt(storedPage) : 1
   })
   const [formData, setFormData] = useState<FormData>(() => {
-    const storedData = localStorage.getItem(`childHealthFormData_${isEditMode ? "edit" : "newchildhealthrecord"}`)
+    const storedData = localStorage.getItem(
+      `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
+    )
     return storedData ? JSON.parse(storedData) : initialFormData
   })
-  const [isLoading, setIsLoading] = useState(isEditMode)
+  const [isLoading, setIsLoading] = useState(isaddnewchildhealthrecordMode)
   const [apiData, setApiData] = useState<any>(null)
   const [historicalBFdates, setHistoricalBFdates] = useState<string[]>([])
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([])
   const [historicalNutritionalStatus, setHistoricalNutritionalStatus] = useState<any[]>([])
+  const [historicalSupplementStatuses, setHistoricalSupplementStatuses] = useState<CHSSupplementStat[]>([]) // New state for historical supplement statuses
   const [latestHistoricalNoteContent, setLatestHistoricalNoteContent] = useState<string>("")
   const [latestHistoricalFollowUpDescription, setLatestHistoricalFollowUpDescription] = useState<string>("")
   const [latestHistoricalFollowUpDate, setLatestHistoricalFollowUpDate] = useState<string>("")
@@ -163,17 +151,17 @@ export default function ChildHealthRecordForm() {
 
   useEffect(() => {
     localStorage.setItem(
-      `childHealthFormCurrentPage_${isEditMode ? "edit" : "newchildhealthrecord"}`,
+      `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
       currentPage.toString(),
     )
-  }, [currentPage, isEditMode])
+  }, [currentPage, isaddnewchildhealthrecordMode])
 
   useEffect(() => {
     localStorage.setItem(
-      `childHealthFormData_${isEditMode ? "edit" : "newchildhealthrecord"}`,
+      `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
       JSON.stringify(formData),
     )
-  }, [formData, isEditMode])
+  }, [formData, isaddnewchildhealthrecordMode])
 
   const getLatestNoteForDate = (notesArray: any[], dateString: string) => {
     const targetDate = dateString.split("T")[0]
@@ -236,14 +224,14 @@ export default function ChildHealthRecordForm() {
       address: patient?.address?.full_address || "",
       landmarks: chhistRecord?.landmarks || "",
       dateNewbornScreening: chrecDetails.newborn_screening || "",
-      disabilityTypes: [], // As per user request, not retrieving into form's editable state
+      disabilityTypes: [], // As per user request, not retrieving into form's addnewchildhealthrecordable state
       edemaSeverity: "None",
       BFdates: [],
       vitalSigns: [],
       medicines: [],
       // is_anemic: false,
-      anemic: { seen: "", given_iron: "",is_anemic: false,date_completed:"" },
-      birthwt: { seen: "", given_iron: "",date_completed:"" },
+      anemic: { seen: "", given_iron: "", is_anemic: false, date_completed: "" },
+      birthwt: { seen: "", given_iron: "", date_completed: "" },
       status: chhistRecord.status || "recorded",
       type_of_feeding: chrecDetails?.type_of_feeding || "",
       tt_status: chhistRecord.tt_status || "",
@@ -258,7 +246,7 @@ export default function ChildHealthRecordForm() {
 
   useEffect(() => {
     const fetchRecordData = async () => {
-      if (!isEditMode) {
+      if (!isaddnewchildhealthrecordMode) {
         setIsLoading(false)
         return
       }
@@ -267,7 +255,7 @@ export default function ChildHealthRecordForm() {
         setError(null)
         console.log("🚀 Fetching data for chrecId:", chrecId, "and chhistId:", chhistId)
         if (!chrecId || !chhistId) {
-          throw new Error("Missing chrecId or chhistId in location state for edit mode")
+          throw new Error("Missing chrecId or chhistId in location state for addnewchildhealthrecord mode")
         }
 
         const response = await api2.get(`/child-health/history/${chrecId}/`)
@@ -282,6 +270,7 @@ export default function ChildHealthRecordForm() {
         const allHistoricalMedicines: Medicine[] = []
         const allHistoricalNutritionalStatuses: any[] = []
         const allHistoricalBFdates: string[] = []
+        const allHistoricalSupplementStatuses: CHSSupplementStat[] = [] // Initialize for supplement statuses
         const allPatientHistoricalDisabilities: {
           id: number
           pd_id: number
@@ -353,6 +342,21 @@ export default function ChildHealthRecordForm() {
           const BFdatesFromHistory = history.exclusive_bf_checks?.map((check: any) => check.ebf_date) || []
           allHistoricalBFdates.push(...BFdatesFromHistory)
 
+          // Aggregate Supplement Statuses
+          const supplementStatusesFromHistory: CHSSupplementStat[] =
+            history.supplements_statuses?.map((status: any) => ({
+              chssupplementstat_id: status.chssupplementstat_id,
+              birthwt: status.birthwt,
+              status_type: status.status_type,
+              date_seen: status.date_seen,
+              date_given_iron: status.date_given_iron,
+              created_at: status.created_at,
+              updated_at: status.updated_at,
+              chsupplement: status.chsupplement,
+              date_completed: status.date_completed,
+            })) || []
+          allHistoricalSupplementStatuses.push(...supplementStatusesFromHistory)
+
           // Aggregate Disabilities from all historical records, including disability_details
           const disabilitiesFromHistory =
             history.disabilities?.map((d: any) => ({
@@ -369,16 +373,17 @@ export default function ChildHealthRecordForm() {
         setHistoricalMedicines(allHistoricalMedicines)
         setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses)
         setHistoricalBFdates(allHistoricalBFdates)
+        setHistoricalSupplementStatuses(allHistoricalSupplementStatuses) // Set historical supplement statuses
         setPatientHistoricalDisabilities(allPatientHistoricalDisabilities) // Set all historical disabilities
 
-        // Keep the logic for the *currently edited* chhistRecord to populate the form data
+        // Keep the logic for the *currently addnewchildhealthrecorded* chhistRecord to populate the form data
         const selectedChhistRecord = chrecRecord.child_health_histories?.find(
           (history: any) => history.chhist_id === Number.parseInt(chhistId),
         )
         if (!selectedChhistRecord) {
           throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`)
         }
-        setApiData(selectedChhistRecord) // This is the specific record being edited
+        setApiData(selectedChhistRecord) // This is the specific record being addnewchildhealthrecorded
 
         // Extract disabilities specifically from the selectedChhistRecord for originalDisabilityRecords
         const disabilitiesForSelectedRecord =
@@ -415,10 +420,17 @@ export default function ChildHealthRecordForm() {
       }
     }
     fetchRecordData()
-  }, [chrecId, chhistId, isEditMode])
+  }, [chrecId, chhistId, isaddnewchildhealthrecordMode])
 
   const updateFormData = (data: Partial<FormData>) => {
     setFormData((prev) => (prev ? { ...prev, ...data } : (data as FormData)))
+  }
+
+  // New function to update historical supplement statuses
+  const handleUpdateHistoricalSupplementStatus = (updatedStatuses: CHSSupplementStat[]) => {
+    setHistoricalSupplementStatuses(updatedStatuses)
+    // TODO: Add API call here to persist the change to the backend
+    // Example: api2.patch(`/child-health/supplements-status/${updatedStatus.chssupplementstat_id}/`, { date_completed: updatedStatus.date_completed });
   }
 
   const handleSubmit = async (submittedData: FormData) => {
@@ -447,8 +459,12 @@ export default function ChildHealthRecordForm() {
 
       // Clear local storage and reset state ONLY after successful submission
       localStorage.removeItem("selectedPatient")
-      localStorage.removeItem(`childHealthFormData_${isEditMode ? "edit" : "newchildhealthrecord"}`)
-      localStorage.removeItem(`childHealthFormCurrentPage_${isEditMode ? "edit" : "newchildhealthrecord"}`)
+      localStorage.removeItem(
+        `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
+      )
+      localStorage.removeItem(
+        `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
+      )
       setFormData(initialFormData)
       setCurrentPage(1)
       // Navigation is handled by the onSuccess callback in the mutation hooks
@@ -477,10 +493,10 @@ export default function ChildHealthRecordForm() {
     )
   }
 
-  if (isEditMode && !formData) {
+  if (isaddnewchildhealthrecordMode && !formData) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-        <div className="text-red-500">No record data available to edit</div>
+        <div className="text-red-500">No record data available to addnewchildhealthrecord</div>
         <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     )
@@ -494,8 +510,12 @@ export default function ChildHealthRecordForm() {
           variant={"outline"}
           onClick={() => {
             localStorage.removeItem("selectedPatient")
-            localStorage.removeItem(`childHealthFormData_${isEditMode ? "edit" : "newchildhealthrecord"}`)
-            localStorage.removeItem(`childHealthFormCurrentPage_${isEditMode ? "edit" : "newchildhealthrecord"}`)
+            localStorage.removeItem(
+              `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
+            )
+            localStorage.removeItem(
+              `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
+            )
             setFormData(initialFormData)
             setCurrentPage(1)
             navigate(-1)
@@ -505,12 +525,18 @@ export default function ChildHealthRecordForm() {
         </Button>
         <div className="mb-4 flex-col items-center">
           <h1 className="text-xl font-semibold text-darkBlue2 sm:text-2xl">
-            {isEditMode ? "Edit Child Health Record" : "Add New Child Health Record"}
+            {mode === "immunization"
+              ? "Immunization Record"
+              : isaddnewchildhealthrecordMode
+                ? "addnewchildhealthrecord Child Health Record"
+                : "Add New Child Health Record"}
           </h1>
           <p className="text-xs text-darkGray sm:text-sm">
-            {isEditMode
-              ? `Editing record for ${formData.childFname} ${formData.childLname}`
-              : "Manage and view patient's information"}
+            {mode === "immunization"
+              ? `Managing immunization record for ${formData.childFname} ${formData.childLname}`
+              : isaddnewchildhealthrecordMode
+                ? `addnewchildhealthrecording record for ${formData.childFname} ${formData.childLname}`
+                : "Manage and view patient's information"}
           </p>
         </div>
       </div>
@@ -530,7 +556,7 @@ export default function ChildHealthRecordForm() {
           updateFormData={updateFormData}
           formData={formData}
           historicalBFdates={historicalBFdates}
-          patientHistoricalDisabilities={patientHistoricalDisabilities} // Pass the historical disabilities
+          patientHistoricalDisabilities={patientHistoricalDisabilities}
           mode={mode || "newchildhealthrecord"}
         />
       )}
@@ -552,9 +578,11 @@ export default function ChildHealthRecordForm() {
           formData={formData}
           historicalVitalSigns={historicalVitalSigns}
           historicalNutritionalStatus={historicalNutritionalStatus}
+          historicalSupplementStatuses={historicalSupplementStatuses} // Pass the new prop
+          onUpdateHistoricalSupplementStatus={handleUpdateHistoricalSupplementStatus} // Pass the new callback
           latestHistoricalNoteContent={latestHistoricalNoteContent}
           latestHistoricalFollowUpDescription={latestHistoricalFollowUpDescription}
-          isSubmitting={isSubmitting} // Pass the local isSubmitting state
+          isSubmitting={isSubmitting}
           latestHistoricalFollowUpDate={latestHistoricalFollowUpDate}
           historicalMedicines={historicalMedicines}
           mode={mode || "newchildhealthrecord"}

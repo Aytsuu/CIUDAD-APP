@@ -157,4 +157,3 @@ class ChildHealthrecordSerializerFull(serializers.ModelSerializer):
     class Meta:
         model = ChildHealthrecord
         fields = "__all__"
-   

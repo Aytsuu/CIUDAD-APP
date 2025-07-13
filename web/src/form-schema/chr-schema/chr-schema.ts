@@ -74,6 +74,8 @@ export const VitalSignSchema = z.object({
   chvital_id: z.string().optional(), // Vital sign ID
   bm_id: z.string().optional(), // Body measurement ID
   chnotes_id: z.string().optional(), // Child health notes ID
+  followv_status:z.string().optional(), // Follow-up visit status
+
   
 })
 
@@ -188,3 +190,7 @@ export type NutritionalStatusType = z.infer<typeof NutritionalStatusSchema>
 export type VaccineType = z.infer<typeof VaccinesSchema> // Export the new type
 export type VaccineRecord = z.infer<typeof vaccineRecordSchema> // Export the new type
 export type ExistingVaccineRecord = z.infer<typeof existingVaccineRecordSchema> // Export the new type
+
+
+
+

@@ -122,4 +122,14 @@ class ChildHealthRecordByPatIDView(APIView):
 
         serializer = ChildHealthrecordSerializerFull(chrec)
         return Response(serializer.data)
-        
+    
+    
+class ChildHealthImmunizationStatusView(generics.ListAPIView):
+    serializer_class = ChildHealthImmunizationHistorySerializer
+
+    def get_queryset(self):
+        pat_id = self.kwargs['pat_id']
+        return ChildHealthImmunizationHistory.objects.filter(
+            chrec__patrec__pat_id=pat_id,
+            status="immunization"
+        ).order_by('-created_at')  # Optional: most recent first

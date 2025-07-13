@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { FormData, VitalSignType, NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema"
+import type { CHSSupplementStat } from "./types" // Updated import path
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ChildHealthFormSchema, VitalSignSchema } from "@/form-schema/chr-schema/chr-schema"
@@ -21,6 +22,8 @@ import type { ColumnDef } from "@tanstack/react-table" // Corrected import for C
 import { DataTable } from "@/components/ui/table/data-table" // Corrected import path for DataTable
 import { Pencil, Activity, Pill, Loader2 } from "lucide-react" // Ensure icons are imported
 import { useMemo, useEffect, useState } from "react" // Ensure all hooks are imported
+import { z } from "zod" // Import z for the new schema
+
 export const NUTRITIONAL_STATUS_DESCRIPTIONS = {
   wfa: {
     N: "Normal",
@@ -68,11 +71,13 @@ interface LastPageProps {
   formData: FormData
   historicalVitalSigns?: VitalSignType[]
   historicalNutritionalStatus?: NutritionalStatusType[]
+  historicalSupplementStatuses?: CHSSupplementStat[] // New prop
+  onUpdateHistoricalSupplementStatus: (updatedStatuses: CHSSupplementStat[]) => void // New callback prop
   latestHistoricalNoteContent?: string
   latestHistoricalFollowUpDescription?: string
   latestHistoricalFollowUpDate?: string
   historicalMedicines?: Medicine[]
-  mode: "newchildhealthrecord" | "edit"
+  mode: "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization"
   isSubmitting: boolean // This prop is now correctly managed by parent
 }
 export default function LastPage({
@@ -82,6 +87,8 @@ export default function LastPage({
   formData,
   historicalVitalSigns = [],
   historicalNutritionalStatus = [],
+  historicalSupplementStatuses = [], // Destructure new prop
+  onUpdateHistoricalSupplementStatus, // Destructure new callback prop
   latestHistoricalNoteContent = "",
   latestHistoricalFollowUpDescription = "",
   latestHistoricalFollowUpDate = "",
@@ -89,13 +96,13 @@ export default function LastPage({
   mode,
   isSubmitting, // Use this prop directly
 }: LastPageProps) {
-  const isEditMode = mode === "edit"
+  const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord"
   const currentAge = useMemo(() => calculateCurrentAge(formData.childDob), [formData.childDob])
   const todaysHistoricalRecord = useMemo(() => {
     return historicalVitalSigns.find((vital) => isToday(vital.date))
   }, [historicalVitalSigns])
   const [newVitalSigns, setNewVitalSigns] = useState<VitalSignType[]>(() => {
-    if (isEditMode && todaysHistoricalRecord) {
+    if (isaddnewchildhealthrecordMode && todaysHistoricalRecord) {
       return [{ ...todaysHistoricalRecord }]
     }
     return []
@@ -109,10 +116,22 @@ export default function LastPage({
       originalIndex: index,
     }))
   }, [newVitalSigns])
-  
-  const shouldHideAddForm = useMemo(() => {
-    return isEditMode  && formData.created_at && isToday(formData.created_at)
-  }, [newVitalSigns, isEditMode])
+
+  // New variable to check if the current record's created_at date is today
+  const isTodaysRecord = useMemo(() => {
+    return formData.created_at && isToday(formData.created_at)
+  }, [formData.created_at])
+
+  // This condition hides the Nutritional Status Calculator and Severe Malnutrition Detected if it's today's record AND has vital signs
+  const shouldHideNutritionalSections = useMemo(() => {
+    return isTodaysRecord && newVitalSigns.length > 0
+  }, [isTodaysRecord, newVitalSigns.length])
+
+  // This condition hides the Health Status forms (Anemia, Low Birth Weight) if it's today's record AND has vital signs
+  const shouldHideHealthStatusForms = useMemo(() => {
+    return isTodaysRecord && newVitalSigns.length > 0
+  }, [isTodaysRecord, newVitalSigns.length])
+
   const latestOverallVitalSign = useMemo(() => {
     if (newVitalSigns.length > 0) {
       return newVitalSigns[0]
@@ -120,8 +139,13 @@ export default function LastPage({
     return getLatestVitalSigns(historicalVitalSigns)
   }, [newVitalSigns, historicalVitalSigns])
   const [currentPage, setCurrentPage] = useState(1)
-  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null)
-  const [editingData, setEditingData] = useState<VitalSignType | null>(null)
+  const [addnewchildhealthrecordingRowIndex, setaddnewchildhealthrecordingRowIndex] = useState<number | null>(null)
+  const [addnewchildhealthrecordingData, setaddnewchildhealthrecordingData] = useState<VitalSignType | null>(null)
+
+  // New state for editing historical supplement statuses
+  const [editingSupplementRowIndex, setEditingSupplementRowIndex] = useState<number | null>(null)
+  const [editingSupplementData, setEditingSupplementData] = useState<CHSSupplementStat | null>(null)
+
   const [edemaSeverityOptions] = useState([
     { id: "+1", name: "+1" },
     { id: "+2", name: "+2" },
@@ -135,9 +159,8 @@ export default function LastPage({
       ...formData,
       vitalSigns: newVitalSigns,
       // is_anemic: false,
-      anemic: { seen: "", given_iron: "" ,     is_anemic: false,date_completed:""
-      },
-      birthwt: { seen: "", given_iron: "" ,date_completed:""},
+      anemic: { seen: "", given_iron: "", is_anemic: false, date_completed: "" },
+      birthwt: { seen: "", given_iron: "", date_completed: "" },
       medicines: [],
       status: "recorded",
       nutritionalStatus: {},
@@ -157,7 +180,7 @@ export default function LastPage({
       notes: "",
     },
   })
-  const editForm = useForm<VitalSignType>({
+  const addnewchildhealthrecordForm = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: {
       date: "",
@@ -170,6 +193,13 @@ export default function LastPage({
       notes: "",
     },
   })
+
+  // New form for editing historical supplement status date_completed
+  const supplementStatusEditForm = useForm<Pick<CHSSupplementStat, "date_completed">>({
+    resolver: zodResolver(z.object({ date_completed: z.string().nullable().optional() })),
+    defaultValues: { date_completed: null },
+  })
+
   const {
     control,
     watch,
@@ -178,18 +208,18 @@ export default function LastPage({
     formState: { errors },
   } = form
   const {
-    control: editFormControl,
-    setValue: editFormSetValue,
-    handleSubmit: editFormHandleSubmit,
-    formState: { errors: editFormErrors },
-  } = editForm
+    control: addnewchildhealthrecordFormControl,
+    setValue: addnewchildhealthrecordFormSetValue,
+    handleSubmit: addnewchildhealthrecordFormHandleSubmit,
+    formState: { errors: addnewchildhealthrecordFormErrors },
+  } = addnewchildhealthrecordForm
   const selectedMedicines = watch("medicines")
   const currentStatus = watch("status")
   const nutritionalStatus = watch("nutritionalStatus")
   const chhistCreatedAt = formData.created_at // Get the created_at date from formData
   const shouldHideLowBirthWeightFollowUp = useMemo(() => {
-    return isEditMode && chhistCreatedAt && isToday(chhistCreatedAt)
-  }, [isEditMode, chhistCreatedAt])
+    return isaddnewchildhealthrecordMode && chhistCreatedAt && isToday(chhistCreatedAt)
+  }, [isaddnewchildhealthrecordMode, chhistCreatedAt])
   // Find the latest historical nutritional status if available
   const latestHistoricalNutritionalStatus = useMemo(() => {
     if (!historicalNutritionalStatus || historicalNutritionalStatus.length === 0) return null
@@ -242,8 +272,8 @@ export default function LastPage({
     const updatedVitalSigns = [...newVitalSigns]
     updatedVitalSigns[index] = values
     setNewVitalSigns(updatedVitalSigns)
-    setEditingRowIndex(null)
-    setEditingData(null)
+    setaddnewchildhealthrecordingRowIndex(null)
+    setaddnewchildhealthrecordingData(null)
   }
   const handleAddVitalSign = (values: VitalSignType) => {
     const updatedVitalSigns = [...newVitalSigns, values]
@@ -282,15 +312,45 @@ export default function LastPage({
       console.error("Form validation failed:", errors)
     },
   )
+
+  // Functions for historical supplement status editing
+  const handleEditSupplementStatus = (index: number, data: CHSSupplementStat) => {
+    setEditingSupplementRowIndex(index)
+    setEditingSupplementData(data)
+    supplementStatusEditForm.reset({ date_completed: data.date_completed })
+  }
+
+  const handleSaveSupplementStatus = (index: number, newDateCompleted: string | null) => {
+    const updatedStatuses = historicalSupplementStatuses.map((status, i) =>
+      i === index ? { ...status, date_completed: newDateCompleted } : status,
+    )
+    onUpdateHistoricalSupplementStatus(updatedStatuses)
+    setEditingSupplementRowIndex(null)
+    setEditingSupplementData(null)
+  }
+
+  const handleCancelEditSupplementStatus = () => {
+    setEditingSupplementRowIndex(null)
+    setEditingSupplementData(null)
+  }
+
   const columns = useMemo<ColumnDef<VitalSignType>[]>(
     () => [
       {
         accessorKey: "date",
         header: "Date",
         cell: ({ row }) => {
-          const isEditing = editingRowIndex === row.index
-          if (isEditing) {
-            return <FormDateTimeInput control={editFormControl} name="date" label="" type="date" readOnly />
+          const isaddnewchildhealthrecording = addnewchildhealthrecordingRowIndex === row.index
+          if (isaddnewchildhealthrecording) {
+            return (
+              <FormDateTimeInput
+                control={addnewchildhealthrecordForm.control}
+                name="date"
+                label=""
+                type="date"
+                readOnly
+              />
+            )
           }
           return row.original.date
         },
@@ -299,9 +359,18 @@ export default function LastPage({
         accessorKey: "age",
         header: "Age",
         cell: ({ row }) => {
-          const isEditing = editingRowIndex === row.index
-          if (isEditing) {
-            return <FormInput control={editFormControl} name="age" label="" type="text" placeholder="Age" readOnly />
+          const isaddnewchildhealthrecording = addnewchildhealthrecordingRowIndex === row.index
+          if (isaddnewchildhealthrecording) {
+            return (
+              <FormInput
+                control={addnewchildhealthrecordForm.control}
+                name="age"
+                label=""
+                type="text"
+                placeholder="Age"
+                readOnly
+              />
+            )
           }
           return row.original.age
         },
@@ -310,11 +379,11 @@ export default function LastPage({
         accessorKey: "ht",
         header: "Height (cm)",
         cell: ({ row }) => {
-          const isEditing = editingRowIndex === row.index
-          if (isEditing) {
+          const isaddnewchildhealthrecording = addnewchildhealthrecordingRowIndex === row.index
+          if (isaddnewchildhealthrecording) {
             return (
               <FormInput
-                control={editFormControl}
+                control={addnewchildhealthrecordForm.control}
                 name="ht"
                 label=""
                 type="number"
@@ -330,11 +399,11 @@ export default function LastPage({
         accessorKey: "wt",
         header: "Weight (kg)",
         cell: ({ row }) => {
-          const isEditing = editingRowIndex === row.index
-          if (isEditing) {
+          const isaddnewchildhealthrecording = addnewchildhealthrecordingRowIndex === row.index
+          if (isaddnewchildhealthrecording) {
             return (
               <FormInput
-                control={editFormControl}
+                control={addnewchildhealthrecordForm.control}
                 name="wt"
                 label=""
                 type="number"
@@ -350,11 +419,11 @@ export default function LastPage({
         accessorKey: "temp",
         header: "Temp (°C)",
         cell: ({ row }) => {
-          const isEditing = editingRowIndex === row.index
-          if (isEditing) {
+          const isaddnewchildhealthrecording = addnewchildhealthrecordingRowIndex === row.index
+          if (isaddnewchildhealthrecording) {
             return (
               <FormInput
-                control={editFormControl}
+                control={addnewchildhealthrecordForm.control}
                 name="temp"
                 label=""
                 type="number"
@@ -370,13 +439,19 @@ export default function LastPage({
         accessorKey: "notes",
         header: "Notes",
         cell: ({ row }) => {
-          const isEditing = editingRowIndex === row.index
-          if (isEditing) {
+          const isaddnewchildhealthrecording = addnewchildhealthrecordingRowIndex === row.index
+          if (isaddnewchildhealthrecording) {
             return (
               <div className="min-w-[250px] space-y-2">
-                <FormTextArea control={editFormControl} name="notes" label="Notes" placeholder="Enter notes" rows={3} />
+                <FormTextArea
+                  control={addnewchildhealthrecordForm.control}
+                  name="notes"
+                  label="Notes"
+                  placeholder="Enter notes"
+                  rows={3}
+                />
                 <FormInput
-                  control={editFormControl}
+                  control={addnewchildhealthrecordForm.control}
                   name="follov_description"
                   label="Follow-up reason"
                   type="text"
@@ -385,7 +460,7 @@ export default function LastPage({
                   readOnly={!!row.original.followv_id}
                 />
                 <FormDateTimeInput
-                  control={editFormControl}
+                  control={addnewchildhealthrecordForm.control}
                   name="followUpVisit"
                   label="Follow-up date"
                   type="date"
@@ -397,7 +472,7 @@ export default function LastPage({
           const displayNotes = row.original.notes || "No notes for this entry."
           return (
             <div className="max-w-[200px] text-left">
-              <p className="whitespace-pre-wrap text-sm text-gray-700">{displayNotes}</p>
+              <p className="whitespace-pre-wrap">{displayNotes}</p>
               {row.original.followUpVisit && (
                 <p className="mt-1 text-xs text-gray-500">
                   Follow Up: {row.original.followUpVisit} ({row.original.follov_description || "N/A"})
@@ -411,13 +486,13 @@ export default function LastPage({
         accessorKey: "action",
         header: "Action",
         cell: ({ row }) => {
-          const isEditing = editingRowIndex === row.index
-          if (isEditing) {
+          const isaddnewchildhealthrecording = addnewchildhealthrecordingRowIndex === row.index
+          if (isaddnewchildhealthrecording) {
             return (
               <div className="flex gap-1">
                 <Button
                   size="sm"
-                  onClick={editFormHandleSubmit((data) => {
+                  onClick={addnewchildhealthrecordFormHandleSubmit((data) => {
                     handleUpdateVitalSign(row.index, data)
                   })}
                   className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700"
@@ -428,8 +503,8 @@ export default function LastPage({
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setEditingRowIndex(null)
-                    setEditingData(null)
+                    setaddnewchildhealthrecordingRowIndex(null)
+                    setaddnewchildhealthrecordingData(null)
                   }}
                   className="px-2 py-1 text-xs"
                 >
@@ -444,9 +519,9 @@ export default function LastPage({
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  setEditingRowIndex(row.index)
-                  setEditingData({ ...row.original })
-                  editForm.reset({
+                  setaddnewchildhealthrecordingRowIndex(row.index)
+                  setaddnewchildhealthrecordingData({ ...row.original })
+                  addnewchildhealthrecordForm.reset({
                     date: row.original.date,
                     age: row.original.age,
                     wt: row.original.wt,
@@ -458,7 +533,7 @@ export default function LastPage({
                   })
                 }}
                 className="px-2 py-1"
-                title={"Edit vital sign"}
+                title={"addnewchildhealthrecord vital sign"}
               >
                 <Pencil size={14} />
               </Button>
@@ -467,7 +542,16 @@ export default function LastPage({
         },
       },
     ],
-    [editingRowIndex, editingData, editFormControl, editFormHandleSubmit, editFormSetValue],
+    [
+      addnewchildhealthrecordingRowIndex,
+      addnewchildhealthrecordingData,
+      addnewchildhealthrecordForm.control,
+      addnewchildhealthrecordFormHandleSubmit,
+      addnewchildhealthrecordFormSetValue,
+      // Removed handleSaveSupplementStatus from dependencies
+      // Removed handleCancelEditSupplementStatus from dependencies
+      // Removed handleEditSupplementStatus from dependencies
+    ],
   )
   const historicalMedicineColumns = useMemo<ColumnDef<Medicine>[]>(
     () => [
@@ -492,6 +576,116 @@ export default function LastPage({
     ],
     [medicineStocksOptions],
   )
+
+  const historicalSupplementStatusColumns = useMemo<ColumnDef<CHSSupplementStat>[]>(
+    () => [
+      {
+        accessorKey: "created_at",
+        header: "Record Date",
+        cell: ({ row }) => (row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "N/A"),
+      },
+      {
+        accessorKey: "status_type",
+        header: "Status Type",
+        cell: ({ row }) => row.original.status_type || "N/A",
+      },
+      {
+        accessorKey: "birthwt",
+        header: "Birth Weight",
+        cell: ({ row }) => row.original.birthwt || "N/A",
+      },
+      {
+        accessorKey: "date_seen",
+        header: "Date Seen",
+        cell: ({ row }) => (row.original.date_seen ? new Date(row.original.date_seen).toLocaleDateString() : "N/A"),
+      },
+      {
+        accessorKey: "date_given_iron",
+        header: "Date Iron Given",
+        cell: ({ row }) =>
+          row.original.date_given_iron ? new Date(row.original.date_given_iron).toLocaleDateString() : "N/A",
+      },
+      {
+        accessorKey: "date_completed",
+        header: "Date Completed",
+        cell: ({ row }) => {
+          const isEditing = editingSupplementRowIndex === row.index
+          const isAnemicOrLowBirthWeight =
+            row.original.status_type === "Anemic" || row.original.status_type === "Low Birth Weight"
+          const isDateCompletedNA = !row.original.date_completed
+          const isNotTodaysRecord = !isToday(row.original.created_at || "")
+
+          if (isEditing && isAnemicOrLowBirthWeight && isDateCompletedNA && isNotTodaysRecord) {
+            return (
+              <FormDateTimeInput
+                control={supplementStatusEditForm.control}
+                name="date_completed"
+                label=""
+                type="date"
+              />
+            )
+          }
+          return row.original.date_completed ? new Date(row.original.date_completed).toLocaleDateString() : "N/A"
+        },
+      },
+      {
+        accessorKey: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const isEditing = editingSupplementRowIndex === row.index
+          const isAnemicOrLowBirthWeight =
+            row.original.status_type === "Anemic" || row.original.status_type === "Low Birth Weight"
+          const isDateCompletedNA = !row.original.date_completed
+          const isNotTodaysRecord = !isToday(row.original.created_at || "")
+
+          if (isEditing && isAnemicOrLowBirthWeight && isDateCompletedNA && isNotTodaysRecord) {
+            return (
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  onClick={supplementStatusEditForm.handleSubmit((data) =>
+                    handleSaveSupplementStatus(row.index, data.date_completed || null),
+                  )}
+                  className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700"
+                >
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancelEditSupplementStatus}
+                  className="px-2 py-1 text-xs bg-transparent"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )
+          } else if (isAnemicOrLowBirthWeight && isDateCompletedNA && isNotTodaysRecord) {
+            return (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleEditSupplementStatus(row.index, row.original)}
+                className="px-2 py-1"
+                title="Edit date completed"
+              >
+                <Pencil size={14} />
+              </Button>
+            )
+          }
+          return null // No action needed if conditions not met
+        },
+      },
+    ],
+    [
+      editingSupplementRowIndex,
+      supplementStatusEditForm,
+      // Removed handleSaveSupplementStatus from dependencies
+      // Removed handleCancelEditSupplementStatus from dependencies
+      // Removed handleEditSupplementStatus from dependencies
+    ],
+  )
+
   return (
     <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
       <Form {...form}>
@@ -510,6 +704,8 @@ export default function LastPage({
               </p>
             </div>
           )}
+
+          {/* Historical Nutritional Status Table - Always visible */}
           {historicalNutritionalStatus && historicalNutritionalStatus.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-green-200 bg-green-50">
               <div className="border-b border-green-200 bg-white px-4 py-3">
@@ -609,6 +805,22 @@ export default function LastPage({
               </div>
             </div>
           )}
+
+          {/* Historical Supplement Statuses Table - Always visible */}
+          {historicalSupplementStatuses && historicalSupplementStatuses.length > 0 && (
+            <div className="overflow-hidden rounded-lg border border-purple-200 bg-purple-50">
+              <div className="border-b border-purple-200 bg-white px-4 py-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <Pill className="h-4 w-4" />
+                  Historical Supplement Statuses (Anemia & Low Birth Weight)
+                </h3>
+              </div>
+              <div className="p-4">
+                <DataTable columns={historicalSupplementStatusColumns} data={historicalSupplementStatuses} />
+              </div>
+            </div>
+          )}
+
           {nonTodaysHistoricalVitalSigns && nonTodaysHistoricalVitalSigns.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
               <div className="border-b border-gray-200 bg-white px-4 py-3">
@@ -681,7 +893,8 @@ export default function LastPage({
               </div>
             </div>
           )}
-          {!shouldHideAddForm && (
+          {/* Show "Add New Vital Signs" only if no vital signs have been added yet */}
+          {newVitalSigns.length === 0 && (
             <div className="rounded-lg border bg-blue-50 p-4">
               <h3 className="mb-4 text-lg font-bold">Add New Vital Signs</h3>
               <Form {...vitalSignForm}>
@@ -758,73 +971,88 @@ export default function LastPage({
           )}
           <div className="pb-10">
             <h3 className="mb-4 text-lg font-bold">Vital Signs Records (Today's Entry)</h3>
-            <Form {...editForm}>
+            <Form {...addnewchildhealthrecordForm}>
               <DataTable columns={columns} data={combinedVitalSignsForTable || []} />
             </Form>
           </div>
-          <div className="mb-10 rounded-lg border bg-gray-50 p-4">
-            <h3 className="mb-4 text-lg font-bold">Health Status</h3>
-            <div className="mb-4">
-              <h4 className="mb-2 font-medium">Anemia Screening</h4>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={control}
-                  name="anemic.is_anemic"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel className="!m-0">Is the child anemic?</FormLabel>
-                      <FormMessage />
-                    </FormItem>
+
+          {/* Health Status Section - Hidden if shouldHideHealthStatusForms is true */}
+          {!shouldHideHealthStatusForms && (
+            <div className="mb-10 rounded-lg border bg-gray-50 p-4">
+              <h3 className="mb-4 text-lg font-bold">Health Status</h3>
+              <div className="mb-4">
+                <h4 className="mb-2 font-medium">Anemia Screening</h4>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <FormField
+                    control={control}
+                    name="anemic.is_anemic"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <FormLabel className="!m-0">Is the child anemic?</FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {watch("anemic.is_anemic") && (
+                    <>
+                      <FormDateTimeInput
+                        control={control}
+                        name="anemic.seen"
+                        label="Date Anemia Detected"
+                        type="date"
+                      />
+                      <FormDateTimeInput
+                        control={control}
+                        name="anemic.given_iron"
+                        label="Date Iron Given"
+                        type="date"
+                      />
+                    </>
                   )}
-                />
-                {watch("anemic.is_anemic") && (
-                  <>
-                    <FormDateTimeInput control={control} name="anemic.seen" label="Date Anemia Detected" type="date" />
-                    <FormDateTimeInput control={control} name="anemic.given_iron" label="Date Iron Given" type="date" />
-                  </>
-                )}
+                </div>
               </div>
-            </div>
-            {latestOverallVitalSign &&
-              latestOverallVitalSign.wt &&
-              Number.parseFloat(String(latestOverallVitalSign.wt)) < 2.5 &&
-              !shouldHideLowBirthWeightFollowUp && ( // Apply the new condition here
-                <div className="mt-4">
-                  <h4 className="mb-2 font-medium">
-                    Low Birth Weight Follow-up (Latest Weight: {latestOverallVitalSign.wt} kg)
+              {latestOverallVitalSign &&
+                latestOverallVitalSign.wt &&
+                Number.parseFloat(String(latestOverallVitalSign.wt)) < 2.5 &&
+                !shouldHideLowBirthWeightFollowUp && ( // Apply the new condition here
+                  <div className="mt-4">
+                    <h4 className="mb-2 font-medium">
+                      Low Birth Weight Follow-up (Latest Weight: {latestOverallVitalSign.wt} kg)
+                    </h4>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
+                      <FormDateTimeInput
+                        control={control}
+                        name="birthwt.given_iron"
+                        label="Date Iron Given"
+                        type="date"
+                      />
+                    </div>
+                  </div>
+                )}
+              {hasSevereMalnutrition && (
+                <div className="mt-6 rounded-lg border border-orange-200 bg-orange-50 p-4">
+                  <h4 className="mb-4 font-medium text-orange-800">
+                    🚨 Severe Malnutrition Detected - Edema Assessment Required
                   </h4>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
-                    <FormDateTimeInput
-                      control={control}
-                      name="birthwt.given_iron"
-                      label="Date Iron Given"
-                      type="date"
-                    />
+                  <div className="space-y-4">
+                    <div className="ml-6 p-3">
+                      <FormSelect
+                        control={control}
+                        name="edemaSeverity"
+                        label="Edema Severity Level"
+                        options={edemaSeverityOptions}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
-            {hasSevereMalnutrition && (
-              <div className="mt-6 rounded-lg border border-orange-200 bg-orange-50 p-4">
-                <h4 className="mb-4 font-medium text-orange-800">
-                  🚨 Severe Malnutrition Detected - Edema Assessment Required
-                </h4>
-                <div className="space-y-4">
-                  <div className="ml-6 p-3">
-                    <FormSelect
-                      control={control}
-                      name="edemaSeverity"
-                      label="Edema Severity Level"
-                      options={edemaSeverityOptions}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+
           {historicalMedicines && historicalMedicines.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
               <div className="border-b border-gray-200 bg-white px-4 py-3">
@@ -859,26 +1087,28 @@ export default function LastPage({
               )}
             </div>
           </div>
-          {(latestOverallVitalSign || (newVitalSigns && newVitalSigns.length > 0)) && (
-            <div className="mb-10">
-              <NutritionalStatusCalculator
-                weight={
-                  newVitalSigns && newVitalSigns.length > 0
-                    ? newVitalSigns[newVitalSigns.length - 1].wt
-                    : latestOverallVitalSign?.wt
-                }
-                height={
-                  newVitalSigns && newVitalSigns.length > 0
-                    ? newVitalSigns[newVitalSigns.length - 1].ht
-                    : latestOverallVitalSign?.ht
-                }
-                age={currentAge}
-                muac={watch("nutritionalStatus")?.muac}
-                onStatusChange={handleNutritionalStatusChange}
-                initialStatus={watch("nutritionalStatus")}
-              />
-            </div>
-          )}
+          {/* Nutritional Status Calculator - Hidden if shouldHideNutritionalSections is true */}
+          {!shouldHideNutritionalSections &&
+            (latestOverallVitalSign || (newVitalSigns && newVitalSigns.length > 0)) && (
+              <div className="mb-10">
+                <NutritionalStatusCalculator
+                  weight={
+                    newVitalSigns && newVitalSigns.length > 0
+                      ? newVitalSigns[newVitalSigns.length - 1].wt
+                      : latestOverallVitalSign?.wt
+                  }
+                  height={
+                    newVitalSigns && newVitalSigns.length > 0
+                      ? newVitalSigns[newVitalSigns.length - 1].ht
+                      : latestOverallVitalSign?.ht
+                  }
+                  age={currentAge}
+                  muac={watch("nutritionalStatus")?.muac}
+                  onStatusChange={handleNutritionalStatusChange}
+                  initialStatus={watch("nutritionalStatus")}
+                />
+              </div>
+            )}
           <div className="mb-10 rounded-lg border bg-purple-50 p-4">
             <h3 className="mb-4 text-lg font-bold">Record Purpose & Status</h3>
             <FormField
@@ -951,7 +1181,7 @@ export default function LastPage({
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Submitting...
                 </div>
-              ) : isEditMode ? (
+              ) : isaddnewchildhealthrecordMode ? (
                 "Update Record"
               ) : (
                 "Submit"

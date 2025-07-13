@@ -53,14 +53,16 @@ import { BasicInfoSchema } from "@/form-schema/chr-schema/chr-schema"
   BFdates: [],
   vitalSigns: [],
   medicines: [],
-  is_anemic: false,
   anemic: {
     seen: "",
     given_iron: "",
+    is_anemic: false,
+    date_completed: "",
   },
   birthwt: {
     seen: "",
     given_iron: "",
+    date_completed:""
   },
   status: "recorded",
   type_of_feeding: "",
@@ -77,13 +79,13 @@ type Page1Props = {
   onNext: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
-  mode: "newchildhealthrecord" | "edit"
+  mode: "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization"
 }
 
 const PATIENT_STORAGE_KEY = "selectedPatient"
 
 export default function ChildHRPage1({ onNext, updateFormData, formData, mode }: Page1Props) {
-  const isEditMode = mode === "edit"
+  const isaddnewchildhealthrecordMode =  mode === "immunization" || mode =="addnewchildhealthrecord"
   const [selectedPatient, setSelectedPatient] = useLocalStorage<Patient | null>(PATIENT_STORAGE_KEY, null)
 
   const form = useForm<FormData>({
@@ -103,17 +105,17 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
   const placeOfDeliveryType = watch("placeOfDeliveryType")
   const placeOfDeliveryLocation = watch("placeOfDeliveryLocation")
 
-  // Reset form when formData changes (this is the key fix for edit mode)
+  // Reset form when formData changes (this is the key fix for addnewchildhealthrecord mode)
   useEffect(() => {
-    if (isEditMode && formData && Object.keys(formData).length > 0) {
-      console.log("🔄 ChildHRPage1: Resetting form with data (Edit Mode):", formData)
+    if (isaddnewchildhealthrecordMode && formData && Object.keys(formData).length > 0) {
+      console.log("🔄 ChildHRPage1: Resetting form with data (addnewchildhealthrecord Mode):", formData)
       reset(formData)
-    } else if (!isEditMode && !selectedPatient) {
+    } else if (!isaddnewchildhealthrecordMode && !selectedPatient) {
       // In add mode, if no patient selected, clear form
       console.log("🔄 ChildHRPage1: Resetting form (Add Mode, no patient selected)")
       reset(initialFormData)
     }
-  }, [formData, reset, isEditMode, selectedPatient])
+  }, [formData, reset, isaddnewchildhealthrecordMode, selectedPatient])
 
   // Handle age calculations
   useEffect(() => {
@@ -264,7 +266,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
 
   return (
     <>
-      {!isEditMode && (
+      {!isaddnewchildhealthrecordMode && (
         <div className="flex items-center justify-between gap-3 mb-10 w-full">
           <div className="flex-1">
             <PatientSearch onPatientSelect={handlePatientSelect} className="w-full" />
@@ -281,7 +283,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   name="residenceType"
                   label="Residence Type"
                   type="text"
-                  readOnly={isEditMode || !!selectedPatient}
+                  readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
                   className="w-[200px]"
                 />
               </div>
@@ -291,7 +293,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   name="familyNo"
                   label="Family No:"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                   className="w-[200px]"
                 />
                 <FormInput
@@ -299,7 +301,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   name="ufcNo"
                   label="UFC No:"
                   type="text"
-                  readOnly={isEditMode || !!selectedPatient}
+                  readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
                   className="w-[200px]"
                 />
                 {isTransient && (
@@ -308,7 +310,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                     name="trans_id"
                     label="Transient ID:"
                     type="text"
-                    readOnly={isEditMode || !!selectedPatient}
+                    readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
                     className="w-[200px]"
                   />
                 )}
@@ -322,21 +324,21 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   name="childFname"
                   label="First Name"
                   type="text"
-                  readOnly={isEditMode || !!selectedPatient}
+                  readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
                 />
                 <FormInput
                   control={control}
                   name="childLname"
                   label="Last Name"
                   type="text"
-                  readOnly={isEditMode || !!selectedPatient}
+                  readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
                 />
                 <FormInput
                   control={control}
                   name="childMname"
                   label="Middle Name"
                   type="text"
-                  readOnly={isEditMode || !!selectedPatient}
+                  readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
                 />
                 <FormField
                   control={control}
@@ -347,7 +349,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                       <FormControl>
                         <select
                           {...field}
-                          disabled={isEditMode || !!selectedPatient}
+                          disabled={isaddnewchildhealthrecordMode || !!selectedPatient}
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <option value="">Select Gender</option>
@@ -364,7 +366,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   name="childDob"
                   label="Date of Birth"
                   type="date"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput control={control} name="childAge" label="Age" type="text" readOnly className="bg-gray-100" />
                 <FormInput
@@ -374,7 +376,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   type="number"
                   min={1}
                   max={20}
-                  readOnly={isEditMode}
+                  readOnly={isaddnewchildhealthrecordMode}
                 />
                 <div className="sm:col-span-2 lg:col-span-3">
                   <FormField
@@ -388,7 +390,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                             onValueChange={field.onChange}
                             value={field.value}
                             className="flex flex-col space-y-1"
-                            disabled={isEditMode}
+                            disabled={isaddnewchildhealthrecordMode}
                           >
                             {["Hospital Gov't/Private", "Home", "Private Clinic", "HC"].map((option) => (
                               <FormItem key={option} className="flex items-center space-x-3 space-y-0">
@@ -416,7 +418,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                               {...field}
                               type="text"
                               placeholder="e.g., Barangay Health Center"
-                              disabled={isEditMode}
+                              disabled={isaddnewchildhealthrecordMode}
                               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                           </FormControl>
@@ -437,7 +439,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="First Name"
                   placeholder="Enter First Name"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput
                   control={control}
@@ -445,7 +447,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="Last Name"
                   placeholder="Enter Last Name"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput
                   control={control}
@@ -453,14 +455,14 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="Middle Name"
                   placeholder="Enter Middle Name"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormDateTimeInput
                   control={control}
                   name="motherdob"
                   label="Date of Birth"
                   type="date"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput
                   control={control}
@@ -476,7 +478,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="Occupation"
                   placeholder="Enter Occupation"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
               </div>
             </div>
@@ -489,7 +491,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="First Name"
                   placeholder="Enter First Name"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput
                   control={control}
@@ -497,7 +499,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   placeholder="Enter Last Name"
                   label="Last Name"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput
                   control={control}
@@ -505,14 +507,14 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="Middle Name"
                   placeholder="Enter Middle Name"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormDateTimeInput
                   control={control}
                   name="fatherdob"
                   label="Date of Birth"
                   type="date"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput
                   control={control}
@@ -528,7 +530,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="Occupation"
                   placeholder="Enter Occupation"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
               </div>
             </div>
@@ -540,7 +542,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   name="address"
                   label="Complete Address"
                   type="text"
-                  readOnly={isEditMode || (!isTransient && !!selectedPatient)}
+                  readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
                 <FormInput
                   control={control}
@@ -548,7 +550,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   label="Landmarks"
                   type="text"
                   placeholder="Enter landmarks"
-                  readOnly={isEditMode}
+                  readOnly={isaddnewchildhealthrecordMode}
                 />
               </div>
             </div>

@@ -2,16 +2,15 @@
 
 import { useMemo, useState, useEffect } from "react"
 import React from "react"
-import { Card, CardContent } from "@/components/ui/card/card" // Corrected import path
-import { ChevronLeft, ChevronDown, ClipboardList, User, Users, AlertTriangle, HeartPulse, BookText, Soup, Syringe, Pill } from "lucide-react" // Added multiple icons
+import { Card, CardContent } from "@/components/ui/card/card"
+import { ChevronLeft, ChevronDown, ClipboardList, User, Users, AlertTriangle, HeartPulse, BookText, Soup, Syringe, Pill } from "lucide-react"
 import { format } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button/button" // Corrected import path
-import { useNavigate, useLocation } from "react-router-dom" // Assuming react-router-dom for navigation
+import { Button } from "@/components/ui/button/button"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { api2 } from "@/api/api"
 
-// Define types for the complex data structure
 interface PersonalInfo {
   per_id?: number
   per_lname: string
@@ -261,7 +260,7 @@ interface CHSSupplementStat {
   created_at: string
   updated_at: string
   chsupplement: number
-  date_completed?: string | null // Added this field as per the user's request
+  date_completed?: string | null
 }
 
 interface NutritionStatus {
@@ -292,8 +291,8 @@ interface ChildHealthHistoryRecord {
   nutrition_statuses: NutritionStatus[]
 }
 
-// Number of records to display in the comparison view at once
 const VISIBLE_COLUMNS = 4
+
 export default function ChildHealthHistoryDetail() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -342,7 +341,7 @@ export default function ChildHealthHistoryDetail() {
     }, obj)
   }
 
-  const getDiffClass = (currentColumnValue: any, latestRecordValue: any) => {
+  const getDiffClass = (currentColumnValue: any, latestRecordValue: any, isLatestRecordColumn: boolean) => {
     const normalizeValue = (val: any) => (val === null || val === undefined || val === "" ? null : val)
     const normalizedCurrent = normalizeValue(currentColumnValue)
     const normalizedLatest = normalizeValue(latestRecordValue)
@@ -350,19 +349,22 @@ export default function ChildHealthHistoryDetail() {
     if (normalizedCurrent === null && normalizedLatest === null) {
       return ""
     }
+    
     if (
       typeof normalizedCurrent === "string" &&
       typeof normalizedLatest === "string" &&
       (normalizedCurrent.match(/^\d{4}-\d{2}-\d{2}/) || normalizedCurrent.match(/^\d{4}-\d{2}-\d{2}T/)) &&
       (normalizedLatest.match(/^\d{4}-\d{2}-\d{2}/) || normalizedLatest.match(/^\d{4}-\d{2}-\d{2}T/))
     ) {
-      return new Date(normalizedCurrent).getTime() !== new Date(normalizedLatest).getTime()
-        ? "text-red-500 font-semibold"
+      return isLatestRecordColumn && normalizedCurrent !== normalizedLatest ? "text-red-500 font-semibold" : ""
+    }
+    
+    if (Array.isArray(normalizedCurrent) && Array.isArray(normalizedLatest)) {
+      return isLatestRecordColumn && JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedLatest) 
+        ? "text-red-500 font-semibold" 
         : ""
     }
-    if (Array.isArray(normalizedCurrent) && Array.isArray(normalizedLatest)) {
-      return JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedLatest) ? "text-red-500 font-semibold" : ""
-    }
+    
     return normalizedCurrent !== normalizedLatest ? "text-red-500 font-semibold" : ""
   }
 
@@ -423,7 +425,6 @@ export default function ChildHealthHistoryDetail() {
     )
   }
 
-  // Field configurations
   const recordOverviewFields: FieldConfig[] = [
     { label: "Record ID", path: ["chhist_id"] },
     { label: "Created At", path: ["created_at"], format: (val) => (val ? format(new Date(val), "PPP p") : "N/A") },
@@ -623,9 +624,12 @@ export default function ChildHealthHistoryDetail() {
                       : "N/A"
                     : valueInCurrentColumn
                 : "N/A"
+            
+            const isLatestRecordColumn = recordInColumnIdx === 0 && currentScrollIndex === 0
+            
             return (
               <div key={recordInColumnIdx} className="text-center py-2 border-t border-gray-100">
-                <span className={getDiffClass(valueInCurrentColumn, valueInLatestRecord)}>
+                <span className={getDiffClass(valueInCurrentColumn, valueInLatestRecord, isLatestRecordColumn)}>
                   {displayValue}
                 </span>
               </div>
@@ -662,16 +666,28 @@ export default function ChildHealthHistoryDetail() {
             const valueInCurrentColumn = getValueByPath(recordInColumn, field.path)
             const valueInLatestRecord = getValueByPath(latestOverallRecord, field.path)
             const displayValue = field.format ? field.format(valueInCurrentColumn) : valueInCurrentColumn
+            const isLatestRecordColumn = recordInColumnIdx === 0 && currentScrollIndex === 0
             
             return (
               <div key={recordInColumnIdx} className="text-center py-2 border-t border-gray-100">
                 {displayValue.length > 0 ? (
                   <div className="space-y-1">
-                    {displayValue.map((ebf: any) => (
-                      <div key={ebf.id} className={getDiffClass(ebf.date, valueInLatestRecord)}>
-                        {ebf.date}
-                      </div>
-                    ))}
+                    {displayValue.map((ebf: any) => {
+                      // Only highlight if this is the latest record column
+                      const shouldHighlight = isLatestRecordColumn && 
+                        !recordsToDisplay[1]?.exclusive_bf_checks?.some(
+                          (prevEbf: any) => prevEbf.ebf_date === ebf.date
+                        )
+                      
+                      return (
+                        <div 
+                          key={ebf.id} 
+                          className={shouldHighlight ? "text-red-500 font-semibold" : ""}
+                        >
+                          {ebf.date}
+                        </div>
+                      )
+                    })}
                   </div>
                 ) : (
                   <span className="text-gray-400">No EBF checks recorded</span>
@@ -685,10 +701,8 @@ export default function ChildHealthHistoryDetail() {
   )
 
   return (
-
     <>
-
-<div className="flex flex-col sm:flex-row gap-4 ">
+      <div className="flex flex-col sm:flex-row gap-4">
         <Button
           className="text-black p-2 mb-2 self-start"
           variant={"outline"}
@@ -698,256 +712,252 @@ export default function ChildHealthHistoryDetail() {
         </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health Hisotry Records
+            Child Health History Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-        View and compare child's health history
+            View and compare child's health history
           </p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
-    <div className="p-6 bg-white">
-      <div className="container mx-auto max-w-6xl">
-        
-        
-        <div className="flex justify-end gap-3 mb-6">
-          <Button
-            onClick={() => setCurrentScrollIndex((prev) => Math.max(prev - 1, 0))}
-            disabled={currentScrollIndex === 0}
-            variant="outline"
-            className="px-4 py-2"
+      <div className="p-6 bg-white">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex justify-end gap-3 mb-6">
+            <Button
+              onClick={() => setCurrentScrollIndex((prev) => Math.max(prev - 1, 0))}
+              disabled={currentScrollIndex === 0}
+              variant="outline"
+              className="px-4 py-2"
+            >
+              Newer
+            </Button>
+            <Button
+              onClick={() =>
+                setCurrentScrollIndex((prev) => Math.min(prev + 1, fullHistoryData.length - VISIBLE_COLUMNS))
+              }
+              disabled={currentScrollIndex >= fullHistoryData.length - VISIBLE_COLUMNS}
+              variant="outline"
+              className="px-4 py-2"
+            >
+              Older
+            </Button>
+          </div>
+
+          <Accordion 
+            type="multiple" 
+            className="w-full space-y-4"
+            defaultValue={["record-overview", "child-details"]}
           >
-            Newer
-          </Button>
-          <Button
-            onClick={() =>
-              setCurrentScrollIndex((prev) => Math.min(prev + 1, fullHistoryData.length - VISIBLE_COLUMNS))
-            }
-            disabled={currentScrollIndex >= fullHistoryData.length - VISIBLE_COLUMNS}
-            variant="outline"
-            className="px-4 py-2"
-          >
-            Older
-          </Button>
+            <AccordionItem value="record-overview" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <ClipboardList className="h-5 w-5 mr-3 text-gray-600" />
+                    Record Overview
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent(recordOverviewFields)}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="child-details" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <User className="h-5 w-5 mr-3 text-gray-600" />
+                    Child Details
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent(childPersonalInfoFields)}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="parent-newborn" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 mr-3 text-gray-600" />
+                    Parent & Newborn Screening
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent(familyHeadInfoFields)}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="exclusive-bf-checks" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <HeartPulse className="h-5 w-5 mr-3 text-gray-600" />
+                    Exclusive Breastfeeding Checks
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderEBFContent()}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="disabilities" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <AlertTriangle className="h-5 w-5 mr-3 text-gray-600" />
+                    Disabilities
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent(disabilitiesFields)}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="vital-signs-notes" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <HeartPulse className="h-5 w-5 mr-3 text-gray-600" />
+                    Vital Signs & Notes
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent([...vitalSignsFields, ...notesFields])}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="nutritional-status" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Soup className="h-5 w-5 mr-3 text-gray-600" />
+                    Nutritional Status
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent(nutritionStatusesFields)}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="immunization" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Syringe className="h-5 w-5 mr-3 text-gray-600" />
+                    Immunization
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent(immunizationTrackingFields)}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="supplements-status" className="border rounded-lg shadow-sm bg-white">
+              <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Pill className="h-5 w-5 mr-3 text-gray-600" />
+                    Supplements & Supplement Status
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="mb-0 border-t rounded-t-none shadow-none">
+                  <CardContent
+                    className="overflow-x-auto p-6"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {renderSectionContent([...supplementsFields, ...supplementStatusesFields])}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
-
-        <Accordion 
-          type="multiple" 
-          className="w-full space-y-4"
-          defaultValue={["record-overview", "child-details"]}
-        >
-          <AccordionItem value="record-overview" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <ClipboardList className="h-5 w-5 mr-3 text-gray-600" />
-                  Record Overview
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent(recordOverviewFields)}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="child-details" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <User className="h-5 w-5 mr-3 text-gray-600" />
-                  Child Details
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent(childPersonalInfoFields)}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="parent-newborn" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <Users className="h-5 w-5 mr-3 text-gray-600" />
-                  Parent & Newborn Screening
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent(familyHeadInfoFields)}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="exclusive-bf-checks" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <HeartPulse className="h-5 w-5 mr-3 text-gray-600" />
-                  Exclusive Breastfeeding Checks
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderEBFContent()}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="disabilities" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <AlertTriangle className="h-5 w-5 mr-3 text-gray-600" />
-                  Disabilities
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent(disabilitiesFields)}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="vital-signs-notes" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <HeartPulse className="h-5 w-5 mr-3 text-gray-600" />
-                  Vital Signs & Notes
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent([...vitalSignsFields, ...notesFields])}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="nutritional-status" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <Soup className="h-5 w-5 mr-3 text-gray-600" />
-                  Nutritional Status
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent(nutritionStatusesFields)}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="immunization" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <Syringe className="h-5 w-5 mr-3 text-gray-600" />
-                  Immunization
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent(immunizationTrackingFields)}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="supplements-status" className="border rounded-lg shadow-sm bg-white">
-            <AccordionTrigger className="text-xl font-semibold px-6 py-4 [&[data-state=open]>div>svg]:rotate-180">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <Pill className="h-5 w-5 mr-3 text-gray-600" />
-                  Supplements & Supplement Status
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card className="mb-0 border-t rounded-t-none shadow-none">
-                <CardContent
-                  className="overflow-x-auto p-6"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {renderSectionContent([...supplementsFields, ...supplementStatusesFields])}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
       </div>
-    </div>
     </>
   )
-
-
 }
