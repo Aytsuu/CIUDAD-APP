@@ -391,6 +391,7 @@ import { initialFormData1, initialFormData2, initialFormData3, initialFormData4 
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "./budgetItemDefinition";
 import { useGetBudgetPlanFromPrev, useGetBudgetPlanDetailFromPrev } from "./queries/budgetplanFetchQueries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BudgetPlanParent() {
   const navigate = useNavigate();
@@ -409,17 +410,10 @@ export default function BudgetPlanParent() {
   const [isBeyondLimit, setIsBeyondLimit] = useState(false);
 
   // Queries with manual fetching
-  const {
-    data: prevPlan,
-    isLoading: prevPlanLoading,
-    refetch: fetchPrevPlan
-  } = useGetBudgetPlanFromPrev();
+  const {data: prevPlan, isLoading: prevPlanLoading, refetch: fetchPrevPlan } = useGetBudgetPlanFromPrev();
   
-  const {
-    data: prevPlanDetail,
-    isLoading: prevPlanDetailLoading,
-    refetch: fetchPrevPlanDetail
-  } = useGetBudgetPlanDetailFromPrev();
+  const { data: prevPlanDetail, isLoading: prevPlanDetailLoading, refetch: fetchPrevPlanDetail} = useGetBudgetPlanDetailFromPrev();
+
 
   // Form definitions
   const headerForm = useForm<z.infer<typeof BudgetHeaderSchema>>({
@@ -552,17 +546,7 @@ export default function BudgetPlanParent() {
         setIsInitialized(true);
       }
     }
-  }, [
-    isEdit,
-    shouldClone,
-    isInitialized,
-    prevPlan,
-    prevPlanDetail,
-    prevPlanLoading,
-    prevPlanDetailLoading,
-    headerForm,
-    allocationForm
-  ]);
+  }, [ isEdit, shouldClone, isInitialized, prevPlan, prevPlanDetail, prevPlanLoading, prevPlanDetailLoading, headerForm, allocationForm ]);
 
   // Calculate available resources
   const getAvailableResources = () => {
@@ -640,17 +624,45 @@ export default function BudgetPlanParent() {
       ...transformData(formData3, budgetItemsPage3),
       ...transformData(formData4, budgetItemsPage4),
     ];
-
-    // if (isEdit) {
-    //   updateBudgetPlan({ budgetHeader, budgetDetails });
-    // } else {
-    //   createBudgetPlan({ budgetHeader, budgetDetails });
-    // }
   };
 
   const handleExit = () => {
     navigate(-1);
   };
+
+  if (prevPlanLoading || prevPlanDetailLoading) {
+    return (
+      <div className="w-full h-full p-4">
+        {/* Header Section Skeleton */}
+        <div className="flex flex-col gap-3 mb-3">
+          <div className="flex flex-row gap-4">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <Skeleton className="h-8 w-48 rounded-md" />
+          </div>
+          <Skeleton className="h-4 w-64 rounded-md ml-[3.2rem]" />
+        </div>
+        <Skeleton className="h-px w-full mb-5" />
+        
+        {/* Form Content Skeleton - Adjust based on current step if needed */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-24 rounded-md" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+            ))}
+          </div>
+          
+          {/* Form Actions Skeleton */}
+          <div className="flex justify-end gap-4 mt-8">
+            <Skeleton className="h-10 w-24 rounded-md" />
+            <Skeleton className="h-10 w-24 rounded-md" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='w-full h-full'>
