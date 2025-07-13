@@ -47,7 +47,7 @@ class BudgetPlan_File(models.Model):
 
     plan_id = models.ForeignKey(
         Budget_Plan,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         db_column='plan_id'

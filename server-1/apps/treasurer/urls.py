@@ -17,6 +17,10 @@ urlpatterns=[
     path('budget-plan-detail-history/', BudgetPlanDetailHistoryView.as_view(), name= 'budget-plan-detail-history'),
     path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryRetrieveView.as_view(), name='budget-plan-history-records'),
     path('budget-plan-and-detail-history/<int:bph_id>/', BudgetPlanAndDetailHistoryView.as_view(), name='budget-plan-and-detail-history'),
+    path('previous-budget-plan/', PreviousYearBudgetPlanView.as_view(), name='previous-budget-plan'),
+    path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
+
+
 
     #Income and Disbursement URL
     # Income Folder URLs

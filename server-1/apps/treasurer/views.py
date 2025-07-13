@@ -44,6 +44,37 @@ class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
             # Use the exact field name from your model
             return BudgetPlan_File.objects.filter(plan_id=plan_id)
         return BudgetPlan_File.objects.all()
+
+
+class PreviousYearBudgetPlanView(generics.RetrieveAPIView):
+    serializer_class = BudgetPlanSerializer
+    
+    def get_object(self):
+        current_year = datetime.now().year
+        previous_year = current_year - 1
+        
+        # Get the budget plan for previous year
+        previous_year_plan = get_object_or_404(
+            Budget_Plan, 
+            plan_year=str(previous_year)
+        )
+        return previous_year_plan
+
+class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
+    serializer_class = Budget_Plan_DetailSerializer
+    
+    def get_queryset(self):
+        current_year = datetime.now().year
+        previous_year = current_year - 1
+        
+        # First get the previous year's plan
+        previous_year_plan = get_object_or_404(
+            Budget_Plan, 
+            plan_year=str(previous_year)
+        )
+        
+        # Then get all details for that plan
+        return Budget_Plan_Detail.objects.filter(plan_id=previous_year_plan.plan_id)
     
 class DeleteBudgetPlanFile(generics.RetrieveDestroyAPIView):
     queryset = BudgetPlan_File.objects.all()

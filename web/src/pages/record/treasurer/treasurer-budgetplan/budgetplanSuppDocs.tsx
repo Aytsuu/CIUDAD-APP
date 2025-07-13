@@ -66,7 +66,7 @@ export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: number }) {
                     ))}
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow">
+                <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-lg shadow">
                     <FolderOpen className="w-16 h-16 text-gray-400 mb-4" />
                     <h3 className="text-xl font-semibold text-gray-600 mb-2">
                         No Supporting Documents

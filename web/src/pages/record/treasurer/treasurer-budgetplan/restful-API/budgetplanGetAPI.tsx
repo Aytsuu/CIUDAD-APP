@@ -48,3 +48,21 @@ export const getBudgetPlanSuppDocs = async (plan_id: string) => {
         console.error(err)
     }
 }
+
+export const getBudgetPlanFromPreviousYear = async() => {
+    try{
+        const res = await api.get('treasurer/previous-budget-plan/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getBudgetPlanDetailFromPreviousYear = async () => {
+    try{
+        const res = await api.get('treasurer/previous-budget-plan-details/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}

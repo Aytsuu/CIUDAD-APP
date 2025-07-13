@@ -13,6 +13,8 @@ import { usegetBudgetPlan, type BudgetPlanType } from "./queries/budgetplanFetch
 import { Button } from "@/components/ui/button/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useArchiveBudgetPlan, useRestoreBudgetPlan } from "./queries/budgetPlanUpdateQueries";
+import { useNavigate } from "react-router-dom";
+import { ConfirmationModal2 } from "@/components/ui/confirmation-modal-2";
 
 function BudgetPlan() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -21,6 +23,8 @@ function BudgetPlan() {
     const [activeTab, setActiveTab] = useState("active");
     const [deletedPlanYear, setDeletedPlanYear] = useState<string | null>(null);
     const currentYear = new Date().getFullYear().toString();
+    const navigate = useNavigate();
+    let shouldClone = false;
 
     const { data: fetchedData = [], isLoading } = usegetBudgetPlan();
 
@@ -249,9 +253,31 @@ function BudgetPlan() {
                 </div>
 
                 {showAddButton && (
-                    <Link to="/budgetplan-forms" state={{ isEdit: false }}>
-                        <Button>+ Add New</Button>
-                    </Link>
+                    // Replace the ConfirmationModal part with this:
+                    <ConfirmationModal2
+                        trigger={<Button>+ Add New</Button>}
+                        title="Cloning Confirmation"
+                        description="Would you like to clone the data from the previous year?"
+                        confirmLabel="Clone"
+                        cancelLabel="Start Fresh"
+                        showCloseButton={true}
+                        onCancel={() => {
+                            navigate("/budgetplan-forms", { 
+                                state: { 
+                                    isEdit: false,
+                                    shouldClone: false
+                                } 
+                            });
+                        }}
+                        onConfirm={() => {
+                            navigate("/budgetplan-forms", { 
+                                state: { 
+                                    isEdit: false,
+                                    shouldClone: true
+                                } 
+                            });
+                        }}
+                    />
                 )}
             </div>
 
