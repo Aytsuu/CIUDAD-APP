@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getServiceChargeRequest, getCaseDetails, getServiceChargeTemplates } from "../requestAPI/summonGetAPI";
+import { getServiceChargeRequest, getCaseDetails, getServiceChargeTemplates, getSuppDoc } from "../requestAPI/summonGetAPI";
 
 export type ServiceChargeRequest = {
     sr_id: string;
@@ -19,16 +19,6 @@ export const useGetServiceChargeRequest = () => {
     })
 }
 
-export type CaseSuppDoc = {
-    csd_id: string;
-    csd_name: string;
-    csd_type: string;
-    csd_path: string;
-    csd_url: string;
-    csd_description: string;
-    csd_upload_date: string;
-};
-
 export type CaseActivity = {
     ca_id: string;
     ca_reason: string;
@@ -40,7 +30,6 @@ export type CaseActivity = {
         srf_name: string;
         srf_url: string;
     };
-    supporting_documents: CaseSuppDoc[];
 };
 
 export type CaseDetails = {
@@ -72,6 +61,24 @@ export const useGetCaseDetails = (srId: string) => {
         staleTime: 5000,
     });
 };
+
+export type CaseSuppDoc = {
+    csd_id: string;
+    csd_name: string;
+    csd_url: string;
+    csd_description: string;
+    csd_upload_date: string;
+};
+
+
+export const useGetSuppDoc = (ca_id: string) => {
+    return useQuery<CaseSuppDoc[]>({
+        queryKey: ['suppDocs', ca_id],
+        queryFn: () => getSuppDoc(ca_id),
+        enabled: !!ca_id, 
+        staleTime: 5000,
+    });
+}
 
 
 export type ServiceChargeTemplates = {

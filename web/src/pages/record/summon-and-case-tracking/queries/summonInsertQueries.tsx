@@ -4,7 +4,6 @@ import { CircleCheck } from "lucide-react";
 import { addCaseActivity, addSuppDoc } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
-import { SummonSuppDocSchema } from "@/form-schema/summon-supp-doc-schema";
 import { MediaUploadType } from "@/components/ui/media-upload";
 
 
@@ -46,7 +45,7 @@ export const useAddSuppDoc = (onSuccess?: () => void) => {
             media: MediaUploadType[number];
         }) => addSuppDoc(values.ca_id, values.media, values.description),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['caseDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['suppDocs'] });
             toast.success('Document added successfully!', {
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                 duration: 2000

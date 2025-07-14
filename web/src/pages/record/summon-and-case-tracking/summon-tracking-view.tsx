@@ -66,7 +66,7 @@ function SummonTrackingView() {
                 hasDocs ? "Documents associated with this case activity." : "No supporting documents available"
               }
               mainContent={
-                    <div className="mt-[-7rem]">
+                    <div className="overflow-auto">
                         <SummonSuppDocs ca_id = {row.original.ca_id}/>
                     </div>
                 }

@@ -42,7 +42,7 @@ export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], d
         formData.append('csd_upload_date', new Date().toISOString());
         formData.append('csd_description', description);
 
-        console.log('ca_id', ca_id)
+        console.log(formData)
 
         const res = await api.post('clerk/case-supp-doc/', formData)
 

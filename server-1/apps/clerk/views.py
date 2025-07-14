@@ -39,9 +39,19 @@ class CaseActivityView(generics.ListCreateAPIView):
     serializer_class = CaseActivitySerializer
     queryset = CaseActivity.objects.all()
 
+# class CaseSuppDocView(generics.ListCreateAPIView):
+#     serializer_class = CaseSuppDocSerializer
+#     querySet = CaseSuppDoc.objects.all()
+
 class CaseSuppDocView(generics.ListCreateAPIView):
     serializer_class = CaseSuppDocSerializer
-    querySet = CaseSuppDoc.objects.all()
+    
+    def get_queryset(self):
+        queryset = CaseSuppDoc.objects.all()
+        ca_id = self.kwargs.get('ca_id')
+        if ca_id is not None:
+            queryset = queryset.filter(ca_id=ca_id)
+        return queryset
 
 class UpdateServiceChargeRequestView(generics.UpdateAPIView):
     serializer_class = ServiceChargeRequestSerializer
