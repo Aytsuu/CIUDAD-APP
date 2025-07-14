@@ -16,6 +16,9 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import React from "react"
+
 
 function RatesPage1() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -24,12 +27,12 @@ function RatesPage1() {
 
     // Search + Pagination for Active
     const [searchQueryActive, setSearchQueryActive] = useState("")
-    const [pageSizeActive, setPageSizeActive] = useState(10)
+    const [pageSizeActive, setPageSizeActive] = React.useState<number>(10)
     const [currentPageActive, setCurrentPageActive] = useState(1)
 
     // Search + Pagination for History
     const [searchQueryHistory, setSearchQueryHistory] = useState("")
-    const [pageSizeHistory, setPageSizeHistory] = useState(10)
+    const [pageSizeHistory, setPageSizeHistory] = React.useState<number>(10)
     const [currentPageHistory, setCurrentPageHistory] = useState(1)
 
     const { data: fetchedData = [], isLoading } = useGetAnnualGrossSales()
@@ -219,19 +222,24 @@ function RatesPage1() {
                                             }}
                                         />
                                     </div>
+
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeActive}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeActive(value >= 1 ? value : 1)
+                                            <Select value={pageSizeActive.toString()} onValueChange={(value) => {
+                                                setPageSizeActive(Number.parseInt(value))
                                                 setCurrentPageActive(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
@@ -272,17 +280,21 @@ function RatesPage1() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeHistory}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeHistory(value >= 1 ? value : 1)
+                                            <Select value={pageSizeHistory.toString()} onValueChange={(value) => {
+                                                setPageSizeHistory(Number.parseInt(value))
                                                 setCurrentPageHistory(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>

@@ -16,6 +16,8 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import React from "react"
 
 function RatesPage3() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -23,11 +25,11 @@ function RatesPage3() {
     const [activeTab, setActiveTab] = useState("active")
 
     const [searchQueryActive, setSearchQueryActive] = useState("")
-    const [pageSizeActive, setPageSizeActive] = useState(10)
+    const [pageSizeActive, setPageSizeActive] =  React.useState<number>(10)
     const [currentPageActive, setCurrentPageActive] = useState(1)
 
     const [searchQueryHistory, setSearchQueryHistory] = useState("")
-    const [pageSizeHistory, setPageSizeHistory] = useState(10)
+    const [pageSizeHistory, setPageSizeHistory] = React.useState<number>(10)
     const [currentPageHistory, setCurrentPageHistory] = useState(1)
 
     const { data: fetchedData = [], isLoading } = useGetPurposeAndRate()
@@ -100,7 +102,7 @@ function RatesPage3() {
                             }
                             content="Edit"
                         />
-                        <TooltipLayout
+                        {/* <TooltipLayout
                             trigger={
                                 <div>
                                     <ConfirmationModal
@@ -113,7 +115,7 @@ function RatesPage3() {
                                  </div>
                             }
                             content="Delete"
-                        />
+                        /> */}
                     </div>
                 )
             }
@@ -164,7 +166,7 @@ function RatesPage3() {
                 <div className='p-7 flex flex-col justify-end gap-7'>
                     <div className="flex flex-row items-center">
                         <h2 className='font-bold w-3/4'>SERVICE CHARGE:</h2>
-                        <div className='flex justify-end w-[32rem]'>
+                        {/* <div className='flex justify-end w-[32rem]'>
                             <DialogLayout
                                 trigger={<Button>+ Add</Button>}
                                 title='Add New Purpose and Fee for Service Charge'
@@ -173,7 +175,7 @@ function RatesPage3() {
                                 isOpen={isDialogOpen}
                                 onOpenChange={setIsDialogOpen}
                             />
-                        </div>
+                        </div> */}
                     </div>
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -203,17 +205,21 @@ function RatesPage3() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeActive}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeActive(value >= 1 ? value : 1)
+                                            <Select value={pageSizeActive.toString()} onValueChange={(value) => {
+                                                setPageSizeActive(Number.parseInt(value))
                                                 setCurrentPageActive(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
@@ -253,17 +259,21 @@ function RatesPage3() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeHistory}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeHistory(value >= 1 ? value : 1)
+                                            <Select value={pageSizeHistory.toString()} onValueChange={(value) => {
+                                                setPageSizeHistory(Number.parseInt(value))
                                                 setCurrentPageHistory(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
