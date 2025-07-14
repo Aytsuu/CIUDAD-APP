@@ -28,14 +28,6 @@ export type IncomeExpense = {
     }[];
 };
   
-// Retrieving income/expense data
-// export const useIncomeExpense = () => {
-//     return useQuery<IncomeExpense[]>({
-//         queryKey: ["incomeExpense"],
-//         queryFn: getIncomeExpense,
-//         staleTime: 1000 * 60 * 30, // 30 minutes stale time
-//     });
-// };
 
 export const useIncomeExpense = (year?: number) => {
     return useQuery<IncomeExpense[]>({

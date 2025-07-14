@@ -6,6 +6,7 @@ import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-si
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
 import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
+import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/inc-exp-quarterly-report";
 
 export default function Dashboard() {
   return (
@@ -23,6 +24,9 @@ export default function Dashboard() {
           <div className="grid">
             <StaffAttendanceRankingChart/>
             <GADQuarterlyBudgetChart/>
+          </div>
+          <div className="grid">
+            <IncomeExpenseQuarterlyChart/>
           </div>
         </div>
         <div className="grid gap-2">
