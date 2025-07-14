@@ -1240,9 +1240,9 @@ export default function WasteIllegalDumping() {
                 rep_date: item.rep_date,
                 rep_date_resolved: item.rep_date_resolved,
                 rep_anonymous: item.rep_anonymous,
-                rep_resolved_img: item.rep_resolved_img,
                 rep_add_details: item.rep_add_details,
-                waste_report_file: JSON.stringify(item.waste_report_file || [])
+                waste_report_file: JSON.stringify(item.waste_report_file || []),
+                waste_report_rslv_file: JSON.stringify(item.waste_report_rslv_file || [])
             }
         });
     };
