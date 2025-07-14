@@ -231,33 +231,33 @@ export function IncomeExpenseQuarterlyChart() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 p-1 mb-2">
+        <CardTitle className="flex items-center gap-2 p-1 mb-2 text-[20px]">
           {currentYear} Quarterly Expenses
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Quarter Selection Tabs */}
-        <div className="flex gap-2">
-            {[
-                { key: "Q1", label: "Jan–Mar" },
-                { key: "Q2", label: "Apr–Jun" },
-                { key: "Q3", label: "Jul–Sep" },
-                { key: "Q4", label: "Oct–Dec" },
-            ].map(({ key, label }) => (
+        <div className="inline-flex items-center bg-muted rounded-md p-1">
+        {[
+            { key: "Q1", label: "Jan-Mar" },
+            { key: "Q2", label: "Apr-Jun" },
+            { key: "Q3", label: "Jul-Sep" },
+            { key: "Q4", label: "Oct-Dec" },
+        ].map(({ key, label }) => (
             <button
-                key={key}
-                onClick={() => setActiveQuarter(key as "Q1" | "Q2" | "Q3" | "Q4")}
-                className={cn(
-                "px-4 py-1 rounded font-medium text-sm border transition-colors",
+            key={key}
+            onClick={() => setActiveQuarter(key as "Q1" | "Q2" | "Q3" | "Q4")}
+            className={cn(
+                "px-3 py-1 text-sm font-medium rounded-md transition-all",
                 activeQuarter === key
-                    ? "bg-red-500 text-white border-red-500"
-                    : "bg-white text-muted-foreground border-muted"
-                )}
+                ? "bg-white text-black shadow"
+                : "text-muted-foreground bg-transparent hover:bg-white/10"
+            )}
             >
-                {label}
+            {label}
             </button>
-            ))}
+        ))}
         </div>
 
         {/* Bar Chart */}
