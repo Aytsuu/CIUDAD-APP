@@ -14,5 +14,5 @@ import WasteCollectionMain from "@/screens/waste/waste-collection/waste-collecti
 import Request from "../(request)";
 
 export default () => {
-    return <IncomeExpenseMain/>
+    return <WasteIllegalDumping/>
 }
