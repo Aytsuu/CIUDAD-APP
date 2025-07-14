@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { IncomeExpense } from "./treasurerIncomeExpenseFetchQueries";
 import { getIncomeExpense } from "../request/income-ExpenseTrackingGetRequest";
+import { Income } from "./treasurerIncomeExpenseFetchQueries";
 
+
+//Expense Quarterly
 export interface QuarterlyData {
   quarter: number;
   total: number;
@@ -66,4 +69,39 @@ export const useIncomeExpense = (year?: number) => {
       };
     }
   });
+};
+
+
+
+
+//Income Quarterly
+interface IncomeQuarterData {
+  name: string; // incp_item
+  Q1?: number;
+  Q2?: number;
+  Q3?: number;
+  Q4?: number;
+}
+
+export const getQuarterlyIncomeByItem = (income: Income[]): IncomeQuarterData[] => {
+  const grouped: Record<string, IncomeQuarterData> = {};
+
+  income.forEach(item => {
+    if (item.inc_entryType !== 'Income') return;
+
+    const date = new Date(item.inc_datetime);
+    if (isNaN(date.getTime())) return;
+
+    const quarter = `Q${Math.floor((date.getMonth() + 3) / 3)}` as 'Q1' | 'Q2' | 'Q3' | 'Q4';
+    const amount = Number(item.inc_amount || 0);
+    const key = item.incp_item;
+
+    if (!grouped[key]) {
+      grouped[key] = { name: key };
+    }
+
+    grouped[key][quarter] = (grouped[key][quarter] || 0) + amount;
+  });
+
+  return Object.values(grouped);
 };
