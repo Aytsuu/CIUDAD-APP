@@ -4,6 +4,7 @@ from .models import ServiceChargeRequest
 from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Prefetch
 
 class ServiceChargeRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargeRequestSerializer
@@ -31,20 +32,16 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
             'comp__cpnt'
         ).prefetch_related(
             'comp__complaintaccused_set__acsd',
-            'case__srf'
+            Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
         )
-    
-    def get_object(self):
-        try:
-            return super().get_object()
-        except ServiceChargeRequest.DoesNotExist:
-            raise NotFound("Service charge request not found")
         
-
 class CaseActivityView(generics.ListCreateAPIView):
     serializer_class = CaseActivitySerializer
     queryset = CaseActivity.objects.all()
 
+class CaseSuppDocView(generics.ListCreateAPIView):
+    serializer_class = CaseSuppDocSerializer
+    querySet = CaseSuppDoc.objects.all()
 
 class UpdateServiceChargeRequestView(generics.UpdateAPIView):
     serializer_class = ServiceChargeRequestSerializer
@@ -58,3 +55,6 @@ class UpdateServiceChargeRequestView(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+

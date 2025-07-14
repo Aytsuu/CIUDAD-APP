@@ -19,6 +19,15 @@ export const useGetServiceChargeRequest = () => {
     })
 }
 
+export type CaseSuppDoc = {
+    csd_id: string;
+    csd_name: string;
+    csd_type: string;
+    csd_path: string;
+    csd_url: string;
+    csd_description: string;
+    csd_upload_date: string;
+};
 
 export type CaseActivity = {
     ca_id: string;
@@ -26,11 +35,12 @@ export type CaseActivity = {
     ca_hearing_date: string;
     ca_hearing_time: string;
     ca_date_of_issuance: string;
-    file: {
-        caf_id: string;
-        caf_name: string;
-        caf_url: string;
+    srf: {
+        srf_id: string;
+        srf_name: string;
+        srf_url: string;
     };
+    supporting_documents: CaseSuppDoc[];
 };
 
 export type CaseDetails = {

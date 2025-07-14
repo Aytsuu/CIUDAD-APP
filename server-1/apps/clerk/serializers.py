@@ -38,12 +38,22 @@ class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
         model = ServiceChargeRequestFile
         fields = ['caf_id', 'caf_name', 'caf_type', 'caf_url']
 
+class CaseSuppDocSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CaseSuppDoc
+        fields = '__all__'
+
 class CaseActivitySerializer(serializers.ModelSerializer):
-    srf = ServiceChargeRequestFileSerializer(required=False, allow_null=True)  
+    srf = ServiceChargeRequestFileSerializer(required=False, allow_null=True)
+    supporting_documents = CaseSuppDocSerializer(
+        source='supporting_docs',  # Default related name
+        many=True,
+        read_only=True
+    )
     
     class Meta:
         model = CaseActivity
-        fields = '__all__'  
+        fields = '__all__'
 
 class AccusedNameSerializer(serializers.ModelSerializer):
     class Meta:

@@ -7,4 +7,5 @@ urlpatterns = [
     path('case-activity/', CaseActivityView.as_view(), name='case-activity'),
     path('update-service-charge-request/<int:sr_id>/', UpdateServiceChargeRequestView.as_view(), name='update-service-charge-request'),
     path('file-action-request/', FileActionrequestView.as_view(), name='file-action-request'),
+    path('case-supp-doc/', CaseSuppDocView.as_view(), name='case-supp-doc'),
 ]
