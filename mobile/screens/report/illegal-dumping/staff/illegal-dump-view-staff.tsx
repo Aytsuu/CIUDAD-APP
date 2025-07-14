@@ -490,6 +490,13 @@ import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteReport } from '../queries/illegal-dump-update-queries';
 
+interface ResolvedImage {
+    name: string;
+    type: string;
+    path: string;
+    url: string;
+}
+
 
 export default function WasteIllegalDumpingDetails() {
   // Get all params from the route
@@ -519,8 +526,26 @@ export default function WasteIllegalDumpingDetails() {
   const parsedResFiles = waste_report_rslv_file ? JSON.parse(waste_report_rslv_file as string) : [];
 
   console.log("LENGTH RESFILES: ", parsedResFiles.length)
-  const [resolutionFiles, setResolutionFiles] = useState<MediaFileType[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
+  const [resolvedImages, setResolvedImages] = useState<ResolvedImage[]>([]);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
+
+  useEffect(() => {
+    if (mediaFiles.length > 0) {
+        const validImages = mediaFiles
+            .filter(file => file.publicUrl)
+            .map(file => ({
+                name: file?.name || '',
+                type: file?.type || '',
+                path: file.path || '',
+                url: file.publicUrl || ''
+            }));
+        
+        setResolvedImages(validImages);
+    } else {
+        setResolvedImages([]);
+    }
+  }, [mediaFiles]);
 
 
   const isResolved = !!rep_date_resolved || rep_status === "resolved";
@@ -567,12 +592,11 @@ export default function WasteIllegalDumpingDetails() {
 
 
     const handleSubmitResolution = () => {
-        if (resolutionFiles.length === 0) return; // Safety check
+        if (resolvedImages.length === 0) return; // Safety check
         
         const updateData = {
             rep_status: "resolved",
-            rep_resolved_img: resolutionFiles[0].publicUrl || resolutionFiles[0].uri,
-            rep_date_resolved: new Date().toISOString()
+            rep_resolved_img: resolvedImages,
         };
         
         updateRep(updateData);
@@ -723,9 +747,9 @@ export default function WasteIllegalDumpingDetails() {
                     <ScrollView contentContainerStyle={{ padding: 16 }}>
                         <Text className="text-md text-gray-600 mb-3">Upload photo evidence of resolution</Text>
                         <MultiImageUploader
-                            mediaFiles={resolutionFiles}
-                            setMediaFiles={setResolutionFiles}
-                            maxFiles={1}
+                            mediaFiles={mediaFiles}
+                            setMediaFiles={setMediaFiles}
+                            maxFiles={3}
                             hideRemoveButton={false}
                         />
 
