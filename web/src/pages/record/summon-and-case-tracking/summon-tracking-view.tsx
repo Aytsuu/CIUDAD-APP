@@ -67,7 +67,7 @@ function SummonTrackingView() {
               }
               mainContent={
                     <div className="mt-[-7rem]">
-                        <SummonSuppDocs />
+                        <SummonSuppDocs ca_id = {row.original.ca_id}/>
                     </div>
                 }
             />

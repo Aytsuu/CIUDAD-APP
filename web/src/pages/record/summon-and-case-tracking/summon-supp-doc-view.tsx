@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button/button"
 import { FileInput, CircleAlert } from "lucide-react"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import SummonSuppDocForm from "./summon-supp-doc-form"
+import { useState } from "react"
 
-export default function SummonSuppDocs() {
+export default function SummonSuppDocs({ca_id}: {ca_id: string}) {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
   return (
     <div className="overflow-hidden">
       {/* Header with Title, Description and Add Button */}
@@ -19,8 +22,13 @@ export default function SummonSuppDocs() {
             title="Add Supporting Document"
              description="Upload relevant photos to support this case activity."
             mainContent={
-              <SummonSuppDocForm/>
+              <SummonSuppDocForm 
+                ca_id = {ca_id}
+                onSuccess={() => setIsDialogOpen(false)}
+              />
             }
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
           />
         </div>
       {/* </div> */}

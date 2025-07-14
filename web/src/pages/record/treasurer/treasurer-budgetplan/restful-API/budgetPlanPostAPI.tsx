@@ -143,41 +143,7 @@ export const createBudgetPlanDetailHistory = async (bph_id: string, detailHistor
     }
 };
 
-// export const addBudgetPlanSuppDoc = async (media: MediaUploadType[number], plan_id: number) => {
-//     if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-//         throw new Error('File upload incomplete: missing URL or path');
-//     }
-
-//     const formData = new FormData();
-//     formData.append('file', media.file);
-//     formData.append('plan_id', plan_id.toString());
-//     formData.append('bpf_name', media.file.name);
-//     formData.append('bpf_type', media.file.type || 'application/octet-stream');
-//     formData.append('bpf_path', media.storagePath);
-//     formData.append('bpf_url', media.publicUrl);
-//     formData.append('bpf_upload_date', new Date().toISOString())
-
-
-//     try {
-//         const response = await api.post('treasurer/budget-plan-file/', formData, {
-//         headers: {
-//             'Content-Type': 'multipart/form-data',
-//         },
-//         });
-//         return response.data;
-//     } catch (error: any) {
-//         console.error('Budget Plan supporting document upload failed:', error.response?.data || error);
-//         throw error;
-//     }
-// };
-
-// queries/budgetPlanInsertQueries.ts
-export const addBudgetPlanSuppDoc = async (files: Array<{
-    publicUrl: string;
-    storagePath: string;
-    type: "image" | "video" | "document";
-    name: string;
-    plan_id: number;
+export const addBudgetPlanSuppDoc = async (files: Array<{ publicUrl: string; storagePath: string; type: "image" | "video" | "document"; name: string; plan_id: number;
 }>) => {
     try {
         const uploadPromises = files.map(file => {
