@@ -1,4 +1,5 @@
 import { api } from "@/api/api";
+import type { MediaUploadType } from "@/components/ui/media-upload";
 
 export const addCaseActivity = async (caseInfo: Record<string, any>) => {
     try{
@@ -18,6 +19,34 @@ export const addCaseActivity = async (caseInfo: Record<string, any>) => {
             sr: Number(caseInfo.sr_id),
         })
         return res.data.ca_id
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    try{
+
+        if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
+            throw new Error('File upload incomplete: missing URL or path');
+        }
+
+ 
+
+        const formData = new FormData();
+        formData.append('file', media.file);
+        formData.append('ca_id', ca_id);
+        formData.append('csd_name', media.file.name);
+        formData.append('csd_type', media.file.type || 'application/octet-stream');
+        formData.append('csd_path', media.storagePath);
+        formData.append('csd_url', media.publicUrl);
+        formData.append('csd_upload_date', new Date().toISOString());
+        formData.append('csd_description', description);
+
+        console.log('ca_id', ca_id)
+
+        const res = await api.post('clerk/case-supp-doc/', formData)
+
+        return res.data
     }catch(err){
         console.error(err)
     }
