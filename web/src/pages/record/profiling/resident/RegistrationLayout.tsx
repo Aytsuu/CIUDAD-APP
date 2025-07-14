@@ -19,7 +19,7 @@ const registrationSteps = [
 ];
 
 export default function RegistrationLayout() {
-  const [currentStep, setCurrentStep] = React.useState<number>(5);
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
   const [residentId, setResidentId] = React.useState<string>('');
   const [hasFamily, setHasFamily] = React.useState<boolean>(false);
   const [addresses, setAddresses] = React.useState<Record<string, any>[]>();
