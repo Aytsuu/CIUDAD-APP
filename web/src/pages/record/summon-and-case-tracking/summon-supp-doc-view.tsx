@@ -6,10 +6,13 @@ import { useState } from "react"
 import { useGetSuppDoc } from "./queries/summonFetchQueries"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useDeleteSuppDoc } from "./queries/summonDeleteQueries"
+import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 
 export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const { data: suppDocs = [], isLoading } = useGetSuppDoc(ca_id)
+  const { data: suppDocs = [], isLoading } = useGetSuppDoc(ca_id);
+  const { mutate: deleteSuppDoc} = useDeleteSuppDoc()
   const hasDocuments = suppDocs.length > 0
 
   const handleEdit = (docId: string) => {
@@ -17,9 +20,8 @@ export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
     console.log("Edit document:", docId)
   }
 
-  const handleDelete = (docId: string) => {
-    // Handle delete functionality
-    console.log("Delete document:", docId)
+  const handleDelete = (csd_id: string) => {
+    deleteSuppDoc(csd_id)
   }
 
   if (isLoading) {
@@ -97,14 +99,17 @@ export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
                     <Button variant="outline" size="sm" onClick={() => handleEdit(doc.csd_id)} className="p-2">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(doc.csd_id)}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <ConfirmationModal
+                        trigger={
+                          <Button variant="outline"  size="sm" className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        }
+                        title="Delete Confirmation"
+                        description="Would you like to permanently delete this document?"
+                        actionLabel="Confirm"
+                        onClick={() => handleDelete(doc.csd_id)}
+                    />
                   </div>
                 </div>
               </div>

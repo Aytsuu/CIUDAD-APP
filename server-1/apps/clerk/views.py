@@ -39,10 +39,6 @@ class CaseActivityView(generics.ListCreateAPIView):
     serializer_class = CaseActivitySerializer
     queryset = CaseActivity.objects.all()
 
-# class CaseSuppDocView(generics.ListCreateAPIView):
-#     serializer_class = CaseSuppDocSerializer
-#     querySet = CaseSuppDoc.objects.all()
-
 class CaseSuppDocView(generics.ListCreateAPIView):
     serializer_class = CaseSuppDocSerializer
     
@@ -52,6 +48,11 @@ class CaseSuppDocView(generics.ListCreateAPIView):
         if ca_id is not None:
             queryset = queryset.filter(ca_id=ca_id)
         return queryset
+    
+class DeleteCaseSuppDocView(generics.RetrieveDestroyAPIView):
+    queryset = CaseSuppDoc.objects.all()
+    serializer_class = CaseSuppDocSerializer
+    lookup_field = 'csd_id'
 
 class UpdateServiceChargeRequestView(generics.UpdateAPIView):
     serializer_class = ServiceChargeRequestSerializer
