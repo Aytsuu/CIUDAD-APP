@@ -486,6 +486,7 @@ import { X } from "lucide-react-native";
 import MultiImageUploader, {MediaFileType} from '@/components/ui/multi-media-upload';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import _ScreenLayout from '@/screens/_ScreenLayout';
+import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteReport } from '../queries/illegal-dump-update-queries';
 
@@ -507,14 +508,17 @@ export default function WasteIllegalDumpingDetails() {
     rep_status,
     rep_date,
     rep_date_resolved,
-    rep_resolved_img,
     sitio_name,
-    waste_report_file
+    waste_report_file,
+    waste_report_rslv_file
   } = params;
 
   // Parse the waste_report_file array
   const parsedFiles = waste_report_file ? JSON.parse(waste_report_file as string) : [];
+  // Parse waste_report_rslv_file
+  const parsedResFiles = waste_report_rslv_file ? JSON.parse(waste_report_rslv_file as string) : [];
 
+  console.log("LENGTH RESFILES: ", parsedResFiles.length)
   const [resolutionFiles, setResolutionFiles] = useState<MediaFileType[]>([]);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
 
@@ -621,31 +625,23 @@ export default function WasteIllegalDumpingDetails() {
             {/* Images Container */}
             <View className="w-full mb-4">
               {/* Original Report Image */}
-              {parsedFiles[0]?.wrf_url && (
-                <View className="relative mb-4">
-                  <Image
-                    source={{ uri: parsedFiles[0].wrf_url }}
-                    className="w-full aspect-video bg-gray-100 rounded-md border border-gray-100"
-                    resizeMode="cover"
-                  />
-                  <Text className="absolute top-2 left-2 bg-white/80 px-2 py-0.5 text-[14px] font-medium text-gray-700 rounded">
-                    Report Evidence
-                  </Text>
-                </View>
+              {parsedFiles.length > 0 && (
+                <ImageCarousel 
+                  images={parsedFiles}
+                  title="Report Evidence"
+                  idKey="wrf_id"
+                  urlKey="wrf_url"
+                />
               )}
               
-              {/* Resolved Image - only show if exists */}
-              {rep_resolved_img && (
-                <View className="relative">
-                  <Image
-                    source={{ uri: String(rep_resolved_img) }}
-                    className="w-full aspect-video bg-gray-100 rounded-md"
-                    resizeMode="cover"
-                  />
-                  <Text className="absolute top-2 left-2 bg-white/80 px-2 py-0.5 text-[14px] font-medium text-gray-700 rounded">
-                    Resolution Evidence
-                  </Text>
-                </View>
+              {/* Resolution Image - only show if exists */}
+              {parsedResFiles.length > 0 && (
+                <ImageCarousel 
+                  images={parsedResFiles}
+                  title="Resolution Evidence"
+                  idKey="wrsf_id"
+                  urlKey="wrsf_url"
+                />
               )}
             </View>
 
