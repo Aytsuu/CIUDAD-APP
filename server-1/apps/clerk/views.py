@@ -54,6 +54,19 @@ class DeleteCaseSuppDocView(generics.RetrieveDestroyAPIView):
     serializer_class = CaseSuppDocSerializer
     lookup_field = 'csd_id'
 
+class UpdateCaseSuppDocView(generics.UpdateAPIView):
+    serializer_class = CaseSuppDocSerializer
+    queryset = CaseSuppDoc.objects.all()
+    lookup_field = 'csd_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UpdateServiceChargeRequestView(generics.UpdateAPIView):
     serializer_class = ServiceChargeRequestSerializer
     queryset = ServiceChargeRequest.objects.all()

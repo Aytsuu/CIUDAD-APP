@@ -10,4 +10,5 @@ urlpatterns = [
     path('case-supp-doc/', CaseSuppDocView.as_view(), name='case-supp-doc'),
     path('case-supp-doc/<int:ca_id>/', CaseSuppDocView.as_view(), name='case-supp-doc'),
     path('delete-case-supp-doc/<int:csd_id>/', DeleteCaseSuppDocView.as_view(), name='delete-case-supp-doc'),
+    path('update-case-supp-doc/<int:csd_id>/', UpdateCaseSuppDocView.as_view(), name='update-case-supp-doc'),
 ]

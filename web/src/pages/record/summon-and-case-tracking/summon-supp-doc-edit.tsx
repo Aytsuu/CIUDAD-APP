@@ -1,4 +1,4 @@
-import { SummonSuppDocSchema } from "@/form-schema/summon-supp-doc-schema";
+import { SummonSuppDocEditSchema } from "@/form-schema/summon-supp-doc-schema";
 import { MediaUpload, type MediaUploadType } from "@/components/ui/media-upload";
 import { FormField, Form, FormControl, FormMessage, FormItem } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
@@ -7,53 +7,70 @@ import { useForm } from "react-hook-form";
 import {z} from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
-import { useAddSuppDoc } from "./queries/summonInsertQueries";
+import { useUpdateSuppDoc } from "./queries/summonUpdateQueries";
 
-export default function SummonSuppDocForm({ca_id, onSuccess}: {
-    ca_id: string;
+export default function SummonSuppDocEditForm({csd_id, csd_url, csd_description, onSuccess}: {
+    csd_id: string;
+    csd_url: string;
+    csd_description: string;
     onSuccess: () => void;
 }) {
-    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
+    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
+        return csd_url ? [{
+            id: `existing-${csd_id}`,
+            type: 'document',
+            status: 'uploaded' as const,
+            publicUrl: csd_url,
+            previewUrl: csd_url,
+            storagePath: '',
+            file: new File([], csd_url.split('/').pop() || 'document')
+        }] : [];
+    });
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const {mutate: addDocs, isPending} = useAddSuppDoc(onSuccess);
+    const {mutate: updateDocs, isPending} = useUpdateSuppDoc(onSuccess);
+    const isSubmitDisabled = isPending || mediaFiles.some(file => file.status === 'uploading');
 
-    // Check if media is still uploading
-    const isMediaUploading = mediaFiles.some(file => file.status === 'uploading');
-    const isSubmitDisabled = isPending || isMediaUploading;
-
-    const form = useForm<z.infer<typeof SummonSuppDocSchema>>({
-        resolver: zodResolver(SummonSuppDocSchema),
+    const form = useForm<z.infer<typeof SummonSuppDocEditSchema>>({
+        resolver: zodResolver(SummonSuppDocEditSchema),
         defaultValues: {
-            supp_doc: "",
-            description: ""
+            supp_doc: csd_url,
+            description: csd_description,
+            csd_id: String(csd_id)
         },
     });
 
     useEffect(() => {
-        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+        if (mediaFiles[0]?.publicUrl) {
             form.setValue('supp_doc', mediaFiles[0].publicUrl);
         } else {
             form.setValue('supp_doc', '');
         }
     }, [mediaFiles, form]);
-    
-    const onSubmit = (values: z.infer<typeof SummonSuppDocSchema>) => {
+
+    const onSubmit = (values: z.infer<typeof SummonSuppDocEditSchema>) => {
         if (!mediaFiles[0]?.publicUrl) {
             form.setError('supp_doc', {message: 'Please upload a document'});
             return;
         }
 
-        addDocs({
-            ...values,
-            ca_id: ca_id,
-            media: mediaFiles[0]
+        updateDocs({
+            csd_id: values.csd_id,
+            values: {              
+                description: values.description,
+                supp_doc: values.supp_doc
+            },
+            mediaFiles            
         });
     }
 
-    return(
+    return (
         <div className="space-y-4">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                        console.error('Form submission errors:', errors);
+                    })}
+                    className="space-y-6"
+                >
                     <FormField
                         control={form.control}
                         name="supp_doc"
@@ -87,7 +104,8 @@ export default function SummonSuppDocForm({ca_id, onSuccess}: {
                             type="submit" 
                             disabled={isSubmitDisabled}
                             className="w-[100px]"
-                        >
+                            onClick={() => console.log('Button clicked')}
+                        > 
                             {isPending ? "Submitting..." : "Save"}
                         </Button>
                     </div>

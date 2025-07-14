@@ -8,17 +8,20 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDeleteSuppDoc } from "./queries/summonDeleteQueries"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
+import SummonSuppDocEditForm from "./summon-supp-doc-edit"
 
 export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingRowId, setEditingRowId] = useState<number | null>(null)
+
   const { data: suppDocs = [], isLoading } = useGetSuppDoc(ca_id);
   const { mutate: deleteSuppDoc} = useDeleteSuppDoc()
   const hasDocuments = suppDocs.length > 0
 
-  const handleEdit = (docId: string) => {
-    // Handle edit functionality
-    console.log("Edit document:", docId)
-  }
+  // const handleEdit = (docId: string) => {
+  //   // Handle edit functionality
+  //   console.log("Edit document:", docId)
+  // }
 
   const handleDelete = (csd_id: string) => {
     deleteSuppDoc(csd_id)
@@ -96,9 +99,25 @@ export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
 
                   {/* Action Buttons */}
                   <div className="flex-shrink-0 flex flex-col gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(doc.csd_id)} className="p-2">
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <DialogLayout
+                        trigger={
+                            <Button variant="outline" size="sm" className="p-2">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                        }
+                        title="Edit Supporting Document"
+                        description="Update relevant supporting document for the case activity."
+                        mainContent={
+                          <SummonSuppDocEditForm
+                            csd_id={doc.csd_id}
+                            csd_url={doc.csd_url}
+                            csd_description = {doc.csd_description}
+                            onSuccess={() => setEditingRowId(null)}
+                          />
+                        }
+                        isOpen={editingRowId === Number(doc.csd_id)}
+                        onOpenChange={(open) => setEditingRowId(open ? Number(doc.csd_id) : null)}
+                    />
                     <ConfirmationModal
                         trigger={
                           <Button variant="outline"  size="sm" className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50">
