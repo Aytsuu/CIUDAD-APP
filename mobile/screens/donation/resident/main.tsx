@@ -25,6 +25,7 @@ import * as WebBrowser from "expo-web-browser";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { useRouter } from "expo-router";
+import PageLayout from "@/screens/_PageLayout";
 
 const { width, height } = Dimensions.get("window");
 const scale = (size: number) => (width / 375) * size;
@@ -193,20 +194,21 @@ const ResidentDonationMain = () => {
     checkPendingPayment();
   }, []);
   return (
-    <ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-[#68d391]" />
-        </TouchableOpacity>
-      }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      backgroundColor="bg-[#002D2A]"
-      loadingMessage="Loading donations..."
-    >
+      <PageLayout
+             leftAction={
+                <TouchableOpacity onPress={() => router.back()}>
+                  <ChevronLeft size={30} color="black" className="text-[#68d391]" />
+                </TouchableOpacity>
+              }
+              headerTitle={<Text className="text-white">Schedule Events</Text>}
+              rightAction={
+                <TouchableOpacity>
+                  <ChevronLeft size={30} color="black" className="text-[#002D2A]" />
+                </TouchableOpacity>
+              }
+              backgroundColor="bg-[#002D2A]"
+          >
+      <ScrollView>
       <View
         className="absolute -bottom-[150px] -right-[150px] z-[-1]"
         style={{
@@ -408,7 +410,8 @@ const ResidentDonationMain = () => {
           </View>
         </Modal>
       </View>
-    </ScreenLayout>
+      </ScrollView>
+    </PageLayout>
   );
 };
 
