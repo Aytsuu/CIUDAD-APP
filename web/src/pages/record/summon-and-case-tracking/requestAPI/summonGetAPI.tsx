@@ -30,12 +30,19 @@ export const getSuppDoc = async(ca_id: string) => {
     }
 }
 
-export const getServiceChargeTemplates = async () => {
-    try{
 
-        const res = await api.get('council/service-charge-templates/')
-        return res.data
-    } catch (err){
-        console.error(err)
+export const getSummonTemplate = async () => {
+    try {
+        const res = await api.get('council/summon-template/', {
+            params: {
+                 filename: "Complaint/Filing Fee/Summons",
+            },
+        });
+
+        console.log(res.data)
+        return res.data;
+    } catch (err) {
+        console.error(err);
     }
-}
+};
+

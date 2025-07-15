@@ -28,6 +28,8 @@ function SummonTrackingView() {
   const { data: caseDetails, isLoading } = useGetCaseDetails(sr_id || "")
   const { mutate: markResolve } = useResolveCase()
   const { mutate: markEscalate } = useEscalateCase()
+  const accusedNames = caseDetails?.complaint?.accused?.map(a => a.acsd_name) || [];
+
 
   const isCaseClosed = caseDetails?.sr_status === "Resolved" || caseDetails?.sr_status === "Escalated"
 
@@ -247,7 +249,17 @@ function SummonTrackingView() {
                   trigger={<Button>+ Create New Schedule</Button>}
                   title="Create New Schedule"
                   description="Schedule a new summon."
-                  mainContent={<CreateNewSummon sr_id={sr_id} onSuccess={() => setIsDialogOpen(false)} />}
+                  mainContent={
+                    <CreateNewSummon 
+                      sr_id={sr_id} 
+                      complainant = {caseDetails?.complainant.cpnt_name || ""}
+                      accused={accusedNames}
+                      // complainant_address = {}
+                      // accused_address = {}
+                      incident_type = {caseDetails?.complaint.comp_incident_type || ''}
+                      onSuccess={() => setIsDialogOpen(false)} 
+                    />
+                  }
                   isOpen={isDialogOpen}
                   onOpenChange={setIsDialogOpen}
                 />

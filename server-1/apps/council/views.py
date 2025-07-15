@@ -12,6 +12,9 @@ import logging
 from apps.treasurer.models import Purpose_And_Rates
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.exceptions import NotFound
+
 
 logger = logging.getLogger(__name__)
 
@@ -220,14 +223,19 @@ class TemplateView(generics.ListCreateAPIView):
     queryset = Template.objects.all()
 
 
-class ServiceChargeTemplateListView(generics.ListAPIView):
-    serializer_class = TemplateSerializer
+class SummonTemplateView(APIView):
+    def get(self, request):
+        filename = request.query_params.get('filename')
+        if not filename:
+            raise NotFound("Missing 'filename' parameter")
 
-    def get_queryset(self):
-        return Template.objects.filter(
-            temp_is_archive=False,
-            pr_id__pr_category="Service Charge"
-        )
+        try:
+            template = Template.objects.get(temp_filename=filename, temp_is_archive=False)
+        except Template.DoesNotExist:
+            raise NotFound("Template not found")
+
+        serializer = TemplateSerializer(template)
+        return Response(serializer.data)
 
 #UPDATE TEMPLATE
 class UpdateTemplateView(generics.RetrieveUpdateAPIView):

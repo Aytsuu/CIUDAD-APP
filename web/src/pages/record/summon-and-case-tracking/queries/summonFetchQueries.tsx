@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getServiceChargeRequest, getCaseDetails, getServiceChargeTemplates, getSuppDoc } from "../requestAPI/summonGetAPI";
+import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc } from "../requestAPI/summonGetAPI";
 
 export type ServiceChargeRequest = {
     sr_id: string;
@@ -81,7 +81,7 @@ export const useGetSuppDoc = (ca_id: string) => {
 }
 
 
-export type ServiceChargeTemplates = {
+export type SummonTemplate = {
     temp_id: number,
     temp_header: string;
     temp_below_headerContent: string;
@@ -96,10 +96,10 @@ export type ServiceChargeTemplates = {
     temp_body: string;
 };
 
-export const useGetServiceChargeTemplates = () => {
-    return useQuery<ServiceChargeTemplates[]>({
-        queryKey: ['templateRec'],
-        queryFn: getServiceChargeTemplates,
+export const useGetSummonTemplate = () => {
+    return useQuery<SummonTemplate>({
+        queryKey: ['summonTemp'],
+        queryFn: getSummonTemplate,
         staleTime: 5000
     })
 }
