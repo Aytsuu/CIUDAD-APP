@@ -26,16 +26,7 @@ export const fetchPatientInfo = async (patId: string): Promise<PatientInfo> => {
   }
 };
 
-// export const usePatientInfo = (patId: string) => {
-//   return useQuery({
-//     queryKey: ["patientInfo", patId],
-//     queryFn: () => fetchPatientInfo(patId),
-//     enabled: !!patId, // Only fetch if patId is provided
-//     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-//   });
-// };
-
-
+//
 export const fetchPatientRecords = async () => {
   try {
     const response = await api2.get("patientrecords/patient/");
@@ -69,49 +60,10 @@ export const fetchPatientRecords = async () => {
   }
 };
 
-
-
-// import { useState,useEffect } from "react";
-// export const fetchPatientRecords = () => {
-//   const [patients, setPatients] = useState<any[]>([]);
-//   const [isLoading, setIsLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       setIsLoading(true);
-//       try {
-//         const response = await api.get("patientrecords/patient/");
-//         const patientData = response.data;
-
-//         // Skip if no patient data or empty array
-//         if (!patientData || !Array.isArray(patientData) || patientData.length === 0) {
-//           console.log("No patient records available.");
-//           setPatients([]);
-//           return;
-//         }
-
-//         // Transform data with proper error handling
-//         const transformedData = patientData.map((patient: any) => ({
-//           id: patient.pat_id.toString(),
-//           pat_id: patient.pat_id,
-//           name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || "N/A"}] (ID: ${patient.pat_id})`,
-//         }));
-
-//         setPatients(transformedData);
-//       } catch (error) {
-//         console.error("Error fetching patient records:", error);
-//         setPatients([]);
-//         toast.error("Failed to load patient records");
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     fetchData();
-//   }, []);
-
-//   return { 
-//     patientRecordsOptions: patients, 
-//     isLoading 
-//   };
-// };
+export const usePatientsQuery = () => {
+  return useQuery({
+    queryKey: ["patients"],
+    queryFn: fetchPatientRecords,
+    staleTime: 5 * 60 * 1000, // optional: 5 minutes cache
+  });
+};

@@ -9,83 +9,17 @@ import ChildHRPage3 from "./child-hr-page3"
 import LastPage from "./child-hr-page-last"
 import { api2 } from "@/api/api"
 import { useAuth } from "@/context/AuthContext"
-import type { FormData, VitalSignType } from "@/form-schema/chr-schema/chr-schema"
-import type { CHSSupplementStat } from "./types" // Updated import path
+import  { FormData, VitalSignType, VaccineRecord, ExistingVaccineRecord } from "@/form-schema/chr-schema/chr-schema"
+import type { CHSSupplementStat } from "./types"
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator"
-import { useChildHealthRecordMutation } from "../restful-api/newchildhealthrecord"
-import { useUpdateChildHealthRecordMutation } from "../restful-api/addnewchildhealthrecord"
+import { useChildHealthRecordMutation } from "../restful-api/newchrecord"
+import { useUpdateChildHealthRecordMutation } from "../restful-api/newchhistory"
+import type { Patient } from "@/components/ui/patientSearch"
+import { useQuery } from "@tanstack/react-query"
+import {Medicine} from "./types"
+import {initialFormData} from "./types"
 
-export type Medicine = {
-  minv_id: string
-  medrec_qty: number
-  reason: string
-  name?: string
-  dosage?: number
-  dosageUnit?: string
-  form?: string
-}
 
-const initialFormData: FormData = {
-  familyNo: "",
-  pat_id: "",
-  rp_id: "",
-  trans_id: "",
-  ufcNo: "",
-  childFname: "",
-  childLname: "",
-  childMname: "",
-  childSex: "",
-  childDob: "",
-  birth_order: 1,
-  placeOfDeliveryType: "Home",
-  placeOfDeliveryLocation: "",
-  childAge: "",
-  residenceType: "Resident",
-  motherFname: "",
-  motherLname: "",
-  motherMname: "",
-  motherAge: "",
-  motherdob: "",
-  motherOccupation: "",
-  fatherFname: "",
-  fatherLname: "",
-  fatherMname: "",
-  fatherAge: "",
-  fatherdob: "",
-  fatherOccupation: "",
-  address: "",
-  landmarks: "",
-  dateNewbornScreening: "",
-  disabilityTypes: [],
-  edemaSeverity: "none",
-  BFdates: [],
-  vitalSigns: [],
-  medicines: [],
-  anemic: {
-    seen: "",
-    given_iron: "",
-    is_anemic: false,
-  },
-  birthwt: {
-    seen: "",
-    given_iron: "",
-  },
-  status: "recorded",
-  type_of_feeding: "",
-  tt_status: "",
-  nutritionalStatus: {
-    wfa: "",
-    lhfa: "",
-    wfh: "",
-    muac: undefined,
-    muac_status: "",
-  },
-  vaccines: [],
-  hasExistingVaccination: false,
-  existingVaccines: [],
-  created_at: "",
-  chhist_status: "",
-}
 
 export const isToday = (dateString: string) => {
   if (!dateString) return false
@@ -94,41 +28,36 @@ export const isToday = (dateString: string) => {
   return today === checkDate
 }
 
-
-
 export default function ChildHealthRecordForm() {
   const location = useLocation()
   const navigate = useNavigate()
   const params = useParams()
-  const mode = params.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization" | undefined
+
+  const mode =(location.state?.params?.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization" | undefined) ||
+    (params.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization" | undefined)
+  // console.log("Current mode:", mode)
+
   const { chrecId, chhistId, patId } = location.state?.params || {}
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord"
   const isNewchildhealthrecord = mode === "newchildhealthrecord"
+  const isImmunizationMode = mode === "immunization"
+
   const { user } = useAuth()
-  const staffId = user?.staff?.staff_id
+  const staffId = user?.staff?.staff_id || null
   const position = user?.staff?.pos?.pos_title
-  const [isSubmitting, setIsSubmitting] = useState(false) // Keep local state for loading spinner
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const newchildhealthrecordMutation = useChildHealthRecordMutation()
   const updatechildhealthrecordmutation = useUpdateChildHealthRecordMutation()
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(() => {
-    const storedPage = localStorage.getItem(
-      `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-    )
-    return storedPage ? Number.parseInt(storedPage) : 1
-  })
-  const [formData, setFormData] = useState<FormData>(() => {
-    const storedData = localStorage.getItem(
-      `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-    )
-    return storedData ? JSON.parse(storedData) : initialFormData
-  })
-  const [isLoading, setIsLoading] = useState(isaddnewchildhealthrecordMode)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [formData, setFormData] = useState<FormData>(initialFormData)
+  const [isLoading, setIsLoading] = useState(isaddnewchildhealthrecordMode || isImmunizationMode)
   const [apiData, setApiData] = useState<any>(null)
   const [historicalBFdates, setHistoricalBFdates] = useState<string[]>([])
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([])
   const [historicalNutritionalStatus, setHistoricalNutritionalStatus] = useState<any[]>([])
-  const [historicalSupplementStatuses, setHistoricalSupplementStatuses] = useState<CHSSupplementStat[]>([]) // New state for historical supplement statuses
+  const [historicalSupplementStatuses, setHistoricalSupplementStatuses] = useState<CHSSupplementStat[]>([])
   const [latestHistoricalNoteContent, setLatestHistoricalNoteContent] = useState<string>("")
   const [latestHistoricalFollowUpDescription, setLatestHistoricalFollowUpDescription] = useState<string>("")
   const [latestHistoricalFollowUpDate, setLatestHistoricalFollowUpDate] = useState<string>("")
@@ -138,30 +67,30 @@ export default function ChildHealthRecordForm() {
       id: number
       pd_id: number
       status: string
-      disability_details: {
-        disability_id: number
-        disability_name: string
-        created_at: string
-      }
+      disability_details: { disability_id: number; disability_name: string; created_at: string }
     }[]
   >([])
   const [originalDisabilityRecords, setOriginalDisabilityRecords] = useState<
     { id: number; pd_id: number; status: string }[]
   >([])
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("")
 
-  useEffect(() => {
-    localStorage.setItem(
-      `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-      currentPage.toString(),
-    )
-  }, [currentPage, isaddnewchildhealthrecordMode])
-
-  useEffect(() => {
-    localStorage.setItem(
-      `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-      JSON.stringify(formData),
-    )
-  }, [formData, isaddnewchildhealthrecordMode])
+  // TanStack Query for fetching child health record
+  const { 
+    data: childHealthRecord, 
+    isLoading: isRecordLoading, 
+    error: recordError 
+  } = useQuery({
+    queryKey: ['childHealthRecord', chrecId],
+    queryFn: async () => {
+      if (!chrecId) return null;
+      const response = await api2.get(`/child-health/history/${chrecId}/`);
+      return response.data;
+    },
+    enabled: !!chrecId && (isaddnewchildhealthrecordMode || isImmunizationMode),
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
 
   const getLatestNoteForDate = (notesArray: any[], dateString: string) => {
     const targetDate = dateString.split("T")[0]
@@ -176,9 +105,9 @@ export default function ChildHealthRecordForm() {
   }
 
   const transformApiDataToFormData = (chhistRecord: any): FormData => {
-    console.log("🔍 Starting transformation with raw chhistRecord:", chhistRecord)
+    console.log("Starting transformation with raw chhistRecord:", chhistRecord)
     if (!chhistRecord) {
-      console.error("❌ chhistRecord is empty or not in expected format.")
+      console.error("chhistRecord is empty or not in expected format.")
       return {} as FormData
     }
 
@@ -187,20 +116,42 @@ export default function ChildHealthRecordForm() {
     const patient = patrecDetails?.pat_details
     const familyHeadInfo = patient?.family_head_info
 
+    // Extract and transform vaccines
+    const vaccinesFromApi: VaccineRecord[] =
+      chhistRecord.child_health_vaccines?.map((vac: any) => ({
+        vacStck_id: vac.vacStck_id?.toString() || "",
+        vaccineType: vac.vaccine_stock_details?.vaccinelist?.vac_name || "Unknown",
+        dose: vac.dose?.toString() || "",
+        date: vac.date_administered ? new Date(vac.date_administered).toISOString().split("T")[0] : "",
+        vac_id: vac.vac_id?.toString() || "",
+        vac_name: vac.vaccine_stock_details?.vaccinelist?.vac_name || "Unknown",
+        expiry_date: vac.vaccine_stock_details?.inv_details?.expiry_date || "",
+      })) || []
+
+    const existingVaccinesFromApi: ExistingVaccineRecord[] =
+      chhistRecord.child_health_existing_vaccines?.map((exVac: any) => ({
+        vac_id: exVac.vac_id?.toString() || "",
+        vaccineType: exVac.vaccine_list_details?.vac_name || "Unknown",
+        dose: exVac.dose?.toString() || "",
+        date: exVac.date_administered ? new Date(exVac.date_administered).toISOString().split("T")[0] : "",
+        vac_name: exVac.vaccine_list_details?.vac_name || "Unknown",
+      })) || []
+
     const transformedData: FormData = {
+      ...initialFormData,
       chhist_status: chhistRecord.status,
       familyNo: chrecDetails?.family_no || "",
-      created_at: chhistRecord?.created_at || "", // Use the created_at from the current chhistRecord
+      created_at: chhistRecord?.created_at || "",
       pat_id: patrecDetails?.pat_id || "",
-      rp_id: "",
-      trans_id: "",
+      rp_id: patrecDetails?.rp_id?.rp_id || "",
+      trans_id: patrecDetails?.trans_id || "",
       ufcNo: chrecDetails?.ufc_no || "N/A",
       childFname: patient?.personal_info?.per_fname || "",
       childLname: patient?.personal_info?.per_lname || "",
       childMname: patient?.personal_info?.per_mname || "",
       childSex: patient?.personal_info?.per_sex || "",
       childDob: patient?.personal_info?.per_dob || "",
-      birth_order: chrecDetails?.birth_order,
+      birth_order: chrecDetails?.birth_order || 1,
       placeOfDeliveryType: chrecDetails?.place_of_delivery_type || "Home",
       placeOfDeliveryLocation: chrecDetails?.pod_location || "",
       childAge: patient?.personal_info?.per_dob ? calculateAgeFromDOB(patient.personal_info.per_dob).ageString : "",
@@ -222,46 +173,44 @@ export default function ChildHealthRecordForm() {
       fatherdob: familyHeadInfo?.family_heads?.father?.personal_info?.per_dob || "",
       fatherOccupation: chrecDetails?.father_occupation || "",
       address: patient?.address?.full_address || "",
-      landmarks: chhistRecord?.landmarks || "",
+      landmarks: chrecDetails?.landmarks || "",
       dateNewbornScreening: chrecDetails.newborn_screening || "",
-      disabilityTypes: [], // As per user request, not retrieving into form's addnewchildhealthrecordable state
-      edemaSeverity: "None",
-      BFdates: [],
-      vitalSigns: [],
-      medicines: [],
-      // is_anemic: false,
-      anemic: { seen: "", given_iron: "", is_anemic: false, date_completed: "" },
-      birthwt: { seen: "", given_iron: "", date_completed: "" },
+      disabilityTypes: chhistRecord.disability_types || [],
+      edemaSeverity: chhistRecord.edemaSeverity || "none",
+      BFdates: chhistRecord.BFdates || [],
+      vitalSigns: chhistRecord.vitalSigns || [],
+      medicines: chhistRecord.medicines || [],
+      anemic: chhistRecord.anemic || initialFormData.anemic,
+      birthwt: chhistRecord.birthwt || initialFormData.birthwt,
       status: chhistRecord.status || "recorded",
       type_of_feeding: chrecDetails?.type_of_feeding || "",
       tt_status: chhistRecord.tt_status || "",
-      nutritionalStatus: {},
-      vaccines: [],
-      hasExistingVaccination: chhistRecord.has_existing_vaccination || false,
-      existingVaccines: [],
+      nutritionalStatus: chhistRecord.nutritionalStatus || initialFormData.nutritionalStatus,
+      vaccines: vaccinesFromApi,
+      hasExistingVaccination: chhistRecord.has_existing_vaccination || existingVaccinesFromApi.length > 0,
+      existingVaccines: existingVaccinesFromApi,
     }
-    console.log("✅ Transformed data (before return):", transformedData)
+    console.log("Transformed data (before return):", transformedData)
     return transformedData
   }
 
   useEffect(() => {
     const fetchRecordData = async () => {
-      if (!isaddnewchildhealthrecordMode) {
+      if ((!isaddnewchildhealthrecordMode && !isImmunizationMode) || !chrecId || !chhistId) {
         setIsLoading(false)
         return
       }
+
       try {
         setIsLoading(true)
         setError(null)
-        console.log("🚀 Fetching data for chrecId:", chrecId, "and chhistId:", chhistId)
+        console.log("🚀 Fetching data for chrecId:", chrecId, "and chhistId:", chhistId, "in mode:", mode)
         if (!chrecId || !chhistId) {
-          throw new Error("Missing chrecId or chhistId in location state for addnewchildhealthrecord mode")
+          throw new Error("Missing chrecId or chhistId in location state for update/immunization mode")
         }
 
-        const response = await api2.get(`/child-health/history/${chrecId}/`)
-        console.log("📡 API Response (raw data received):", response.data)
-
-        const chrecRecord = response.data && response.data.length > 0 ? response.data[0] : null
+        // Use the cached data if available
+        const chrecRecord = childHealthRecord && childHealthRecord.length > 0 ? childHealthRecord[0] : null;
         if (!chrecRecord) {
           throw new Error("Parent child health record (chrec) not found.")
         }
@@ -270,7 +219,7 @@ export default function ChildHealthRecordForm() {
         const allHistoricalMedicines: Medicine[] = []
         const allHistoricalNutritionalStatuses: any[] = []
         const allHistoricalBFdates: string[] = []
-        const allHistoricalSupplementStatuses: CHSSupplementStat[] = [] // Initialize for supplement statuses
+        const allHistoricalSupplementStatuses: CHSSupplementStat[] = []
         const allPatientHistoricalDisabilities: {
           id: number
           pd_id: number
@@ -282,9 +231,7 @@ export default function ChildHealthRecordForm() {
           }
         }[] = []
 
-        // Iterate through all child_health_histories to aggregate data
         chrecRecord.child_health_histories?.forEach((history: any) => {
-          // Aggregate Vital Signs
           const vitalSignsFromHistory: VitalSignType[] =
             history.child_health_vital_signs?.map((vital: any) => {
               const vitalSignDate = vital.created_at
@@ -302,11 +249,11 @@ export default function ChildHealthRecordForm() {
                 bm_id: vital.bm_details?.bm_id?.toString() || undefined,
                 chnotes_id: latestNoteForThisVitalSign?.chnotes_id?.toString() || undefined,
                 followv_id: latestNoteForThisVitalSign?.followv_details?.followv_id?.toString() || undefined,
+                followv_status: latestNoteForThisVitalSign?.followv_details?.followv_status || "pending",
               }
             }) || []
           allHistoricalVitalSigns.push(...vitalSignsFromHistory)
 
-          // Aggregate Medicines
           const medicinesFromHistory: Medicine[] =
             history.child_health_supplements?.map((supp: any) => ({
               minv_id: supp.medrec_details?.minv_id?.toString() || "",
@@ -319,7 +266,6 @@ export default function ChildHealthRecordForm() {
             })) || []
           allHistoricalMedicines.push(...medicinesFromHistory)
 
-          // Aggregate Nutritional Statuses
           const nutritionalStatusFromHistory = history.nutrition_statuses?.[0]
             ? {
                 nutstat_id: history.nutrition_statuses[0].nutstat_id?.toString() || undefined,
@@ -338,11 +284,9 @@ export default function ChildHealthRecordForm() {
             allHistoricalNutritionalStatuses.push(nutritionalStatusFromHistory)
           }
 
-          // Aggregate BF dates
           const BFdatesFromHistory = history.exclusive_bf_checks?.map((check: any) => check.ebf_date) || []
           allHistoricalBFdates.push(...BFdatesFromHistory)
 
-          // Aggregate Supplement Statuses
           const supplementStatusesFromHistory: CHSSupplementStat[] =
             history.supplements_statuses?.map((status: any) => ({
               chssupplementstat_id: status.chssupplementstat_id,
@@ -357,44 +301,40 @@ export default function ChildHealthRecordForm() {
             })) || []
           allHistoricalSupplementStatuses.push(...supplementStatusesFromHistory)
 
-          // Aggregate Disabilities from all historical records, including disability_details
           const disabilitiesFromHistory =
             history.disabilities?.map((d: any) => ({
               id: d.disability_details?.disability_id || "",
               pd_id: Number(d.pd_id) || "",
               status: d.status || "active",
-              disability_details: d.disability_details, // Include the full details object
+              disability_details: d.disability_details,
             })) || []
           allPatientHistoricalDisabilities.push(...disabilitiesFromHistory)
         })
 
-        // Set the aggregated historical data
         setHistoricalVitalSigns(allHistoricalVitalSigns)
         setHistoricalMedicines(allHistoricalMedicines)
         setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses)
         setHistoricalBFdates(allHistoricalBFdates)
-        setHistoricalSupplementStatuses(allHistoricalSupplementStatuses) // Set historical supplement statuses
-        setPatientHistoricalDisabilities(allPatientHistoricalDisabilities) // Set all historical disabilities
+        setHistoricalSupplementStatuses(allHistoricalSupplementStatuses)
+        setPatientHistoricalDisabilities(allPatientHistoricalDisabilities)
 
-        // Keep the logic for the *currently addnewchildhealthrecorded* chhistRecord to populate the form data
         const selectedChhistRecord = chrecRecord.child_health_histories?.find(
           (history: any) => history.chhist_id === Number.parseInt(chhistId),
         )
         if (!selectedChhistRecord) {
           throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`)
         }
-        setApiData(selectedChhistRecord) // This is the specific record being addnewchildhealthrecorded
 
-        // Extract disabilities specifically from the selectedChhistRecord for originalDisabilityRecords
+        setApiData(selectedChhistRecord)
+
         const disabilitiesForSelectedRecord =
           selectedChhistRecord.disabilities?.map((d: any) => ({
             id: d.disability_details?.disability_id || "",
             pd_id: Number(d.pd_id) || "",
             status: d.status || "active",
           })) || []
-        setOriginalDisabilityRecords(disabilitiesForSelectedRecord) // Set only relevant disabilities for update logic
+        setOriginalDisabilityRecords(disabilitiesForSelectedRecord)
 
-        // Update latest historical note/follow-up based on the *selected* chhistRecord
         if (selectedChhistRecord.child_health_notes && selectedChhistRecord.child_health_notes.length > 0) {
           const sortedNotes = [...selectedChhistRecord.child_health_notes].sort(
             (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
@@ -412,6 +352,13 @@ export default function ChildHealthRecordForm() {
         const recordData = transformApiDataToFormData(selectedChhistRecord)
         console.log("📝 Final form data (after transformation):", recordData)
         setFormData(recordData)
+
+        if (recordData.pat_id) {
+          setSelectedPatient({ pat_id: recordData.pat_id } as Patient)
+          const patientFullName = `${recordData.childFname || ""} ${recordData.childLname || ""}`.trim()
+          const fullPatientIdString = `${recordData.pat_id}${patientFullName ? `,${patientFullName}` : ""}`
+          setSelectedPatientId(fullPatientIdString)
+        }
       } catch (error) {
         console.error("❌ Error fetching record data:", error)
         setError(`Failed to load record data: ${error instanceof Error ? error.message : "Unknown error"}`)
@@ -419,22 +366,31 @@ export default function ChildHealthRecordForm() {
         setIsLoading(false)
       }
     }
+    
     fetchRecordData()
-  }, [chrecId, chhistId, isaddnewchildhealthrecordMode])
+  }, [chrecId, chhistId, mode, isaddnewchildhealthrecordMode, isImmunizationMode, childHealthRecord])
 
   const updateFormData = (data: Partial<FormData>) => {
     setFormData((prev) => (prev ? { ...prev, ...data } : (data as FormData)))
   }
 
-  // New function to update historical supplement statuses
   const handleUpdateHistoricalSupplementStatus = (updatedStatuses: CHSSupplementStat[]) => {
-    setHistoricalSupplementStatuses(updatedStatuses)
-    // TODO: Add API call here to persist the change to the backend
-    // Example: api2.patch(`/child-health/supplements-status/${updatedStatus.chssupplementstat_id}/`, { date_completed: updatedStatus.date_completed });
-  }
-
+    // Create a map of the updated statuses for easy lookup
+    const updatedStatusMap = new Map(
+      updatedStatuses.map(status => [status.chssupplementstat_id, status])
+    );
+  
+    // Merge the changes while preserving other statuses
+    const mergedStatuses = historicalSupplementStatuses.map(status => {
+      const updatedStatus = updatedStatusMap.get(status.chssupplementstat_id);
+      return updatedStatus ? updatedStatus : status;
+    });
+  
+    setHistoricalSupplementStatuses(mergedStatuses);
+    updateFormData({ historicalSupplementStatuses: mergedStatuses });
+  };
   const handleSubmit = async (submittedData: FormData) => {
-    setIsSubmitting(true) // Set submitting to true at the start
+    setIsSubmitting(true)
     setError(null)
     try {
       console.log("Submitted data received in ChildHealthRecordForm:", submittedData)
@@ -442,13 +398,11 @@ export default function ChildHealthRecordForm() {
 
       if (isNewchildhealthrecord) {
         await newchildhealthrecordMutation.mutateAsync({
-          // Use mutateAsync
           submittedData: submittedData,
           staff: staffId || null,
         })
       } else {
         await updatechildhealthrecordmutation.mutateAsync({
-          // Use mutateAsync
           submittedData: submittedData,
           staff: staffId || null,
           todaysHistoricalRecord: historicalVitalSigns.find((vital) => isToday(vital.date)),
@@ -457,26 +411,18 @@ export default function ChildHealthRecordForm() {
         })
       }
 
-      // Clear local storage and reset state ONLY after successful submission
-      localStorage.removeItem("selectedPatient")
-      localStorage.removeItem(
-        `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-      )
-      localStorage.removeItem(
-        `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-      )
       setFormData(initialFormData)
       setCurrentPage(1)
-      // Navigation is handled by the onSuccess callback in the mutation hooks
+      setSelectedPatient(null)
+      setSelectedPatientId("")
     } catch (Error) {
       console.error("Error submitting form:", Error)
-      // Error handling is already done by the onError callback in the mutation hooks
     } finally {
-      setIsSubmitting(false) // Ensure submitting is set to false in finally
+      setIsSubmitting(false)
     }
   }
 
-  if (isLoading) {
+  if (isLoading || isRecordLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div className="text-gray-500">Loading record data...</div>
@@ -484,19 +430,19 @@ export default function ChildHealthRecordForm() {
     )
   }
 
-  if (error) {
+  if (error || recordError) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-        <div className="text-red-500">{error}</div>
+        <div className="text-red-500">{error || recordError?.message}</div>
         <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     )
   }
 
-  if (isaddnewchildhealthrecordMode && !formData) {
+  if ((isaddnewchildhealthrecordMode || isImmunizationMode) && !formData) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-        <div className="text-red-500">No record data available to addnewchildhealthrecord</div>
+        <div className="text-red-500">No record data available to edit/immunize</div>
         <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     )
@@ -504,42 +450,28 @@ export default function ChildHealthRecordForm() {
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row">
+      <div className=" flex flex-col gap-4 sm:flex-row">
         <Button
           className="self-start p-2 text-black"
           variant={"outline"}
           onClick={() => {
-            localStorage.removeItem("selectedPatient")
-            localStorage.removeItem(
-              `childHealthFormData_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-            )
-            localStorage.removeItem(
-              `childHealthFormCurrentPage_${isaddnewchildhealthrecordMode ? "addnewchildhealthrecord" : "newchildhealthrecord"}`,
-            )
             setFormData(initialFormData)
             setCurrentPage(1)
             navigate(-1)
+            setSelectedPatient(null)
+            setSelectedPatientId("")
           }}
         >
           <ChevronLeft />
         </Button>
         <div className="mb-4 flex-col items-center">
-          <h1 className="text-xl font-semibold text-darkBlue2 sm:text-2xl">
-            {mode === "immunization"
-              ? "Immunization Record"
-              : isaddnewchildhealthrecordMode
-                ? "addnewchildhealthrecord Child Health Record"
-                : "Add New Child Health Record"}
-          </h1>
+          <h1 className="text-xl font-semibold text-darkBlue2 sm:text-2xl">Child Health Record</h1>
           <p className="text-xs text-darkGray sm:text-sm">
-            {mode === "immunization"
-              ? `Managing immunization record for ${formData.childFname} ${formData.childLname}`
-              : isaddnewchildhealthrecordMode
-                ? `addnewchildhealthrecording record for ${formData.childFname} ${formData.childLname}`
-                : "Manage and view patient's information"}
+            Manage and view child's health record for {formData.childFname} {formData.childLname}
           </p>
         </div>
       </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       {currentPage === 1 && (
         <ChildHRPage1
@@ -547,6 +479,10 @@ export default function ChildHealthRecordForm() {
           updateFormData={updateFormData}
           formData={formData}
           mode={mode || "newchildhealthrecord"}
+          selectedPatient={selectedPatient}
+          setSelectedPatient={setSelectedPatient}
+          selectedPatientId={selectedPatientId}
+          setSelectedPatientId={setSelectedPatientId}
         />
       )}
       {currentPage === 2 && (
@@ -578,8 +514,8 @@ export default function ChildHealthRecordForm() {
           formData={formData}
           historicalVitalSigns={historicalVitalSigns}
           historicalNutritionalStatus={historicalNutritionalStatus}
-          historicalSupplementStatuses={historicalSupplementStatuses} // Pass the new prop
-          onUpdateHistoricalSupplementStatus={handleUpdateHistoricalSupplementStatus} // Pass the new callback
+          historicalSupplementStatuses={historicalSupplementStatuses}
+          onUpdateHistoricalSupplementStatus={handleUpdateHistoricalSupplementStatus}
           latestHistoricalNoteContent={latestHistoricalNoteContent}
           latestHistoricalFollowUpDescription={latestHistoricalFollowUpDescription}
           isSubmitting={isSubmitting}

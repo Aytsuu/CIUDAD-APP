@@ -1,23 +1,20 @@
 "use client"
 import { useEffect } from "react"
 import type React from "react"
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormMessage, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form/form"
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/ui/button/button" // Corrected import path
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { PatientSearch } from "@/components/ui/patientSearch" // Assuming this component exists
-import { useLocalStorage } from "@/helpers/useLocalStorage" // Assuming this hook exists
-import type { Patient } from "@/components/ui/patientSearch" // Assuming this type exists
+import { PatientSearch } from "@/components/ui/patientSearch"
+import type { Patient } from "@/components/ui/patientSearch" // Ensure this import is correct
 import type { FormData } from "@/form-schema/chr-schema/chr-schema"
 import { BasicInfoSchema } from "@/form-schema/chr-schema/chr-schema"
 
-// Define initial form data
- const initialFormData: FormData = {
+const initialFormData: FormData = {
   familyNo: "",
   pat_id: "",
   rp_id: "",
@@ -62,7 +59,7 @@ import { BasicInfoSchema } from "@/form-schema/chr-schema/chr-schema"
   birthwt: {
     seen: "",
     given_iron: "",
-    date_completed:""
+    date_completed: "",
   },
   status: "recorded",
   type_of_feeding: "",
@@ -75,25 +72,35 @@ import { BasicInfoSchema } from "@/form-schema/chr-schema/chr-schema"
     muac_status: "",
   },
 }
+
 type Page1Props = {
   onNext: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
   mode: "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization"
+  selectedPatient: Patient | null
+  setSelectedPatient: (patient: Patient | null) => void
+  selectedPatientId: string // Add this prop
+  setSelectedPatientId: (id: string) => void // Add this prop
 }
 
-const PATIENT_STORAGE_KEY = "selectedPatient"
-
-export default function ChildHRPage1({ onNext, updateFormData, formData, mode }: Page1Props) {
-  const isaddnewchildhealthrecordMode =  mode === "immunization" || mode =="addnewchildhealthrecord"
-  const [selectedPatient, setSelectedPatient] = useLocalStorage<Patient | null>(PATIENT_STORAGE_KEY, null)
+export default function ChildHRPage1({
+  onNext,
+  updateFormData,
+  formData,
+  mode,
+  selectedPatient,
+  setSelectedPatient,
+  selectedPatientId, // Destructure the prop
+  setSelectedPatientId, // Destructure the prop
+}: Page1Props) {
+  const isaddnewchildhealthrecordMode = mode === "immunization" || mode === "addnewchildhealthrecord"
 
   const form = useForm<FormData>({
     resolver: zodResolver(BasicInfoSchema),
     mode: "onChange",
-    defaultValues: formData, // Initialize with formData from parent
+    defaultValues: formData, // This is crucial for initializing with parent's data
   })
-
   const { handleSubmit, watch, setValue, reset, control, formState, setError, clearErrors } = form
   const { errors, isValid, isSubmitting, isDirty } = formState
 
@@ -104,18 +111,6 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
   const fatherdob = watch("fatherdob")
   const placeOfDeliveryType = watch("placeOfDeliveryType")
   const placeOfDeliveryLocation = watch("placeOfDeliveryLocation")
-
-  // Reset form when formData changes (this is the key fix for addnewchildhealthrecord mode)
-  useEffect(() => {
-    if (isaddnewchildhealthrecordMode && formData && Object.keys(formData).length > 0) {
-      console.log("🔄 ChildHRPage1: Resetting form with data (addnewchildhealthrecord Mode):", formData)
-      reset(formData)
-    } else if (!isaddnewchildhealthrecordMode && !selectedPatient) {
-      // In add mode, if no patient selected, clear form
-      console.log("🔄 ChildHRPage1: Resetting form (Add Mode, no patient selected)")
-      reset(initialFormData)
-    }
-  }, [formData, reset, isaddnewchildhealthrecordMode, selectedPatient])
 
   // Handle age calculations
   useEffect(() => {
@@ -155,7 +150,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
     }
   }, [placeOfDeliveryType, placeOfDeliveryLocation, setError, clearErrors])
 
-  // Update parent form data on change
+  // Update parent form data on change - This is crucial for persistence
   useEffect(() => {
     const subscription = watch((value) => {
       updateFormData(value as Partial<FormData>)
@@ -167,7 +162,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
     const newFormData: Partial<FormData> = {
       pat_id: patient.pat_id?.toString() || "",
       familyNo: patient.family?.fam_id || "",
-      ufcNo: "N/A", // Default for existing patients
+      ufcNo: "N/A",
       childFname: patient.personal_info?.per_fname || "",
       childLname: patient.personal_info?.per_lname || "",
       childMname: patient.personal_info?.per_mname || "",
@@ -175,12 +170,12 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
       childDob: patient.personal_info?.per_dob || "",
       residenceType: patient.pat_type || "Resident",
       address: patient.address?.full_address || "No address provided",
-      landmarks:   "",
+      landmarks: "",
       trans_id: patient.trans_id || "",
       rp_id: patient.rp_id?.rp_id || "",
-      birth_order: 1, // Default, can be updated manually
-      placeOfDeliveryType: "Home", // Default, can be updated manually
-      placeOfDeliveryLocation: "", // Default, can be updated manually
+      birth_order: 1,
+      placeOfDeliveryType: "Home",
+      placeOfDeliveryLocation: "",
       motherFname: "",
       motherLname: "",
       motherMname: "",
@@ -194,11 +189,9 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
       fatherAge: "",
       fatherOccupation: "",
     }
-
     if (patient.personal_info?.per_dob) {
       newFormData.childAge = calculateAgeFromDOB(patient.personal_info.per_dob).ageString
     }
-
     if (patient.pat_type !== "Transient") {
       const motherInfo = patient.family_head_info?.family_heads?.mother?.personal_info
       if (motherInfo) {
@@ -221,27 +214,22 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
         }
       }
     }
-    reset(newFormData)
-    updateFormData(newFormData)
+    reset(newFormData) // Reset form with new patient data
+    updateFormData(newFormData) // Update parent state
   }
-
   const handlePatientSelect = (patient: Patient | null, patientId: string) => {
-    setSelectedPatient(patient)
+    setSelectedPatient(patient) // Use the prop setter
+    setSelectedPatientId(patientId) // Update parent's selectedPatientId with the full ID string
     if (patient) {
       populatePatientData(patient)
     } else {
-      // If patient is unselected, reset form to initial state for add mode
       reset(initialFormData)
       updateFormData(initialFormData)
     }
   }
-
   const onSubmitForm = async (data: FormData) => {
     try {
-      if (
-        data.placeOfDeliveryType === "HC" &&
-        (!data.placeOfDeliveryLocation || data.placeOfDeliveryLocation.trim() === "")
-      ) {
+      if (data.placeOfDeliveryType === "HC" && !data.placeOfDeliveryLocation?.trim()) {
         setError("placeOfDeliveryLocation", {
           type: "required",
           message: "Location is required when HC is selected",
@@ -249,7 +237,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
         return
       }
       console.log("PAGE 1 submitted data:", data)
-      updateFormData(data)
+      updateFormData(data) // Ensure this updates the parent state
       onNext()
     } catch (error) {
       console.error("Form submission error:", error)
@@ -269,11 +257,17 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
       {!isaddnewchildhealthrecordMode && (
         <div className="flex items-center justify-between gap-3 mb-10 w-full">
           <div className="flex-1">
-            <PatientSearch onPatientSelect={handlePatientSelect} className="w-full" />
+            <PatientSearch
+              onPatientSelect={handlePatientSelect}
+              className="w-full"
+              value={selectedPatientId} // Pass the value prop
+              onChange={setSelectedPatientId} // Pass the onChange prop
+            />
           </div>
         </div>
       )}
       <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
+        <div className="font-light text-gray">Page 1/4</div>
         <Form {...form}>
           <form onSubmit={handleFormSubmit} className="space-y-6 md:p-6 lg:p-8" noValidate>
             <div className="flex w-full flex-wrap gap-4">
@@ -304,16 +298,6 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
                   readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
                   className="w-[200px]"
                 />
-                {isTransient && (
-                  <FormInput
-                    control={control}
-                    name="trans_id"
-                    label="Transient ID:"
-                    type="text"
-                    readOnly={isaddnewchildhealthrecordMode || !!selectedPatient}
-                    className="w-[200px]"
-                  />
-                )}
               </div>
             </div>
             <div className="space-y-4">
@@ -555,7 +539,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode }:
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" className="w-full sm:w-[100px]" >
+              <Button type="submit" className="w-full sm:w-[100px]">
                 {isSubmitting ? "Loading..." : "Next"}
               </Button>
             </div>

@@ -1,6 +1,5 @@
 import { api2 } from "@/api/api"
 
-// --- Child Health Record (chrec) Operations ---
 
 export async function createChildHealthRecord(payload: {
   // chr_date: string
@@ -89,8 +88,7 @@ export async function getChildHealthRecordById(chhistId: string) {
 
 export async function createExclusiveBFCheck(payload: {
   chhist: string
-  ebf_date: string
-  created_at: string
+  BFdates: string[]
 }) {
   try {
     const response = await api2.post("child-health/exclusive-bf-check/", payload)

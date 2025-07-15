@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Trash, Eye, ArrowUpDown, FileInput } from "lucide-react";
+import { Search, ChevronLeft , Eye, ArrowUpDown, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,6 @@ import { calculateAge } from "@/helpers/ageCalculator";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api2 } from "@/api/api";
-import { Toaster } from "sonner";
 
 export interface ChildHealthRecord {
   chrec_id: number;
@@ -54,17 +53,11 @@ export interface ChildHealthRecord {
   birth_height: number;
   type_of_feeding: string;
   delivery_type: string;
-  place_of_delivery_type: string;
-  pod_location: string;
-  pod_location_details?: string;
-  health_checkup_count: number;
-  birth_order?: string;
-  tt_status?: string; // Optional field for TT status
 }
 
-export const getChildHealthRecords = async () => {
+export const getChildHealthImmunizationRecords = async () => {
   try {
-    const response = await api2.get("/child-health/records/");
+    const response = await api2.get("/child-health/child-immunization-status/");
     return response.data;
   } catch (error) {
     console.error("Error fetching records:", error);
@@ -72,19 +65,20 @@ export const getChildHealthRecords = async () => {
   }
 };
 
-export default function AllChildHealthRecords() {
-  const { data: childHealthRecords, isLoading } = useQuery({
-    queryKey: ["childHealthRecords"],
-    queryFn: getChildHealthRecords,
-    refetchOnMount: false, // Changed from true to avoid unnecessary refetches
+export default function ForwardedCHimmunization() {
+  
+    const { data: immunizationRecords, isLoading } = useQuery({
+    queryKey: ["childHealthImmunizationRecords"],
+    queryFn: getChildHealthImmunizationRecords,
+    refetchOnMount: true, // Changed from true to avoid unnecessary refetches
     staleTime: 300000, // Increased cache time to 5 minutes
     gcTime: 600000, // Cache time for garbage collection
   });
 
-  const formatChildHealthData = React.useCallback((): ChildHealthRecord[] => {
-    if (!childHealthRecords) return [];
+  const formattedCHimmunizationrecord = React.useCallback((): ChildHealthRecord[] => {
+    if (!immunizationRecords) return [];
 
-    return childHealthRecords.map((record: any) => {
+    return immunizationRecords.map((record: any) => {
       const childInfo = record.patrec_details?.pat_details?.personal_info || {};
       const motherInfo =
         record.patrec_details?.pat_details?.family_head_info?.family_heads
@@ -93,6 +87,7 @@ export default function AllChildHealthRecords() {
         record.patrec_details?.pat_details?.family_head_info?.family_heads
           ?.father?.personal_info || {};
       const addressInfo = record.patrec_details?.pat_details?.address || {};
+      const age = childInfo.per_dob ? calculateAge(childInfo.per_dob) : "Unknown age";
 
       return {
         chrec_id: record.chrec_id,
@@ -101,7 +96,7 @@ export default function AllChildHealthRecords() {
         lname: childInfo.per_lname || "",
         mname: childInfo.per_mname || "",
         sex: childInfo.per_sex || "",
-        age: calculateAge(childInfo.per_dob).toString(),
+        age,
         dob: childInfo.per_dob || "",
         householdno:
           record.patrec_details?.pat_details?.households?.[0]?.hh_id || "",
@@ -130,15 +125,9 @@ export default function AllChildHealthRecords() {
         birth_height: record.birth_height || 0,
         type_of_feeding: record.type_of_feeding || "Unknown",
         delivery_type: record.place_of_delivery_type || "",
-        place_of_delivery_type: record.place_of_delivery_type || "",
-        pod_location: record.pod_location || "",
-        pod_location_details: record.pod_location_details || "",
-        health_checkup_count: record.health_checkup_count || 0,
-        birth_order: record.birth_order || "",
-        tt_status: record.tt_status || "", // Optional field for TT status
       };
     });
-  }, [childHealthRecords]);
+  }, [immunizationRecords]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -147,7 +136,7 @@ export default function AllChildHealthRecords() {
   const [currentData, setCurrentData] = useState<ChildHealthRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState("all");
-
+  const navigate= useNavigate();
   const filterOptions = [
     { id: "all", name: "All Records" },
     { id: "home", name: "Home Delivery" },
@@ -157,7 +146,7 @@ export default function AllChildHealthRecords() {
   ];
 
   useEffect(() => {
-    const formattedData = formatChildHealthData();
+    const formattedData = formattedCHimmunizationrecord();
     const filtered = formattedData.filter((item) => {
       const matchesFilter =
         selectedFilter === "all" ||
@@ -184,8 +173,8 @@ export default function AllChildHealthRecords() {
     searchQuery,
     selectedFilter,
     pageSize,
-    childHealthRecords,
-    formatChildHealthData,
+    immunizationRecords,
+    formattedCHimmunizationrecord,
   ]);
 
   useEffect(() => {
@@ -213,7 +202,7 @@ export default function AllChildHealthRecords() {
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age} old
+                {row.original.sex}, {row.original.age} 
               </div>
             </div>
           </div>
@@ -237,7 +226,7 @@ export default function AllChildHealthRecords() {
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
-              
+             
             </div>
           </div>
         );
@@ -268,21 +257,21 @@ export default function AllChildHealthRecords() {
     //   },
     // },
     {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-            ),
-            cell: ({ row }) => (
-              <div className="flex justify-start px-2">
-              <div className="w-[250px] break-words">{row.original.address}</div>
-            </div>
-            ),
-          },
+         accessorKey: "address",
+         header: ({ column }) => (
+           <div
+             className="flex w-full justify-center items-center gap-2 cursor-pointer"
+             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+           >
+             Address <ArrowUpDown size={15} />
+           </div>
+               ),
+               cell: ({ row }) => (
+           <div className="flex justify-start px-2">
+             <div className="w-[250px] break-words">{row.original.address}</div>
+           </div>
+               ),
+             },
     // {
     //   accessorKey: "sitio",
     //   header: "Sitio",
@@ -344,19 +333,15 @@ export default function AllChildHealthRecords() {
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          
+        
               <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
                 <Link
                   to={`/child-health-records`}
-                  state={{ ChildHealthRecord: row.original,mode:"addnewchildhealthrecord" }}
+                  state={{ ChildHealthRecord: row.original ,mode:"immunization"}}
                 >
-
-                  <Eye size={15} />
-                </Link>
+View                </Link>
               </div>
-            
-      
-          
+       
         </div>
       ),
     },
@@ -383,17 +368,25 @@ export default function AllChildHealthRecords() {
   return (
     <>
       <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-col items-center">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Child Health Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view child's information
-            </p>
-          </div>
+      <div className="flex flex-col sm:flex-row gap-4 ">
+        <Button
+          className="text-black p-2 mb-2 self-start"
+          variant={"outline"}
+          onClick={() => navigate(-1)}
+        >
+          <ChevronLeft />
+        </Button>
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Forwarded Child Health Hisotry Records
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Manage and view child's health history
+          </p>
         </div>
-        <hr className="border-gray-300 mb-4" />
+      </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
+
 
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
@@ -425,7 +418,7 @@ export default function AllChildHealthRecords() {
               state={{
                 params: {
                 
-                  mode: "newchildhealthrecord", // This is the key part
+                  mode: "add", // This is the key part
                 },
               }}
             >

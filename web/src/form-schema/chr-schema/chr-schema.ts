@@ -164,6 +164,18 @@ export const VaccinesSchema = z.object({
   existingVaccines: z.array(existingVaccineRecordSchema).optional(),
 })
 
+const CHSSupplementStatSchema = z.object({
+  chssupplementstat_id: z.number().optional(), // Changed to number and optional
+  chsupp_details: z.any().optional(), // Added as optional any
+  birthwt: z.string().nullable().optional(), // Changed to string | null and optional
+  status_type: z.string().optional(), // Remains string
+  date_seen: z.string().optional(), // Remains string
+  date_given_iron: z.string().optional(), // Remains string
+  created_at: z.string().optional(), // Optional
+  updated_at: z.string().optional(), // Optional
+  chsupplement: z.number().optional(), // Changed to number and optional
+  date_completed: z.string().nullable().optional(), // Optional string | null
+})
 // Apply superRefine to the final merged schema
 export const ChildHealthFormSchema = BasicInfoSchema.merge(ChildDetailsSchema)
   .merge(SupplementSchema)
@@ -175,6 +187,8 @@ export const ChildHealthFormSchema = BasicInfoSchema.merge(ChildDetailsSchema)
     edemaSeverity: z.string().optional().default("N/A"),
     created_at: z.string().optional(),
     chhist_status: z.string().optional(), // Added for child health history status
+    historicalSupplementStatuses: z.array(CHSSupplementStatSchema).optional(), // ADDED THIS LINE
+
   })
 
 

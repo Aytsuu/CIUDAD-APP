@@ -1,9 +1,8 @@
 "use client";
-
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button/button"; // Corrected import path
 import { Input } from "@/components/ui/input";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -15,7 +14,6 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
 import { api2 } from "@/api/api";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,31 +24,56 @@ const getChildHealthRecords = async (chrec_id: number) => {
   return response.data;
 };
 
-export default function InvChildHealthRecords() {
-  type ChrRecords = {
-    chrec_id: number;
-    chhist_id: number;
-    id: number;
-    age: string;
-    wt: number;
-    ht: number;
-    bmi: string;
-    latestNote: string | null; // Changed to hold a single latest note
-    vaccineStat: string;
-    nutritionStat: string;
-    updatedAt: string;
-    rawCreatedAt: string;
-  };
+type ChrRecords = {
+  chrec_id: number;
+  chhist_id: number;
+  id: number; // This ID will now reflect the sorted order (latest first)
+  age: string;
+  wt: number;
+  ht: number;
+  bmi: string;
+  latestNote: string | null;
+  vaccineStat: string;
+  nutritionStat: string;
+  updatedAt: string;
+  rawCreatedAt: string;
+};
 
-  // State and hooks
+export default function InvChildHealthRecords() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
-  const [childData, setChildData] = useState(ChildHealthRecord || null);
+  const mode = location.state.mode as  "addnewchildhealthrecord" | "immunization" | undefined
+
+  
+  console.log(mode)
+
+  const [childData, setChildData] = useState(ChildHealthRecord); // Initialize with the passed data
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Early check for essential data
+  useEffect(() => {
+    if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
+      console.error(
+        "ChildHealthRecord or chrec_id is missing from location state. Cannot display health records."
+      );
+      // Optionally navigate back or show a specific error message to the user
+      // navigate('/some-error-page');
+    }
+  }, [ChildHealthRecord, navigate]);
+
+  // If essential data is missing, render an error or loading state early
+  if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-red-500">
+        Error: Child health record data is missing or incomplete. Please go back
+        and select a child.
+      </div>
+    );
+  }
 
   // Data fetching with React Query
   const {
@@ -58,10 +81,10 @@ export default function InvChildHealthRecords() {
     isLoading,
     isError,
     error,
-  } = useQuery({
-    queryKey: ["indivchildhistory", childData?.chrec_id], // Added chrec_id to queryKey
-    queryFn: () => getChildHealthRecords(childData?.chrec_id),
-    enabled: !!childData?.chrec_id,
+  } = useQuery<any, Error, ChrRecords[]>({
+    queryKey: ["indivchildhistory", childData.chrec_id], // Use childData directly
+    queryFn: () => getChildHealthRecords(childData.chrec_id), // Use childData directly
+    enabled: !!childData.chrec_id, // This will now always be true if we reach here
     staleTime: 300000,
     gcTime: 600000,
     select: (data) => {
@@ -102,37 +125,85 @@ export default function InvChildHealthRecords() {
         }
 
         return {
-          chrec_id: mainRecord.chrec_id, // Keep the main chrec_id
+          chrec_id: mainRecord.chrec_id,
           chhist_id: record.chhist_id,
           id: index + 1, // This ID will now reflect the sorted order (latest first)
           age: record.child_health_vital_signs?.[0]?.bm_details?.age || "N/A",
           wt: record.child_health_vital_signs?.[0]?.bm_details?.weight || 0,
           ht: record.child_health_vital_signs?.[0]?.bm_details?.height || 0,
           bmi,
-          latestNote: latestNoteContent, // Assign the single latest note
+          latestNote: latestNoteContent,
           vaccineStat: record.tt_status || "N/A",
           nutritionStat: record.nutrition_statuses?.[0]?.wfa || "N/A",
-          updatedAt: new Date(record.created_at).toLocaleDateString(), // This is the history record's created_at
-          rawCreatedAt: record.created_at, // This is the history record's created_at
+          updatedAt: new Date(record.created_at).toLocaleDateString(),
+          rawCreatedAt: record.created_at,
         };
       });
     },
   });
 
+  const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    // Early return if no updates needed
+    if (!childData?.pat_id || !historyData?.length) return;
+  
+    const updateFollowUps = async () => {
+      try {
+        const response = await api2.get(
+          `/patientrecords/followup-pending/${childData.pat_id}/`
+        );
+        console.log("🚀 followup-pending response", response.data);
+  
+        const visits = response.data.results ?? [];
+  
+        // Early return if no visits to update
+        if (!visits.length) {
+          console.log("ℹ️ No pending visits to update.");
+          return;
+        }
+  
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Process visits in parallel for better performance
+        await Promise.all(visits.map(async (visit:any) => {
+          const newStatus = visit.date === today ? "completed" : "missed";
+          const todayNote = newStatus === "missed"
+            ? `Missed on ${today}`
+            : `Completed on ${today}`;
+  
+          const updatedDescription = 
+            (visit.description ? `${visit.description} | ` : "") + todayNote;
+  
+          await api2.patch(`/patientrecords/follow-up-visit/${visit.id}/`, {
+            followv_status: newStatus,
+            followv_description: updatedDescription,
+          });
+        }));
+  
+        console.log("✅ Follow-up statuses updated.");
+      } catch (err) {
+        console.error("❌ Failed to update follow-ups:", err);
+      }
+    };
+  
+    updateFollowUps();
+  }, [childData?.pat_id, historyData]);
+
   // Latest record calculation (now correctly refers to the latest chhist_id)
-  const latestHistoryCreatedAt = useMemo(() => {
+  const latestRecord = useMemo(() => {
     if (historyData.length === 0) return null;
-    return new Date(historyData[0].rawCreatedAt).getTime();
+    return historyData[0];
   }, [historyData]);
 
-  // Filter and paginate data
+  // Filter data for the DataTable (all records, including the latest)
   const filteredData = useMemo(() => {
     return historyData.filter((item: ChrRecords) => {
       const searchText = `${item.age} ${item.wt} ${item.ht} ${item.bmi} ${
         item.vaccineStat
       } ${item.nutritionStat} ${item.updatedAt} ${
         item.latestNote || ""
-      }`.toLowerCase(); // Use latestNote
+      }`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
   }, [searchQuery, historyData]);
@@ -144,15 +215,23 @@ export default function InvChildHealthRecords() {
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
-  // Navigation function
-  function toChildHealthForm() {
-    navigate("/newAddChildHRForm", {
-      state: {
-        recordType: "existingPatient",
-        params: { ChildHealthRecord: childData },
-      },
-    });
-  }
+  // Navigation function for the "Update Latest Record" button
+  const navigateToUpdateLatest = () => {
+    if (latestRecord) {
+      navigate("/child-health-record/addnewchildhealthrecord", {
+        state: {
+          params: {
+            chhistId: latestRecord.chhist_id,
+            patId: childData?.pat_id,
+            originalRecord: latestRecord,
+            patientData: childData,
+            chrecId: childData?.chrec_id,
+            mode: mode ,
+          },
+        },
+      });
+    }
+  };
 
   // Table columns
   const columns: ColumnDef<ChrRecords>[] = [
@@ -192,12 +271,12 @@ export default function InvChildHealthRecords() {
       header: "Nutrition Status",
     },
     {
-      accessorKey: "latestNote", // Changed accessorKey to latestNote
+      accessorKey: "latestNote",
       header: "Notes",
       cell: ({ row }) => (
         <div className="min-w-[150px]">
           {row.original.latestNote ? (
-            <p className="text-sm">{row.original.latestNote}</p> // Display the single latest note
+            <p className="text-sm">{row.original.latestNote}</p>
           ) : (
             <span className="text-gray-500">No notes</span>
           )}
@@ -215,10 +294,6 @@ export default function InvChildHealthRecords() {
         const originalRecord = historyData.find(
           (rec: any) => rec.chhist_id === row.original.chhist_id
         );
-        const isLatest =
-          originalRecord &&
-          new Date(originalRecord.rawCreatedAt).getTime() ===
-            latestHistoryCreatedAt;
         return (
           <div className="flex justify-center gap-2">
             <Link
@@ -235,28 +310,16 @@ export default function InvChildHealthRecords() {
             >
               <Button variant="ghost">View</Button>
             </Link>
-            {isLatest && (
-              <Link
-                to="/child-health-record/addnewchildhealthrecord"
-                state={{
-                  params: {
-                    chhistId: originalRecord?.chhist_id,
-                    patId: childData?.pat_id,
-                    originalRecord,
-                    patientData: childData,
-                    chrecId: childData?.chrec_id,
-                    mode: "addnewchildhealthrecord", // This is the key part
-                  },
-                }}
-              >
-                <Button>Update</Button>
-              </Link>
-            )}
           </div>
         );
       },
     },
   ];
+
+  // Debugging logs
+  console.log("childData:", childData);
+  console.log("historyData:", historyData);
+  console.log("latestRecord:", latestRecord);
 
   if (isLoading) {
     return (
@@ -292,7 +355,7 @@ export default function InvChildHealthRecords() {
         </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health Hisotry Records
+            Child Health History Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view child's health history
@@ -300,12 +363,21 @@ export default function InvChildHealthRecords() {
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
-
       <div className="mb-5">
         <ChildHealthRecordCard child={childData} />
       </div>
 
-      {/* Wrap the DataTable with TooltipProvider */}
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
+        {" "}
+        {latestRecord && (
+          <div className="ml-auto mt-4 sm:mt-0">
+            <Button onClick={navigateToUpdateLatest}>
+              New  Record
+            </Button>
+          </div>
+        )}
+      </div>
+
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">

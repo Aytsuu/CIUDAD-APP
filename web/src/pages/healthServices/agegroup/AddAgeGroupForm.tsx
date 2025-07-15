@@ -38,6 +38,7 @@ export function AddAgeGroupForm() {
 
       const isDuplicate = existingAgeGroups.some(
         (group: AgeGroupType) =>
+          group.agegroup_name === data.agegroup_name &&
           group.min_age === data.min_age &&
           group.max_age === data.max_age &&
           group.time_unit === data.time_unit

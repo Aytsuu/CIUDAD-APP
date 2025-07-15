@@ -239,3 +239,46 @@ export interface AgeCalculation {
     return age.ageString
   }
   
+
+  import { differenceInYears, differenceInMonths, differenceInWeeks, differenceInDays, parseISO } from "date-fns"
+
+export function AgeCalculation(dob: string): number {
+  const birthDate = parseISO(dob)
+  const today = new Date()
+  return differenceInYears(today, birthDate)
+}
+
+/**
+ * Calculates a person's age in a specified time unit (years, months, weeks, or days).
+ * @param dob The date of birth in ISO 8601 format (e.g., "YYYY-MM-DD").
+ * @param unit The desired time unit ('years', 'months', 'weeks', or 'days').
+ * @returns The age in the specified unit, or 0 if dob is invalid or unit is unsupported.
+ */
+export function getAgeInUnit(dob: string, unit: "years" | "months" | "weeks" | "days"): number {
+  try {
+    const birthDate = parseISO(dob)
+    const today = new Date()
+
+    if (isNaN(birthDate.getTime())) {
+      console.warn("Invalid date of birth provided to getAgeInUnit:", dob)
+      return 0
+    }
+
+    switch (unit) {
+      case "years":
+        return differenceInYears(today, birthDate)
+      case "months":
+        return differenceInMonths(today, birthDate)
+      case "weeks":
+        return differenceInWeeks(today, birthDate)
+      case "days": // Added 'days' unit
+        return differenceInDays(today, birthDate)
+      default:
+        console.warn("Unsupported time unit provided to getAgeInUnit:", unit)
+        return 0
+    }
+  } catch (error) {
+    console.error("Error calculating age in unit:", error)
+    return 0
+  }
+}

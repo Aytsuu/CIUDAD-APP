@@ -262,7 +262,8 @@ export default function SoapForm() {
       localStorage.removeItem("soapFormData")
       localStorage.removeItem("soapFormMedicines")
       toast.success("Documentation saved successfully")
-      setShowReceipt(true)
+      navigate(-1)
+      // setShowReceipt(true)
     } catch (error) {
       console.error("Error saving documentation:", error)
       try {

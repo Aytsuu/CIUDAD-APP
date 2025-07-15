@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 
 export interface MedicalRecord {
   medrec_id: number;
+  medrec_chief_complaint: string ;
   created_at: string;
   vital_signs: {
     vital_id: number;
@@ -42,7 +43,13 @@ export interface MedicalRecord {
     created_at: string;
     pat: number | null;
   };
-  find_details: any | null;
+  find_details: {
+    find_id: string,
+    assessment_summary:string,
+    obj_summary: string,
+    subj_summary: string,
+    plantreatment_summary: string,
+},
   patrec_details: {
     pat_id: string | number;
     medicalrec_count: number;
@@ -92,6 +99,7 @@ export default function InvMedicalConRecords() {
       const patrecDetails = record.patrec_details || {};
 
       return {
+        medrec_chief_complaint: record.medrec_chief_complaint || "N/A",
         medrec_id: record.medrec_id,
         created_at: record.created_at || "N/A",
         vital_signs: {
@@ -119,6 +127,8 @@ export default function InvMedicalConRecords() {
           medicalrec_count: patrecDetails.medicalrec_count || 0,
           patient_details: patrecDetails.patient_details || null,
         },
+
+
       };
     });
   }, [medicalRecords]);
@@ -140,6 +150,21 @@ export default function InvMedicalConRecords() {
   );
 
   const columns: ColumnDef<MedicalRecord>[] = [
+    {
+      accessorKey: "created_at",
+      header: "Created at",
+      cell: ({ row }) => {
+        const createdAt = new Date(row.original.created_at);
+        const formattedDate = createdAt.toLocaleDateString();
+        const formattedTime = createdAt.toLocaleTimeString();
+
+        return (
+          <div className="text-sm text-gray-600">
+            {formattedDate}
+          </div>
+        );
+      },
+    },
     {
       accessorKey: "vital_signs",
       header: "Vital Signs",
@@ -187,18 +212,15 @@ export default function InvMedicalConRecords() {
         );
       },
     },
+   
     {
-      accessorKey: "created_at",
-      header: "Date",
+      accessorKey: "chiefcomplaint",
+      header: "ChiefComplaint",
       cell: ({ row }) => {
-        const createdAt = new Date(row.original.created_at);
-        const formattedDate = createdAt.toLocaleDateString();
-        const formattedTime = createdAt.toLocaleTimeString();
-
         return (
-          <div className="text-sm text-gray-600">
-            {formattedDate}
-            <div className="text-xs text-gray-400">{formattedTime}</div>
+          <div className="flex flex-col">
+            <div className="text-sm font-medium">{row.original.medrec_chief_complaint || "N/A"}</div>
+            
           </div>
         );
       },

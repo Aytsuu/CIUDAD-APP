@@ -27,7 +27,7 @@ import { calculateAge } from "@/helpers/ageCalculator";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/NewVacRecordQueries";
 import { ValidationAlert } from "./vac-required-alert";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
-
+import { useAuth } from "@/context/AuthContext";
 export default function VaccinationForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,7 +36,9 @@ export default function VaccinationForm() {
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
     "self"
   );
-  const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
+  const staff_id=user?.staff?.staff_id || null;
+    const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
@@ -102,6 +104,7 @@ export default function VaccinationForm() {
         vac_id: vac_id.trim(),
         vac_name: vac_name.trim(),
         expiry_date: expiry_date.trim(),
+        staff_id: staff_id,
       });
     } catch (error) {
       toast.error(
@@ -133,6 +136,7 @@ export default function VaccinationForm() {
           reset: form.reset,
         },
         form2: { reset: form2.reset, getValues: form2.getValues },
+        staff_id: staff_id,
       });
     } finally {
       setSubmitting(false);

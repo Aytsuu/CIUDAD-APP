@@ -24,13 +24,12 @@ export const getStockColumns = (
       try {
         const date = new Date(dateString);
         return (
-          <div className="text-center">
+          <div className="text-center w-[90px]">
             {date.toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
+            
             })}
           </div>
         );

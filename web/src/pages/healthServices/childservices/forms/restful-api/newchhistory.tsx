@@ -3,42 +3,21 @@ import {
   createFollowUpVisit,
   createBodyMeasurement,
   createPatientDisability,
-  updateFollowUpVisit,
-  updatePatientDisabilityStatus,
-  deleteFollowUpVisit,
-} from "./patient-info";
+  createChildHealthNotes,
+  createChildVitalSign,
+  createNutritionalStatus,
+} from "./createAPI";
 import {
   createExclusiveBFCheck,
   createSupplementStatus,
   createChildHealthRecord,
   createChildHealthHistory,
 } from "./chrecord";
-import {
-  createChildHealthNotes,
-  createChildVitalSign,
-  createNutritionalStatus,
-  updateChildHealthNotes,
-} from "./vitalsignsAPI";
-import { processMedicineRequest } from "./medicineAPI";
+import { deleteFollowUpVisit } from "./deleteAPI";
+import { updateSupplementStatus } from "./updateAPI";
+import { processMedicineRequest } from "./createAPI";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
-import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
-import { isToday } from "../editform/child-health-record-form";
-
-export interface AddRecordArgs {
-  submittedData: FormData;
-  staff: string | null;
-  todaysHistoricalRecord: any;
-  originalRecord: any;
-  originalDisabilityRecords: { id: number; pd_id: number; status: string }[];
-}
-
-export interface AddRecordResult {
-  patrec_id: string;
-  chrec_id: string;
-  chhist_id: string;
-  chvital_id?: string;
-  followv_id?: string | null;
-}
+import { AddRecordArgs, AddRecordResult } from "../muti-step-form/types";
 
 export async function updateChildHealthRecord({
   submittedData,
@@ -46,7 +25,7 @@ export async function updateChildHealthRecord({
   todaysHistoricalRecord,
   originalRecord,
   originalDisabilityRecords, // Pass the original disability records
-}: AddRecordArgs): Promise<AddRecordResult> {
+}: AddRecordArgs): Promise<any> {
   const originalChrecDetails = originalRecord?.chrec_details || {};
   const originalPatrecDetails = originalChrecDetails?.patrec_details || {};
   const old_chhist = originalRecord?.chhist_id;
@@ -67,8 +46,16 @@ export async function updateChildHealthRecord({
   let chvital_id: string | undefined;
   let followv_id: string | null = null;
 
-  if ( submittedData.created_at && new Date(submittedData.created_at).toDateString() ===   new Date().toDateString()) {
-    if (submittedData.vitalSigns?.[0] &&new Date(submittedData.created_at).toDateString() ===  new Date().toDateString()) {
+  if (
+    submittedData.created_at &&
+    new Date(submittedData.created_at).toDateString() ===
+      new Date().toDateString()
+  ) {
+    if (
+      submittedData.vitalSigns?.[0] &&
+      new Date(submittedData.created_at).toDateString() ===
+        new Date().toDateString()
+    ) {
       const submittedVitalSign = submittedData.vitalSigns[0];
       const originalFollowvId = todaysHistoricalRecord?.followv_id;
       const submittedFollowUpDate = submittedVitalSign.followUpVisit;
@@ -113,18 +100,17 @@ export async function updateChildHealthRecord({
             updated_at: new Date().toISOString(),
             followv: originalFollowvId,
             chhist: current_chhist_id,
-            staff: staff || null,
+            staff: staff,
           });
         }
       }
-      
+
       // Handle breastfeeding dates
       if (submittedData.BFdates && submittedData.BFdates.length > 0) {
         for (const date of submittedData.BFdates) {
           await createExclusiveBFCheck({
             chhist: current_chhist_id,
-            ebf_date: date,
-            created_at: new Date().toISOString(),
+            BFdates: submittedData.BFdates,
           });
         }
       }
@@ -168,10 +154,55 @@ export async function updateChildHealthRecord({
       });
     }
 
-   
-  } 
-  
-  else {
+
+
+
+
+
+ // Handle historical supplement statuses updates
+ if (submittedData.historicalSupplementStatuses?.length) {
+  // Transform the submitted data into the required update format
+  const updates = submittedData.historicalSupplementStatuses
+    .filter(
+      (
+        status
+      ): status is {
+        chssupplementstat_id: number;
+        date_completed?: string | null;
+      } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
+    )
+    .map((status) => ({
+      chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
+      date_completed: status.date_completed || null,
+    }));
+
+  if (updates.length > 0) {
+    try {
+      await updateSupplementStatus(updates);
+      console.log(
+        `Successfully updated ${updates.length} supplement status records`
+      );
+    } catch (error) {
+      console.error("Supplement status update failed:", error);
+      throw new Error(
+        `Failed to update supplement statuses: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+  } else {
     const newChhist = await createChildHealthHistory({
       created_at: new Date().toISOString(),
       chrec: chrec_id,
@@ -202,7 +233,7 @@ export async function updateChildHealthRecord({
       updated_at: new Date().toISOString(),
       followv: followv_id,
       chhist: current_chhist_id,
-      staff: staff || null,
+      staff: staff,
     });
     const chnotes_id = newNotes.chnotes_id;
 
@@ -213,7 +244,7 @@ export async function updateChildHealthRecord({
       weight: submittedData.vitalSigns?.[0]?.wt || null,
       created_at: new Date().toISOString(),
       patrec: patrec_id,
-      staff: staff || null,
+      staff: staff,
     });
     const bmi_id = newBMI.bm_id;
 
@@ -226,39 +257,34 @@ export async function updateChildHealthRecord({
     });
     chvital_id = newVitalSign.chvital_id;
 
-    // Create nutritional status
-    await createNutritionalStatus({
-      wfa: submittedData.nutritionalStatus?.wfa || "",
-      lhfa: submittedData.nutritionalStatus?.lhfa || "",
-      wfl: submittedData.nutritionalStatus?.wfh || "",
-      muac: submittedData.nutritionalStatus?.muac?.toString() || "",
-      muac_status: submittedData.nutritionalStatus?.muac_status || "",
-      created_at: new Date().toISOString(),
-      chvital: Number(chvital_id),
-      edemaSeverity: submittedData.edemaSeverity || "none",
-    });
+    // Assuming submittedData.vitalSigns is an array of VitalSignType objects
+    // and VitalSignType includes an optional 'id' or 'chvital_id' for existing records
+    if (submittedData.vitalSigns?.length === 1) {
+      const vital = submittedData.vitalSigns[0];
+      // Check if the vital sign is new (no id or chvital_id)
+      if (!vital.chvital_id && vital.date && submittedData.nutritionalStatus) {
+        await createNutritionalStatus({
+          wfa: submittedData.nutritionalStatus.wfa || "",
+          lhfa: submittedData.nutritionalStatus.lhfa || "",
+          wfl: submittedData.nutritionalStatus.wfh || "",
+          muac: submittedData.nutritionalStatus.muac?.toString() || "",
+          muac_status: submittedData.nutritionalStatus.muac_status || "",
+          created_at: vital.date, // Use the vital sign's date
+          chvital: Number(chvital_id), // Link to the vital sign's ID
+          edemaSeverity: submittedData.edemaSeverity || "none",
+        });
+      }
+    }
 
     // Handle breastfeeding dates
     if (submittedData.BFdates && submittedData.BFdates.length > 0) {
       for (const date of submittedData.BFdates) {
         await createExclusiveBFCheck({
           chhist: current_chhist_id,
-          ebf_date: date,
-          created_at: new Date().toISOString(),
+          BFdates: submittedData.BFdates,
         });
       }
     }
-
-    // // Handle disabilities
-    // if (
-    //   submittedData.disabilityTypes &&
-    //   submittedData.disabilityTypes.length > 0
-    // ) {
-    //   await createPatientDisability({
-    //     patrec: patrec_id,
-    //     disabilities: submittedData.disabilityTypes?.map(String) || [],
-    //   });
-    // }
 
     const currentDisabilityIds = submittedData.disabilityTypes || [];
     const originalActiveDisabilityIds = originalDisabilityRecords
@@ -268,11 +294,6 @@ export async function updateChildHealthRecord({
     const disabilitiesToAdd = currentDisabilityIds.filter(
       (id) => !originalActiveDisabilityIds.includes(id)
     );
-    const disabilitiesToResolve = originalDisabilityRecords.filter(
-      (originalDisability) =>
-        originalDisability.status === "active" && // Only consider active ones for resolving
-        !currentDisabilityIds.includes(Number(originalDisability.id))
-    );
 
     // Add new disabilities
     if (disabilitiesToAdd.length > 0) {
@@ -281,8 +302,6 @@ export async function updateChildHealthRecord({
         disabilities: submittedData.disabilityTypes?.map(String) || [],
       });
     }
-
-   
 
     // // Handle low birth weight
     const isLowBirthWeight =
@@ -301,13 +320,11 @@ export async function updateChildHealthRecord({
         birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
         date_completed: null,
         is_anemic: false,
-
       });
     }
 
     // Handle medicines
-     // Handle medicines
-     if (submittedData.medicines && submittedData.medicines.length > 0) {
+    if (submittedData.medicines && submittedData.medicines.length > 0) {
       await processMedicineRequest(
         {
           pat_id: submittedData.pat_id,
@@ -336,6 +353,41 @@ export async function updateChildHealthRecord({
         is_anemic: submittedData.anemic?.is_anemic || false,
       });
     }
+   // Handle historical supplement statuses updates
+   if (submittedData.historicalSupplementStatuses?.length) {
+    // Transform the submitted data into the required update format
+    const updates = submittedData.historicalSupplementStatuses
+      .filter(
+        (
+          status
+        ): status is {
+          chssupplementstat_id: number;
+          date_completed?: string | null;
+        } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
+      )
+      .map((status) => ({
+        chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
+        date_completed: status.date_completed || null,
+      }));
+
+    if (updates.length > 0) {
+      try {
+        await updateSupplementStatus(updates);
+        console.log(
+          `Successfully updated ${updates.length} supplement status records`
+        );
+      } catch (error) {
+        console.error("Supplement status update failed:", error);
+        throw new Error(
+          `Failed to update supplement statuses: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    }
+  }
+
+   
   }
 
   return {
@@ -360,8 +412,7 @@ export const useUpdateChildHealthRecordMutation = () => {
     mutationFn: updateChildHealthRecord,
     onSuccess: () => {
       toast.success("Child health record updated successfully!");
-      navigate(-1)
- 
+      navigate(-1);
     },
     onError: (error: unknown) => {
       console.error("Failed to update child health record:", error);

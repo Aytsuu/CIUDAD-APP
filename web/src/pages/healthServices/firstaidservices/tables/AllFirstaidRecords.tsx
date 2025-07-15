@@ -83,7 +83,7 @@ export default function AllFirstAidRecords() {
         dob: info.per_dob || '',
         householdno: record.patient_details?.households?.[0]?.hh_id || "",
         street: address.add_street || '',
-        sitio: address.sitio || '',
+        sitio: address.add_sitio || '',
         barangay: address.add_barangay || '',
         city: address.add_city || '',
         province: address.add_province || '',
@@ -212,7 +212,7 @@ export default function AllFirstAidRecords() {
                       add_barangay: row.original.barangay,
                       add_city: row.original.city,
                       add_province: row.original.province,
-                      sitio: row.original.sitio,
+                      add_sitio: row.original.sitio,
                     },
                     households: [{ hh_id: row.original.householdno }],
                     personal_info: {

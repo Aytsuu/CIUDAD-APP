@@ -141,6 +141,18 @@ export default function IndivFirstAidRecords() {
 
   const columns: ColumnDef<FirstAidRecord>[] = [
     {
+      accessorKey: "dates",
+      header: "Date ",
+      cell: ({ row }) => {
+        const usedAt = new Date(row.original.created_at);
+        return (
+          <div className="flex flex-col text-sm">
+            <div>{usedAt.toLocaleDateString()}</div>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "firstaid_item",
       header: "First Aid Item",
       cell: ({ row }) => (
@@ -175,18 +187,7 @@ export default function IndivFirstAidRecords() {
         </div>
       ),
     },
-    {
-      accessorKey: "dates",
-      header: "Date Used",
-      cell: ({ row }) => {
-        const usedAt = new Date(row.original.created_at);
-        return (
-          <div className="flex flex-col text-sm">
-            <div>{usedAt.toLocaleDateString()}</div>
-          </div>
-        );
-      },
-    },
+   
   ];
 
   if (isLoading) {
@@ -203,7 +204,7 @@ export default function IndivFirstAidRecords() {
   return (
     <>
       <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row gap-4 ">
           <Button
             className="text-black p-2 mb-2 self-start"
             variant={"outline"}

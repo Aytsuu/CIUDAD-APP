@@ -34,9 +34,9 @@ export const createVaccinationHistory = async (
   doseNo: number,
   status: "forwarded" | "completed" | "partially vaccinated",
   age:string,
-  vital_id: string | null = null,
-  followv_id: string | null = null,
-  staff_id: string | null = null
+  staff_id: string | null,
+  vital_id?: string | null,
+  followv_id?: string | null ,
   
 ) => {
   try {
@@ -44,7 +44,7 @@ export const createVaccinationHistory = async (
       vachist_doseNo: doseNo,
       vachist_status: status,
       vachist_age: age,
-      staff_id: 1,
+      staff: staff_id,
       vacrec: vacrec_id,
       vital: vital_id,
       created_at: new Date().toISOString(),

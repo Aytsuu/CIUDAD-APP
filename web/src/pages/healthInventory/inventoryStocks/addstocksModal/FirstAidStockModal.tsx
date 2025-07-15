@@ -65,6 +65,7 @@ export default function () {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
     submit({ data: formData, staff_id });
+    
   };
 
   return (

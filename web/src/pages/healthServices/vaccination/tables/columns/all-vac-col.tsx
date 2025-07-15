@@ -101,7 +101,7 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
                     add_barangay: row.original.barangay,
                     add_city: row.original.city,
                     add_province: row.original.province,
-                    sitio: row.original.sitio,
+                    add_sitio: row.original.sitio,
                   },
                   households: [{ hh_id: row.original.householdno }],
                   personal_info: {

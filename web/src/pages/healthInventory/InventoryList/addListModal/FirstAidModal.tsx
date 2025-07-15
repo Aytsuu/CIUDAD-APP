@@ -104,6 +104,7 @@ export default function FirstAidModal() {
       }
       setNewFirstAidName(data.fa_name);
       setIsAddConfirmationOpen(true);
+      
     } catch (err) {
       console.error("Error checking for duplicates:", err);
     }

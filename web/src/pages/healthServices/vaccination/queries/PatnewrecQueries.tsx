@@ -36,6 +36,7 @@ export const useSubmitStep1 = () => {
       form,
       vacStck_id,
       vac_id,
+      staff_id,
     }: {
       data: Record<string, any>;
       vacStck_id: any;
@@ -44,6 +45,7 @@ export const useSubmitStep1 = () => {
       expiry_date: string;
       assignmentOption: string;
       form: { setError: any; getValues: any; reset: any };
+      staff_id: string | null;
     }) => {
     
 
@@ -54,7 +56,7 @@ export const useSubmitStep1 = () => {
         let patrec_id: string | null = null;
         let vacrec_id: string | null = null;
         try {
-          const patientRecord = await createPatientRecord(data.pat_id, "Vaccination Record");
+          const patientRecord = await createPatientRecord(data.pat_id, "Vaccination Record", staff_id);
           patrec_id = patientRecord.patrec_id;
 
           if (!patrec_id) {
@@ -63,7 +65,7 @@ export const useSubmitStep1 = () => {
             );
           }
 
-          const vaccinationRecord = await createVaccinationRecord(patrec_id, 1);
+          const vaccinationRecord = await createVaccinationRecord(patrec_id,staff_id, 1);
 
           vacrec_id = vaccinationRecord.vacrec_id;
           let age = data.age;
@@ -75,7 +77,8 @@ export const useSubmitStep1 = () => {
               vacStck_id,
               1,
               "forwarded",
-              age
+              age,
+              staff_id
             );
           } else {
             throw new Error(
@@ -124,7 +127,7 @@ export const useSubmitStep2 = () => {
       vac_name,
       expiry_date,
       pat_id,
-      age,
+      staff_id
     }: {
       data: Record<string, any>;
       form: { setError: any; getValues: any; reset: any };
@@ -134,7 +137,7 @@ export const useSubmitStep2 = () => {
       vac_name: string;
       expiry_date: string;
       pat_id: string ;
-      age: string
+      staff_id: string | null; // Optional staff_id parameter
     }) => {
      
 
@@ -156,7 +159,7 @@ export const useSubmitStep2 = () => {
         if (response?.exists) {throw new Error("Patient already has this vaccine in their record.");}
 
 
-        const patientRecord = await createPatientRecord(pat_id ?? "" , "Vaccination Record");
+        const patientRecord = await createPatientRecord(pat_id ?? "" , "Vaccination Record",staff_id);
         patrec_id = patientRecord.patrec_id;
 
         // const status = maxDoses === 1 ? "completed" : "partially vaccinated";
@@ -168,6 +171,7 @@ export const useSubmitStep2 = () => {
 
         const vaccinationRecord = await createVaccinationRecord(
           patrec_id,
+          staff_id,
           maxDoses
         );
         vacrec_id = vaccinationRecord.vacrec_id;
@@ -179,7 +183,7 @@ export const useSubmitStep2 = () => {
           vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
           // vacStck_used: vaccineData.vacStck_used + 1,
         });
-        await createAntigenStockTransaction(parseInt(vacStck_id));
+        await createAntigenStockTransaction(parseInt(vacStck_id), staff_id ?? "");
 
         let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
 
@@ -221,7 +225,7 @@ export const useSubmitStep2 = () => {
           }
         }
 
-        console.log("age", age);
+        console.log("age", form.getValues("age"));
         const historyStatus =
           maxDoses === 1 ? "completed" : "partially vaccinated";
         await createVaccinationHistory(
@@ -230,7 +234,8 @@ export const useSubmitStep2 = () => {
           vacStck_id,
           1,
           historyStatus,
-          age,
+          form.getValues("age"),
+          staff_id,
           vital_id,
           followv_id
         );

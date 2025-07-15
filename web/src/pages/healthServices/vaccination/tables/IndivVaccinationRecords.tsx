@@ -384,7 +384,7 @@ export default function IndivVaccinationRecords() {
   return (
     <>
       <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 ">
           <Button
             className="text-black p-2 mb-2 self-start"
             variant={"outline"}
@@ -605,7 +605,7 @@ export default function IndivVaccinationRecords() {
           </div>
           <div>
             <Button className="w-full sm:w-auto">
-              <Link to="/vaccinationForm" state={{ params: { patientData } }}>
+              <Link to="/patNewVacRecForm" state={{mode:"addnewvaccination_record" ,params: { patientData } }}>
                 New Vaccination Record
               </Link>
             </Button>

@@ -1,6 +1,6 @@
 
 // import NonPHMedicalForm from "@/pages/Doctor/MedicalConNoPH";
-import PendingMedicalConsultationRecords from "@/pages/healthServices/doctor/medical-con/tables/forwarded-record";
+// import PendingMedicalConsultationRecords from "@/pages/healthServices/doctor/medical-con/tables/forwarded-record";
 import PendingDisplayMedicalConsultation from "@/pages/healthServices/doctor/medical-con/medcon-form";
 // import PrescriptionMedicineStocks from "@/pages/healthServices/doctor/medical-con/med-presciption";
 import SoapForm from "@/pages/healthServices/doctor/medical-con/soap-form";
@@ -9,10 +9,11 @@ import path from "path";
 // import IllnessManager from "@/pages/healthServices/doctor/medical-con/illness";
 export const doctorRouting = [
   // 
-  {
-    path: "/pending-medical-con",
-    element : <PendingMedicalConsultationRecords/>
-  } ,  {
+  // {
+  //   path: "/pending-medical-con",
+  //   element : <PendingMedicalConsultationRecords/>
+  // } ,
+    {
     path: "/pending-medical-con-form",
     element : <PendingDisplayMedicalConsultation/>
   } ,

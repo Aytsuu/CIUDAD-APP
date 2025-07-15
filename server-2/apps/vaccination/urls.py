@@ -27,10 +27,11 @@ urlpatterns = [
     path('residents/unvaccinated/', GetAllResidentsNotVaccinated.as_view(), name='unvaccinated-residents'),
     path('count-vaccinated/', CountVaccinatedByPatientTypeView.as_view(), name='count-vaccinated'),
     path('forwarded-vaccination-records/', ForwardedVaccinationHistoryView.as_view(), name='forwarded-vaccination-records'),
+    path('forwarded-vaccination-count/', ForwardedVaccinationCountView.as_view(), name='pat_vaccination_records'),
     
     
     
- path('vaccination-records/monthly/', MonthlyVaccinationRecordsAPIView.as_view(), name='monthly_vaccination_records'),
+    path('vaccination-records/monthly/', MonthlyVaccinationRecordsAPIView.as_view(), name='monthly_vaccination_records'),
 
 
 ]

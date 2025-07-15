@@ -45,6 +45,7 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
 
     return existingAgeGroups.some(
       (group: AgeGroupType & { id?: string }) =>
+        group.agegroup_name === data.agegroup_name &&
         group.min_age === data.min_age &&
         group.max_age === data.max_age &&
         group.time_unit === data.time_unit &&

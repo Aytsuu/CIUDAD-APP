@@ -19,21 +19,7 @@ class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
     queryset  =VaccinationRecord.objects.all()
     
-    
-
-# class VaccineRecordView(generics.RetrieveUpdateAPIView):
-#     serializer_class = VaccinationRecordSerializer
-#     queryset  =VaccinationRecord.objects.all()
-#     lookup_field = 'vacrec_id'
-    
-#     def get_object(self):
-#         try:
-#             return super().get_object()
-#         except NotFound:
-#             return Response({"error": "Vaccination Record record not found."}, status=status.HTTP_404_NOT_FOUND)
-
-    
-    
+   
     
    
    
@@ -52,22 +38,10 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Patient.objects.filter(
-            Q(patient_records__patrec_type__iexact='Vaccination'),
+            Q(patient_records__patrec_type='Vaccination Record'),
             Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
         ).distinct()
 
-
-
-# class PatientRecordWithVaccinationSerializer(PatientRecordSerializer):
-#     vaccination_records = VaccinationRecordSerializer(
-#         source='vaccination_records', 
-#         many=True, 
-#         read_only=True
-#     )
-    
-#     class Meta:
-#         model = PatientRecord
-#         fields = '__all__'
 
 
 # INDIVIDUAL RECORDS VIEW
@@ -104,17 +78,6 @@ class DeleteUpdateVaccinationRecordView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "Vaccination record not found."}, status=status.HTTP_404_NOT_FOUND)
     
     
-# class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = VitalSignsSerializer
-#     queryset = VitalSigns.objects.all()
-#     lookup_field = 'vital_id'
-    
-#     def get_object(self):
-#         try:
-#             return super().get_object()
-#         except NotFound:
-#             return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 class DeleteUpdateVaccinationHistoryView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccinationHistorySerializer
@@ -191,6 +154,17 @@ class ForwardedVaccinationHistoryView(generics.ListAPIView):
         return VaccinationHistory.objects.filter(
             vachist_status__iexact='forwarded'
         ).order_by('-created_at')
+
+
+
+class ForwardedVaccinationCountView(APIView):
+    def get(self, request, *args, **kwargs):
+        count = (
+            VaccinationHistory.objects
+            .filter(vachist_status__iexact='forwarded')
+            .count()
+        )
+        return Response({"count": count})
 
 
 

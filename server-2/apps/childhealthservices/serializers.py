@@ -137,7 +137,6 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
             'nutrition_statuses',
         ]
 
-   
 
     def get_nutrition_statuses(self, obj):
         # fetch nutritional status for each vital sign

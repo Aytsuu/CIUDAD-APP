@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
-import { createVitalSigns, updateVacRecord } from "./restful-api/vitalsignsAPI";
+import { createVitalSigns, updateVacRecord } from "../restful-api/vitalsignsAPI";
 import {
   getVaccineStock,
   createFollowUpVisit,

@@ -7,6 +7,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound
 from .utils import get_childhealth_record_count
 from .models import *
+from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db.models import Prefetch
 
 
 class ChildHealthRecordsView(generics.ListCreateAPIView):
@@ -40,6 +44,71 @@ class ChildHealthSupplementStatusView(generics.ListCreateAPIView):
     queryset = ChildHealthSupplementsStatus.objects.all()
     serializer_class = ChildHealthSupplementStatusSerializer
 
+
+class UpdateChildHealthSupplementsStatusView(generics.RetrieveUpdateAPIView):
+    def patch(self, request, *args, **kwargs):
+        data = request.data  # Expecting a list of updates
+        if not isinstance(data, list) or not data:
+            return Response(
+                {"detail": "Expected a non-empty list of updates."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        updated = []
+        errors = []
+
+        for item in data:
+            chssupplementstat_id = item.get("chssupplementstat_id")
+            date_completed = item.get("date_completed")
+
+            if not chssupplementstat_id:
+                errors.append(
+                    {
+                        "error": "Missing chssupplementstat_id",
+                        "item": item,
+                    }
+                )
+                continue
+
+            try:
+                instance = ChildHealthSupplementsStatus.objects.get(
+                    pk=chssupplementstat_id
+                )
+            except ChildHealthSupplementsStatus.DoesNotExist:
+                errors.append(
+                    {
+                        "error": f"Record with id {chssupplementstat_id} not found",
+                    }
+                )
+                continue
+
+            # Only include the allowed field(s)
+            update_data = {"date_completed": date_completed}
+
+            serializer = ChildHealthSupplementStatusSerializer(
+                instance, data=update_data, partial=True
+            )
+
+            if serializer.is_valid():
+                serializer.save()
+                updated.append(serializer.data)
+            else:
+                errors.append(
+                    {
+                        "id": chssupplementstat_id,
+                        "errors": serializer.errors,
+                    }
+                )
+
+        return Response(
+            {
+                "updated": updated,
+                "errors": errors,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    
 
 class NutritionalStatusView(generics.ListCreateAPIView):
     queryset = NutritionalStatus.objects.all()
@@ -91,14 +160,29 @@ class EditIndivChildHealthHistoryView(generics.ListAPIView):
     
     
     
+# class IndivChildHealthHistoryView(generics.ListAPIView):
+#     serializer_class = ChildHealthrecordSerializerFull
+
+#     def get_queryset(self):
+#         chrec_id = self.kwargs['chrec_id']
+#         return ChildHealthrecord.objects.filter(chrec_id=chrec_id).order_by('-created_at')  # Optional: most recent first
+    
 class IndivChildHealthHistoryView(generics.ListAPIView):
     serializer_class = ChildHealthrecordSerializerFull
 
     def get_queryset(self):
         chrec_id = self.kwargs['chrec_id']
-        return ChildHealthrecord.objects.filter(chrec_id=chrec_id).order_by('-created_at')  # Optional: most recent first
-    
-    
+        return (
+            ChildHealthrecord.objects
+            .filter(chrec_id=chrec_id)
+            .prefetch_related(
+            Prefetch(
+                'child_health_histories',
+                queryset=ChildHealth_History.objects.filter(status__in=["recorded", "immunization"])
+            )
+            )
+            .order_by('-created_at')
+        )
 class GeChildHealthRecordCountView(APIView):
     def get(self, request, pat_id):
         try:
@@ -124,12 +208,25 @@ class ChildHealthRecordByPatIDView(APIView):
         return Response(serializer.data)
     
     
-class ChildHealthImmunizationStatusView(generics.ListAPIView):
-    serializer_class = ChildHealthImmunizationHistorySerializer
+
+class ChildHealthImmunizationStatusListView(generics.ListAPIView):
+    serializer_class = ChildHealthrecordSerializer
 
     def get_queryset(self):
-        pat_id = self.kwargs['pat_id']
-        return ChildHealthImmunizationHistory.objects.filter(
-            chrec__patrec__pat_id=pat_id,
-            status="immunization"
-        ).order_by('-created_at')  # Optional: most recent first
+        return (
+            ChildHealthrecord.objects
+            .filter(child_health_histories__status="immunization")
+            .distinct()
+            .order_by('-created_at')
+        )
+
+
+class ChildHealthImmunizationCountView(APIView):
+    def get(self, request, *args, **kwargs):
+        count = (
+            ChildHealthrecord.objects
+            .filter(child_health_histories__status="immunization")
+            .distinct()
+            .count()
+        )
+        return Response({"count": count})

@@ -11,6 +11,7 @@ urlpatterns = [
     path('notes/', ChildHealthNotesView.as_view(), name='child-health-notes'),
     path('supplements/', ChildHealthSupplementsView.as_view(), name='child-health-supplements'),
     path('supplement-status/', ChildHealthSupplementStatusView.as_view(), name='child-health-supplement-status'),
+    path('update-supplement-status/', UpdateChildHealthSupplementsStatusView.as_view(), name='update-child-health-supplement-status'),
     path('nutritional-status/', NutritionalStatusView.as_view(), name='nutritional-status'),
     path('exclusive-bf-check/', ExclusiveBFCheckView.as_view(), name='exclusive-bf-check'),
     path('immunization-history/', ChildHealthImmunizationHistoryView.as_view(), name='immunization-history'),
@@ -18,6 +19,7 @@ urlpatterns = [
     
     path('child-health-record-count/<str:pat_id>/', GeChildHealthRecordCountView.as_view(), name='child-health-record-count'),
     path('child-health-records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
-
+    path('child-immunization-status/',ChildHealthImmunizationStatusListView.as_view(), name='child-immunization-status'),
+    path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
 ]
 

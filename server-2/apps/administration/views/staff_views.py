@@ -39,6 +39,7 @@ class StaffTableView(generics.ListCreateAPIView):
 
     return queryset
   
+  
 class StaffUpdateView(generics.UpdateAPIView):
   serializer_class = StaffBaseSerializer
   queryset = Staff.objects.all()
@@ -63,3 +64,11 @@ class StaffDeleteView(generics.DestroyAPIView):
   serializer_class = StaffBaseSerializer
   queryset = Staff.objects.all()
   lookup_field = "staff_id"
+
+
+
+class HealthStaffListView(generics.ListCreateAPIView):
+    serializer_class = StaffFullSerializer
+    queryset = Staff.objects.all()
+
+   

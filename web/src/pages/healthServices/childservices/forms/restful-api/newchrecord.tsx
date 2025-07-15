@@ -3,19 +3,18 @@ import {
   createFollowUpVisit,
   createBodyMeasurement,
   createPatientDisability,
-} from "./patient-info";
+  processMedicineRequest,
+  createChildHealthNotes,
+  createChildVitalSign,
+  createNutritionalStatus,
+} from "./createAPI";
 import {
   createExclusiveBFCheck,
   createSupplementStatus,
   createChildHealthRecord,
   createChildHealthHistory,
 } from "./chrecord";
-import {
-  createChildHealthNotes,
-  createChildVitalSign,
-  createNutritionalStatus,
-} from "./vitalsignsAPI";
-import  {processMedicineRequest} from "./medicineAPI";
+
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 import { api2 } from "@/api/api";
@@ -80,9 +79,7 @@ export async function addChildHealthRecord({
     staff 
   );
   const patrec_id = newPatrec.patrec_id;
-  // Create child health record
   const newChrec = await createChildHealthRecord({
-    // chr_date: submittedData.childDob,
     ufc_no: submittedData.ufcNo || "",
     family_no: submittedData.familyNo || "",
     place_of_delivery_type: submittedData.placeOfDeliveryType,
@@ -92,7 +89,7 @@ export async function addChildHealthRecord({
     father_occupation: submittedData.fatherOccupation || "",
     birth_order: submittedData.birth_order,
     newborn_screening: submittedData.dateNewbornScreening || "",
-    staff: staff || null,
+    staff: staff,
     patrec: patrec_id,
     landmarks: submittedData.landmarks || null,
   });
@@ -165,17 +162,18 @@ export async function addChildHealthRecord({
     muac_status: submittedData.nutritionalStatus?.muac_status || "",
     created_at: new Date().toISOString(),
     chvital: chvital_id,
-    edemaSeverity: submittedData.edemaSeverity || "none",
+    edemaSeverity: submittedData.edemaSeverity || "None",
   });
 
+  console.log(submittedData.BFdates)
   // Handle breastfeeding dates
   if (submittedData.BFdates && submittedData.BFdates.length > 0) {
     for (const date of submittedData.BFdates) {
       await createExclusiveBFCheck({
         chhist: current_chhist_id,
-        ebf_date: date,
-        created_at: new Date().toISOString(),
+        BFdates: submittedData.BFdates,
       });
+      
     }
   }
 

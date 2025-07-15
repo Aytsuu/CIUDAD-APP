@@ -1,11 +1,10 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { ChildDetailsSchema, type FormData } from "@/form-schema/chr-schema/chr-schema"
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/ui/button/button" // Corrected import path
 import { Baby, Calendar, ChevronLeft, Trash2, Plus, Pencil, Check } from "lucide-react"
 import { DisabilityComponent } from "@/components/ui/add-search-disability"
 import { FormSelect } from "@/components/ui/form/form-select"
@@ -41,6 +40,7 @@ export default function ChildHRPage2({
   mode,
 }: Page2Props) {
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord" || mode === "immunization"
+
   const form = useForm<FormData>({
     resolver: zodResolver(ChildDetailsSchema),
     mode: "onChange",
@@ -53,7 +53,7 @@ export default function ChildHRPage2({
       tt_status: formData.tt_status || "",
     },
   })
-  
+
   const { handleSubmit, reset, watch, setValue, getValues, formState, control } = form
   const { errors, isValid, isSubmitting } = formState
   const BFdates = watch("BFdates")
@@ -70,25 +70,10 @@ export default function ChildHRPage2({
     console.log("Form values:", getValues())
   }, [errors, isValid, getValues])
 
-  // Reset form when formData changes (important for addnewchildhealthrecord mode)
-  useEffect(() => {
-    console.log("🔄 ChildHRPage2: Resetting form with formData:", formData)
-    const resetData = {
-      ...formData,
-      disabilityTypes: formData.disabilityTypes || [],
-      edemaSeverity: formData.edemaSeverity || "none",
-      BFdates: formData.BFdates || [], // Preserve existing BFdates from formData
-      dateNewbornScreening: formData.dateNewbornScreening || "",
-      type_of_feeding: formData.type_of_feeding || "",
-      tt_status: formData.tt_status || "",
-    }
-    reset(resetData)
-    // Reset input state but keep form data
-    setCurrentBFDate("")
-    setEditingIndex(null)
-  }, [formData, reset])
+  // Removed the useEffect that was resetting the form based on formData changes.
+  // The `defaultValues` in `useForm` handles initial population.
 
-  // Update parent form data on change
+  // Update parent form data on change - This is crucial for persistence
   useEffect(() => {
     const subscription = watch((value) => {
       updateFormData(value as Partial<FormData>)
@@ -103,7 +88,6 @@ export default function ChildHRPage2({
         ...data,
         disabilityTypes: data.disabilityTypes || [],
       }
-
       updateFormData(finalData)
       onNext()
     } catch (error) {
@@ -160,41 +144,33 @@ export default function ChildHRPage2({
       console.log("No current BF date provided")
       return
     }
-    
     try {
       // Convert to consistent format
       const formattedDate = formatMonthYear(currentBFDate)
       console.log("Formatted date:", formattedDate)
-
       // Get current dates from form
       const currentDates = getValues("BFdates") || []
       console.log("Current BF dates:", currentDates)
-
       // Check for duplicates
       if (editingIndex === null && currentDates.includes(formattedDate)) {
         console.log("Duplicate date detected")
         alert("This date has already been added")
         return
       }
-
       // Update dates array
       const updatedDates =
         editingIndex !== null
           ? currentDates.map((date, i) => (i === editingIndex ? formattedDate : date))
           : [...currentDates, formattedDate]
-
       console.log("Updated dates:", updatedDates)
-
       // Update form state
       setValue("BFdates", updatedDates, {
         shouldValidate: true,
         shouldDirty: true,
       })
-
       // Reset editing state
       setEditingIndex(null)
       setCurrentBFDate("")
-      
       console.log("BF dates updated successfully")
     } catch (error) {
       console.error("Error adding BF date:", error)
@@ -266,13 +242,11 @@ export default function ChildHRPage2({
                       name="dateNewbornScreening"
                       label="Date of Newborn Screening"
                       type="date"
-                      readOnly={isaddnewchildhealthrecordMode}
                     />
                     <FormMessage />
                   </div>
                 }
               />
-
               {/* Breastfeeding Section */}
               <CardLayout
                 title={
@@ -289,15 +263,16 @@ export default function ChildHRPage2({
                         control={form.control}
                         name="type_of_feeding"
                         label="Type of feeding"
-                        readOnly={isaddnewchildhealthrecordMode}
                         options={[
-                          { id: "exclusive_bf", name: "Exclusive Breastfeeding" },
+                          {
+                            id: "exclusive_bf",
+                            name: "Exclusive Breastfeeding",
+                          },
                           { id: "mixed_bf", name: "Mixed Breastfeeding" },
                           { id: "formula", name: "Formula Feeding" },
                         ]}
                       />
                     </div>
-
                     {/* BF Dates Form Field */}
                     <FormField
                       control={control}
@@ -317,13 +292,12 @@ export default function ChildHRPage2({
                                   value={currentBFDate}
                                   onChange={(e) => setCurrentBFDate(e.target.value)}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                  disabled={isaddnewchildhealthrecordMode}
                                 />
                               </div>
                               <Button
                                 type="button"
                                 onClick={handleAddDate}
-                                disabled={!currentBFDate || isaddnewchildhealthrecordMode}
+                                disabled={!currentBFDate}
                                 className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                               >
                                 {editingIndex !== null ? (
@@ -353,7 +327,6 @@ export default function ChildHRPage2({
                         </FormItem>
                       )}
                     />
-
                     {/* Historical Dates */}
                     {historicalBFdates?.length > 0 && (
                       <div className="bg-gray-50 rounded-lg border border-gray-200">
@@ -379,7 +352,6 @@ export default function ChildHRPage2({
                         </div>
                       </div>
                     )}
-
                     {/* Newly Added Dates */}
                     {(BFdates ?? []).length > 0 ? (
                       <div className="bg-gray-50 rounded-lg border border-gray-200">
@@ -404,7 +376,6 @@ export default function ChildHRPage2({
                                   type="button"
                                   onClick={() => handleEditDate(index)}
                                   className="p-2 text-blue-500 bg-white hover:bg-blue-50"
-                                  disabled={isaddnewchildhealthrecordMode}
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
@@ -412,7 +383,6 @@ export default function ChildHRPage2({
                                   type="button"
                                   onClick={() => handleDeleteDate(index)}
                                   className="p-2 text-red-500 hover:bg-red-50 bg-white"
-                                  disabled={isaddnewchildhealthrecordMode}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -432,7 +402,6 @@ export default function ChildHRPage2({
                   </div>
                 }
               />
-
               {/* TT Status */}
               <FormSelect
                 control={form.control}
@@ -449,7 +418,6 @@ export default function ChildHRPage2({
                 ]}
               />
             </div>
-
             {/* Right Column - Disability Information */}
             <div className="space-y-6">
               <CardLayout
@@ -470,17 +438,23 @@ export default function ChildHRPage2({
                           Patient's Historical Disabilities
                         </h3>
                         <ul className="space-y-2">
-                          {patientHistoricalDisabilities.map((disability, index) => (
+                          {Array.from(
+                            new Map(
+                              patientHistoricalDisabilities
+                                .filter((d) => d.disability_details) // Filter out any null disability_details
+                                .map((d) => [d.disability_details.disability_id, d]),
+                            ).values(),
+                          ).map((disability, index) => (
                             <li key={index} className="flex items-center gap-2 text-sm text-gray-700">
-                              <span className="font-medium">
-                                {disability.disability_details?.disability_name || "N/A"}
+                              <span className="font-medium">{disability.disability_details.disability_name}</span>
+                              <span className="text-xs text-gray-500">
+                                (Added: {new Date(disability.disability_details.created_at).toLocaleDateString()})
                               </span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
-
                     <FormLabel className="text-sm font-medium leading-none text-gray-700 mb-4 block">
                       Does the child have any known disabilities?
                     </FormLabel>
@@ -508,15 +482,6 @@ export default function ChildHRPage2({
               />
             </div>
           </div>
-
-          {/* Debug Information (remove in production) */}
-          <div className="bg-gray-100 p-4 rounded-lg text-xs">
-            <p><strong>Debug Info:</strong></p>
-            <p>Form Valid: {isValid ? "Yes" : "No"}</p>
-            <p>BF Dates: {JSON.stringify(BFdates)}</p>
-            <p>Errors: {JSON.stringify(errors)}</p>
-          </div>
-
           {/* Navigation Buttons */}
           <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
             <Button
@@ -529,11 +494,7 @@ export default function ChildHRPage2({
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || !isValid} 
-              className="flex items-center gap-2"
-            >
+            <Button type="submit" disabled={isSubmitting } className="flex items-center gap-2">
               {isSubmitting ? "Processing..." : "Continue"}
               <ChevronLeft className="h-4 w-4 rotate-180 ml-2" />
             </Button>

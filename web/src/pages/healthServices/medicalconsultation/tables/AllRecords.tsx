@@ -44,7 +44,6 @@ export interface MedicalRecord {
 }
 
 export default function AllMedicalConsRecord() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
   const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [value, setValue] = useState("");
@@ -54,7 +53,6 @@ export default function AllMedicalConsRecord() {
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const queryClient = useQueryClient();
 
-  // Fetch medical records from API
   const { data: MedicalRecord, isLoading } = useQuery<[MedicalRecord]>({
     queryKey: ["MedicalRecord"],
     queryFn: getMedicalRecord,
@@ -70,15 +68,14 @@ export default function AllMedicalConsRecord() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
-      // Construct address string - returns empty string if no address components
       const addressString = [
         address.add_street || info.per_address || "",
         address.add_barangay || "",
         address.add_city || "",
         address.add_province || ""
       ]
-        .filter(part => part.trim().length > 0) // Remove empty parts
-        .join(", ") || ""; // Join with commas or return empty string
+        .filter(part => part.trim().length > 0)
+        .join(", ") || "";
 
       return {
         pat_id: record.pat_id,
@@ -90,18 +87,17 @@ export default function AllMedicalConsRecord() {
         dob: info.per_dob || '',
         householdno: details.households?.[0]?.hh_id || "",
         street: address.add_street || '',
-        sitio: address.sitio || '',
+        sitio: address.add_sitio || '',
         barangay: address.add_barangay || '',
         city: address.add_city || '',
         province: address.add_province || '',
         pat_type: details.pat_type || '',
-        address: addressString, // Will be empty string if no address parts
+        address: addressString,
         medicalrec_count: record.medicalrec_count || 0,
       };
     });
   }, [MedicalRecord]);
 
-  // Filter data based on search query and patient type
   const filteredData = React.useMemo(() => {
     return formatMedicalData().filter((record: MedicalRecord) => {
       const searchText = `${record.pat_id} 
@@ -117,28 +113,14 @@ export default function AllMedicalConsRecord() {
     });
   }, [searchQuery, formatMedicalData, patientTypeFilter]);
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  // Archive confirmation handler
-  const confirmArchiveRecord = async () => {
-    if (recordToArchive !== null) {
-      try {
-        // Add your archive logic here
-        toast.success("Record archived successfully!");
-        queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
-      } catch (error) {
-        toast.error("Failed to archive the record.");
-      } finally {
-        setIsArchiveConfirmationOpen(false);
-        setRecordToArchive(null);
-      }
-    }
-  };
+ 
+  
 
   const columns: ColumnDef<MedicalRecord>[] = [
     {
@@ -238,7 +220,7 @@ export default function AllMedicalConsRecord() {
                           add_barangay: row.original.barangay,
                           add_city: row.original.city,
                           add_province: row.original.province,
-                          sitio: row.original.sitio,
+                          add_sitio: row.original.sitio,
                         },
                         households: [{ hh_id: row.original.householdno }],
                         personal_info: {
@@ -252,8 +234,7 @@ export default function AllMedicalConsRecord() {
                     },
                   }}
                 >
-                  <Eye size={15} />
-                </Link>
+View                </Link>
               </div>
             }
           />
@@ -262,21 +243,9 @@ export default function AllMedicalConsRecord() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="w-full h-full flex flex-col">
-        {/* Header Section */}
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Medical Consultation Records
@@ -322,7 +291,6 @@ export default function AllMedicalConsRecord() {
           </div>
         </div>
 
-        {/* Table Container */}
         <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
@@ -355,35 +323,48 @@ export default function AllMedicalConsRecord() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
-            </p>
 
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
+          {/* DataTable with Skeleton Loading */}
+          <div className="bg-white w-full overflow-x-auto">
+            {isLoading ? (
+              <div className="p-4 space-y-4">
+                {/* Header skeleton */}
+               
+                {/* Row skeletons */}
+                {[...Array(2)].map((_, i) => (
+                  <div key={`row-${i}`} className="flex gap-4 py-2">
+                    {[1, 2,3].map((_, j) => (
+                      <Skeleton key={`cell-${i}-${j}`} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
           </div>
+
+          {!isLoading && (
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+              <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                Showing{" "}
+                {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                {filteredData.length} rows
+              </p>
+
+              <div className="w-full sm:w-auto flex justify-center">
+                <PaginationLayout
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <ConfirmationDialog
-        isOpen={isArchiveConfirmationOpen}
-        onOpenChange={setIsArchiveConfirmationOpen}
-        onConfirm={confirmArchiveRecord}
-        title="Archive Medical Record"
-        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
-      />
     </>
   );
 }

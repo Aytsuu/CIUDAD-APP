@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Combobox } from "@/components/ui/combobox";
-import { Label } from "@/components/ui/label";
+import { useEffect, useCallback } from "react";
 import { User } from "lucide-react";
 import { Link } from "react-router-dom";
+
+import { Label } from "@/components/ui/label";
+import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
-import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
+import { usePatientsQuery , } from "@/pages/healthServices/restful-api-patient/FetchPatient" // Your original import
+
 export interface Patient {
   pat_id: string;
   pat_type: string;
   name?: string;
   trans_id?: string;
-  rp_id?: {
-    rp_id?:string;
-  };
+  rp_id?: { rp_id?: string };
   personal_info?: {
     per_fname?: string;
     per_mname?: string;
@@ -31,9 +31,7 @@ export interface Patient {
     add_sitio?: string;
     full_address?: string;
   };
-  family?: {
-    fam_id: string;
-  };
+  family?: { fam_id: string };
   family_head_info?: {
     fam_id: string | null;
     family_heads?: {
@@ -59,56 +57,44 @@ export interface Patient {
       };
     };
   };
-  spouse_info?: {
-    // Define spouse info structure if needed
-  };
+  spouse_info?: Record<string, unknown>;
 }
 
 interface PatientSearchProps {
   onPatientSelect: (patient: Patient | null, patientId: string) => void;
   className?: string;
+  value: string;
+  onChange: (id: string) => void;
 }
 
 export function PatientSearch({
   onPatientSelect,
   className,
+  value,
+  onChange,
 }: PatientSearchProps) {
-
-  
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [patients, setPatients] = useState<{
-    default: Patient[];
-    formatted: { id: string; name: string }[];
-  }>({ default: [], formatted: [] });
+  const {
+    data: patientsData,
+    isLoading,
+    isError,
+    error,
+  } = usePatientsQuery();
 
   useEffect(() => {
-    const loadPatients = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchPatientRecords();
-        setPatients(data);
-      } catch (error) {
-        toast.error(
-          "Failed to load patients: " +
-            (error instanceof Error ? error.message : "Unknown error")
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPatients();
-  }, []);
+    if (isError) {
+      toast.error(`Failed to load patients: ${(error as Error).message}`);
+    }
+  }, [isError, error]);
 
   const handlePatientSelection = useCallback(
     (id: string) => {
-      setSelectedPatientId(id);
-      const selectedPatient = patients.default.find(
-        (patient) => patient.pat_id.toString() === id.split(",")[0].trim()
+      onChange(id);
+      const selectedPatient = patientsData?.default.find(
+        (patient:any) => patient.pat_id.toString() === id.split(",")[0].trim()
       );
       onPatientSelect(selectedPatient || null, id);
     },
-    [patients.default, onPatientSelect]
+    [patientsData?.default, onPatientSelect, onChange]
   );
 
   return (
@@ -122,17 +108,17 @@ export function PatientSearch({
         </Label>
       </div>
       <Combobox
-        options={patients.formatted}
-        value={selectedPatientId}
+        options={patientsData?.formatted ?? []}
+        value={value}
         onChange={handlePatientSelection}
         placeholder={
-          loading ? "Loading patients..." : "Search and select a patient"
+          isLoading ? "Loading patients..." : "Search and select a patient"
         }
         triggerClassName="font-normal w-full"
         emptyMessage={
           <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
             <Label className="font-normal text-xs">
-              {loading ? "Loading..." : "No patient found."}
+              {isLoading ? "Loading..." : "No patient found."}
             </Label>
             <Link to="/patient-records/new">
               <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">

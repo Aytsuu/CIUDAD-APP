@@ -148,11 +148,9 @@ export default function PendingimpoRecords() {
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-gray-500">
-                {row.original.sex}, {row.original.age} years old
+                {row.original.sex}, {row.original.age} 
               </div>
-              <div className="text-xs text-gray-400">
-                ID: {row.original.pat_id}
-              </div>
+            
             </div>
           </div>
         );
@@ -164,7 +162,7 @@ export default function PendingimpoRecords() {
       cell: ({ row }) => {
         const vital = row.original.consultation.vital_signs;
         return (
-          <div className="grid grid-cols-2 gap-1 text-sm min-w-[160px]">
+          <div className="grid grid-cols-2 gap-1 text-sm min-w-[200px]">
             <div>BP: {vital.vital_bp_systolic}/{vital.vital_bp_diastolic}</div>
             <div>Temp: {vital.vital_temp}°C</div>
             <div>Pulse: {vital.vital_pulse}</div>
@@ -180,9 +178,8 @@ export default function PendingimpoRecords() {
         const bmi = row.original.consultation.bmi_details;
         return (
           <div className="text-sm min-w-[120px]">
-            <div>H: {bmi.height}cm</div>
-            <div>W: {bmi.weight}kg</div>
-            <div>BMI: {bmi.bmi}</div>
+            <div>HT: {bmi.height.endsWith(".00") ? bmi.height.slice(0, -3) : bmi.height} cm</div>
+            <div>WT: {bmi.weight.endsWith(".00") ? bmi.weight.slice(0, -3) : bmi.weight} kg</div>
           </div>
         );
       },
@@ -200,11 +197,9 @@ export default function PendingimpoRecords() {
       accessorKey: "address",
       header: "Address",
       cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate text-sm">
-            {row.original.address || "No address provided"}
-          </div>
-        </div>
+        <div className="flex justify-start px-2">
+             <div className="w-[250px] break-words">{row.original.address || "No address provided"}</div>
+           </div>
       ),
     },
     {
@@ -216,15 +211,15 @@ export default function PendingimpoRecords() {
         </div>
       ),
     },
-    {
-      accessorKey: "created_at",
-      header: "Date",
-      cell: ({ row }) => (
-        <div className="text-sm min-w-[100px]">
-          {new Date(row.original.consultation.created_at).toLocaleDateString()}
-        </div>
-      ),
-    },
+    // {
+    //   accessorKey: "created_at",
+    //   header: "Date",
+    //   cell: ({ row }) => (
+    //     <div className="text-sm min-w-[100px]">
+    //       {new Date(row.original.consultation.created_at).toLocaleDateString()}
+    //     </div>
+    //   ),
+    // },
     {
       accessorKey: "action",
       header: "Action",
@@ -279,17 +274,25 @@ export default function PendingimpoRecords() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Pending Medical Consultations
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            {filteredData.length} pending consultation records
-          </p>
-        </div>
-        <hr className="border-gray mb-5 sm:mb-8" />
+       <div className="flex flex-col sm:flex-row gap-4 ">
+               <Button
+                 className="text-black p-2 mb-2 self-start"
+                 variant={"outline"}
+                 onClick={() => navigate(-1)}
+               >
+                 <ChevronLeft />
+               </Button>
+               <div className="flex-col items-center mb-4">
+                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                   Forwarded Medical Consultation Records
+                 </h1>
+                 <p className="text-xs sm:text-sm text-darkGray">
+                   Manage and view Medical Consultation Records
+                 </p>
+               </div>
+             </div>
+             <hr className="border-gray mb-5 sm:mb-8" />
 
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
