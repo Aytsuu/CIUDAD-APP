@@ -125,7 +125,7 @@ function SummonTrackingMain(){
                                         <div className="flex flex-row">
                                             <div className="flex justify-between items-center w-full">
                                                 <p className="text-primary flex items-center font-semibold text-xl mb-2">
-                                                    No. {item.sr_id}
+                                                    No. {item.sr_code}
                                                 </p>
                                             </div>
                                             <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />

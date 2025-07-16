@@ -20,6 +20,21 @@ class FileActionrequestView(generics.ListCreateAPIView):
     serializer_class = FileActionRequestSerializer
     queryset = ServiceChargeRequest.objects.all()
 
+# class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
+#     serializer_class = ServiceChargeRequestDetailSerializer
+#     lookup_field = 'sr_id'
+    
+#     def get_queryset(self):
+#         return ServiceChargeRequest.objects.filter(
+#             sr_payment_status="Paid",
+#             sr_type="Summon"
+#         ).select_related(
+#             'comp__cpnt'
+#         ).prefetch_related(
+#             'comp__complaintaccused_set__acsd',
+#             Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
+#         )
+
 class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
     serializer_class = ServiceChargeRequestDetailSerializer
     lookup_field = 'sr_id'
@@ -29,9 +44,10 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
             sr_payment_status="Paid",
             sr_type="Summon"
         ).select_related(
-            'comp__cpnt'
+            'comp__cpnt__add',  # Include complainant's address
+            'comp'  # Include complaint
         ).prefetch_related(
-            'comp__complaintaccused_set__acsd',
+            'comp__complaintaccused_set__acsd__add',  # Include accused's address
             Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
         )
         

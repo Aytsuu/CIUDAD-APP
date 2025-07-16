@@ -1,7 +1,5 @@
 from django.db import models
-from datetime import date
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
+from django.utils import timezone
 
 # Create your models here.
 # create models para as documets later
@@ -75,34 +73,38 @@ class Address(models.Model):
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)
     cpnt_name = models.CharField(max_length=100)
+    cpnt_gender = models.CharField(max_length=20)
+    cpnt_age = models.CharField(max_length=2)
+    cpnt_number = models.CharField(max_length=11)
+    cpnt_relation_to_respondent = models.CharField(max_length=20)
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='complainant')
     
     class Meta:
         db_table = 'complainant'
-        managed = False
 
 class Accused(models.Model):
     acsd_id = models.BigAutoField(primary_key=True)
     acsd_name = models.CharField(max_length=100)
+    acsd_age = models.CharField(max_length=2)
+    acsd_gender = models.CharField(max_length=20)
+    acsd_description = models.TextField()
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='accused')
     
     class Meta:
         db_table = 'accused'
-        managed = False
 
 class Complaint(models.Model):
     comp_id = models.BigAutoField(primary_key=True)
+    comp_location=models.CharField(max_length=255)
     comp_incident_type = models.CharField(max_length=100)
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
-    comp_category = models.CharField(max_length=100, default='Low')
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_is_archive = models.BooleanField(default=False)
     cpnt = models.ForeignKey(Complainant, related_name='complaints', on_delete=models.CASCADE)
     
     class Meta:
         db_table = 'complaint'
-        managed = False
 
 class ComplaintAccused(models.Model):
     ca_id = models.BigAutoField(primary_key=True)
@@ -123,14 +125,41 @@ class Complaint_File(models.Model):
         db_table = 'complaint_file'
         managed = False
 
-class ServiceChargeRequest(models.Model): 
+# class ServiceChargeRequest(models.Model): 
+#     sr_id = models.BigAutoField(primary_key=True)
+#     sr_req_date = models.DateTimeField(default=datetime.now)
+#     sr_status = models.CharField(null=True, blank=True)
+#     sr_payment_status = models.CharField(null=True, blank=True)
+#     sr_type = models.CharField(null=True, blank=True)
+#     sr_decision_date    = models.DateTimeField(null=True, blank=True)
+#     # staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, db_column='staff_id', null=True)
+#     comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+
+#     parent_summon = models.ForeignKey(
+#         'self',
+#         null=True, blank=True,
+#         on_delete=models.SET_NULL,
+#         related_name='escalated_file_actions'
+#     )
+#     file_action_file = models.OneToOneField(
+#         'ServiceChargeRequestFile', null=True, blank=True,
+#         on_delete=models.SET_NULL,
+#         related_name='file_action'
+#     )
+
+#     class Meta:
+#         db_table = 'service_charge_request'
+
+class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
+    sr_code = models.CharField(max_length=10, blank=True, null=True)  # <--- new field
+
     sr_req_date = models.DateTimeField(default=datetime.now)
     sr_status = models.CharField(null=True, blank=True)
     sr_payment_status = models.CharField(null=True, blank=True)
     sr_type = models.CharField(null=True, blank=True)
-    sr_decision_date    = models.DateTimeField(null=True, blank=True)
-    # staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, db_column='staff_id', null=True)
+    sr_decision_date = models.DateTimeField(null=True, blank=True)
+
     comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
 
     parent_summon = models.ForeignKey(
@@ -148,6 +177,12 @@ class ServiceChargeRequest(models.Model):
     class Meta:
         db_table = 'service_charge_request'
 
+    def save(self, *args, **kwargs):
+        if self.comp and not self.sr_code:
+            case_id = f"{self.comp.id:03}"
+            year_suffix = timezone.now().year % 100
+            self.sr_code = f"{case_id}-{year_suffix:02}"
+        super().save(*args, **kwargs)
 
 class CaseActivity(models.Model):
     ca_id = models.BigAutoField(primary_key=True)

@@ -3,6 +3,7 @@ import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc 
 
 export type ServiceChargeRequest = {
     sr_id: string;
+    sr_code: string;
     complainant_name: string;
     accused_names: string[];
     incident_type: string;
@@ -32,13 +33,27 @@ export type CaseActivity = {
     };
 };
 
+export type FormattedAddress = string;
+
+export type AddressDetails = {
+    add_province: string;
+    add_city: string;
+    add_barangay: string;
+    add_street: string;
+    sitio_name?: string;
+    add_external_sitio?: string;
+    formatted_address: FormattedAddress; // Add this new field
+};
+
 export type CaseDetails = {
     sr_id: string;
+    sr_code: string;
     sr_status: string;
     sr_decision_date: string;
     complainant: {
         cpnt_id: string;
         cpnt_name: string;
+        address: AddressDetails;
     };
     complaint: {
         comp_id: string;
@@ -48,6 +63,7 @@ export type CaseDetails = {
         accused: {
             acsd_id: string;
             acsd_name: string;
+            address: AddressDetails;
         }[];
     };
     case_activities: CaseActivity[];
@@ -61,6 +77,36 @@ export const useGetCaseDetails = (srId: string) => {
         staleTime: 5000,
     });
 };
+
+// export type CaseDetails = {
+//     sr_id: string;
+//     sr_status: string;
+//     sr_decision_date: string;
+//     complainant: {
+//         cpnt_id: string;
+//         cpnt_name: string;
+//     };
+//     complaint: {
+//         comp_id: string;
+//         comp_incident_type: string;
+//         comp_allegation: string;
+//         comp_datetime: string;
+//         accused: {
+//             acsd_id: string;
+//             acsd_name: string;
+//         }[];
+//     };
+//     case_activities: CaseActivity[];
+// };
+
+// export const useGetCaseDetails = (srId: string) => {
+//     return useQuery<CaseDetails>({
+//         queryKey: ['caseDetails', srId],
+//         queryFn: () => getCaseDetails(srId),
+//         enabled: !!srId, 
+//         staleTime: 5000,
+//     });
+// };
 
 export type CaseSuppDoc = {
     csd_id: string;

@@ -18,11 +18,6 @@ export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
   const { mutate: deleteSuppDoc} = useDeleteSuppDoc()
   const hasDocuments = suppDocs.length > 0
 
-  // const handleEdit = (docId: string) => {
-  //   // Handle edit functionality
-  //   console.log("Edit document:", docId)
-  // }
-
   const handleDelete = (csd_id: string) => {
     deleteSuppDoc(csd_id)
   }

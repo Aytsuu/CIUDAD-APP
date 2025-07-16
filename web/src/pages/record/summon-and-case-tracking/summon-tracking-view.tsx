@@ -129,7 +129,7 @@ function SummonTrackingView() {
               <ChevronLeft />
             </Button>
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-              Case No. {caseDetails?.sr_id}
+              Case No. {caseDetails?.sr_code}
             </h1>
           </div>
         </div>
@@ -245,24 +245,27 @@ function SummonTrackingView() {
               </div>
 
               {!isCaseClosed && (
-                <DialogLayout
-                  trigger={<Button>+ Create New Schedule</Button>}
-                  title="Create New Schedule"
-                  description="Schedule a new summon."
-                  mainContent={
-                    <CreateNewSummon 
-                      sr_id={sr_id} 
-                      complainant = {caseDetails?.complainant.cpnt_name || ""}
-                      accused={accusedNames}
-                      // complainant_address = {}
-                      // accused_address = {}
-                      incident_type = {caseDetails?.complaint.comp_incident_type || ''}
-                      onSuccess={() => setIsDialogOpen(false)} 
-                    />
-                  }
-                  isOpen={isDialogOpen}
-                  onOpenChange={setIsDialogOpen}
-                />
+               <DialogLayout
+                trigger={<Button>+ Create New Schedule</Button>}
+                title="Create New Schedule"
+                description="Schedule a new summon."
+                mainContent={
+                  <CreateNewSummon 
+                    sr_id={sr_id} 
+                    sr_code = {caseDetails?.sr_code || ''}
+                    complainant={caseDetails?.complainant.cpnt_name || ""}
+                    accused={accusedNames}
+                    complainant_address={caseDetails?.complainant.address.formatted_address || ""}
+                    accused_address={
+                      caseDetails?.complaint.accused.map(accused => accused.address.formatted_address) || []
+                    }
+                    incident_type={caseDetails?.complaint.comp_incident_type || ''}
+                    onSuccess={() => setIsDialogOpen(false)} 
+                  />
+                }
+                isOpen={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+              />
               )}
             </div>
             <div>
