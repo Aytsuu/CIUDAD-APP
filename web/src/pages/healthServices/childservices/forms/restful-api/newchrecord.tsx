@@ -18,6 +18,7 @@ import {
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 import { api2 } from "@/api/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 export interface AddRecordArgs {
   submittedData: FormData;
   staff: string | null;
@@ -35,6 +36,7 @@ export async function addChildHealthRecord({
   submittedData,
   staff,
 }: AddRecordArgs): Promise<AddRecordResult> {
+
   // Validate required fields
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -198,7 +200,6 @@ export async function addChildHealthRecord({
       created_at: new Date().toISOString(),
       birthwt: Number(submittedData.vitalSigns?.[0]?.wt) ,
       date_completed : null,
-      is_anemic: false,
 
      
     });
@@ -217,7 +218,6 @@ export async function addChildHealthRecord({
       birthwt: Number(submittedData.vitalSigns?.[0]?.wt) ,
       date_completed : null,
       updated_at: new Date().toISOString(),
-      is_anemic: submittedData.anemic?.is_anemic || false,
 
     });
   }
@@ -251,6 +251,7 @@ export async function addChildHealthRecord({
        );
      }
 
+
   return {
     patrec_id,
     chrec_id,
@@ -275,12 +276,14 @@ import { toast } from "sonner";
 
 export const useChildHealthRecordMutation = () => {
   const navigate = useNavigate();
+  const queryClient=useQueryClient()
 
   return useMutation({
     mutationFn: addChildHealthRecord,
     onSuccess: () => {
       toast.success("Child health record created successfully!");
-         
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
+ 
       navigate(-1);
     },
     onError: (error: unknown) => {

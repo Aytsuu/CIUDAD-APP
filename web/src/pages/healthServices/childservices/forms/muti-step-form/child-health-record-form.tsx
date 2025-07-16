@@ -9,17 +9,15 @@ import ChildHRPage3 from "./child-hr-page3"
 import LastPage from "./child-hr-page-last"
 import { api2 } from "@/api/api"
 import { useAuth } from "@/context/AuthContext"
-import  { FormData, VitalSignType, VaccineRecord, ExistingVaccineRecord } from "@/form-schema/chr-schema/chr-schema"
+import { FormData, VitalSignType, VaccineRecord, ExistingVaccineRecord } from "@/form-schema/chr-schema/chr-schema"
 import type { CHSSupplementStat } from "./types"
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator"
 import { useChildHealthRecordMutation } from "../restful-api/newchrecord"
 import { useUpdateChildHealthRecordMutation } from "../restful-api/newchhistory"
 import type { Patient } from "@/components/ui/patientSearch"
 import { useQuery } from "@tanstack/react-query"
-import {Medicine} from "./types"
-import {initialFormData} from "./types"
-
-
+import { Medicine } from "./types"
+import { initialFormData } from "./types"
 
 export const isToday = (dateString: string) => {
   if (!dateString) return false
@@ -33,9 +31,8 @@ export default function ChildHealthRecordForm() {
   const navigate = useNavigate()
   const params = useParams()
 
-  const mode =(location.state?.params?.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization" | undefined) ||
+  const mode = (location.state?.params?.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization" | undefined) ||
     (params.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization" | undefined)
-  // console.log("Current mode:", mode)
 
   const { chrecId, chhistId, patId } = location.state?.params || {}
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord"
@@ -76,7 +73,6 @@ export default function ChildHealthRecordForm() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
 
-  // TanStack Query for fetching child health record
   const { 
     data: childHealthRecord, 
     isLoading: isRecordLoading, 
@@ -89,34 +85,30 @@ export default function ChildHealthRecordForm() {
       return response.data;
     },
     enabled: !!chrecId && (isaddnewchildhealthrecordMode || isImmunizationMode),
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    staleTime: 0,
   });
 
-  const getLatestNoteForDate = (notesArray: any[], dateString: string) => {
-    const targetDate = dateString.split("T")[0]
-    const notesForDate = notesArray.filter(
-      (note: any) => note.created_at && note.created_at.split("T")[0] === targetDate,
-    )
-    if (notesForDate.length === 0) return null
-    const sortedNotes = [...notesForDate].sort(
-      (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    )
-    return sortedNotes[0]
-  }
+  const getLatestNoteForRecord = (notesArray: any[]) => {
+    if (!notesArray || notesArray.length === 0) return null;
+    
+    // Sort notes by created_at in descending order
+    const sortedNotes = [...notesArray].sort(
+      (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    return sortedNotes[0];
+  };
 
   const transformApiDataToFormData = (chhistRecord: any): FormData => {
-    console.log("Starting transformation with raw chhistRecord:", chhistRecord)
     if (!chhistRecord) {
-      console.error("chhistRecord is empty or not in expected format.")
-      return {} as FormData
+      return {} as FormData;
     }
 
-    const chrecDetails = chhistRecord?.chrec_details
-    const patrecDetails = chrecDetails?.patrec_details
-    const patient = patrecDetails?.pat_details
-    const familyHeadInfo = patient?.family_head_info
+    const chrecDetails = chhistRecord?.chrec_details;
+    const patrecDetails = chrecDetails?.patrec_details;
+    const patient = patrecDetails?.pat_details;
+    const familyHeadInfo = patient?.family_head_info;
 
-    // Extract and transform vaccines
     const vaccinesFromApi: VaccineRecord[] =
       chhistRecord.child_health_vaccines?.map((vac: any) => ({
         vacStck_id: vac.vacStck_id?.toString() || "",
@@ -126,7 +118,7 @@ export default function ChildHealthRecordForm() {
         vac_id: vac.vac_id?.toString() || "",
         vac_name: vac.vaccine_stock_details?.vaccinelist?.vac_name || "Unknown",
         expiry_date: vac.vaccine_stock_details?.inv_details?.expiry_date || "",
-      })) || []
+      })) || [];
 
     const existingVaccinesFromApi: ExistingVaccineRecord[] =
       chhistRecord.child_health_existing_vaccines?.map((exVac: any) => ({
@@ -135,9 +127,9 @@ export default function ChildHealthRecordForm() {
         dose: exVac.dose?.toString() || "",
         date: exVac.date_administered ? new Date(exVac.date_administered).toISOString().split("T")[0] : "",
         vac_name: exVac.vaccine_list_details?.vac_name || "Unknown",
-      })) || []
+      })) || [];
 
-    const transformedData: FormData = {
+    return {
       ...initialFormData,
       chhist_status: chhistRecord.status,
       familyNo: chrecDetails?.family_no || "",
@@ -189,71 +181,65 @@ export default function ChildHealthRecordForm() {
       vaccines: vaccinesFromApi,
       hasExistingVaccination: chhistRecord.has_existing_vaccination || existingVaccinesFromApi.length > 0,
       existingVaccines: existingVaccinesFromApi,
-    }
-    console.log("Transformed data (before return):", transformedData)
-    return transformedData
-  }
+    };
+  };
 
   useEffect(() => {
     const fetchRecordData = async () => {
       if ((!isaddnewchildhealthrecordMode && !isImmunizationMode) || !chrecId || !chhistId) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
       try {
-        setIsLoading(true)
-        setError(null)
-        console.log("🚀 Fetching data for chrecId:", chrecId, "and chhistId:", chhistId, "in mode:", mode)
-        if (!chrecId || !chhistId) {
-          throw new Error("Missing chrecId or chhistId in location state for update/immunization mode")
-        }
-
-        // Use the cached data if available
+        setIsLoading(true);
+        setError(null);
+        
         const chrecRecord = childHealthRecord && childHealthRecord.length > 0 ? childHealthRecord[0] : null;
         if (!chrecRecord) {
-          throw new Error("Parent child health record (chrec) not found.")
+          throw new Error("Parent child health record (chrec) not found.");
         }
 
-        const allHistoricalVitalSigns: VitalSignType[] = []
-        const allHistoricalMedicines: Medicine[] = []
-        const allHistoricalNutritionalStatuses: any[] = []
-        const allHistoricalBFdates: string[] = []
-        const allHistoricalSupplementStatuses: CHSSupplementStat[] = []
+        const allHistoricalVitalSigns: VitalSignType[] = [];
+        const allHistoricalMedicines: Medicine[] = [];
+        const allHistoricalNutritionalStatuses: any[] = [];
+        const allHistoricalBFdates: string[] = [];
+        const allHistoricalSupplementStatuses: CHSSupplementStat[] = [];
         const allPatientHistoricalDisabilities: {
-          id: number
-          pd_id: number
-          status: string
+          id: number;
+          pd_id: number;
+          status: string;
           disability_details: {
-            disability_id: number
-            disability_name: string
-            created_at: string
-          }
-        }[] = []
+            disability_id: number;
+            disability_name: string;
+            created_at: string;
+          };
+        }[] = [];
 
         chrecRecord.child_health_histories?.forEach((history: any) => {
-          const vitalSignsFromHistory: VitalSignType[] =
-            history.child_health_vital_signs?.map((vital: any) => {
-              const vitalSignDate = vital.created_at
-              const latestNoteForThisVitalSign = getLatestNoteForDate(history.child_health_notes || [], vitalSignDate)
-              return {
-                date: vitalSignDate ? vitalSignDate.split("T")[0] : "",
-                temp: vital.temp ? Number.parseFloat(vital.temp) : undefined,
-                wt: vital.bm_details?.weight ? Number.parseFloat(vital.bm_details.weight) : undefined,
-                ht: vital.bm_details?.height ? Number.parseFloat(vital.bm_details.height) : undefined,
-                age: vital.bm_details?.age || "",
-                notes: latestNoteForThisVitalSign?.chn_notes || "",
-                follov_description: latestNoteForThisVitalSign?.followv_details?.followv_description || "",
-                followUpVisit: latestNoteForThisVitalSign?.followv_details?.followv_date || "",
-                chvital_id: vital.chvital_id?.toString() || undefined,
-                bm_id: vital.bm_details?.bm_id?.toString() || undefined,
-                chnotes_id: latestNoteForThisVitalSign?.chnotes_id?.toString() || undefined,
-                followv_id: latestNoteForThisVitalSign?.followv_details?.followv_id?.toString() || undefined,
-                followv_status: latestNoteForThisVitalSign?.followv_details?.followv_status || "pending",
-              }
-            }) || []
-          allHistoricalVitalSigns.push(...vitalSignsFromHistory)
+          // Get the latest note for this history record
+          const latestNote = getLatestNoteForRecord(history.child_health_notes || []);
 
+          // Process vital signs
+          const vitalSignsFromHistory: VitalSignType[] =
+            history.child_health_vital_signs?.map((vital: any) => ({
+              date: vital.created_at ? new Date(vital.created_at).toISOString().split("T")[0] : "",
+              temp: vital.temp ? Number.parseFloat(vital.temp) : undefined,
+              wt: vital.bm_details?.weight ? Number.parseFloat(vital.bm_details.weight) : undefined,
+              ht: vital.bm_details?.height ? Number.parseFloat(vital.bm_details.height) : undefined,
+              age: vital.bm_details?.age || "",
+              notes: latestNote?.chn_notes || "",
+              follov_description: latestNote?.followv_details?.followv_description || "",
+              followUpVisit: latestNote?.followv_details?.followv_date || "",
+              chvital_id: vital.chvital_id?.toString() || undefined,
+              bm_id: vital.bm_details?.bm_id?.toString() || undefined,
+              chnotes_id: latestNote?.chnotes_id?.toString() || undefined,
+              followv_id: latestNote?.followv_details?.followv_id?.toString() || undefined,
+              followv_status: latestNote?.followv_details?.followv_status || "pending",
+            })) || [];
+          allHistoricalVitalSigns.push(...vitalSignsFromHistory);
+
+          // Process medicines
           const medicinesFromHistory: Medicine[] =
             history.child_health_supplements?.map((supp: any) => ({
               minv_id: supp.medrec_details?.minv_id?.toString() || "",
@@ -263,9 +249,10 @@ export default function ChildHealthRecordForm() {
               dosage: supp.medrec_details?.minv_details?.minv_dsg || undefined,
               dosageUnit: supp.medrec_details?.minv_details?.minv_dsg_unit || "",
               form: supp.medrec_details?.minv_details?.minv_form || "",
-            })) || []
-          allHistoricalMedicines.push(...medicinesFromHistory)
+            })) || [];
+          allHistoricalMedicines.push(...medicinesFromHistory);
 
+          // Process nutritional status
           const nutritionalStatusFromHistory = history.nutrition_statuses?.[0]
             ? {
                 nutstat_id: history.nutrition_statuses[0].nutstat_id?.toString() || undefined,
@@ -279,14 +266,16 @@ export default function ChildHealthRecordForm() {
                 date: history.nutrition_statuses[0].created_at,
                 edemaSeverity: history.nutrition_statuses[0].edemaSeverity || "None",
               }
-            : null
+            : null;
           if (nutritionalStatusFromHistory) {
-            allHistoricalNutritionalStatuses.push(nutritionalStatusFromHistory)
+            allHistoricalNutritionalStatuses.push(nutritionalStatusFromHistory);
           }
 
-          const BFdatesFromHistory = history.exclusive_bf_checks?.map((check: any) => check.ebf_date) || []
-          allHistoricalBFdates.push(...BFdatesFromHistory)
+          // Process BF dates
+          const BFdatesFromHistory = history.exclusive_bf_checks?.map((check: any) => check.ebf_date) || [];
+          allHistoricalBFdates.push(...BFdatesFromHistory);
 
+          // Process supplement statuses
           const supplementStatusesFromHistory: CHSSupplementStat[] =
             history.supplements_statuses?.map((status: any) => ({
               chssupplementstat_id: status.chssupplementstat_id,
@@ -298,89 +287,80 @@ export default function ChildHealthRecordForm() {
               updated_at: status.updated_at,
               chsupplement: status.chsupplement,
               date_completed: status.date_completed,
-            })) || []
-          allHistoricalSupplementStatuses.push(...supplementStatusesFromHistory)
+            })) || [];
+          allHistoricalSupplementStatuses.push(...supplementStatusesFromHistory);
 
+          // Process disabilities
           const disabilitiesFromHistory =
             history.disabilities?.map((d: any) => ({
               id: d.disability_details?.disability_id || "",
               pd_id: Number(d.pd_id) || "",
               status: d.status || "active",
               disability_details: d.disability_details,
-            })) || []
-          allPatientHistoricalDisabilities.push(...disabilitiesFromHistory)
-        })
+            })) || [];
+          allPatientHistoricalDisabilities.push(...disabilitiesFromHistory);
+        });
 
-        setHistoricalVitalSigns(allHistoricalVitalSigns)
-        setHistoricalMedicines(allHistoricalMedicines)
-        setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses)
-        setHistoricalBFdates(allHistoricalBFdates)
-        setHistoricalSupplementStatuses(allHistoricalSupplementStatuses)
-        setPatientHistoricalDisabilities(allPatientHistoricalDisabilities)
+        setHistoricalVitalSigns(allHistoricalVitalSigns);
+        setHistoricalMedicines(allHistoricalMedicines);
+        setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses);
+        setHistoricalBFdates(allHistoricalBFdates);
+        setHistoricalSupplementStatuses(allHistoricalSupplementStatuses);
+        setPatientHistoricalDisabilities(allPatientHistoricalDisabilities);
 
         const selectedChhistRecord = chrecRecord.child_health_histories?.find(
           (history: any) => history.chhist_id === Number.parseInt(chhistId),
-        )
+        );
         if (!selectedChhistRecord) {
-          throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`)
+          throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`);
         }
 
-        setApiData(selectedChhistRecord)
+        setApiData(selectedChhistRecord);
 
         const disabilitiesForSelectedRecord =
           selectedChhistRecord.disabilities?.map((d: any) => ({
             id: d.disability_details?.disability_id || "",
             pd_id: Number(d.pd_id) || "",
             status: d.status || "active",
-          })) || []
-        setOriginalDisabilityRecords(disabilitiesForSelectedRecord)
+          })) || [];
+        setOriginalDisabilityRecords(disabilitiesForSelectedRecord);
 
-        if (selectedChhistRecord.child_health_notes && selectedChhistRecord.child_health_notes.length > 0) {
-          const sortedNotes = [...selectedChhistRecord.child_health_notes].sort(
-            (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-          )
-          const latestNote = sortedNotes[0]
-          setLatestHistoricalNoteContent(latestNote.chn_notes || "")
-          setLatestHistoricalFollowUpDescription(latestNote.followv_details?.followv_description || "")
-          setLatestHistoricalFollowUpDate(latestNote.followv_details?.followv_date || "")
-        } else {
-          setLatestHistoricalNoteContent("")
-          setLatestHistoricalFollowUpDescription("")
-          setLatestHistoricalFollowUpDate("")
-        }
+        // Get the latest note for the selected record
+        const latestNote = getLatestNoteForRecord(selectedChhistRecord.child_health_notes || []);
+        setLatestHistoricalNoteContent(latestNote?.chn_notes || "");
+        setLatestHistoricalFollowUpDescription(latestNote?.followv_details?.followv_description || "");
+        setLatestHistoricalFollowUpDate(latestNote?.followv_details?.followv_date || "");
 
-        const recordData = transformApiDataToFormData(selectedChhistRecord)
-        console.log("📝 Final form data (after transformation):", recordData)
-        setFormData(recordData)
+        const recordData = transformApiDataToFormData(selectedChhistRecord);
+        setFormData(recordData);
 
         if (recordData.pat_id) {
-          setSelectedPatient({ pat_id: recordData.pat_id } as Patient)
-          const patientFullName = `${recordData.childFname || ""} ${recordData.childLname || ""}`.trim()
-          const fullPatientIdString = `${recordData.pat_id}${patientFullName ? `,${patientFullName}` : ""}`
-          setSelectedPatientId(fullPatientIdString)
+          setSelectedPatient({ pat_id: recordData.pat_id } as Patient);
+          const patientFullName = `${recordData.childFname || ""} ${recordData.childLname || ""}`.trim();
+          const fullPatientIdString = `${recordData.pat_id}${patientFullName ? `,${patientFullName}` : ""}`;
+          setSelectedPatientId(fullPatientIdString);
         }
       } catch (error) {
-        console.error("❌ Error fetching record data:", error)
-        setError(`Failed to load record data: ${error instanceof Error ? error.message : "Unknown error"}`)
+        console.error("Error fetching record data:", error);
+        setError(`Failed to load record data: ${error instanceof Error ? error.message : "Unknown error"}`);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
     
-    fetchRecordData()
-  }, [chrecId, chhistId, mode, isaddnewchildhealthrecordMode, isImmunizationMode, childHealthRecord])
+    fetchRecordData();
+  }, [chrecId, chhistId, mode, isaddnewchildhealthrecordMode, isImmunizationMode, childHealthRecord]);
 
+  // Rest of the component remains the same...
   const updateFormData = (data: Partial<FormData>) => {
-    setFormData((prev) => (prev ? { ...prev, ...data } : (data as FormData)))
-  }
+    setFormData((prev) => (prev ? { ...prev, ...data } : (data as FormData)));
+  };
 
   const handleUpdateHistoricalSupplementStatus = (updatedStatuses: CHSSupplementStat[]) => {
-    // Create a map of the updated statuses for easy lookup
     const updatedStatusMap = new Map(
       updatedStatuses.map(status => [status.chssupplementstat_id, status])
     );
   
-    // Merge the changes while preserving other statuses
     const mergedStatuses = historicalSupplementStatuses.map(status => {
       const updatedStatus = updatedStatusMap.get(status.chssupplementstat_id);
       return updatedStatus ? updatedStatus : status;
@@ -389,18 +369,16 @@ export default function ChildHealthRecordForm() {
     setHistoricalSupplementStatuses(mergedStatuses);
     updateFormData({ historicalSupplementStatuses: mergedStatuses });
   };
-  const handleSubmit = async (submittedData: FormData) => {
-    setIsSubmitting(true)
-    setError(null)
-    try {
-      console.log("Submitted data received in ChildHealthRecordForm:", submittedData)
-      console.log("Medicines in submittedData:", submittedData.medicines)
 
+  const handleSubmit = async (submittedData: FormData) => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
       if (isNewchildhealthrecord) {
         await newchildhealthrecordMutation.mutateAsync({
           submittedData: submittedData,
           staff: staffId || null,
-        })
+        });
       } else {
         await updatechildhealthrecordmutation.mutateAsync({
           submittedData: submittedData,
@@ -408,26 +386,26 @@ export default function ChildHealthRecordForm() {
           todaysHistoricalRecord: historicalVitalSigns.find((vital) => isToday(vital.date)),
           originalRecord: apiData,
           originalDisabilityRecords: originalDisabilityRecords,
-        })
+        });
       }
 
-      setFormData(initialFormData)
-      setCurrentPage(1)
-      setSelectedPatient(null)
-      setSelectedPatientId("")
+      setFormData(initialFormData);
+      setCurrentPage(1);
+      setSelectedPatient(null);
+      setSelectedPatientId("");
     } catch (Error) {
-      console.error("Error submitting form:", Error)
+      console.error("Error submitting form:", Error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (isLoading || isRecordLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div className="text-gray-500">Loading record data...</div>
       </div>
-    )
+    );
   }
 
   if (error || recordError) {
@@ -436,7 +414,7 @@ export default function ChildHealthRecordForm() {
         <div className="text-red-500">{error || recordError?.message}</div>
         <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
-    )
+    );
   }
 
   if ((isaddnewchildhealthrecordMode || isImmunizationMode) && !formData) {
@@ -445,7 +423,7 @@ export default function ChildHealthRecordForm() {
         <div className="text-red-500">No record data available to edit/immunize</div>
         <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -455,11 +433,11 @@ export default function ChildHealthRecordForm() {
           className="self-start p-2 text-black"
           variant={"outline"}
           onClick={() => {
-            setFormData(initialFormData)
-            setCurrentPage(1)
-            navigate(-1)
-            setSelectedPatient(null)
-            setSelectedPatientId("")
+            setFormData(initialFormData);
+            setCurrentPage(1);
+            navigate(-1);
+            setSelectedPatient(null);
+            setSelectedPatientId("");
           }}
         >
           <ChevronLeft />
@@ -518,12 +496,12 @@ export default function ChildHealthRecordForm() {
           onUpdateHistoricalSupplementStatus={handleUpdateHistoricalSupplementStatus}
           latestHistoricalNoteContent={latestHistoricalNoteContent}
           latestHistoricalFollowUpDescription={latestHistoricalFollowUpDescription}
-          isSubmitting={isSubmitting}
           latestHistoricalFollowUpDate={latestHistoricalFollowUpDate}
           historicalMedicines={historicalMedicines}
           mode={mode || "newchildhealthrecord"}
+          isSubmitting={isSubmitting}
         />
       )}
     </>
-  )
+  );
 }

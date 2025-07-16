@@ -113,7 +113,6 @@ export async function createSupplementStatus(payload: {
   updated_at?: string
   birthwt: number
    date_completed : string | null
-   is_anemic?: boolean
 
  
 }) {

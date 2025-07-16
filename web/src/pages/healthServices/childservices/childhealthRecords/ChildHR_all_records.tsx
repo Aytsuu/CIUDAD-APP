@@ -20,66 +20,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api2 } from "@/api/api";
 import { Toaster } from "sonner";
+import {getChildHealthRecords,getNutrionalSummary} from "../forms/restful-api/get"
+import {useChildHealthRecords} from "../forms/queries/fetchQueries";
+import {ChildHealthRecord } from "../forms/muti-step-form/types";
 
-export interface ChildHealthRecord {
-  chrec_id: number;
-  pat_id: string;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  dob: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  landmarks: string;
-  pat_type: string;
-  address: string;
-  mother_fname: string;
-  mother_lname: string;
-  mother_mname: string;
-  mother_contact: string;
-  mother_occupation: string;
-  father_fname: string;
-  father_lname: string;
-  father_mname: string;
-  father_contact: string;
-  father_occupation: string;
-  family_no: string;
-  birth_weight: number;
-  birth_height: number;
-  type_of_feeding: string;
-  delivery_type: string;
-  place_of_delivery_type: string;
-  pod_location: string;
-  pod_location_details?: string;
-  health_checkup_count: number;
-  birth_order?: string;
-  tt_status?: string; // Optional field for TT status
-}
 
-export const getChildHealthRecords = async () => {
-  try {
-    const response = await api2.get("/child-health/records/");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching records:", error);
-    throw error;
-  }
-};
 
 export default function AllChildHealthRecords() {
-  const { data: childHealthRecords, isLoading } = useQuery({
-    queryKey: ["childHealthRecords"],
-    queryFn: getChildHealthRecords,
-    refetchOnMount: false, // Changed from true to avoid unnecessary refetches
-    staleTime: 300000, // Increased cache time to 5 minutes
-    gcTime: 600000, // Cache time for garbage collection
-  });
+  const { data: childHealthRecords, isLoading } = useChildHealthRecords();
 
   const formatChildHealthData = React.useCallback((): ChildHealthRecord[] => {
     if (!childHealthRecords) return [];
@@ -140,6 +88,7 @@ export default function AllChildHealthRecords() {
     });
   }, [childHealthRecords]);
 
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);

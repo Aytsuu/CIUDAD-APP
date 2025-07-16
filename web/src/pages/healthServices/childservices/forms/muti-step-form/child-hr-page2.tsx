@@ -213,11 +213,20 @@ export default function ChildHRPage2({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
+    <>
+     <CardLayout
+    cardClassName="px-4"
+    contentClassName="space-y-8"
+    title={
+      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
+        Page 2 of 4
+      </div>
+    }
+    content={
       <Form {...form}>
         <form
           onSubmit={handleSubmit(handleNext, (errors) => {
-            console.error("Form validation errors:", errors)
+            console.error("Form validation errors:", errors);
           })}
           className="space-y-8"
           noValidate
@@ -441,7 +450,7 @@ export default function ChildHRPage2({
                           {Array.from(
                             new Map(
                               patientHistoricalDisabilities
-                                .filter((d) => d.disability_details) // Filter out any null disability_details
+                                .filter((d) => d.disability_details)
                                 .map((d) => [d.disability_details.disability_id, d]),
                             ).values(),
                           ).map((disability, index) => (
@@ -467,10 +476,10 @@ export default function ChildHRPage2({
                             <DisabilityComponent
                               selectedDisabilities={field.value || []}
                               onDisabilitySelectionChange={(selected) => {
-                                field.onChange(selected)
+                                field.onChange(selected);
                               }}
                               isRequired={false}
-                              historicalDisabilityIds={historicalDisabilityIds} // Pass the historical IDs
+                              historicalDisabilityIds={historicalDisabilityIds}
                             />
                             <FormMessage />
                           </FormItem>
@@ -488,19 +497,25 @@ export default function ChildHRPage2({
               type="button"
               variant="outline"
               onClick={handlePrevious}
-              className="flex items-center gap-2 px-6 py-2 hover:bg-gray-50 transition-colors duration-200 bg-transparent"
+              className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent"
               disabled={isSubmitting}
             >
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <Button type="submit" disabled={isSubmitting } className="flex items-center gap-2">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex items-center gap-2  px-6"
+            >
               {isSubmitting ? "Processing..." : "Continue"}
               <ChevronLeft className="h-4 w-4 rotate-180 ml-2" />
             </Button>
           </div>
         </form>
       </Form>
-    </div>
+    }
+  />
+    </>
   )
 }

@@ -18,6 +18,8 @@ import { updateSupplementStatus } from "./updateAPI";
 import { processMedicineRequest } from "./createAPI";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { AddRecordArgs, AddRecordResult } from "../muti-step-form/types";
+import { useQueryClient } from "@tanstack/react-query";
+
 
 export async function updateChildHealthRecord({
   submittedData,
@@ -154,54 +156,39 @@ export async function updateChildHealthRecord({
       });
     }
 
+    // Handle historical supplement statuses updates
+    if (submittedData.historicalSupplementStatuses?.length) {
+      // Transform the submitted data into the required update format
+      const updates = submittedData.historicalSupplementStatuses
+        .filter(
+          (
+            status
+          ): status is {
+            chssupplementstat_id: number;
+            date_completed?: string | null;
+          } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
+        )
+        .map((status) => ({
+          chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
+          date_completed: status.date_completed || null,
+        }));
 
-
-
-
-
- // Handle historical supplement statuses updates
- if (submittedData.historicalSupplementStatuses?.length) {
-  // Transform the submitted data into the required update format
-  const updates = submittedData.historicalSupplementStatuses
-    .filter(
-      (
-        status
-      ): status is {
-        chssupplementstat_id: number;
-        date_completed?: string | null;
-      } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
-    )
-    .map((status) => ({
-      chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
-      date_completed: status.date_completed || null,
-    }));
-
-  if (updates.length > 0) {
-    try {
-      await updateSupplementStatus(updates);
-      console.log(
-        `Successfully updated ${updates.length} supplement status records`
-      );
-    } catch (error) {
-      console.error("Supplement status update failed:", error);
-      throw new Error(
-        `Failed to update supplement statuses: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      if (updates.length > 0) {
+        try {
+          await updateSupplementStatus(updates);
+          console.log(
+            `Successfully updated ${updates.length} supplement status records`
+          );
+        } catch (error) {
+          console.error("Supplement status update failed:", error);
+          throw new Error(
+            `Failed to update supplement statuses: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
+      }
     }
-  }
-}
-
-
-
-
-
-
-
-
-
-
   } else {
     const newChhist = await createChildHealthHistory({
       created_at: new Date().toISOString(),
@@ -319,7 +306,6 @@ export async function updateChildHealthRecord({
         created_at: new Date().toISOString(),
         birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
         date_completed: null,
-        is_anemic: false,
       });
     }
 
@@ -350,44 +336,42 @@ export async function updateChildHealthRecord({
         birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
         date_completed: null,
         updated_at: new Date().toISOString(),
-        is_anemic: submittedData.anemic?.is_anemic || false,
       });
     }
-   // Handle historical supplement statuses updates
-   if (submittedData.historicalSupplementStatuses?.length) {
-    // Transform the submitted data into the required update format
-    const updates = submittedData.historicalSupplementStatuses
-      .filter(
-        (
-          status
-        ): status is {
-          chssupplementstat_id: number;
-          date_completed?: string | null;
-        } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
-      )
-      .map((status) => ({
-        chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
-        date_completed: status.date_completed || null,
-      }));
+    // Handle historical supplement statuses updates
+    if (submittedData.historicalSupplementStatuses?.length) {
+      // Transform the submitted data into the required update format
+      const updates = submittedData.historicalSupplementStatuses
+        .filter(
+          (
+            status
+          ): status is {
+            chssupplementstat_id: number;
+            date_completed?: string | null;
+          } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
+        )
+        .map((status) => ({
+          chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
+          date_completed: status.date_completed || null,
+        }));
 
-    if (updates.length > 0) {
-      try {
-        await updateSupplementStatus(updates);
-        console.log(
-          `Successfully updated ${updates.length} supplement status records`
-        );
-      } catch (error) {
-        console.error("Supplement status update failed:", error);
-        throw new Error(
-          `Failed to update supplement statuses: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
+      if (updates.length > 0) {
+        try {
+          await updateSupplementStatus(updates);
+          console.log(
+            `Successfully updated ${updates.length} supplement status records`
+          );
+        } catch (error) {
+          console.error("Supplement status update failed:", error);
+          throw new Error(
+            `Failed to update supplement statuses: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
       }
     }
-  }
 
-   
   }
 
   return {
@@ -403,15 +387,18 @@ export async function updateChildHealthRecord({
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { sub } from "date-fns";
+
 
 export const useUpdateChildHealthRecordMutation = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: updateChildHealthRecord,
     onSuccess: () => {
-      toast.success("Child health record updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
+
+      toast.success("Child health record created successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {

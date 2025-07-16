@@ -13,6 +13,8 @@ urlpatterns = [
     path('supplement-status/', ChildHealthSupplementStatusView.as_view(), name='child-health-supplement-status'),
     path('update-supplement-status/', UpdateChildHealthSupplementsStatusView.as_view(), name='update-child-health-supplement-status'),
     path('nutritional-status/', NutritionalStatusView.as_view(), name='nutritional-status'),
+    path('nutritional-summary/<int:chrec_id>/',ChildHealthNutrionalStatusListView.as_view(),name='child-nutrional-status'),
+   
     path('exclusive-bf-check/', ExclusiveBFCheckView.as_view(), name='exclusive-bf-check'),
     path('immunization-history/', ChildHealthImmunizationHistoryView.as_view(), name='immunization-history'),
     path('child-vitalsigns/', ChildHealthVitalSignsView.as_view(), name='child-vitalsigns'),

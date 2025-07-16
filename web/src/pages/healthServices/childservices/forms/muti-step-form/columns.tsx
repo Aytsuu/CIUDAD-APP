@@ -4,11 +4,11 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { Pencil } from "lucide-react";
-import type { 
-  VitalSignType, 
-  NutritionalStatusType 
+import type {
+  VitalSignType,
+  NutritionalStatusType,
 } from "@/form-schema/chr-schema/chr-schema";
-import {Medicine} from "./types"
+import { Medicine } from "./types";
 import type { CHSSupplementStat } from "./types";
 import type { Control, UseFormHandleSubmit } from "react-hook-form";
 
@@ -39,125 +39,129 @@ export const NUTRITIONAL_STATUS_DESCRIPTIONS = {
 };
 
 // Historical Nutritional Status Columns
-export const createHistoricalNutritionalStatusColumns = (): ColumnDef<NutritionalStatusType>[] => [
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) =>
-      row.original.date
-        ? new Date(row.original.date).toLocaleDateString()
-        : "N/A",
-  },
-  {
-    accessorKey: "wfa",
-    header: "WFA",
-    cell: ({ row }) => {
-      const status = row.original.wfa;
-      const description =
-        NUTRITIONAL_STATUS_DESCRIPTIONS.wfa[
-          status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.wfa
-        ] || "Unknown";
-      return `${status} - ${description}`;
+export const createHistoricalNutritionalStatusColumns =
+  (): ColumnDef<NutritionalStatusType>[] => [
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) =>
+        row.original.date
+          ? new Date(row.original.date).toLocaleDateString()
+          : "N/A",
     },
-  },
-  {
-    accessorKey: "lhfa",
-    header: "LHFA",
-    cell: ({ row }) => {
-      const status = row.original.lhfa;
-      const description =
-        NUTRITIONAL_STATUS_DESCRIPTIONS.lhfa[
-          status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.lhfa
-        ] || "Unknown";
-      return `${status} - ${description}`;
+    {
+      accessorKey: "wfa",
+      header: "WFA",
+      cell: ({ row }) => {
+        const status = row.original.wfa;
+        const description =
+          NUTRITIONAL_STATUS_DESCRIPTIONS.wfa[
+            status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.wfa
+          ] || "Unknown";
+        return `${status} - ${description}`;
+      },
     },
-  },
-  {
-    accessorKey: "wfh",
-    header: "WFH",
-    cell: ({ row }) => {
-      const status = row.original.wfh;
-      const description =
-        NUTRITIONAL_STATUS_DESCRIPTIONS.wfh[
-          status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.wfh
-        ] || "Unknown";
-      return `${status} - ${description}`;
+    {
+      accessorKey: "lhfa",
+      header: "LHFA",
+      cell: ({ row }) => {
+        const status = row.original.lhfa;
+        const description =
+          NUTRITIONAL_STATUS_DESCRIPTIONS.lhfa[
+            status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.lhfa
+          ] || "Unknown";
+        return `${status} - ${description}`;
+      },
     },
-  },
-  {
-    accessorKey: "muac",
-    header: "MUAC",
-    cell: ({ row }) => row.original.muac ?? "N/A",
-  },
-  {
-    accessorKey: "muac_status",
-    header: "MUAC Status",
-    cell: ({ row }) => {
-      const status = row.original.muac_status;
-      const description =
-        NUTRITIONAL_STATUS_DESCRIPTIONS.muac[
-          status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.muac
-        ] || "Unknown";
-      return `${status} - ${description}`;
+    {
+      accessorKey: "wfh",
+      header: "WFH",
+      cell: ({ row }) => {
+        const status = row.original.wfh;
+        const description =
+          NUTRITIONAL_STATUS_DESCRIPTIONS.wfh[
+            status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.wfh
+          ] || "Unknown";
+        return `${status} - ${description}`;
+      },
     },
-  },
-  {
-    accessorKey: "edemaSeverity",
-    header: "Edema",
-    cell: ({ row }) => row.original.edemaSeverity || "N/A",
-  },
-];
+    {
+      accessorKey: "muac",
+      header: "MUAC",
+      cell: ({ row }) => row.original.muac ?? "N/A",
+    },
+    {
+      accessorKey: "muac_status",
+      header: "MUAC Status",
+      cell: ({ row }) => {
+        const status = row.original.muac_status;
+        const description =
+          NUTRITIONAL_STATUS_DESCRIPTIONS.muac[
+            status as keyof typeof NUTRITIONAL_STATUS_DESCRIPTIONS.muac
+          ] || "Unknown";
+        return `${status} - ${description}`;
+      },
+    },
+    {
+      accessorKey: "edemaSeverity",
+      header: "Edema",
+      cell: ({ row }) => row.original.edemaSeverity || "N/A",
+    },
+  ];
 
 // Historical Vital Signs Columns (Read-only)
-export const createHistoricalVitalSignsColumns = (): ColumnDef<VitalSignType>[] => [
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => row.original.date || "N/A",
-  },
-  {
-    accessorKey: "age",
-    header: "Age",
-    cell: ({ row }) => row.original.age || "N/A",
-  },
-  {
-    accessorKey: "wt",
-    header: "Weight (kg)",
-    cell: ({ row }) => row.original.wt || "N/A",
-  },
-  {
-    accessorKey: "ht",
-    header: "Height (cm)",
-    cell: ({ row }) => row.original.ht || "N/A",
-  },
-  {
-    accessorKey: "temp",
-    header: "Temp (°C)",
-    cell: ({ row }) => row.original.temp || "N/A",
-  },
-  {
-    accessorKey: "notes",
-    header: "Notes",
-    cell: ({ row }) => (
-      <div className="max-w-[200px] text-left">
-        <p className="whitespace-pre-wrap">
-          {row.original.notes || "No notes for this entry."}
-        </p>
-        {row.original.followUpVisit && (
-          <p className="mt-1 flex flex-col text-xs text-gray-500">
-            <span>
-              Follow Up: {row.original.followUpVisit} (
-              {row.original.follov_description || "N/A"})
-            </span>
-            <span className="font-medium text-green-800">
-              Status: {row.original.followv_status}
-            </span>
-          </p>
-        )}
-      </div>
-    ),
-  },
-];
+export const createHistoricalVitalSignsColumns =
+  (): ColumnDef<VitalSignType>[] => [
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => row.original.date || "N/A",
+    },
+    {
+      accessorKey: "age",
+      header: "Age",
+      cell: ({ row }) => row.original.age || "N/A",
+    },
+    {
+      accessorKey: "wt",
+      header: "Weight (kg)",
+      cell: ({ row }) => row.original.wt || "N/A",
+    },
+    {
+      accessorKey: "ht",
+      header: "Height (cm)",
+      cell: ({ row }) => row.original.ht || "N/A",
+    },
+    {
+      accessorKey: "temp",
+      header: "Temp (°C)",
+      cell: ({ row }) => row.original.temp || "N/A",
+    },
+    {
+      accessorKey: "notes",
+      header: "Notes",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="max-w-[200px] text-left">
+            <p className="whitespace-pre-wrap">
+              {row.original.notes || "No notes for this entry."}
+            </p>
+            {row.original.followUpVisit && (
+              <p className="mt-1 flex flex-col text-xs text-gray-500">
+                <span>
+                  Follow Up: {row.original.followUpVisit} (
+                  {row.original.follov_description || "N/A"})
+                </span>
+                <span className="font-medium text-green-800">
+                  Status: {row.original.followv_status}
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+  ];
 
 // Today's Entry Vital Signs Columns (Editable)
 export const createTodaysVitalSignsColumns = (
@@ -268,9 +272,7 @@ export const createTodaysVitalSignsColumns = (
         );
       }
       return (
-        <div className="flex justify-center">
-          {row.original.temp || "-"}
-        </div>
+        <div className="flex justify-center">{row.original.temp || "-"}</div>
       );
     },
   },
@@ -289,13 +291,13 @@ export const createTodaysVitalSignsColumns = (
               placeholder="Enter notes"
               rows={3}
             />
-            <FormInput
+            <FormTextArea
               control={editVitalSignFormControl}
               name="follov_description"
               label="Follow-up reason"
-              type="text"
               placeholder="Follow-up reason"
               className="w-full"
+              rows={3}
               readOnly={!!row.original.followv_id}
             />
             <FormDateTimeInput
@@ -310,16 +312,18 @@ export const createTodaysVitalSignsColumns = (
       }
       const displayNotes = row.original.notes || "No notes for this entry.";
       return (
-        <div className="max-w-[200px] text-left">
-          <p className="whitespace-pre-wrap">{displayNotes}</p>
-          {row.original.followUpVisit && (
-            <p className="mt-1 flex flex-col justify-center text-xs text-gray-500">
-              <span>
-                Follow Up: {row.original.followUpVisit} (
-                {row.original.follov_description || "N/A"})
-              </span>
-            </p>
-          )}
+        <div className="flex justify-center ">
+          <div className="max-w-[200px] text-left">
+            <p className="whitespace-pre-wrap">{displayNotes}</p>
+            {row.original.followUpVisit && (
+              <p className="mt-1 flex flex-col  text-xs text-gray-500">
+                <span>
+                  Follow Up: {row.original.followUpVisit} (
+                  {row.original.follov_description || "N/A"})
+                </span>
+              </p>
+            )}
+          </div>
         </div>
       );
     },
@@ -355,7 +359,6 @@ export const createTodaysVitalSignsColumns = (
       return (
         <Button
           size="sm"
-          variant="ghost"
           onClick={() => {
             onStartEdit(row.index, row.original);
             editVitalSignFormReset({
@@ -372,7 +375,7 @@ export const createTodaysVitalSignsColumns = (
           className="px-2 py-1"
           title="Edit vital sign"
         >
-          <Pencil size={14} />
+          Update
         </Button>
       );
     },
@@ -387,9 +390,7 @@ export const createHistoricalMedicineColumns = (): ColumnDef<Medicine>[] => [
     cell: ({ row }) => {
       const { name, dosage, dosageUnit, form } = row.original;
       return name
-        ? `${name} (${dosage || "N/A"} ${dosageUnit || ""}, ${
-            form || "N/A"
-          })`
+        ? `${name} (${dosage || "N/A"} ${dosageUnit || ""}, ${form || "N/A"})`
         : "N/A";
     },
   },
@@ -410,14 +411,18 @@ export const createHistoricalSupplementStatusColumns = (
   editingAnemiaIndex: number | null,
   editingBirthWeightIndex: number | null,
   supplementStatusEditFormControl: Control<{ date_completed: string | null }>,
-  supplementStatusEditFormHandleSubmit: UseFormHandleSubmit<{ date_completed: string | null }>,
+  supplementStatusEditFormHandleSubmit: UseFormHandleSubmit<{
+    date_completed: string | null;
+  }>,
   onSaveAnemiaDate: (index: number, date: string | null) => void,
   onSaveBirthWeightDate: (index: number, date: string | null) => void,
   onStartEditAnemia: (index: number, currentDate: string | null) => void,
   onStartEditBirthWeight: (index: number, currentDate: string | null) => void,
   onCancelEditAnemia: () => void,
   onCancelEditBirthWeight: () => void,
-  supplementStatusEditFormReset: (data: { date_completed: string | null }) => void
+  supplementStatusEditFormReset: (data: {
+    date_completed: string | null;
+  }) => void
 ): ColumnDef<CHSSupplementStat>[] => [
   {
     accessorKey: "created_at",
@@ -487,7 +492,8 @@ export const createHistoricalSupplementStatusColumns = (
       const isEditingAnemia = editingAnemiaIndex === row.index && isAnemic;
       const isEditingBirthWeight =
         editingBirthWeightIndex === row.index && isBirthWeight;
-      
+      const hasDateCompleted = !!row.original.date_completed; // Check if date_completed exists
+
       if (isEditingAnemia) {
         return (
           <div className="flex gap-1">
@@ -532,25 +538,31 @@ export const createHistoricalSupplementStatusColumns = (
             </Button>
           </div>
         );
-      } else if (isAnemic || isBirthWeight) {
+      } else if ((isAnemic || isBirthWeight) && !hasDateCompleted) {
+        // Only show edit button if no date_completed
         return (
           <Button
             size="sm"
-            variant="ghost"
             onClick={() => {
               supplementStatusEditFormReset({
                 date_completed: row.original.date_completed || null,
               });
               if (isAnemic) {
-                onStartEditAnemia(row.index, row.original.date_completed || null);
+                onStartEditAnemia(
+                  row.index,
+                  row.original.date_completed || null
+                );
               } else {
-                onStartEditBirthWeight(row.index, row.original.date_completed || null);
+                onStartEditBirthWeight(
+                  row.index,
+                  row.original.date_completed || null
+                );
               }
             }}
             className="px-2 py-1"
             title="Update date completed"
           >
-            <Pencil size={14} />
+            Update
           </Button>
         );
       }

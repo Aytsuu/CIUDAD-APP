@@ -13,7 +13,8 @@ import { PatientSearch } from "@/components/ui/patientSearch"
 import type { Patient } from "@/components/ui/patientSearch" // Ensure this import is correct
 import type { FormData } from "@/form-schema/chr-schema/chr-schema"
 import { BasicInfoSchema } from "@/form-schema/chr-schema/chr-schema"
-
+import CardLayout from "@/components/ui/card/card-layout"
+import {ChevronRight} from "lucide-react"
 const initialFormData: FormData = {
   familyNo: "",
   pat_id: "",
@@ -254,22 +255,32 @@ export default function ChildHRPage1({
 
   return (
     <>
-      {!isaddnewchildhealthrecordMode && (
-        <div className="flex items-center justify-between gap-3 mb-10 w-full">
-          <div className="flex-1">
-            <PatientSearch
-              onPatientSelect={handlePatientSelect}
-              className="w-full"
-              value={selectedPatientId} // Pass the value prop
-              onChange={setSelectedPatientId} // Pass the onChange prop
-            />
-          </div>
+    
+    <CardLayout
+      cardClassName="px-4"
+      contentClassName="space-y-6"
+      title={
+        <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
+          Page 1 of 4
         </div>
-      )}
-      <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
-        <div className="font-light text-gray">Page 1/4</div>
+      }
+      content={
         <Form {...form}>
-          <form onSubmit={handleFormSubmit} className="space-y-6 md:p-6 lg:p-8" noValidate>
+
+{!isaddnewchildhealthrecordMode && (
+      <div className="flex items-center justify-between gap-3 mb-10 w-full">
+        <div className="flex-1">
+          <PatientSearch
+            onPatientSelect={handlePatientSelect}
+            className="w-full"
+            value={selectedPatientId}
+            onChange={setSelectedPatientId}
+          />
+        </div>
+      </div>
+    )}
+
+          <form onSubmit={handleFormSubmit} className="space-y-6" noValidate>
             <div className="flex w-full flex-wrap gap-4">
               <div className="flex justify-end gap-4 w-full">
                 <FormInput
@@ -352,7 +363,14 @@ export default function ChildHRPage1({
                   type="date"
                   readOnly={isaddnewchildhealthrecordMode || (!isTransient && !!selectedPatient)}
                 />
-                <FormInput control={control} name="childAge" label="Age" type="text" readOnly className="bg-gray-100" />
+                <FormInput
+                  control={control}
+                  name="childAge"
+                  label="Age"
+                  type="text"
+                  readOnly
+                  className="bg-gray-100"
+                />
                 <FormInput
                   control={control}
                   name="birth_order"
@@ -539,13 +557,17 @@ export default function ChildHRPage1({
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" className="w-full sm:w-[100px]">
+              <Button type="submit"               className="flex items-center gap-2  px-6"
+              >
                 {isSubmitting ? "Loading..." : "Next"}
+                <ChevronRight className="h-4 w-4" />
+
               </Button>
             </div>
           </form>
         </Form>
-      </div>
+      }
+    />
     </>
   )
 }

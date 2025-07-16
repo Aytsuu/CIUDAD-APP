@@ -74,23 +74,38 @@ class ChildHealthSupplementStatusSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
 
-class NutritionalStatusSerializer(serializers.ModelSerializer):
-    # bm_details = BodyMeasurementSerializer(source='bm', read_only=True)
-    # chhist_details = ChildHealthHistorySerializer(source='chhist', read_only=True)
-    # chvital_details = ChildHealthVitalSignsSerializer(source='chvital', read_only=True)
+class NutritionalStatusSerializerBase(serializers.ModelSerializer):
     class Meta:
         model = NutritionalStatus
         fields = '__all__'
+        
 
 class ChildHealthVitalSignsSerializer(serializers.ModelSerializer):
     find_details = FindingSerializer(source='find', read_only=True)
     bm_details = BodyMeasurementSerializer(source='bm', read_only=True)
-    chnotes_details = ChildHealthNotesSerializer(source='chnotes', read_only=True)
-    
-
+    # chnotes_details = ChildHealthNotesSerializer(source='chnotes', read_only=True)
     class Meta:
         model = ChildHealthVitalSigns
         fields = '__all__'
+        
+        
+class ChildHealthVitalSignsSerializerFull(serializers.ModelSerializer):
+    find_details = FindingSerializer(source='find', read_only=True)
+    bm_details = BodyMeasurementSerializer(source='bm', read_only=True)
+    nutritional_status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ChildHealthVitalSigns
+        fields = '__all__'  # or list explicitly
+
+    def get_nutritional_status(self, obj):
+        # Grab the linked nutritional status if it exists
+        nutritional = NutritionalStatus.objects.filter(chvital=obj).first()
+        if nutritional:
+            return NutritionalStatusSerializerBase(nutritional).data
+        return None
+
+
 class ExclusiveBFCheckSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -144,7 +159,7 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
         nut_stats = []
         for vital in vitals:
             for nut in vital.nutritional_status.all():
-                nut_stats.append(NutritionalStatusSerializer(nut).data)
+                nut_stats.append(NutritionalStatusSerializerBase(nut).data)
         return nut_stats
     def get_disabilities(self, obj):  # 🔷 THIS METHOD
         patrec = obj.chrec.patrec

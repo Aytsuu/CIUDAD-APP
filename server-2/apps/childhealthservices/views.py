@@ -112,12 +112,29 @@ class UpdateChildHealthSupplementsStatusView(generics.RetrieveUpdateAPIView):
 
 class NutritionalStatusView(generics.ListCreateAPIView):
     queryset = NutritionalStatus.objects.all()
-    serializer_class = NutritionalStatusSerializer
+    serializer_class = NutritionalStatusSerializerBase
+    
+    
 
 class ChildHealthVitalSignsView(generics.ListCreateAPIView):
     queryset = ChildHealthVitalSigns.objects.all()
     serializer_class = ChildHealthVitalSignsSerializer
     
+class ChildHealthNutrionalStatusListView(APIView):
+    def get(self, request, chrec_id):
+        vitals = ChildHealthVitalSigns.objects.filter(
+            chhist__chrec_id=chrec_id
+        ).order_by('-created_at')
+
+        if not vitals.exists():
+            return Response(
+                {"detail": "No vital signs found for this child."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ChildHealthVitalSignsSerializerFull(vitals, many=True)
+        return Response(serializer.data)
+
 class ExclusiveBFCheckView(generics.ListCreateAPIView):
     queryset = ExclusiveBFCheck.objects.all()
     serializer_class = ExclusiveBFCheckSerializer

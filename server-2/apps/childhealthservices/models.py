@@ -110,7 +110,6 @@ class ChildHealthSupplementsStatus(models.Model):
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='supplements_statuses')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) 
-    is_anemic = models.BooleanField(default=False)  # Indicates if the child is anemic
     class Meta:
         db_table = 'child_health_supplements_status'
               
@@ -122,7 +121,7 @@ class NutritionalStatus(models.Model):
     muac = models.CharField(max_length=100, blank=True, null=True)  # Mid-Upper Arm Circumference
     created_at = models.DateTimeField(auto_now_add=True)
     edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
-
+    muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
     # bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
     # chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chhist_id')
     chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')

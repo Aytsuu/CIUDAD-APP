@@ -1,12 +1,24 @@
 // src/hooks/useChildHealthRecord.ts
 import { useQuery } from "@tanstack/react-query";
-import { fetchChildHealthRecord } from "../restful-api/fetch";
+import { getChildHealthRecords,getNutrionalSummary } from "../restful-api/get";
 
-export const useChildHealthRecord = (chrecId?: string) => {
+export function useChildHealthRecords() {
   return useQuery({
-    queryKey: ["childHealthRecord", chrecId],
-    queryFn: () => fetchChildHealthRecord(chrecId!),
-    enabled: !!chrecId,              // only run if chrecId exists
-    staleTime: 5 * 60 * 1000,       // cache for 5 minutes
+    queryKey: ["childHealthRecords"],
+    queryFn: getChildHealthRecords,
+    refetchOnMount: false, // Avoid unnecessary refetches
+    staleTime: 300_000,    // 5 minutes
   });
-};
+}
+
+
+
+export function useNutritionalSummary(chrec_id: string) {
+  return useQuery({
+    queryKey: ["nutritionalSummary", chrec_id],
+    queryFn: () => getNutrionalSummary(chrec_id),
+    enabled: !!chrec_id,               // only runs if chrec_id is truthy
+    staleTime: 300_000,               // 5 minutes
+    refetchOnMount: false,
+  });
+}
