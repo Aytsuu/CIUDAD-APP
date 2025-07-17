@@ -190,13 +190,14 @@ export const getSitioList = async () => {
 };
 
 // ==================== FETCH REGISTRATION REQUEST ==================== (Status: Optimizing....)
-export const getRequests = async (page: number, pageSize: number, searchQuery: string) => {
+export const getRequests = async (page: number, pageSize: number, searchQuery: string, selectedRequestType: string) => {
   try {
     const res = await api.get("profiling/request/list/table/", {
       params: {
         page,
         page_size: pageSize,
-        search: searchQuery
+        search: searchQuery,
+        request_type: selectedRequestType
       }
     });
     return res.data;

@@ -6,7 +6,7 @@ import { RequestRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 
 // Define the colums for the data table
-export const requestColumns: ColumnDef<RequestRecord>[] = [
+export const IndividualRequestColumns: ColumnDef<RequestRecord>[] = [
   {
     accessorKey: "req_id",
     header: ({ column }) => (

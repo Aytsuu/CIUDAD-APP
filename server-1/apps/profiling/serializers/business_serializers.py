@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Business, BusinessFile, Address, Sitio
+from ..models import *
 
 
 class BusinessBaseSerializer(serializers.ModelSerializer):
@@ -20,10 +20,7 @@ class BusinessTableSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = Business
-    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 
-              'bus_respondentLname', 'bus_respondentFname', 'bus_respondentMname',
-              'bus_respondentSex', 'bus_respondentDob', 'bus_respondentContact', 
-              'bus_respondentAddress', 'bus_date_registered', 'bus_registered_by', 'files']
+    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 'bus_date_registered', 'bus_registered_by', 'files']
 
   def get_bus_registered_by(self, obj):
     info = obj.staff.rp.per
@@ -47,10 +44,19 @@ class BusinessTableSerializer(serializers.ModelSerializer):
 
   
 class BusinessFileInputSerializer(serializers.Serializer):
-    bf_name = serializers.CharField()
-    bf_type = serializers.CharField()
-    bf_path = serializers.CharField()
-    bf_url = serializers.CharField()
+  bf_name = serializers.CharField()
+  bf_type = serializers.CharField()
+  bf_path = serializers.CharField()
+  bf_url = serializers.CharField()
+
+class RespondentInputSerializer(serializers.Serializer):
+  br_lname = serializers.CharField()
+  br_fname = serializers.CharField()
+  br_mname = serializers.CharField()
+  br_sex = serializers.CharField() 
+  br_dob = serializers.DateField()
+  br_contact = serializers.CharField()
+  br_address = serializers.CharField()
   
 class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   bus_street = serializers.CharField(write_only=True, required=False)
@@ -60,17 +66,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     write_only=True, 
     required=False)
   files = BusinessFileInputSerializer(write_only=True, many=True, required=False)
+  respondent = RespondentInputSerializer(write_only=True, required=False)
+  rp = serializers.CharField(write_only=True, required=False)
 
   class Meta:
     model = Business
-    fields = ['bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 'bus_respondentLname',
-              'bus_respondentFname', 'bus_respondentMname', 'bus_respondentSex', 'bus_respondentDob',
-              'bus_respondentContact', 'bus_respondentAddress', 'staff', 'files', ]
+    fields = ['bus_name', 'rp', 'respondent', 'bus_gross_sales', 
+              'sitio', 'bus_street', 'staff', 'files', ]
 
   def create(self, validated_data):
-    sitio = validated_data.pop('sitio')
-    street = validated_data.pop('bus_street')
-    files = validated_data.pop('files')
+    sitio = validated_data.pop('sitio', None)
+    street = validated_data.pop('bus_street', None)
+    files = validated_data.pop('files', None)
+    respondent = validated_data.pop('respondent', None)
+    rp = validated_data.pop('rp', None)
 
     address, _ = Address.objects.get_or_create(
         sitio=sitio,
@@ -82,7 +91,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         }
     )
 
-    business_instance = Business.objects.create(add=address, **validated_data)
+    if respondent:
+      respondent_instance = BusinessRespondent.objects.create(**respondent)
+      if respondent_instance:
+        business_instance = Business.objects.create(
+          br=respondent_instance, 
+          add=address, 
+          **validated_data
+        )
+    else:
+      business_instance = Business.objects.create(
+        rp=ResidentProfile.objects.get(rp_id=rp), 
+        add=address, 
+        **validated_data
+      )
 
     BusinessFile.objects.bulk_create([
       BusinessFile(bus=business_instance, **file)
@@ -121,5 +143,4 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
       ])
     return instance
 
-      
     

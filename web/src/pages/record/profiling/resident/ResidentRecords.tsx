@@ -65,7 +65,7 @@ export default function ResidentRecords() {
 
   return (
     // ----------------- RENDER --------------------
-    <MainLayoutComponent title="Resident Profiling" description="Manage and view all residents in your community">
+    <MainLayoutComponent title="Resident" description="Manage and view all residents in your community">
       <div className="space-y-6">
         {/* Search and Actions */}
         <Card>

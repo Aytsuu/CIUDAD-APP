@@ -56,7 +56,7 @@ export default function BusinessRecords() {
   return (
     // ----------------- RENDER --------------------
     <MainLayoutComponent
-      title="Business Records"
+      title="Business"
       description="View and manage registered businesses, including their details, location, and registration information."
     >
       <div className="space-y-6">

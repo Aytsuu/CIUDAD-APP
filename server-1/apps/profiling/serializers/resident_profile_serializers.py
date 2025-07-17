@@ -4,6 +4,8 @@ from rest_framework import serializers
 from ..models import *
 from ..serializers.personal_serializers import *
 from ..serializers.address_serializers import *
+from apps.account.serializers import UserAccountSerializer
+from apps.administration.models import Staff
 from datetime import datetime
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
@@ -21,6 +23,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     mname = serializers.SerializerMethodField()
     household_no = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
+    business_owner = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     gender = serializers.CharField(source='per.per_sex')
@@ -28,7 +31,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 
-                  'age', 'gender', 'household_no', 'family_no', 'has_account']
+                  'age', 'gender', 'household_no', 'family_no', 'business_owner', 'has_account']
     
     def get_mname(self, obj):
         return obj.per.per_mname if obj.per.per_mname else ''
@@ -42,6 +45,11 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
             return obj.family_compositions.first().fam.fam_id
         return ""
+    
+    def get_business_owner(self, obj):
+        if hasattr(obj, 'owned_business') and obj.owned_business.exists():
+            return True
+        return False
     
     def get_has_account(self, obj):
         return hasattr(obj, 'account')
@@ -139,3 +147,26 @@ class ResidentProfileListSerializer(serializers.ModelSerializer):
         info = obj.per
         return f"{info.per_lname}, {info.per_fname}" + \
             (f" {info.per_mname[0]}." if info.per_mname else "")
+    
+class ResidentProfileFullSerializer(serializers.ModelSerializer):
+    per = PersonalBaseSerializer(read_only=True)
+    per_id = serializers.PrimaryKeyRelatedField(
+        queryset=Personal.objects.all(), 
+        write_only=True, 
+        source='per'
+    )
+    is_staff = serializers.SerializerMethodField()
+    account = UserAccountSerializer(read_only=True)
+    staff = serializers.SerializerMethodField()
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff", allow_null=True)
+
+    class Meta:
+        model = ResidentProfile
+        fields = '__all__'
+    
+    def get_staff(self, obj):
+        from apps.administration.serializers.staff_serializers import StaffFullSerializer
+        return StaffFullSerializer(obj.staff).data
+
+    def get_is_staff(self, obj):
+        return hasattr(obj, 'staff_assignments') and bool(obj.staff_assignments.all())    

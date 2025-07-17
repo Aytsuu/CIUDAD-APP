@@ -24,10 +24,10 @@ class KYCVerificationProcessor:
         )
         self.mtcnn = MTCNN(
             keep_all=True,
-            thresholds=[0.5, 0.6, 0.6],  # detection thresholds
+            thresholds=[0.5, 0.6, 0.7],  # detection thresholds
         )
         self.resnet = InceptionResnetV1(pretrained='vggface2').eval()
-        self.threshold = 0.6
+        self.threshold = 0.5
 
     def process_kyc_document_matching(self, user_data, id_image, kyc_id):
         try:
@@ -53,7 +53,7 @@ class KYCVerificationProcessor:
 
             info_match = self._verify_info_match(user_data, personal_info)
             if not info_match['match']:
-                return {'verified': False, 'reason': f"Information mismatch: {info_match['mismatch']}"}
+                return {'verified': False, 'reason': f"Information mismatch: {info_match['mismatches']}"}
         
             update_data = {
                 'document_info_match': True,
@@ -149,7 +149,6 @@ class KYCVerificationProcessor:
         # Clean the text (remove special characters, normalize spaces)
         text = re.sub(r'[^\w\s,:.-]', '', text)
         text = ' '.join(text.split())  # Collapse multiple spaces
-        print("Cleaned text:", text)  # Debug print
 
         # # looks for all-caps last name followed by title-case first/middle
         # name_match = re.search(
@@ -211,11 +210,12 @@ class KYCVerificationProcessor:
         mismatches = []
         text = re.sub(r'[^\w\s]', '', extracted_info['raw_text'])
         text = text.split()
-        print()
+        print("Cleaned text:", text)  # Debug print
         print('dob:',extracted_info['dob'])
         
         # Name comparison (case insensitive, allow partial matches)
-        name_match = user_data['lname'].upper() in text and user_data['fname'].upper() in  text
+        name_match = user_data['lname'] in text and user_data['fname'] in text
+        print(name_match)
 
         if not name_match:
             mismatches.append(f"Name mismatch: User entered '{user_data['lname']}, {user_data['fname']}'")
@@ -224,7 +224,7 @@ class KYCVerificationProcessor:
         try:
             user_dob = datetime.strptime(user_data['dob'], '%Y-%m-%d').date()
             extracted_dob = datetime.strptime(extracted_info['dob'], '%Y-%m-%d').date()
-            
+            print(user_dob)
             if user_dob != extracted_dob:
                 mismatches.append(f"DOB mismatch: User entered '{user_data['dob']}', "
                                 f"document shows '{extracted_info['dob']}'")

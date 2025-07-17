@@ -53,7 +53,7 @@ export default function FamilyRecords() {
 
   return (
     // ----------------- RENDER --------------------
-    <MainLayoutComponent title="Family Profiling" description="Manage and view all family records in your community">
+    <MainLayoutComponent title="Family" description="Manage and view all family records in your community">
       <div className="space-y-6">
         <Card>
           {/* Search and Actions Bar */}

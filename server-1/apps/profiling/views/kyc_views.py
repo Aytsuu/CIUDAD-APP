@@ -2,7 +2,6 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from django.core.files.base import ContentFile
-import base64
 from ..verification import KYCVerificationProcessor
 from ..models import KYCRecord
 
@@ -15,28 +14,43 @@ class KYCDocumentMatchingView(APIView):
     dob = request.data.get('dob', None)
 
     if(id_image): 
-      format, imgstr = id_image.split(';base64,')
-      ext = format.split('/')[-1]
-      validated_img = ContentFile(base64.b64decode(imgstr), name=f'{'id_document_front.jpg'}')
-
+      imgstr = id_image.split(';base64,')[1]
+  
       #Process verification
       processor = KYCVerificationProcessor()
-      processor.process_kyc_document_matching(
+      processed_data = processor.process_kyc_document_matching(
         user_data={
           'lname': lname,
           'fname': fname,
           'dob': dob 
         },
-        id_image=validated_img,
+        id_image=imgstr,
         kyc_id=kyc_id
       )
-      return Response(status=status.HTTP_200_OK)
-    
-    return None
+
+      if 'info_match' in processed_data:
+        return Response(data=processed_data,status=status.HTTP_200_OK)
+      
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class KYCFaceMatchingView(APIView):
   def post(self, request):
     kyc_id = request.data.get('kyc_id', None)
     face_image = request.data.get('image', None)
+    id_image = KYCRecord.objects.get(kyc_id=kyc_id)
 
-    return
+    if face_image and id_image:
+      face_imgstr = face_image.split(';base64,')[1]
+      id_imgstr = id_image.id_face_embedding
+
+      processor = KYCVerificationProcessor()
+      processed_data = processor.process_kyc_face_matching(
+        face_img=face_imgstr,
+        id_img=id_imgstr,
+        kyc_id=kyc_id
+      )
+
+      if 'match' in processed_data:
+        return Response(data=processed_data,status=status.HTTP_200_OK)
+      
+    return Response(status=status.HTTP_400_BAD_REQUEST)

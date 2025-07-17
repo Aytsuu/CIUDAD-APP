@@ -25,7 +25,6 @@ export const addPersonalAddress = async (data: Record<string, any>[]) => {
 export const addPersonal = async (data: Record<string, any>) => {
   
   try {
-    console.log(data)
     const res = await api.post("profiling/personal/create/", {
       per_lname: data.per_lname,
         per_fname: data.per_fname,
@@ -58,10 +57,9 @@ export const addRequest = async (data: Record<string, any>) => {
 
 export const postFaceData = async (data: Record<string, any>) => {
   try {
-    const res = await api.post("profiling/kyc/face-match/", data);
+    const res = await api.post("profiling/kyc/match-face/", data);
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 }
@@ -71,19 +69,13 @@ export const postDocumentData = async (data: Record<string, any>) => {
     const res = await api.post("profiling/kyc/match-document/", data);
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 }
 
-export const addAccount = async (accountInfo: Record<string, string>, residentId: string) => {
+export const addAccount = async (data: Record<string, any>) => {
   try {
-    const response = await api.post('authentication/signup/', {
-      username: accountInfo.username,
-      email: accountInfo.email,
-      password: accountInfo.password,
-      resident_id: residentId 
-    });
+    const response = await api.post('authentication/signup/', data);
 
     return response.data;
   } catch (err: any) {

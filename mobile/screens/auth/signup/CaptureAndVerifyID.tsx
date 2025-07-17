@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import * as FileSystem from 'expo-file-system'
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { postDocumentData } from "../rest-api/authPostAPI";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
 export type CAVIDCamHandle = {
   capturePhoto: () => Promise<Record<string, any> | null | undefined>;
@@ -15,6 +16,7 @@ export type CAVIDCamHandle = {
 
 export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
   (props, ref) => {
+    const { getValues } = useRegistrationFormContext();
     const isActive = React.useRef<boolean>(true);
     const device = useCameraDevice("back");
     const camera = React.useRef<Camera>(null);
@@ -81,7 +83,9 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
                           filter: `kyc_id=eq.${request_id}`
                         },
                         async (payload) => {
-                          if(payload.new.document_info_match === true){
+                          if(payload.new.document_info_match === true &&
+                            payload.new.id_has_face === true
+                          ){
                             subscription.unsubscribe();
                             
                             resolve({
@@ -98,18 +102,27 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
                         if (err) console.error("Subscription error:", err);
                         if (status) console.log("Status:", status)
                       })
+                    
+                    try {
+                      const request = await postDocumentData({
+                        kyc_id: request_id,
+                        lname: getValues('personalInfoSchema.per_lname').toUpperCase().trim(),
+                        fname: getValues('personalInfoSchema.per_fname').toUpperCase().trim(),
+                        dob: getValues('personalInfoSchema.per_dob'),
+                        image: `data:image/jpeg;base64,${base64Data}`
+                      })
 
-                    await postDocumentData({
-                      kyc_id: request_id,
-                      lname: 'ARANETA',
-                      fname: 'alvin',
-                      dob: '1961-02-13',
-                      image: `data:image/jpeg;base64,${base64Data}`
-                    })
+                      console.log('post_result:', request)  
+                    } catch (err) {
+                      subscription.unsubscribe();
+                      resolve({ success: false });
+                      throw err;
+                    }
                   }
                 )
-              , 15000)
-
+              , 30000)
+              
+              console.log("resolve:", result.success)
               return result.success ? result.kyc_id : false
             } catch (error) { 
               console.log("Detection error:", error);
