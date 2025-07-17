@@ -133,7 +133,7 @@ export default function RegistrationRequests() {
                       key={item.id}
                       onClick={() => handleRequestTypeChange(item.id)}
                       className={cn(
-                        "w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors duration-200 group",
+                        "w-full flex items-center justify-between p-3 rounded-lg text-left outline-none transition-colors duration-200 group",
                         isSelected
                           ? "bg-blue-50 text-blue-700 border border-blue-200"
                           : "hover:bg-gray-50 text-gray-700 hover:text-gray-900",

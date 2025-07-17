@@ -86,16 +86,18 @@ export const buttonConfig = (
       </div>
     ),
     default: (
-      <ConfirmationModal
-        trigger={<Button className="w-full sm:w-32"> 
+      <div className="flex gap-2">
+        <ConfirmationModal
+        trigger={<Button className="w-full"> 
           <Check/>
-          Register 
+          Create Record 
         </Button>}
         title="Confirm Registration"
         description="Do you wish to proceed with the registration?"
         actionLabel="Confirm"
         onClick={submit}
       />
+      </div>
     ),
   },
 });

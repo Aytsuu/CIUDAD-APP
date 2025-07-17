@@ -74,7 +74,7 @@ export const IndividualRequestColumns: ColumnDef<RequestRecord>[] = [
     header: "Action",
     cell: ({ row }) => (
       <Link
-        to="/resident/form"
+        to="/resident/registration"
         state={{
           params: {
             type: "request",

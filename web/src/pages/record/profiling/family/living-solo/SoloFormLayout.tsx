@@ -11,7 +11,6 @@ import {
   User,
   Home,
   Users,
-  UserCheck,
   MoveRight,
   UsersRound,
 } from "lucide-react"

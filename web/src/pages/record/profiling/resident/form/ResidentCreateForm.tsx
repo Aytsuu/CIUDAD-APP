@@ -38,6 +38,7 @@ import {
   Shield,
   UserRoundPlus,
 } from "lucide-react";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function ResidentCreateForm({
   params,
@@ -51,8 +52,6 @@ export default function ResidentCreateForm({
   const {
     form,
     defaultValues,
-    handleSubmitSuccess,
-    handleSubmitError,
     populateFields,
     checkDefaultValues,
   } = useResidentForm("", params?.origin);
@@ -178,20 +177,20 @@ export default function ResidentCreateForm({
     if(params?.origin === Origin.Administration){
       if(!form.getValues('per_id')) {
         setIsSubmitting(false);
-        handleSubmitError('Please select a resident for the assignment');
+        showErrorToast('Please select a resident for the assignment');
         return;
       }
     }
 
     if (!(await form.trigger())) {
       setIsSubmitting(false);
-      handleSubmitError("Please fill out all required fields");
+      showErrorToast("Please fill out all required fields");
       return;
     }
 
     if (!validateAddresses(addresses)) {
       setIsSubmitting(false);
-      handleSubmitError("Please fill out all required fields");
+      showErrorToast("Please fill out all required fields");
       return;
     }
 
@@ -225,7 +224,7 @@ export default function ResidentCreateForm({
                 addPersonalAddress(per_address, {
                   onSuccess: () => {
                     // Main database operations completed successfully
-                    handleSubmitSuccess('Successfully registered new resident!')
+                    showSuccessToast('Successfully registered new resident!')
                     if (params?.isRegistrationTab) {
                       params.setResidentId(resident.rp_id);
                       params.setAddresses(new_addresses);
@@ -236,7 +235,7 @@ export default function ResidentCreateForm({
                   },
                   onError: (error) => {
                     setIsSubmitting(false);
-                    handleSubmitError(
+                    showErrorToast(
                       "Failed to link address to resident in main database. Please try again."
                     );
                     console.error("Main address linking error:", error);
@@ -245,7 +244,7 @@ export default function ResidentCreateForm({
               },
               onError: (error) => {
                 setIsSubmitting(false);
-                handleSubmitError(
+                showErrorToast(
                   "Failed to create address in main database. Please try again."
                 );
                 console.error("Main address creation error:", error);
@@ -254,7 +253,7 @@ export default function ResidentCreateForm({
           },
           onError: (error) => {
             setIsSubmitting(false);
-            handleSubmitError(
+            showErrorToast(
               "Failed to create main database record. Please try again."
             );
             console.error("Main database insertion error:", error);
@@ -284,28 +283,28 @@ export default function ResidentCreateForm({
                   },
                   onError: (error) => {
                     setIsSubmitting(false);
-                    handleSubmitError("Failed to link address to resident in main database. Please try again.");
+                    showErrorToast("Failed to link address to resident in main database. Please try again.");
                     console.error("Main address linking error:", error);
                   }
                 });
               },
               onError: (error) => {
                 setIsSubmitting(false);
-                handleSubmitError("Failed to create address in main database. Please try again.");
+                showErrorToast("Failed to create address in main database. Please try again.");
                 console.error("Main address creation error:", error);
               }
             });
           },
           onError: (error) => {
             setIsSubmitting(false);
-            handleSubmitError("Failed to create main database record. Please try again.");
+            showErrorToast("Failed to create main database record. Please try again.");
             console.error("Main database insertion error:", error);
           }
         }
       );
     } catch (err) {
       setIsSubmitting(false);
-      handleSubmitError(
+      showErrorToast(
         err instanceof Error ? err.message : "An error occurred"
       );
     }
