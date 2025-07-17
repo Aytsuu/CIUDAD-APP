@@ -78,9 +78,10 @@ class Complainant(models.Model):
     cpnt_number = models.CharField(max_length=11)
     cpnt_relation_to_respondent = models.CharField(max_length=20)
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='complainant')
-    
+
     class Meta:
         db_table = 'complainant'
+
 
 class Accused(models.Model):
     acsd_id = models.BigAutoField(primary_key=True)
@@ -89,71 +90,77 @@ class Accused(models.Model):
     acsd_gender = models.CharField(max_length=20)
     acsd_description = models.TextField()
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='accused')
-    
+
     class Meta:
         db_table = 'accused'
 
 class Complaint(models.Model):
     comp_id = models.BigAutoField(primary_key=True)
-    comp_location=models.CharField(max_length=255)
+    comp_location = models.CharField(max_length=255)
     comp_incident_type = models.CharField(max_length=100)
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_is_archive = models.BooleanField(default=False)
-    cpnt = models.ForeignKey(Complainant, related_name='complaints', on_delete=models.CASCADE)
-    
+
+    complainant = models.ManyToManyField(
+        Complainant,
+        through='ComplaintComplainant',
+        related_name='complaint'
+    )
+    accused = models.ManyToManyField(
+        Accused,
+        through='ComplaintAccused',
+        related_name='complaint'
+    )
+
     class Meta:
         db_table = 'complaint'
+
+class ComplaintComplainant(models.Model):
+    cc_id = models.BigAutoField(primary_key=True)
+    comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
+    cpnt = models.ForeignKey(Complainant, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'complaint_complainant'
+        unique_together = ('comp', 'cpnt')
 
 class ComplaintAccused(models.Model):
     ca_id = models.BigAutoField(primary_key=True)
     comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
     acsd = models.ForeignKey(Accused, on_delete=models.CASCADE)
-    
+
     class Meta:
         db_table = 'complaint_accused'
-        unique_together = ('comp', 'acsd')  # Prevent duplicate relationships
-        managed = False
+        unique_together = ('comp', 'acsd')
 
 class Complaint_File(models.Model):
-    cf_id = models.BigAutoField(primary_key=True)
-    comp = models.ForeignKey(Complaint, related_name='complaint_file', on_delete=models.CASCADE)
-    file = models.ForeignKey('file.File', related_name='complaint_file', on_delete=models.CASCADE)
-    
+    comp_file_id = models.BigAutoField(primary_key=True)
+    comp_file_name = models.CharField(max_length=255)
+    comp_file_type = models.CharField(max_length=10)
+    comp_file_path = models.URLField(max_length=512)
+    supabase_path = models.CharField(max_length=255)
+    file_size = models.PositiveIntegerField(help_text="File size in bytes")
+    comp = models.ForeignKey(
+        Complaint,
+        on_delete=models.CASCADE,
+        related_name='complaint_file',
+    )
+
     class Meta:
         db_table = 'complaint_file'
-        managed = False
+        indexes = [
+            models.Index(fields=['comp_file_type']),
+            models.Index(fields=['comp']),
+        ]
 
-# class ServiceChargeRequest(models.Model): 
-#     sr_id = models.BigAutoField(primary_key=True)
-#     sr_req_date = models.DateTimeField(default=datetime.now)
-#     sr_status = models.CharField(null=True, blank=True)
-#     sr_payment_status = models.CharField(null=True, blank=True)
-#     sr_type = models.CharField(null=True, blank=True)
-#     sr_decision_date    = models.DateTimeField(null=True, blank=True)
-#     # staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, db_column='staff_id', null=True)
-#     comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-
-#     parent_summon = models.ForeignKey(
-#         'self',
-#         null=True, blank=True,
-#         on_delete=models.SET_NULL,
-#         related_name='escalated_file_actions'
-#     )
-#     file_action_file = models.OneToOneField(
-#         'ServiceChargeRequestFile', null=True, blank=True,
-#         on_delete=models.SET_NULL,
-#         related_name='file_action'
-#     )
-
-#     class Meta:
-#         db_table = 'service_charge_request'
+    def __str__(self):
+        return f"{self.comp_file_name} (Case #{self.comp.comp_id})"
 
 class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
-    sr_code = models.CharField(max_length=10, blank=True, null=True)  # <--- new field
-
+    sr_code = models.CharField(max_length=10, blank=True, null=True) 
     sr_req_date = models.DateTimeField(default=datetime.now)
     sr_status = models.CharField(null=True, blank=True)
     sr_payment_status = models.CharField(null=True, blank=True)
@@ -213,8 +220,8 @@ class CaseSuppDoc(models.Model):
 class ServiceChargeRequestFile(models.Model):
     srf_id = models.BigAutoField(primary_key=True)
     srf_name = models.CharField(max_length=255)
-    srf_type = models.CharField(max_length=100)
-    srf_path = models.CharField(max_length=500)
+    srf_type = models.CharField(max_length=100, null=True, blank=True)
+    srf_path = models.CharField(max_length=500, null=True, blank=True)
     srf_url = models.CharField(max_length=500)
     
     class Meta:

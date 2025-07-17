@@ -26,7 +26,7 @@ export type CaseActivity = {
     ca_hearing_date: string;
     ca_hearing_time: string;
     ca_date_of_issuance: string;
-    srf: {
+    srf_detail: {
         srf_id: string;
         srf_name: string;
         srf_url: string;
@@ -54,7 +54,7 @@ export type CaseDetails = {
         cpnt_id: string;
         cpnt_name: string;
         address: AddressDetails;
-    };
+    } | null;
     complaint: {
         comp_id: string;
         comp_incident_type: string;

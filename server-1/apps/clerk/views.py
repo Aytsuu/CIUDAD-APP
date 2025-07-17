@@ -11,7 +11,7 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon").select_related(
-            'comp__cpnt'  
+            'comp'  
         ).prefetch_related(
             'comp__complaintaccused_set__acsd'  
         )
@@ -29,9 +29,10 @@ class FileActionrequestView(generics.ListCreateAPIView):
 #             sr_payment_status="Paid",
 #             sr_type="Summon"
 #         ).select_related(
-#             'comp__cpnt'
+#             'comp__cpnt__add',  # Include complainant's address
+#             'comp'  # Include complaint
 #         ).prefetch_related(
-#             'comp__complaintaccused_set__acsd',
+#             'comp__complaintaccused_set__acsd__add',  # Include accused's address
 #             Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
 #         )
 
@@ -44,10 +45,9 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
             sr_payment_status="Paid",
             sr_type="Summon"
         ).select_related(
-            'comp__cpnt__add',  # Include complainant's address
-            'comp'  # Include complaint
+            'comp'  # Changed from 'comp__cpnt' to match your model
         ).prefetch_related(
-            'comp__complaintaccused_set__acsd__add',  # Include accused's address
+            'comp__complaintaccused_set__acsd',
             Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
         )
         
@@ -95,6 +95,10 @@ class UpdateServiceChargeRequestView(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ServiceChargeRequestFileView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargeRequestFileSerializer
+    queryset = ServiceChargeRequestFile.objects.all()
     
 
 

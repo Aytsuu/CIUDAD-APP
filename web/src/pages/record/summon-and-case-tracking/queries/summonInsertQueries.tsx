@@ -11,8 +11,7 @@ export const useAddCaseActivity = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
      return useMutation({
-            mutationFn: (values: z.infer<typeof SummonSchema>) => 
-            addCaseActivity(values),
+            mutationFn: (values: z.infer<typeof SummonSchema>) => addCaseActivity(values),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['caseDetails'] });
 

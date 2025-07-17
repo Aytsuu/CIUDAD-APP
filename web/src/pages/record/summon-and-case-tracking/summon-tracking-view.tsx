@@ -7,7 +7,6 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { FileInput } from "lucide-react"
 import { useNavigate } from "react-router"
-import { Link } from "react-router-dom"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import CreateNewSummon from "./summon-create"
@@ -19,6 +18,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { useResolveCase, useEscalateCase } from "./queries/summonUpdateQueries"
 import { Skeleton } from "@/components/ui/skeleton"
 import SummonSuppDocs from "./summon-supp-doc-view"
+import { SummonPreview } from "./summon-preview"
 
 function SummonTrackingView() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -58,9 +58,13 @@ function SummonTrackingView() {
         return (
             <DialogLayout
               trigger={
-                <div className={`cursor-pointer ${hasDocs ? "text-[#1273B8] underline" : "text-primary"}`}>
-                  {hasDocs ? `View (${docs.length})` : "View Supporting Documents"}
-                </div>
+                hasDocs ? (
+                  <div className="cursor-pointer text-[#1273B8] underline">
+                    View ({docs.length})
+                  </div>
+                ) : (
+                  <div className="text-red-500">No Documents</div>
+                )
               }
               className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
               title="Supporting Documents"
@@ -68,10 +72,12 @@ function SummonTrackingView() {
                 hasDocs ? "Documents associated with this case activity." : "No supporting documents available"
               }
               mainContent={
-                    <div className="overflow-auto">
-                        <SummonSuppDocs ca_id = {row.original.ca_id}/>
-                    </div>
-                }
+               
+                  <div className="overflow-auto">
+                    <SummonSuppDocs ca_id={row.original.ca_id} />
+                  </div>
+             
+              }
             />
         )
       },
@@ -80,17 +86,39 @@ function SummonTrackingView() {
     {
       accessorKey: "file",
       header: "File",
-      cell: ({ row }) => (
-        <Link
-          to={row.original.caf?.caf_url || "#"}
-          className="text-primary hover:text-blue-800 hover:underline"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          View File
-        </Link>
-      ),
-    },
+      cell: ({ row }) => {
+        const activity = row.original;
+        
+        return (
+          <DialogLayout
+            trigger={
+              <div className="text-[#1273B8] underline cursor-pointer">
+                View File
+              </div>
+            }
+            title="Summon Preview"
+            description={`Preview of summon for case ${caseDetails?.sr_code}`}
+            className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
+            mainContent={
+              <div className="w-full h-full">
+                <SummonPreview 
+                  sr_code={caseDetails?.sr_code || ''}
+                  incident_type={caseDetails?.complaint?.comp_incident_type || ''}
+                  complainant={caseDetails?.complainant?.cpnt_name || ''}
+                  complainant_address={caseDetails?.complainant?.address?.formatted_address || ''}
+                  accused={caseDetails?.complaint?.accused?.map(a => a.acsd_name) || []}
+                  accused_address={caseDetails?.complaint?.accused?.map(a => a.address?.formatted_address) || []}
+                  hearingDate={activity.ca_hearing_date}
+                  hearingTime={activity.ca_hearing_time}
+                  mediation={activity.ca_reason?.includes('1st') ? '1st' : 
+                            activity.ca_reason?.includes('2nd') ? '2nd' : '3rd'}
+                />
+              </div>
+            }
+          />
+        );
+      }
+    }
   ]
 
   if (isLoading) {
@@ -253,9 +281,9 @@ function SummonTrackingView() {
                   <CreateNewSummon 
                     sr_id={sr_id} 
                     sr_code = {caseDetails?.sr_code || ''}
-                    complainant={caseDetails?.complainant.cpnt_name || ""}
+                    complainant={caseDetails?.complainant?.cpnt_name || ""}
                     accused={accusedNames}
-                    complainant_address={caseDetails?.complainant.address.formatted_address || ""}
+                    complainant_address={caseDetails?.complainant?.address.formatted_address || ""}
                     accused_address={
                       caseDetails?.complaint.accused.map(accused => accused.address.formatted_address) || []
                     }
