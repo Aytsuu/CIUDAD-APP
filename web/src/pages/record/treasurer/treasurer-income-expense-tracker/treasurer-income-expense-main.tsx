@@ -57,7 +57,10 @@ function IncomeExpenseMain() {
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
-                {fetchedData.map((tracker: any, index: any) => {
+                {[...fetchedData]
+                    .sort((a, b) => Number(b.ie_main_year) - Number(a.ie_main_year))
+                    .map((tracker: any, index: any) => {
+                        
                     const budget = Number(tracker.ie_main_tot_budget)
                     console.log("BUDGETTTTT SA MAINNNNNNNNNNNNNNNNNNNNNN: ", budget)
                     const income = Number(tracker.ie_main_inc)
