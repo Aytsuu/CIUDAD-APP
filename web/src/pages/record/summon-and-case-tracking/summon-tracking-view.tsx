@@ -48,41 +48,31 @@ function SummonTrackingView() {
       header: "Date of Issuance",
       cell: ({ row }) => formatTimestamp(row.original.ca_date_of_issuance),
     },
+    { accessorKey: "ca_reason", header: "Reason" },
     {
       accessorKey: "supporting_documents",
       header: "Supporting Documents",
       cell: ({ row }) => {
         const docs = row.original.supporting_documents || []
-        const hasDocs = docs.length > 0
-
         return (
             <DialogLayout
               trigger={
-                hasDocs ? (
-                  <div className="cursor-pointer text-[#1273B8] underline">
-                    View ({docs.length})
-                  </div>
-                ) : (
-                  <div className="text-red-500">No Documents</div>
-                )
+                <div className="cursor-pointer text-[#1273B8] underline">
+                  View ({docs.length})
+                </div>
               }
               className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
               title="Supporting Documents"
-              description={
-                hasDocs ? "Documents associated with this case activity." : "No supporting documents available"
-              }
+              description="Documents associated with this case activity."
               mainContent={
-               
                   <div className="overflow-auto">
                     <SummonSuppDocs ca_id={row.original.ca_id} />
                   </div>
-             
               }
             />
         )
       },
     },
-    { accessorKey: "ca_reason", header: "Reason" },
     {
       accessorKey: "file",
       header: "File",
@@ -110,8 +100,8 @@ function SummonTrackingView() {
                   accused_address={caseDetails?.complaint?.accused?.map(a => a.address?.formatted_address) || []}
                   hearingDate={activity.ca_hearing_date}
                   hearingTime={activity.ca_hearing_time}
-                  mediation={activity.ca_reason?.includes('1st') ? '1st' : 
-                            activity.ca_reason?.includes('2nd') ? '2nd' : '3rd'}
+                  mediation={activity.ca_mediation}
+                  issuance_date = {activity.ca_date_of_issuance}
                 />
               </div>
             }

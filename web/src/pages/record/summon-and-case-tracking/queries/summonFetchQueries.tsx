@@ -25,6 +25,7 @@ export type CaseActivity = {
     ca_reason: string;
     ca_hearing_date: string;
     ca_hearing_time: string;
+    ca_mediation: string;
     ca_date_of_issuance: string;
     srf_detail: {
         srf_id: string;

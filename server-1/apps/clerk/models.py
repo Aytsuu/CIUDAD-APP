@@ -196,6 +196,7 @@ class CaseActivity(models.Model):
     ca_reason = models.CharField(max_length=100)
     ca_hearing_date = models.DateField(null=False)
     ca_hearing_time = models.TimeField(null=False)
+    ca_mediation = models.CharField()
     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
     srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
@@ -209,7 +210,7 @@ class CaseSuppDoc(models.Model):
     csd_type = models.CharField(max_length=100)
     csd_path = models.CharField(max_length=500)
     csd_url = models.CharField(max_length=500)
-    csd_description = models.TextField()
+    csd_description = models.TextField(null=False)
     csd_upload_date = models.DateTimeField(default=datetime.now)
     ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
 

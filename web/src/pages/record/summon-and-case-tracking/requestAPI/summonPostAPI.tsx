@@ -3,32 +3,22 @@ import type { MediaUploadType } from "@/components/ui/media-upload";
 
 export const addCaseActivity = async (caseInfo: Record<string, any>) => {
     try{
-
-        // const resfile = await api.post('clerk/service-charge-request-file/', {
-        //     srf_name: caseInfo.pdfFilename,
-        //     srf_url: caseInfo.pdfUrl
-        // })
-
-        // const srf = resfile.data.srf_id
-
-        // console.log(srf)
-
         console.log('data',{
             ca_hearing_date : caseInfo.hearingDate,
             ca_hearing_time : caseInfo.hearingTime,
             ca_reason: caseInfo.reason,
+            ca_mediation: caseInfo.mediation,
             ca_date_of_issuance: new Date().toISOString(),
             sr: caseInfo.sr_id,
-            // srf: srf,
         })
 
         const res = await api.post('clerk/case-activity/', {
             ca_hearing_date : caseInfo.hearingDate,
             ca_hearing_time : caseInfo.hearingTime,
             ca_reason: caseInfo.reason,
+            ca_mediation: caseInfo.mediation,
             ca_date_of_issuance: new Date().toISOString(),
             sr: Number(caseInfo.sr_id),
-            // srf: srf
         })
         return res.data.ca_id
     }catch(err){

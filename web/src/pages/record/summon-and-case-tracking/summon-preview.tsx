@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
 import { formatSummonDateTime } from "@/helpers/summonDateTimeFormatter";
@@ -7,6 +7,7 @@ import { useGetSummonTemplate } from "./queries/summonFetchQueries";
 import sealImage from "@/assets/images/Seal.png";
 import { veraMonoNormal } from "@/assets/fonts/VeraMono-normal";
 import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
+import { formatDateForSummon, formatTimestampToDate } from "@/helpers/summonTimestampFormatter";
 
 interface SummonPreviewProps {
   sr_code: string;
@@ -18,21 +19,9 @@ interface SummonPreviewProps {
   hearingDate: string;
   hearingTime: string;
   mediation: string;
+  issuance_date: string;
   onClose?: () => void;
 }
-
-const formatDateForSummon = (date: Date) => {
-  const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' }).toUpperCase();
-  const year = date.getFullYear();
-  
-  const suffix = 
-    day === 1 || day === 21 || day === 31 ? 'st' :
-    day === 2 || day === 22 ? 'nd' :
-    day === 3 || day === 23 ? 'rd' : 'th';
-  
-  return `${day}${suffix} day of ${month} ${year}`;
-};
 
 export const SummonPreview: React.FC<SummonPreviewProps> = ({
   sr_code,
@@ -44,6 +33,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
   hearingDate,
   hearingTime,
   mediation,
+  issuance_date,
   onClose,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -63,14 +53,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
     doc.addFont('VeraMono-Bold-bold.ttf', 'VeraMono', 'bold');
   };
 
-  const downloadPdf = () => {
-    if (pdfData) {
-      const link = document.createElement('a');
-      link.href = pdfData;
-      link.download = `Summon_${sr_code}.pdf`;
-      link.click();
-    }
-  };
+  const newIssuanceDate = issuance_date ? formatTimestampToDate(issuance_date) : formatDateForSummon(new Date());
 
   useEffect(() => {
     setIsLoading(true);
@@ -262,9 +245,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
         yPos += sectionGap;
 
         // Current date formatting
-        const currentDate = new Date();
-        const formattedDate = formatDateForSummon(currentDate);
-        doc.text(`Issued this ${formattedDate}, in the City of Cebu, Philippines.`, marginValue, yPos);
+        doc.text(`Issued this ${newIssuanceDate}, in the City of Cebu, Philippines.`, marginValue, yPos);
         yPos += lineHeight * 3;
 
         // Signature section
