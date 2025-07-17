@@ -147,7 +147,7 @@ export default function AllMedicalForm() {
 
   const handlePatientSelect = async (patient: any, patientId: string) => {
     const trimmedPatientId = patientId.split(",")[0].trim();
-    setSelectedPatientId(trimmedPatientId);
+    setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
     form.setValue("pat_id", patient?.pat_id || "");
     console.log(trimmedPatientId);
@@ -290,7 +290,11 @@ export default function AllMedicalForm() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
-      <PatientSearch onPatientSelect={handlePatientSelect} />
+      <PatientSearch
+        value={selectedPatientId}
+        onChange={setSelectedPatientId}
+        onPatientSelect={handlePatientSelect}
+      />
 
       {selectedPatientData && (
         <div className="mt-4 mb-6">

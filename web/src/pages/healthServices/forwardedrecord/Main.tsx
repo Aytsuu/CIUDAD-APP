@@ -1,4 +1,4 @@
-import { useCHimmunizationCount, usePendingMedicalConCount, useForwardedVaccinationCount } from "./restful-api/count";
+import { useCHimmunizationCount, usePendingMedicalConCount, useForwardedVaccinationCount ,useForwardedChildMedRecordCount} from "./restful-api/count";
 import { SyringeIcon, Pill, Baby, Frown } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router-dom";
@@ -14,7 +14,11 @@ export default function MainForwardedRecord() {
   const { data: forwardedVaccinationCount } = useForwardedVaccinationCount();
   const forwardedVaccinationCountData = forwardedVaccinationCount?.count || 0;
 
-  // Check if all counts are zero
+  const { data: forwardedChildMedRecordCount } = useForwardedChildMedRecordCount();
+  const forwardedChildMedRecordCountData = forwardedChildMedRecordCount?.count || 0;
+  
+  let totalconsultationCount = forwardedChildMedRecordCountData + pendingMedicalConCountData;
+  
   const hasNoRecords = 
     CHimmunizationcountData === 0 &&
     pendingMedicalConCountData === 0 &&
@@ -89,7 +93,7 @@ export default function MainForwardedRecord() {
               </div>
             )}
 
-            {pendingMedicalConCountData > 0 && (
+            {/* {pendingMedicalConCountData > 0 && (
               <div className="p-4 rounded-lg border border-blue-200 mt-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -118,7 +122,7 @@ export default function MainForwardedRecord() {
                   </Link>
                 </div>
               </div>
-            )}
+            )} */}
 
             {forwardedVaccinationCountData > 0 && (
               <div className="p-4 rounded-lg border border-green-200 mt-4">
@@ -143,6 +147,68 @@ export default function MainForwardedRecord() {
                       variant="outline"
                       size="sm"
                       className="h-10 px-6 bg-white border-green-300 text-green-700 font-medium"
+                    >
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* {forwardedChildMedRecordCountData > 0 && (
+              <div className="p-4 rounded-lg border border-yellow-200 mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg">
+                      <Baby className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Forwarded Child Medical Records
+                      </h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-yellow-200 px-2 py-1 rounded-md">
+                          {forwardedChildMedRecordCountData} Records forwarded
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/main-forwarded-records/combined-health-records">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-yellow-300 text-yellow-700 font-medium"
+                    >
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )} */}
+
+            {totalconsultationCount > 0 && (
+              <div className="p-4 rounded-lg border border-orange-200 mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg">
+                      <SyringeIcon className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Total Consultation Records
+                      </h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-orange-200 px-2 py-1 rounded-md">
+                          {totalconsultationCount} Records forwarded
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/main-forwarded-records/combined-health-records">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-orange-300 text-orange-700 font-medium"
                     >
                       View Details
                     </Button>

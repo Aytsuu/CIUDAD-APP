@@ -1,6 +1,21 @@
 import { api2 } from "@/api/api";
 
-
+export const updateCHHistory = async (chhist_id: number) => {
+  try {
+    const response = await api2.patch(`/child-health/update/history/${chhist_id}/`, {
+      status: "recorded",
+    });
+    console.log("Child health history updated:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update child health history:", error);
+    throw new Error(
+      `Failed to update child health history: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
+};
 
 export async function updatePatientRecord(
     patrecId: string,

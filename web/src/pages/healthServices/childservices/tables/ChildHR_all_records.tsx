@@ -13,18 +13,10 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api2 } from "@/api/api";
-import { Toaster } from "sonner";
-import {getChildHealthRecords,getNutrionalSummary} from "../forms/restful-api/get"
-import {useChildHealthRecords} from "../forms/queries/fetchQueries";
-import {ChildHealthRecord } from "../forms/muti-step-form/types";
-
-
+import { useChildHealthRecords } from "../forms/queries/fetchQueries";
+import { ChildHealthRecord } from "../forms/muti-step-form/types";
 
 export default function AllChildHealthRecords() {
   const { data: childHealthRecords, isLoading } = useChildHealthRecords();
@@ -88,7 +80,6 @@ export default function AllChildHealthRecords() {
     });
   }, [childHealthRecords]);
 
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -186,7 +177,6 @@ export default function AllChildHealthRecords() {
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
-              
             </div>
           </div>
         );
@@ -225,13 +215,13 @@ export default function AllChildHealthRecords() {
         >
           Address <ArrowUpDown size={15} />
         </div>
-            ),
-            cell: ({ row }) => (
-              <div className="flex justify-start px-2">
-              <div className="w-[250px] break-words">{row.original.address}</div>
-            </div>
-            ),
-          },
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-start px-2">
+          <div className="w-[250px] break-words">{row.original.address}</div>
+        </div>
+      ),
+    },
     // {
     //   accessorKey: "sitio",
     //   header: "Sitio",
@@ -293,19 +283,17 @@ export default function AllChildHealthRecords() {
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          
-              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
-                <Link
-                  to={`/child-health-records`}
-                  state={{ ChildHealthRecord: row.original,mode:"addnewchildhealthrecord" }}
-                >
-
-                  <Eye size={15} />
-                </Link>
-              </div>
-            
-      
-          
+          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
+            <Link
+              to={`/child-health-records`}
+              state={{
+                ChildHealthRecord: row.original,
+                mode: "addnewchildhealthrecord",
+              }}
+            >
+              View{" "}
+            </Link>
+          </div>
         </div>
       ),
     },
@@ -373,7 +361,6 @@ export default function AllChildHealthRecords() {
               to="/child-health-record/newchildhealthrecord"
               state={{
                 params: {
-                
                   mode: "newchildhealthrecord", // This is the key part
                 },
               }}

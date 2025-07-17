@@ -372,7 +372,7 @@ const items: MenuItem[] = [
       { title: "Medical Consultation Services", url: "/allMedRecords" },
       { title: "Vaccination Services", url: "/VaccinationManagement" },
       { title: "Family Profiling", url: "/family-profiling-main" },
-      {title: "Medicine Request", url:"/AllMedicineRecords"},
+      {title: "Medicine Request", url:"/all-medicine-records"},
       { title: "Firstaid Request ", url: "/all-firstaid-records" },
       {title:"Forwarded Records", url: "/main-forwarded-records"},
       {title:"Archive", url: "/archiveMainInventoryStocks"},

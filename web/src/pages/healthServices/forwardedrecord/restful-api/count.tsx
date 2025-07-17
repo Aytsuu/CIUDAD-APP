@@ -40,5 +40,17 @@ export function usePendingMedicalConCount() {
     });
   }
 
+  export function useForwardedChildMedRecordCount() { 
+    return useQuery({
+      queryKey: ["forwardedchildmedrec-count"],
+      queryFn: async () => {
+        const response = await api2.get(`/child-health/history/pending-count/`);
+        return response.data;
+      },
+      refetchOnMount: true,
+      staleTime: 0,
+    });
+  }
+
 
 

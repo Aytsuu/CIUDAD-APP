@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 
 export interface MedicalRecord {
   medrec_id: number;
-  medrec_chief_complaint: string ;
+  medrec_chief_complaint: string;
   created_at: string;
   vital_signs: {
     vital_id: number;
@@ -44,12 +44,12 @@ export interface MedicalRecord {
     pat: number | null;
   };
   find_details: {
-    find_id: string,
-    assessment_summary:string,
-    obj_summary: string,
-    subj_summary: string,
-    plantreatment_summary: string,
-},
+    find_id: string;
+    assessment_summary: string;
+    obj_summary: string;
+    subj_summary: string;
+    plantreatment_summary: string;
+  };
   patrec_details: {
     pat_id: string | number;
     medicalrec_count: number;
@@ -127,8 +127,6 @@ export default function InvMedicalConRecords() {
           medicalrec_count: patrecDetails.medicalrec_count || 0,
           patient_details: patrecDetails.patient_details || null,
         },
-
-
       };
     });
   }, [medicalRecords]);
@@ -158,11 +156,7 @@ export default function InvMedicalConRecords() {
         const formattedDate = createdAt.toLocaleDateString();
         const formattedTime = createdAt.toLocaleTimeString();
 
-        return (
-          <div className="text-sm text-gray-600">
-            {formattedDate}
-          </div>
-        );
+        return <div className="text-sm text-gray-600">{formattedDate}</div>;
       },
     },
     {
@@ -212,15 +206,16 @@ export default function InvMedicalConRecords() {
         );
       },
     },
-   
+
     {
       accessorKey: "chiefcomplaint",
       header: "ChiefComplaint",
       cell: ({ row }) => {
         return (
           <div className="flex flex-col">
-            <div className="text-sm font-medium">{row.original.medrec_chief_complaint || "N/A"}</div>
-            
+            <div className="text-sm font-medium">
+              {row.original.medrec_chief_complaint || "N/A"}
+            </div>
           </div>
         );
       },
@@ -301,7 +296,7 @@ export default function InvMedicalConRecords() {
           </div>
         )}
 
-        <div className="w-full hidden lg:flex justify-between items-center mb-4 gap-6">
+        <div className="w-full  lg:flex justify-between items-center mb-4 gap-6">
           {/* Total Medical Consultations */}
           <div className=" flex  gap-2 items-center p-2 ">
             <div className=" flex items-center justify-center ">
@@ -311,11 +306,10 @@ export default function InvMedicalConRecords() {
               <p className="text-sm font-medium text-gray-800 pr-2">
                 Total Medical Consultations
               </p>
-              
             </div>
             <p className="text-2xl font-bold text-gray-900">
-                {formatMedicalData().length}
-              </p>
+              {formatMedicalData().length}
+            </p>
           </div>
 
           {/* Search and Actions */}
@@ -344,7 +338,7 @@ export default function InvMedicalConRecords() {
         </div>
 
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="w-full  sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input

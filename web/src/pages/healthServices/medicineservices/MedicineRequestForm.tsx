@@ -4,19 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import {
   ChevronLeft,
-  Package,
   AlertCircle,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchMedicinesWithStock } from "./restful-api/fetchAPI";
-import { z } from "zod";
-import { MedicineTransactionType } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/queries/MedicinePostQueries";
 import {
   MedicineRequestArraySchema,
   MedicineRequestArrayType,
@@ -27,42 +25,48 @@ import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
 import { useMedicineRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { useAuth } from "@/context/AuthContext";
-interface Patient {
-  pat_id: string;
-  pat_type: string;
-  name?: string;
-  personal_info?: {
-    per_fname?: string;
-    per_mname?: string;
-    per_lname?: string;
-    per_dob?: string;
-    per_sex?: string;
-  };
-  households?: { hh_id: string }[];
-  address?: {
-    add_street?: string;
-    add_barangay?: string;
-    add_city?: string;
-    add_province?: string;
-    add_sitio?: string;
-  };
-}
+import { Patient } from "@/components/ui/patientSearch";
 
-export default function PatNewMedRecForm() {
+export default function MedicineRequestForm() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id || null;
+  
+  // Determine mode from location state
+  const mode = location.state?.params?.mode || 'fromallrecordtable';
+  
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+  
+  const {
+    data: medicineStocksOptions,
+    isLoading: isMedicinesLoading,
+    isError: isMedicinesError,
+    error: medicinesError,
+  } = fetchMedicinesWithStock();
+  
   const [selectedMedicines, setSelectedMedicines] = useState<
     { minv_id: string; medrec_qty: number; reason: string }[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } = useMedicineRequestMutation();
-  const {user}=useAuth()
-  const staff_id = user?.staff?.staff_id
+  
+  const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } =
+    useMedicineRequestMutation();
+
+  // Initialize patient data based on mode
+  useEffect(() => {
+    if (mode === 'fromindivrecord' && location.state?.params?.patientData) {
+      const patientData = location.state.params.patientData;
+      setSelectedPatientData(patientData);
+      setSelectedPatientId(patientData.pat_id);
+      form.setValue("pat_id", patientData.pat_id.toString());
+    }
+  }, [location.state, mode]);
+
   const handlePatientSelect = (patient: Patient | null, patientId: string) => {
     setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
@@ -74,13 +78,7 @@ export default function PatNewMedRecForm() {
   };
 
   const handleSelectedMedicinesChange = useCallback(
-    (
-      updatedMedicines: {
-        minv_id: string;
-        medrec_qty: number;
-        reason: string;
-      }[]
-    ) => {
+    (updatedMedicines: { minv_id: string; medrec_qty: number; reason: string }[]) => {
       setSelectedMedicines(updatedMedicines);
     },
     []
@@ -102,62 +100,45 @@ export default function PatNewMedRecForm() {
     form.setValue("medicines", selectedMedicines);
   }, [selectedMedicines, form]);
 
-  const onSubmit = useCallback(
-    async (data: MedicineRequestArrayType) => {
-      setIsConfirming(true);
-      try {
-        const requestData = {
-          pat_id: data.pat_id,
-          medicines: selectedMedicines.map((med) => ({
-            minv_id: med.minv_id,
-            medrec_qty: med.medrec_qty,
-            reason: med.reason || "No reason provided",
-          })),
-        };
-        await submitMedicineRequest({ data: requestData, staff_id });
-      } catch (error) {
-        console.error("Error in onSubmit handler:", error);
-        toast.error("Failed to submit request");
-      } finally {
-        setIsConfirming(false);
-      }
-    },
-    [selectedMedicines, submitMedicineRequest]
-  );
-  
+  const onSubmit = useCallback(async (data: MedicineRequestArrayType) => {
+    setIsConfirming(true);
+    const requestData = {
+      pat_id: data.pat_id,
+      medicines: selectedMedicines.map((med) => ({
+        minv_id: med.minv_id,
+        medrec_qty: med.medrec_qty,
+        reason: med.reason || "No reason provided",
+      })),
+    };
+    await submitMedicineRequest({ data: requestData, staff_id: staffId });
+    setIsConfirming(false);
+  }, [selectedMedicines, submitMedicineRequest, staffId]);
 
   const totalSelectedQuantity = selectedMedicines.reduce(
     (sum, med) => sum + med.medrec_qty,
     0
   );
 
-  // Check for invalid quantities (less than 1 or exceeds available stock)
   const hasInvalidQuantities = selectedMedicines.some((med) => {
-    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    const medicine = medicineStocksOptions?.find(m => m.id === med.minv_id);
     return med.medrec_qty < 1 || (medicine && med.medrec_qty > medicine.avail);
   });
 
-  // Check for medicines that exceed available stock
   const hasExceededStock = selectedMedicines.some((med) => {
-    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    const medicine = medicineStocksOptions?.find(m => m.id === med.minv_id);
     return medicine && med.medrec_qty > medicine.avail;
   });
 
-
-  
   const handlePreview = useCallback(() => {
-    if (
-      !selectedPatientId ||
-      selectedMedicines.length === 0 ||
-      hasInvalidQuantities
-    ) {
+    const patientCheck = mode === 'fromindivrecord' ? selectedPatientData : selectedPatientId;
+    
+    if (!patientCheck || selectedMedicines.length === 0 || hasInvalidQuantities) {
       toast.error("Please complete all required fields");
       return;
     }
     setShowSummary(true);
-  }, [selectedPatientId, selectedMedicines, hasInvalidQuantities]);
+  }, [selectedPatientData, selectedPatientId, selectedMedicines, hasInvalidQuantities, mode]);
 
-  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -169,44 +150,69 @@ export default function PatNewMedRecForm() {
           >
             <ChevronLeft />
           </Button>
-          <div className="flex-col items-center ">
+          <div className="flex-col items-center">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Medicine Request
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
+              {mode === 'fromindivrecord' 
+                ? "Request medicines for a patient" 
+                : "Manage and view patient's medicine records"}
             </p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        {/* Patient Selection Section */}
-        <PatientSearch onPatientSelect={handlePatientSelect} className="mb-4" />
+        {/* Patient Selection Section - only shown in fromallrecordtable mode */}
+        {mode === 'fromallrecordtable' && (
+          <PatientSearch
+            value={selectedPatientId}
+            onChange={setSelectedPatientId}
+            onPatientSelect={handlePatientSelect}
+            className="mb-4"
+          />
+        )}
 
         {/* Patient Information Card */}
-        <div className="mb-4 bg-white">
-          <PatientInfoCard patient={selectedPatientData} />
-        </div>
+        {selectedPatientData && (
+          <div className="mb-4">
+            <PatientInfoCard patient={selectedPatientData} />
+          </div>
+        )}
 
-        <div className="bg-white rounded-md pt-5">
+        {mode === 'fromindivrecord' && !selectedPatientData && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <Label className="text-base font-semibold text-red-500">
+                No patient selected
+              </Label>
+            </div>
+            <p className="text-sm text-gray-600">
+              Please select a patient from the medicine records page first.
+            </p>
+          </div>
+        )}
+
+        <div className="bg-white rounded-md pt-10 pb-5">
           {isMedicinesLoading ? (
             <div className="p-4 flex justify-center items-center space-y-4">
               <p className="text-center text-red-600">Loading medicines...</p>
             </div>
           ) : (
-            <div className="w-full ">
+            <div className="w-full">
               {showSummary ? (
                 <div className="w-full overflow-x-auto">
                   <RequestSummary
                     selectedMedicines={selectedMedicines}
-                    medicineStocksOptions={medicineStocksOptions}
+                    medicineStocksOptions={medicineStocksOptions || []}
                     totalSelectedQuantity={totalSelectedQuantity}
                   />
                 </div>
               ) : (
                 <div className="w-full overflow-x-auto">
                   <MedicineDisplay
-                    medicines={medicineStocksOptions}
+                    medicines={medicineStocksOptions || []}
                     initialSelectedMedicines={selectedMedicines}
                     onSelectedMedicinesChange={handleSelectedMedicinesChange}
                     itemsPerPage={itemsPerPage}
@@ -237,16 +243,19 @@ export default function PatNewMedRecForm() {
             </div>
           )}
 
-          {(!selectedPatientId ||
-            selectedMedicines.length === 0 ||
-            hasInvalidQuantities) && (
+          {((mode === 'fromindivrecord' && !selectedPatientData) ||
+           (mode === 'fromallrecordtable' && !selectedPatientId) ||
+           selectedMedicines.length === 0 ||
+           hasInvalidQuantities) && (
             <div className="mx-3 mb-4 mt-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-amber-900">
-                      {!selectedPatientId
+                      {mode === 'fromindivrecord' && !selectedPatientData
+                        ? "Patient Required"
+                        : mode === 'fromallrecordtable' && !selectedPatientId
                         ? "Patient Required"
                         : selectedMedicines.length === 0
                         ? "Medicines Required"
@@ -255,7 +264,9 @@ export default function PatNewMedRecForm() {
                         : "Invalid Quantities"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
-                      {!selectedPatientId
+                      {mode === 'fromindivrecord' && !selectedPatientData
+                        ? "Please select a patient first from the medicine records page."
+                        : mode === 'fromallrecordtable' && !selectedPatientId
                         ? "Please select a patient to continue with the medicine request."
                         : selectedMedicines.length === 0
                         ? "Please select at least one medicine to submit the request."
@@ -269,7 +280,7 @@ export default function PatNewMedRecForm() {
             </div>
           )}
 
-          <div className="px-3 pb-4 mt-5 ">
+          <div className="px-3 pb-4 mt-5">
             <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
               <Button
                 variant="outline"
@@ -282,7 +293,8 @@ export default function PatNewMedRecForm() {
                 <Button
                   onClick={handlePreview}
                   disabled={
-                    !selectedPatientId ||
+                    (mode === 'fromindivrecord' && !selectedPatientData) ||
+                    (mode === 'fromallrecordtable' && !selectedPatientId) ||
                     selectedMedicines.length === 0 ||
                     hasInvalidQuantities ||
                     isMedicinesLoading

@@ -21,7 +21,27 @@ class ChildHealthRecordsView(generics.ListCreateAPIView):
 class ChildHealthHistoryView(generics.ListCreateAPIView):
     queryset = ChildHealth_History.objects.all()
     serializer_class = ChildHealthHistorySerializer
+    
+class CheckUPChildHealthHistoryView(generics.ListAPIView):
+    serializer_class = ChildHealthHistoryFullSerializer
 
+    def get_queryset(self):
+        return ChildHealth_History.objects.filter(status="check-up").order_by('-created_at')  # Filter by check-up and order by most recent first
+    
+    
+class UpdateChildHealthHistoryView(generics.RetrieveUpdateAPIView):
+    queryset = ChildHealth_History.objects.all()
+    serializer_class = ChildHealthHistorySerializer
+    lookup_field = 'chhist_id'
+
+class PendingMedConChildCountView(APIView):
+    def get(self, request, *args, **kwargs):
+        count = (
+            ChildHealth_History.objects
+            .filter(status="check-up")
+            .count()
+        )
+        return Response({"count": count})
 
 class ChildHealthNotesView(generics.ListCreateAPIView):
     queryset = ChildHealthNotes.objects.all()
@@ -36,6 +56,13 @@ class ChildHealthNotesUpdateView(generics.RetrieveUpdateAPIView):
         if not chnotes_id:
             raise NotFound(detail="Child health notes ID not provided", code=status.HTTP_400_BAD_REQUEST)
         return get_object_or_404(ChildHealthNotes, chnotes_id=chnotes_id)
+    
+class DeleteChildHealthNotesView(generics.DestroyAPIView):
+    queryset = ChildHealthNotes.objects.all()
+    serializer_class = ChildHealthNotesSerializer
+    lookup_field = 'chnotes_id'
+
+    
 class ChildHealthSupplementsView(generics.ListCreateAPIView):
     queryset = ChildHealthSupplements.objects.all()
     serializer_class = ChildHealthSupplementsSerializer
@@ -120,6 +147,11 @@ class ChildHealthVitalSignsView(generics.ListCreateAPIView):
     queryset = ChildHealthVitalSigns.objects.all()
     serializer_class = ChildHealthVitalSignsSerializer
     
+class UpdateChildHealthVitalSignsView(generics.RetrieveUpdateAPIView):
+    queryset = ChildHealthVitalSigns.objects.all()
+    serializer_class = ChildHealthVitalSignsSerializer
+    lookup_field = 'chvital_id'
+    
 class ChildHealthNutrionalStatusListView(APIView):
     def get(self, request, chrec_id):
         vitals = ChildHealthVitalSigns.objects.filter(
@@ -168,12 +200,12 @@ class ChildHealthImmunizationHistoryView(generics.ListCreateAPIView):
 #         return ChildHealth_History.objects.filter(
 #             chrec__patrec__pat_id=pat_id
 #         )
-class EditIndivChildHealthHistoryView(generics.ListAPIView):
+class IndivChildHealthHistoryView(generics.ListAPIView):
     serializer_class = ChildHealthHistoryFullSerializer
 
     def get_queryset(self):
         chhist_id = self.kwargs['chhist_id']
-        return ChildHealth_History.objects.filter(chhist_id=chhist_id).order_by('-created_at')  # Optional: most recent first
+        return ChildHealth_History.objects.filter(chhist_id=chhist_id, status="recorded").order_by('-created_at')  # Optional: most recent first
     
     
     
@@ -195,7 +227,7 @@ class IndivChildHealthHistoryView(generics.ListAPIView):
             .prefetch_related(
             Prefetch(
                 'child_health_histories',
-                queryset=ChildHealth_History.objects.filter(status__in=["recorded", "immunization"])
+                queryset=ChildHealth_History.objects.filter(status__in=["recorded", "immunization","check-up"])
             )
             )
             .order_by('-created_at')

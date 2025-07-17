@@ -60,6 +60,7 @@ export async function createChildHealthNotes(payload: {
     followv: string | null
     chhist: string,
     staff: string | null
+    
   }) {
     try {
       const response = await api2.post("child-health/notes/", payload)

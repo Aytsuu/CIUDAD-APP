@@ -28,12 +28,19 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
-import { NutritionalStatusCalculator } from "../nutritional-status-calculator";
+import { NutritionalStatusCalculator } from "../../../../../components/ui/nutritional-status-calculator";
 import { calculateAgeFromDOB } from "@/helpers/mmddwksAgeCalculator";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import type { Medicine } from "./types";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Salad, Pill, Loader2, AlertTriangle, HeartPulse, ChevronLeft } from "lucide-react";
+import {
+  Salad,
+  Pill,
+  Loader2,
+  AlertTriangle,
+  HeartPulse,
+  ChevronLeft,
+} from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
 import { z } from "zod";
 import {
@@ -106,13 +113,26 @@ export default function LastPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editingData, setEditingData] = useState<VitalSignType | null>(null);
-  const [editingAnemiaIndex, setEditingAnemiaIndex] = useState<number | null>(null);
-  const [editingBirthWeightIndex, setEditingBirthWeightIndex] = useState<number | null>(null);
-  const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+  const [editingAnemiaIndex, setEditingAnemiaIndex] = useState<number | null>(
+    null
+  );
+  const [editingBirthWeightIndex, setEditingBirthWeightIndex] = useState<
+    number | null
+  >(null);
+  const {
+    data: medicineStocksOptions,
+    isLoading: isMedicinesLoading,
+    isError: isMedicinesError,
+    error: medicinesError,
+  } = fetchMedicinesWithStock();
+
   const [isTodaysEntry, setIsTodaysEntry] = useState(false);
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(false);
 
-  const currentAge = useMemo(() => calculateCurrentAge(formData.childDob), [formData.childDob]);
+  const currentAge = useMemo(
+    () => calculateCurrentAge(formData.childDob),
+    [formData.childDob]
+  );
 
   const todaysHistoricalRecord = useMemo(() => {
     return historicalVitalSigns.find((vital) => isToday(vital.date));
@@ -156,8 +176,10 @@ export default function LastPage({
   }, [newVitalSigns, historicalVitalSigns]);
 
   const shouldShowNutritionalStatusCalculator = useMemo(() => {
-    return (newVitalSigns.length > 0 && !todaysHistoricalRecord) || 
-           (latestOverallVitalSign && !isToday(latestOverallVitalSign.date));
+    return (
+      (newVitalSigns.length > 0 && !todaysHistoricalRecord) ||
+      (latestOverallVitalSign && !isToday(latestOverallVitalSign.date))
+    );
   }, [newVitalSigns.length, latestOverallVitalSign, todaysHistoricalRecord]);
 
   const form = useForm<FormData>({
@@ -239,7 +261,10 @@ export default function LastPage({
   const chhistCreatedAt = formData.created_at;
 
   const latestHistoricalNutritionalStatus = useMemo(() => {
-    if (!historicalNutritionalStatus || historicalNutritionalStatus.length === 0)
+    if (
+      !historicalNutritionalStatus ||
+      historicalNutritionalStatus.length === 0
+    )
       return null;
     const sorted = [...historicalNutritionalStatus].sort(
       (a, b) =>
@@ -451,509 +476,492 @@ export default function LastPage({
 
   return (
     <>
-      <CardLayout
-        cardClassName="px-4"
-        title={
-          <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
-            Page 4 of 4
-          </div>
-        }
-        content={
-          <Form {...form}>
-            <form onSubmit={handleFormSubmit} className="space-y-6">
-              {Object.keys(errors).length > 0 && (
-                <div className="rounded border border-red-200 bg-red-50 p-4">
-                  <h4 className="font-medium text-red-800">
-                    Form Validation Errors:
-                  </h4>
-                  <pre className="mt-2 text-sm text-red-700">
-                    {JSON.stringify(errors, null, 2)}
-                  </pre>
-                </div>
-              )}
+      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
+        Page 4 of 4
+      </div>
 
-              {!canSubmit && !showVitalSignsForm && (
-                <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
-                  <h4 className="font-medium text-yellow-800">
-                    ⚠️ Required Information Missing
-                  </h4>
-                  <p className="mt-1 text-sm text-yellow-700">
-                    Please add at least one vital sign record before submitting
-                    the form.
-                  </p>
-                </div>
-              )}
+      <Form {...form}>
+        <form onSubmit={handleFormSubmit} className="space-y-6">
+          {Object.keys(errors).length > 0 && (
+            <div className="rounded border border-red-200 bg-red-50 p-4">
+              <h4 className="font-medium text-red-800">
+                Form Validation Errors:
+              </h4>
+              <pre className="mt-2 text-sm text-red-700">
+                {JSON.stringify(errors, null, 2)}
+              </pre>
+            </div>
+          )}
 
-              {!hasAddedVitalSign && (
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    onClick={handleToggleVitalSignsForm}
-                  >
-                    {showVitalSignsForm ? "Hide Vital Signs Form" : "Add New Vital Signs"}
-                  </Button>
-                </div>
-              )}
+          {!canSubmit && !showVitalSignsForm && (
+            <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
+              <h4 className="font-medium text-yellow-800">
+                ⚠️ Required Information Missing
+              </h4>
+              <p className="mt-1 text-sm text-yellow-700">
+                Please add at least one vital sign record before submitting the
+                form.
+              </p>
+            </div>
+          )}
 
-              {shouldShowAddVitalSignsForm && (
-                <div className="rounded-lg border bg-blue-50 p-4">
-                  <h3 className="mb-4 text-lg font-bold">
-                    Add New Vital Signs
-                  </h3>
-                  <Form {...vitalSignForm}>
-                    <div className="space-y-4">
-                      <div className="flex w-full justify-between gap-2">
-                        <FormInput
-                          control={vitalSignForm.control}
-                          name="age"
-                          label="Age"
-                          type="text"
-                          placeholder="Current age"
-                          readOnly
-                          className="bg-gray-100"
-                        />
-                        <FormInput
-                          control={vitalSignForm.control}
-                          name="wt"
-                          label="Weight (kg)"
-                          type="number"
-                          placeholder="Enter weight"
-                        />
-                        <FormInput
-                          control={vitalSignForm.control}
-                          name="ht"
-                          label="Height (cm)"
-                          type="number"
-                          placeholder="Enter height"
-                        />
-                        <FormInput
-                          control={vitalSignForm.control}
-                          name="temp"
-                          label="Temperature (°C)"
-                          type="number"
-                          placeholder="Enter temperature"
-                        />
-                      </div>
-                      <div className="w-full">
-                        <FormTextArea
-                          control={vitalSignForm.control}
-                          name="notes"
-                          label="Notes"
-                          placeholder="Enter notes"
-                          rows={3}
-                        />
-                      </div>
-                      <div className="flex w-full gap-4">
-                        <FormTextArea
-                          control={vitalSignForm.control}
-                          name="follov_description"
-                          label="Follow Up Reason"
-                          placeholder="Enter reason for follow-up"
-                          className="w-full"
+          {!hasAddedVitalSign && (
+            <div className="flex justify-end">
+              <Button type="button" onClick={handleToggleVitalSignsForm}>
+                {showVitalSignsForm
+                  ? "Hide Vital Signs Form"
+                  : "Add New Vital Signs"}
+              </Button>
+            </div>
+          )}
+
+          {shouldShowAddVitalSignsForm && (
+            <div className="rounded-lg border bg-blue-50 p-4">
+              <h3 className="mb-4 text-lg font-bold">Add New Vital Signs</h3>
+              <Form {...vitalSignForm}>
+                <div className="space-y-4">
+                  <div className="flex w-full justify-between gap-2">
+                    <FormInput
+                      control={vitalSignForm.control}
+                      name="age"
+                      label="Age"
+                      type="text"
+                      placeholder="Current age"
+                      readOnly
+                      className="bg-gray-100"
+                    />
+                    <FormInput
+                      control={vitalSignForm.control}
+                      name="wt"
+                      label="Weight (kg)"
+                      type="number"
+                      placeholder="Enter weight"
+                    />
+                    <FormInput
+                      control={vitalSignForm.control}
+                      name="ht"
+                      label="Height (cm)"
+                      type="number"
+                      placeholder="Enter height"
+                    />
+                    <FormInput
+                      control={vitalSignForm.control}
+                      name="temp"
+                      label="Temperature (°C)"
+                      type="number"
+                      placeholder="Enter temperature"
+                    />
+                  </div>
+                  <div className="w-full">
+                    <FormTextArea
+                      control={vitalSignForm.control}
+                      name="notes"
+                      label="Notes"
+                      placeholder="Enter notes"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex w-full gap-4">
+                    <FormTextArea
+                      control={vitalSignForm.control}
+                      name="follov_description"
+                      label="Follow Up Reason"
+                      placeholder="Enter reason for follow-up"
+                      className="w-full"
+                    />
+                    <FormDateTimeInput
+                      control={vitalSignForm.control}
+                      name="followUpVisit"
+                      label="Follow Up Visit Date"
+                      type="date"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleToggleVitalSignsForm}
+                      className="px-6 py-2 hover:bg-zinc-100"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={vitalSignForm.handleSubmit(handleAddVitalSign)}
+                      className="bg-green-600 px-6 py-2 hover:bg-green-700"
+                    >
+                      Add Vital Signs
+                    </Button>
+                  </div>
+                </div>
+              </Form>
+            </div>
+          )}
+
+          {newVitalSigns.length > 0 && (
+            <div className="pt-4">
+              <div className="border-b border-gray-200 bg-white px-4 py-3">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Today's Entry
+                </h3>
+              </div>
+              <Form {...editVitalSignForm}>
+                <DataTable
+                  columns={columns}
+                  data={combinedVitalSignsForTable || []}
+                />
+              </Form>
+            </div>
+          )}
+
+          {shouldShowGeneralHealthSections && (
+            <div className="mb-10 rounded-lg border border-gray-200 bg-white shadow-sm">
+              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Anemic and Birth Weight Status
+                </h3>
+              </div>
+              <div className="space-y-6 p-6">
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
+                  <div className="mb-4 flex items-center">
+                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                    <h4 className="flex items-center gap-2 text-base font-medium text-gray-700">
+                      <HeartPulse className="h-5 w-5 text-red-600" />
+                      Anemia Screening
+                    </h4>
+                  </div>
+                  <div className="space-y-4">
+                    <FormField
+                      control={control}
+                      name="anemic.is_anemic"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-3">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </FormControl>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Is the child anemic?
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                    {watch("anemic.is_anemic") && (
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <FormDateTimeInput
+                          control={control}
+                          name="anemic.seen"
+                          label="Date Anemia Detected"
+                          type="date"
                         />
                         <FormDateTimeInput
-                          control={vitalSignForm.control}
-                          name="followUpVisit"
-                          label="Follow Up Visit Date"
+                          control={control}
+                          name="anemic.given_iron"
+                          label="Date Iron Given"
                           type="date"
                         />
                       </div>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleToggleVitalSignsForm}
-                          className="px-6 py-2 hover:bg-zinc-100"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={vitalSignForm.handleSubmit(handleAddVitalSign)}
-                          className="bg-green-600 px-6 py-2 hover:bg-green-700"
-                        >
-                          Add Vital Signs
-                        </Button>
-                      </div>
-                    </div>
-                  </Form>
-                </div>
-              )}
-
-              {newVitalSigns.length > 0 && (
-                <div className="pt-4">
-                  <div className="border-b border-gray-200 bg-white px-4 py-3">
-                    <h3 className="text-sm font-semibold text-gray-700">
-                      Today's Entry
-                    </h3>
+                    )}
                   </div>
-                  <Form {...editVitalSignForm}>
-                    <DataTable
-                      columns={columns}
-                      data={combinedVitalSignsForTable || []}
-                    />
-                  </Form>
                 </div>
-              )}
 
-              {shouldShowGeneralHealthSections && (
-                <div className="mb-10 rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Anemic and Birth Weight Status
-                    </h3>
-                  </div>
-                  <div className="space-y-6 p-6">
+                {latestOverallVitalSign &&
+                  latestOverallVitalSign.wt !== undefined && (
                     <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
                       <div className="mb-4 flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                        <h4 className="flex items-center gap-2 text-base font-medium text-gray-700">
-                          <HeartPulse className="h-5 w-5 text-red-600" />
-                          Anemia Screening
+                        <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
+                        <h4 className="text-base font-medium text-gray-700">
+                          Birth Weight Follow-up
                         </h4>
+                        {Number(latestOverallVitalSign.wt) < 2.5 && (
+                          <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
+                            Low Birth Weight: {latestOverallVitalSign.wt} kg
+                          </span>
+                        )}
                       </div>
-                      <div className="space-y-4">
-                        <FormField
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <FormDateTimeInput
                           control={control}
-                          name="anemic.is_anemic"
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-3">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                              </FormControl>
-                              <FormLabel className="text-sm font-medium text-gray-700">
-                                Is the child anemic?
-                              </FormLabel>
-                            </FormItem>
-                          )}
+                          name="birthwt.seen"
+                          label="Date Seen"
+                          type="date"
                         />
-                        {watch("anemic.is_anemic") && (
-                          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                            <FormDateTimeInput
-                              control={control}
-                              name="anemic.seen"
-                              label="Date Anemia Detected"
-                              type="date"
-                            />
-                            <FormDateTimeInput
-                              control={control}
-                              name="anemic.given_iron"
-                              label="Date Iron Given"
-                              type="date"
-                            />
-                          </div>
-                        )}
+                        <FormDateTimeInput
+                          control={control}
+                          name="birthwt.given_iron"
+                          label="Date Iron Given"
+                          type="date"
+                        />
                       </div>
                     </div>
+                  )}
+              </div>
+            </div>
+          )}
 
-                    {latestOverallVitalSign && latestOverallVitalSign.wt !== undefined && (
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
-                        <div className="mb-4 flex items-center">
-                          <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
-                          <h4 className="text-base font-medium text-gray-700">
-                            Birth Weight Follow-up
-                          </h4>
-                          {Number(latestOverallVitalSign.wt) < 2.5 && (
-                            <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
-                              Low Birth Weight: {latestOverallVitalSign.wt} kg
-                            </span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                          <FormDateTimeInput
-                            control={control}
-                            name="birthwt.seen"
-                            label="Date Seen"
-                            type="date"
-                          />
-                          <FormDateTimeInput
-                            control={control}
-                            name="birthwt.given_iron"
-                            label="Date Iron Given"
-                            type="date"
-                          />
-                        </div>
+          {shouldShowNutritionalStatusCalculator && (
+            <div className="mb-10 rounded-lg border bg-green-50 p-4">
+              <h3 className="mb-4 text-lg font-bold">Nutritional Status</h3>
+              <NutritionalStatusCalculator
+                weight={
+                  newVitalSigns.length > 0
+                    ? newVitalSigns[0].wt
+                    : latestOverallVitalSign?.wt
+                }
+                height={
+                  newVitalSigns.length > 0
+                    ? newVitalSigns[0].ht
+                    : latestOverallVitalSign?.ht
+                }
+                age={currentAge}
+                muac={watch("nutritionalStatus")?.muac}
+                onStatusChange={handleNutritionalStatusChange}
+                initialStatus={watch("nutritionalStatus")}
+              />
+            </div>
+          )}
+
+          {shouldShowSevereMalnutritionWarning && (
+            <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                <div>
+                  <h4 className="mb-2 font-medium text-red-800">
+                    Nutritional Status Assessment
+                  </h4>
+                  {hasSevereMalnutrition ? (
+                    <>
+                      <p className="text-sm text-red-700">
+                        Severe malnutrition detected. Please assess for edema
+                        and provide appropriate intervention.
+                      </p>
+                      <div className="mt-3 ml-3 p-3">
+                        <FormSelect
+                          control={control}
+                          name="edemaSeverity"
+                          label="Edema Severity Level"
+                          options={edemaSeverityOptions}
+                        />
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {shouldShowNutritionalStatusCalculator && (
-                <div className="mb-10 rounded-lg border bg-green-50 p-4">
-                  <h3 className="mb-4 text-lg font-bold">Nutritional Status</h3>
-                  <NutritionalStatusCalculator
-                    weight={
-                      newVitalSigns.length > 0
-                        ? newVitalSigns[0].wt
-                        : latestOverallVitalSign?.wt
-                    }
-                    height={
-                      newVitalSigns.length > 0
-                        ? newVitalSigns[0].ht
-                        : latestOverallVitalSign?.ht
-                    }
-                    age={currentAge}
-                    muac={watch("nutritionalStatus")?.muac}
-                    onStatusChange={handleNutritionalStatusChange}
-                    initialStatus={watch("nutritionalStatus")}
-                  />
-                </div>
-              )}
-
-              {shouldShowSevereMalnutritionWarning && (
-                <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="mb-2 font-medium text-red-800">
-                        Nutritional Status Assessment
-                      </h4>
-                      {hasSevereMalnutrition ? (
-                        <>
-                          <p className="text-sm text-red-700">
-                            Severe malnutrition detected. Please assess for edema and provide
-                            appropriate intervention.
-                          </p>
-                          <div className="mt-3 ml-3 p-3">
-                            <FormSelect
-                              control={control}
-                              name="edemaSeverity"
-                              label="Edema Severity Level"
-                              options={edemaSeverityOptions}
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-sm text-green-700">
-                          No severe malnutrition detected.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {nonTodaysHistoricalVitalSigns &&
-                nonTodaysHistoricalVitalSigns.length > 0 && (
-                  <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-                    <div className="px-4 py-3">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-red-700">
-                        <HeartPulse className="h-4 w-4 text-red-600" />
-                        Historical Vital Signs (Past Dates)
-                      </h3>
-                    </div>
-                    <div>
-                      <DataTable
-                        columns={historicalVitalSignsColumns}
-                        data={nonTodaysHistoricalVitalSigns.sort(
-                          (a, b) =>
-                            new Date(b.date || "").getTime() -
-                            new Date(a.date || "").getTime()
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
-
-              {historicalNutritionalStatus &&
-                historicalNutritionalStatus.length > 0 && (
-                  <div className="overflow-hidden rounded-lg border">
-                    <div className="px-4 py-3">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                        <Salad className="h-4 w-4 text-green-600" />
-                        Nutritional History and Trends
-                      </h3>
-                    </div>
-                    <div className="">
-                      <DataTable
-                        columns={historicalNutritionalStatusColumns}
-                        data={historicalNutritionalStatus.sort(
-                          (a, b) =>
-                            new Date(b.date || "").getTime() -
-                            new Date(a.date || "").getTime()
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
-
-              {historicalSupplementStatusesProp &&
-                historicalSupplementStatusesProp.length > 0 && (
-                  <div className="overflow-hidden rounded-lg border">
-                    <div className="px-4 py-3">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-sky-700">
-                        <Pill className="h-4 w-4 text-sky-600" />
-                        Historical Supplement Statuses (Anemia & Low Birth
-                        Weight)
-                      </h3>
-                    </div>
-                    <div className="">
-                      <DataTable
-                        columns={historicalSupplementStatusColumns}
-                        data={historicalSupplementStatusesProp}
-                      />
-                    </div>
-                  </div>
-                )}
-
-              {historicalMedicines && historicalMedicines.length > 0 && (
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-                  <div className="border-b border-gray-200 bg-white px-4 py-3">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                      <Pill className="h-4 w-4 text-green-600" />
-                      Historical Medicine Prescriptions
-                    </h3>
-                  </div>
-                  <div>
-                    <DataTable
-                      columns={historicalMedicineColumns}
-                      data={historicalMedicines}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="mb-10 rounded-lg border bg-blue-50 p-4">
-                <h3 className="mb-4 text-lg font-bold">
-                  Medicine Prescription
-                </h3>
-                <div className="grid grid-cols-1 gap-6">
-                  {isMedicinesLoading ? (
-                    <div className="flex items-center justify-center p-8">
-                      <div className="text-center">
-                        <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 last:mx-auto"></div>
-                        <p className="text-sm text-gray-600">
-                          Loading medicines...
-                        </p>
-                      </div>
-                    </div>
+                    </>
                   ) : (
-                    <MedicineDisplay
-                      medicines={medicineStocksOptions || []}
-                      initialSelectedMedicines={selectedMedicines || []}
-                      onSelectedMedicinesChange={handleMedicineSelectionChange}
-                      currentPage={currentPage}
-                      onPageChange={setCurrentPage}
-                    />
+                    <p className="text-sm text-green-700">
+                      No severe malnutrition detected.
+                    </p>
                   )}
                 </div>
               </div>
+            </div>
+          )}
 
-              {!isImmunizationMode && (
-                <div className="mb-10 rounded-lg border bg-purple-50 p-4">
-                  <h3 className="mb-4 text-lg font-bold">
-                    Record Purpose & Status
+          {nonTodaysHistoricalVitalSigns &&
+            nonTodaysHistoricalVitalSigns.length > 0 && (
+              <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                <div className="px-4 py-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-red-700">
+                    <HeartPulse className="h-4 w-4 text-red-600" />
+                    Historical Vital Signs (Past Dates)
                   </h3>
-                  <FormField
-                    control={control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel className="text-sm font-medium text-gray-700">
-                          Select the purpose of this record:
-                        </FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            className="flex flex-col gap-3"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="check-up" id="check-up" />
-                              <Label
-                                htmlFor="check-up"
-                                className="cursor-pointer"
-                              >
-                                Check-up
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="immunization"
-                                id="immunization"
-                              />
-                              <Label
-                                htmlFor="immunization"
-                                className="cursor-pointer"
-                              >
-                                Immunization
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="recorded" id="recorded" />
-                              <Label
-                                htmlFor="recorded"
-                                className="cursor-pointer"
-                              >
-                                Record only
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                </div>
+                <div>
+                  <DataTable
+                    columns={historicalVitalSignsColumns}
+                    data={nonTodaysHistoricalVitalSigns.sort(
+                      (a, b) =>
+                        new Date(b.date || "").getTime() -
+                        new Date(a.date || "").getTime()
                     )}
                   />
-                  {currentStatus && (
-                    <div
-                      className={`mt-4 rounded border p-3 ${
-                        currentStatus === "check-up"
-                          ? "border-green-200 bg-green-50 text-green-600"
-                          : currentStatus === "immunization"
-                          ? "border-blue-200 bg-blue-50 text-blue-600"
-                          : "border-purple-200 bg-purple-50 text-purple-600"
-                      }`}
-                    >
-                      <strong>Status:</strong>{" "}
-                      {currentStatus === "check-up"
-                        ? "Record prepared for Check-up"
-                        : currentStatus === "immunization"
-                        ? "Record prepared for Immunization"
-                        : "Record only - No further action required"}
-                    </div>
-                  )}
-                  {!currentStatus && (
-                    <div className="mt-4 text-sm italic text-gray-500">
-                      Please select the purpose for this health record.
-                    </div>
-                  )}
+                </div>
+              </div>
+            )}
+
+          {historicalNutritionalStatus &&
+            historicalNutritionalStatus.length > 0 && (
+              <div className="overflow-hidden rounded-lg border">
+                <div className="px-4 py-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                    <Salad className="h-4 w-4 text-green-600" />
+                    Nutritional History and Trends
+                  </h3>
+                </div>
+                <div className="">
+                  <DataTable
+                    columns={historicalNutritionalStatusColumns}
+                    data={historicalNutritionalStatus.sort(
+                      (a, b) =>
+                        new Date(b.date || "").getTime() -
+                        new Date(a.date || "").getTime()
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
+          {historicalSupplementStatusesProp &&
+            historicalSupplementStatusesProp.length > 0 && (
+              <div className="overflow-hidden rounded-lg border">
+                <div className="px-4 py-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-sky-700">
+                    <Pill className="h-4 w-4 text-sky-600" />
+                    Historical Supplement Statuses (Anemia & Low Birth Weight)
+                  </h3>
+                </div>
+                <div className="">
+                  <DataTable
+                    columns={historicalSupplementStatusColumns}
+                    data={historicalSupplementStatusesProp}
+                  />
+                </div>
+              </div>
+            )}
+
+          {historicalMedicines && historicalMedicines.length > 0 && (
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+              <div className="border-b border-gray-200 bg-white px-4 py-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                  <Pill className="h-4 w-4 text-green-600" />
+                  Historical Medicine Prescriptions
+                </h3>
+              </div>
+              <div>
+                <DataTable
+                  columns={historicalMedicineColumns}
+                  data={historicalMedicines}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="mb-10 rounded-lg border bg-blue-50 p-4">
+            <h3 className="mb-4 text-lg font-bold">Medicine Prescription</h3>
+            <div className="grid grid-cols-1 gap-6">
+              {isMedicinesLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 last:mx-auto"></div>
+                    <p className="text-sm text-gray-600">
+                      Loading medicines...
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <MedicineDisplay
+                  medicines={medicineStocksOptions || []}
+                  initialSelectedMedicines={selectedMedicines || []}
+                  onSelectedMedicinesChange={handleMedicineSelectionChange}
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
+                />
+              )}
+            </div>
+          </div>
+
+          {!isImmunizationMode && (
+            <div className="mb-10 rounded-lg border bg-purple-50 p-4">
+              <h3 className="mb-4 text-lg font-bold">
+                Record Purpose & Status
+              </h3>
+              <FormField
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-sm font-medium text-gray-700">
+                      Select the purpose of this record:
+                    </FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-col gap-3"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="check-up" id="check-up" />
+                          <Label htmlFor="check-up" className="cursor-pointer">
+                            Check-up
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="immunization"
+                            id="immunization"
+                          />
+                          <Label
+                            htmlFor="immunization"
+                            className="cursor-pointer"
+                          >
+                            Immunization
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="recorded" id="recorded" />
+                          <Label htmlFor="recorded" className="cursor-pointer">
+                            Record only
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {currentStatus && (
+                <div
+                  className={`mt-4 rounded border p-3 ${
+                    currentStatus === "check-up"
+                      ? "border-green-200 bg-green-50 text-green-600"
+                      : currentStatus === "immunization"
+                      ? "border-blue-200 bg-blue-50 text-blue-600"
+                      : "border-purple-200 bg-purple-50 text-purple-600"
+                  }`}
+                >
+                  <strong>Status:</strong>{" "}
+                  {currentStatus === "check-up"
+                    ? "Record prepared for Check-up"
+                    : currentStatus === "immunization"
+                    ? "Record prepared for Immunization"
+                    : "Record only - No further action required"}
                 </div>
               )}
+              {!currentStatus && (
+                <div className="mt-4 text-sm italic text-gray-500">
+                  Please select the purpose for this health record.
+                </div>
+              )}
+            </div>
+          )}
 
-              <div className="flex w-full justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onPrevious}
-                  className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex items-center gap-2 px-6"
-                  disabled={!canSubmit || isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Submitting...
-                    </div>
-                  ) : (
-                    "Submit"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        }
-      />
+          <div className="flex w-full justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onPrevious}
+              className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              type="submit"
+              className="flex items-center gap-2 px-6"
+              disabled={!canSubmit || isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting...
+                </div>
+              ) : (
+                "Submit"
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </>
   );
 }

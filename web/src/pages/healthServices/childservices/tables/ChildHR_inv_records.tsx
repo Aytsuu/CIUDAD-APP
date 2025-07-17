@@ -17,7 +17,6 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
 import { api2 } from "@/api/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import NutritionalStatusGraph from "../nutrition-graph";
 
 // API functions
 const getChildHealthRecords = async (chrec_id: number) => {
@@ -49,6 +48,7 @@ type ChrRecords = {
   nutritionStatus: NutritionStatus;
   updatedAt: string;
   rawCreatedAt: string;
+  status: string;
 };
 
 export default function InvChildHealthRecords() {
@@ -137,7 +137,6 @@ export default function InvChildHealthRecords() {
           }
         }
 
-        // Nutrition status with all fields
         const nutritionStatus = record.nutrition_statuses?.[0] || {
           wfa: "N/A",
           lhfa: "N/A",
@@ -149,6 +148,7 @@ export default function InvChildHealthRecords() {
         return {
           chrec_id: mainRecord.chrec_id,
           patrec: mainRecord.patrec_id,
+          status: record.status || "N/A",  
           chhist_id: record.chhist_id,
           id: index + 1,
           temp: record.child_health_vital_signs?.[0]?.temp || 0,
@@ -218,18 +218,34 @@ export default function InvChildHealthRecords() {
     return historyData[0];
   }, [historyData]);
 
-  const filteredData = useMemo(() => {
-    return historyData.filter((item: ChrRecords) => {
-      const searchText = `${item.age} ${item.wt} ${item.ht} ${item.bmi} ${
-        item.vaccineStat
-      } ${item.nutritionStatus.wfa} ${item.nutritionStatus.lhfa} ${
-        item.nutritionStatus.wfl
-      } ${item.updatedAt} ${item.latestNote || ""} ${
-        item.followUpDescription || ""
-      }`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [searchQuery, historyData]);
+
+  // Filter out immunization records when not in immunization mode
+const filteredData = useMemo(() => {
+  return historyData.filter((item: ChrRecords) => {
+    // Skip immunization records when not in immunization mode
+    if (mode !== "immunization" && item.status === "immunization") {
+      return false;
+    }
+    
+    const searchText = `${item.age} ${item.wt} ${item.ht} ${item.bmi} ${
+      item.vaccineStat
+    } ${item.nutritionStatus.wfa} ${item.nutritionStatus.lhfa} ${
+      item.nutritionStatus.wfl
+    } ${item.updatedAt} ${item.latestNote || ""} ${
+      item.followUpDescription || ""
+    }`.toLowerCase();
+    return searchText.includes(searchQuery.toLowerCase());
+  });
+}, [searchQuery, historyData, mode]);
+
+// Disable button when not in immunization mode and latest record is immunization
+const shouldDisableButton = useMemo(() => {
+  if (!latestRecord) return false;
+  return mode !== "immunization" && latestRecord.status === "check-up" ;
+}, [latestRecord, mode]);
+
+// Button text based on mode
+const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record";
 
   const currentData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -318,14 +334,12 @@ export default function InvChildHealthRecords() {
         const record = row.original;
         return (
           <div className="min-w-[200px] max-w-[300px]">
-            {/* Main Note */}
             {record.latestNote ? (
               <p className="text-sm mb-2">{record.latestNote}</p>
             ) : (
               <p className="text-gray-500 text-sm mb-2">No notes</p>
             )}
 
-            {/* Follow-up Section */}
             {(record.followUpDescription || record.followUpDate) && (
               <div className="border-t pt-2 mt-2">
                 <div className="flex items-center gap-2 mb-1">
@@ -448,7 +462,12 @@ export default function InvChildHealthRecords() {
       <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
         {latestRecord && (
           <div className="ml-auto mt-4 sm:mt-0">
-            <Button onClick={navigateToUpdateLatest}>New Record</Button>
+            <Button 
+              onClick={navigateToUpdateLatest}
+              disabled={shouldDisableButton}
+            >
+              {buttonText}
+              </Button>
           </div>
         )}
       </div>

@@ -20,7 +20,6 @@ import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { AddRecordArgs, AddRecordResult } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
 
-
 export async function updateChildHealthRecord({
   submittedData,
   staff,
@@ -156,8 +155,13 @@ export async function updateChildHealthRecord({
       });
     }
 
+   
+     // Handle historical supplement statuses updates
     // Handle historical supplement statuses updates
     if (submittedData.historicalSupplementStatuses?.length) {
+      // Get the original supplement statuses from the original record
+      const originalStatuses = originalRecord?.supplements_statuses || [];
+
       // Transform the submitted data into the required update format
       const updates = submittedData.historicalSupplementStatuses
         .filter(
@@ -166,16 +170,37 @@ export async function updateChildHealthRecord({
           ): status is {
             chssupplementstat_id: number;
             date_completed?: string | null;
-          } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
+          } => Boolean(status.chssupplementstat_id) // Ensure ID exists
         )
-        .map((status) => ({
-          chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
-          date_completed: status.date_completed || null,
-        }));
+        .map((status) => {
+          // Find the original status to compare
+          const originalStatus = originalStatuses.find(
+            (s: any) => s.chssupplementstat_id === status.chssupplementstat_id
+          );
+
+          // Only include if:
+          // 1. This is a new record (no original status) OR
+          // 2. date_completed has changed from original
+          const isNewRecord = !originalStatus;
+          const hasChangedDate =
+            originalStatus?.date_completed !== status.date_completed;
+
+          return isNewRecord || hasChangedDate
+            ? {
+                chssupplementstat_id: status.chssupplementstat_id,
+                date_completed: status.date_completed || null,
+              }
+            : null;
+        })
+        .filter(Boolean); // Remove null entries (unchanged statuses)
 
       if (updates.length > 0) {
         try {
-          await updateSupplementStatus(updates);
+          await updateSupplementStatus(
+            updates.filter(
+              (update): update is { chssupplementstat_id: number; date_completed: string | null } => update !== null
+            )
+          );
           console.log(
             `Successfully updated ${updates.length} supplement status records`
           );
@@ -187,8 +212,25 @@ export async function updateChildHealthRecord({
             }`
           );
         }
+      } else {
+        console.log("No supplement status changes detected, skipping update");
       }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
   } else {
     const newChhist = await createChildHealthHistory({
       created_at: new Date().toISOString(),
@@ -339,7 +381,11 @@ export async function updateChildHealthRecord({
       });
     }
     // Handle historical supplement statuses updates
+    // Handle historical supplement statuses updates
     if (submittedData.historicalSupplementStatuses?.length) {
+      // Get the original supplement statuses from the original record
+      const originalStatuses = originalRecord?.supplements_statuses || [];
+
       // Transform the submitted data into the required update format
       const updates = submittedData.historicalSupplementStatuses
         .filter(
@@ -348,16 +394,37 @@ export async function updateChildHealthRecord({
           ): status is {
             chssupplementstat_id: number;
             date_completed?: string | null;
-          } => Boolean(status.chssupplementstat_id) // This ensures ID exists and is truthy
+          } => Boolean(status.chssupplementstat_id) // Ensure ID exists
         )
-        .map((status) => ({
-          chssupplementstat_id: status.chssupplementstat_id, // Now guaranteed to be number
-          date_completed: status.date_completed || null,
-        }));
+        .map((status) => {
+          // Find the original status to compare
+          const originalStatus = originalStatuses.find(
+            (s: any) => s.chssupplementstat_id === status.chssupplementstat_id
+          );
+
+          // Only include if:
+          // 1. This is a new record (no original status) OR
+          // 2. date_completed has changed from original
+          const isNewRecord = !originalStatus;
+          const hasChangedDate =
+            originalStatus?.date_completed !== status.date_completed;
+
+          return isNewRecord || hasChangedDate
+            ? {
+                chssupplementstat_id: status.chssupplementstat_id,
+                date_completed: status.date_completed || null,
+              }
+            : null;
+        })
+        .filter(Boolean); // Remove null entries (unchanged statuses)
 
       if (updates.length > 0) {
         try {
-          await updateSupplementStatus(updates);
+          await updateSupplementStatus(
+            updates.filter(
+              (update): update is { chssupplementstat_id: number; date_completed: string | null } => update !== null
+            )
+          );
           console.log(
             `Successfully updated ${updates.length} supplement status records`
           );
@@ -369,9 +436,10 @@ export async function updateChildHealthRecord({
             }`
           );
         }
+      } else {
+        console.log("No supplement status changes detected, skipping update");
       }
     }
-
   }
 
   return {
@@ -387,7 +455,6 @@ export async function updateChildHealthRecord({
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
 
 export const useUpdateChildHealthRecordMutation = () => {
   const navigate = useNavigate();

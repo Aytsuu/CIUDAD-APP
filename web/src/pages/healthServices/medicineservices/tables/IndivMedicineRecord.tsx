@@ -156,7 +156,7 @@ export default function IndivMedicineRecords() {
         medrec_qty: record.medrec_qty,
         status: record.status,
         req_type: record.req_type,
-        reason: record.reason,
+        reason: record.reason || "No reason Provided",
         is_archived: record.is_archived,
         requested_at: record.requested_at,
         fulfilled_at: record.fulfilled_at,
@@ -255,17 +255,16 @@ export default function IndivMedicineRecords() {
 
     {
       accessorKey: "request_info",
-      header: "Request Info",
+      header: "Reason",
       cell: ({ row }) => (
         <div className="flex flex-col text-sm">
-          <div>
+          {/* <div>
             <span className="font-medium">Type: </span>
             {row.original.req_type}
-          </div>
+          </div> */}
           {row.original.reason && (
             <div>
-              <span className="font-medium">Reason: </span>
-              {row.original.reason}
+              {row.original.reason }
             </div>
           )}
         </div>
@@ -414,8 +413,11 @@ export default function IndivMedicineRecords() {
           <div>
             <Button className="w-full sm:w-auto">
               <Link
-                to="/IndivPatNewMedRecForm"
-                state={{ params: { patientData } }}
+                to="/medicine-request-form"
+                state={{   params: { 
+                  mode: 'fromindivrecord',
+                  patientData: patientData 
+                } }}
               >
                 New Medicine Record
               </Link>

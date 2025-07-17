@@ -291,8 +291,16 @@ export default function AllMedicineRecords() {
 
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Link to={`/patNewMedRecForm`}>New Record</Link>
-            </Button>
+            <Link 
+  to="/medicine-request-form"
+  state={{
+    params: {
+      mode: 'fromallrecordtable'
+    }
+  }}
+>
+  New Request
+</Link>            </Button>
           </div>
         </div>
 

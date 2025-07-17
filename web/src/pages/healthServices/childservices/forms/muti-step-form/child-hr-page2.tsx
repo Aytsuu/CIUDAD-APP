@@ -214,15 +214,9 @@ export default function ChildHRPage2({
 
   return (
     <>
-     <CardLayout
-    cardClassName="px-4"
-    contentClassName="space-y-8"
-    title={
-      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
-        Page 2 of 4
-      </div>
-    }
-    content={
+     <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
+            Page 2 of 4
+          </div>
       <Form {...form}>
         <form
           onSubmit={handleSubmit(handleNext, (errors) => {
@@ -274,11 +268,11 @@ export default function ChildHRPage2({
                         label="Type of feeding"
                         options={[
                           {
-                            id: "exclusive_bf",
+                            id: "Exclusive Breastfeedin",
                             name: "Exclusive Breastfeeding",
                           },
-                          { id: "mixed_bf", name: "Mixed Breastfeeding" },
-                          { id: "formula", name: "Formula Feeding" },
+                          { id: "Mixed Breastfeeding", name: "Mixed Breastfeeding" },
+                          { id: "Formula Feeding", name: "Formula Feeding" },
                         ]}
                       />
                     </div>
@@ -514,8 +508,7 @@ export default function ChildHRPage2({
           </div>
         </form>
       </Form>
-    }
-  />
+  
     </>
   )
 }

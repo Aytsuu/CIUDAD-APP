@@ -7,7 +7,7 @@ from apps.patientrecords.serializers.followvisits_serializers import FollowUpVis
 from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.medicineservices.serializers import MedicineRequestSerializer
-from apps.vaccination.serializers import VaccinationRecordSerializer
+from apps.vaccination.serializers import VaccinationRecordSerializerBase
 from apps.patientrecords.serializers.disability_serializers import PatientDisablitySerializerBase
 from apps.medicineservices.serializers import MedicineRecordSerializerMinimal
 
@@ -114,7 +114,7 @@ class ExclusiveBFCheckSerializer(serializers.ModelSerializer):
 
 
 class ChildHealthImmunizationHistorySerializer(serializers.ModelSerializer):
-    vacrec_details = VaccinationRecordSerializer(source='vacrec', read_only=True)
+    vacrec_details = VaccinationRecordSerializerBase(source='vacrec', read_only=True)
 
     class Meta:
         model = ChildHealthImmunizationHistory

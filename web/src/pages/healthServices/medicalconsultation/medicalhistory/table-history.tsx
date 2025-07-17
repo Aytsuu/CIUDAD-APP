@@ -33,11 +33,6 @@ export type MedicalConsultationHistory = {
   } | null;
 };
 
-export const medicalConsultationCache: Record<
-  string,
-  MedicalConsultationHistory[]
-> = {};
-
 export function ConsultationHistoryTable({
   relevantHistory,
   currentConsultationId,

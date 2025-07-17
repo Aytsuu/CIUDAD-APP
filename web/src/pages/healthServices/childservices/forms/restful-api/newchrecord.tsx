@@ -80,6 +80,8 @@ export async function addChildHealthRecord({
     "Child Health Record",
     staff 
   );
+
+
   const patrec_id = newPatrec.patrec_id;
   const newChrec = await createChildHealthRecord({
     ufc_no: submittedData.ufcNo || "",
@@ -95,8 +97,11 @@ export async function addChildHealthRecord({
     patrec: patrec_id,
     landmarks: submittedData.landmarks || null,
   });
-  const chrec_id = newChrec.chrec_id;
 
+  const chrec_id = newChrec.chrec_id;
+  console.log("Child health record created:", newChrec);
+
+  
   // Create child health history
   const newChhist = await createChildHealthHistory({
     created_at: new Date().toISOString(),

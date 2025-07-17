@@ -226,7 +226,7 @@ export default function PendingimpoRecords() {
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
           <Link
-            to="/pending-medical-con-form"
+            to="/medical-consultation-flow"
             state={{ 
               patientData: {
                 pat_id: row.original.pat_id,

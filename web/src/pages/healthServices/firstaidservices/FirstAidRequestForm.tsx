@@ -8,27 +8,28 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import {
   ChevronLeft,
-  Package,
   AlertCircle,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchFirstaidsWithStock } from "./restful-api/fetchAPI";
-import { z } from "zod";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { FirstAidDisplay } from "@/components/ui/first-aid-display";
 import { RequestSummary } from "@/components/ui/firstaid-summary";
 import { useFirstRequestMutation } from "./queries/postQueries";
+import { PatientSearch } from "@/components/ui/patientSearch";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useAuth } from "@/context/AuthContext";
-// Updated schema to allow zero quantities
+import { z } from "zod";
+
+// Schema definition
 const FirstaidRequestArraySchema = z.object({
   pat_id: z.string(),
   firstaid: z.array(
     z.object({
       finv_id: z.string(),
-      qty: z.number().int().min(0), // Changed from min(1) to min(0)
+      qty: z.number().int().min(0),
       reason: z.string().optional(),
     })
   ),
@@ -57,30 +58,52 @@ interface Patient {
   };
 }
 
-export default function IndivPatNewFirstAidRecForm() {
+export default function FirstAidRequestForm() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id;
+  
+  // Determine mode from location state
+  const mode = location.state?.params?.mode || 'fromallrecordtable';
+  
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false);
-  const { firstAidStocksOptions, isLoading: isFirstAidLoading } = fetchFirstaidsWithStock();
+  
+  const { firstAidStocksOptions, isLoading: isFirstAidLoading } = 
+    fetchFirstaidsWithStock();
+  
   const [selectedFirstAids, setSelectedFirstAids] = useState<
     { finv_id: string; qty: number; reason: string }[]
   >([]);
-  const {user} = useAuth()
-  const staff_id =user?.staff?.staff_id
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { mutateAsync: submitFirstaidRequest, isPending: isSubmitting } = useFirstRequestMutation();
+  
+  const { mutateAsync: submitFirstaidRequest, isPending: isSubmitting } =
+    useFirstRequestMutation();
 
+  // Initialize patient data based on mode
   useEffect(() => {
-    if (location.state?.params?.patientData) {
+    if (mode === 'fromindivrecord' && location.state?.params?.patientData) {
       const patientData = location.state.params.patientData;
       setSelectedPatientData(patientData);
+      setSelectedPatientId(patientData.pat_id);
       form.setValue("pat_id", patientData.pat_id.toString());
     }
-  }, [location.state]);
+  }, [location.state, mode]);
+
+  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+    setSelectedPatientId(patientId);
+    setSelectedPatientData(patient);
+    if (patient) {
+      form.setValue("pat_id", patient.pat_id.toString());
+    } else {
+      form.setValue("pat_id", "");
+    }
+  };
 
   const handleSelectedFirstAidChange = useCallback(
     (updatedFirstAids: { finv_id: string; qty: number; reason: string }[]) => {
@@ -92,14 +115,6 @@ export default function IndivPatNewFirstAidRecForm() {
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
-
-  const handlePreview = useCallback(() => {
-    if (!selectedPatientData || selectedFirstAids.length === 0) {
-      toast.error("Please complete all required fields");
-      return;
-    }
-    setShowSummary(true);
-  }, [selectedPatientData, selectedFirstAids]);
 
   const form = useForm<FirstaidRequestArrayType>({
     resolver: zodResolver(FirstaidRequestArraySchema),
@@ -113,20 +128,16 @@ export default function IndivPatNewFirstAidRecForm() {
     form.setValue("firstaid", selectedFirstAids);
   }, [selectedFirstAids, form]);
 
- // In your form component
-const onSubmit = useCallback(
-  async (data: FirstaidRequestArrayType) => {
+  const onSubmit = useCallback(async (data: FirstaidRequestArrayType) => {
     setIsConfirming(true);
-    setIsSubmitConfirmationOpen(true);
+    setIsSubmitConfirmationOpen(false);
 
-    
-    // Remove the zero quantity filter - now we'll process all items
     const requestData = {
       pat_id: data.pat_id,
-      firstaid: data.firstaid.map((med) => ({
-        finv_id: med.finv_id,
-        qty: med.qty,
-        reason: med.reason || "No reason provided",
+      firstaid: data.firstaid.map((item) => ({
+        finv_id: item.finv_id,
+        qty: item.qty,
+        reason: item.reason || "No reason provided",
       })),
     };
 
@@ -135,28 +146,32 @@ const onSubmit = useCallback(
         data: requestData, 
         staff_id: staff_id 
       });
-
     } catch (error) {
       toast.error("Failed to submit first aid request");
     } finally {
       setIsConfirming(false);
-      setIsSubmitConfirmationOpen(false);
     }
-  },
-  [submitFirstaidRequest, navigate, staff_id]
-);
+  }, [submitFirstaidRequest, staff_id]);
 
-const handleConfirmSubmit = () => {
-  // Remove the non-zero quantity check
-  setIsSubmitConfirmationOpen(true);
-};
+  const handlePreview = useCallback(() => {
+    const patientCheck = mode === 'fromindivrecord' ? selectedPatientData : selectedPatientId;
+    
+    if (!patientCheck || selectedFirstAids.length === 0) {
+      toast.error("Please complete all required fields");
+      return;
+    }
+    setShowSummary(true);
+  }, [selectedPatientData, selectedPatientId, selectedFirstAids, mode]);
+
+  const handleConfirmSubmit = () => {
+    setIsSubmitConfirmationOpen(true);
+  };
 
   const totalSelectedQuantity = selectedFirstAids.reduce(
     (sum, fa) => sum + fa.qty,
     0
   );
 
- 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -173,17 +188,32 @@ const handleConfirmSubmit = () => {
               First Aid Request
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Request first aid items for a patient
+              {mode === 'fromindivrecord' 
+                ? "Request first aid items for a patient" 
+                : "Manage and view patient's first aid records"}
             </p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        {selectedPatientData ? (
+        {/* Patient Selection Section - only shown in fromallrecordtable mode */}
+        {mode === 'fromallrecordtable' && (
+          <PatientSearch
+            value={selectedPatientId}
+            onChange={setSelectedPatientId}
+            onPatientSelect={handlePatientSelect}
+            className="mb-4"
+          />
+        )}
+
+        {/* Patient Information Card */}
+        {selectedPatientData && (
           <div className="mb-4">
             <PatientInfoCard patient={selectedPatientData} />
           </div>
-        ) : (
+        )}
+
+        {mode === 'fromindivrecord' && !selectedPatientData && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="h-4 w-4 text-red-500" />
@@ -248,20 +278,26 @@ const handleConfirmSubmit = () => {
             </div>
           )}
 
-          {(!selectedPatientData || selectedFirstAids.length === 0) && (
+          {((mode === 'fromindivrecord' && !selectedPatientData) ||
+           (mode === 'fromallrecordtable' && !selectedPatientId) ||
+           selectedFirstAids.length === 0) && (
             <div className="mx-3 mb-4 mt-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-amber-900">
-                      {!selectedPatientData
+                      {mode === 'fromindivrecord' && !selectedPatientData
+                        ? "Patient Required"
+                        : mode === 'fromallrecordtable' && !selectedPatientId
                         ? "Patient Required"
                         : "First Aid Items Required"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
-                      {!selectedPatientData
+                      {mode === 'fromindivrecord' && !selectedPatientData
                         ? "Please select a patient first from the first aid records page."
+                        : mode === 'fromallrecordtable' && !selectedPatientId
+                        ? "Please select a patient to continue with the request."
                         : "Please select at least one first aid item to submit the request."}
                     </p>
                   </div>
@@ -283,7 +319,8 @@ const handleConfirmSubmit = () => {
                 <Button
                   onClick={handlePreview}
                   disabled={
-                    !selectedPatientData ||
+                    (mode === 'fromindivrecord' && !selectedPatientData) ||
+                    (mode === 'fromallrecordtable' && !selectedPatientId) ||
                     selectedFirstAids.length === 0 ||
                     isFirstAidLoading
                   }

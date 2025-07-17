@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useFirstAidCount } from "../queries/FirstAidCountQueries";
-import {Heart} from "lucide-react"
+import { Heart } from "lucide-react";
 
 export interface FirstAidRecord {
   farec_id: number;
@@ -83,7 +83,8 @@ export default function IndivFirstAidRecords() {
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -102,7 +103,9 @@ export default function IndivFirstAidRecords() {
   } = useQuery({
     queryKey: ["patientFirstAidDetails"],
     queryFn: async () => {
-      const response = await api2.get(`/firstaid/indiv-firstaid-record/${patientData.pat_id}/`);
+      const response = await api2.get(
+        `/firstaid/indiv-firstaid-record/${patientData.pat_id}/`
+      );
       return response.data;
     },
     refetchOnMount: true,
@@ -162,7 +165,6 @@ export default function IndivFirstAidRecords() {
             <div className="text-xs text-gray-500">
               Category: {row.original.finv_details?.fa_detail?.catlist || "N/A"}
             </div>
-            
           </div>
         </div>
       ),
@@ -172,9 +174,7 @@ export default function IndivFirstAidRecords() {
       header: "Qty used",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[200px] px-2">
-            <div className="text-sm">
-              {row.original.qty}
-            </div>
+          <div className="text-sm">{row.original.qty}</div>
         </div>
       ),
     },
@@ -187,7 +187,6 @@ export default function IndivFirstAidRecords() {
         </div>
       ),
     },
-   
   ];
 
   if (isLoading) {
@@ -241,26 +240,24 @@ export default function IndivFirstAidRecords() {
           </div>
         )}
 
-        <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 border rounded-md flex items-center justify-center shadow-sm">
-              <Heart className="h-5 w-5 text-red-600" />
+        <div className="relative w-full flex flex-col lg:flex-row justify-between items-center space-x-4 mb-4 gap-4 lg:gap-0">
+          {/* Total Medical Consultations */}
+          <div className="flex gap-2 items-center p-2">
+            <div className="flex items-center justify-center">
+              <Heart className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800">
-                Total First Aid Records
-              </p>
-              <p className="text-3xl font-bold text-gray-900">
-                {firstAidCount !== undefined ? firstAidCount : "0"}
+              <p className="text-sm font-medium text-gray-800 pr-2">
+                Total Medical Consultations
               </p>
             </div>
+            <p className="text-2xl font-bold text-gray-900">
+              {firstAidCount !== undefined ? firstAidCount : "0"}
+            </p>
           </div>
-        </div>
-
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="w-full flex gap-2 mr-2">
-              <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row flex-1 justify-between items-center gap-4 w-full">
+            <div className="w-full flex gap-2">
+              <div className="relative flex-1 ">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
                   size={17}
@@ -274,13 +271,18 @@ export default function IndivFirstAidRecords() {
               </div>
             </div>
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
               <Link
-                to="/indiv-firstaid-form"
-                state={{ params: { patientData } }}
+                to="/firstaid-request-form"
+                state={{
+                  params: {
+                    mode: "fromindivrecord",
+                    patientData,
+                  },
+                }}
               >
-                New First Aid Record
+                New Request
               </Link>
             </Button>
           </div>

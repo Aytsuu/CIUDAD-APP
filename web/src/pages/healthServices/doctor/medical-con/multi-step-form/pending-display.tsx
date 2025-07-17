@@ -1,78 +1,39 @@
 import { Button } from "@/components/ui/button/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card/card";
-import { ChevronLeft } from "lucide-react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card/card";
+import { ChevronLeft, Stethoscope } from "lucide-react";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";
 import {
   MedicalConsultationHistory,
   ConsultationHistoryTable,
-  medicalConsultationCache,
 } from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
 import CurrentConsultationCard from "@/pages/healthServices/medicalconsultation/medicalhistory/current-medrec";
-import { ConsultationHistorySkeleton } from "@/pages/healthServices/skeleton/doc-medform-skeleton"
+import { ConsultationHistorySkeleton } from "@/pages/healthServices/skeleton/doc-medform-skeleton";
 
-export default function PendingDisplayMedicalConsultation() {
-  const location = useLocation();
-  const navigate = useNavigate();
+interface PendingDisplayMedicalConsultationProps {
+  patientData: any;
+  MedicalConsultation: any;
+  onNext: () => void;
+}
 
-  const { patientData, MedicalConsultation } = location.state || {};
+export default function PendingDisplayMedicalConsultation({
+  patientData,
+  MedicalConsultation,
+  onNext,
+}: PendingDisplayMedicalConsultationProps) {
   const [consultationHistory, setConsultationHistory] = useState<
     MedicalConsultationHistory[]
   >([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const handleBackNavigation = useCallback(() => {
-    localStorage.removeItem("pendingConsultation");
-    localStorage.removeItem("soapFormData");
-    localStorage.removeItem("soapFormMedicines");
-    navigate(-1);
-  }, [navigate]);
-  
-
-  useEffect(() => {
-    if (!patientData || !MedicalConsultation) {
-      const savedData = localStorage.getItem("pendingConsultation");
-      if (savedData) {
-        const {
-          patientData: savedPatientData,
-          MedicalConsultation: savedConsultation,
-        } = JSON.parse(savedData);
-        navigate(location.pathname, {
-          state: {
-            patientData: savedPatientData,
-            MedicalConsultation: savedConsultation,
-          },
-          replace: true,
-        });
-      }
-    } else {
-      localStorage.setItem(
-        "pendingConsultation",
-        JSON.stringify({
-          patientData,
-          MedicalConsultation,
-        })
-      );
-    }
-  }, [patientData, MedicalConsultation, navigate, location.pathname]);
-
   const patientId = useMemo(() => patientData?.pat_id, [patientData]);
 
+
+  
   const fetchConsultationHistory = useCallback(async () => {
     if (!patientId) return;
-
-    if (medicalConsultationCache[patientId]) {
-      setConsultationHistory(medicalConsultationCache[patientId]);
-      setLoading(false);
-      return;
-    }
 
     try {
       setLoading(true);
@@ -97,16 +58,16 @@ export default function PendingDisplayMedicalConsultation() {
         created_at: history.created_at,
         medrec_age: history.medrec_age,
         vital_signs: {
-          vital_bp_systolic: history.vital_signs?.vital_bp_systolic || "N/A",
-          vital_bp_diastolic: history.vital_signs?.vital_bp_diastolic || "N/A",
-          vital_temp: history.vital_signs?.vital_temp || "N/A",
-          vital_RR: history.vital_signs?.vital_RR || "N/A",
-          vital_o2: history.vital_signs?.vital_o2 || "N/A",
-          vital_pulse: history.vital_signs?.vital_pulse || "N/A",
+          vital_bp_systolic: history.vital_signs?.vital_bp_systolic || "",
+          vital_bp_diastolic: history.vital_signs?.vital_bp_diastolic || "",
+          vital_temp: history.vital_signs?.vital_temp || "",
+          vital_RR: history.vital_signs?.vital_RR || "",
+          vital_o2: history.vital_signs?.vital_o2 || "",
+          vital_pulse: history.vital_signs?.vital_pulse || "",
         },
         bmi_details: {
-          height: history.bmi_details?.height || "N/A",
-          weight: history.bmi_details?.weight || "N/A",
+          height: history.bmi_details?.height || "",
+          weight: history.bmi_details?.weight || "",
         },
         find_details: history.find_details
           ? {
@@ -126,7 +87,6 @@ export default function PendingDisplayMedicalConsultation() {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      medicalConsultationCache[patientId] = sortedHistories;
       setConsultationHistory(sortedHistories);
     } catch (err) {
       console.error("Error fetching medical consultation history:", err);
@@ -161,41 +121,13 @@ export default function PendingDisplayMedicalConsultation() {
     return { totalPages };
   }, [relevantHistory]);
 
-  if (!patientData || !currentConsultation) {
-    return (
-      <div className="w-full min-h-screen flex items-center justify-center p-4">
-        <p className="text-base sm:text-lg md:text-xl text-gray-600">
-          No medical consultation data found.
-        </p>
-        <Button onClick={handleBackNavigation} className="ml-4">
-          Go Back
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="">
-      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <button
-          onClick={handleBackNavigation}
-          className="text-darkGray p-2 bg-white hover:bg-gray-100 rounded-md border border-gray-200"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-
-        <div>
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
-            Medical Consultation Record
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View consultation details and patient information
-          </p>
-        </div>
+      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
+        Page 1 of 2
       </div>
-      <hr className="border-gray mb-4 sm:mb-6" />
 
-      <Card className="w-full p-4 sm:p-6 md:p-8">
+      <div>
         <CardContent className="p-0">
           {/* Current Consultation Card */}
           {currentConsultation && (
@@ -206,9 +138,10 @@ export default function PendingDisplayMedicalConsultation() {
           )}
 
           {/* Consultation History Section */}
-          <div>
+          <div className="mt-6">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <h2 className="font-bold text-base sm:text-lg">
+              <Stethoscope className="text-blue" />
+              <h2 className="font-bold text-base sm:text-lg ">
                 Consultation History
               </h2>
             </div>
@@ -234,30 +167,21 @@ export default function PendingDisplayMedicalConsultation() {
 
           {/* Navigation Buttons */}
           <div className="flex justify-end mt-6 sm:mt-8">
-            <Button
-              onClick={handleBackNavigation}
-              className="mr-2 w-[100px]"
-              variant={"outline"}
-            >
+            <Button className="mr-2 w-[100px]" variant={"outline"}>
               Cancel
             </Button>
-            <Link
-              to="/soap-form"
-              state={{
-                patientData,
-                MedicalConsultation: currentConsultation,
-              }}
+            <Button
+              onClick={onNext}
+              className={`w-[100px] ${
+                loading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
+              disabled={loading}
             >
-              <Button 
-                className={`w-[100px] ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
-                disabled={loading}
-              >
-                 Next
-              </Button>
-            </Link>
+              Next
+            </Button>
           </div>
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

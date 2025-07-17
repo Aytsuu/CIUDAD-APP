@@ -4,6 +4,10 @@ import MainForwardedRecord from "@/pages/healthServices/forwardedrecord/Main";
 import path from "path";
 import ForwardedCHimmunization from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedCHimmunization";
 import  PendingConsultationRecord  from "@/pages/healthServices/forwardedrecord/forwardedrecords/forwardedMedicalConsultation";
+import ChildHealthCheckupHistory from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedhildMedicalCon";
+import CombinedHealthRecordsTable from "@/pages/healthServices/forwardedrecord/forwardedrecords/CombineConsultation";
+
+
 export const forwardedhealthrecord_router = [
   {
     path: "/forwarded-vaccination-records",
@@ -26,4 +30,14 @@ export const forwardedhealthrecord_router = [
     path: "/main-forwarded-records/pending-medical-con",
     element: <PendingConsultationRecord />,
   },
+  {
+    path: "/main-forwarded-records/child-health-checkup-history",
+    element: <ChildHealthCheckupHistory />,
+
+  },
+  {
+    path: "/main-forwarded-records/combined-health-records",
+    element: <CombinedHealthRecordsTable />,
+  }
+
 ];
