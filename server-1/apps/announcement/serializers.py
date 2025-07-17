@@ -5,6 +5,9 @@ from apps.account.models import Account
 from utils.email import send_email
 from django.utils.dateformat import format
 from apps.announcement.models import AnnouncementFile
+from apps.profiling.models import ResidentProfile
+from datetime import date
+
 
 class AnnouncementFileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,7 +37,7 @@ class AnnouncementRecipientSerializer(serializers.ModelSerializer):
         model = AnnouncementRecipient
         fields = [
             'ar_id', 'ar_mode', 'ann', 'position',
-            'ar_age', 'position_title', 'email'
+            'ar_age', 'rp', 'position_title', 'email'
         ]
 
     def get_position_title(self, obj):
@@ -45,7 +48,13 @@ class AnnouncementRecipientSerializer(serializers.ModelSerializer):
             return obj.staff.rp.account.email
         except Exception:
             return None
-        
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        print(f"[DEBUG] SERIALIZER OUTPUT - ar_id: {data['ar_id']}, ar_age: {data['ar_age']}, position: {data['position_title']}, mode: {data['ar_mode']}")
+        return data
+
+
 class BulkAnnouncementRecipientSerializer(serializers.Serializer):
     recipients = AnnouncementRecipientSerializer(many=True)
 
@@ -63,33 +72,55 @@ class BulkAnnouncementRecipientSerializer(serializers.Serializer):
             return []
 
         try:
+            # Get the sender RP (optional)
             try:
                 account = Account.objects.get(email=sender_email)
                 rp = account.rp
             except Account.DoesNotExist:
-                print(f"[WARNING] Account with email '{sender_email}' not found. Proceeding without rp.")
-                account = None
+                print(f"[WARNING] Account with email '{sender_email}' not found.")
                 rp = None
 
             for data in recipients_data:
                 ann = data.get("ann")
-                ar_mode = data.get("ar_mode", "email")
+                ar_mode = data.get("ar_mode") or "email"
                 ar_age = data.get("ar_age", None)
-                position = data.get("position")
+                position = data.get("position", None)
+                recipient_rp = data.get("rp", None)
+
+                # ✅ Classify ar_age using recipient's per_dob, regardless of position
+                if not ar_age:
+                    try:
+                        if recipient_rp and recipient_rp.personal and recipient_rp.personal.per_dob:
+                            dob = recipient_rp.personal.per_dob
+                            today = date.today()
+                            age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                            if age <= 17:
+                                ar_age = "youth"
+                            elif 18 <= age <= 59:
+                                ar_age = "adult"
+                            else:
+                                ar_age = "senior"
+                            print(f"[✔️ AGE CLASSIFIED] {recipient_rp} | DOB: {dob} | Age: {age} → {ar_age}")
+                        else:
+                            print(f"[⚠️ MISSING DOB] Cannot classify age group for: {recipient_rp}")
+                    except Exception as e:
+                        print(f"[❌ ERROR] Age classification failed for {recipient_rp}: {e}")
+                        ar_age = None
 
                 if not ann:
-                    print("[ERROR] Announcement missing in recipients. Skipping...")
+                    print("[ERROR] Missing announcement. Skipping recipient.")
                     continue
 
                 recipient = AnnouncementRecipient.objects.create(
                     ann=ann,
-                    rp=rp,
+                    rp=recipient_rp,
                     ar_mode=ar_mode,
                     ar_age=ar_age,
                     position=position
                 )
                 created_recipients.append(recipient)
 
+                # ✅ Send email if mode is email
                 if ar_mode == "email":
                     context = {
                         "ann_title": ann.ann_title,
@@ -101,18 +132,19 @@ class BulkAnnouncementRecipientSerializer(serializers.Serializer):
                         "positions": [recipient.position.pos_title] if recipient.position else [],
                         "ar_age": [ar_age] if ar_age else [],
                         "staff_id": ann.staff.staff_id if ann.staff else "Unknown",
-                        "files": AnnouncementFileSerializer(AnnouncementFile.objects.filter(ann=ann), many=True).data,
+                        "files": AnnouncementFileSerializer(
+                            AnnouncementFile.objects.filter(ann=ann), many=True
+                        ).data,
                     }
 
                     final_sender = sender_email if sender_email else None
                     all_accounts = Account.objects.all()
-
                     for acc in all_accounts:
-                        print(f"[DEBUG] Sending email to: {acc.email} from: {final_sender}")
+                        print(f"[📧 EMAIL] Sending to: {acc.email} | From: {final_sender}")
                         send_email("New Announcement", context, acc.email, from_email=final_sender)
 
         except Exception as e:
-            print(f"[ERROR] Failed to process bulk recipients: {e}")
+            print(f"[FATAL ERROR] Processing bulk recipients failed: {e}")
 
         return created_recipients
 
