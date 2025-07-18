@@ -163,7 +163,7 @@ export default function ResidentRecords() {
 
           <CardContent className="p-0">
             {/* Table Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 border-b bg-gray-50">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>Show</span>
                 <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>

@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity } from "react-native"
+import { Text, View, TouchableOpacity, ScrollView } from "react-native"
 import ScreenLayout from "../_ScreenLayout"
 import { ChevronRight } from "@/lib/icons/ChevronRight"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
@@ -17,77 +17,63 @@ export default () => {
   const menuItems = [
     {
       id: 'resident',
-      title: 'Resident Records',
-      description: 'Individual resident information and demographics',
+      title: 'Residents',
+      description: 'Individual records',
       icon: UserRound,
-      onPress: () => {
-        router.push('/(profiling)/resident/records');
-      }
+      route: '/(profiling)/resident/records'
     },
     {
       id: 'family',
-      title: 'Family Records',
-      description: 'Family compositions and relationships',
+      title: 'Families',
+      description: 'Family compositions',
       icon: UsersRound,
-      onPress: () => {
-        router.push('/(profiling)/family/records');
-      }
+      route: '/(profiling)/family/records'
     },
     {
       id: 'household',
-      title: 'Household Records',
-      description: 'Housing information and living conditions',
+      title: 'Households',
+      description: 'Housing information',
       icon: Building,
-      onPress: () => {
-        router.push('/(profiling)/household/records');
-      }
+      route: '/(profiling)/household/records'
     },
     {
       id: 'business',
-      title: 'Business Records',
-      description: 'Local businesses and economic activities',
+      title: 'Businesses',
+      description: 'Local enterprises',
       icon: Store,
-      onPress: () => {
-        router.push('/(profiling)/business/records');
-      }
+      route: '/(profiling)/business/records'
     }
   ]
 
-  const MenuItem = ({ item, index } : {item: any, index: number}) => {
+  const MenuCard = ({ item, index }: { item: any, index: number }) => {
     const IconComponent = item.icon
-    
+    const count = !isLoading && cardAnalytics ? cardAnalytics[index] : '...'
+
     return (
       <TouchableOpacity
-        onPress={item.onPress}
-        className={`bg-white px-4 py-4 border-l-4 border-blue-500`}
+        onPress={() => router.push(item.route)}
+        className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-200"
         activeOpacity={0.7}
       >
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center flex-1 gap-4">
-            <View className="w-12 h-12 bg-blue-50 rounded-full items-center justify-center mr-4">
-              <IconComponent color="gray" />
-            </View>
-            
-            <View className="flex-1">
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-lg font-semibold text-gray-900">
-                  {item.title}
-                </Text>
-                <View className="bg-blue-100 px-3 py-1 rounded-full">
-                  <Text className="text-sm font-medium text-blue-800">
-                    {!isLoading && cardAnalytics[index]}
-                  </Text>
-                </View>
-              </View>
-              
-              <Text className="text-sm text-gray-600 mb-2 leading-5">
-                {item.description}
-              </Text>
-            </View>
+        <View className="flex-row items-center">
+          {/* Icon Container */}
+          <View className={`w-14 h-14 bg-primaryBlue rounded-lg items-center justify-center`}>
+            <IconComponent size={24} className="text-white" />
           </View>
-          
-          <View className="ml-3">
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+
+          {/* Content */}
+          <View className="flex-1 ml-4">
+            <Text className="text-md font-semibold text-gray-900">
+              {item.title}
+            </Text>
+            <Text className="text-sm text-gray-500 mb-2">
+              {item.description}
+            </Text>
+          </View>
+
+          {/* Arrow */}
+          <View className="ml-2">
+            <ChevronRight size={20} className="text-gray-400" />
           </View>
         </View>
       </TouchableOpacity>
@@ -113,28 +99,22 @@ export default () => {
       }
       customRightAction={<View className="w-10 h-10"/>}
     >
-      <View className="flex-1 bg-gray-50">
-        {/* Summary Header */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-lg shadow-sm border border-gray-200">
-          <Text className="text-base font-medium text-gray-900 mb-2">
-            Profile Overview
-          </Text>
-          <Text className="text-sm text-gray-600 leading-5">
-            Monitor barangay demographic records. Select a category below to view records.
-          </Text>
-        </View>
-
-        {/* Menu Items */}
-        <View className="mx-4 mt-4 rounded-lg shadow-sm overflow-hidden">
+      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+        {/* Header Card */}
+        <Text className="text-sm text-center text-gray-600 leading-6">
+          Monitor barangay demographic records. Select a category below to view records.
+        </Text> 
+        {/* Menu Cards */}
+        <View className="mt-6 pb-6">
           {menuItems.map((item, index) => (
-            <MenuItem 
-              key={item.id} 
-              item={item} 
+            <MenuCard 
+              key={item.id}
+              item={item}
               index={index}
             />
           ))}
         </View>
-      </View>
+      </ScrollView>
     </ScreenLayout>
   )
 }

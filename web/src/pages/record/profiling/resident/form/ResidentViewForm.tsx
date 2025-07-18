@@ -198,7 +198,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
               Shows additional family details of this resident
             </p>
             <div className="flex justify-center">
-              <div className="w-4/5 mt-5 border rounded-2xl">
+              <div className="w-full max-w-5xl mt-5 border">
                 <DataTable
                   columns={additionalDetailsColumns(
                     params.data.residentId,

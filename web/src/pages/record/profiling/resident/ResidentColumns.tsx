@@ -252,8 +252,8 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     cell: ({row}) => {
       const profiles = [
         {id: 'account', icon: CircleUserRound},
-        {id: 'household', icon: House},
-        {id: 'family', icon: UsersRound},
+        {id: 'household', icon: House, tooltip: "ID: " + row.original.household_no},
+        {id: 'family', icon: UsersRound, tooltip: "ID: " + row.original.family_no},
         {id: 'business', icon: Building},
       ]
       const completed: any[] = [];
@@ -268,11 +268,20 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
       return (
         <div className="flex items-center justify-between px-5">
           {profiles.map((profile: any) => (
-            <div>
+            completed.includes(profile.id) ? (
+              <TooltipLayout
+              trigger={
+                <profile.icon size={20} 
+                  className="text-blue-600"
+                />
+              }
+              content={profile.tooltip}
+            />
+            ) : (
               <profile.icon size={20} 
-                className={`${completed.includes(profile.id) ? "text-blue-600" : "text-gray-300"}`}
+                className="text-gray-300"
               />
-            </div>
+            )
           ))}
         </div>
       )

@@ -20,7 +20,8 @@ class BusinessTableSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = Business
-    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 'bus_date_registered', 'bus_registered_by', 'files']
+    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 
+              'bus_date_registered', 'bus_registered_by', 'files']
 
   def get_bus_registered_by(self, obj):
     info = obj.staff.rp.per

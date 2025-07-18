@@ -39,6 +39,21 @@ export const useResidentsTable = (page: number, pageSize: number, searchQuery: s
   })
 }
 
+export const useGetPersonalInfo = (residentId: string) => {
+  return useQuery({
+    queryKey: ['personalInfo', residentId],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`profiling/resident/personal/${residentId}/`)
+        return res.data
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 export const useFamiliesTable = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ["familiesTableData", page, pageSize, searchQuery],
@@ -59,6 +74,22 @@ export const useFamiliesTable = (page: number, pageSize: number, searchQuery: st
     },
     staleTime: 5000,
   });
+}
+
+export const useGetFamilyMembers = (familyId: string) => {
+  return useQuery({
+    queryKey: ['familyMembers', familyId],
+    queryFn: async () => {
+      if(!familyId) return [];
+      try { 
+        const res = await api.get(`profiling/family/${familyId}/members/`)
+        return res.data
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
 }
 
 export const useHouseholdTable = (page: number, pageSize: number, searchQuery: string) => {
