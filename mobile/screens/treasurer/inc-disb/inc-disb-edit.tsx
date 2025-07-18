@@ -291,6 +291,7 @@ const EditFolderForm = () => {
         label="Year"
         placeholder="Enter year (e.g., 2025)"
         keyboardType="numeric"
+        maxInput={4}
       />
       <FormInput
         control={control}

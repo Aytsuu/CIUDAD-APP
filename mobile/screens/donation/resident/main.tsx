@@ -200,7 +200,6 @@ const ResidentDonationMain = () => {
                   <ChevronLeft size={30} color="black" className="text-[#68d391]" />
                 </TouchableOpacity>
               }
-              headerTitle={<Text className="text-white">Schedule Events</Text>}
               rightAction={
                 <TouchableOpacity>
                   <ChevronLeft size={30} color="black" className="text-[#002D2A]" />

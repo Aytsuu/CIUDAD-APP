@@ -36,6 +36,7 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { Button } from "@/components/ui/button";
 import MultiImageUploader, { MediaFileType } from "@/components/ui/multi-media-upload";
 import { useRouter } from "expo-router";
+import PageLayout from "@/screens/_PageLayout";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const MarkAttendeesSchema = z.object({
@@ -302,7 +303,7 @@ const AttendanceSheets = () => {
             <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Attendance Sheets and Records</Text>}
+        headerBetweenAction={<Text>Attendance Sheets and Records</Text>}
         showExitButton={false}
         headerAlign="left"
         scrollable={true}

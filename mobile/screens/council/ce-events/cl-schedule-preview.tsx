@@ -13,7 +13,7 @@ import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
-import { FormTimeInput } from '@/components/ui/form/form-time-input';
+import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import z from 'zod';
 import PageLayout from '@/screens/_PageLayout';
@@ -329,13 +329,12 @@ const CLSchedulePreview = () => {
           </View>
 
           <View className="relative">
-            <FormTimeInput
+            <FormDateTimeInput
               control={control}
-              name="eventTime"
-              label="Event Time"
-              mode="24h"
-              returnKeyType="next"
-            />
+                name="eventTime"
+                label="Event Time"
+                type="time"
+              />
             {(!isEditMode || isArchived) && (
               <TouchableOpacity
                 className="absolute top-0 left-0 right-0 bottom-0"
