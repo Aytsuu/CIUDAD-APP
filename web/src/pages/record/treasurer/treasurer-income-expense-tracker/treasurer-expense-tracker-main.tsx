@@ -585,8 +585,14 @@ function IncomeandExpenseTracking() {
                     <ArrowUpDown size={14}/>
                 </div>
             ),
-            cell: ({row}) => (
-                <div className="text-center">{new Date(row.getValue("iet_datetime")).toLocaleString()}</div>
+            cell: ({ row }) => (
+                <div className="text-center">
+                    {new Date(row.getValue("iet_datetime")).toLocaleString("en-US", {
+                        timeZone: "UTC",
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                    })}
+                </div>
             )
         },
         { 
