@@ -66,11 +66,12 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()
+    per_id = serializers.IntegerField(write_only=True, required=False)
     staff = serializers.CharField(allow_null=True, required=False) 
 
     class Meta:
         model = ResidentProfile
-        fields = ['per', 'staff', 'rp_id']
+        fields = ['per', 'per_id', 'staff', 'rp_id']
         read_only_fields = ['rp_id']
         extra_kwargs = {
             'staff': {'required': False}
@@ -80,7 +81,7 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):   
         # Extract personal data
         personal_data = validated_data.pop('per')
-        per = personal_data.pop('per_id', None)
+        per = validated_data.pop('per_id', None)
         if per:
             personal = Personal.objects.get(per_id=per)
         else:

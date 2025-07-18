@@ -91,3 +91,12 @@ export const formatFamiles = (families: any) => {
     ),
   }));
 }
+
+export const formatRequestComposition = (compositions: any) => {
+  if (!compositions) return [];
+
+  return compositions.map((comp: any) => ({
+    id: comp.per_id,
+    name: <p>{`${comp.per_lname}, ${comp.per_fname}${comp.per_mname ? ` ${comp.per_mname}` : ""}`}</p>
+  }))
+}

@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q, Count
 from apps.pagination import StandardResultsPagination
-from utils.email import send_email
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 

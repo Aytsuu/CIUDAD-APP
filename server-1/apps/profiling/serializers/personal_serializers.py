@@ -10,6 +10,18 @@ class PersonalBaseSerializer(serializers.ModelSerializer):
         fields = ['per_id','per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_dob', 
                   'per_sex', 'per_status', 'per_edAttainment', 'per_religion', 
                   'per_contact', 'addresses']
+        extra_kwargs = {
+            'per_lname': {'required': False, 'allow_null': True},
+            'per_fname': {'required': False, 'allow_null': True},
+            'per_mname': {'required': False, 'allow_null': True},
+            'per_suffix': {'required': False, 'allow_null': True},
+            'per_sex': {'required': False, 'allow_null': True},
+            'per_dob': {'required': False, 'allow_null': True},
+            'per_status': {'required': False, 'allow_null': True},
+            'per_contact': {'required': False, 'allow_null': True},
+            'per_edAttainment': {'required': False, 'allow_null': True},
+            'per_religion': {'required': False, 'allow_null': True},
+        }
         
     def get_addresses(Self, obj):
         per_addresses = PersonalAddress.objects.filter(per=obj.per_id)

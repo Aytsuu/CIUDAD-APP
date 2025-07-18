@@ -3,7 +3,6 @@ import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
 import { Type } from "../../profilingEnums";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import {
   Card,
   CardContent,
@@ -12,21 +11,17 @@ import {
 } from "@/components/ui/card/card";
 import { useAuth } from "@/context/AuthContext";
 import { useDeleteRequest } from "../../queries/profilingDeleteQueries";
-import { useNavigate } from "react-router";
 import { CircleAlert, FileText, MapPin, Shield, User, UserRoundPlus } from "lucide-react";
 import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
 import { useUpdateAccount } from "../../queries/profilingUpdateQueries";
 import { useSitioList } from "../../queries/profilingFetchQueries";
 import { formatSitio } from "../../profilingFormats";
-import { useDispatch } from "react-redux";
-import { accountCreated } from "@/redux/addRegSlice";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@radix-ui/react-separator";
+import { useRequestExpiration } from "../useRequestExpiration";
 
 export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
-  const dispatch = useDispatch();
   const { user } = useAuth();
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: deleteRequest } = useDeleteRequest();
@@ -34,114 +29,16 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
   const { form } = useResidentForm(params.data);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { 
+    getExpirationColor,
+    getExpirationMessage,
+    getStatusDisplay 
+  } = useRequestExpiration(params.data?.req_date);
 
   const formattedSitio = React.useMemo(
     () => formatSitio(sitioList) || [],
     [sitioList]
   );
-
-  // ============= EXPIRATION CALCULATION ===============
-  const calculateRemainingTime = React.useMemo(() => {
-    if (!params.data?.req_date) return { days: 7, hours: 0 }; // Default to 7 days if no creation date
-
-    const createdDate = new Date(params.data.req_date);
-    const currentDate = new Date();
-    const expirationDate = new Date(createdDate);
-    expirationDate.setDate(createdDate.getDate() + 7); // Add 7 days to creation date
-
-    const timeDiff = expirationDate.getTime() - currentDate.getTime();
-    const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-    const hoursDiff = Math.floor(
-      (timeDiff % (1000 * 3600 * 24)) / (1000 * 3600)
-    );
-
-    return {
-      days: Math.max(0, daysDiff),
-      hours: Math.max(0, hoursDiff),
-      isExpired: timeDiff <= 0,
-    };
-  }, [params.data?.req_date]);
-
-  const getExpirationMessage = React.useMemo(() => {
-    const { days, hours, isExpired } = calculateRemainingTime;
-
-    if (isExpired) {
-      return "This request has expired and will be archived.";
-    }
-
-    if (days < 1) {
-      if (hours === 1) {
-        return "This request will automatically expire and be archived after 1 hour if not approved.";
-      } else if (hours === 0) {
-        return "This request will expire very soon if not approved.";
-      } else {
-        return `This request will automatically expire and be archived after ${hours} hours if not approved.`;
-      }
-    } else if (days === 1) {
-      return "This request will automatically expire and be archived after 1 day if not approved.";
-    } else {
-      return `This request will automatically expire and be archived after ${days} days if not approved.`;
-    }
-  }, [calculateRemainingTime]);
-
-  const getExpirationColor = React.useMemo(() => {
-    const { days, hours, isExpired } = calculateRemainingTime;
-
-    if (isExpired || (days < 1 && hours <= 2)) {
-      return {
-        bg: "bg-red-50",
-        border: "border-red-200",
-        icon: "text-red-500",
-        title: "text-red-800",
-        text: "text-red-700",
-      };
-    } else if (days < 1 || days === 1) {
-      return {
-        bg: "bg-orange-50",
-        border: "border-orange-200",
-        icon: "text-orange-500",
-        title: "text-orange-800",
-        text: "text-orange-700",
-      };
-    } else if (days <= 3) {
-      return {
-        bg: "bg-amber-50",
-        border: "border-amber-200",
-        icon: "text-amber-500",
-        title: "text-amber-800",
-        text: "text-amber-700",
-      };
-    } else {
-      return {
-        bg: "bg-blue-50",
-        border: "border-blue-200",
-        icon: "text-blue-500",
-        title: "text-blue-800",
-        text: "text-blue-700",
-      };
-    }
-  }, [calculateRemainingTime]);
-
-  // Update the status display in the JSX
-  const getStatusDisplay = React.useMemo(() => {
-    const { days, hours, isExpired } = calculateRemainingTime;
-
-    if (isExpired) {
-      return "EXPIRED";
-    } else if (days < 1) {
-      if (hours === 0) {
-        return "EXPIRES VERY SOON";
-      } else if (hours === 1) {
-        return "EXPIRES IN 1 HOUR";
-      } else {
-        return `EXPIRES IN ${hours} HOURS`;
-      }
-    } else if (days === 1) {
-      return "EXPIRES TODAY";
-    } else {
-      return null; // Don't show status for longer periods
-    }
-  }, [calculateRemainingTime]);
 
   // ==================== HANDLERS ====================
 

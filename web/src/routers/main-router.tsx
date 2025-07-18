@@ -32,13 +32,15 @@ import { patientsRecordRouter } from './patients-record-router';
 import { health_administration_router } from './administration-health-router';
 import { reports_router } from './reports-router';
 import { summon_router } from './summon-router';
+import { RouteWithTransition } from '@/components/route-transition/route-with-transition';
+import { withTransition } from '@/helpers/withTransition';
 
 
 export const main_router: RouteObject[] = [
     {
         path: "/",
         element: <MainLayout />,
-        children: [
+        children: withTransition([
             {
                 path: "/",
                 element: <Navigate to="/dashboard" />
@@ -80,6 +82,6 @@ export const main_router: RouteObject[] = [
             ...patientsRecordRouter,
             ...health_administration_router,
             
-        ]
+        ])
     }
 ]

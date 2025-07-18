@@ -69,7 +69,7 @@ export type SitioRecord = {
   sitio_name: string;
 }
 
-export type RequestRecord = {
+export type IndividualRequestRecord = {
   req_id: string;
   per_lname: string;
   per_fname: string;
@@ -83,6 +83,13 @@ export type RequestRecord = {
   per_religion: string;
   addresses: Record<string, any>[];
   files: Record<string, any>[]
+  req_date: string;
+}
+
+export type FamilyRequestRecord = {
+  req_id: string;
+  respondent: Record<string, any>;
+  compositions: Record<string, any>[];
   req_date: string;
 }
 

@@ -10,18 +10,6 @@ class StaffBaseSerializer(serializers.ModelSerializer):
     model = Staff
     fields = '__all__'
 
-class StaffMinimalSerializer(serializers.ModelSerializer):
-    rp = serializers.SerializerMethodField()
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
-
-    class Meta:
-        model = Staff
-        fields = '__all__'
-
-    def get_rp(self, obj):
-        from apps.profiling.serializers.minimal import ResidentProfileMinimalSerializer 
-        return ResidentProfileMinimalSerializer(obj.rp).data
-
 class StaffTableSerializer(serializers.ModelSerializer):
   lname = serializers.CharField(source='rp.per.per_lname')
   fname = serializers.CharField(source='rp.per.per_fname')
@@ -55,8 +43,8 @@ class StaffFullSerializer(serializers.ModelSerializer):
       fields = '__all__'
 
   def get_rp(self, obj):
-      from apps.profiling.serializers.minimal import ResidentProfileMinimalSerializer  # Lazy import inside the method
-      return ResidentProfileMinimalSerializer(obj.rp).data
+      from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
+      return ResidentPersonalInfoSerializer(obj.rp).data
   
 
 class StaffCreateSerializer(serializers.ModelSerializer):

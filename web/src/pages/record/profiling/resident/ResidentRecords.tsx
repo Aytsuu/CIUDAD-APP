@@ -107,7 +107,7 @@ export default function ResidentRecords() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Link to="/resident/pending" className="flex-1 sm:flex-none">
+                <Link to="/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending

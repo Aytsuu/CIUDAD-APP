@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { DataTable } from "@/components/ui/table/data-table"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { IndividualRequestColumns } from "./RequestColumns"
+import { FamilyRequestColumns, IndividualRequestColumns } from "./RequestColumns"
 import { useRequests } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
@@ -13,16 +13,19 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { useLoading } from "@/context/LoadingContext"
 import { cn } from "@/lib/utils"
+import { useNavigate } from "react-router"
 
 type RequestType = "individual" | "family"
 
 export default function RegistrationRequests() {
   // ----------------- STATE INITIALIZATION --------------------
+  const currentPath = location.pathname.split("/").pop() || ""
+  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading()
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
-  const [selectedRequestType, setSelectedRequestType] = React.useState<RequestType>("individual")
+  const [selectedRequestType, setSelectedRequestType] = React.useState<RequestType>(currentPath as RequestType)
 
   const debouncedPageSize = useDebounce(pageSize, 100)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -44,12 +47,14 @@ export default function RegistrationRequests() {
       label: "Individual",
       icon: User,
       description: "Personal registrations",
+      route: "individual",
     },
     {
       id: "family" as RequestType,
       label: "Family",
       icon: Users,
       description: "Family registrations",
+      route: "family",
     },
   ]
 
@@ -71,21 +76,33 @@ export default function RegistrationRequests() {
   // ----------------- HANDLERS --------------------
   const formatRequestList = React.useCallback(() => {
     const formatted = requestList.map((request: any) => {
-      const personal = request.compositions[0] 
-      return {
-        req_id: request.req_id,
-        req_date: request.req_date,
-        per_lname: personal.per_lname,
-        per_fname: personal.per_fname,
-        per_mname: personal.per_mname,
-        per_suffix: personal.per_suffix,
-        per_dob: personal.per_dob,
-        per_sex: personal.per_sex,
-        per_status: personal.per_status,
-        per_edAttainment: personal.per_edAttainment,
-        per_religion: personal.per_religion,
-        per_contact: personal.per_contact,
-        addresses: personal.addresses
+      if(selectedRequestType === "individual") {
+        const personal = request.compositions[0] 
+        return {
+          req_id: request.req_id,
+          req_date: request.req_date,
+          per_lname: personal.per_lname,
+          per_fname: personal.per_fname,
+          per_mname: personal.per_mname,
+          per_suffix: personal.per_suffix,
+          per_dob: personal.per_dob,
+          per_sex: personal.per_sex,
+          per_status: personal.per_status,
+          per_edAttainment: personal.per_edAttainment,
+          per_religion: personal.per_religion,
+          per_contact: personal.per_contact,
+          addresses: personal.addresses
+        }
+      } else {
+        const respondent = request.compositions.filter((comp: any) => comp.acc !== null)[0]
+        if(respondent) {
+          return {
+            req_id: request.req_id,
+            req_date: request.req_date,
+            respondent: respondent,
+            compositions: request.compositions
+          }
+        }
       }
     });
 
@@ -131,8 +148,11 @@ export default function RegistrationRequests() {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => handleRequestTypeChange(item.id)}
-                      className={cn(
+                      onClick={() => {
+                        handleRequestTypeChange(item.id)
+                        navigate(item.route, { replace: true })
+                      }}
+                                              className={cn(
                         "w-full flex items-center justify-between p-3 rounded-lg text-left outline-none transition-colors duration-200 group",
                         isSelected
                           ? "bg-blue-50 text-blue-700 border border-blue-200"
@@ -234,7 +254,13 @@ export default function RegistrationRequests() {
             )}
 
             {/* Data Table */}
-            {!isLoadingRequests && requestList.length > 0 && <DataTable columns={IndividualRequestColumns} data={formatRequestList()} />}
+            {!isLoadingRequests && requestList.length > 0 && <DataTable 
+              columns={
+                selectedRequestType == "individual" ? 
+                IndividualRequestColumns : FamilyRequestColumns as any
+              } 
+              data={formatRequestList()} 
+            />}
 
             {/* Pagination */}
             {!isLoadingRequests && requestList.length > 0 && (
