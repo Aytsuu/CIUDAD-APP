@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, Download } from "lucide-react"
+import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, Download, CircleUserRound, House, UsersRound, Building } from "lucide-react"
 import { Link } from "react-router"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
@@ -16,6 +16,26 @@ import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQue
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
+import { capitalize } from "@/helpers/capitalize"
+
+const profiles = [
+  {
+    id: 'account', 
+    icon: CircleUserRound,
+  },
+  {
+    id: 'household', 
+    icon: House
+  },
+  {
+    id: 'family', 
+    icon: UsersRound
+  },
+  {
+    id: 'business', 
+    icon: Building
+  },
+]
 
 export default function ResidentRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -159,6 +179,19 @@ export default function ResidentRecords() {
                   </SelectContent>
                 </Select>
                 <span>entries</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex item-center justify-between gap-12">
+                  {profiles.map((profile: any) => (
+                    <div className="flex gap-2">
+                      <profile.icon size={18} 
+                        className=""
+                      />
+                      <p>-</p>
+                      <p>{capitalize(profile.id)}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { ArrowUpDown, CircleAlert, Store, UserRoundPlus } from "lucide-react";
+import { ArrowUpDown, Building, CircleAlert, CircleUserRound, House, UserRoundPlus, UsersRound } from "lucide-react";
 import { ResidentAdditionalRecord, ResidentRecord } from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -11,35 +11,187 @@ import { Badge } from "@/components/ui/badge";
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const residentColumns: ColumnDef<ResidentRecord>[] = [
-  {
-    accessorKey: 'has_account',
-    header: '',
-    cell: ({ row }) => {
-      const account = row.original.has_account
+// export const residentColumns: ColumnDef<ResidentRecord>[] = [
+//   {
+//     accessorKey: 'has_account',
+//     header: '',
+//     cell: ({ row }) => {
+//       const account = row.original.has_account
 
-      return (
-        <div className="flex items-center justify-center">
-          {!account && (
-            <TooltipLayout 
-              trigger={
-                <Link to="/account/create"
-                  state={{
-                    params: {
-                      residentId: row.original.rp_id
-                    }
-                  }}
-                >
-                  <UserRoundPlus size={18} className="text-orange-400"/>
-                </Link> 
-              }
-              content="Account not registered"
-            />
-          )}
-        </div>
-      )
-    }
-  },
+//       return (
+//         <div className="flex items-center justify-center">
+//           {!account && (
+//             <TooltipLayout 
+//               trigger={
+//                 <Link to="/account/create"
+//                   state={{
+//                     params: {
+//                       residentId: row.original.rp_id
+//                     }
+//                   }}
+//                 >
+//                   <UserRoundPlus size={18} className="text-orange-400"/>
+//                 </Link> 
+//               }
+//               content="Account not registered"
+//             />
+//           )}
+//         </div>
+//       )
+//     }
+//   },
+//   {
+//     accessorKey: "rp_id",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Resident No.
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//   },
+//   {
+//     accessorKey: "household_no",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Household No.
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => {
+//         const householdNo: string = row.getValue("household_no");
+        
+//         return householdNo ? (<div>{householdNo}</div>) :
+//         (<div className="flex justify-center items-center">
+//           <TooltipLayout
+//               trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+//               content="Family not registered"
+//           />
+//         </div>)
+//     },
+//   },
+//   {
+//     accessorKey: "family_no",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Family No.
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => {
+//         const familyNo: string = row.getValue("family_no");
+        
+//         return familyNo ? (<div>{familyNo}</div>) :
+//         (<div className="flex justify-center items-center">
+//           <TooltipLayout
+//               trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+//               content="Family not registered"
+//           />
+//         </div>)
+//     },
+//   },
+//   {
+//     accessorKey: "business_owner",
+//     header: "Business Owner",
+//     cell: ({ row }) => (
+//       <div className="flex justify-center items-center">
+//         {row.original.business_owner === true ? (
+//         <Store className="w-4 h-4 text-green-500"/>
+//         ) : (
+//           <div className="w-2 h-2 rounded-full bg-red-500"/>
+//         )}
+//       </div>
+      
+//     ),
+//   },
+//   {
+//     accessorKey: "lname",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Last Name
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => (
+//       <div className="hidden lg:block max-w-xs truncate">
+//         {row.getValue("lname")}
+//       </div>
+//     ),
+//   },
+//   {
+//     accessorKey: "fname",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         First Name
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => (
+//       <div className="hidden lg:block max-w-xs truncate">
+//         {row.getValue("fname")}
+//       </div>
+//     ),
+//   },
+//   {
+//     accessorKey: "mname",
+//     header: "Middle Name",
+//   },
+//   {
+//     accessorKey: "rp_date_registered",
+//     header: "Date Registered"
+//   },
+//   {
+//     accessorKey: "action",
+//     header: "Action",
+//     cell: ({ row }) => {
+//       const navigate = useNavigate();
+//       const { showLoading, hideLoading } = useLoading();
+
+//       const handleViewClick = async () => {
+//         showLoading();
+//         try {
+//           const personalInfo = await getPersonalInfo(row.original.rp_id);
+//           navigate("/resident/view", {
+//             state: {
+//               params: {
+//                 type: 'viewing',
+//                 data: {
+//                   personalInfo: personalInfo,
+//                   residentId: row.original.rp_id,
+//                   familyId: row.original.family_no
+//                 },
+//               }
+//             }
+//           });
+//         } finally {
+//           hideLoading();
+//         }
+//       }
+    
+//       return (
+//         <ViewButton onClick={handleViewClick} />
+//       )
+//     },
+//     enableSorting: false,
+//     enableHiding: false,
+//   },
+// ];
+
+export const residentColumns: ColumnDef<ResidentRecord>[] = [
   {
     accessorKey: "rp_id",
     header: ({ column }) => (
@@ -50,66 +202,6 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
         Resident No.
         <ArrowUpDown size={14} />
       </div>
-    ),
-  },
-  {
-    accessorKey: "household_no",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Household No.
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-        const householdNo: string = row.getValue("household_no");
-        
-        return householdNo ? (<div>{householdNo}</div>) :
-        (<div className="flex justify-center items-center">
-          <TooltipLayout
-              trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-              content="Family not registered"
-          />
-        </div>)
-    },
-  },
-  {
-    accessorKey: "family_no",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Family No.
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-        const familyNo: string = row.getValue("family_no");
-        
-        return familyNo ? (<div>{familyNo}</div>) :
-        (<div className="flex justify-center items-center">
-          <TooltipLayout
-              trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-              content="Family not registered"
-          />
-        </div>)
-    },
-  },
-  {
-    accessorKey: "business_owner",
-    header: "Business Owner",
-    cell: ({ row }) => (
-      <div className="flex justify-center items-center">
-        {row.original.business_owner === true ? (
-        <Store className="w-4 h-4 text-green-500"/>
-        ) : (
-          <div className="w-2 h-2 rounded-full bg-red-500"/>
-        )}
-      </div>
-      
     ),
   },
   {
@@ -153,6 +245,38 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
   {
     accessorKey: "rp_date_registered",
     header: "Date Registered"
+  },
+  {
+    accessorKey: "completed_profiles",
+    header: "Completed Profile",
+    cell: ({row}) => {
+      const profiles = [
+        {id: 'account', icon: CircleUserRound},
+        {id: 'household', icon: House},
+        {id: 'family', icon: UsersRound},
+        {id: 'business', icon: Building},
+      ]
+      const completed: any[] = [];
+
+      row.original.has_account && completed.push('account')
+      row.original.household_no && completed.push('household')
+      row.original.family_no && completed.push('family')
+      row.original.business_owner && completed.push('business')
+
+      console.log(completed)
+
+      return (
+        <div className="flex items-center justify-between px-5">
+          {profiles.map((profile: any) => (
+            <div>
+              <profile.icon size={20} 
+                className={`${completed.includes(profile.id) ? "text-blue-600" : "text-gray-300"}`}
+              />
+            </div>
+          ))}
+        </div>
+      )
+    }
   },
   {
     accessorKey: "action",
