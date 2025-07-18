@@ -41,7 +41,7 @@ export function HealthHistoryAccordions({
     <>
       <AccordionSection
         value="record-overview"
-        title="Record Overview"
+        title="TT status of the mother"
         icon={<ClipboardList className="h-5 w-5" />}
       >
         <SectionRenderer
@@ -51,7 +51,7 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
-      <AccordionSection
+      {/* <AccordionSection
         value="child-details"
         title="Child Details"
         icon={<User className="h-5 w-5" />}
@@ -61,9 +61,9 @@ export function HealthHistoryAccordions({
           recordsToDisplay={recordsToDisplay}
           chhistId={chhistId}
         />
-      </AccordionSection>
+      </AccordionSection> */}
 
-      <AccordionSection
+      {/* <AccordionSection
         value="parent-newborn"
         title="Parent & Newborn Screening"
         icon={<Users className="h-5 w-5" />}
@@ -73,7 +73,7 @@ export function HealthHistoryAccordions({
           recordsToDisplay={recordsToDisplay}
           chhistId={chhistId}
         />
-      </AccordionSection>
+      </AccordionSection> */}
 
       <AccordionSection
         value="exclusive-bf-checks"

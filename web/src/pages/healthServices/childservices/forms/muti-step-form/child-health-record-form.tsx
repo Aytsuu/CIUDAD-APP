@@ -234,9 +234,7 @@ export default function ChildHealthRecordForm() {
       nutritionalStatus:
         chhistRecord.nutritionalStatus || initialFormData.nutritionalStatus,
       vaccines: vaccinesFromApi,
-      hasExistingVaccination:
-        chhistRecord.has_existing_vaccination ||
-        existingVaccinesFromApi.length > 0,
+    
       existingVaccines: existingVaccinesFromApi,
     };
   };

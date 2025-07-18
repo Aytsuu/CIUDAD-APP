@@ -28,6 +28,11 @@ class CheckUPChildHealthHistoryView(generics.ListAPIView):
     def get_queryset(self):
         return ChildHealth_History.objects.filter(status="check-up").order_by('-created_at')  # Filter by check-up and order by most recent first
     
+class ChildHealthImmunizationStatusListView(generics.ListAPIView):
+    serializer_class = ChildHealthHistoryFullSerializer
+
+    def get_queryset(self):
+        return ChildHealth_History.objects.filter(status="immunization").order_by('-created_at')  # Filter by check-up and order by most recent first
     
 class UpdateChildHealthHistoryView(generics.RetrieveUpdateAPIView):
     queryset = ChildHealth_History.objects.all()
@@ -258,16 +263,8 @@ class ChildHealthRecordByPatIDView(APIView):
     
     
 
-class ChildHealthImmunizationStatusListView(generics.ListAPIView):
-    serializer_class = ChildHealthrecordSerializer
 
-    def get_queryset(self):
-        return (
-            ChildHealthrecord.objects
-            .filter(child_health_histories__status="immunization")
-            .distinct()
-            .order_by('-created_at')
-        )
+        
 
 
 class ChildHealthImmunizationCountView(APIView):

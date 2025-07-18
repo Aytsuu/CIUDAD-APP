@@ -236,16 +236,7 @@ export default function AllFirstAidRecords() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
+
 
   return (
     <>
@@ -345,9 +336,37 @@ export default function AllFirstAidRecords() {
             </div>
           </div>
 
+       
           <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="bg-white rounded-md border border-gray-200">
+              {/* Skeleton for table header */}
+              <div className="w-full h-16 bg-gray-50 flex items-center p-4">
+                {columns.map((_, i) => (
+                  <Skeleton key={`header-${i}`} className="h-6 flex-1 mx-2" />
+                ))}
+              </div>
+              {/* Skeleton for table rows */}
+              <div className="p-4 space-y-4">
+                {[...Array(5)].map((_, rowIndex) => (
+                  <div 
+                    key={`row-${rowIndex}`} 
+                    className="flex items-center justify-between space-x-4"
+                  >
+                    {columns.map((_, colIndex) => (
+                      <Skeleton 
+                        key={`cell-${rowIndex}-${colIndex}`} 
+                        className="h-12 flex-1 mx-2" 
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
             <DataTable columns={columns} data={paginatedData} />
-          </div>
+          )}
+        </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}

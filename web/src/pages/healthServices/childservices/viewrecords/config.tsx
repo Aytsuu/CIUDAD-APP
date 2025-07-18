@@ -10,15 +10,15 @@ import {
 } from "./types";
 
 export const recordOverviewFields: FieldConfig[] = [
-  { label: "Record ID", path: ["chhist_id"] },
-  {
-    label: "Created At",
-    path: ["created_at"],
-    format: (val: string) =>
-      val && isValid(new Date(val)) ? format(new Date(val), "PPP p") : "N/A",
-  },
+  // { label: "Record ID", path: ["chhist_id"] },
+  // {
+  //   label: "Created At",
+  //   path: ["created_at"],
+  //   format: (val: string) =>
+  //     val && isValid(new Date(val)) ? format(new Date(val), "PPP p") : "N/A",
+  // },
   { label: "TT Status", path: ["tt_status"] },
-  { label: "Status", path: ["status"] },
+  // { label: "Status", path: ["status"] },
 ];
 
 export const childPersonalInfoFields: FieldConfig[] = [
@@ -200,16 +200,94 @@ export const nutritionStatusesFields: FieldConfig[] = [
     path: ["nutrition_statuses", "0", "wfl"],
   },
   { label: "MUAC", path: ["nutrition_statuses", "0", "muac"] },
+  { label: "MUAC Status", path: ["nutrition_statuses", "0", "muac_status"] },
 ];
-
 export const notesFields: FieldConfig[] = [
   {
-    label: "Notes",
+    label: "Clinical Notes",
     path: ["child_health_notes"],
-    format: (val: CHNotes[]) =>
-      val && val.length > 0
-        ? val.map((note: CHNotes) => note.chn_notes || "N/A").join(" | ")
-        : "No notes recorded",
+    format: (val: CHNotes[], record?: ChildHealthHistoryRecord) => {
+      if (!val || val.length === 0) {
+        return [
+          <div key="no-notes" className="text-center">
+            <span>No clinical notes found</span>
+          </div>,
+        ];
+      }
+
+      // Filter out notes with empty content
+      const validNotes = val.filter(
+        (note) => note.chn_notes && note.chn_notes.trim() !== ""
+      );
+
+      // Return empty state if all notes were filtered out
+      if (validNotes.length === 0) {
+        return [
+          <div key="no-valid-notes" className="text-center">
+            <span>No clinical notes with content found</span>
+          </div>,
+        ];
+      }
+
+      return validNotes.map((note, index) => {
+        const staffName = note.staff_details?.rp?.per
+          ? `${note.staff_details.rp.per.per_fname} ${note.staff_details.rp.per.per_lname}`
+          : "Unknown staff";
+
+        return (
+          <div
+            key={`note-${note.chnotes_id || index}`}
+            className="flex justify-center space-y-1 mb-2"
+          >
+            <div className="font-medium flex flex-col text-left">
+              <div className="text-left">-{note.chn_notes}</div>
+              <div className="text-xs font-normal ml-4">
+                Created by {staffName} at{" "}
+                {new Date(note.created_at).toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
+        );
+      });
+    },
+  },
+  {
+    label: "Follow-ups",
+    path: ["child_health_notes"],
+    format: (val: CHNotes[], record?: ChildHealthHistoryRecord) => {
+      const followUps = val?.filter((note) => note.followv_details) || [];
+      if (followUps.length === 0) {
+        return [
+          <div key="no-followups" className="text-center">
+            <span>No follow-ups scheduled</span>
+          </div>,
+        ];
+      }
+
+      return followUps.map((note, index) => {
+        const followv = note.followv_details!;
+
+        return (
+          <div key={`followup-${index}`} className="mb-2 flex justify-center">
+            <div className="text-left">
+              <div> -{followv.followv_description || ""} </div>
+
+              <div className="ml-4 flex flex-row gap-2">
+                <div>
+                  Scheduled on
+                  {new Date(followv.followv_date).toLocaleDateString()}
+                </div>
+                <div className="font-normal text-xs">
+                  {" "}
+                  [Status:
+                  {followv.followv_status}]
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      });
+    },
   },
 ];
 
@@ -258,46 +336,51 @@ export const immunizationTrackingFields: FieldConfig[] = [
     path: ["immunization_tracking"],
     format: (val: any[]) => {
       if (!val || val.length === 0) return "No immunization records";
-      
-      return val.map(imt => {
-        const vacrec = imt.vacrec_details;
-        if (!vacrec || !vacrec.vaccination_histories || vacrec.vaccination_histories.length === 0) {
-          return "No vaccination details";
-        }
 
-        // Get the first vaccination history (assuming there's at least one)
-        const vachist = vacrec.vaccination_histories[0];
-        const vaccine = vachist.vaccine_stock?.vaccinelist;
-        
-        const doseNumber = vachist.vachist_doseNo;
-        const doseSuffix =
-          doseNumber === 1
-            ? "1st dose"
-            : doseNumber === 2
-            ? "2nd dose"
-            : doseNumber === 3
-            ? "3rd dose"
-            : `${doseNumber}th dose`;
+      return val
+        .map((imt) => {
+          const vacrec = imt.vacrec_details;
+          if (
+            !vacrec ||
+            !vacrec.vaccination_histories ||
+            vacrec.vaccination_histories.length === 0
+          ) {
+            return "No vaccination details";
+          }
 
-        const details = [
-          `Vaccine: ${vaccine?.vac_name || "Unknown"}`,
-          `Dose: ${doseSuffix}/${vacrec.vacrec_totaldose}`,
-          `Status: ${vachist.vachist_status}`,
-          // `Date: ${new Date(vachist.created_at).toLocaleDateString()}`,
-          // `Age at vaccination: ${vachist.vachist_age}`,
-          `Next follow-up: ${
-            vachist.follow_up_visit
-              ? new Date(vachist.follow_up_visit.followv_date).toLocaleDateString()
-              : "None"
-          }`,
-        ]
-          .filter(Boolean)
-          .join(" | ");
+          // Get the first vaccination history (assuming there's at least one)
+          const vachist = vacrec.vaccination_histories[0];
+          const vaccine = vachist.vaccine_stock?.vaccinelist;
 
-        return details;
-      }).join('\n'); // Separate multiple immunizations with new lines
-    }
-  }
+          const doseNumber = vachist.vachist_doseNo;
+          const doseSuffix =
+            doseNumber === 1
+              ? "1st dose"
+              : doseNumber === 2
+              ? "2nd dose"
+              : doseNumber === 3
+              ? "3rd dose"
+              : `${doseNumber}th dose`;
+
+          const details = [
+            `${vaccine?.vac_name || "Unknown"} (${doseSuffix})`,
+            `Status: ${vachist.vachist_status}`,
+            // `Date: ${new Date(vachist.created_at).toLocaleDateString()}`,
+            // `Age at vaccination: ${vachist.vachist_age}`,
+            // `Next follow-up: ${
+            //   vachist.follow_up_visit
+            //     ? new Date(vachist.follow_up_visit.followv_date).toLocaleDateString()
+            //     : "None"
+            // }`,
+          ]
+            .filter(Boolean)
+            .join("  ");
+
+          return details;
+        })
+        .join("\n"); // Separate multiple immunizations with new lines
+    },
+  },
 ];
 
 export const getSupplementStatusesFields = (

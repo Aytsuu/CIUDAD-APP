@@ -76,7 +76,6 @@ export const VitalSignSchema = z.object({
   chnotes_id: z.string().optional(), // Child health notes ID
   followv_status:z.string().optional(), // Follow-up visit status
 
-  
 })
 
 export const HealthStatusSchema = z.object({
@@ -160,7 +159,6 @@ export const existingVaccineRecordSchema = z.object({
 
 export const VaccinesSchema = z.object({
   vaccines: z.array(vaccineRecordSchema).optional(),
-  hasExistingVaccination: z.boolean().optional(),
   existingVaccines: z.array(existingVaccineRecordSchema).optional(),
 })
 
@@ -193,7 +191,6 @@ export const ChildHealthFormSchema = BasicInfoSchema.merge(ChildDetailsSchema)
 
 
 
-// Type for FormData
 export type FormData = z.infer<typeof ChildHealthFormSchema>
 export type BasicInfoType = z.infer<typeof BasicInfoSchema>
 export type ChildDetailsType= z.infer<typeof ChildDetailsSchema>

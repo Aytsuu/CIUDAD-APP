@@ -6,7 +6,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { IllnessComponent } from "@/components/ui/add-search-illness";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { PhysicalExam } from "@/components/ui/physical-exam";
-import { Loader2 } from "lucide-react";
+import { Loader2,ChevronLeft } from "lucide-react";
 import { Control } from "react-hook-form";
 import { SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "@/pages/healthServices/doctor/types";
@@ -176,14 +176,16 @@ interface SoapFormFieldsProps {
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" type="button" onClick={onBack}>
+              <ChevronLeft  />
               Previous
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || hasInvalidQuantities}
+              className="w-[100px]"
             >
               {isSubmitting ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2  ">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </div>

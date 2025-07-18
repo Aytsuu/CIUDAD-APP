@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import PendingDisplaycheckupData from "./pending-display";
-import SoapForm from "./soap-form";
+import PendingDisplaycheckupData from "./ChildhealthHistory";
+import SoapForm from "./SoapFormCH";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import {ChevronLeft} from "lucide-react";

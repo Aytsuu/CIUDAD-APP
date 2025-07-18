@@ -5,8 +5,8 @@ import ChildHealthRecordForm from "@/pages/healthServices/childservices/forms/mu
 import ChildHealthHistoryDetail from "@/pages/healthServices/childservices/viewrecords/Viewhistory";
 import { el } from "date-fns/locale";
 import path from "path";
-
-import ChildMedicalConsultation from "@/pages/healthServices/doctor/child-medical-con/history";
+import ChildImmunization from "@/pages/healthServices/childservices/immunization/Main";
+import ChildMedicalConsultation from "@/pages/healthServices/doctor/child-medical-con/Main";
 
 
 export const childHealthServices = [
@@ -29,6 +29,11 @@ export const childHealthServices = [
   {
     path: "/child-medical-consultation",
     element: <ChildMedicalConsultation />,
+  },
+  {
+    path: "/child-immunization",
+    element: <ChildImmunization />,
   }
+
 ];
 

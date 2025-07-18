@@ -83,7 +83,7 @@ export const initialFormData: FormData = {
     muac_status: "",
   },
   vaccines: [],
-  hasExistingVaccination: false,
+  // hasExistingVaccination: false,
   existingVaccines: [],
   created_at: "",
   chhist_status: "",

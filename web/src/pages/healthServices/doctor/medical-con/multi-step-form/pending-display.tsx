@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button/button";
 import { Card, CardContent } from "@/components/ui/card/card";
-import { ChevronLeft, Stethoscope } from "lucide-react";
+import { ChevronRight, Stethoscope } from "lucide-react";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";
 import {
@@ -167,17 +167,16 @@ export default function PendingDisplayMedicalConsultation({
 
           {/* Navigation Buttons */}
           <div className="flex justify-end mt-6 sm:mt-8">
-            <Button className="mr-2 w-[100px]" variant={"outline"}>
-              Cancel
-            </Button>
+           
             <Button
               onClick={onNext}
-              className={`w-[100px] ${
-                loading ? "opacity-70 cursor-not-allowed" : ""
+              className={`w-[100px] flex items-center justify-center ${
+              loading ? "opacity-70 cursor-not-allowed" : ""
               }`}
               disabled={loading}
             >
               Next
+              <ChevronRight className="ml-2" />
             </Button>
           </div>
         </CardContent>

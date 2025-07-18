@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 export function ConsultationHistorySkeleton() {
   return (
     <div className="space-y-4">
-        <div  className="border rounded-lg p-4">
+        <div  className="p-4">
           {/* Header with date and status */}
           <div className="flex justify-between items-start mb-3">
             <Skeleton className="h-5 w-1/4" />
@@ -19,7 +19,7 @@ export function ConsultationHistorySkeleton() {
           </div>
        
         </div>
-      ))
+      
     </div>
   );
 }

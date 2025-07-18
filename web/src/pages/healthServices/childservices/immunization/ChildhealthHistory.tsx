@@ -1,71 +1,51 @@
-"use client";
-
-import { useMemo, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion } from "@/components/ui/accordion";
+import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
+import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
+import { PatientSummarySection } from "../../childservices/viewrecords/CurrentHistoryView";
+import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ChildHealthHistoryRecord } from "./types";
-import { getSupplementStatusesFields } from "./config";
-import { api2 } from "@/api/api";
-import { PatientSummarySection } from "./CurrentHistoryView";
+import { Baby, History } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
-import { History, Baby } from "lucide-react";
-export default function ChildHealthHistoryDetail() {
-  // Navigation and routing
+
+interface PendingDisplayMedicalConsultationProps {
+  ChildHealthRecord: any;
+  onNext: () => void;
+  fullHistoryData: ChildHealthHistoryRecord[];
+}
+
+export default function PendingDisplayMedicalConsultation({
+  ChildHealthRecord,
+  onNext,
+  fullHistoryData,
+}: PendingDisplayMedicalConsultationProps) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { patId, chrecId, chhistId } = location.state?.params || {};
+  const chhistId = ChildHealthRecord.chhist_id;
 
   // State management
-  const [fullHistoryData, setFullHistoryData] = useState<
-    ChildHealthHistoryRecord[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [recordsPerPage, setRecordsPerPage] = useState(2);
-  const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
+  const [activeTab, setActiveTab] = useState("current");
 
   const supplementStatusesFields = useMemo(
     () => getSupplementStatusesFields(fullHistoryData),
     [fullHistoryData]
   );
 
-  // Data fetching
+  // Set initial index when fullHistoryData changes
   useEffect(() => {
-    const fetchAllData = async () => {
-      setIsLoading(true);
-      try {
-        const historyResponse = await api2.get(
-          `/child-health/history/${chrecId}/`
-        );
-        const sortedHistory = (
-          historyResponse.data[0]?.child_health_histories || []
-        ).sort(
-          (a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        setFullHistoryData(sortedHistory);
-
-        // Set initial index to the selected record
-        const initialIndex = sortedHistory.findIndex(
-          (record: ChildHealthHistoryRecord) => record.chhist_id === chhistId
-        );
-        setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
-      } catch (error) {
-        console.error("Error fetching child health history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (patId) {
-      fetchAllData();
+    if (fullHistoryData.length > 0 && chhistId) {
+      const initialIndex = fullHistoryData.findIndex(
+        (record) => record.chhist_id === chhistId
+      );
+      setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
     }
-  }, [patId, chrecId, chhistId]);
+  }, [fullHistoryData, chhistId]);
 
   // Memoized data for display
   const recordsToDisplay = useMemo(() => {
@@ -104,30 +84,14 @@ export default function ChildHealthHistoryDetail() {
   }
 
   return (
-    <>
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center relative">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft />
-        </Button>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health History Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View and compare child's health history
-          </p>
-        </div>
+    <div className="p-6">
+      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
+        Page 1 of 2
       </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto bg-white mb-6">
+        <TabsList className="grid w-full grid-cols-2 h-auto bg-slate-100 mb-6">
           <TabsTrigger
             value="current"
             className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
@@ -146,11 +110,13 @@ export default function ChildHealthHistoryDetail() {
 
         {/* Current Record Tab */}
         <TabsContent value="current">
-          <PatientSummarySection
-            recordsToDisplay={[fullHistoryData[currentIndex]]}
-            fullHistoryData={fullHistoryData}
-            chhistId={chhistId}
-          />
+          {fullHistoryData.length > 0 && (
+            <PatientSummarySection
+              recordsToDisplay={[fullHistoryData[currentIndex]]}
+              fullHistoryData={fullHistoryData}
+              chhistId={chhistId}
+            />
+          )}
         </TabsContent>
 
         {/* History Tab */}
@@ -164,7 +130,7 @@ export default function ChildHealthHistoryDetail() {
               cardClassName="border rounded-lg shadow-sm"
               content={
                 <div className="space-y-6 p-6">
-                  {/* Pagination Controls with Record Count */}
+                  {/* Pagination Controls */}
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div className="text-sm text-gray-500 font-medium">
                       Showing records {currentIndex + 1}-
@@ -201,10 +167,8 @@ export default function ChildHealthHistoryDetail() {
                     </div>
                   </div>
 
-                  {/* Divider */}
                   <hr className="border-gray-200" />
 
-                  {/* Accordion Sections */}
                   <Accordion
                     type="multiple"
                     className="w-full space-y-4"
@@ -217,7 +181,7 @@ export default function ChildHealthHistoryDetail() {
                     />
                   </Accordion>
 
-                  {/* Bottom Pagination Controls (for mobile) */}
+                  {/* Mobile Pagination */}
                   <div className="sm:hidden flex justify-center gap-4 pt-4">
                     <Button
                       variant="outline"
@@ -246,6 +210,19 @@ export default function ChildHealthHistoryDetail() {
           )}
         </TabsContent>
       </Tabs>
-    </>
+
+      <div className="flex justify-end mt-6 sm:mt-8">
+        <Button
+          onClick={onNext}
+          className={`w-[100px] flex items-center justify-center gap-2 ${
+            isLoading ? "opacity-70 cursor-not-allowed" : ""
+          }`}
+          disabled={isLoading}
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -55,14 +55,14 @@ export interface ChildHealthCheckupRecord {
     pod_location: string;
     created_at: string;
   };
-  pat_details?: {  
+  pat_details?: {
     pat_id: string;
-  }
+  };
   created_at: string;
   tt_status: string;
   status: string;
   patrec: string;
-  child_health_vital_signs?: Array<{ chvital_id?: string }>
+  child_health_vital_signs?: Array<{ chvital_id?: string }>;
 }
 
 // Medical Consultation Interfaces
@@ -120,7 +120,9 @@ export default function CombinedHealthRecordsTable() {
   const { data: medConsultData, isLoading: medConsultLoading } = useQuery({
     queryKey: ["PendingimpoRecords"],
     queryFn: async () => {
-      const response = await api2.get("/medical-consultation/pending-medcon-record/");
+      const response = await api2.get(
+        "/medical-consultation/pending-medcon-record/"
+      );
       return response.data || [];
     },
   });
@@ -135,57 +137,67 @@ export default function CombinedHealthRecordsTable() {
       const address = details.address || {};
 
       const addressParts = [
-        address.add_sitio ? `Sitio ${address.add_sitio}` : '',
+        address.add_sitio ? `Sitio ${address.add_sitio}` : "",
         address.add_street,
-        address.add_barangay, 
+        address.add_barangay,
         address.add_city,
-        address.add_province
-      ].filter(Boolean).join(", ");
-      
+        address.add_province,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
       const fullAddress = address.full_address || addressParts || "";
 
       const patientRecord: PatientRecord = {
-        pat_id: details.pat_id || '',
-        fname: info.per_fname || '',
-        lname: info.per_lname || '',
-        mname: info.per_mname || '',
-        sex: info.per_sex || '',
+        pat_id: details.pat_id || "",
+        fname: info.per_fname || "",
+        lname: info.per_lname || "",
+        mname: info.per_mname || "",
+        sex: info.per_sex || "",
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob || '',
+        dob: info.per_dob || "",
         householdno: details.households?.[0]?.hh_id || "N/A",
-        street: address.add_street || '',
-        sitio: address.add_sitio || '',
-        barangay: address.add_barangay || '',
-        city: address.add_city || '',
-        province: address.add_province || '',
-        pat_type: details.pat_type || '',
+        street: address.add_street || "",
+        sitio: address.add_sitio || "",
+        barangay: address.add_barangay || "",
+        city: address.add_city || "",
+        province: address.add_province || "",
+        pat_type: details.pat_type || "",
         address: fullAddress,
       };
 
       const checkupRecord: ChildHealthCheckupRecord = {
         chhist_id: record.chhist_id,
         chrec_details: {
-          ufc_no: record.chrec_details.ufc_no || 'N/A',
-          family_no: record.chrec_details.family_no || 'N/A',
-          mother_occupation: record.chrec_details.mother_occupation || 'Not specified',
-          father_occupation: record.chrec_details.father_occupation || 'Not specified',
-          type_of_feeding: record.chrec_details.type_of_feeding || 'Not specified',
-          newborn_screening: record.chrec_details.newborn_screening || 'Not done',
-          place_of_delivery_type: record.chrec_details.place_of_delivery_type || 'Not specified',
+          ufc_no: record.chrec_details.ufc_no || "N/A",
+          family_no: record.chrec_details.family_no || "N/A",
+          mother_occupation:
+            record.chrec_details.mother_occupation || "Not specified",
+          father_occupation:
+            record.chrec_details.father_occupation || "Not specified",
+          type_of_feeding:
+            record.chrec_details.type_of_feeding || "Not specified",
+          newborn_screening:
+            record.chrec_details.newborn_screening || "Not done",
+          place_of_delivery_type:
+            record.chrec_details.place_of_delivery_type || "Not specified",
           birth_order: record.chrec_details.birth_order || 0,
-          pod_location: record.chrec_details.pod_location || 'Not specified',
-          created_at: record.chrec_details.created_at || '',
+          pod_location: record.chrec_details.pod_location || "Not specified",
+          created_at: record.chrec_details.created_at || "",
         },
-        chrec_id: record.chrec || '',
-        created_at: record.created_at || '',
-        tt_status: record.tt_status || 'Not vaccinated',
-        status: record.status || 'check-up',
-        patrec: record.chrec_details?.patrec || '',
-        child_health_vital_signs: [{
-          chvital_id: record.child_health_vital_signs?.[0]?.chvital_id || '',
-        }],
+        chrec_id: record.chrec || "",
+        created_at: record.created_at || "",
+        tt_status: record.tt_status || "Not vaccinated",
+        status: record.status || "check-up",
+        patrec: record.chrec_details?.patrec || "",
+        child_health_vital_signs: [
+          {
+            chvital_id: record.child_health_vital_signs?.[0]?.chvital_id || "",
+          },
+        ],
         pat_details: {
-          pat_id: record.chrec_details?.patrec_details?.pat_details?.pat_id || '',
+          pat_id:
+            record.chrec_details?.patrec_details?.pat_details?.pat_id || "",
         },
       };
 
@@ -203,28 +215,30 @@ export default function CombinedHealthRecordsTable() {
 
       const addressParts = [
         address.add_street,
-        address.add_barangay, 
+        address.add_barangay,
         address.add_city,
-        address.add_province
-      ].filter(Boolean).join(", ");
-      
+        address.add_province,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
       const fullAddress = address.full_address || addressParts || "";
 
       const patientRecord: PatientRecord = {
-        pat_id: record.patrec_details?.pat_id || '',
-        fname: info.per_fname || '',
-        lname: info.per_lname || '',
-        mname: info.per_mname || '',
-        sex: info.per_sex || '',
+        pat_id: record.patrec_details?.pat_id || "",
+        fname: info.per_fname || "",
+        lname: info.per_lname || "",
+        mname: info.per_mname || "",
+        sex: info.per_sex || "",
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob || '',
+        dob: info.per_dob || "",
         householdno: details.households?.[0]?.hh_id || "N/A",
-        street: address.add_street || '',
-        sitio: address.sitio || '',
-        barangay: address.add_barangay || '',
-        city: address.add_city || '',
-        province: address.add_province || '',
-        pat_type: details.pat_type || '',
+        street: address.add_street || "",
+        sitio: address.sitio || "",
+        barangay: address.add_barangay || "",
+        city: address.add_city || "",
+        province: address.add_province || "",
+        pat_type: details.pat_type || "",
         address: fullAddress,
       };
 
@@ -252,15 +266,16 @@ export default function CombinedHealthRecordsTable() {
 
   const filteredData = React.useMemo(() => {
     return formatRecordsData().filter((record) => {
-      const searchText = `${record.patient.pat_id} ${record.patient.lname} ${record.patient.fname} ${
-        record.recordType === "child-health" 
-          ? record.checkup.tt_status 
+      const searchText = `${record.patient.pat_id} ${record.patient.lname} ${
+        record.patient.fname
+      } ${
+        record.recordType === "child-health"
+          ? record.checkup.tt_status
           : record.consultation.medrec_chief_complaint
       }`.toLowerCase();
-      
-      const typeMatches = 
-        recordTypeFilter === "all" || 
-        record.recordType === recordTypeFilter;
+
+      const typeMatches =
+        recordTypeFilter === "all" || record.recordType === recordTypeFilter;
 
       return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
     });
@@ -276,24 +291,25 @@ export default function CombinedHealthRecordsTable() {
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           Patient <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const patient = row.original.patient;
-        const fullName = `${patient.lname}, ${patient.fname} ${patient.mname}`.trim();
+        const fullName =
+          `${patient.lname}, ${patient.fname} ${patient.mname}`.trim();
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-gray-500">
-                {patient.sex}, {patient.age} 
+                {patient.sex}, {patient.age}
               </div>
-              <div className="text-xs text-gray-500">
-                ID: {patient.pat_id}
-              </div>
+              <div className="text-xs text-gray-500">ID: {patient.pat_id}</div>
             </div>
           </div>
         );
@@ -309,88 +325,118 @@ export default function CombinedHealthRecordsTable() {
       ),
     },
     {
-        accessorKey: "details",
-        header: "Details",
-        cell: ({ row }) => {
-          if (row.original.recordType === "child-health") {
-            // Get the full record data from childHealthData
-            const fullRecord = childHealthData?.find(
-              (record: any) =>
-                row.original.recordType === "child-health" &&
-                record.chhist_id === row.original.checkup.chhist_id
-            );
-            
-            const vitalSigns = fullRecord?.child_health_vital_signs?.[0];
-            const nutritionStatus = fullRecord?.nutrition_statuses?.[0];
-            
-            return (
-              <div className="grid grid-cols-1 gap-1 text-sm min-w-[180px]">
-                <div>Birth Order: {row.original.checkup.chrec_details.birth_order}</div>
-                <div>Feeding: {row.original.checkup.chrec_details.type_of_feeding.replace('_', ' ')}</div>
-                {vitalSigns && (
-                  <div>Temp: {vitalSigns.temp}°C</div>
-                )}
-                {nutritionStatus && (
-                  <div>Nutrition: {nutritionStatus.wfa} (WFA)</div>
+      accessorKey: "details",
+      header: "Details",
+      cell: ({ row }) => {
+        if (row.original.recordType === "child-health") {
+          // Get the full record data from childHealthData
+          const fullRecord = childHealthData?.find(
+            (record: any) =>
+              row.original.recordType === "child-health" &&
+              record.chhist_id === row.original.checkup.chhist_id
+          );
+
+          const vitalSigns = fullRecord?.child_health_vital_signs?.[0];
+          const nutritionStatus = fullRecord?.nutrition_statuses?.[0];
+
+          return (
+            <div className="grid grid-cols-1 gap-1 text-sm min-w-[180px]">
+              <div>
+                Birth Order: {row.original.checkup.chrec_details.birth_order}
+              </div>
+              <div>
+                Feeding:{" "}
+                {row.original.checkup.chrec_details.type_of_feeding.replace(
+                  "_",
+                  " "
                 )}
               </div>
-            );
-          } else {
-            const vital = row.original.consultation.vital_signs;
-            return (
-              <div className="grid grid-cols-2 gap-1 text-sm min-w-[200px]">
-                <div>BP: {vital.vital_bp_systolic}/{vital.vital_bp_diastolic} mmHg</div>
-                <div>Temp: {vital.vital_temp}°C</div>
-                <div>Pulse: {vital.vital_pulse} bpm</div>
-                <div>RR: {vital.vital_RR} cpm</div>
+              {vitalSigns && <div>Temp: {vitalSigns.temp}°C</div>}
+              {nutritionStatus && (
+                <div>Nutrition: {nutritionStatus.wfa} (WFA)</div>
+              )}
+            </div>
+          );
+        } else {
+          const vital = row.original.consultation.vital_signs;
+          return (
+            <div className="grid grid-cols-2 gap-1 text-sm min-w-[200px]">
+              <div>
+                BP: {vital.vital_bp_systolic}/{vital.vital_bp_diastolic} mmHg
               </div>
-            );
-          }
-        },
+              <div>Temp: {vital.vital_temp}°C</div>
+              <div>Pulse: {vital.vital_pulse} bpm</div>
+              <div>RR: {vital.vital_RR} cpm</div>
+            </div>
+          );
+        }
       },
+    },
     {
-        accessorKey: "HT and WT",
-        header: "Height and Weight",
-        cell: ({ row }) => {
-          if (row.original.recordType === "child-health") {
-            // Get height and weight from child health vital signs if available
-            const vitalSigns = childHealthData?.find(
-              (record: any) =>
-                row.original.recordType === "child-health" &&
-                record.chhist_id === row.original.checkup.chhist_id
-            )?.child_health_vital_signs?.[0]?.bm_details;
-            
-            return (
-              <div className="text-sm min-w-[180px]">
-                {vitalSigns && (
-                  <>
-                    <div>HT: {vitalSigns.height.endsWith(".00") 
-                      ? vitalSigns.height.slice(0, -3) 
-                      : vitalSigns.height} cm</div>
-                    <div>WT: {vitalSigns.weight.endsWith(".00") 
-                      ? vitalSigns.weight.slice(0, -3) 
-                      : vitalSigns.weight} kg</div>
-                  </>
-                )}
+      accessorKey: "HT and WT",
+      header: "Height and Weight",
+      cell: ({ row }) => {
+        if (row.original.recordType === "child-health") {
+          // Get height and weight from child health vital signs if available
+          const vitalSigns = childHealthData?.find(
+            (record: any) =>
+              row.original.recordType === "child-health" &&
+              record.chhist_id === row.original.checkup.chhist_id
+          )?.child_health_vital_signs?.[0]?.bm_details;
+
+          return (
+            <div className="text-sm min-w-[180px]">
+              {vitalSigns && (
+                <>
+                  <div>
+                    HT:{" "}
+                    {vitalSigns.height.endsWith(".00")
+                      ? vitalSigns.height.slice(0, -3)
+                      : vitalSigns.height}{" "}
+                    cm
+                  </div>
+                  <div>
+                    WT:{" "}
+                    {vitalSigns.weight.endsWith(".00")
+                      ? vitalSigns.weight.slice(0, -3)
+                      : vitalSigns.weight}{" "}
+                    kg
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        } else {
+          const bmi = row.original.consultation.bmi_details;
+          return (
+            <div className="text-sm min-w-[150px]">
+              <div>
+                HT:{" "}
+                {bmi.height.endsWith(".00")
+                  ? bmi.height.slice(0, -3)
+                  : bmi.height}{" "}
+                cm
               </div>
-            );
-          } else {
-            const bmi = row.original.consultation.bmi_details;
-            return (
-              <div className="text-sm min-w-[150px]">
-                <div>HT: {bmi.height.endsWith(".00") ? bmi.height.slice(0, -3) : bmi.height} cm</div>
-                <div>WT: {bmi.weight.endsWith(".00") ? bmi.weight.slice(0, -3) : bmi.weight} kg</div>
+              <div>
+                WT:{" "}
+                {bmi.weight.endsWith(".00")
+                  ? bmi.weight.slice(0, -3)
+                  : bmi.weight}{" "}
+                kg
               </div>
-            );
-          }
-        },
+            </div>
+          );
+        }
       },
+    },
     {
       accessorKey: "address",
       header: "Address",
       cell: ({ row }) => (
         <div className="flex justify-start px-2">
-          <div className="w-[250px] break-words">{row.original.patient.address || "No address provided"}</div>
+          <div className="w-[250px] break-words">
+            {row.original.patient.address || "No address provided"}
+          </div>
         </div>
       ),
     },
@@ -401,11 +447,11 @@ export default function CombinedHealthRecordsTable() {
         <div className="flex justify-center gap-2">
           <Link
             to={
-              row.original.recordType === "child-health" 
+              row.original.recordType === "child-health"
                 ? `/child-medical-consultation`
                 : "/medical-consultation-flow"
             }
-            state={{ 
+            state={{
               patientData: {
                 pat_id: row.original.patient.pat_id,
                 pat_type: row.original.patient.pat_type,
@@ -427,13 +473,13 @@ export default function CombinedHealthRecordsTable() {
                   per_sex: row.original.patient.sex,
                 },
               },
-              ...(row.original.recordType === "child-health" 
+              ...(row.original.recordType === "child-health"
                 ? { checkupData: row.original.checkup }
-                : { MedicalConsultation: row.original.consultation })
+                : { MedicalConsultation: row.original.consultation }),
             }}
           >
             <Button variant="outline" size="sm">
-              <Eye className="h-4 w-4" />
+              View{" "}
             </Button>
           </Link>
         </div>
@@ -443,16 +489,7 @@ export default function CombinedHealthRecordsTable() {
 
   const isLoading = childHealthLoading || medConsultLoading;
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
+  
 
   return (
     <>
@@ -538,8 +575,35 @@ export default function CombinedHealthRecordsTable() {
             </div>
           </div>
           <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="bg-white rounded-md border border-gray-200">
+              {/* Skeleton for table header */}
+              <div className="w-full h-16 bg-gray-50 flex items-center p-4">
+                {columns.map((_, i) => (
+                  <Skeleton key={`header-${i}`} className="h-6 flex-1 mx-2" />
+                ))}
+              </div>
+              {/* Skeleton for table rows */}
+              <div className="p-4 space-y-4">
+                {[...Array(5)].map((_, rowIndex) => (
+                  <div 
+                    key={`row-${rowIndex}`} 
+                    className="flex items-center justify-between space-x-4"
+                  >
+                    {columns.map((_, colIndex) => (
+                      <Skeleton 
+                        key={`cell-${rowIndex}-${colIndex}`} 
+                        className="h-12 flex-1 mx-2" 
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
             <DataTable columns={columns} data={paginatedData} />
-          </div>
+          )}
+        </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}

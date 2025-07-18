@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ChevronLeft , Eye, ArrowUpDown, FileInput } from "lucide-react";
+import { Search, ChevronLeft, ArrowUpDown, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,49 +13,89 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api2 } from "@/api/api";
 
-export interface ChildHealthRecord {
-  chrec_id: number;
-  pat_id: string;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  dob: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  landmarks: string;
-  pat_type: string;
-  address: string;
-  mother_fname: string;
-  mother_lname: string;
-  mother_mname: string;
-  mother_contact: string;
-  mother_occupation: string;
-  father_fname: string;
-  father_lname: string;
-  father_mname: string;
-  father_contact: string;
-  father_occupation: string;
-  family_no: string;
-  birth_weight: number;
-  birth_height: number;
-  type_of_feeding: string;
-  delivery_type: string;
+export interface ChildHealthCheckupRecord {
+  chhist_id: string;
+  chrec: string;
+  chrec_details: {
+    ufc_no: string;
+    family_no: string;
+    mother_occupation: string;
+    father_occupation: string;
+    type_of_feeding: string;
+    newborn_screening: string;
+    place_of_delivery_type: string;
+    birth_order: number;
+    pod_location: string;
+    created_at: string;
+    patrec_details: {
+      patrec_id: number;
+      pat_details: {
+        pat_id: string;
+        personal_info: {
+          per_fname: string;
+          per_lname: string;
+          per_mname: string;
+          per_suffix: string;
+          per_dob: string;
+          per_sex: string;
+          per_status: string;
+          per_edAttainment: string;
+          per_religion: string;
+          per_contact: string;
+        };
+        address: {
+          add_street: string;
+          add_barangay: string;
+          add_city: string;
+          add_province: string;
+          add_sitio: string;
+          full_address: string;
+        };
+        family_head_info: {
+          fam_id: string | null;
+          family_heads: {
+            mother?: {
+              role: string;
+              personal_info: {
+                per_fname: string;
+                per_lname: string;
+                per_mname: string;
+                per_dob: string;
+              };
+            };
+            father?: {
+              role: string;
+              personal_info: {
+                per_fname: string;
+                per_lname: string;
+                per_mname: string;
+                per_dob: string;
+              };
+            };
+          };
+        };
+        pat_type: string;
+      };
+    };
+  };
+  pat_details?: {
+    pat_id: string;
+  };
+  created_at: string;
+  tt_status: string;
+  status: string;
+  patrec: string;
+  child_health_vital_signs?: Array<{ chvital_id?: string }>;
 }
 
-export const getChildHealthImmunizationRecords = async () => {
+export const getChildHealthImmunizationRecords = async (): Promise<
+  ChildHealthCheckupRecord[]
+> => {
   try {
     const response = await api2.get("/child-health/child-immunization-status/");
     return response.data;
@@ -66,77 +106,62 @@ export const getChildHealthImmunizationRecords = async () => {
 };
 
 export default function ForwardedCHimmunization() {
-  
-    const { data: immunizationRecords, isLoading } = useQuery({
+  const { data: immunizationRecords, isLoading } = useQuery<
+    ChildHealthCheckupRecord[]
+  >({
     queryKey: ["childHealthImmunizationRecords"],
     queryFn: getChildHealthImmunizationRecords,
-    refetchOnMount: true, // Changed from true to avoid unnecessary refetches
-    staleTime: 300000, // Increased cache time to 5 minutes
-    gcTime: 600000, // Cache time for garbage collection
+    refetchOnMount: true,
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
-  const formattedCHimmunizationrecord = React.useCallback((): ChildHealthRecord[] => {
-    if (!immunizationRecords) return [];
+  const formatRecordForTable = (record: ChildHealthCheckupRecord) => {
+    const patDetails = record.chrec_details?.patrec_details?.pat_details;
+    const personalInfo = patDetails?.personal_info;
+    const addressInfo = patDetails?.address;
+    const familyHeadInfo = patDetails?.family_head_info;
 
-    return immunizationRecords.map((record: any) => {
-      const childInfo = record.patrec_details?.pat_details?.personal_info || {};
-      const motherInfo =
-        record.patrec_details?.pat_details?.family_head_info?.family_heads
-          ?.mother?.personal_info || {};
-      const fatherInfo =
-        record.patrec_details?.pat_details?.family_head_info?.family_heads
-          ?.father?.personal_info || {};
-      const addressInfo = record.patrec_details?.pat_details?.address || {};
-      const age = childInfo.per_dob ? calculateAge(childInfo.per_dob) : "Unknown age";
+    const motherInfo = familyHeadInfo?.family_heads?.mother?.personal_info;
+    const fatherInfo = familyHeadInfo?.family_heads?.father?.personal_info;
 
-      return {
-        chrec_id: record.chrec_id,
-        pat_id: record.patrec_details?.pat_details?.pat_id || "",
-        fname: childInfo.per_fname || "",
-        lname: childInfo.per_lname || "",
-        mname: childInfo.per_mname || "",
-        sex: childInfo.per_sex || "",
-        age,
-        dob: childInfo.per_dob || "",
-        householdno:
-          record.patrec_details?.pat_details?.households?.[0]?.hh_id || "",
-        street: addressInfo.add_street || "",
-        sitio: addressInfo.add_sitio || "",
-        barangay: addressInfo.add_barangay || "",
-        city: addressInfo.add_city || "",
-        province: addressInfo.add_province || "",
-        landmarks: addressInfo.add_landmarks || "",
-        pat_type: record.patrec_details?.pat_details?.pat_type || "",
-        address: addressInfo.full_address || "No address Provided",
-        mother_fname: motherInfo.per_fname || "",
-        mother_lname: motherInfo.per_lname || "",
-        mother_mname: motherInfo.per_mname || "",
-        mother_contact: motherInfo.per_contact || "",
-        mother_occupation:
-          motherInfo.per_occupation || record.mother_occupation || "",
-        father_fname: fatherInfo.per_fname || "",
-        father_lname: fatherInfo.per_lname || "",
-        father_mname: fatherInfo.per_mname || "",
-        father_contact: fatherInfo.per_contact || "",
-        father_occupation:
-          fatherInfo.per_occupation || record.father_occupation || "",
-        family_no: record.family_no || "",
-        birth_weight: record.birth_weight || 0,
-        birth_height: record.birth_height || 0,
-        type_of_feeding: record.type_of_feeding || "Unknown",
-        delivery_type: record.place_of_delivery_type || "",
-      };
-    });
-  }, [immunizationRecords]);
+    return {
+      record, // Keep the full record
+      chrec_id: record.chrec,
+      chhist_id: record.chhist_id,
+
+      fname: personalInfo?.per_fname || "",
+      lname: personalInfo?.per_lname || "",
+      mname: personalInfo?.per_mname || "",
+      sex: personalInfo?.per_sex || "",
+      age: personalInfo?.per_dob ? calculateAge(personalInfo.per_dob) : "",
+      mother_fname: motherInfo?.per_fname || "",
+      mother_lname: motherInfo?.per_lname || "",
+      mother_mname: motherInfo?.per_mname || "",
+      father_fname: fatherInfo?.per_fname || "",
+      father_lname: fatherInfo?.per_lname || "",
+      father_mname: fatherInfo?.per_mname || "",
+      address: addressInfo?.full_address || "",
+      sitio: addressInfo?.add_sitio || "",
+      family_no: record.chrec_details?.family_no || "",
+      pat_type: patDetails?.pat_type || "",
+      delivery_type: record.chrec_details?.place_of_delivery_type || "",
+    };
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<ChildHealthRecord[]>([]);
-  const [currentData, setCurrentData] = useState<ChildHealthRecord[]>([]);
+  const [filteredData, setFilteredData] = useState<
+    ReturnType<typeof formatRecordForTable>[]
+  >([]);
+  const [currentData, setCurrentData] = useState<
+    ReturnType<typeof formatRecordForTable>[]
+  >([]);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const navigate= useNavigate();
+  const navigate = useNavigate();
+
   const filterOptions = [
     { id: "all", name: "All Records" },
     { id: "home", name: "Home Delivery" },
@@ -146,14 +171,20 @@ export default function ForwardedCHimmunization() {
   ];
 
   useEffect(() => {
-    const formattedData = formattedCHimmunizationrecord();
+    if (!immunizationRecords) return;
+
+    const formattedData = immunizationRecords.map(formatRecordForTable);
     const filtered = formattedData.filter((item) => {
       const matchesFilter =
         selectedFilter === "all" ||
         (selectedFilter === "resident" &&
           item.pat_type.toLowerCase() === "resident") ||
         (selectedFilter === "transient" &&
-          item.pat_type.toLowerCase() === "transient");
+          item.pat_type.toLowerCase() === "transient") ||
+        (selectedFilter === "home" &&
+          item.delivery_type.toLowerCase() === "home") ||
+        (selectedFilter === "hospital" &&
+          item.delivery_type.toLowerCase() === "hospital");
 
       const matchesSearch =
         `${item.fname} ${item.lname} ${item.mname} ` +
@@ -169,13 +200,7 @@ export default function ForwardedCHimmunization() {
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
     setCurrentPage(1);
-  }, [
-    searchQuery,
-    selectedFilter,
-    pageSize,
-    immunizationRecords,
-    formattedCHimmunizationrecord,
-  ]);
+  }, [searchQuery, selectedFilter, pageSize, immunizationRecords]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -183,7 +208,7 @@ export default function ForwardedCHimmunization() {
     setCurrentData(filteredData.slice(startIndex, endIndex));
   }, [currentPage, pageSize, filteredData]);
 
-  const columns: ColumnDef<ChildHealthRecord>[] = [
+  const columns: ColumnDef<ReturnType<typeof formatRecordForTable>>[] = [
     {
       accessorKey: "child",
       header: ({ column }) => (
@@ -202,7 +227,7 @@ export default function ForwardedCHimmunization() {
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age} 
+                {row.original.sex}, {row.original.age}
               </div>
             </div>
           </div>
@@ -226,76 +251,35 @@ export default function ForwardedCHimmunization() {
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
-             
             </div>
           </div>
         );
       },
     },
-    // {
-    //   accessorKey: "father",
-    //   header: ({ column }) => (
-    //     <div
-    //       className="flex w-full justify-center items-center gap-2 cursor-pointer"
-    //       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    //     >
-    //       Father <ArrowUpDown size={15} />
-    //     </div>
-    //   ),
-    //   cell: ({ row }) => {
-    //     const fullName = `${row.original.father_lname}, ${row.original.father_fname} ${row.original.father_mname}`.trim();
-    //     return (
-    //       <div className="flex justify-start min-w-[200px] px-2">
-    //         <div className="flex flex-col w-full">
-    //           <div className="font-medium truncate">{fullName}</div>
-    //           <div className="text-sm text-darkGray truncate">
-    //             Occupation: {row.original.father_occupation}
-    //           </div>
-    //         </div>
-    //       </div>
-    //     );
-    //   },
-    // },
     {
-         accessorKey: "address",
-         header: ({ column }) => (
-           <div
-             className="flex w-full justify-center items-center gap-2 cursor-pointer"
-             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-           >
-             Address <ArrowUpDown size={15} />
-           </div>
-               ),
-               cell: ({ row }) => (
-           <div className="flex justify-start px-2">
-             <div className="w-[250px] break-words">{row.original.address}</div>
-           </div>
-               ),
-             },
-    // {
-    //   accessorKey: "sitio",
-    //   header: "Sitio",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
-    //       <div className="text-center w-full">{row.original.sitio}</div>
-    //     </div>
-    //   ),
-    // },
-    // {
-    //   accessorKey: "landmarks",
-    //   header: "Landmarks",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
-    //       <div className="text-center w-full">{row.original.landmarks}</div>
-    //     </div>
-    //   ),
-    // },
+      accessorKey: "address",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Address <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-start px-2">
+          <div className="w-[250px] break-words">{row.original.address}</div>
+        </div>
+      ),
+    },
     {
       accessorKey: "family_no",
       header: "Family No.",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.family_no}</div>
+          <div className="text-center w-full">
+            {row.original.family_no || "N/A"}
+          </div>
         </div>
       ),
     },
@@ -304,26 +288,19 @@ export default function ForwardedCHimmunization() {
       header: "Delivery Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.delivery_type}</div>
+          <div className="text-center w-full capitalize">
+            {row.original.delivery_type?.toLowerCase() || "N/A"}
+          </div>
         </div>
       ),
     },
-    // {
-    //   accessorKey: "feeding_type",
-    //   header: "Feeding Type",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[100px] px-2">
-    //       <div className="text-center w-full capitalize">{row.original.feeding_type.toLowerCase()}</div>
-    //     </div>
-    //   ),
-    // },
     {
       accessorKey: "pat_type",
       header: "Patient Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full capitalize">
-            {row.original.pat_type.toLowerCase()}
+            {row.original.pat_type?.toLowerCase() || "N/A"}
           </div>
         </div>
       ),
@@ -333,41 +310,26 @@ export default function ForwardedCHimmunization() {
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-        
-              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
-                <Link
-                  to={`/child-health-records`}
-                  state={{ ChildHealthRecord: row.original ,mode:"immunization"}}
-                >
-View                </Link>
-              </div>
-       
+          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
+            <Link
+              to={`/child-immunization`}
+              state={{
+                ChildHealthRecord: row.original.record,
+                mode: "immunization",
+              }}
+            >
+              View
+            </Link>
+          </div>
         </div>
       ),
     },
   ];
 
-  // const navigate = useNavigate();
-  // function toChildHealthForm() {
-  //   navigate("/newAddChildHRForm", {
-  //     state: { recordType: "nonexistingPatient" },
-  //   });
-  // }
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
 
   return (
-    <>
-      <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col">
       <div className="flex flex-col sm:flex-row gap-4 ">
         <Button
           className="text-black p-2 mb-2 self-start"
@@ -378,113 +340,124 @@ View                </Link>
         </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Forwarded Child Health Hisotry Records
+            Forwarded Child Health Immunization Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view child's health history
+            Manage and view child immunization records
           </p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
-
-        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
-          <div className="w-full flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <SelectLayout
-              placeholder="Filter records"
-              label=""
-              className="bg-white w-full sm:w-48"
-              options={filterOptions}
-              value={selectedFilter}
-              onChange={(value) => setSelectedFilter(value)}
+      <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
+        <div className="w-full flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+              size={17}
+            />
+            <Input
+              placeholder="Search..."
+              className="pl-10 bg-white w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <SelectLayout
+            placeholder="Filter records"
+            label=""
+            className="bg-white w-full sm:w-48"
+            options={filterOptions}
+            value={selectedFilter}
+            onChange={(value) => setSelectedFilter(value)}
+          />
+        </div>
+      </div>
 
-          <div className="w-full sm:w-auto">
-            <Link
-              to="/child-health-record/newchildhealthrecord"
-              state={{
-                params: {
-                
-                  mode: "add", // This is the key part
-                },
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-3 justify-start items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input
+              type="number"
+              className="w-[70px] h-8 flex items-center justify-center text-center"
+              value={pageSize}
+              onChange={(e) => {
+                const value = +e.target.value;
+                setPageSize(value >= 1 ? value : 1);
               }}
-            >
-              <Button className="w-full sm:w-auto">New Record</Button>
-            </Link>
+              min="1"
+            />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+          <div className="flex justify-end sm:justify-start">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  aria-label="Export data"
+                  className="flex items-center gap-2"
+                >
+                  <FileInput size={16} />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-            <div className="flex gap-x-3 justify-start items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-[70px] h-8 flex items-center justify-center text-center"
-                value={pageSize}
-                onChange={(e) => {
-                  const value = +e.target.value;
-                  setPageSize(value >= 1 ? value : 1);
-                }}
-                min="1"
-              />
-              <p className="text-xs sm:text-sm">Entries</p>
-            </div>
-            <div className="flex justify-end sm:justify-start">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    aria-label="Export data"
-                    className="flex items-center gap-2"
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="bg-white rounded-md border border-gray-200">
+              {/* Skeleton for table header */}
+              <div className="w-full h-16 bg-gray-50 flex items-center p-4">
+                {columns.map((_, i) => (
+                  <Skeleton key={`header-${i}`} className="h-6 flex-1 mx-2" />
+                ))}
+              </div>
+              {/* Skeleton for table rows */}
+              <div className="p-4 space-y-4">
+                {[...Array(5)].map((_, rowIndex) => (
+                  <div
+                    key={`row-${rowIndex}`}
+                    className="flex items-center justify-between space-x-4"
                   >
-                    <FileInput size={16} />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    {columns.map((_, colIndex) => (
+                      <Skeleton
+                        key={`cell-${rowIndex}-${colIndex}`}
+                        className="h-12 flex-1 mx-2"
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <div className="bg-white w-full overflow-x-auto">
+          ) : (
             <DataTable columns={columns} data={currentData} />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
-            </p>
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing{" "}
+            {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
+          </p>
 
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

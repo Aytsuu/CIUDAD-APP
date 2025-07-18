@@ -1,24 +1,41 @@
-"use client";
-
-import { useMemo, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
-import { Accordion } from "@/components/ui/accordion";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ChildHealthHistoryRecord } from "./types";
-import { getSupplementStatusesFields } from "./config";
+import { Card, CardContent } from "@/components/ui/card/card";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { api2 } from "@/api/api";
-import { PatientSummarySection } from "./CurrentHistoryView";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
+import { Accordion } from "@/components/ui/accordion";
+import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
+import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
+import { PatientSummarySection } from "../../childservices/viewrecords/CurrentHistoryView";
+import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Baby, History } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
-import { History, Baby } from "lucide-react";
-export default function ChildHealthHistoryDetail() {
-  // Navigation and routing
+
+interface PendingDisplayMedicalConsultationProps {
+  patientData: any;
+  checkupData: any;
+  onNext: () => void;
+}
+
+export default function PendingDisplayMedicalConsultation({
+  patientData,
+  checkupData,
+  onNext,
+}: PendingDisplayMedicalConsultationProps) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { patId, chrecId, chhistId } = location.state?.params || {};
+  const patId = checkupData.pat_details.pat_id;
+  const chrecId = checkupData.chrec_id;
+  const chhistId = checkupData.chhist_id;
 
   // State management
   const [fullHistoryData, setFullHistoryData] = useState<
@@ -104,30 +121,14 @@ export default function ChildHealthHistoryDetail() {
   }
 
   return (
-    <>
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center relative">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft />
-        </Button>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health History Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View and compare child's health history
-          </p>
-        </div>
+    <div className="p-6">
+      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
+        Page 1 of 2
       </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto bg-white mb-6">
+        <TabsList className="grid w-full grid-cols-2 h-auto bg-slate-100 mb-6">
           <TabsTrigger
             value="current"
             className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
@@ -246,6 +247,20 @@ export default function ChildHealthHistoryDetail() {
           )}
         </TabsContent>
       </Tabs>
-    </>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-end mt-6 sm:mt-8">
+        <Button
+          onClick={onNext}
+          className={`w-[100px] flex items-center justify-center gap-2 ${
+            isLoading ? "opacity-70 cursor-not-allowed" : ""
+          }`}
+          disabled={isLoading}
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }

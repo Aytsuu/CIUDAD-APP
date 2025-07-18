@@ -260,6 +260,7 @@ export interface PersonalInfo {
     lhfa: string;
     wfl: string;
     muac: string;
+    muac_status: string;
     created_at: string;
     chvital: number;
   }
@@ -269,8 +270,7 @@ export interface PersonalInfo {
     disabilities: Disability[];
     created_at: string;
     tt_status: string;
-    status: string;
-    
+    status: string;  
     chrec: number;
     chrec_details: CHRecDetails;
     child_health_notes: CHNotes[];
