@@ -32,10 +32,10 @@ const formatDateForSummon = (date: Date) => {
 
 function CreateNewSummon({ sr_id, complainant, accused, incident_type, complainant_address, accused_address, sr_code, onSuccess }: {
     sr_id: number;
-    complainant: string;
+    complainant: string[];
     accused: string[];
     incident_type: string;
-    complainant_address: string;
+    complainant_address: string[];
     accused_address: string[];
     sr_code: string;
     onSuccess: () => void
@@ -181,13 +181,23 @@ function CreateNewSummon({ sr_id, complainant, accused, incident_type, complaina
                 yPos += lineHeight * 2;  // Extra space after header
 
                 // Left-aligned complainant details
-                setCurrentFont('bold');
-                doc.text(`NAME: ${complainant}`, marginValue, yPos);
-                yPos += lineHeight;
-
-                setCurrentFont('normal');
-                doc.text(`ADDRESS: ${complainant_address}`, marginValue, yPos);
-                yPos += lineHeight;
+                for (let i = 0; i < complainant.length; i++) {
+                // Print name
+                    setCurrentFont('bold');
+                    doc.text(`NAME:`, marginValue, yPos);
+                    setCurrentFont('bold');
+                    doc.text(`${complainant[i]}`, marginValue + 35, yPos);
+                    yPos += lineHeight;
+                    
+                    // Print corresponding address if available
+                    if (i < complainant_address.length) {
+                        setCurrentFont('normal');
+                        doc.text(`ADDRESS:`, marginValue, yPos);
+                        setCurrentFont('normal');
+                        doc.text(`${complainant_address[i]}`, marginValue + 50, yPos);
+                        yPos += lineHeight;
+                    }
+                }
 
                 doc.text(`COMPLAINANT/S`, marginValue, yPos);
                 yPos += lineHeight * 2;  // Extra space before divider
@@ -195,7 +205,7 @@ function CreateNewSummon({ sr_id, complainant, accused, incident_type, complaina
                 // Divider
                 setCurrentFont('bold');
                 doc.text(`-AGAINST-`, marginValue, yPos);
-                yPos += lineHeight * 2;  // Extra space after divider
+                yPos += lineHeight * 1.5;  // Extra space after divider
 
                 // Left-aligned respondent details
 
@@ -286,7 +296,7 @@ function CreateNewSummon({ sr_id, complainant, accused, incident_type, complaina
                 const positionX = pageWidth - marginValue - (nameWidth - positionWidth)/2;
                 doc.text(position, positionX, yPos + lineHeight, { align: "right" });
 
-                yPos += lineHeight * 5;
+                yPos += lineHeight * 4;
 
                 // Signature fields
                 setCurrentFont('normal');

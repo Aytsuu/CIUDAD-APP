@@ -124,7 +124,7 @@ class ComplaintComplainant(models.Model):
 
     class Meta:
         db_table = 'complaint_complainant'
-        unique_together = ('comp', 'cpnt')
+        unique_together = ('comp', 'cpnt')  
 
 class ComplaintAccused(models.Model):
     ca_id = models.BigAutoField(primary_key=True)
@@ -135,29 +135,6 @@ class ComplaintAccused(models.Model):
         db_table = 'complaint_accused'
         unique_together = ('comp', 'acsd')
 
-class Complaint_File(models.Model):
-    comp_file_id = models.BigAutoField(primary_key=True)
-    comp_file_name = models.CharField(max_length=255)
-    comp_file_type = models.CharField(max_length=10)
-    comp_file_path = models.URLField(max_length=512)
-    supabase_path = models.CharField(max_length=255)
-    file_size = models.PositiveIntegerField(help_text="File size in bytes")
-    comp = models.ForeignKey(
-        Complaint,
-        on_delete=models.CASCADE,
-        related_name='complaint_file',
-    )
-
-    class Meta:
-        db_table = 'complaint_file'
-        indexes = [
-            models.Index(fields=['comp_file_type']),
-            models.Index(fields=['comp']),
-        ]
-
-    def __str__(self):
-        return f"{self.comp_file_name} (Case #{self.comp.comp_id})"
-
 class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
@@ -166,9 +143,7 @@ class ServiceChargeRequest(models.Model):
     sr_payment_status = models.CharField(null=True, blank=True)
     sr_type = models.CharField(null=True, blank=True)
     sr_decision_date = models.DateTimeField(null=True, blank=True)
-
     comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-
     parent_summon = models.ForeignKey(
         'self',
         null=True, blank=True,
@@ -183,13 +158,6 @@ class ServiceChargeRequest(models.Model):
 
     class Meta:
         db_table = 'service_charge_request'
-
-    def save(self, *args, **kwargs):
-        if self.comp and not self.sr_code:
-            case_id = f"{self.comp.id:03}"
-            year_suffix = timezone.now().year % 100
-            self.sr_code = f"{case_id}-{year_suffix:02}"
-        super().save(*args, **kwargs)
 
 class CaseActivity(models.Model):
     ca_id = models.BigAutoField(primary_key=True)

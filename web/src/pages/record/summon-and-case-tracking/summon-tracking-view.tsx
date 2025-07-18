@@ -94,8 +94,8 @@ function SummonTrackingView() {
                 <SummonPreview 
                   sr_code={caseDetails?.sr_code || ''}
                   incident_type={caseDetails?.complaint?.comp_incident_type || ''}
-                  complainant={caseDetails?.complainant?.cpnt_name || ''}
-                  complainant_address={caseDetails?.complainant?.address?.formatted_address || ''}
+                  complainant={caseDetails?.complainant?.map(c => c.cpnt_name) || []}
+                  complainant_address={caseDetails?.complainant?.map(c => c.address?.formatted_address || 'N/A') || []}
                   accused={caseDetails?.complaint?.accused?.map(a => a.acsd_name) || []}
                   accused_address={caseDetails?.complaint?.accused?.map(a => a.address?.formatted_address) || []}
                   hearingDate={activity.ca_hearing_date}
@@ -161,10 +161,14 @@ function SummonTrackingView() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column - People */}
                 <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm text-gray-500 font-normal mb-2 block">Complainant</Label>
-                    <p className="text-lg font-medium text-gray-800">{caseDetails?.complainant?.cpnt_name || "N/A"}</p>
-                  </div>
+                    <div>
+                      <Label className="text-sm text-gray-500 font-normal mb-2 block">Complainant</Label>
+                        <p className="text-lg font-medium text-gray-800">
+                          {caseDetails?.complainant?.length
+                            ? caseDetails.complainant.map(c => c.cpnt_name).join(', ')
+                            : 'N/A'}
+                        </p>                 
+                    </div>
                   <div>
                     <Label className="text-sm text-gray-500 font-normal mb-2 block">Accused</Label>
                     <p className="text-lg font-medium text-gray-800">
@@ -271,9 +275,9 @@ function SummonTrackingView() {
                   <CreateNewSummon 
                     sr_id={sr_id} 
                     sr_code = {caseDetails?.sr_code || ''}
-                    complainant={caseDetails?.complainant?.cpnt_name || ""}
+                    complainant={caseDetails?.complainant?.map(c => c.cpnt_name) || []}
+                    complainant_address={caseDetails?.complainant?.map(c => c.address?.formatted_address || 'N/A') || []}                    
                     accused={accusedNames}
-                    complainant_address={caseDetails?.complainant?.address.formatted_address || ""}
                     accused_address={
                       caseDetails?.complaint.accused.map(accused => accused.address.formatted_address) || []
                     }

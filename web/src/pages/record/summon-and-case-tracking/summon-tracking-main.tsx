@@ -1,7 +1,7 @@
 import CardLayout from "@/components/ui/card/card-layout";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { Search, X } from 'lucide-react';
+import { Search} from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -128,7 +128,6 @@ function SummonTrackingMain(){
                                                     No. {item.sr_code}
                                                 </p>
                                             </div>
-                                            <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
                                         </div>
                                     }
                                     content={

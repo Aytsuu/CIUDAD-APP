@@ -55,7 +55,7 @@ export type CaseDetails = {
         cpnt_id: string;
         cpnt_name: string;
         address: AddressDetails;
-    } | null;
+    }[];
     complaint: {
         comp_id: string;
         comp_incident_type: string;
