@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm CI
+      - run: npm ci
       - run: npm run test
 
   test-mobile:
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm CI
+      - run: npm ci
       - run: npm run test
   
   # --- Backend Job ---
