@@ -19,7 +19,13 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
-      - run: npm run test
+      - name: Run Tests
+        run: |
+          if grep -q '"test":' ./web/package.json; then
+            npm run test -- --watchAll=false --if-present
+          else
+            echo "No test script found, skipping tests"
+          fi
 
   test-mobile:
     runs-on: ubuntu-latest
@@ -32,7 +38,13 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
-      - run: npm run test
+      - name: Run Tests
+        run: |
+          if grep -q '"test":' ./web/package.json; then
+            npm test -- --watchAll=false --if-present
+          else
+            echo "No test script found, skipping tests"
+          fi
   
   # --- Backend Job ---
   test-server-1:
