@@ -100,11 +100,9 @@ export default () => {
       customRightAction={<View className="w-10 h-10"/>}
     >
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-        {/* Header Card */}
         <Text className="text-sm text-center text-gray-600 leading-6">
           Monitor barangay demographic records. Select a category below to view records.
         </Text> 
-        {/* Menu Cards */}
         <View className="mt-6 pb-6">
           {menuItems.map((item, index) => (
             <MenuCard 

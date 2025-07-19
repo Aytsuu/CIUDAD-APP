@@ -148,7 +148,15 @@ import { Badge } from "@/components/ui/badge";
 //   },
 //   {
 //     accessorKey: "mname",
-//     header: "Middle Name",
+//     header: ({ column }) => (
+      //   <div
+      //     className="flex w-full justify-center items-center gap-2 cursor-pointer"
+      //     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      //   >
+      //     Middle Name
+      //     <ArrowUpDown size={14} />
+      //   </div>
+      // ),
 //   },
 //   {
 //     accessorKey: "rp_date_registered",
@@ -240,7 +248,15 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
   },
   {
     accessorKey: "mname",
-    header: "Middle Name",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Middle Name
+        <ArrowUpDown size={14} />
+      </div>
+    ),
   },
   {
     accessorKey: "rp_date_registered",

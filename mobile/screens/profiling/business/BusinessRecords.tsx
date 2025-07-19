@@ -76,9 +76,7 @@ export default function BusinessRecords() {
   };
 
   const RenderBusinessCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const respondentName = `${item.bus_respondentFname || ''} ${item.bus_respondentMname ? item.bus_respondentMname + ' ' : ''}${item.bus_respondentLname || ''}`.trim();
-    const businessAddress = `${item.bus_street || ''}, ${item.sitio || ''}`.replace(/^,\s*|,\s*$/g, '');
-    const hasFiles = item.files && item.files.length > 0;
+    const businessAddress = `${item.bus_street || ''}, Sitio ${item.sitio || ''}`;
     
     return (
       <TouchableOpacity
@@ -98,11 +96,6 @@ export default function BusinessRecords() {
             <View className="flex-1">
               {/* Business Header */}
               <View className="flex-row items-center mb-3">
-                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-blue-600 font-semibold text-lg">
-                    {getBusinessInitial(item.bus_name)}
-                  </Text>
-                </View>
                 <View className="flex-1">
                   <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
                     {item.bus_name || 'Unnamed Business'}
@@ -118,7 +111,6 @@ export default function BusinessRecords() {
                 {/* Gross Sales */}
                 {item.bus_gross_sales && (
                   <View className="flex-row items-center">
-                    <Text>P</Text>
                     <Text className="text-gray-600 text-sm flex-1">
                       Gross Sales: <Text className="font-medium text-green-600">{formatCurrency(item.bus_gross_sales)}</Text>
                     </Text>
@@ -135,10 +127,10 @@ export default function BusinessRecords() {
                 )}
 
                 {/* Respondent */}
-                {respondentName && (
+                {item.respondent && (
                   <View className="flex-row items-center">
                     <Text className="text-gray-600 text-sm flex-1" numberOfLines={1}>
-                      Contact: {respondentName}
+                      Contact: {item.respondent}
                     </Text>
                   </View>
                 )}
@@ -151,38 +143,9 @@ export default function BusinessRecords() {
                     </Text>
                   </View>
                 )}
-
-                {/* Registration Date */}
-                {item.bus_date_registered && (
-                  <View className="flex-row items-center">
-                    <Calendar size={14} className="text-gray-400 mr-2" />
-                    <Text className="text-gray-600 text-sm">
-                      Registered: {formatDate(item.bus_date_registered)}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Registered By */}
-                {item.bus_registered_by && (
-                  <View className="flex-row items-center">
-                    <Building size={14} className="text-gray-400 mr-2" />
-                    <Text className="text-gray-600 text-sm">
-                      By: {item.bus_registered_by}
-                    </Text>
-                  </View>
-                )}
               </View>
-
-              {/* Files indicator */}
-              {hasFiles && (
-                <View className="mt-3 pt-3 border-t border-gray-100">
-                  <Text className="text-xs text-blue-600 font-medium">
-                    📎 {item.files.length} document{item.files.length > 1 ? 's' : ''} attached
-                  </Text>
-                </View>
-              )}
             </View>
-            
+        
             <ChevronRight size={20} className="text-gray-400 ml-2" />
           </View>
         </Card>
@@ -318,6 +281,8 @@ export default function BusinessRecords() {
             ) : (
               <>
                 <FlatList
+                  overScrollMode="never"
+                  maxToRenderPerBatch={1}
                   data={families}
                   renderItem={({item, index}) => <RenderBusinessCard item={item} index={index} />}
                   keyExtractor={(item) => item.bus_id}

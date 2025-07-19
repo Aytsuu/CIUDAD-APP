@@ -30,11 +30,15 @@ export const usePerAddressesList = () => {
 // ================ RESIDENTS ================ (Status: Optmizing....)
 export const useResidentsList = (
   is_staff: boolean = false,
-  exclude_independent: boolean = false
+  exclude_independent: boolean = false,
+  disable: boolean = false
 ) => {
   return useQuery({
-    queryKey: ["residentsList", is_staff, exclude_independent],
-    queryFn: () => getResidentsList(is_staff, exclude_independent),
+    queryKey: ["residentsList", is_staff, exclude_independent, disable],
+    queryFn: () => {
+      if(disable) return [];
+      return getResidentsList(is_staff, exclude_independent)
+    },
     staleTime: 5000,
   });
 };
@@ -161,6 +165,23 @@ export const useBusinesses = (
     staleTime: 5000,
   });
 };
+
+export const useBusinessInfo = (busId: number) => {
+  return useQuery({
+    queryKey: ["businessInfo", busId],
+    queryFn: async () => {
+      if (!busId) return null;
+      
+      try {
+        const res = await api.get(`profiling/business/${busId}/info/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000,
+  });
+}
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
 export const useHouseholdsList = () => {

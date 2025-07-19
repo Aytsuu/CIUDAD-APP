@@ -95,14 +95,7 @@ export default function BusinessProfileForm({
 
   return (
     <div className="mx-auto">
-      {/* Respondent Information Section */}
-      {formType == Type.Viewing && (
-        <div>
-          
-        </div>
-      )}
-
-      {!isRegistrationTab && formType !== Type.Viewing && (
+      {!isRegistrationTab && formType == Type.Create && (
         <div className="bg-blue-600 p-10 shadow-sm rounded-t-md">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">

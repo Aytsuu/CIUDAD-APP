@@ -63,6 +63,7 @@ urlpatterns = [
     # Business Urls
     path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
+    path("business/<int:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
     path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
     path("business/verify/account-creation/", VerifyBusinessRespondent.as_view(), name="respondent-account-creation"),

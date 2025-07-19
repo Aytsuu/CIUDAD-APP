@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import *
+from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 
 
 class BusinessBaseSerializer(serializers.ModelSerializer):
@@ -12,22 +13,45 @@ class BusinessFileBaseSerializer(serializers.ModelSerializer):
     model = BusinessFile
     fields = '__all__'
 
+class BusinessRespondentBaseSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = BusinessRespondent
+    fields = '__all__'
+
 class BusinessTableSerializer(serializers.ModelSerializer):
   sitio = serializers.CharField(source="add.sitio.sitio_name")
   bus_street = serializers.CharField(source='add.add_street')
-  bus_registered_by = serializers.SerializerMethodField()
-  files = serializers.SerializerMethodField()
+  respondent = serializers.SerializerMethodField()
 
   class Meta:
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 
-              'bus_date_registered', 'bus_registered_by', 'files']
+              'bus_date_registered', 'respondent', 'rp']
+    
+  def get_respondent(self, obj):
+    if obj.br:
+      return f"{obj.br.br_lname}, {obj.br.br_fname} " \
+             f"{obj.br.br_mname}" if obj.br.br_mname else None
+    
+    if obj.rp:
+      return f"{obj.rp.per.per_lname}, {obj.rp.per.per_fname} " \
+             f"{obj.rp.per.per_mname}" if obj.rp.per.per_mname else None
+    
+    return None
+  
+class BusinessInfoSerializer(serializers.ModelSerializer):
+  sitio = serializers.CharField(source="add.sitio.sitio_name")
+  bus_street = serializers.CharField(source='add.add_street')
+  bus_registered_by = serializers.SerializerMethodField()
+  br = BusinessRespondentBaseSerializer()
+  rp = ResidentPersonalInfoSerializer()
+  files = serializers.SerializerMethodField()
 
-  def get_bus_registered_by(self, obj):
-    info = obj.staff.rp.per
-    return f'{info.per_lname}, {info.per_fname} ' \
-          f'{info.per_mname[0]}' if info.per_mname else None 
-
+  class Meta:
+    model = Business
+    fields = ['bus_id', 'br', 'rp', 'bus_name', 'bus_gross_sales', 'sitio', 
+              'bus_street', 'bus_date_registered', 'bus_registered_by', 'files']
+    
   def get_files(self, obj):
     files = BusinessFile.objects.filter(bus=obj)
     return [
@@ -42,7 +66,11 @@ class BusinessTableSerializer(serializers.ModelSerializer):
       }
       for file in files
     ]
-
+  
+  def get_bus_registered_by(self, obj):
+    info = obj.staff.rp.per
+    return f'{info.per_lname}, {info.per_fname} ' \
+          f'{info.per_mname}' if info.per_mname else None 
   
 class BusinessFileInputSerializer(serializers.Serializer):
   bf_name = serializers.CharField()

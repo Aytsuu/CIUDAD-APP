@@ -133,3 +133,20 @@ export const useBusinessTable = (page: number, pageSize: number, searchQuery: st
     staleTime: 5000,
   })
 }
+
+export const useBusinessInfo = (busId: number) => {
+  return useQuery({
+    queryKey: ["businessInfo", busId],
+    queryFn: async () => {
+      if (!busId) return null;
+      
+      try {
+        const res = await api.get(`profiling/business/${busId}/info/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000,
+  });
+}

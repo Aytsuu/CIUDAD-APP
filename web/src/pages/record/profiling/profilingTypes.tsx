@@ -99,11 +99,7 @@ export type BusinessRecord = {
   bus_gross_sales: string;
   sitio: string;
   bus_street: string;
-  bus_respondentLname: string;
-  bus_respondentFname: string;
-  bus_respondentMname: string;
   bus_date_registered: string;
-  bus_registered_by: string;
-  files: Record<string, any>[];
+  rp: string;
 }
 

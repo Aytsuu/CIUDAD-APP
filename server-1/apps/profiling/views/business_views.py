@@ -62,6 +62,11 @@ class BusinessFileCreateView(generics.CreateAPIView):
     created_instances = BusinessFile.objects.bulk_create(instances)
 
     return Response(status=status.HTTP_201_CREATED, data=created_instances)
+  
+class BusinessInfoView(generics.RetrieveAPIView):
+  serializer_class = BusinessInfoSerializer
+  queryset = Business.objects.all()
+  lookup_field = 'bus_id'
 
 class BusinessUpdateView(generics.UpdateAPIView):
   serializer_class = BusinessCreateUpdateSerializer

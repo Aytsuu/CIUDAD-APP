@@ -39,14 +39,6 @@ export default function FamilyDetails() {
   const members = familyMembers?.results || []
   const totalCount = familyMembers?.count || 0
 
-  React.useEffect(() => {
-    if (!family) {
-      Alert.alert('Error', 'Family data not found', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
-    }
-  }, [family]);
-
   const handleViewMember = (member: any) => {
     // Navigate to individual member details
     router.push({
@@ -109,30 +101,6 @@ export default function FamilyDetails() {
       </View>
     </View>
   )
-
-  if (!family) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={24} className="text-gray-700" />
-          </TouchableOpacity>
-        }
-        headerTitle={
-          <Text className="text-gray-900 text-[13px]">
-            Family Details
-          </Text>
-        }
-      >
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-gray-500">Loading...</Text>
-        </View>
-      </PageLayout>
-    );
-  }
 
   return (
     <PageLayout
