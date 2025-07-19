@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Edit, AlertCircle } from "lucide-react";
+import { ChevronLeft, Edit, AlertCircle, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema";
@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientDetails } from "../queries/patientsFetchQueries";
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
@@ -30,7 +29,6 @@ import PersonalInfoTab from "./PersonalInfoTab";
 import Records from "./Records";
 import VisitHistoryTab from "./VisitHistoryTab";
 import { useMedConCount } from "../queries/count";
-import PatientRecordSkeleton from "../../../../healthServices/skeleton/patient-rec-main-skeleton"
 
 interface PatientData {
   pat_id: string;
@@ -287,7 +285,12 @@ const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
   };
 
   if (isLoading) {
-    return <PatientRecordSkeleton />; // Use the new Skeleton component
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <span>Loading patient information...</span>
+      </div>
+    )
   }
 
   if (isError) {

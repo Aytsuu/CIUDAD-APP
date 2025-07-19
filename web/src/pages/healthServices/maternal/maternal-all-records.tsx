@@ -5,7 +5,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
@@ -13,7 +12,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Loader2, Search } from "lucide-react";
 import { FileInput } from "lucide-react";
 import WomanRoundedIcon from '@mui/icons-material/WomanRounded';
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
@@ -256,6 +255,7 @@ export default function MaternalAllRecords() {
   })
 
   const totalRecords = filteredData.length;
+  // const activePregnancies = data.filter((item) => item.pregnancy.status === "Active").length;
 
   const totalEntries = Math.ceil(filteredData.length / entriesCount);
   const maternalPagination = filteredData.slice(
@@ -266,12 +266,12 @@ export default function MaternalAllRecords() {
 
   if(isLoading){
      return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
+      <LayoutWithBack title="Maternal Health Records" description="Manage and view mother's maternal information">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading maternal patients...</span>
+        </div>
+      </LayoutWithBack>
     );
   }
 
@@ -279,7 +279,7 @@ export default function MaternalAllRecords() {
   return (
     <LayoutWithBack 
       title="Maternal Health Records  "
-      description="Manage and view mother's information"
+      description="Manage and view mother's maternal information"
     >
       <div className="w-full h-full flex flex-col">
         <div className="w-full">

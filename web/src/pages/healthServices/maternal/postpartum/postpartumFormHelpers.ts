@@ -8,7 +8,6 @@ export const transformPostpartumFormData = (
 ) => {
   // Transform the form data to match the API structure
   const transformedData = {
-    // Patient and record type - Keep as string, don't convert to number
     pat_id: selectedPatientId, 
     patrec_type: "Postpartum Care",
 
@@ -79,7 +78,7 @@ const getOutcomeName = (outcomeId: string): string => {
 }
 
 export const validatePostpartumFormData = (
-  formData: z.infer<typeof PostPartumSchema>,
+  formData: z.infer<typeof PostPartumSchema>, 
   selectedPatientId: string,
   postpartumCareData: any[],
 ): string[] => {

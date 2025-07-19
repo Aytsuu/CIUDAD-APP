@@ -31,6 +31,7 @@ export interface Patient {
   };
   family?: {
     fam_id: string;
+    fc_role: string;
   };
   family_head_info?: {
     fam_id: string | null;
@@ -63,6 +64,7 @@ export interface Patient {
       spouse_lname?: string
       spouse_mname?: string
       spouse_dob?: string
+      spouse_occupation?: string
     }
   };
 }

@@ -61,3 +61,36 @@ export const getPregnancyDetails = async (patientId: string) => {
     throw error;
   }
 }
+
+
+export const getPrenatalPatientMedHistory = async (patientId: string) => {
+  try { 
+    const res = await api2.get(`maternal/patient/${patientId}/medicalhistory`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal patient medical history: ", error);
+    throw error;
+  }
+}
+
+
+export const getPrenatalPatientObsHistory = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/patient/${patientId}/obstetricalhistory`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal patient obstetrical history: ", error);
+    throw error;
+  }
+}
+
+
+export const getPrenatalPatientBodyMeasurement = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/patient/${patientId}/bodymeasurement`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal patient body measurement: ", error);
+    throw error;
+  }
+}

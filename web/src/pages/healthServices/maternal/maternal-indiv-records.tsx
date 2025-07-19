@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Search, Heart, Baby, Clock, CheckCircle } from "lucide-react"
+import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
@@ -18,9 +18,10 @@ import { Badge } from "@/components/ui/badge"
 import { PatientInfoCardv2 } from "@/pages/healthServices/maternal/maternal-components/patient-info-card-v2"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { PregnancyAccordion } from "../maternal/maternal-components/maternal-records-accordion"
+import PregnancyChart from "./maternal-components/pregnancy-chart"
 
 import { usePregnancyDetails } from "./queries/maternalFetchQueries"
-import { Skeleton } from "@/components/ui/skeleton"
+
 
 interface Patient {
   pat_id: string
@@ -45,6 +46,7 @@ interface Patient {
   patrec_type?: string
 }
 
+// accordion data types
 interface MaternalRecord {
   id: string
   pregnancyId: string
@@ -55,9 +57,23 @@ interface MaternalRecord {
   recordType: "Prenatal" | "Postpartum Care"
   status: "Active" | "Completed" | "Pregnancy Loss"
   gestationalWeek?: number
+  gestationalFormatted?: string
   expectedDueDate?: string
   deliveryDate?: string
+  prenatal_end_date?: string
+  postpartum_end_date?: string
   notes?: string
+  postpartum_assessment?: {
+    ppa_id: string;
+    ppa_date: string;
+    ppa_lochial_discharges: string;
+    ppa_blood_pressure: string;
+    ppa_feedings: string;
+    ppa_findings: string;
+    ppa_nurses_notes: string;
+    created_at: string;
+    updated_at: string;
+  }[]
 }
 
 interface PregnancyGroup {
@@ -71,6 +87,7 @@ interface PregnancyGroup {
   hasPostpartum: boolean
 }
 
+// pregnancy details types for fetching
 interface PregnancyDataDetails{
   pregnancy_id: string;
   status: string;
@@ -84,12 +101,28 @@ interface PregnancyDataDetails{
     pf_lmp: string;
     pf_edc: string;
     created_at: string;
-  }[]
+  }[],
+  prenatal_care?: {
+    pf_id: string;
+    pfpc_aog_wks: number;
+    pfpc_aog_days: number;
+  }[];
   postpartum_record?: {
     ppr_id:string;
     delivery_date: string | "N/A";
     created_at: string;
     updated_at: string;
+    postpartum_assessment?: {
+      ppa_id: string;
+      ppa_date: string;
+      ppa_lochial_discharges: string;
+      ppa_blood_pressure: string;
+      ppa_feedings: string;
+      ppa_findings: string;
+      ppa_nurses_notes: string;
+      created_at: string;
+      updated_at: string;
+    }[]
   }[]
 }
 
@@ -97,6 +130,7 @@ interface PregnancyDataDetails{
 export default function MaternalIndivRecords() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const location = useLocation()
+  const { data: pregnancyData, isLoading: pregnancyDataLoading } = usePregnancyDetails(selectedPatient?.pat_id || "")
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -109,8 +143,7 @@ export default function MaternalIndivRecords() {
     }
   }, [location.state])
 
-  const { data: pregnancyData, isLoading: pregnancyDataLoading } = usePregnancyDetails(selectedPatient?.pat_id || "")
-
+  
   function calculateGestationalWeek(lmp: string, visitDate: string): number {
     const lmpDate = new Date(lmp);
     const visit = new Date(visitDate);
@@ -137,7 +170,7 @@ export default function MaternalIndivRecords() {
       if(!grouped[pregnancy.pregnancy_id]) {
         grouped[pregnancy.pregnancy_id] = {
           pregnancyId: pregnancy.pregnancy_id,
-          status: pregnancy.status as "Active" | "Completed" | "Pregnancy Loss",
+          status: normalizeStatus(pregnancy.status),
           startDate: pregnancy.created_at.split("T")[0],
           expectedDueDate: pregnancy.prenatal_form?.[0]?.pf_edc || undefined,
           deliveryDate: pregnancy.postpartum_record?.[0]?.delivery_date || undefined,
@@ -149,6 +182,11 @@ export default function MaternalIndivRecords() {
 
       const currPregnancyGroup =  grouped[pregnancy.pregnancy_id]
 
+      // const aogWks = pregnancy.prenatal_care?.[0]?.pfpc_aog_wks
+      // const aogDays = pregnancy.prenatal_care?.[0]?.pfpc_aog_days
+      // const gestationalFormatted = `${aogWks} weeks ${aogDays} days`
+
+
       pregnancy.prenatal_form?.forEach((pf) => {
         const addressParts = [
           patientAddress?.add_street,
@@ -156,6 +194,15 @@ export default function MaternalIndivRecords() {
           patientAddress?.add_city,
           patientAddress?.add_province
         ].filter(Boolean);
+
+        
+        const correspondingCare = pregnancy.prenatal_care?.find(care => care.pf_id === pf.pf_id);
+        const aogWks = correspondingCare?.pfpc_aog_wks;
+        const aogDays = correspondingCare?.pfpc_aog_days;
+        const gestationalFormatted = aogWks !== undefined && aogDays !== undefined 
+          ? `${aogWks} weeks ${aogDays} days` 
+          : undefined;
+
 
         currPregnancyGroup.records.push({
           id: pf.pf_id,
@@ -165,9 +212,11 @@ export default function MaternalIndivRecords() {
           sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "N/A",
           type: patientType as "Transient" | "Resident",
           recordType: "Prenatal",
-          status: pregnancy.status as "Active" | "Completed" | "Pregnancy Loss",
-          gestationalWeek: calculateGestationalWeek(pf.pf_lmp, pf.created_at.split("T")[0]),
+          status: normalizeStatus(pregnancy.status),
+          gestationalWeek: aogWks,
+          gestationalFormatted: gestationalFormatted,
           expectedDueDate: pf.pf_edc,
+          prenatal_end_date: pregnancy.prenatal_end_date,
           notes: `Prenatal visit on ${pf.created_at.split("T")[0]}`,
         })
         currPregnancyGroup.hasPrenatal = true
@@ -192,9 +241,11 @@ export default function MaternalIndivRecords() {
           sitio: patientAddress?.add_sitio || "N/A",
           type: patientType as "Transient" | "Resident",
           recordType: "Postpartum Care",
-          status: pregnancy.status as "Active" | "Completed" | "Pregnancy Loss",
+          status: normalizeStatus(pregnancy.status),
           deliveryDate: ppr.delivery_date,
+          postpartum_end_date: pregnancy.postpartum_end_date,
           notes: `Postpartum care on ${ppr.created_at.split("T")[0]}`,
+          postpartum_assessment: ppr.postpartum_assessment || []
         })
         currPregnancyGroup.hasPostpartum = true
         // Update deliveryDate for the pregnancy group from postpartum record if available
@@ -207,11 +258,28 @@ export default function MaternalIndivRecords() {
         (a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
       )
       
-      if(currPregnancyGroup.records.length > 0) {
-        currPregnancyGroup.startDate = currPregnancyGroup.records[0].dateCreated
-      }
+      currPregnancyGroup.records.sort((a, b) => {
+        // First, sort by record type - postpartum records come first
+        if (a.recordType === "Postpartum Care" && b.recordType === "Prenatal") {
+          return -1; // a comes before b
+        }
+        if (a.recordType === "Prenatal" && b.recordType === "Postpartum Care") {
+          return 1; // b comes before a
+        }
+        
+        // If both records are of the same type, sort by date (newest first)
+        return new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime();
+      });
     })
     return Object.values(grouped).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+  }
+
+  // Helper to normalize backend status to UI-expected casing
+  const normalizeStatus = (statusRaw: string): "Active" | "Completed" | "Pregnancy Loss" => {
+    const s = statusRaw.toLowerCase()
+    if (s === "active") return "Active"
+    if (s === "completed") return "Completed"
+    return "Pregnancy Loss" // covers both "pregnancy loss" and any unknown variants
   }
 
   // using memo for grouped pregnancies
@@ -230,6 +298,7 @@ export default function MaternalIndivRecords() {
     { id: "All", name: "All" },
     { id: "Active", name: "Active" },
     { id: "Completed", name: "Completed" },
+    { id: "Pregnancy Loss", name: "Pregnancy Loss" },
   ]
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
@@ -242,6 +311,8 @@ export default function MaternalIndivRecords() {
         return group.status === "Active"
       case "Completed":
         return group.status === "Completed"
+      case "Pregnancy Loss":
+        return group.status === "Pregnancy Loss"
       default:
         return true
     }
@@ -266,8 +337,7 @@ export default function MaternalIndivRecords() {
     } else if (status === "Pregnancy Loss") {
       return (
         <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          {/* You can use a suitable icon here */}
-          <Heart className="w-3 h-3 mr-1" />
+          <HeartHandshake className="w-3 h-3 mr-1" />
           Pregnancy Loss
         </Badge>
       )
@@ -299,27 +369,28 @@ export default function MaternalIndivRecords() {
     console.log(`Pregnancy ${pregnancyId} marked as completed`)
   }
 
+  const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
+    console.log(`Record ${recordId} of type ${recordType} marked as completed`)
+  }
+
   if(pregnancyDataLoading) {
     return (
-      <LayoutWithBack title="Maternal Records" description="Manage mother's individual record">
-        <div className="mb-5">
-          <PatientInfoCardv2 patient={selectedPatient} />
-        </div>
-        <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-          <Skeleton className="h-10 w-full mb-4" />
-          <Skeleton className="h-24 w-full mb-4" />
-          <Skeleton className="h-24 w-full mb-4" />
+      <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading maternal individual records...</span>
         </div>
       </LayoutWithBack>
     )
   }
 
   return (
-    <LayoutWithBack title="Maternal Records" description="Manage mother's individual record">
+    <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
       <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
         {selectedPatient ? (
-          <div className="mb-5">
+          <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-1">
             <PatientInfoCardv2 patient={selectedPatient} />
+            <PregnancyChart pregnancies={pregnancyData}/>
           </div>
         ) : (
           <div className="mb-5 rounded">
@@ -367,7 +438,7 @@ export default function MaternalIndivRecords() {
         <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-md">
             <div className="flex gap-x-2 items-center">
-              <p className="text-xs sm:text-sm">Showing {filteredGroups.length} pregnancies</p>
+              <p className="text-xs sm:text-sm">Showing {filteredGroups.length === 1 ? filteredGroups.length + " pregnancy" :  filteredGroups.length + " pregnancies"}</p>
             </div>
           </div>
 
@@ -383,6 +454,7 @@ export default function MaternalIndivRecords() {
                 getStatusBadge={getStatusBadge}
                 getRecordTypeBadge={getRecordTypeBadge}
                 onCompletePregnancy={handleCompletePregnancy}
+                onCompleteRecord={handleCompleteRecord}
               />
             )}
           </div>

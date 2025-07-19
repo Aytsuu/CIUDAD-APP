@@ -138,12 +138,13 @@ export default function PostpartumFormFirstPg({
     setSelectedPatient(patient)
 
     if (patient && patient.personal_info) {
+      const patientRole = patient.family?.fc_role?.toLowerCase()
       const personalInfo = patient.personal_info
       const address = patient.address
       const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info
       const spouse = patient.spouse_info?.spouse_info
 
-      form.setValue("mothersPersonalInfo.familyNo", patient.family?.fam_id || "")
+      form.setValue("mothersPersonalInfo.familyNo", patient.family_head_info?.fam_id || "")
       form.setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname || "")
       form.setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname || "")
       form.setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname || "")
@@ -151,10 +152,36 @@ export default function PostpartumFormFirstPg({
         "mothersPersonalInfo.motherAge",
         personalInfo?.per_dob ? String(calculateAge(personalInfo.per_dob)) : "",
       )
-      form.setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
-      form.setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
-      form.setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
-      form.setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
+      if (patientRole === 'mother') {
+        if(spouse){
+          form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+          form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+          form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "") 
+        } else if (familyHeadFather){
+          form.setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
+          form.setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
+          form.setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
+          form.setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
+        } else {
+          form.setValue("mothersPersonalInfo.husbandLName", "")
+          form.setValue("mothersPersonalInfo.husbandFName", "")
+          form.setValue("mothersPersonalInfo.husbandMName", "")
+          form.setValue("mothersPersonalInfo.husbandDob", "")
+        }
+      } else {
+        if(spouse){
+          form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+          form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+          form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "") 
+        } else {
+          form.setValue("mothersPersonalInfo.husbandLName", "")
+          form.setValue("mothersPersonalInfo.husbandFName", "")
+          form.setValue("mothersPersonalInfo.husbandMName", "")
+          form.setValue("mothersPersonalInfo.husbandDob", "")
+        }
+      }
 
       if (address) {
         form.setValue("mothersPersonalInfo.address.street", address.add_street || "")
@@ -352,6 +379,7 @@ export default function PostpartumFormFirstPg({
 
       <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
         <div className="pb-4">
+                              <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 1</Label>
           <h2 className="text-3xl font-bold text-center mt-12">POSTPARTUM RECORD</h2>
         </div>
 
@@ -643,7 +671,7 @@ export default function PostpartumFormFirstPg({
                 </Button>
               </div>
 
-              <div className="mt-5">
+              <div className="mt-5 h-[30rem] border rounded-md">
                 <DataTable columns={postpartumTableColumns} data={postpartumCareData} />
               </div>
             </div>

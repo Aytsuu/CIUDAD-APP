@@ -398,3 +398,5 @@ export const MedicineDisplay = ({
     </div>
   )
 }
+
+export default MedicineDisplay;
