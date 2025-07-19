@@ -17,6 +17,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import { capitalize } from "@/helpers/capitalize"
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 
 const profiles = [
   {
@@ -69,19 +70,6 @@ export default function ResidentRecords() {
   }, [isLoading])
 
   // ----------------- HANDLERS --------------------
-  const handleExport = (type: "csv" | "excel" | "pdf") => {
-    switch (type) {
-      case "csv":
-        exportToCSV(residents)
-        break
-      case "excel":
-        exportToExcel(residents)
-        break
-      case "pdf":
-        exportToPDF(residents)
-        break
-    }
-  }
 
   return (
     // ----------------- RENDER --------------------
@@ -104,28 +92,19 @@ export default function ResidentRecords() {
               </div>
 
               <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport("csv")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("excel")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as Excel
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <DropdownLayout
+                    trigger={
+                      <Button variant="outline" className="gap-2">
+                        <FileDown className="h-4 w-4" />
+                        Export
+                      </Button>
+                    }
+                    options={[
+                      { id: "csv", name: "Export as CSV" },
+                      { id: "excel", name: "Export as Excel" },
+                      { id: "pdf", name: "Export as PDF" },
+                    ]}
+                  />
 
                 <Link to="/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">

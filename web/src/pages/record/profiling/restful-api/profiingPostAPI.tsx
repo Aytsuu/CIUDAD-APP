@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api, api2 } from "@/api/api";
 import { formatDate } from "@/helpers/dateHelper";
 import { capitalize } from "@/helpers/capitalize";
 
@@ -8,6 +8,7 @@ import { capitalize } from "@/helpers/capitalize";
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/address/create/", data);
+    await api2.post("health-profiling/address/create/", data);
     return res.data;
   } catch (err) {
     throw err;

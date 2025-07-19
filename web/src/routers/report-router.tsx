@@ -11,26 +11,16 @@ import CreateMissingWeeks from '@/pages/record/report/weekly/CreateMissingWeeks'
 // Creating routes
 export const report_router = [
   {
-    path: '/report',
-    element: <ReportLayout/>,
-    children: [
-      {
-        path: '/report',
-        element: <Navigate to='incident' />
-      },
-      {
-        path: '/report/incident',
-        element: <IRRecords/>
-      },
-      {
-        path: '/report/acknowledgement',
-        element: <ARRecords/>
-      },
-      {
-        path: '/report/weekly',
-        element: <WeeklyAR/>
-      }
-    ]
+    path: '/report/incident',
+    element: <IRRecords/>
+  },
+  {
+    path: '/report/acknowledgement',
+    element: <ARRecords/>
+  },
+  {
+    path: '/report/weekly-accomplishment',
+    element: <WeeklyAR/>
   },
   {
     path: '/report/incident/form',
