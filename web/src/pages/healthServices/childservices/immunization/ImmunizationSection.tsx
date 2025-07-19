@@ -1,5 +1,4 @@
-// ImmunizationSection.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { Plus, Info, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
@@ -12,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { createImmunizationColumns } from "./columns";
-import { VaccineRecord, ExistingVaccineRecord ,ImmunizationFormData} from "./ImmunizationSchema";
+import { VaccineRecord, ExistingVaccineRecord ,ImmunizationFormData,getCurrentDate} from "@/form-schema/ImmunizationSchema";
 
 interface ImmunizationSectionProps {
   vaccines: VaccineRecord[];
@@ -34,6 +33,8 @@ interface ImmunizationSectionProps {
   setSelectedVaccineListId: (id: string) => void;
   addVac: () => void;
   addExistingVac: () => void;
+  showVaccineList: boolean;
+  setShowVaccineList: (value: boolean) => void;
 }
 
 export function ImmunizationSection({
@@ -51,9 +52,10 @@ export function ImmunizationSection({
   selectedVaccineListId,
   setSelectedVaccineListId,
   addVac,
-  addExistingVac
+  addExistingVac,
+  showVaccineList,
+  setShowVaccineList
 }: ImmunizationSectionProps) {
-  const [showVaccineList, setShowVaccineList] = useState<boolean>(false);
   const [newVaccineErrors, setNewVaccineErrors] = useState<{ vaccine?: string; dose?: string; date?: string }>({});
   const [existingVaccineErrors, setExistingVaccineErrors] = useState<{ vaccine?: string; dose?: string; date?: string }>({});
 
@@ -90,6 +92,21 @@ export function ImmunizationSection({
       toast.success("Existing vaccine removed successfully!");
     }
   });
+
+  // Set default dates on component mount
+  useEffect(() => {
+    const currentDate = getCurrentDate();
+    
+    // Initialize form values if they're empty
+    if (!form.getValues('vaccines.0.date')) {
+      form.setValue('vaccines.0.date', currentDate);
+    }
+    
+    if (!form.getValues('existingVaccines.0.date')) {
+      form.setValue('existingVaccines.0.date', currentDate);
+    }
+  }, [form]);
+  
 
   return (
     <div className="space-y-6">
@@ -233,6 +250,7 @@ export function ImmunizationSection({
                 name="vaccines.0.date"
                 label="Date Administered"
                 type="date"
+                
               />
               {newVaccineErrors.date && (
                 <p className="text-red-500 text-sm">{newVaccineErrors.date}</p>

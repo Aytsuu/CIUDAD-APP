@@ -10,25 +10,9 @@ import { DisabilityComponent } from "@/components/ui/add-search-disability"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import CardLayout from "@/components/ui/card/card-layout"
+import { type_of_feeding_options } from "./options"
+import {Page2Props} from "./types"
 
-type Page2Props = {
-  onPrevious: () => void
-  onNext: () => void
-  updateFormData: (data: Partial<FormData>) => void
-  formData: FormData
-  historicalBFdates: string[]
-  patientHistoricalDisabilities: {
-    id: number
-    pd_id: number
-    status: string
-    disability_details: {
-      disability_id: number
-      disability_name: string
-      created_at: string
-    }
-  }[] // Type for historical disabilities
-  mode: "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization"
-}
 
 export default function ChildHRPage2({
   onPrevious,
@@ -39,7 +23,7 @@ export default function ChildHRPage2({
   patientHistoricalDisabilities, // Destructure the prop
   mode,
 }: Page2Props) {
-  const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord" || mode === "immunization"
+  const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord"
 
   const form = useForm<FormData>({
     resolver: zodResolver(ChildDetailsSchema),
@@ -266,14 +250,7 @@ export default function ChildHRPage2({
                         control={form.control}
                         name="type_of_feeding"
                         label="Type of feeding"
-                        options={[
-                          {
-                            id: "Exclusive Breastfeedin",
-                            name: "Exclusive Breastfeeding",
-                          },
-                          { id: "Mixed Breastfeeding", name: "Mixed Breastfeeding" },
-                          { id: "Formula Feeding", name: "Formula Feeding" },
-                        ]}
+                        options={type_of_feeding_options}
                       />
                     </div>
                     {/* BF Dates Form Field */}

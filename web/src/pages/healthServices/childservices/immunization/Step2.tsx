@@ -4,30 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   HeartPulse,
   ChevronLeft,
-  Plus,
-  Info,
-  CheckCircle,
   Loader2,
-  Trash2,
-  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Form } from "@/components/ui/form/form";
-import { FormInput } from "@/components/ui/form/form-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { calculateAgeFromDOB } from "@/helpers/mmddwksAgeCalculator";
-import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { Combobox } from "@/components/ui/combobox";
 import { ImmunizationSection } from "./ImmunizationSection";
 import { toast } from "sonner";
 import { api2 } from "@/api/api";
@@ -35,46 +23,25 @@ import { z } from "zod";
 import {
   VitalSignType,
   VaccineRecord,
-  ImmunizationFormSchema,
   ExistingVaccineRecord,
   ImmunizationFormData,
   getCurrentDate,
-} from "./ImmunizationSchema";
+  OptionalImmunizationFormSchema,
+} from "@/form-schema/ImmunizationSchema";
 import { createImmunizationColumns } from "./columns";
-
-// Updated schema with all fields optional
-const OptionalImmunizationFormSchema = ImmunizationFormSchema.extend({
-  wt: z.string().optional(),
-  ht: z.string().optional(),
-  temp: z.string().optional(),
-  follov_description: z.string().optional(),
-  followUpVisit: z.string().optional(),
-  followv_status: z.string().optional(),
-  notes: z.string().optional(),
-  existingVaccines: z
-    .array(
-      z.object({
-        dose: z.string().optional(),
-        date: z.string().optional(),
-      })
-    )
-    .optional(),
-  vaccines: z
-    .array(
-      z.object({
-        dose: z.string().optional(),
-        date: z.string().optional(),
-      })
-    )
-    .optional(),
-});
+import {
+  createFollowUpVisit,
+  createBodyMeasurement,
+  createPatientDisability,
+  createChildHealthNotes,
+  createChildVitalSign,
+  createNutritionalStatus,
+} from "../forms/restful-api/createAPI";
+import {ChildHealthHistoryRecord} from "../../childservices/viewrecords/types";
+import { useAuth } from "@/context/AuthContext";
 
 interface ImmunizationProps {
-  ChildHealthRecord: {
-    chrec: string;
-    chhist_id: string;
-    childDob?: string;
-  };
+  ChildHealthRecord: ChildHealthHistoryRecord
   historicalVitalSigns?: VitalSignType[];
   historicalNotes?: {
     date: string;
@@ -86,6 +53,12 @@ interface ImmunizationProps {
   }[];
   onUpdateVitalSigns?: (updatedVitalSigns: VitalSignType[]) => void;
   onBack?: () => void;
+  vaccines?: VaccineRecord[];
+  existingVaccines?: ExistingVaccineRecord[];
+  setVaccines?: (vaccines: VaccineRecord[]) => void;
+  setExistingVaccines?: (vaccines: ExistingVaccineRecord[]) => void;
+  showVaccineList: boolean;
+  setShowVaccineList: (value: boolean) => void;
 }
 
 export default function Immunization({
@@ -94,6 +67,12 @@ export default function Immunization({
   historicalNotes = [],
   onUpdateVitalSigns,
   onBack = () => {},
+  vaccines: propVaccines = [],
+  existingVaccines: propExistingVaccines = [],
+  setVaccines: propSetVaccines,
+  setExistingVaccines: propSetExistingVaccines,
+  showVaccineList,
+  setShowVaccineList,
 }: ImmunizationProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -101,15 +80,11 @@ export default function Immunization({
     useState<VitalSignType | null>(null);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
-  const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
-  const [existingVaccines, setExistingVaccines] = useState<
-    ExistingVaccineRecord[]
-  >([]);
+  const [vaccines, setVaccines] = useState<VaccineRecord[]>(propVaccines);
+  const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>(propExistingVaccines);
   const [selectedVaccineId, setSelectedVaccineId] = useState<string>("");
   const [selectedVaccineListId, setSelectedVaccineListId] =
     useState<string>("");
-  const [showVaccineList, setShowVaccineList] = useState<boolean>(false);
-
   const [vaccineOptions, setVaccineOptions] = useState<{
     default: any[];
     formatted: { id: string; name: string; quantity?: number }[];
@@ -120,8 +95,18 @@ export default function Immunization({
   }>({ default: [], formatted: [] });
   const [isLoadingVaccines, setIsLoadingVaccines] = useState(false);
   const [isLoadingVaccineList, setIsLoadingVaccineList] = useState(false);
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id || null;
+  const position = user?.staff?.pos?.pos_title;
 
+  // Update local state when props change
+  useEffect(() => {
+    setVaccines(propVaccines);
+  }, [propVaccines]);
 
+  useEffect(() => {
+    setExistingVaccines(propExistingVaccines);
+  }, [propExistingVaccines]);
 
   const form = useForm<ImmunizationFormData>({
     resolver: zodResolver(OptionalImmunizationFormSchema),
@@ -135,8 +120,8 @@ export default function Immunization({
       followUpVisit: "",
       followv_status: "pending",
       notes: "",
-      existingVaccines: [],
-      vaccines: [],
+      existingVaccines: propExistingVaccines,
+      vaccines: propVaccines,
     },
   });
 
@@ -297,36 +282,73 @@ export default function Immunization({
   };
 
   const onSubmit = async (data: ImmunizationFormData) => {
-    alert("Submitting immunization data...");
     console.log("Data to save:", data);
     if (!form.formState.isValid) {
       console.log("Form errors:", form.formState.errors);
       return;
     }
-
+  
+    // Check if any data has been added
+    const hasVaccines = vaccines.length > 0;
+    const hasExistingVaccines = existingVaccines.length > 0;
+    const hasNotes = data.notes && data.notes.trim() !== "";
+    const hasFollowUp = data.followUpVisit && data.followUpVisit.trim() !== "";
+    const hasFollowUpReason = data.follov_description && data.follov_description.trim() !== "";
+    
+    if (!hasVaccines && !hasExistingVaccines && !hasNotes && !hasFollowUp && !hasFollowUpReason ) {
+      toast.info("No changes have been made");
+      return;
+    }
+  
     try {
       setIsSaving(true);
-
+  
       const saveData = {
         ...data,
         chrec: ChildHealthRecord.chrec,
-        vaccines: vaccines.length > 0 ? vaccines : undefined,
-        existingVaccines:
-          existingVaccines.length > 0 ? existingVaccines : undefined,
+        vaccines: hasVaccines ? vaccines : undefined,
+        existingVaccines: hasExistingVaccines ? existingVaccines : undefined,
       };
-
+  
       // Remove undefined fields
       const cleanData = Object.fromEntries(
         Object.entries(saveData).filter(([_, v]) => v !== undefined)
       );
-
       console.log("Data to save:", cleanData);
-
-      // Simulate API call (replace with actual API call)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+  
+      console.log("Child Health Record:", ChildHealthRecord);
+      const patrec_id = ChildHealthRecord.chrec_details.patrec_details.patrec_id.toString();
+      console.log("Patient Record ID:", patrec_id);
+      const chist_id = ChildHealthRecord.chhist_id;
+      
+      // Only create follow-up if there's follow-up data
+      let followv_id = null;
+      if (hasFollowUp || hasFollowUpReason) {
+        const newFollowUp = await createFollowUpVisit({
+          followv_date: data.followUpVisit ?? null,
+          created_at: new Date().toISOString(),
+          followv_description: data.follov_description || "Follow Up for Child Health",
+          patrec: patrec_id,
+          followv_status: "pending",
+          updated_at: new Date().toISOString(),
+        });
+        followv_id = newFollowUp.followv_id;
+      }
+  
+      // Only create notes if there are notes
+      if (hasNotes) {
+        await createChildHealthNotes({
+          chn_notes: data.notes || "",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          followv: followv_id,
+          chhist: chist_id,
+          staff: staffId,
+        });
+      }
+  
       toast.success("Immunization data saved successfully!");
-
+  
       if (editingRowIndex !== null) {
         handleUpdateVitalSign(editingRowIndex, data);
       }
@@ -337,6 +359,7 @@ export default function Immunization({
       setIsSaving(false);
     }
   };
+
   const addVac = () => {
     if (!selectedVaccineId) {
       toast.error("Please select a vaccine first");
@@ -350,15 +373,17 @@ export default function Immunization({
     const vaccineToAdd: VaccineRecord = {
       vacStck_id: vacStck_id.trim(),
       vaccineType: vac_name.trim(),
-      dose: formValues.vaccines?.[0]?.dose || "1", // Default to dose 1 if empty
-      date: formValues.vaccines?.[0]?.date || getCurrentDate(),
+      dose: formValues.vaccines?.[0]?.dose || "1",
+      date: getCurrentDate(), // Always use today's date
       vac_id: vac_id.trim(),
       vac_name: vac_name.trim(),
       expiry_date: expiry_date.trim(),
     };
 
-    setVaccines((prev) => [...prev, vaccineToAdd]);
-    form.setValue("vaccines", [...vaccines, vaccineToAdd]);
+    const newVaccines = [...vaccines, vaccineToAdd];
+    setVaccines(newVaccines);
+    if (propSetVaccines) propSetVaccines(newVaccines);
+    form.setValue("vaccines", newVaccines);
     setSelectedVaccineId("");
     toast.success("Vaccine added successfully!");
   };
@@ -372,12 +397,13 @@ export default function Immunization({
       vac_name: vac_name.trim(),
       vaccineType: vac_name.trim(),
       dose: formValues.existingVaccines?.[0]?.dose || "",
-      date: formValues.existingVaccines?.[0]?.date || getCurrentDate(),
+      date: getCurrentDate(), // Always use today's date
     };
 
-    const updatedExistingVaccines = [...existingVaccines, vaccineToAdd];
-    setExistingVaccines(updatedExistingVaccines);
-    form.setValue("existingVaccines", updatedExistingVaccines);
+    const newExistingVaccines = [...existingVaccines, vaccineToAdd];
+    setExistingVaccines(newExistingVaccines);
+    if (propSetExistingVaccines) propSetExistingVaccines(newExistingVaccines);
+    form.setValue("existingVaccines", newExistingVaccines);
 
     setSelectedVaccineListId("");
     form.setValue("existingVaccines.0", {
@@ -393,6 +419,7 @@ export default function Immunization({
       (vac) => vac.vacStck_id !== vacStck_id
     );
     setVaccines(updatedVaccines);
+    if (propSetVaccines) propSetVaccines(updatedVaccines);
     form.setValue("vaccines", updatedVaccines);
     toast.success("Vaccine removed successfully!");
   };
@@ -402,6 +429,7 @@ export default function Immunization({
       (vac) => vac.vac_id !== vac_id
     );
     setExistingVaccines(updatedExistingVaccines);
+    if (propSetExistingVaccines) propSetExistingVaccines(updatedExistingVaccines);
     form.setValue("existingVaccines", updatedExistingVaccines);
     toast.success("Existing vaccine removed successfully!");
   };
@@ -466,6 +494,8 @@ export default function Immunization({
             setSelectedVaccineListId={setSelectedVaccineListId}
             addVac={addVac}
             addExistingVac={addExistingVac}
+            showVaccineList={showVaccineList}
+            setShowVaccineList={setShowVaccineList}
           />
 
           {/* Error display */}
@@ -543,8 +573,15 @@ export default function Immunization({
               <ChevronLeft />
               Previous
             </Button>
-            <Button type="submit" className="w-[100px]">
-              save{" "}
+            <Button type="submit" className="w-[100px]" disabled={isSaving}>
+                {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Submitting
+                </>
+                ) : (
+                "Save"
+                )}
             </Button>
           </div>
         </form>

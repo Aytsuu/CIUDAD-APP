@@ -282,3 +282,10 @@ export function getAgeInUnit(dob: string, unit: "years" | "months" | "weeks" | "
     return 0
   }
 }
+
+
+
+export const calculateCurrentAge = (birthDate: string) => {
+  if (!birthDate) return "";
+  return calculateAgeFromDOB(birthDate).ageString;
+};

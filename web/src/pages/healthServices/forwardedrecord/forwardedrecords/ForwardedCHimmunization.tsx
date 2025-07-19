@@ -17,84 +17,10 @@ import { calculateAge } from "@/helpers/ageCalculator";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api2 } from "@/api/api";
+import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 
-export interface ChildHealthCheckupRecord {
-  chhist_id: string;
-  chrec: string;
-  chrec_details: {
-    ufc_no: string;
-    family_no: string;
-    mother_occupation: string;
-    father_occupation: string;
-    type_of_feeding: string;
-    newborn_screening: string;
-    place_of_delivery_type: string;
-    birth_order: number;
-    pod_location: string;
-    created_at: string;
-    patrec_details: {
-      patrec_id: number;
-      pat_details: {
-        pat_id: string;
-        personal_info: {
-          per_fname: string;
-          per_lname: string;
-          per_mname: string;
-          per_suffix: string;
-          per_dob: string;
-          per_sex: string;
-          per_status: string;
-          per_edAttainment: string;
-          per_religion: string;
-          per_contact: string;
-        };
-        address: {
-          add_street: string;
-          add_barangay: string;
-          add_city: string;
-          add_province: string;
-          add_sitio: string;
-          full_address: string;
-        };
-        family_head_info: {
-          fam_id: string | null;
-          family_heads: {
-            mother?: {
-              role: string;
-              personal_info: {
-                per_fname: string;
-                per_lname: string;
-                per_mname: string;
-                per_dob: string;
-              };
-            };
-            father?: {
-              role: string;
-              personal_info: {
-                per_fname: string;
-                per_lname: string;
-                per_mname: string;
-                per_dob: string;
-              };
-            };
-          };
-        };
-        pat_type: string;
-      };
-    };
-  };
-  pat_details?: {
-    pat_id: string;
-  };
-  created_at: string;
-  tt_status: string;
-  status: string;
-  patrec: string;
-  child_health_vital_signs?: Array<{ chvital_id?: string }>;
-}
-
-export const getChildHealthImmunizationRecords = async (): Promise<
-  ChildHealthCheckupRecord[]
+export const getChildHealthHistoryRecordRecords = async (): Promise<
+  ChildHealthHistoryRecord[]
 > => {
   try {
     const response = await api2.get("/child-health/child-immunization-status/");
@@ -107,16 +33,16 @@ export const getChildHealthImmunizationRecords = async (): Promise<
 
 export default function ForwardedCHimmunization() {
   const { data: immunizationRecords, isLoading } = useQuery<
-    ChildHealthCheckupRecord[]
+    ChildHealthHistoryRecord[]
   >({
-    queryKey: ["childHealthImmunizationRecords"],
-    queryFn: getChildHealthImmunizationRecords,
+    queryKey: ["ChildHealthHistoryRecordRecords"],
+    queryFn: getChildHealthHistoryRecordRecords,
     refetchOnMount: true,
     staleTime: 300000,
     gcTime: 600000,
   });
 
-  const formatRecordForTable = (record: ChildHealthCheckupRecord) => {
+  const formatRecordForTable = (record: ChildHealthHistoryRecord) => {
     const patDetails = record.chrec_details?.patrec_details?.pat_details;
     const personalInfo = patDetails?.personal_info;
     const addressInfo = patDetails?.address;
@@ -129,7 +55,7 @@ export default function ForwardedCHimmunization() {
       record, // Keep the full record
       chrec_id: record.chrec,
       chhist_id: record.chhist_id,
-
+    
       fname: personalInfo?.per_fname || "",
       lname: personalInfo?.per_lname || "",
       mname: personalInfo?.per_mname || "",

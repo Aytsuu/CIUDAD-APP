@@ -44,62 +44,7 @@ type Page3Props = {
   updateFormData: (data: Partial<VaccineType>) => void;
   formData: VaccineType;
   position: string; // Still passed, but not used for conditional rendering of forms
-  mode: "addnewchildhealthrecord" | "newchildhealthrecord" | "immunization";
-};
-
-const fetchVaccinesWithStock = async () => {
-  try {
-    const response = await api2.get("/inventory/vaccine_stocks/");
-    const stocks = response.data;
-    if (!stocks || !Array.isArray(stocks)) {
-      return { default: [], formatted: [] };
-    }
-    const availableStocks = stocks.filter((stock: any) => {
-      const isExpired =
-        stock.inv_details?.expiry_date &&
-        new Date(stock.inv_details.expiry_date) < new Date();
-      return stock.vacStck_qty_avail > 0 && !isExpired;
-    });
-    return {
-      default: availableStocks,
-      formatted: availableStocks.map((stock: any) => ({
-        id: `${stock.vacStck_id.toString()},${stock.vac_id},${
-          stock.vaccinelist?.vac_name || "Unknown"
-        },${stock.inv_details?.expiry_date || ""}`,
-        name: `${stock.vaccinelist?.vac_name || "Unknown"} (Exp: ${
-          stock.inv_details?.expiry_date
-            ? new Date(stock.inv_details.expiry_date).toLocaleDateString()
-            : "N/A"
-        })`,
-        quantity: stock.vacStck_qty_avail,
-      })),
-    };
-  } catch (error) {
-    console.error("Error fetching vaccine stocks:", error);
-    toast.error("Failed to load vaccine stocks");
-    throw error;
-  }
-};
-
-const fetchVaccineList = async () => {
-  try {
-    const response = await api2.get("/inventory/vac_list/");
-    const vaccines = response.data;
-    if (!vaccines || !Array.isArray(vaccines)) {
-      return { default: [], formatted: [] };
-    }
-    return {
-      default: vaccines,
-      formatted: vaccines.map((vaccine: any) => ({
-        id: `${vaccine.vac_id.toString()},${vaccine.vac_name}`,
-        name: vaccine.vac_name,
-      })),
-    };
-  } catch (error) {
-    console.error("Error fetching vaccine list:", error);
-    toast.error("Failed to load vaccine list");
-    throw error;
-  }
+  mode: "addnewchildhealthrecord" | "newchildhealthrecord" ;
 };
 
 export default function ChildHRPage3({
@@ -113,29 +58,29 @@ export default function ChildHRPage3({
   
   return (
     <div className="bg-white p-8">
-      <div className="font-light text-zinc-400 flex justify-end mb-8 ">
+      <div className="font-light text-zinc-400 flex justify-end mb-8">
         Page 3 of 4
       </div>
 
-          <div className="flex justify-end items-center pt-6 gap-2 border-t">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={onPrevious}
-              className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent"
-            >
-                            <ChevronLeft className="h-4 w-4" />
-
-              Previous
-            </Button>
-            <Button type="submit"      
-                     className="flex items-center gap-2  px-6"
-            >Continue
-
-            <ChevronLeft className="h-4 w-4 rotate-180 ml-2" />
-
-            </Button>
-          </div>
+      <div className="flex justify-end items-center pt-6 gap-2 border-t">
+        <Button
+          variant="outline"
+          type="button"
+          onClick={onPrevious}
+          className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </Button>
+        <Button 
+          type="button"  // Changed from "submit" to "button" since we're not in a form
+          onClick={onNext}  // Added onClick handler
+          className="flex items-center gap-2 px-6"
+        >
+          Continue
+          <ChevronLeft className="h-4 w-4 rotate-180 ml-2" />
+        </Button>
+      </div>
     </div>
   );
 }

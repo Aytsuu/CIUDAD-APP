@@ -29,7 +29,7 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
 import { NutritionalStatusCalculator } from "../../../../../components/ui/nutritional-status-calculator";
-import { calculateAgeFromDOB } from "@/helpers/mmddwksAgeCalculator";
+import { calculateCurrentAge } from "@/helpers/ageCalculator";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import type { Medicine } from "./types";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -41,7 +41,7 @@ import {
   HeartPulse,
   ChevronLeft,
 } from "lucide-react";
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import { z } from "zod";
 import {
   createHistoricalNutritionalStatusColumns,
@@ -51,47 +51,13 @@ import {
   createHistoricalSupplementStatusColumns,
 } from "./columns";
 import { edemaSeverityOptions } from "./options";
-import CardLayout from "@/components/ui/card/card-layout";
+import { LastPageProps } from "./types";
+import {isToday} from "@/helpers/isToday";
 
-const calculateCurrentAge = (birthDate: string) => {
-  if (!birthDate) return "";
-  return calculateAgeFromDOB(birthDate).ageString;
-};
 
-const isToday = (dateString: string) => {
-  if (!dateString) return false;
-  const today = new Date().toISOString().split("T")[0];
-  const checkDate = dateString.split("T")[0];
-  return today === checkDate;
-};
 
-const getLatestVitalSigns = (vitalSigns: VitalSignType[] | undefined) => {
-  if (!vitalSigns || vitalSigns.length === 0) return null;
-  const sorted = [...vitalSigns].sort(
-    (a, b) =>
-      new Date(b.date || "").getTime() - new Date(a.date || "").getTime()
-  );
-  return sorted[0];
-};
+ 
 
-interface LastPageProps {
-  onPrevious: () => void;
-  onSubmit: (data: FormData) => void;
-  updateFormData: (data: Partial<FormData>) => void;
-  formData: FormData;
-  historicalVitalSigns?: VitalSignType[];
-  historicalNutritionalStatus?: NutritionalStatusType[];
-  historicalSupplementStatuses: CHSSupplementStat[];
-  onUpdateHistoricalSupplementStatus: (
-    updatedStatuses: CHSSupplementStat[]
-  ) => void;
-  latestHistoricalNoteContent?: string;
-  latestHistoricalFollowUpDescription?: string;
-  latestHistoricalFollowUpDate?: string;
-  historicalMedicines?: Medicine[];
-  mode: "newchildhealthrecord" | "addnewchildhealthrecord" | "immunization";
-  isSubmitting: boolean;
-}
 
 export default function LastPage({
   onPrevious,
@@ -108,8 +74,9 @@ export default function LastPage({
   historicalMedicines = [],
   mode,
   isSubmitting,
+  newVitalSigns,
+  setNewVitalSigns,
 }: LastPageProps) {
-  const isImmunizationMode = mode === "immunization";
   const [currentPage, setCurrentPage] = useState(1);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editingData, setEditingData] = useState<VitalSignType | null>(null);
@@ -127,23 +94,30 @@ export default function LastPage({
   } = fetchMedicinesWithStock();
 
   const [isTodaysEntry, setIsTodaysEntry] = useState(false);
-  const [showVitalSignsForm, setShowVitalSignsForm] = useState(false);
+  const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
+    const todaysHistoricalRecord = historicalVitalSigns.find((vital) => isToday(vital.date));
+    return !todaysHistoricalRecord && newVitalSigns.length === 0;
+  });
 
   const currentAge = useMemo(
     () => calculateCurrentAge(formData.childDob),
     [formData.childDob]
   );
 
+
+  const getLatestVitalSigns = (vitalSigns: VitalSignType[] | undefined) => {
+    if (!vitalSigns || vitalSigns.length === 0) return null;
+    const sorted = [...vitalSigns].sort(
+      (a, b) =>
+        new Date(b.date || "").getTime() - new Date(a.date || "").getTime()
+    );
+    return sorted[0];
+  };
+  
+
   const todaysHistoricalRecord = useMemo(() => {
     return historicalVitalSigns.find((vital) => isToday(vital.date));
   }, [historicalVitalSigns]);
-
-  const [newVitalSigns, setNewVitalSigns] = useState<VitalSignType[]>(() => {
-    if (todaysHistoricalRecord) {
-      return [{ ...todaysHistoricalRecord }];
-    }
-    return [];
-  });
 
   const nonTodaysHistoricalVitalSigns = useMemo(() => {
     return historicalVitalSigns.filter((vital) => !isToday(vital.date));
@@ -156,13 +130,9 @@ export default function LastPage({
     }));
   }, [newVitalSigns]);
 
-  const [hasAddedVitalSign, setHasAddedVitalSign] = useState<boolean>(() => {
-    return !!todaysHistoricalRecord;
-  });
-
-  const shouldShowAddVitalSignsForm = useMemo(() => {
-    return !hasAddedVitalSign && showVitalSignsForm;
-  }, [hasAddedVitalSign, showVitalSignsForm]);
+  const canSubmit = useMemo(() => {
+    return newVitalSigns && newVitalSigns.length > 0;
+  }, [newVitalSigns]);
 
   const shouldShowGeneralHealthSections = useMemo(() => {
     return !todaysHistoricalRecord;
@@ -258,6 +228,9 @@ export default function LastPage({
   const selectedMedicines = watch("medicines");
   const currentStatus = watch("status");
   const nutritionalStatus = watch("nutritionalStatus");
+  const anemicData = watch("anemic");
+  const birthwtData = watch("birthwt");
+  const edemaSeverity = watch("edemaSeverity");
   const chhistCreatedAt = formData.created_at;
 
   const latestHistoricalNutritionalStatus = useMemo(() => {
@@ -285,6 +258,32 @@ export default function LastPage({
     return hasSevereMalnutrition && !todaysHistoricalRecord;
   }, [hasSevereMalnutrition, todaysHistoricalRecord]);
 
+  // Function to sync all form data to parent
+  const syncFormDataToParent = useCallback(() => {
+    const currentFormValues = form.getValues();
+    updateFormData({
+      vitalSigns: newVitalSigns,
+      anemic: currentFormValues.anemic,
+      birthwt: currentFormValues.birthwt,
+      medicines: currentFormValues.medicines,
+      status: currentFormValues.status,
+      nutritionalStatus: currentFormValues.nutritionalStatus,
+      edemaSeverity: currentFormValues.edemaSeverity,
+    });
+  }, [form, newVitalSigns, updateFormData]);
+
+  // Update parent form data whenever any watched values change
+  useEffect(() => {
+    updateFormData({
+      anemic: anemicData,
+      birthwt: birthwtData,
+      medicines: selectedMedicines,
+      status: currentStatus,
+      nutritionalStatus: nutritionalStatus,
+      edemaSeverity: edemaSeverity,
+    });
+  }, [anemicData, birthwtData, selectedMedicines, currentStatus, nutritionalStatus, edemaSeverity, updateFormData]);
+
   useEffect(() => {
     setValue("vitalSigns", newVitalSigns);
     updateFormData({ vitalSigns: newVitalSigns });
@@ -306,10 +305,6 @@ export default function LastPage({
   useEffect(() => {
     setValue("historicalSupplementStatuses", historicalSupplementStatusesProp);
   }, [historicalSupplementStatusesProp, setValue]);
-
-  const canSubmit = useMemo(() => {
-    return newVitalSigns && newVitalSigns.length > 0;
-  }, [newVitalSigns]);
 
   const handleMedicineSelectionChange = (
     selectedMedicines: {
@@ -340,9 +335,8 @@ export default function LastPage({
       handleUpdateVitalSign(0, values);
     } else {
       setNewVitalSigns([values]);
-      setHasAddedVitalSign(true);
-      setShowVitalSignsForm(false);
     }
+    setShowVitalSignsForm(false);
     vitalSignForm.reset({
       date: new Date().toISOString().split("T")[0],
       age: currentAge,
@@ -393,6 +387,13 @@ export default function LastPage({
   const handleToggleVitalSignsForm = () => {
     setShowVitalSignsForm((prev) => !prev);
   };
+
+  // Modified handlePrevious to sync data before going back
+  const handlePrevious = useCallback(() => {
+    // Sync all current form data to parent before navigating
+    syncFormDataToParent();
+    onPrevious();
+  }, [syncFormDataToParent, onPrevious]);
 
   const handleFormSubmit = handleSubmit(
     (data) => {
@@ -505,17 +506,7 @@ export default function LastPage({
             </div>
           )}
 
-          {!hasAddedVitalSign && (
-            <div className="flex justify-end">
-              <Button type="button" onClick={handleToggleVitalSignsForm}>
-                {showVitalSignsForm
-                  ? "Hide Vital Signs Form"
-                  : "Add New Vital Signs"}
-              </Button>
-            </div>
-          )}
-
-          {shouldShowAddVitalSignsForm && (
+          {showVitalSignsForm && (
             <div className="rounded-lg border bg-blue-50 p-4">
               <h3 className="mb-4 text-lg font-bold">Add New Vital Signs</h3>
               <Form {...vitalSignForm}>
@@ -580,7 +571,7 @@ export default function LastPage({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={handleToggleVitalSignsForm}
+                      onClick={() => setShowVitalSignsForm(false)}
                       className="px-6 py-2 hover:bg-zinc-100"
                     >
                       Cancel
@@ -595,6 +586,17 @@ export default function LastPage({
                   </div>
                 </div>
               </Form>
+            </div>
+          )}
+
+          {!showVitalSignsForm && newVitalSigns.length === 0 && (
+            <div className="flex justify-end">
+              <Button 
+                type="button" 
+                onClick={() => setShowVitalSignsForm(true)}
+              >
+                Add New Vital Signs
+              </Button>
             </div>
           )}
 
@@ -757,6 +759,7 @@ export default function LastPage({
             </div>
           )}
 
+
           {nonTodaysHistoricalVitalSigns &&
             nonTodaysHistoricalVitalSigns.length > 0 && (
               <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
@@ -860,80 +863,78 @@ export default function LastPage({
             </div>
           </div>
 
-          {!isImmunizationMode && (
-            <div className="mb-10 rounded-lg border bg-purple-50 p-4">
-              <h3 className="mb-4 text-lg font-bold">
-                Record Purpose & Status
-              </h3>
-              <FormField
-                control={control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Select the purpose of this record:
-                    </FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="flex flex-col gap-3"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="check-up" id="check-up" />
-                          <Label htmlFor="check-up" className="cursor-pointer">
-                            Check-up
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem
-                            value="immunization"
-                            id="immunization"
-                          />
-                          <Label
-                            htmlFor="immunization"
-                            className="cursor-pointer"
-                          >
-                            Immunization
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="recorded" id="recorded" />
-                          <Label htmlFor="recorded" className="cursor-pointer">
-                            Record only
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {currentStatus && (
-                <div
-                  className={`mt-4 rounded border p-3 ${
-                    currentStatus === "check-up"
-                      ? "border-green-200 bg-green-50 text-green-600"
-                      : currentStatus === "immunization"
-                      ? "border-blue-200 bg-blue-50 text-blue-600"
-                      : "border-purple-200 bg-purple-50 text-purple-600"
-                  }`}
-                >
-                  <strong>Status:</strong>{" "}
-                  {currentStatus === "check-up"
-                    ? "Record prepared for Check-up"
+          <div className="mb-10 rounded-lg border bg-purple-50 p-4">
+            <h3 className="mb-4 text-lg font-bold">
+              Record Purpose & Status
+            </h3>
+            <FormField
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel className="text-sm font-medium text-gray-700">
+                    Select the purpose of this record:
+                  </FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      className="flex flex-col gap-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="check-up" id="check-up" />
+                        <Label htmlFor="check-up" className="cursor-pointer">
+                          Check-up
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="immunization"
+                          id="immunization"
+                        />
+                        <Label
+                          htmlFor="immunization"
+                          className="cursor-pointer"
+                        >
+                          Immunization
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="recorded" id="recorded" />
+                        <Label htmlFor="recorded" className="cursor-pointer">
+                          Record only
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {currentStatus && (
+              <div
+                className={`mt-4 rounded border p-3 ${
+                  currentStatus === "check-up"
+                    ? "border-green-200 bg-green-50 text-green-600"
                     : currentStatus === "immunization"
-                    ? "Record prepared for Immunization"
-                    : "Record only - No further action required"}
-                </div>
-              )}
-              {!currentStatus && (
-                <div className="mt-4 text-sm italic text-gray-500">
-                  Please select the purpose for this health record.
-                </div>
-              )}
-            </div>
-          )}
+                    ? "border-blue-200 bg-blue-50 text-blue-600"
+                    : "border-purple-200 bg-purple-50 text-purple-600"
+                }`}
+              >
+                <strong>Status:</strong>{" "}
+                {currentStatus === "check-up"
+                  ? "Record prepared for Check-up"
+                  : currentStatus === "immunization"
+                  ? "Record prepared for Immunization"
+                  : "Record only - No further action required"}
+              </div>
+            )}
+            {!currentStatus && (
+              <div className="mt-4 text-sm italic text-gray-500">
+                Please select the purpose for this health record.
+              </div>
+            )}
+          </div>
 
           <div className="flex w-full justify-end gap-2">
             <Button

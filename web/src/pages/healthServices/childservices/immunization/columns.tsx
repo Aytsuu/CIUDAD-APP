@@ -6,7 +6,7 @@ import {
   VitalSignType,
   VaccineRecord,
   ExistingVaccineRecord,
-} from "./ImmunizationSchema";
+} from "../../../../form-schema/ImmunizationSchema";
 
 interface ColumnsProps {
   editingRowIndex?: number | null;

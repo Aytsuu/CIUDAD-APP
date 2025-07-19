@@ -18,13 +18,13 @@ import {
 import type { CHSSupplementStat } from "./types";
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { useChildHealthRecordMutation } from "../restful-api/newchrecord";
-import { useImmunizationChildHealthRecordMutation } from "../restful-api/immunization";
 import { useUpdateChildHealthRecordMutation } from "../restful-api/newchhistory";
 import type { Patient } from "@/components/ui/patientSearch";
 import { useQuery } from "@tanstack/react-query";
 import { Medicine } from "./types";
 import { initialFormData } from "./types";
 import CardLayout from "@/components/ui/card/card-layout";
+
 export const isToday = (dateString: string) => {
   if (!dateString) return false;
   const today = new Date().toISOString().split("T")[0];
@@ -41,18 +41,15 @@ export default function ChildHealthRecordForm() {
     (location.state?.params?.mode as
       | "newchildhealthrecord"
       | "addnewchildhealthrecord"
-      | "immunization"
       | undefined) ||
     (params.mode as
       | "newchildhealthrecord"
       | "addnewchildhealthrecord"
-      | "immunization"
       | undefined);
 
   const { chrecId, chhistId, patId } = location.state?.params || {};
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord";
   const isNewchildhealthrecord = mode === "newchildhealthrecord";
-  const isImmunizationMode = mode === "immunization";
 
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id || null;
@@ -61,13 +58,10 @@ export default function ChildHealthRecordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const newchildhealthrecordMutation = useChildHealthRecordMutation();
   const updatechildhealthrecordmutation = useUpdateChildHealthRecordMutation();
-  const immunizationMutation = useImmunizationChildHealthRecordMutation();
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [isLoading, setIsLoading] = useState(
-    isaddnewchildhealthrecordMode || isImmunizationMode
-  );
+  const [isLoading, setIsLoading] = useState(isaddnewchildhealthrecordMode);
   const [apiData, setApiData] = useState<any>(null);
   const [historicalBFdates, setHistoricalBFdates] = useState<string[]>([]);
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<
@@ -106,6 +100,7 @@ export default function ChildHealthRecordForm() {
   >([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [newVitalSigns, setNewVitalSigns] = useState<VitalSignType[]>([]);
 
   const {
     data: childHealthRecord,
@@ -118,7 +113,7 @@ export default function ChildHealthRecordForm() {
       const response = await api2.get(`/child-health/history/${chrecId}/`);
       return response.data;
     },
-    enabled: !!chrecId && (isaddnewchildhealthrecordMode || isImmunizationMode),
+    enabled: !!chrecId && isaddnewchildhealthrecordMode,
     staleTime: 0,
   });
 
@@ -234,18 +229,13 @@ export default function ChildHealthRecordForm() {
       nutritionalStatus:
         chhistRecord.nutritionalStatus || initialFormData.nutritionalStatus,
       vaccines: vaccinesFromApi,
-    
       existingVaccines: existingVaccinesFromApi,
     };
   };
 
   useEffect(() => {
     const fetchRecordData = async () => {
-      if (
-        (!isaddnewchildhealthrecordMode && !isImmunizationMode) ||
-        !chrecId ||
-        !chhistId
-      ) {
+      if (!isaddnewchildhealthrecordMode || !chrecId || !chhistId) {
         setIsLoading(false);
         return;
       }
@@ -326,7 +316,7 @@ export default function ChildHealthRecordForm() {
                 supp.medrec_details?.minv_details?.minv_dsg_unit || "",
               form: supp.medrec_details?.minv_details?.minv_form || "",
             })) || [];
-          allHistoricalMedicines.push(...medicinesFromHistory);
+        allHistoricalMedicines.push(...medicinesFromHistory);
 
           // Process nutritional status
           const nutritionalStatusFromHistory = history.nutrition_statuses?.[0]
@@ -425,6 +415,16 @@ export default function ChildHealthRecordForm() {
         const recordData = transformApiDataToFormData(selectedChhistRecord);
         setFormData(recordData);
 
+        // Initialize newVitalSigns with today's vital signs if they exist
+        const todaysVitalSign = allHistoricalVitalSigns.find((vital) => 
+          isToday(vital.date)
+        );
+        if (todaysVitalSign) {
+          setNewVitalSigns([todaysVitalSign]);
+        } else if (recordData.vitalSigns && recordData.vitalSigns.length > 0) {
+          setNewVitalSigns(recordData.vitalSigns);
+        }
+
         if (recordData.pat_id) {
           setSelectedPatient({ pat_id: recordData.pat_id } as Patient);
           const patientFullName = `${recordData.childFname || ""} ${
@@ -453,11 +453,9 @@ export default function ChildHealthRecordForm() {
     chhistId,
     mode,
     isaddnewchildhealthrecordMode,
-    isImmunizationMode,
     childHealthRecord,
   ]);
 
-  // Rest of the component remains the same...
   const updateFormData = (data: Partial<FormData>) => {
     setFormData((prev) => (prev ? { ...prev, ...data } : (data as FormData)));
   };
@@ -482,24 +480,20 @@ export default function ChildHealthRecordForm() {
     setIsSubmitting(true);
     setError(null);
     try {
+      // Merge new vital signs into the form data before submission
+      const dataToSubmit = {
+        ...submittedData,
+        vitalSigns: newVitalSigns,
+      };
+
       if (isNewchildhealthrecord) {
         await newchildhealthrecordMutation.mutateAsync({
-          submittedData: submittedData,
+          submittedData: dataToSubmit,
           staff: staffId || null,
-        });
-      } else if (isImmunizationMode) {
-        await immunizationMutation.mutateAsync({
-          submittedData: submittedData,
-          staff: staffId || null,
-          todaysHistoricalRecord: historicalVitalSigns.find((vital) =>
-            isToday(vital.date)
-          ),
-          originalRecord: apiData,
-          originalDisabilityRecords: originalDisabilityRecords,
         });
       } else {
         await updatechildhealthrecordmutation.mutateAsync({
-          submittedData: submittedData,
+          submittedData: dataToSubmit,
           staff: staffId || null,
           todaysHistoricalRecord: historicalVitalSigns.find((vital) =>
             isToday(vital.date)
@@ -537,12 +531,10 @@ export default function ChildHealthRecordForm() {
     );
   }
 
-  if ((isaddnewchildhealthrecordMode || isImmunizationMode) && !formData) {
+  if (isaddnewchildhealthrecordMode && !formData) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-        <div className="text-red-500">
-          No record data available to edit/immunize
-        </div>
+        <div className="text-red-500">No record data available to edit</div>
         <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     );
@@ -635,6 +627,8 @@ export default function ChildHealthRecordForm() {
                 historicalMedicines={historicalMedicines}
                 mode={mode || "newchildhealthrecord"}
                 isSubmitting={isSubmitting}
+                newVitalSigns={newVitalSigns}
+                setNewVitalSigns={setNewVitalSigns}
               />
             )}
           </div>

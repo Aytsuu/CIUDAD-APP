@@ -317,9 +317,12 @@ export const createTodaysVitalSignsColumns = (
             <p className="whitespace-pre-wrap">{displayNotes}</p>
             {row.original.followUpVisit && (
               <p className="mt-1 flex flex-col  text-xs text-gray-500">
+                {row.original.follov_description && (
+                  <span>Follow up reason {row.original.follov_description}</span>
+                )}
                 <span>
-                  Follow Up: {row.original.followUpVisit} (
-                  {row.original.follov_description || "N/A"})
+                  Schedule on{row.original.followUpVisit} (
+                  {row.original.followv_status || "N/A"})
                 </span>
               </p>
             )}

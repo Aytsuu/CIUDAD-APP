@@ -5,3 +5,13 @@ export const edemaSeverityOptions = [
     { id: "+3", name: "+3" },
     { id: "None", name: "None" },
 ];
+
+
+export const type_of_feeding_options = [
+  {
+    id: "Exclusive Breastfeedin",
+    name: "Exclusive Breastfeeding",
+  },
+  { id: "Mixed Breastfeeding", name: "Mixed Breastfeeding" },
+  { id: "Formula Feeding", name: "Formula Feeding" },
+]

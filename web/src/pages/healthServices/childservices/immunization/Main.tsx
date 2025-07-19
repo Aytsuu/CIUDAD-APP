@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import PendingDisplayChildHealthRecord from "./ChildhealthHistory";
-import Immunization from "./Immunization";
+import PendingDisplayChildHealthRecord from "./Step1";
+import Immunization from "./Step2";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import { ChevronLeft } from "lucide-react";
@@ -10,7 +10,8 @@ import { api2 } from "@/api/api";
 import z from "zod";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import{VitalSignType, FormData} from "./ImmunizationSchema";
+import { VitalSignType, FormData, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
+
 const fetchChildHealthHistory = async (chrec: string) => {
   const response = await api2.get(`/child-health/history/${chrec}/`);
   return response.data;
@@ -24,6 +25,11 @@ export default function ChildImmunization() {
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
   const [historicalNotes, setHistoricalNotes] = useState<any[]>([]);
   const [fullHistoryData, setFullHistoryData] = useState<ChildHealthHistoryRecord[]>([]);
+  
+  // State lifted to parent component
+  const [showVaccineList, setShowVaccineList] = useState<boolean>(false);
+  const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
+  const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>([]);
 
   const {
     data: historyData,
@@ -46,14 +52,9 @@ export default function ChildImmunization() {
     follov_description: undefined,
     notes: undefined,
     followUpVisit: undefined,
-    followv_id: undefined,
-    chvital_id: undefined,
-    bm_id: undefined,
-    chnotes_id: undefined,
     followv_status: undefined,
-    vaccines: [] as { vacStck_id: string, vaccineName: string; dose: string; dateAdministered: string }[],
-    // hasExistingVaccination: false,
-    existingVaccines: [] as { vac_id: string, vaccineName: string; dose: string; dateAdministered: string }[],
+    vaccines: [],
+    existingVaccines: [],
   });
 
   useEffect(() => {
@@ -85,9 +86,6 @@ export default function ChildImmunization() {
           follov_description: "",
           followUpVisit: "",
           followv_status: "pending",
-          chvital_id: vital.chvital_id,
-          bm_id: vital.bm_id,
-          followv_id: vital.followv_id,
         })) || [];
         allVitalSigns.push(...vitalSigns);
 
@@ -181,6 +179,12 @@ export default function ChildImmunization() {
                   historicalNotes={historicalNotes}
                   onUpdateVitalSigns={handleUpdateVitalSigns}
                   onBack={prevStep}
+                  vaccines={vaccines}
+                  existingVaccines={existingVaccines}
+                  setVaccines={setVaccines}
+                  setExistingVaccines={setExistingVaccines}
+                  showVaccineList={showVaccineList}
+                  setShowVaccineList={setShowVaccineList}
                 />
               )}
             </>

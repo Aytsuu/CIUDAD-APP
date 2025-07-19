@@ -1,3 +1,8 @@
+
+import type {FormData, VitalSignType, NutritionalStatusType,} from "@/form-schema/chr-schema/chr-schema";
+import type { Patient } from "@/components/ui/patientSearch"; // Ensure this import is correct
+
+
 export interface CHSSupplementStat {
     chssupplementstat_id?: number
     chsupp_details?: any
@@ -23,7 +28,6 @@ export interface CHSSupplementStat {
   }
   
 
-import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 
 export const initialFormData: FormData = {
   familyNo: "",
@@ -150,3 +154,64 @@ export interface ChildHealthRecord {
   tt_status?: string; // Optional field for TT status
 }
 
+
+
+
+
+
+export interface LastPageProps {
+onPrevious: () => void;
+onSubmit: (data: FormData) => void;
+updateFormData: (data: Partial<FormData>) => void;
+formData: FormData;
+historicalVitalSigns?: VitalSignType[];
+historicalNutritionalStatus?: NutritionalStatusType[];
+historicalSupplementStatuses: CHSSupplementStat[];
+onUpdateHistoricalSupplementStatus: (
+  updatedStatuses: CHSSupplementStat[]
+) => void;
+latestHistoricalNoteContent?: string;
+latestHistoricalFollowUpDescription?: string;
+latestHistoricalFollowUpDate?: string;
+historicalMedicines?: Medicine[];
+mode: "newchildhealthrecord" | "addnewchildhealthrecord";
+isSubmitting: boolean;
+newVitalSigns: VitalSignType[];
+setNewVitalSigns: React.Dispatch<React.SetStateAction<VitalSignType[]>>;
+}
+
+
+
+
+
+export type Page2Props = {
+onPrevious: () => void
+onNext: () => void
+updateFormData: (data: Partial<FormData>) => void
+formData: FormData
+historicalBFdates: string[]
+patientHistoricalDisabilities: {
+  id: number
+  pd_id: number
+  status: string
+  disability_details: {
+    disability_id: number
+    disability_name: string
+    created_at: string
+  }
+}[] // Type for historical disabilities
+mode: "newchildhealthrecord" | "addnewchildhealthrecord" 
+}
+
+
+
+export type Page1Props = {
+  onNext: () => void;
+  updateFormData: (data: Partial<FormData>) => void;
+  formData: FormData;
+  mode: "newchildhealthrecord" | "addnewchildhealthrecord";
+  selectedPatient: Patient | null;
+  setSelectedPatient: (patient: Patient | null) => void;
+  selectedPatientId: string; // Add this prop
+  setSelectedPatientId: (id: string) => void; // Add this prop
+};
