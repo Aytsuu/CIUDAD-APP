@@ -1,7 +1,7 @@
 // components/HealthHistoryAccordions.tsx
 import { ChildHealthHistoryRecord } from "@/pages/healthServices/childservices/viewrecords/types";
-import { SectionRenderer } from "@/pages/healthServices/childservices/viewrecords/SectionRenderer";
-import { EbfRenderer } from "@/pages/healthServices/childservices/viewrecords/EbfRenderer";
+import { SectionRenderer } from "@/components/ui/SectionRenderer";
+import { EbfRenderer } from "@/components/ui/EbfRenderer";
 import {
   ClipboardList,
   User,

@@ -1,6 +1,6 @@
 import React from "react";
-import { FieldConfig, ChildHealthHistoryRecord } from "./types";
-import { getValueByPath, getDiffClass } from "./utils";
+import { FieldConfig, ChildHealthHistoryRecord } from "../../pages/healthServices/childservices/viewrecords/types";
+import { getValueByPath, getDiffClass } from "../../pages/healthServices/childservices/viewrecords/utils";
 import { format, isValid, parseISO, isSameDay } from "date-fns";
 
 interface SectionRendererProps {
