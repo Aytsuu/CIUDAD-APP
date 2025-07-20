@@ -71,9 +71,9 @@ export const columns: ColumnDef<Ordinance>[] = [
                     trigger={
                         <div className="flex items-center h-10">
                             <Link to="/update-ord">
-                                <Button className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer shadow-none h-full flex items-center">
+                                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer shadow-none h-full flex items-center">
                                     <Pencil size={16} />
-                                </Button>
+                                </div>
                             </Link>
                         </div>
                     }
@@ -150,7 +150,7 @@ function OrdinancePage() {
                     Manage and view ordinance information
                 </p>
             </div>
-            <hr className="border-gray mb-6 sm:mb-10" />        
+            <hr className="border-gray mb-6 sm:mb-8" />        
 
             <div className='w-full flex flex-col md:flex-row justify-between mb-4 gap-2'>
                 <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
@@ -192,7 +192,7 @@ function OrdinancePage() {
 
                 {/* Pagination */}
                 <div className="w-full sm:w-auto flex justify-center">
-                    <PaginationLayout className="" />
+                    {/* <PaginationLayout className="" /> */}
                 </div>
             </div>                
         </div>

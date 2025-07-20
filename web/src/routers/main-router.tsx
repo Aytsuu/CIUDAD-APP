@@ -12,6 +12,7 @@ import { ord_router } from './ordinancePage-router';
 import { res_router } from './resolutionPage-router';
 import { attendance_router } from './attendacePage-router';
 import { mom_router } from './MinutesOfMeetingPage-router';
+import { template_router } from './template-router';
 import { council_calendar_router } from './calendarPage-route';
 import { patientQueue } from './patientsQueue';
 import { healthinventory } from './inventory';
@@ -61,6 +62,7 @@ export const main_router: RouteObject[] = [
             ...res_router,
             ...attendance_router,
             ...mom_router,
+            ...template_router,
             ...council_calendar_router,
             ...donation_router,
             ...treasurer_router,

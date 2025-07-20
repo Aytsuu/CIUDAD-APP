@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master]
+    branches: [main, master]  
 
 jobs:
   # --- Frontend Job ---
@@ -17,15 +17,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
       - run: npm ci
       - name: Run Tests
         run: |
-          if grep -q '"test":' ./web/pacakge.json; then
+          if grep -q '"test":' ./web/package.json; then
             npm run test -- --watchAll=false --if-present
           else
             echo "No test script found, skipping tests"
-          fi  
+          fi
 
   test-mobile:
     runs-on: ubuntu-latest
@@ -36,17 +36,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
       - run: npm ci
       - name: Run Tests
         run: |
-          if grep -q'"test":' ./mobile/package.json; then
-            npm test -- --watchall=false --if-prensent
+          if grep -q '"test":' ./mobile/package.json; then
+            npm test -- --watchAll=false --if-present
           else
             echo "No test script found, skipping tests"
           fi
-
-
+  
   # --- Backend Job ---
   test-server-1:
     runs-on: ubuntu-latest
