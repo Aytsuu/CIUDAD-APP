@@ -22,11 +22,11 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # DEBUG = config('DEBUG', default=False, cast=bool)
 DEBUG=False
-# ALLOWED_HOSTS = config(
-#     'ALLOWED_HOSTS',
-#     default='localhost,127.0.0.1',
-#     cast=lambda v: [s.strip() for s in v.split(',')]
-# )
+ALLOWED_HOSTS = config(
+    'ciudad-app.onrender.com',
+    'localhost',
+    '127.0.0.1'
+)
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -217,7 +217,6 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    config('FRONTEND_URL', default='http://localhost:3000'),
 ]
 ALLOWED_HOSTS = ['*'] 
 CORS_ALLOW_ALL_ORIGINS = True
