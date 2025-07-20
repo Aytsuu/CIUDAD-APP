@@ -22,11 +22,6 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # DEBUG = config('DEBUG', default=False, cast=bool)
 DEBUG=False
-ALLOWED_HOSTS = [
-    'ciudad-app.onrender.com',
-    'localhost',
-    '127.0.0.1'
-]
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -96,7 +91,6 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -217,7 +211,10 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "https://ciudad-app.onrender.com",
+    "http://127.0.0.1:5173",  # Add this for Vite sometimes
 ]
+
 ALLOWED_HOSTS = ['*'] 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
