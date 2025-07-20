@@ -23,7 +23,8 @@ export function ConfirmationModal({
   actionLabel,
   type,
   variant,
-  onClick
+  onClick,
+  onClose
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -32,9 +33,25 @@ export function ConfirmationModal({
   type?: string;
   variant?: string;
   onClick?: () => void;
+  onClose?: () => void;
 }) {
+  const [open, setOpen] = React.useState(false);
+
+  const handleActionClick = async () => {
+    try {
+      if (onClick) {
+        await onClick();
+      }
+    } finally {
+      setOpen(false);
+      if (onClose) {
+        onClose();
+      }
+    }
+  };
+
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -45,7 +62,7 @@ export function ConfirmationModal({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             type={(type as "button" | "submit" | "reset") || "button"}
-            onClick={onClick}
+            onClick={handleActionClick}
             className={variants[variant ?? variants.default]}
           >
             {actionLabel}

@@ -17,7 +17,7 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { getMedicalRecord } from "../restful-api/GetMedicalRecord";
+import { getMedicalRecord } from "../restful-api/get";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
 
 export interface MedicalRecord {
@@ -284,7 +284,16 @@ export default function AllMedicalConsRecord() {
 
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Link to={`/AllMedicalForm`}>New Record</Link>
+              <Link
+                to="/medical-consultation-form"
+                state={{
+                  params: {
+                    mode: "fromallrecordtable",
+                  },
+                }}
+              >
+                New Request
+              </Link>{" "}
             </Button>
           </div>
         </div>

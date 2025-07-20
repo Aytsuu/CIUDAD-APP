@@ -148,7 +148,7 @@ export default function ChildImmunization() {
       <hr className="border-gray mb-4 sm:mb-6" />
 
       {isLoading || !ChildHealthRecord ? (
-        <div className="w-full h-full p-6">
+        <div className="w-full h-full px-6">
           <Skeleton className="h-10 w-1/6 mb-3" />
           <Skeleton className="h-7 w-1/4 mb-6" />
           <Skeleton className="h-10 w-full mb-4" />

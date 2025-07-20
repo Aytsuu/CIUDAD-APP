@@ -174,6 +174,7 @@ export interface PersonalInfo {
     staff: string;
   }
   
+
   export interface CHVitalSigns {
     chvital_id: number;
     find_details: any;
@@ -282,8 +283,6 @@ export interface PersonalInfo {
     nutrition_statuses: NutritionStatus[];
   }
 
-
-  
 
 export interface FieldConfig {
     label: string;

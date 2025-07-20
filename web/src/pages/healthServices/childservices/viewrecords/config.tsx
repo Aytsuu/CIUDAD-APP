@@ -189,6 +189,112 @@ export const vitalSignsFields: FieldConfig[] = [
   },
 ];
 
+
+export const findingsFields: FieldConfig[] = [
+  {
+    label: "Assessment Summary",
+    path: ["child_health_vital_signs", "0", "find_details", "assessment_summary"],
+    format: (val: string): JSX.Element[] => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-assessment" className="text-center">
+            <span>No assessment summary found</span>
+          </div>,
+        ];
+      }
+      
+      // Split by new lines and filter empty lines
+      const lines = val.split('\n').filter(line => line.trim() !== '');
+      
+      return lines.map((line, index) => (
+        <div key={`assessment-${index}`} className="flex justify-center mb-1">
+          <div className="text-left">
+            {line.startsWith(',') ? (
+              <div>- {line.substring(1).trim()}</div>
+            ) : (
+              <div>{line}</div>
+            )}
+          </div>
+        </div>
+      ));
+    }
+  },
+  {
+    label: "Objective Findings",
+    path: ["child_health_vital_signs", "0", "find_details", "obj_summary"],
+    format: (val: string) => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-objective" className="text-center">
+            <span>No objective findings</span>
+          </div>,
+        ];
+      }
+      
+      const lines = val.split('\n').filter(line => line.trim() !== '');
+      
+      return lines.map((line, index) => (
+        <div key={`objective-${index}`} className="flex justify-center mb-1">
+          <div className="text-left">
+            {line.startsWith('-') ? (
+              <div>- {line.substring(1).trim()}</div>
+            ) : (
+              <div>{line}</div>
+            )}
+          </div>
+        </div>
+      ));
+    }
+  },
+  {
+    label: "Subjective Findings",
+    path: ["child_health_vital_signs", "0", "find_details", "subj_summary"],
+    format: (val: string) => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-subjective" className="text-center">
+            <span>No subjective findings</span>
+          </div>,
+        ];
+      }
+      
+      return [
+        <div key="subjective" className="flex justify-center">
+          <div className="text-left">{val}</div>
+        </div>,
+      ];
+    }
+  },
+  {
+    label: "Plan/Treatment",
+    path: ["child_health_vital_signs", "0", "find_details", "plantreatment_summary"],
+    format: (val: string): JSX.Element[] => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-plan" className="text-center">
+            <span>No treatment plan found</span>
+          </div>,
+        ];
+      }
+      
+      const lines = val.split('\n').filter(line => line.trim() !== '');
+      
+      return lines.map((line, index) => (
+        <div key={`plan-${index}`} className="flex justify-center mb-1">
+          <div className="text-left">
+            {line.startsWith('-') ? (
+              <div>- {line.substring(1).trim()}</div>
+            ) : (
+              <div>{line}</div>
+            )}
+          </div>
+        </div>
+      ));
+    }
+  }
+];
+
+
 export const nutritionStatusesFields: FieldConfig[] = [
   { label: "Weight-for-Age (WFA)", path: ["nutrition_statuses", "0", "wfa"] },
   {
@@ -202,6 +308,8 @@ export const nutritionStatusesFields: FieldConfig[] = [
   { label: "MUAC", path: ["nutrition_statuses", "0", "muac"] },
   { label: "MUAC Status", path: ["nutrition_statuses", "0", "muac_status"] },
 ];
+
+
 export const notesFields: FieldConfig[] = [
   {
     label: "Clinical Notes",

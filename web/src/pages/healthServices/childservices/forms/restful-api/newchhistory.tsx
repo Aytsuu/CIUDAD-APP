@@ -462,9 +462,11 @@ export const useUpdateChildHealthRecordMutation = () => {
 
   return useMutation({
     mutationFn: updateChildHealthRecord,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
-
+    onSuccess: (data) => {
+      const { chrec_id } = data;
+      console.log("Child health record updated successfully result :", data);
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords", chrec_id] });
       toast.success("Child health record created successfully!");
       navigate(-1);
     },

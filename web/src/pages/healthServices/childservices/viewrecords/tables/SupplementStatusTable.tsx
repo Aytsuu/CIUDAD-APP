@@ -19,6 +19,11 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
   fullHistoryData,
   chhistId,
 }) => {
+  // Check if there are any supplement status records
+  const hasSupplementRecords = fullHistoryData.some(
+    (record) => record.supplements_statuses && record.supplements_statuses.length > 0
+  );
+
   return (
     <div className="border overflow-hidden mb-6">
       <div className="font-semibold bg-gray-100 p-2 border-b">
@@ -35,13 +40,13 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {fullHistoryData.length === 0 ? (
+          {!hasSupplementRecords ? (
             <TableRow className="hover:bg-inherit">
               <TableCell
-                colSpan={6}
+                colSpan={5}
                 className="text-center text-gray-600 py-4 border-r hover:bg-inherit"
               >
-                No supplement status records available.
+                No supplement given.
               </TableCell>
             </TableRow>
           ) : (

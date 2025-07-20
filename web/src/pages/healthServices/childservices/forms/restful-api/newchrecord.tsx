@@ -36,7 +36,6 @@ export async function addChildHealthRecord({
   submittedData,
   staff,
 }: AddRecordArgs): Promise<AddRecordResult> {
-  const queryClient = useQueryClient();
 
   // Validate required fields
   if (!submittedData.pat_id) {
@@ -259,7 +258,6 @@ export async function addChildHealthRecord({
       current_chhist_id // assuming you have this in submittedData
     );
   }
-  queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
 
   return {
     patrec_id,
@@ -289,8 +287,9 @@ export const useChildHealthRecordMutation = () => {
   return useMutation({
     mutationFn: addChildHealthRecord,
     onSuccess: () => {
-      toast.success("Child health record created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
 
+      toast.success("Child health record created successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {

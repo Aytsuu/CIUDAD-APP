@@ -215,3 +215,6 @@ export type Page1Props = {
   selectedPatientId: string; // Add this prop
   setSelectedPatientId: (id: string) => void; // Add this prop
 };
+
+
+

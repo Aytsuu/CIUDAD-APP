@@ -52,12 +52,7 @@ import {
 } from "./columns";
 import { edemaSeverityOptions } from "./options";
 import { LastPageProps } from "./types";
-import {isToday} from "@/helpers/isToday";
-
-
-
- 
-
+import { isToday } from "@/helpers/isToday";
 
 export default function LastPage({
   onPrevious,
@@ -95,7 +90,9 @@ export default function LastPage({
 
   const [isTodaysEntry, setIsTodaysEntry] = useState(false);
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
-    const todaysHistoricalRecord = historicalVitalSigns.find((vital) => isToday(vital.date));
+    const todaysHistoricalRecord = historicalVitalSigns.find((vital) =>
+      isToday(vital.date)
+    );
     return !todaysHistoricalRecord && newVitalSigns.length === 0;
   });
 
@@ -103,7 +100,6 @@ export default function LastPage({
     () => calculateCurrentAge(formData.childDob),
     [formData.childDob]
   );
-
 
   const getLatestVitalSigns = (vitalSigns: VitalSignType[] | undefined) => {
     if (!vitalSigns || vitalSigns.length === 0) return null;
@@ -113,7 +109,6 @@ export default function LastPage({
     );
     return sorted[0];
   };
-  
 
   const todaysHistoricalRecord = useMemo(() => {
     return historicalVitalSigns.find((vital) => isToday(vital.date));
@@ -282,7 +277,15 @@ export default function LastPage({
       nutritionalStatus: nutritionalStatus,
       edemaSeverity: edemaSeverity,
     });
-  }, [anemicData, birthwtData, selectedMedicines, currentStatus, nutritionalStatus, edemaSeverity, updateFormData]);
+  }, [
+    anemicData,
+    birthwtData,
+    selectedMedicines,
+    currentStatus,
+    nutritionalStatus,
+    edemaSeverity,
+    updateFormData,
+  ]);
 
   useEffect(() => {
     setValue("vitalSigns", newVitalSigns);
@@ -591,10 +594,7 @@ export default function LastPage({
 
           {!showVitalSignsForm && newVitalSigns.length === 0 && (
             <div className="flex justify-end">
-              <Button 
-                type="button" 
-                onClick={() => setShowVitalSignsForm(true)}
-              >
+              <Button type="button" onClick={() => setShowVitalSignsForm(true)}>
                 Add New Vital Signs
               </Button>
             </div>
@@ -670,18 +670,17 @@ export default function LastPage({
                 </div>
 
                 {latestOverallVitalSign &&
-                  latestOverallVitalSign.wt !== undefined && (
+                  latestOverallVitalSign.wt !== undefined &&
+                  Number(latestOverallVitalSign.wt) < 2.5 && ( // Only show if wt < 2.5
                     <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
                       <div className="mb-4 flex items-center">
                         <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
                         <h4 className="text-base font-medium text-gray-700">
                           Birth Weight Follow-up
                         </h4>
-                        {Number(latestOverallVitalSign.wt) < 2.5 && (
-                          <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
-                            Low Birth Weight: {latestOverallVitalSign.wt} kg
-                          </span>
-                        )}
+                        <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
+                          Low Birth Weight: {latestOverallVitalSign.wt} kg
+                        </span>
                       </div>
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <FormDateTimeInput
@@ -757,7 +756,6 @@ export default function LastPage({
               </div>
             </div>
           )}
-
 
           {nonTodaysHistoricalVitalSigns &&
             nonTodaysHistoricalVitalSigns.length > 0 && (
@@ -863,9 +861,7 @@ export default function LastPage({
           </div>
 
           <div className="mb-10 rounded-lg border bg-purple-50 p-4">
-            <h3 className="mb-4 text-lg font-bold">
-              Record Purpose & Status
-            </h3>
+            <h3 className="mb-4 text-lg font-bold">Record Purpose & Status</h3>
             <FormField
               control={control}
               name="status"

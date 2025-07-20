@@ -133,3 +133,10 @@ class MedicineRequestItemSerializer(serializers.ModelSerializer):
         model = MedicineRequestItem
         fields = '__all__'
     
+    
+class FindingPlanTreatmentSerializer(serializers.ModelSerializer):
+    medreq_details = MedicineRequestSerializer(source='medreq', read_only=True)
+
+    class Meta:
+        model = FindingsPlanTreatment
+        fields = '__all__'

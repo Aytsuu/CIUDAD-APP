@@ -217,7 +217,7 @@ export default function ChildHealthRecordForm() {
       landmarks: chrecDetails?.landmarks || "",
       dateNewbornScreening: chrecDetails.newborn_screening || "",
       disabilityTypes: chhistRecord.disability_types || [],
-      edemaSeverity: chhistRecord.edemaSeverity || "none",
+      edemaSeverity: chhistRecord.edemaSeverity || "None",
       BFdates: chhistRecord.BFdates || [],
       vitalSigns: chhistRecord.vitalSigns || [],
       medicines: chhistRecord.medicines || [],

@@ -7,6 +7,7 @@ import {
   createMedicineRequest,
   createPEResults,
   createFindings,
+  createFindingPlantreatment
 } from "../restful-api/create";
 import { updateMedicalConsultation } from "../restful-api/update";
 import {
@@ -15,7 +16,7 @@ import {
   deleteFindings,
   deletePEResults,
 } from "../restful-api/delete";
-
+import { CircleCheck } from "lucide-react";
 import { SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { toast } from "sonner";
 
@@ -45,7 +46,6 @@ export const useSubmitSoapForm = () => {
       let followv: string | null = null;
 
       // Show loading toast immediately
-      const loadingToastId = toast.loading("Saving documentation...");
 
       try {
         // 1. Create Findings
@@ -76,6 +76,11 @@ export const useSubmitSoapForm = () => {
           });
           medRequestId = medRequestResponse.medreq_id;
         }
+
+        console.log("medRequestId", medRequestId)
+        
+        await createFindingPlantreatment(medRequestId?.toString() || "",findingId)
+
 
         // 3. Create Physical Exam Results if needed
         if (
@@ -121,10 +126,9 @@ export const useSubmitSoapForm = () => {
         }
 
         // Update loading toast to success
-        toast.success("Documentation saved successfully", {
-          id: loadingToastId,
-          description: "All patient records have been updated.",
-          duration: 5000,
+        toast.success("Project proposal restored successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000
         });
         navigate(-1);
         queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] }); // Update with your query key
@@ -165,7 +169,6 @@ export const useSubmitSoapForm = () => {
         } catch (rollbackError) {
           console.error("Error during rollback:", rollbackError);
           toast.error("Failed to fully rollback changes", {
-            id: loadingToastId,
             description: "Please contact support to resolve this issue.",
             duration: 10000,
           });
@@ -174,7 +177,6 @@ export const useSubmitSoapForm = () => {
 
         // Show error toast
         toast.error("Failed to save documentation", {
-          id: loadingToastId,
           description:
             error instanceof Error
               ? error.message

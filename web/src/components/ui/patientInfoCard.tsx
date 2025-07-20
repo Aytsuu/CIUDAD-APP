@@ -32,7 +32,7 @@ interface PatientInfoCardProps {
 const formatFullName = (personalInfo?: Patient["personal_info"]) => {
   if (!personalInfo) return "Not provided";
   const { per_fname = "", per_mname = "", per_lname = "" } = personalInfo;
-  const fullName = `${per_fname} ${per_mname} ${per_lname}`.trim();
+  const fullName = `${per_fname} ${per_mname || ""} ${per_lname}`.trim();
   return fullName || "Not provided";
 };
 
@@ -124,7 +124,14 @@ export const PatientInfoCard = ({ patient }: PatientInfoCardProps) => {
             <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-gray-900 leading-relaxed">
-                {patient.addressFull || "No address provided"}
+                {[
+                  patient.address?.add_street,
+                  patient.address?.add_barangay,
+                  patient.address?.add_city,
+                  patient.address?.add_province,
+                ]
+                  .filter((part) => part && part.toLowerCase() !== "no data")
+                  .join(", ") || "No address provided"}
               </p>
               <p className="text-xs text-gray-500">Address</p>
             </div>

@@ -341,12 +341,8 @@ export const FirstAidDisplay = ({
                             type="number"
                             min="0"
                             max={firstAid.avail}
-                            className={`border rounded-lg px-3 py-1 w-20 text-center focus:ring-2 ${
-                              (selectedFirstAid?.qty ?? 0) === 0 
-                                ? 'bg-yellow-50 border-yellow-300' 
-                                : ''
-                            }`}
-                            value={selectedFirstAid?.qty ?? 0}
+                            className="border rounded-lg px-3 py-1 w-20 text-center focus:ring-2 "
+                            value={selectedFirstAid?.qty ?? undefined}
                             onChange={(e) => {
                               const value = parseInt(e.target.value) || 0;
                               handleQuantityChange(firstAid.id, value);

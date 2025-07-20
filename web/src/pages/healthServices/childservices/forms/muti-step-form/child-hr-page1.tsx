@@ -136,6 +136,9 @@ export default function ChildHRPage1({
                 className="w-full"
                 value={selectedPatientId}
                 onChange={setSelectedPatientId}
+                ischildren={true}
+                
+
               />
             </div>
           </div>

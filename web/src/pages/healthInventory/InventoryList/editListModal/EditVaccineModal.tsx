@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { getAgegroup } from "@/pages/healthServices/agegroup/restful-api/agepostAPI";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { getVaccineList } from "../restful-api/Antigen/VaccineFetchAPI";
+import CardLayout from "@/components/ui/card/card-layout";
 
 const timeUnits = [
   { id: "years", name: "Years" },
@@ -85,7 +86,8 @@ const isDuplicateVaccineList = (
   return vaccinelist.some(
     (vac) =>
       vac.id !== currentVaccineId &&
-      vac.vac_name.trim().toLowerCase() === newVaccinelist.trim().toLowerCase() &&
+      vac.vac_name.trim().toLowerCase() ===
+        newVaccinelist.trim().toLowerCase() &&
       String(vac.agegrp_id) === String(age_group)
   );
 };
@@ -96,7 +98,8 @@ export default function EditVaccineModal() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
   const navigate = useNavigate();
-  const [initialFormValues, setInitialFormValues] = useState<VaccineType | null>(null);
+  const [initialFormValues, setInitialFormValues] =
+    useState<VaccineType | null>(null);
   const [ageGroups, setAgeGroups] = useState<{
     default: any[];
     formatted: { id: string; name: string }[];
@@ -178,9 +181,13 @@ export default function EditVaccineModal() {
           if (!isValid) {
             setSelectedAgeGroupId("");
             form.setValue("ageGroup", "");
-            toast.warning("Initial age group not found; please select a valid age group");
+            toast.warning(
+              "Initial age group not found; please select a valid age group"
+            );
           } else {
-            form.setValue("ageGroup", selectedAgeGroupId, { shouldDirty: false });
+            form.setValue("ageGroup", selectedAgeGroupId, {
+              shouldDirty: false,
+            });
           }
         }
       } catch (error) {
@@ -235,20 +242,24 @@ export default function EditVaccineModal() {
   const hasFormChanged = () => {
     if (!initialFormValues) return false;
     const currentValues = form.getValues();
-    
+
     // Convert both values to string for consistent comparison
-    const currentAgeGroup = String(currentValues.ageGroup || '');
-    const initialAgeGroup = String(initialFormValues.ageGroup || '');
+    const currentAgeGroup = String(currentValues.ageGroup || "");
+    const initialAgeGroup = String(initialFormValues.ageGroup || "");
 
     return (
       currentValues.vaccineName !== initialFormValues.vaccineName ||
       currentValues.type !== initialFormValues.type ||
       currentValues.noOfDoses !== initialFormValues.noOfDoses ||
       currentAgeGroup !== initialAgeGroup ||
-      JSON.stringify(currentValues.intervals) !== JSON.stringify(initialFormValues.intervals) ||
-      JSON.stringify(currentValues.timeUnits) !== JSON.stringify(initialFormValues.timeUnits) ||
-      currentValues.routineFrequency?.interval !== initialFormValues.routineFrequency?.interval ||
-      currentValues.routineFrequency?.unit !== initialFormValues.routineFrequency?.unit
+      JSON.stringify(currentValues.intervals) !==
+        JSON.stringify(initialFormValues.intervals) ||
+      JSON.stringify(currentValues.timeUnits) !==
+        JSON.stringify(initialFormValues.timeUnits) ||
+      currentValues.routineFrequency?.interval !==
+        initialFormValues.routineFrequency?.interval ||
+      currentValues.routineFrequency?.unit !==
+        initialFormValues.routineFrequency?.unit
     );
   };
 
@@ -256,8 +267,10 @@ export default function EditVaccineModal() {
     const age_id = data.ageGroup.split(",")[0];
     const currentValues = form.getValues();
 
-    if ((currentValues.vaccineName !== initialFormValues?.vaccineName || 
-        currentValues.ageGroup !== initialFormValues?.ageGroup)) {
+    if (
+      currentValues.vaccineName !== initialFormValues?.vaccineName ||
+      currentValues.ageGroup !== initialFormValues?.ageGroup
+    ) {
       setIsCheckingDuplicate(true);
 
       try {
@@ -291,7 +304,9 @@ export default function EditVaccineModal() {
       } catch (error) {
         toast.error("Failed to verify vaccine", {
           description:
-            error instanceof Error ? error.message : "An unknown error occurred",
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
         });
         return;
       } finally {
@@ -433,129 +448,154 @@ export default function EditVaccineModal() {
     });
   };
 
-  const isSaveButtonDisabled = 
-    !isValid || 
-    !hasFormChanged() || 
-    isCheckingDuplicate || 
+  const isSaveButtonDisabled =
+    !isValid ||
+    !hasFormChanged() ||
+    isCheckingDuplicate ||
     updateVaccineMutation.isPending;
 
   return (
-    <div className="bg-gray-100 flex items-center justify-center ">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
-        <div className="flex items-center justify-center mb-6">
-          <Pill className="h-6 w-6 text-darkBlue2 mr-2" />
-          <h1 className="text-2xl font-semibold text-gray-800 text-darkBlue2">
-            Edit Vaccine
-          </h1>
-        </div>
-        <Form {...form}>
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-            <div className="space-y-4">
-              <FormInput
-                control={control}
-                name="vaccineName"
-                label="Vaccine Name"
-                placeholder="Enter vaccine name"
-              />
-              <div>
-                <Label className="text-darkGray">Age Group</Label>
-                <Combobox
-                  options={ageGroups.formatted}
-                  value={loadingAgeGroups ? "" : selectedAgeGroupId}
-                  onChange={handleAgeGroupSelection}
-                  triggerClassName="w-full mt-2"
-                  placeholder={
-                    loadingAgeGroups ? "Loading..." : "Select age group"
-                  }
-                  emptyMessage={
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">
-                        No age groups found.
-                      </p>
-                      <Link
-                        to="/age-group-management"
-                        className="text-sm text-teal-600 hover:underline"
-                      >
-                        Add New Age Group
-                      </Link>
-                    </div>
-                  }
-                />
-                {errors.ageGroup && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.ageGroup.message}
-                  </p>
-                )}
+    <>
+      <div className=" flex items-center justify-center ">
+      <CardLayout
+        cardClassName="max-w-2xl w-full p-4 "
+        content={
+          <>
+            <div>
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-8">
+                  <Pill className="h-6 w-6 text-blue-600 mr-2" />
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Add Vaccine List
+                  </h2>
+                </div>
               </div>
-              <FormSelect
-                control={control}
-                name="type"
-                label="Vaccine Type"
-                options={vaccineTypes}
+              <Form {...form}>
+                <form
+                  onSubmit={handleSubmit(handleFormSubmit)}
+                  className="space-y-4"
+                >
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormInput
+                        control={control}
+                        name="vaccineName"
+                        label="Vaccine Name"
+                        placeholder="Enter vaccine name"
+                      />
+                      <div>
+                        <Label className="text-darkGray">Age Group</Label>
+                        <Combobox
+                          options={ageGroups.formatted}
+                          value={loadingAgeGroups ? "" : selectedAgeGroupId}
+                          onChange={handleAgeGroupSelection}
+                          triggerClassName="w-full mt-2"
+                          placeholder={
+                            loadingAgeGroups ? "Loading..." : "Select age group"
+                          }
+                          emptyMessage={
+                            <div className="text-center">
+                              <p className="text-sm text-gray-600">
+                                No age groups found.
+                              </p>
+                              <Link
+                                to="/age-group-management"
+                                className="text-sm text-teal-600 hover:underline"
+                              >
+                                Add New Age Group
+                              </Link>
+                            </div>
+                          }
+                        />
+                        {errors.ageGroup && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.ageGroup.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormSelect
+                        control={control}
+                        name="type"
+                        label="Vaccine Type"
+                        options={vaccineTypes}
+                      />
+                      {type !== "conditional" && (
+                        <FormInput
+                          control={control}
+                          name="noOfDoses"
+                          label="Required Doses"
+                          type="number"
+                          placeholder="e.g., 1"
+                        />
+                      )}
+                    </div>
+                    {type === "routine" && (
+                      <p className="text-sm text-gray-500">
+                        Routine vaccines require 1 dose.
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-700">
+                      Dose Schedule
+                    </h2>
+                    {renderDoseFields()}
+                  </div>
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      type="button" // Add this line
+                      onClick={() => {
+                        navigate(-1);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSaveButtonDisabled}
+                      title={
+                        !isValid
+                          ? "Please fix all form errors"
+                          : !hasFormChanged()
+                          ? "No changes detected"
+                          : ""
+                      }
+                    >
+                      {isCheckingDuplicate ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Checking...
+                        </>
+                      ) : updateVaccineMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        "Update"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+              <ConfirmationDialog
+                isOpen={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                onConfirm={confirmUpdate}
+                title="Confirm Vaccine Update"
+                description={`Are you sure you want to update the vaccine "${watch(
+                  "vaccineName"
+                )}"?`}
               />
-              {type !== "conditional" && (
-                <FormInput
-                  control={control}
-                  name="noOfDoses"
-                  label="Required Doses"
-                  type="number"
-                  placeholder="e.g., 1"
-                />
-              )}
-              {type === "routine" && (
-                <p className="text-sm text-gray-500">
-                  Routine vaccines require 1 dose.
-                </p>
-              )}
             </div>
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-700">
-                Dose Schedule
-              </h2>
-              {renderDoseFields()}
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" asChild>
-                <Link to="/mainInventoryList">Cancel</Link>
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSaveButtonDisabled}
-                title={
-                  !isValid
-                    ? "Please fix all form errors"
-                    : !hasFormChanged()
-                    ? "No changes detected"
-                    : ""
-                }
-              >
-                {isCheckingDuplicate ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Checking...
-                  </>
-                ) : updateVaccineMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  "Update"
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
-        <ConfirmationDialog
-          isOpen={isConfirmOpen}
-          onOpenChange={setIsConfirmOpen}
-          onConfirm={confirmUpdate}
-          title="Confirm Vaccine Update"
-          description={`Are you sure you want to update the vaccine "${watch(
-            "vaccineName"
-          )}"?`}
-        />
+          </>
+        }
+      />
       </div>
-    </div>
+    </>
   );
 }

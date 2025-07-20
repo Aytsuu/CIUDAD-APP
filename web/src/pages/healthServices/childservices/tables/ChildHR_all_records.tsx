@@ -46,14 +46,18 @@ export default function AllChildHealthRecords() {
         dob: childInfo.per_dob || "",
         householdno:
           record.patrec_details?.pat_details?.households?.[0]?.hh_id || "",
-        street: addressInfo.add_street || "",
+        address:
+          [
+            addressInfo.add_street,
+            addressInfo.add_barangay,
+            addressInfo.add_city,
+            addressInfo.add_province,
+          ]
+            .filter((part) => part && part.trim() !== "")
+            .join(", ") || "No address Provided",
         sitio: addressInfo.add_sitio || "",
-        barangay: addressInfo.add_barangay || "",
-        city: addressInfo.add_city || "",
-        province: addressInfo.add_province || "",
         landmarks: addressInfo.add_landmarks || "",
         pat_type: record.patrec_details?.pat_details?.pat_type || "",
-        address: addressInfo.full_address || "No address Provided",
         mother_fname: motherInfo.per_fname || "",
         mother_lname: motherInfo.per_lname || "",
         mother_mname: motherInfo.per_mname || "",
@@ -66,7 +70,7 @@ export default function AllChildHealthRecords() {
         father_contact: fatherInfo.per_contact || "",
         father_occupation:
           fatherInfo.per_occupation || record.father_occupation || "",
-        family_no: record.family_no || "",
+        family_no: record.family_no || "Not Provided",
         birth_weight: record.birth_weight || 0,
         birth_height: record.birth_height || 0,
         type_of_feeding: record.type_of_feeding || "Unknown",
@@ -91,8 +95,7 @@ export default function AllChildHealthRecords() {
 
   const filterOptions = [
     { id: "all", name: "All Records" },
-    { id: "home", name: "Home Delivery" },
-    { id: "hospital", name: "Hospital Delivery" },
+
     { id: "resident", name: "Resident" },
     { id: "transient", name: "Transient" },
   ];
@@ -250,15 +253,32 @@ export default function AllChildHealthRecords() {
         </div>
       ),
     },
+
     {
-      accessorKey: "delivery_type",
-      header: "Delivery Type",
+      accessorKey: "sitio",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Sitio <ArrowUpDown size={15} />
+        </div>
+      ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.delivery_type}</div>
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.sitio}</div>
         </div>
       ),
     },
+    // {
+    //   accessorKey: "delivery_type",
+    //   header: "Delivery Type",
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center min-w-[120px] px-2">
+    //       <div className="text-center w-full">{row.original.delivery_type}</div>
+    //     </div>
+    //   ),
+    // },
     // {
     //   accessorKey: "feeding_type",
     //   header: "Feeding Type",
@@ -307,7 +327,6 @@ export default function AllChildHealthRecords() {
   //   });
   // }
 
- 
   return (
     <>
       <div className="w-full h-full flex flex-col">
@@ -398,15 +417,13 @@ export default function AllChildHealthRecords() {
             </div>
           </div>
 
-        
           <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-               <TableSkeleton columns={columns} rowCount={5} />
-
-          ) : (
-            <DataTable columns={columns} data={currentData} />
-          )}
-        </div>
+            {isLoading ? (
+              <TableSkeleton columns={columns} rowCount={5} />
+            ) : (
+              <DataTable columns={columns} data={currentData} />
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}

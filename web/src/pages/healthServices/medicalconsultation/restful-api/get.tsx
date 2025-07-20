@@ -4,22 +4,19 @@
 import {api2} from "@/api/api";
 
 
-// export interface VaccinationPatientRecord {
-//   pat_id: number;
-//   fname: string;
-//   lname: string;
-//   mname: string;
-//   sex: string;
-//   age: string;
-//   householdno: string;
-//   street: string;
-//   sitio: string;
-//   barangay: string;
-//   city: string;
-//   province: string;
-//   pat_type: string;
-//   vaccination_count: number;
-// }
+
+
+
+export const previousBMI = async (pat_id: string) => {
+  try {
+    const res = await api2.get(`/patientrecords/previous-measurement/${pat_id}/`);
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching previous BMI:", err);
+    throw err;
+  }
+};
+
 
 
 export const getPatient =  async () => {
@@ -30,6 +27,8 @@ export const getPatient =  async () => {
     console.error(err);
   }
 };
+
+
 
 
 export const getMedicalRecord =  async () => {

@@ -17,6 +17,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
 import { api2 } from "@/api/api";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
+
 // API functions
 const getChildHealthRecords = async (chrec_id: number) => {
   const response = await api2.get(`/child-health/history/${chrec_id}/`);
@@ -56,7 +57,6 @@ export default function InvChildHealthRecords() {
   const { ChildHealthRecord } = location.state || {};
   const mode = location.state.mode as
     | "addnewchildhealthrecord"
-    | "immunization"
     | undefined;
 
   const [childData, setChildData] = useState(ChildHealthRecord);
@@ -217,34 +217,25 @@ export default function InvChildHealthRecords() {
     return historyData[0];
   }, [historyData]);
 
+  // Check if latest record is immunization or check-up
+  const isLatestRecordImmunizationOrCheckup = useMemo(() => {
+    if (!latestRecord) return false;
+    return latestRecord.status === "immunization" || latestRecord.status === "check-up";
+  }, [latestRecord]);
 
   // Filter out immunization records when not in immunization mode
-const filteredData = useMemo(() => {
-  return historyData.filter((item: ChrRecords) => {
-    // Skip immunization records when not in immunization mode
-    if (mode !== "immunization" && item.status === "immunization") {
-      return false;
-    }
-    
-    const searchText = `${item.age} ${item.wt} ${item.ht} ${item.bmi} ${
-      item.vaccineStat
-    } ${item.nutritionStatus.wfa} ${item.nutritionStatus.lhfa} ${
-      item.nutritionStatus.wfl
-    } ${item.updatedAt} ${item.latestNote || ""} ${
-      item.followUpDescription || ""
-    }`.toLowerCase();
-    return searchText.includes(searchQuery.toLowerCase());
-  });
-}, [searchQuery, historyData, mode]);
-
-// Disable button when not in immunization mode and latest record is immunization
-const shouldDisableButton = useMemo(() => {
-  if (!latestRecord) return false;
-  return mode !== "immunization" && latestRecord.status === "check-up" ;
-}, [latestRecord, mode]);
-
-// Button text based on mode
-const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record";
+  const filteredData = useMemo(() => {
+    return historyData.filter((item: ChrRecords) => {
+      const searchText = `${item.age} ${item.wt} ${item.ht} ${item.bmi} ${
+        item.vaccineStat
+      } ${item.nutritionStatus.wfa} ${item.nutritionStatus.lhfa} ${
+        item.nutritionStatus.wfl
+      } ${item.updatedAt} ${item.latestNote || ""} ${
+        item.followUpDescription || ""
+      }`.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    });
+  }, [searchQuery, historyData, mode]);
 
   const currentData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -411,8 +402,6 @@ const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record"
     },
   ];
 
-
-
   if (isError) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -451,13 +440,20 @@ const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record"
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
         {latestRecord && (
-          <div className="ml-auto mt-4 sm:mt-0">
-            <Button 
-              onClick={navigateToUpdateLatest}
-              disabled={shouldDisableButton}
-            >
-              {buttonText}
+          <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+            {isLatestRecordImmunizationOrCheckup ? (
+              <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+                <span className="text-sm font-medium">
+                  {latestRecord.status === "immunization" 
+                    ? "Child recently underwent immunization" 
+                    : "Child recently had a check-up"}
+                </span>
+              </div>
+            ) : (
+              <Button onClick={navigateToUpdateLatest}>
+                New record
               </Button>
+            )}
           </div>
         )}
       </div>

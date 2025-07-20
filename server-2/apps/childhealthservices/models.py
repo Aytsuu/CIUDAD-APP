@@ -35,6 +35,7 @@ class ChildHealthrecord(models.Model):
     
     class Meta:
         db_table = 'child_healthrecord'
+        ordering = ['-created_at']
        
     
 class ChildHealth_History(models.Model):
@@ -55,6 +56,8 @@ class ChildHealth_History(models.Model):
     
     class Meta:
         db_table = 'child_health_history'
+        
+
 class ChildHealthNotes(models.Model):
     chnotes_id = models.BigAutoField(primary_key=True)
     chn_notes = models.TextField(blank=True, null=True)
@@ -65,6 +68,7 @@ class ChildHealthNotes(models.Model):
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_notes', null=True, blank=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) 
+    
     
     class Meta:
         db_table = 'child_health_notes'

@@ -15,7 +15,7 @@ import {
 import {
   recordOverviewFields,
   childPersonalInfoFields,
-  familyHeadInfoFields,
+  findingsFields,
   disabilitiesFields,
   vitalSignsFields,
   nutritionStatusesFields,
@@ -51,17 +51,6 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
-      {/* <AccordionSection
-        value="child-details"
-        title="Child Details"
-        icon={<User className="h-5 w-5" />}
-      >
-        <SectionRenderer
-          fields={childPersonalInfoFields}
-          recordsToDisplay={recordsToDisplay}
-          chhistId={chhistId}
-        />
-      </AccordionSection> */}
 
       {/* <AccordionSection
         value="parent-newborn"
@@ -87,6 +76,19 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
+
+      <AccordionSection
+        value="find-details"
+        title="Findings Details"
+        icon={<User className="h-5 w-5" />}
+      >
+        <SectionRenderer
+          fields={findingsFields}
+          recordsToDisplay={recordsToDisplay}
+          chhistId={chhistId}
+        />
+      </AccordionSection>
+      
       <AccordionSection
         value="disabilities"
         title="Disabilities"

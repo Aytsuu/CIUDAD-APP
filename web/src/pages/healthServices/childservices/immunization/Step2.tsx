@@ -1,16 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  HeartPulse,
-  ChevronLeft,
-  Loader2,
-} from "lucide-react";
+import { HeartPulse, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Form } from "@/components/ui/form/form";
@@ -19,7 +12,6 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { ImmunizationSection } from "./ImmunizationSection";
 import { toast } from "sonner";
 import { api2 } from "@/api/api";
-import { z } from "zod";
 import {
   VitalSignType,
   VaccineRecord,
@@ -31,17 +23,16 @@ import {
 import { createImmunizationColumns } from "./columns";
 import {
   createFollowUpVisit,
-  createBodyMeasurement,
-  createPatientDisability,
   createChildHealthNotes,
-  createChildVitalSign,
-  createNutritionalStatus,
 } from "../forms/restful-api/createAPI";
-import {ChildHealthHistoryRecord} from "../../childservices/viewrecords/types";
+import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { useAuth } from "@/context/AuthContext";
+import { updateCHHistory } from "../forms/restful-api/updateAPI";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 
-interface ImmunizationProps {
-  ChildHealthRecord: ChildHealthHistoryRecord
+export interface ImmunizationProps {
+  ChildHealthRecord: ChildHealthHistoryRecord;
   historicalVitalSigns?: VitalSignType[];
   historicalNotes?: {
     date: string;
@@ -81,7 +72,8 @@ export default function Immunization({
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [vaccines, setVaccines] = useState<VaccineRecord[]>(propVaccines);
-  const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>(propExistingVaccines);
+  const [existingVaccines, setExistingVaccines] =
+    useState<ExistingVaccineRecord[]>(propExistingVaccines);
   const [selectedVaccineId, setSelectedVaccineId] = useState<string>("");
   const [selectedVaccineListId, setSelectedVaccineListId] =
     useState<string>("");
@@ -97,7 +89,8 @@ export default function Immunization({
   const [isLoadingVaccineList, setIsLoadingVaccineList] = useState(false);
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id || null;
-  const position = user?.staff?.pos?.pos_title;
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Update local state when props change
   useEffect(() => {
@@ -287,56 +280,67 @@ export default function Immunization({
       console.log("Form errors:", form.formState.errors);
       return;
     }
-  
+
     // Check if any data has been added
     const hasVaccines = vaccines.length > 0;
     const hasExistingVaccines = existingVaccines.length > 0;
     const hasNotes = data.notes && data.notes.trim() !== "";
     const hasFollowUp = data.followUpVisit && data.followUpVisit.trim() !== "";
-    const hasFollowUpReason = data.follov_description && data.follov_description.trim() !== "";
-    
-    if (!hasVaccines && !hasExistingVaccines && !hasNotes && !hasFollowUp && !hasFollowUpReason ) {
+    const hasFollowUpReason =
+      data.follov_description && data.follov_description.trim() !== "";
+
+    if (
+      !hasVaccines &&
+      !hasExistingVaccines &&
+      !hasNotes &&
+      !hasFollowUp &&
+      !hasFollowUpReason
+    ) {
       toast.info("No changes have been made");
       return;
     }
-  
+
     try {
       setIsSaving(true);
-  
+
       const saveData = {
         ...data,
         chrec: ChildHealthRecord.chrec,
         vaccines: hasVaccines ? vaccines : undefined,
         existingVaccines: hasExistingVaccines ? existingVaccines : undefined,
       };
-  
+
       // Remove undefined fields
       const cleanData = Object.fromEntries(
         Object.entries(saveData).filter(([_, v]) => v !== undefined)
       );
       console.log("Data to save:", cleanData);
-  
+
       console.log("Child Health Record:", ChildHealthRecord);
-      const patrec_id = ChildHealthRecord.chrec_details.patrec_details.patrec_id.toString();
+      const chrec_id=ChildHealthRecord.chrec
+      console.log("Child Health Record ID:", chrec_id);
+      const patrec_id =
+        ChildHealthRecord.chrec_details.patrec_details.patrec_id.toString();
       console.log("Patient Record ID:", patrec_id);
       const chist_id = ChildHealthRecord.chhist_id;
-      
+
       // Only create follow-up if there's follow-up data
       let followv_id = null;
-      if (hasFollowUp || hasFollowUpReason) {
-        const newFollowUp = await createFollowUpVisit({
-          followv_date: data.followUpVisit ?? null,
-          created_at: new Date().toISOString(),
-          followv_description: data.follov_description || "Follow Up for Child Health",
-          patrec: patrec_id,
-          followv_status: "pending",
-          updated_at: new Date().toISOString(),
-        });
-        followv_id = newFollowUp.followv_id;
-      }
-  
-      // Only create notes if there are notes
-      if (hasNotes) {
+      if (hasNotes || hasFollowUp || hasFollowUpReason) {
+        if (hasFollowUp || hasFollowUpReason) {
+          const newFollowUp = await createFollowUpVisit({
+            followv_date: data.followUpVisit ?? null,
+            created_at: new Date().toISOString(),
+            followv_description:
+              data.follov_description || "Follow Up for Child Health",
+            patrec: patrec_id,
+            followv_status: "pending",
+            updated_at: new Date().toISOString(),
+          });
+          followv_id = newFollowUp.followv_id;
+        }
+
+        // Only create notes if there are notes
         await createChildHealthNotes({
           chn_notes: data.notes || "",
           created_at: new Date().toISOString(),
@@ -346,9 +350,12 @@ export default function Immunization({
           staff: staffId,
         });
       }
-  
+      await updateCHHistory(Number(chist_id));
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); 
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords", chrec_id] });
+      // Update with your query key
       toast.success("Immunization data saved successfully!");
-  
+      navigate(-1);
       if (editingRowIndex !== null) {
         handleUpdateVitalSign(editingRowIndex, data);
       }
@@ -429,7 +436,8 @@ export default function Immunization({
       (vac) => vac.vac_id !== vac_id
     );
     setExistingVaccines(updatedExistingVaccines);
-    if (propSetExistingVaccines) propSetExistingVaccines(updatedExistingVaccines);
+    if (propSetExistingVaccines)
+      propSetExistingVaccines(updatedExistingVaccines);
     form.setValue("existingVaccines", updatedExistingVaccines);
     toast.success("Existing vaccine removed successfully!");
   };
@@ -573,15 +581,19 @@ export default function Immunization({
               <ChevronLeft />
               Previous
             </Button>
-            <Button type="submit" className="w-[100px]" disabled={isSaving}>
-                {isSaving ? (
+            <Button
+              type="submit"
+              className="w-[120px] px-2"
+              disabled={isSaving}
+            >
+              {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Submitting
                 </>
-                ) : (
+              ) : (
                 "Save"
-                )}
+              )}
             </Button>
           </div>
         </form>

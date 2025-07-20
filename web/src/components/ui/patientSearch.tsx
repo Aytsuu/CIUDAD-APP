@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
-import { usePatientsQuery , } from "@/pages/healthServices/restful-api-patient/FetchPatient" // Your original import
+import { usePatientsQuery, usePatients5yearsbelowQuery } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 
 export interface Patient {
   pat_id: string;
@@ -76,6 +76,7 @@ interface PatientSearchProps {
   className?: string;
   value: string;
   onChange: (id: string) => void;
+  ischildren?: boolean;
 }
 
 export function PatientSearch({
@@ -83,6 +84,7 @@ export function PatientSearch({
   className,
   value,
   onChange,
+  ischildren = false,
 }: PatientSearchProps) {
   const {
     data: patientsData,
@@ -91,22 +93,37 @@ export function PatientSearch({
     error,
   } = usePatientsQuery();
 
+  const {
+    data: patients5YearsBelowData,
+    isLoading: isLoading5YearsBelow,
+    isError: isError5YearsBelow,
+    error: error5YearsBelow,
+  } = usePatients5yearsbelowQuery();
+
   useEffect(() => {
     if (isError) {
       toast.error(`Failed to load patients: ${(error as Error).message}`);
     }
-  }, [isError, error]);
+    if (isError5YearsBelow) {
+      toast.error(`Failed to load children patients: ${(error5YearsBelow as Error).message}`);
+    }
+  }, [isError, error, isError5YearsBelow, error5YearsBelow]);
 
   const handlePatientSelection = useCallback(
     (id: string) => {
       onChange(id);
-      const selectedPatient = patientsData?.default.find(
-        (patient:any) => patient.pat_id.toString() === id.split(",")[0].trim()
+      const dataSource = ischildren ? patients5YearsBelowData?.default : patientsData?.default;
+      const selectedPatient = dataSource?.find(
+        (patient: any) => patient.pat_id.toString() === id.split(",")[0].trim()
       );
       onPatientSelect(selectedPatient || null, id);
     },
-    [patientsData?.default, onPatientSelect, onChange]
+    [patientsData?.default, patients5YearsBelowData?.default, onPatientSelect, onChange, ischildren]
   );
+
+  const currentData = ischildren ? patients5YearsBelowData : patientsData;
+  const currentIsLoading = ischildren ? isLoading5YearsBelow : isLoading;
+  const currentEmptyMessage = ischildren ? "No child patient found." : "No patient found.";
 
   return (
     <div
@@ -115,21 +132,21 @@ export function PatientSearch({
       <div className="flex items-center gap-3 mb-4">
         <User className="h-4 w-4 text-darkBlue3" />
         <Label className="text-base font-semibold text-darkBlue3">
-          Select Patient
+          {ischildren ? "Select Child Patient" : "Select Patient"}
         </Label>
       </div>
       <Combobox
-        options={patientsData?.formatted ?? []}
+        options={currentData?.formatted ?? []}
         value={value}
         onChange={handlePatientSelection}
         placeholder={
-          isLoading ? "Loading patients..." : "Search and select a patient"
+          currentIsLoading ? "Loading patients..." : `Search and select ${ischildren ? "a child" : "a"} patient`
         }
         triggerClassName="font-normal w-full"
         emptyMessage={
           <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
             <Label className="font-normal text-xs">
-              {isLoading ? "Loading..." : "No patient found."}
+              {currentIsLoading ? "Loading..." : currentEmptyMessage}
             </Label>
             <Link to="/patient-records/new">
               <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
@@ -139,6 +156,9 @@ export function PatientSearch({
           </div>
         }
       />
+      {/* <span className="text-xs italic text-red-400 mt-2">
+        Note: Ensure the selected patient does not have any existing records. 
+      </span> */}
     </div>
   );
 }

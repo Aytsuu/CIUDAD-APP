@@ -125,127 +125,140 @@ export default function ChildHealthHistoryDetail() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
-      {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto bg-white mb-6">
-          <TabsTrigger
-            value="current"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-          >
-            <Baby />
-            Current Record
-          </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-          >
-            <History />
-            View History
-          </TabsTrigger>
-        </TabsList>
+      <CardLayout
+        cardClassName="px-6"
+        title=""
+        content={
+          <>
+            {/* Tab Navigation */}
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 h-auto bg-white mb-6">
+                <TabsTrigger
+                  value="current"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <Baby />
+                  Current Record
+                </TabsTrigger>
+                <TabsTrigger
+                  value="history"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <History />
+                  View History
+                </TabsTrigger>
+              </TabsList>
 
-        {/* Current Record Tab */}
-        <TabsContent value="current">
-          <PatientSummarySection
-            recordsToDisplay={[fullHistoryData[currentIndex]]}
-            fullHistoryData={fullHistoryData}
-            chhistId={chhistId}
-          />
-        </TabsContent>
+              {/* Current Record Tab */}
+              <TabsContent value="current">
+                <PatientSummarySection
+                  recordsToDisplay={[fullHistoryData[currentIndex]]}
+                  fullHistoryData={fullHistoryData}
+                  chhistId={chhistId}
+                />
+              </TabsContent>
 
-        {/* History Tab */}
-        <TabsContent value="history">
-          {recordsToDisplay.length === 0 ? (
-            <div className="p-6 text-center text-gray-600">
-              <p>No health history found for this child.</p>
-            </div>
-          ) : (
-            <CardLayout
-              cardClassName="border rounded-lg shadow-sm"
-              content={
-                <div className="space-y-6 p-6">
-                  {/* Pagination Controls with Record Count */}
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-500 font-medium">
-                      Showing records {currentIndex + 1}-
-                      {Math.min(
-                        currentIndex + recordsPerPage,
-                        fullHistoryData.length
-                      )}{" "}
-                      of {fullHistoryData.length}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleSwipeRight}
-                        disabled={currentIndex === 0}
-                        className="border-gray-300 hover:bg-gray-50 transition-colors"
-                        aria-label="Previous records"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleSwipeLeft}
-                        disabled={
-                          currentIndex >=
-                          fullHistoryData.length - recordsPerPage
-                        }
-                        className="border-gray-300 hover:bg-gray-50 transition-colors"
-                        aria-label="Next records"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {/* History Tab */}
+              <TabsContent value="history">
+                {recordsToDisplay.length === 0 ? (
+                  <div className="p-6 text-center text-gray-600">
+                    <p>No health history found for this child.</p>
                   </div>
+                ) : (
+                  <CardLayout
+                    cardClassName="border rounded-lg shadow-sm"
+                    content={
+                      <div className="space-y-6 p-6">
+                        {/* Pagination Controls with Record Count */}
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                          <div className="text-sm text-gray-500 font-medium">
+                            Showing records {currentIndex + 1}-
+                            {Math.min(
+                              currentIndex + recordsPerPage,
+                              fullHistoryData.length
+                            )}{" "}
+                            of {fullHistoryData.length}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={handleSwipeRight}
+                              disabled={currentIndex === 0}
+                              className="border-gray-300 hover:bg-gray-50 transition-colors"
+                              aria-label="Previous records"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={handleSwipeLeft}
+                              disabled={
+                                currentIndex >=
+                                fullHistoryData.length - recordsPerPage
+                              }
+                              className="border-gray-300 hover:bg-gray-50 transition-colors"
+                              aria-label="Next records"
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
 
-                  {/* Divider */}
-                  <hr className="border-gray-200" />
+                        {/* Divider */}
+                        <hr className="border-gray-200" />
 
-                  {/* Accordion Sections */}
-                  <Accordion
-                    type="multiple"
-                    className="w-full space-y-4"
-                    defaultValue={["record-overview", "child-details"]}
-                  >
-                    <HealthHistoryAccordions
-                      recordsToDisplay={recordsToDisplay}
-                      chhistId={chhistId}
-                      supplementStatusesFields={supplementStatusesFields}
-                    />
-                  </Accordion>
+                        {/* Accordion Sections */}
+                        <Accordion
+                          type="multiple"
+                          className="w-full space-y-4"
+                          defaultValue={["record-overview", "child-details"]}
+                        >
+                          <HealthHistoryAccordions
+                            recordsToDisplay={recordsToDisplay}
+                            chhistId={chhistId}
+                            supplementStatusesFields={supplementStatusesFields}
+                          />
+                        </Accordion>
 
-                  {/* Bottom Pagination Controls (for mobile) */}
-                  <div className="sm:hidden flex justify-center gap-4 pt-4">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleSwipeRight}
-                      disabled={currentIndex === 0}
-                      className="border-gray-300 hover:bg-gray-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleSwipeLeft}
-                      disabled={
-                        currentIndex >= fullHistoryData.length - recordsPerPage
-                      }
-                      className="border-gray-300 hover:bg-gray-50"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              }
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+                        {/* Bottom Pagination Controls (for mobile) */}
+                        <div className="sm:hidden flex justify-center gap-4 pt-4">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleSwipeRight}
+                            disabled={currentIndex === 0}
+                            className="border-gray-300 hover:bg-gray-50"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleSwipeLeft}
+                            disabled={
+                              currentIndex >=
+                              fullHistoryData.length - recordsPerPage
+                            }
+                            className="border-gray-300 hover:bg-gray-50"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    }
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        }
+      />
     </>
   );
 }

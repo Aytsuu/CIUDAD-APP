@@ -19,19 +19,10 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({
   fullHistoryData,
   chhistId,
 }) => {
-  // Helper function to get vaccine status
-  const getVaccineStatus = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "Completed";
-      case "missed":
-        return "Missed";
-      case "pending":
-        return "Pending";
-      default:
-        return status;
-    }
-  };
+  // Check if there are any immunization records
+  const hasImmunizationRecords = fullHistoryData.some(
+    (record) => record.immunization_tracking && record.immunization_tracking.length > 0
+  );
 
   return (
     <div className="border overflow-hidden">
@@ -45,13 +36,13 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {fullHistoryData.length === 0 ? (
+          {!hasImmunizationRecords ? (
             <TableRow className="hover:bg-inherit">
               <TableCell
-                colSpan={8}
+                colSpan={4}
                 className="text-center text-gray-600 py-4 border-r hover:bg-inherit"
               >
-                No immunization records available.
+                No vaccination records yet.
               </TableCell>
             </TableRow>
           ) : (

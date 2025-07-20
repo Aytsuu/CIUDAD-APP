@@ -276,3 +276,11 @@ class ChildServiceMedicineRecordView(generics.CreateAPIView):
             raise ValidationError({
                 "error": f"Failed to create record: {str(e)}"
             })
+            
+            
+class FindingPlanTreatmentView(generics.CreateAPIView):
+  
+    serializer_class = FindingPlanTreatmentSerializer
+    queryset = FindingsPlanTreatment.objects.all()
+
+ 

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateImzSuppliesList } from "../../restful-api/Antigen/ImzPutAPI";
-
+import {toast}  from "sonner";
 
 
 export const useUpdateImzSupply = () => {
@@ -11,6 +11,7 @@ export const useUpdateImzSupply = () => {
         updateImzSuppliesList(imz_id, imz_name),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["antigen"] });
+        
       },
       onError: (error: Error) => {
         console.error("Error updating IMZ supply:", error);

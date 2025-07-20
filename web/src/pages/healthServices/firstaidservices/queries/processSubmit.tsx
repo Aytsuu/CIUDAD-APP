@@ -58,7 +58,9 @@ export const processFirstRequest = async (
     try {
       patientRecord = await createPatientRecord(
         data.pat_id,
-        "First Aid Record"
+        "First Aid Record",
+        staff_id
+
       );
       
       if (!patientRecord?.patrec_id) {
@@ -72,12 +74,36 @@ export const processFirstRequest = async (
     // Process each first aid item
     for (const fa of data.firstaid) {
       try {
+
+
+           // Process non-zero quantity items
+           const inventoryList: InventoryItem[] = await getFirstAidStocks();
+           const existingFirstaid = inventoryList.find(
+             (firstaid: InventoryItem) =>
+               parseInt(firstaid.finv_id, 10) === parseInt(fa.finv_id, 10)
+           );
+   
+           if (!existingFirstaid) {
+             throw new Error(`FirstAid ID ${fa.finv_id} not found in inventory`);
+           }
+   
+           if (existingFirstaid.finv_qty_avail < fa.qty) {
+             throw new Error(`Insufficient stock for FirstAid ID ${fa.finv_id}`);
+           }
+   
+           const inv_id = existingFirstaid.inv_detail?.inv_id;
+           const newQty = existingFirstaid.finv_qty_avail - fa.qty;
+           let unit = existingFirstaid.finv_qty_unit;
+           if (unit === "boxes") {
+             unit = "pc/s";
+           }
+
         if (fa.qty === 0) {
           // Create record for zero quantity items
           const submissionData: SubmissionData = {
             patrec: patientRecord.patrec_id,
             finv: fa.finv_id,
-            qty: `0 pc/s`,
+            qty: `0 ${unit}`,
             reason: fa.reason || null,
             created_at: new Date().toISOString(),
           };
@@ -93,27 +119,7 @@ export const processFirstRequest = async (
           continue;
         }
 
-        // Process non-zero quantity items
-        const inventoryList: InventoryItem[] = await getFirstAidStocks();
-        const existingFirstaid = inventoryList.find(
-          (firstaid: InventoryItem) =>
-            parseInt(firstaid.finv_id, 10) === parseInt(fa.finv_id, 10)
-        );
-
-        if (!existingFirstaid) {
-          throw new Error(`FirstAid ID ${fa.finv_id} not found in inventory`);
-        }
-
-        if (existingFirstaid.finv_qty_avail < fa.qty) {
-          throw new Error(`Insufficient stock for FirstAid ID ${fa.finv_id}`);
-        }
-
-        const inv_id = existingFirstaid.inv_detail?.inv_id;
-        const newQty = existingFirstaid.finv_qty_avail - fa.qty;
-        let unit = existingFirstaid.finv_qty_unit;
-        if (unit === "boxes") {
-          unit = "pc/s";
-        }
+     
 
         await updateFirstAidStock(parseInt(fa.finv_id, 10), {
           finv_qty_avail: newQty,
