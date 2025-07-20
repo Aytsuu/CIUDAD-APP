@@ -411,6 +411,11 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     )
                     print(f"Created follow-up visit: {follow_up_visit.followv_id}")
 
+                # create Previous_Pregnancy record
+                if previous_pregnancy_data:
+                    Previous_Pregnancy.objects.create(patrec_id=patient_record, **previous_pregnancy_data)
+                    print("Created previous pregnancy record.")
+
                 # 7. get Staff (to be modified)
                 staff = None
                 if assessed_by:
@@ -438,11 +443,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     Previous_Hospitalization.objects.create(pf_id=prenatal_form, **hosp_data)
                 if previous_hospitalizations_data:
                     print(f"Created {len(previous_hospitalizations_data)} previous hospitalization records.")
-
-                # create Previous_Pregnancy record
-                if previous_pregnancy_data:
-                    Previous_Pregnancy.objects.create(pf_id=prenatal_form, **previous_pregnancy_data)
-                    print("Created previous pregnancy record.")
 
                 # create TT_Status records
                 for tt_data in tt_statuses_data:

@@ -12,7 +12,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-import { ArrowUpDown, Loader2, Search } from "lucide-react";
+import { ArrowUpDown, Loader2, Search, RefreshCw } from "lucide-react";
 import { FileInput } from "lucide-react";
 import WomanRoundedIcon from '@mui/icons-material/WomanRounded';
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
@@ -48,7 +48,8 @@ export default function MaternalAllRecords() {
   };
 
 
-  const { data: maternalRecordsData, isLoading } = useMaternalRecords();
+  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords();
+  const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesCount, setEntriesCount] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -263,6 +264,17 @@ export default function MaternalAllRecords() {
     currentPage * entriesCount
   )
 
+  const handleRefetching = async () => {
+    try {
+      setIsRefetching(true);
+      await refetch();
+    } catch (error){
+      console.error("Error fetching records")
+    } finally {
+      setIsRefetching(false);
+    }
+  }
+
 
   if(isLoading){
      return (
@@ -325,9 +337,20 @@ export default function MaternalAllRecords() {
             />
           </div>
         </div>
+
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}
-          <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex flex-col md:flex-row gap-2 w-full">
+            <div>
+              <Button 
+                className="hover:bg-gray-100 transition-colors duration-200 ease-in-out" 
+                variant="outline" 
+                onClick={handleRefetching} 
+                disabled={isRefetching || isLoading}
+              >
+                <RefreshCw className={`${isRefetching ? 'animate-spin' : ''}`} size={20} />
+              </Button>
+            </div>
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
                 <Search

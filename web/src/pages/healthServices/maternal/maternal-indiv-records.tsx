@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2 } from "lucide-react"
+import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
@@ -130,7 +130,8 @@ interface PregnancyDataDetails{
 export default function MaternalIndivRecords() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const location = useLocation()
-  const { data: pregnancyData, isLoading: pregnancyDataLoading } = usePregnancyDetails(selectedPatient?.pat_id || "")
+  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(selectedPatient?.pat_id || "")
+  const [isRefetching, setIsRefetching] = useState(false)
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -373,6 +374,17 @@ export default function MaternalIndivRecords() {
     console.log(`Record ${recordId} of type ${recordType} marked as completed`)
   }
 
+  const handleRefetching = async () => {
+    try {
+      setIsRefetching(true);
+      await refetch();
+    } catch (error){
+      console.error("Error fetching records")
+    } finally {
+      setIsRefetching(false);
+    }
+  }
+
   if(pregnancyDataLoading) {
     return (
       <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
@@ -400,7 +412,17 @@ export default function MaternalIndivRecords() {
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}
-          <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex flex-col md:flex-row gap-2 w-full">
+            <div>
+              <Button 
+                className="hover:bg-gray-100 transition-colors duration-200 ease-in-out" 
+                variant="outline" 
+                onClick={handleRefetching} 
+                disabled={isRefetching || pregnancyDataLoading}
+              >
+                <RefreshCw className={`${isRefetching ? 'animate-spin' : ''}`} size={20} />
+              </Button>
+            </div>
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />

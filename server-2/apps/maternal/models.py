@@ -119,10 +119,10 @@ class Previous_Pregnancy(models.Model):
     gender = models.CharField(max_length=10, default='', blank=True, null=True)
     ballard_score = models.PositiveIntegerField(null=True, blank=True)
     apgar_score = models.PositiveIntegerField(null=True, blank=True)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_previous_pregnancy', db_column='pf_id', null=True)
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='previous_pregnancy', db_column='patrec_id', null=True)
     
     class Meta:
-        db_table = 'pf_previous_pregnancy'
+        db_table = 'previous_pregnancy'
 
 
 class TT_Status(models.Model):

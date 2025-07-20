@@ -266,16 +266,16 @@ export default function PrenatalFormFourthPq({
   ]
 
   const submitFinalForm = async (data: z.infer<typeof PrenatalFormSchema>) => {
-    console.log("🚀 Submit button clicked!")
-    console.log("🔍 Form data received:", data)
-    console.log("🔍 Prenatal care data to submit:", prenatalCareData)
+    console.log("Submit button clicked!")
+    console.log("Form data received:", data)
+    console.log("Prenatal care data to submit:", prenatalCareData)
     
     setIsSubmitting(true)
 
     try {
       // Check if there's any prenatal care data to submit
       if (prenatalCareData.length === 0) {
-        console.warn("⚠️ No prenatal care data to submit")
+        console.warn("No prenatal care data to submit")
         alert("Please add at least one prenatal care entry before submitting.")
         setIsSubmitting(false)
         return
@@ -308,11 +308,11 @@ export default function PrenatalFormFourthPq({
         }
       }))
 
-      console.log("🔍 Transformed prenatal care data:", transformedPrenatalCare)
+      console.log("Transformed prenatal care data:", transformedPrenatalCare)
 
       // IMPORTANT: Set the prenatal care data in the form BEFORE validation
       setValue("prenatalCare", transformedPrenatalCare)
-      console.log("🔍 Prenatal care data set in form as array")
+      console.log("Prenatal care data set in form as array")
 
       // Create the final form data with prenatal care array
       const finalFormData = {
@@ -320,33 +320,33 @@ export default function PrenatalFormFourthPq({
         prenatalCare: transformedPrenatalCare
       }
 
-      console.log("🔍 Final form data prepared:", finalFormData)
+      console.log("Final form data prepared:", finalFormData)
 
       // Trigger validation on the entire form with the updated data
-      console.log("🔍 Triggering validation...")
+      console.log("Triggering validation...")
       const isValid = await trigger()
-      console.log("🔍 Validation result:", isValid)
+      console.log("Validation result:", isValid)
 
       if (isValid) {
-        console.log("✅ Form is valid, submitting...")
+        console.log("Form is valid, submitting...")
 
         // Get the latest form values after setting prenatalCare
         const latestFormData = form.getValues()
-        console.log("🔍 Latest form data:", latestFormData)
+        console.log("Latest form data:", latestFormData)
 
         addPrenatalRecordMutation.mutate(latestFormData as any, {
           onSuccess: (result) => {
-            console.log("✅ Mutation successful:", result)
+            console.log("Mutation successful:", result)
             onSubmit()
           },
           onError: (error) => {
-            console.error("❌ Mutation error:", error)
+            console.error("Mutation error:", error)
             alert(`Submission failed: ${error.message || 'Unknown error'}`)
           },
         })
       } else {
-        console.error("❌ Form validation failed")
-        console.error("🔍 Form errors:", form.formState.errors)
+        console.error("Form validation failed")
+        console.error("Form errors:", form.formState.errors)
         
         // Show more detailed validation errors
         const errors = form.formState.errors
@@ -357,7 +357,7 @@ export default function PrenatalFormFourthPq({
         alert("Form validation failed. Please check the form for errors.")
       }
     } catch (error) {
-      console.error("❌ Error in submitFinalForm:", error)
+      console.error("Error in submitFinalForm:", error)
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
@@ -376,12 +376,12 @@ export default function PrenatalFormFourthPq({
 
     // navigate(-1)
     
-    console.log("🔍 Form submitted:", formData)
+    console.log("Form submitted:", formData)
   }
 
   // Debug: Log mutation state
   useEffect(() => {
-    console.log("🔍 Mutation state:", {
+    console.log("Mutation state:", {
       isPending: addPrenatalRecordMutation.isPending,
       isError: addPrenatalRecordMutation.isError,
       error: addPrenatalRecordMutation.error,
