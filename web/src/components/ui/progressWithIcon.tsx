@@ -1,89 +1,148 @@
-import React from 'react';
-import { BsFillPersonFill, BsFillPeopleFill, BsCheckLg, BsFillPersonPlusFill } from 'react-icons/bs';
-import { MdGroupWork, MdHome } from "react-icons/md";
-import { IconType } from 'react-icons';
+import type React from "react"
+import { BsCheckLg } from "react-icons/bs"
+import type { IconType } from "react-icons"
 
 interface ProgressProps {
-  progress: number;
+  progress: number
+  steps: Step[]
+  completedColor?: string
+  activeColor?: string
+  inactiveColor?: string
+  showLabels?: boolean
 }
 
 interface Step {
-  label: string;
-  minProgress: number;
-  icon: IconType;
+  label: string
+  minProgress: number
+  icon: IconType
 }
 
 interface StepIconProps {
-  progress: number;
-  step: Step;
+  progress: number
+  step: Step
+  completedColor?: string
+  activeColor?: string
+  inactiveColor?: string
 }
 
-const STEPS: readonly Step[] = [
-  { label: "Demographic", minProgress: 25, icon: MdGroupWork },
-  { label: "Parent", minProgress: 50, icon: BsFillPeopleFill },
-  { label: "Dependent", minProgress: 75, icon: BsFillPersonPlusFill },
-  { label: "Household Info", minProgress: 100, icon: MdHome },
-] as const;
-
-const StepIcon: React.FC<StepIconProps> = ({ progress, step }) => {
+const StepIcon: React.FC<StepIconProps> = ({
+  progress,
+  step,
+  completedColor = "text-white",
+  activeColor = "text-gray-500",
+  inactiveColor = "text-gray-400",
+}) => {
   if (progress > step.minProgress) {
-    return <BsCheckLg className="text-white" size={20} />;
+    return <BsCheckLg className={completedColor} size={20} />
   }
-  
-  const IconComponent = step.icon;
-  return (
-    <IconComponent 
-      size={20}
-      className={progress === step.minProgress ? "text-gray-500" : "text-gray-400"}
-    />
-  );
-};
 
-export default function ProgressWithIcon({ progress }: ProgressProps) {
+  const IconComponent = step.icon
+  return <IconComponent size={20} className={progress === step.minProgress ? activeColor : inactiveColor} />
+}
+
+export default function ProgressWithIcon({
+  progress,
+  steps,
+  completedColor = "blue-500",
+  activeColor = "blue-500",
+  inactiveColor = "gray-300",
+  showLabels = true,
+}: ProgressProps) {
+  const getProgressBarColor = (currentIndex: number) => {
+    const previousStep = steps[currentIndex - 1]
+    return progress > previousStep.minProgress ? `bg-${completedColor}` : `bg-${inactiveColor}`
+  }
+
+  const getStepCircleClasses = (step: Step) => {
+    if (progress > step.minProgress) {
+      return `bg-${completedColor} border-${completedColor}`
+    } else if (progress === step.minProgress) {
+      return `border-${activeColor} bg-white`
+    } else {
+      return `border-${inactiveColor} bg-white`
+    }
+  }
+
+  const getStepLabelClasses = (step: Step) => {
+    return progress >= step.minProgress
+      ? `text-${completedColor.replace("500", "600")} font-semibold`
+      : `text-${inactiveColor.replace("300", "500")}`
+  }
+
+  const getStepNumberClasses = (step: Step) => {
+    return progress >= step.minProgress
+      ? `text-${completedColor.replace("500", "600")} font-bold`
+      : `text-${inactiveColor.replace("300", "500")} font-medium`
+  }
+
   return (
-    <div className="flex items-center justify-center w-full px-2 md:px-4 py-2 overflow-x-auto">
+    <div className="flex items-center justify-center w-full px-2 md:px-4 py-4 overflow-x-auto">
       <div className="flex items-center min-w-max">
-        {STEPS.map((step, index) => (
+        {steps.map((step, index) => (
           <div key={step.label} className="flex items-center">
             {index > 0 && (
-              <div
-                className={`
-                  w-16 sm:w-24 md:w-32 lg:w-44 h-1 mr-2 rounded-sm
-                  ${progress > STEPS[index - 1].minProgress ? "bg-green-500" : "bg-gray"}
-                  transition-colors duration-300
-                `}
-              />
-            )}
-            
-            <div className="flex flex-col items-center space-y-1 md:space-y-2 p-4">
-              <div
-                className={`
-                  w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center
-                  ${
-                    progress > step.minProgress
-                      ? "bg-green-500 border-green-500"
-                      : progress === step.minProgress
-                      ? "border-green-500 bg-white"
-                      : "border-gray-300 bg-white"
-                  }
-                  transition-all duration-300
-                `}
-              >
-                <StepIcon progress={progress} step={step} />
+              <div className="flex items-center">
+                <div
+                  className={`
+                    w-16 sm:w-24 md:w-32 lg:w-44 h-1 rounded-full
+                    ${getProgressBarColor(index)}
+                    transition-colors duration-500 ease-in-out
+                  `}
+                />
               </div>
-              
-              <p
+            )}
+
+            <div className="flex flex-col items-center space-y-2 p-4">
+              {/* Step Number */}
+              <div className="text-center">
+                <p
+                  className={`
+                    text-xs sm:text-sm font-medium
+                    ${getStepNumberClasses(step)}
+                    transition-colors duration-300
+                  `}
+                >
+                  Step {index + 1}
+                </p>
+              </div>
+
+              {/* Step Circle with Icon */}
+              <div
                 className={`
-                  text-[10px] sm:text-xs
-                  ${progress >= step.minProgress ? "text-green-600 font-semibold" : "text-gray-500"}
+                  w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full border-3 flex items-center justify-center
+                  ${getStepCircleClasses(step)}
+                  transition-all duration-500 ease-in-out
+                  transform hover:scale-105
+                  border
                 `}
               >
-                {step.label}
-              </p>
+                <StepIcon
+                  progress={progress}
+                  step={step}
+                  completedColor="text-white"
+                  activeColor="text-gray-600"
+                  inactiveColor="text-gray-400"
+                />
+              </div>
+
+              {/* Step Label */}
+              {showLabels && (
+                <div className="text-center max-w-20 sm:max-w-24">
+                  <p
+                    className={`
+                      text-[10px] sm:text-xs leading-tight
+                      ${getStepLabelClasses(step)}
+                      transition-colors duration-300
+                    `}
+                  >
+                    {step.label}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
     </div>
-  );
+  )
 }

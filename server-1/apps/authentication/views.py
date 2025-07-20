@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny 
 from rest_framework.decorators import api_view, permission_classes
 from django.db import transaction
 from rest_framework.authtoken.models import Token
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
         
 #     ],
 #     'Barangay Staff' : [
-        
+#         'auth/'
 #     ],
 #     'resident': [
         
@@ -49,7 +49,6 @@ class AuthBaseView(APIView):
             raise ValueError('supabase_id and email are required')
         
         return supabase_id, email
-
 
 class SignupView(APIView):
     permission_classes = [AllowAny]
@@ -111,7 +110,7 @@ class SignupView(APIView):
                         email=email,
                         username=username or email.split('@')[0],
                         supabase_id=supabase_response.user.id,  # Store Supabase ID
-                        rp=resident_profile 
+                        rp=resident_profile
                     )
 
                 # Check if email confirmation is required
@@ -201,7 +200,8 @@ class LoginView(APIView):
             return Response({
                 'user': serializer.data,
                 'access_token': supabase_response.session.access_token,
-                'message': 'Login successful'
+                'message': 'Login successful',
+                'supabase_token': supabase_response.session.access_token
             })
 
         except Exception as e:
@@ -213,6 +213,8 @@ class LoginView(APIView):
 
 
 class UserView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
         try:
             # Get the Supabase user from the request (set by middleware)

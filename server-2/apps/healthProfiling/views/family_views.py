@@ -26,7 +26,7 @@ class FamilyTableView(generics.ListCreateAPIView):
 
         )
 
-        queryset = Family.objects.select_related('staff').prefetch_related(
+        queryset = Family.objects.select_related('staff', 'hh__add__sitio').prefetch_related(
             Prefetch('family_compositions', queryset=family_compositions)
         ).annotate(
             members=Count('family_compositions'),
@@ -64,7 +64,11 @@ class FamilyTableView(generics.ListCreateAPIView):
             'fam_id',
             'fam_date_registered',
             'fam_building',
+            'fam_indigenous',
             'staff__staff_id',
+            'staff__staff_type',
+            'hh__hh_id',
+            'hh__add__sitio__sitio_name',
         )
 
         search_query = self.request.query_params.get('search', '').strip()

@@ -13,22 +13,22 @@ import {
   MapPin,
   Hash,
   Clock,
-  Archive,
   Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { archiveComplaint } from "./restful-api/complaint-api";
 import { useAuth } from "@/context/AuthContext";
+import { raiseIssue } from "./restful-api/complaint-api";
+import { useNotifications } from "@/context/NotificationContext";
 
 export function ComplaintViewRecord() {
   const { state } = useLocation();
   const { user } = useAuth();
   const complaintData = state?.complaint as Complaint;
   const [isRaiseIssueDialogOpen, setIsRaiseIssueDialogOpen] = useState(false);
-  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
+  const { send } = useNotifications();
   const [complaintStatus, setComplaintStatus] = useState({
     isArchived: complaintData?.comp_is_archive || false,
     isRaised: false,
@@ -37,10 +37,15 @@ export function ComplaintViewRecord() {
   const handleRaiseIssue = async () => {
     setIsSubmitting(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setComplaintStatus((prev) => ({ ...prev, isRaised: true }));
+      await raiseIssue(complaintData.comp_id);
+      await handleSendAlert();
+      
+      // Archive the complaint after raising the issue
+      await archiveComplaint(complaintData.comp_id.toString());
+      
+      setComplaintStatus((prev) => ({ ...prev, isRaised: true, isArchived: true }));
       toast.success("Issue raised successfully", {
-        description: `Complaint ID: ${complaintData.comp_id}`,
+        description: `Service Request created for Complaint ID: ${complaintData.comp_id}`,
         action: {
           label: "View",
           onClick: () => console.log("View action clicked"),
@@ -56,37 +61,27 @@ export function ComplaintViewRecord() {
     }
   };
 
-  const handleMoveToArchive = async () => {
-    setIsArchiving(true);
-    try {
-      await archiveComplaint(complaintData.comp_id.toString());
-      setComplaintStatus((prev) => ({ ...prev, isArchived: true }));
-      toast.success("Complaint moved to archive successfully", {
-        description: `Complaint ID: ${complaintData.comp_id}`,
-        action: {
-          label: "View Archives",
-          onClick: () => console.log("View archives clicked"),
-        },
-      });
-    } catch (error: any) {
-      console.error("Archive error:", error);
-      toast.error("Failed to move to archive", {
-        description: error.response?.data?.message || "Please try again later",
-      });
-    } finally {
-      setIsArchiving(false);
-      setIsArchiveDialogOpen(false);
-    }
-  };
+  const handleSendAlert = async () => {
+    await send({
+      title: "Complaint Report Filed",
+      message: "Your request has been processed",
+      recipient_ids: [user?.acc_id || '', '13'], // pass here the id of the clerk's account
+      metadata:{
+        action_url: '/home',
+        sender_name: 'System',
+        sender_avatar: `${user?.profile_image}` || '',
+      }
+    })
+  }
 
   const getStatusDisplay = () => {
-    if (complaintStatus.isArchived) {
+    if (complaintStatus.isRaised) {
+      return { text: "Raised", class: "bg-orange-100 text-orange-700" };
+    } else if (complaintStatus.isArchived) {
       return {
         text: "Archived",
-        class: "bg-yellow-500 p-2 rounded-full text-gray-700",
+        class: "bg-yellow-100 text-yellow-700",
       };
-    } else if (complaintStatus.isRaised) {
-      return { text: "Raised", class: "bg-orange-100 text-orange-700" };
     } else {
       return { text: "Active", class: "bg-green-100 text-green-700" };
     }
@@ -143,53 +138,6 @@ export function ComplaintViewRecord() {
           </div>
         </div>
         <div className="flex justify-end gap-4 mt-6">
-          {!complaintStatus.isArchived && (
-            <DialogLayout
-              isOpen={isArchiveDialogOpen}
-              onOpenChange={(open) => setIsArchiveDialogOpen(open)}
-              trigger={
-                <Button className="" disabled={isArchiving}>
-                  <Archive className="w-4 h-4" />
-                  {isArchiving ? "Archiving..." : "Archive"}
-                </Button>
-              }
-              title="Confirm Archive Action"
-              description="Are you sure you want to move this complaint to the archive?"
-              mainContent={
-                <>
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2">
-                      Complaint ID:{" "}
-                      <span className="font-medium">
-                        {complaintData.comp_id}
-                      </span>
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      This action will move the complaint to the archive
-                      section. Archived complaints can still be viewed but are
-                      no longer active.
-                    </p>
-                  </div>
-                  <div className="flex justify-end gap-2 mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsArchiveDialogOpen(false)}
-                      disabled={isArchiving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleMoveToArchive}
-                      disabled={isArchiving}
-                    >
-                      {isArchiving ? "Processing..." : "Move to Archive"}
-                    </Button>
-                  </div>
-                </>
-              }
-            />
-          )}
-
           <DialogLayout
             isOpen={isRaiseIssueDialogOpen}
             onOpenChange={(open) => setIsRaiseIssueDialogOpen(open)}
@@ -217,7 +165,7 @@ export function ComplaintViewRecord() {
                   </p>
                   <p className="text-sm text-gray-600">
                     This action will notify the concerned authorities about
-                    unresolved issues.
+                    unresolved issues and automatically archive the complaint.
                   </p>
                 </div>
                 <div className="flex justify-end gap-2 mt-6">

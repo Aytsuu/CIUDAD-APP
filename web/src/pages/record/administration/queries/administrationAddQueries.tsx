@@ -83,10 +83,15 @@ export const useAddPositionBulk = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
+        console.log('Payload being sent to bulk create:', data);
         const res = await api.post('administration/position/bulk/create/', data);
         return res.data;
-      } catch(err) {
-        console.error(err);
+      } catch(err: any) {
+        console.error('Bulk position creation error:', err);
+        if (err.response) {
+          console.error('Response data:', err.response.data);
+          console.error('Response status:', err.response.status);
+        }
         throw err;
       }
     },

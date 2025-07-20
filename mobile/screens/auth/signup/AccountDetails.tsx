@@ -11,13 +11,14 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
 import { useToast } from "@/hooks/use-toast"
 import { useAddAccount } from "../queries/authPostQueries"
 import { useGetAccountEmailList } from "../queries/authFetchQueries"
+import { ConfirmationModal } from "@/components/ui/confirmationModal"
 
 export default function AccountDetails() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { registrationType, rp_id } = useLocalSearchParams();
   const { toast } = useToast();
-  const { control, trigger, getValues, setError } = useRegistrationFormContext();
+  const { control, trigger, getValues, setError, reset } = useRegistrationFormContext();
   const { mutateAsync: addAccount } = useAddAccount();
   const { data: accEmailList, isLoading } = useGetAccountEmailList();
 
@@ -60,6 +61,11 @@ export default function AccountDetails() {
     });
   }
 
+  const handleClose = () => {
+    reset();
+    router.replace("/(auth)");
+  };
+
   return (
     <_ScreenLayout
       customLeftAction={
@@ -72,12 +78,13 @@ export default function AccountDetails() {
       }
       headerBetweenAction={<Text className="text-[13px]">Account Details</Text>}
       customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={<X size={20} className="text-gray-700" />}
+          variant="destructive"
+          onPress={handleClose}
+        />
       }
     >
       <View className="flex-1 px-5">

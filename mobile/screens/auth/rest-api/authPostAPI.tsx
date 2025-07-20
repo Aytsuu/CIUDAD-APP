@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelpers";
 import { capitalize } from "@/helpers/capitalize";
 import { supabase } from "@/lib/supabase";
 
@@ -58,7 +58,17 @@ export const addRequest = async (data: Record<string, any>) => {
 
 export const postFaceData = async (data: Record<string, any>) => {
   try {
-    const res = await api.post("api/detection/face/", data);
+    const res = await api.post("profiling/kyc/face-match/", data);
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
+
+export const postDocumentData = async (data: Record<string, any>) => {
+  try {
+    const res = await api.post("profiling/kyc/match-document/", data);
     return res.data;
   } catch (err) {
     console.error(err);

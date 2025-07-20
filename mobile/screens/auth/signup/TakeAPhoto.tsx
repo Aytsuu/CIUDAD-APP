@@ -1,96 +1,44 @@
 import React from "react";
 import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import RegisterCompletion from "./RegisterCompletion";
-import { FaceDetection, FaceDetectionCamHandle } from "./FaceDetection";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFieldArray } from "react-hook-form";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import { FaceRecognition, FaceRecognitionCamHandle } from "./FaceRecognition";
 
 export default function TakeAPhoto() {
+  const params = useLocalSearchParams();
   const {control} = useRegistrationFormContext();
-  const [photo, setPhoto] = React.useState<Record<string, any>>();
-  const [isDetecting, setIsDetecting] = React.useState(false);
+  const [photo, setPhoto] = React.useState<Record<string, any> | null>(null);
+  const [isMatching, setIsMatching] = React.useState(false);
   const [detectionStatus, setDetectionStatus] = React.useState<string>("");
   const [retryCount, setRetryCount] = React.useState(0);
   const [timerActive, setTimerActive] = React.useState(false);
   const [timeRemaining, setTimeRemaining] = React.useState(30);
-  const cameraRef = React.useRef<FaceDetectionCamHandle>(null);
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const cameraRef = React.useRef<FaceRecognitionCamHandle>(null);
   const router = useRouter();
 
-  const { append } = useFieldArray({
-    control: control,
-    name: "photoSchema.list",
-  });
-
-  // Cleanup timer on unmount
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
-  const startTimer = React.useCallback(() => {
-    setTimerActive(true);
-    setTimeRemaining(30);
-    
-    timerRef.current = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          setTimerActive(false);
-          setRetryCount(0);
-          setDetectionStatus("You can try again now!");
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
-
   const attemptFaceDetection = React.useCallback(async () => {
-    if (!cameraRef.current || isDetecting || timerActive) {
+    if (!cameraRef.current || isMatching) {
       return;
     }
 
-    setIsDetecting(true);
+    setIsMatching(true);
     setDetectionStatus("Looking for your face...");
 
     try {
-      const photoData = await cameraRef.current.capturePhoto();
+      const matched = await cameraRef.current.capturePhoto();
       
-      if (photoData) {
-        setPhoto(photoData);
-        append(photoData as any)
-        setRetryCount(0);
-        // Clear timer if active
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          setTimerActive(false);
-        }
+      if (matched) {
+        
       } else {
-        const newRetryCount = retryCount + 1;
-        setRetryCount(newRetryCount);
-        
-        const maxAttempts = 3;
-        
-        if (newRetryCount >= maxAttempts) {
-          // Start waiting timer
-          setDetectionStatus("Unable to detect face after all attempts.");
-          startTimer();
-        } else {
-          setDetectionStatus(`Detection failed. Attempt ${newRetryCount}/3`);
-        }
+        setIsMatching(false);
+        setDetectionStatus(`Detection failed.`);
       }
     } finally {
-      setIsDetecting(false);
+      setIsMatching(false);
     }
-  }, [isDetecting, retryCount, timerActive, startTimer]);
+  }, [setIsMatching]);
 
   const handleManualCapture = () => {
     if (timerActive) return;
@@ -109,7 +57,7 @@ export default function TakeAPhoto() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isButtonDisabled = isDetecting || timerActive;
+  const isButtonDisabled = isMatching || timerActive;
   const showTimerStatus = timerActive && timeRemaining > 0;
 
   return (
@@ -135,7 +83,7 @@ export default function TakeAPhoto() {
 
             {/* Camera View */}
             <View className="flex-1 relative">
-              <FaceDetection ref={cameraRef} />
+              <FaceRecognition kyc_id={+params?.kyc_id} ref={cameraRef} />
               
               {/* Face Detection Overlay */}
               <View className="absolute inset-0 pointer-events-none">
@@ -151,10 +99,10 @@ export default function TakeAPhoto() {
               </View>
 
               {/* Status Overlay */}
-              {(isDetecting || detectionStatus || showTimerStatus) && (
+              {(isMatching || detectionStatus || showTimerStatus) && (
                 <View className="absolute bottom-32 left-0 right-0 items-center px-6">
                   <View className="bg-black bg-opacity-75 rounded-2xl px-6 py-4 max-w-sm">
-                    {isDetecting && (
+                    {isMatching && (
                       <View className="flex-row items-center justify-center mb-2">
                         <ActivityIndicator size="small" color="white" />
                         <Text className="text-white ml-2 font-medium">
@@ -196,7 +144,7 @@ export default function TakeAPhoto() {
                   }`}
                 >
                   <View className="flex-row items-center justify-center">
-                    {isDetecting ? (
+                    {isMatching ? (
                       <ActivityIndicator size="small" color="gray" />
                     ) : timerActive ? (
                       <Text className="text-gray-600 font-semibold text-lg">

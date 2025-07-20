@@ -18,7 +18,7 @@ import ViewButton from "@/components/ui/view-button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { capitalize } from "@/helpers/capitalize";
-import { useUpdateFamily, useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
+import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -108,6 +108,26 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   {
     accessorKey: "fam_date_registered",
     header: "Date Registered",
+  },
+  {
+    accessorKey: "registered_by",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "action",

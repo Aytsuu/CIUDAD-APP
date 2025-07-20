@@ -1,8 +1,9 @@
 
 export type ResidentRecord = {
   rp_id: string;
-  household_noe: string;
+  household_no: string;
   family_no: string;
+  business_owner: boolean;
   sitio_name: string;
   lname: string;
   fname: string;
@@ -41,6 +42,7 @@ export type FamilyRecord = {
   father: string;
   guardian: string;
   fam_date_registered: string;
+  registered_by: string;
 }
 
 export type MemberRecord = {

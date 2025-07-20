@@ -11,6 +11,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
 import { Plus } from "@/lib/icons/Plus"
 import { AddressDrawer } from "./AddressDrawer"
+import { ConfirmationModal } from "@/components/ui/confirmationModal"
 
 
 const sexOptions: { label: string; value: string }[] = [
@@ -26,7 +27,7 @@ const civilStatusOptions: { label: string; value: string }[] = [
 
 export default function PersonalInformation() {
   const router = useRouter();
-  const { control, trigger, watch, getValues, setValue } = useRegistrationFormContext();
+  const { control, trigger, watch, getValues, setValue,  reset } = useRegistrationFormContext();
   const [showAddressDrawer, setShowAddressDrawer] = React.useState(false);
   const [addresses, setAddresses] = React.useState<any[]>([]);
   const [addressError, setAddressesError] = React.useState<boolean>(false);
@@ -67,6 +68,11 @@ export default function PersonalInformation() {
     router.push("/(auth)/upload-id")
   }
 
+  const handleClose = () => {
+    reset();
+    router.replace("/(auth)");
+  };
+
   return (
     <_ScreenLayout
       customLeftAction={
@@ -79,12 +85,13 @@ export default function PersonalInformation() {
       }
       headerBetweenAction={<Text className="text-[13px]">Personal Information</Text>}
       customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={<X size={20} className="text-gray-700" />}
+          variant="destructive"
+          onPress={handleClose}
+        />
       }
     >
       <View className="flex-1 px-5">

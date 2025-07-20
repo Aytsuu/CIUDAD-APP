@@ -258,15 +258,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { formatHouseholds, formatResidents } from "./profilingFormats";
 import { DependentRecord } from "./profilingTypes";
+import { FaHome, FaUsers, FaBriefcaseMedical, FaClipboardCheck } from "react-icons/fa";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useHouseholdsListHealth, useResidentsListHealth, useFamilyMembersWithResidentDetails } from "./family-profling/queries/profilingFetchQueries";
+import { useHouseholdsListHealth, useResidentsListHealth } from "./family-profling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
-import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
-import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
-import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
-import { Separator } from "@/components/ui/separator";
+// These imports are currently unused but may be needed when implementing step 4
+// import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
+// import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
+// import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
+// import { Separator } from "@/components/ui/separator";
 
-export default function FamilyProfileForm() {
+export default function HealthFamilyForm() {
   const { showLoading, hideLoading } = useLoading();
   const { data: householdsListHealth, isLoading: isLoadingHouseholds } = useHouseholdsListHealth();
   const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsListHealth(); 
@@ -275,8 +277,9 @@ export default function FamilyProfileForm() {
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
   const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
-  const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
-  const [famId, setFamId] = React.useState<string>(""); // Add fam_id state
+  // Commenting out unused state variables for now
+  // const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
+  const [famId] = React.useState<string>(""); // Add fam_id state
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
@@ -289,13 +292,14 @@ export default function FamilyProfileForm() {
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsListHealth), [householdsListHealth]);
 
   // Fetch family members for household info step using famId
-  const familyMembersHealth = useFamilyMembersWithResidentDetails(famId);
+  // Commented out since it's not being used in the current form implementation
+  // const familyMembersHealth = useFamilyMembersWithResidentDetails(famId);
 
   // Debug logging
   React.useEffect(() => {
     console.log('Family ID:', famId);
-    console.log('Family Members:', familyMembersHealth);
-  }, [famId, familyMembersHealth]);
+    // console.log('Family Members:', familyMembersHealth);
+  }, [famId]);
 
   React.useEffect(() => {
       if(isLoadingHouseholds || isLoadingResidents) {
@@ -331,6 +335,14 @@ export default function FamilyProfileForm() {
     }
   }, [currentStep]);
 
+  // Import step icons
+  const progressSteps = React.useMemo(() => [
+    { label: "Demographics", minProgress: 25, icon: FaHome },
+    { label: "Family Members", minProgress: 50, icon: FaUsers },
+    { label: "Dependents", minProgress: 75, icon: FaBriefcaseMedical },
+    { label: "Household Info", minProgress: 100, icon: FaClipboardCheck }
+  ], []);
+
   return (
     <LayoutWithBack
       title="Family Profile"
@@ -338,7 +350,14 @@ export default function FamilyProfileForm() {
     >
         <Card className="w-full">
           <div className="pt-10">
-            <ProgressWithIcon progress={calculateProgress()} />
+            <ProgressWithIcon 
+              progress={calculateProgress()} 
+              steps={progressSteps}
+              completedColor="blue-500"
+              activeColor="blue-500"
+              inactiveColor="gray-300"
+              showLabels={true}
+            />
            
           </div>
           {currentStep === 1 && (
@@ -424,7 +443,7 @@ export default function FamilyProfileForm() {
               </div>
               <NoncomDiseaseFormLayout
                 form={form}
-                familyMembers={familyMembersHealth || []}
+                familyMembers={[]}
                 selectedResidentId={selectedResidentId}
                 setSelectedResidentId={setSelectedResidentId}
               />
@@ -433,7 +452,7 @@ export default function FamilyProfileForm() {
               </div>
               <TbSurveilanceInfoLayout
                 form={form}
-                residents={familyMembersHealth || []}
+                residents={[]}
                 selectedResidentId={selectedResidentId}
                 setSelectedResidentId={setSelectedResidentId}
               />

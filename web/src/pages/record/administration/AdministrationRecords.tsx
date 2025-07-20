@@ -13,9 +13,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Card } from "@/components/ui/card/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
+import { useAuth } from "@/context/AuthContext";
+import { getStaffFilterContext } from "./utils/staffFilterUtils";
 
 export default function AdministrationRecords() {
   // ----------------- STATE INITIALIZATION --------------------
+  const { user } = useAuth();
   const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
@@ -23,10 +26,14 @@ export default function AdministrationRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
+  // Get filtering context based on logged-in user
+  const filterContext = React.useMemo(() => getStaffFilterContext(user), [user]);
+
   const { data: staffs, isLoading: isLoadingStaffs } = useStaffs(
     currentPage, 
     debouncedPageSize, 
-    debouncedSearchQuery
+    debouncedSearchQuery,
+    filterContext.staffTypeFilter // Pass the staff type filter
   );
   const { data: features } = useFeatures();
 
@@ -62,6 +69,31 @@ export default function AdministrationRecords() {
       description="Manage and view staff information"
     >
       <div className="space-y-6">
+        {/* Filter Info Banner */}
+        {!filterContext.canViewAllRecords && !filterContext.isAdmin && (
+          <Card className="bg-blue-50 border-blue-200">
+            <div className="p-4">
+              <div className="flex items-center gap-2">
+                <CircleAlert size={18} className="text-blue-600" />
+                <p className="text-sm text-blue-800">
+                  Showing only <strong>{filterContext.staffTypeFilter}</strong> records
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+        {filterContext.isAdmin && (
+          <Card className="bg-green-50 border-green-200">
+            <div className="p-4">
+              <div className="flex items-center gap-2">
+                <CircleAlert size={18} className="text-green-600" />
+                <p className="text-sm text-green-800">
+                  <strong>Admin access:</strong> Showing all staff records
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
       
         <Card>
           {/* Search and Actions Bar */}

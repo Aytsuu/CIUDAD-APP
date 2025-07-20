@@ -45,7 +45,6 @@ function AnnouncementView({ ann_id }: AnnouncementViewProps) {
         ? formatDateTimeLocal(announcement.ann_end_at)
         : formatDateTimeLocal(new Date()),
       ann_type: announcement?.ann_type || "General",
-      staff: announcement?.staff?.toString() || "0",
       ar_mode: [firstRecipient?.ar_mode || ""],
     },
   })

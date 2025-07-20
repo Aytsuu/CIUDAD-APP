@@ -17,6 +17,7 @@ import {
   getResidentsWithFamExclusion,
   getSitioList,
 } from "../restful-api/profilingGetAPI";
+import { api } from "@/api/api";
 
 // ================ ADDRESS =================
 export const usePerAddressesList = () => {
@@ -28,10 +29,13 @@ export const usePerAddressesList = () => {
 }
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
-export const useResidentsList = (is_staff: boolean = false) => {
+export const useResidentsList = (
+  is_staff: boolean = false,
+  exclude_independent: boolean = false
+) => {
   return useQuery({
-    queryKey: ['residentsList', is_staff],
-    queryFn: () => getResidentsList(is_staff),
+    queryKey: ['residentsList', is_staff, exclude_independent],
+    queryFn: () => getResidentsList(is_staff, exclude_independent),
     staleTime: 5000,
   })
 }
@@ -66,6 +70,20 @@ export const useRequests = (page: number, pageSize: number, searchQuery: string)
     queryFn: () => getRequests(page, pageSize, searchQuery),
     staleTime: 5000,
   });
+}
+
+export const useRequestCount = () => {
+  return useQuery({
+    queryKey: ["requestCount"],
+    queryFn: async () => {
+      try {
+        const res = await api.get("profiling/request/count/");
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    }
+  })
 }
 
 export const useSitioList = () => {

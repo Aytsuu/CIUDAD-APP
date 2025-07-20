@@ -17,16 +17,21 @@ class BusinessTableView(generics.ListAPIView):
     queryset = Business.objects.select_related(
       'add',
       'staff',
+    ).prefetch_related(
+      'business_files'
     ).only(
       'bus_id',
       'bus_name',
+      'bus_gross_sales',
       'bus_date_registered',
       'bus_respondentLname',
       'bus_respondentFname',
       'bus_respondentMname',
       'bus_respondentSex',
       'bus_respondentDob',
-      'staff',
+      'staff__rp__per__per_lname',
+      'staff__rp__per__per_fname',
+      'staff__rp__per__per_mname',
       'add__sitio__sitio_name',
       'add__add_street'
     )
@@ -36,15 +41,16 @@ class BusinessTableView(generics.ListAPIView):
       queryset = queryset.filter(
         Q(bus_id__icontains=search_query) |
         Q(bus_name__icontains=search_query) |
+        Q(bus_gross_sales__icontains=search_query) |
         Q(bus_date_registered__icontains=search_query) |
         Q(bus_respondentLname__icontains=search_query) |
         Q(bus_respondentFname__icontains=search_query) |
         Q(bus_respondentMname__icontains=search_query) |
         Q(add__sitio__sitio_name__icontains=search_query) |
         Q(add__add_street__icontains=search_query) 
-      )
+      ).distinct()
 
-    return queryset
+    return queryset.order_by('bus_id')
 
 class BusinessFileCreateView(generics.CreateAPIView):
   serializer_class = BusinessFileBaseSerializer

@@ -17,6 +17,7 @@ import { useAddFamilyComposition } from "../queries/profilingAddQueries";
 import { useAddFamilyCompositionHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries"; // Add this import
 import { toast } from "sonner";
 import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
+import { capitalize } from "@/helpers/capitalize";
 
 export default function AddMemberForm({ 
   familyId, 
@@ -37,7 +38,7 @@ export default function AddMemberForm({
   const formattedResidents = React.useMemo(() => 
     formatResidents(residentsWithFamExclusion)
   , [residentsWithFamExclusion]);
-  const defaultValues = React.useRef(generateDefaultValues(newMemberFormSchema)).current;
+  const defaultValues = generateDefaultValues(newMemberFormSchema);
   const form = useForm<z.infer<typeof newMemberFormSchema>>({
     resolver: zodResolver(newMemberFormSchema),
     defaultValues,
@@ -59,13 +60,13 @@ export default function AddMemberForm({
     const role = form.getValues().role;
     const compositionData = [{
       "fam": familyId,
-      "fc_role": role,
+      "fc_role": capitalize(role),
       "rp": residentId
     }];
 
     try {
       // Execute both mutations concurrently
-      const [newComposition, newCompositionHealth] = await Promise.all([
+      const [newComposition] = await Promise.all([
         addFamilyComposition(compositionData, {
           onSuccess: () => {
             // Individual success handler for main database
@@ -105,6 +106,7 @@ export default function AddMemberForm({
   if(isLoadingResidents) {
     return <Loader2 className="animate-spin" />
   }
+  
 
   return (
     <Form {...form}>

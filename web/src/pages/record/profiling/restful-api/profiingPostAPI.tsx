@@ -59,7 +59,7 @@ export const addFamily = async (
     const res = await api.post("profiling/family/create/", {
       fam_indigenous: capitalize(demographicInfo.indigenous),
       fam_building: capitalize(demographicInfo.building),
-      hh: demographicInfo.householdNo || null,
+      hh: demographicInfo.householdNo.split(" ")[0] || null,
       staff: staffId,
     });
 

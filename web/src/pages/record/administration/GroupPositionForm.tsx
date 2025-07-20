@@ -114,12 +114,14 @@ export default function GroupPositionForm() {
 
     const values = form.getValues()
     const data = positions.map((pos: any) => ({
-      ...pos,
+      pos_title: pos.pos_title,
+      pos_max: parseInt(pos.pos_max),
       pos_group: values.pos_group.toUpperCase(),
       staff: user?.staff?.staff_id,
     }))
 
     try {
+      console.log('Sending bulk position data:', data);
 
       await addPositionBulk(data)
       await addPositionBulkHealth(data)

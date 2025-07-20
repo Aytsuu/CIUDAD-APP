@@ -21,12 +21,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useToastContext } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 const { width } = Dimensions.get('window');
 
 export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus }: {
   photo: string,
-  setPhoto: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  setPhoto: React.Dispatch<React.SetStateAction<Record<string, any> | null>>
   setDetectionStatus: React.Dispatch<React.SetStateAction<string>>
 }) {
   const { toast } = useToastContext();
@@ -34,28 +35,29 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [status, setStatus] = React.useState<"success" | "failure">("success");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { getValues } = useRegistrationFormContext();
+  const { getValues, setValue, reset } = useRegistrationFormContext();
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addRequest } = useAddRequest();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
 
   const cancel = () => {
-    setPhoto({});
+    const files = getValues('photoSchema.list');
+    const face_removed = files.filter((file) => file.rf_url !== photo);
+    setValue('photoSchema.list', face_removed); 
+    setPhoto(null);
     setDetectionStatus("");
   };
   
   const submit = async () => {
-    setIsSubmitting(false);
+    setIsSubmitting(true);
     try {
       const {per_addresses, ...data} = getValues("personalInfoSchema");
       const dob = getValues("verificationSchema.dob");
       const photoList = getValues("photoSchema.list");
-      const accountInfo = getValues("accountFormSchema")
-      console.log("Data:", data)
-      console.log("Addresses:", per_addresses.list)
-
-      addPersonal({...data, per_dob: dob }, {
+      const {confirmPassword, ...accountInfo} = getValues("accountFormSchema")
+      
+      addPersonal({...capitalizeAllFields(data), per_dob: dob }, {
         onSuccess: (newData) => {
           addAddress(per_addresses.list, {
             onSuccess: (new_addresses) => {
@@ -76,6 +78,7 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
               setStatus("success");
               setIsSubmitting(false);
               setShowFeedback(true);
+              reset();
             },
             onError: () => {
               setIsSubmitting(false);

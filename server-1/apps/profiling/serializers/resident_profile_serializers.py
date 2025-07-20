@@ -22,14 +22,17 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     household_no = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
-    
+    age = serializers.SerializerMethodField()
+    gender = serializers.CharField(source='per.per_sex')
+    registered_by = serializers.SerializerMethodField()
+
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 
-                  'household_no', 'family_no', 'has_account']
+                  'age', 'gender', 'household_no', 'family_no', 'has_account', 'registered_by']
     
     def get_mname(self, obj):
-        return obj.per.per_mname if obj.per.per_mname else '-'
+        return obj.per.per_mname if obj.per.per_mname else ''
     
     def get_household_no(self, obj):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
@@ -43,6 +46,31 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     
     def get_has_account(self, obj):
         return hasattr(obj, 'account')
+    
+    def get_registered_by(self, obj):
+        if obj.staff:
+            staff_type = obj.staff.staff_type
+            staff_id = obj.staff.staff_id
+            
+            # Determine prefix based on staff type
+            if staff_type == "Barangay Staff":
+                prefix = "B-"
+            elif staff_type == "Health Staff":
+                prefix = "H-"
+            else:
+                prefix = ""  # Default for unknown types
+                
+            return f"{prefix}{staff_id}"
+        return "-"
+    
+    def get_age(self, obj):
+        dob = obj.per.per_dob
+        today = datetime.today().date()
+
+        age = today.year - dob.year - (
+        (today.month, today.day) < (dob.month, dob.day)
+    )
+        return age
 
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):

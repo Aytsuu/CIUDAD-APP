@@ -10,11 +10,12 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { X } from "@/lib/icons/X";
 import { Calendar } from "@/lib/icons/Calendar";
 import { useToastContext } from "@/components/ui/toast";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
 export default function VerifyAge() {
   const { toast } = useToastContext();
   const router = useRouter();
-  const { control, trigger, getValues } = useRegistrationFormContext();
+  const { control, trigger, getValues, reset } = useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -53,14 +54,8 @@ export default function VerifyAge() {
   };
 
   const handleClose = () => {
-    Alert.alert(
-      "Exit Registration",
-      "Are you sure you want to exit? Your progress will be lost.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Exit", style: "destructive", onPress: () => router.push("/")}
-      ]
-    );
+    reset();
+    router.replace("/(auth)");
   };
 
   return (
@@ -75,12 +70,13 @@ export default function VerifyAge() {
       }
       headerBetweenAction={<Text className="text-[13px]">Verifying Age</Text>}
       customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(auth)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={<X size={20} className="text-gray-700" />}
+          variant="destructive"
+          onPress={handleClose}
+        />
       }
     >
       <ScrollView 

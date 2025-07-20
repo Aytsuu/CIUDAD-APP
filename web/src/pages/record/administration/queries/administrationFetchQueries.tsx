@@ -8,18 +8,25 @@ import {
 } from "../restful-api/administrationGetAPI";
 import { api } from "@/api/api";
 
-export const useStaffs = (page: number, pageSize: number, searchQuery: string) => {
+export const useStaffs = (
+  page: number, 
+  pageSize: number, 
+  searchQuery: string, 
+  staffTypeFilter?: 'Barangay Staff' | 'Health Staff'
+) => {
   return useQuery({
-    queryKey: ["staffs", page, pageSize, searchQuery],
-    queryFn: () => getStaffs(page, pageSize, searchQuery),
+    queryKey: ["staffs", page, pageSize, searchQuery, staffTypeFilter],
+    queryFn: () => getStaffs(page, pageSize, searchQuery, staffTypeFilter),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
-export const usePositions = () => {
+export const usePositions = (
+  staffType?: 'Admin' | 'Health Staff' | 'Barangay Staff'
+) => {
   return useQuery({
-    queryKey: ["positions"],
-    queryFn: getPositions,
+    queryKey: ["positions", staffType],
+    queryFn: () => getPositions(staffType),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { ArrowUpDown, CircleAlert, UserRoundPlus } from "lucide-react";
+import { ArrowUpDown, CircleAlert, Store, UserRoundPlus } from "lucide-react";
 import { ResidentAdditionalRecord, ResidentRecord } from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -99,6 +99,20 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     },
   },
   {
+    accessorKey: "business_owner",
+    header: "Business Owner",
+    cell: ({ row }) => (
+      <div className="flex justify-center items-center">
+        {row.original.business_owner === true ? (
+        <Store className="w-4 h-4 text-green-500"/>
+        ) : (
+          <div className="w-2 h-2 rounded-full bg-red-500"/>
+        )}
+      </div>
+      
+    ),
+  },
+  {
     accessorKey: "lname",
     header: ({ column }) => (
       <div
@@ -135,6 +149,26 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
   {
     accessorKey: "mname",
     header: "Middle Name",
+  },
+  {
+    accessorKey: "registered_by",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "rp_date_registered",

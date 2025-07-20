@@ -119,7 +119,7 @@ export default function Security() {
       {/* Password Section */}
       <div className="space-y-4 p-6 border rounded-lg">
         <div className="flex items-center gap-3">
-          <Lock className="w-5 h-5 text-primary" />
+          <Lock className="w-5 h-5" />
           <h2 className="text-lg font-semibold">Password</h2>
         </div>
 
@@ -307,7 +307,7 @@ export default function Security() {
       {/* Two-Factor Authentication */}
       <div className="space-y-4 p-6 border rounded-lg">
         <div className="flex items-center gap-3">
-          <Shield className="w-5 h-5 text-primary" />
+          <Shield className="w-5 h-5" />
           <h2 className="text-lg font-semibold">Two-Factor Authentication</h2>
         </div>
 

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Card, CardContent } from "@/components/ui/card/card"
@@ -20,7 +18,6 @@ export default function WeeklyAR() {
   const currentYear = new Date().getFullYear()
   const [selectedYear, setSelectedYear] = useState(currentYear)
 
-  // Generate year options based on actual data range
   const getYearOptions = () => {
     if (!weeklyAR || weeklyAR.length === 0) {
       // If no data, only show current year
@@ -110,6 +107,7 @@ export default function WeeklyAR() {
       </div>
     )
   }
+
 
   if (error) {
     return (

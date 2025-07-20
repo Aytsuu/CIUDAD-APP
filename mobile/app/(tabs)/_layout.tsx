@@ -28,9 +28,9 @@ export default () => {
             }}
         />
         <Tabs.Screen
-            name="profile"
+            name="account"
             options={{
-              title: "Profile",
+              title: "Account",
               headerShown: false,
             }}
         />

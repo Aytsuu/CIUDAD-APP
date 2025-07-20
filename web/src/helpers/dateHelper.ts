@@ -33,7 +33,12 @@ export const lastDayOfTheWeek = (weekNo: number, month: number, year: number) =>
 };
 
 // Get the range of days in a week (e.g September 01-05, 2025)
-export const getRangeOfDaysInWeek = (week: number, month: string, year: number) => {
+export const getRangeOfDaysInWeek = (
+  week: number, 
+  month: string, 
+  year: number, 
+  onlyNumber: boolean = false
+) => {
   const monthNum = monthNameToNumber(month); // 1-based
   if (!monthNum) return null;
 
@@ -50,6 +55,7 @@ export const getRangeOfDaysInWeek = (week: number, month: string, year: number) 
   const startDate = new Date(year, monthIndex, start).getDate();
   const endDate = new Date(year, monthIndex, end).getDate();
 
+  if(onlyNumber) return { start_day: startDate, end_day: endDate }
   return `${month.toUpperCase()} ${startDate}-${endDate}, ${year}`;
 };
 // Get month in number based on a given month in text

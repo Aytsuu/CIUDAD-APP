@@ -19,7 +19,10 @@ class HouseholdTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
   
   def get_queryset(self):
-        queryset = Household.objects.annotate(
+        queryset = Household.objects.select_related(
+           'add',
+           'staff'
+        ).annotate(
            family_count=Count('family_set', distinct=True)
         ).prefetch_related(
             'family_set'  # For counting families (assuming Family has hh FK)
@@ -30,7 +33,11 @@ class HouseholdTableView(generics.ListAPIView):
             'rp__rp_id',
             'rp__per__per_lname',
             'rp__per__per_fname',
-            'rp__per__per_mname'
+            'rp__per__per_mname',
+            'add__sitio__sitio_name',
+            'add__add_street',
+            'staff__staff_id',
+            'staff__staff_type',
         )
 
         search_query = self.request.query_params.get('search', '').strip()

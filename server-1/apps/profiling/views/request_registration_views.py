@@ -1,8 +1,10 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q
 from apps.pagination import StandardResultsPagination
+from utils.email import send_email
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 
@@ -14,7 +16,7 @@ class RequestTableView(generics.ListAPIView):
     queryset = RequestRegistration.objects.select_related(
       'per'
     ).prefetch_related(
-      'per__personaladdress_set__add'
+      'per__personal_addresses__add'
     ).only(
       'req_id',
       'req_date',
@@ -30,9 +32,9 @@ class RequestTableView(generics.ListAPIView):
         Q(req_date__icontains=search_query) |
         Q(per__per_lname__icontains=search_query) |
         Q(per__per_fname__icontains=search_query) |
-        Q(per__per_mname__icontains=search_query) 
-      ).distinct()
-    return queryset
+        Q(per__per_mname__icontains=search_query)).distinct()
+      
+    return queryset.filter(req_is_archive=False)
 
 class RequestCreateView(generics.CreateAPIView):
   serializer_class = RequestCreateSerializer
@@ -61,3 +63,7 @@ class RequestDeleteView(generics.DestroyAPIView):
   serializer_class = RequestBaseSerializer
   queryset = RequestRegistration.objects.all()
   lookup_field = 'req_id'
+
+class RequestCountView(APIView):
+  def get(self, request, *args, **kwargs):
+    return Response(RequestRegistration.objects.count())

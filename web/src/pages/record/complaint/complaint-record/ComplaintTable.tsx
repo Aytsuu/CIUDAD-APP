@@ -2,6 +2,8 @@ import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import Loading from "@/components/ui/loading";
+
 
 export default function ComplaintTable({ data, columns }: any) {
   const [pageSizeInput, setPageSizeInput] = useState("10");

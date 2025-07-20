@@ -20,6 +20,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = ResidentProfile.objects.select_related(
           'per',
+          'staff',  # Include staff relationship
         ).prefetch_related(
             Prefetch('family_compositions', 
                 queryset=FamilyComposition.objects.select_related(
@@ -32,6 +33,8 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
           'per__per_lname',
           'per__per_fname',
           'per__per_mname',
+          'staff__staff_id',  # Include staff fields
+          'staff__staff_type',
         )
 
         search_query = self.request.query_params.get('search', '').strip()

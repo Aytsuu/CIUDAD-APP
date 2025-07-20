@@ -13,7 +13,7 @@ const getIcon = (routeName: string, color: string) => {
       return <Logs {...iconProps} />;
     case 'inbox':
       return <Mail {...iconProps} />;
-    case 'profile':
+    case 'account':
       return <CircleUserRound {...iconProps} />;
     default:
       return null;

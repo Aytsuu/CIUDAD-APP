@@ -275,7 +275,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Team",
-    url: "/report",
+    url: "/team",
   },
   {
     title: "Report",

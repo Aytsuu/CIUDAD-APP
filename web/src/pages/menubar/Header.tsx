@@ -1,6 +1,7 @@
 import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
 import AccountProfile from "./navItems/user/accountProfile";
-import { NotificationDropdown } from "@/components/notification-dropdown";
+// import { NotificationDropdown } from "@/pages/menubar/sidebar/notification-dropdown";
+import { NotificationBell } from "./navItems/notification/notification_bell";
 
 export function Header() {
   return (
@@ -18,7 +19,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <NotificationDropdown />
+          <NotificationBell />
           <AccountProfile />
         </div>
       </header>

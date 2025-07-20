@@ -61,7 +61,7 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">Sign In</CardTitle>
@@ -172,7 +172,7 @@ export default function SignIn() {
             </form>
           </Form>
 
-          <div className="relative">
+          {/* <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -181,7 +181,7 @@ export default function SignIn() {
                 Or continue with
               </span>
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

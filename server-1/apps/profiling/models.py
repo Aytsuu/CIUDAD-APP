@@ -23,6 +23,9 @@ class Address(models.Model):
 
     class Meta:
         db_table = 'address'
+        indexes = [
+            models.Index(fields=['sitio']),
+        ]
 
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
@@ -57,7 +60,7 @@ class Personal(models.Model):
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
 
     class Meta:
@@ -72,6 +75,7 @@ class ResidentProfile(models.Model):
     class Meta:
         db_table = 'resident_profile'
         indexes = [
+            models.Index(fields=['rp_id']),
             models.Index(fields=['per']),
             models.Index(fields=['rp_date_registered'])
         ]
@@ -124,6 +128,7 @@ class FamilyComposition(models.Model):
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
     req_date = models.DateField(auto_now_add=True)
+    req_is_archive = models.BooleanField(default=False)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     acc = models.ForeignKey('account.Account', on_delete=models.CASCADE)
 
@@ -162,7 +167,7 @@ class BusinessFile(models.Model):
     bf_path = models.CharField(max_length=500)
     bf_url = models.URLField()
     bf_created_at = models.DateTimeField(auto_now_add=True)
-    bus = models.ForeignKey(Business, on_delete=models.CASCADE)
+    bus = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_files')
 
     class Meta:
         db_table = 'business_file'
@@ -181,3 +186,15 @@ class RequestFile(models.Model):
     class Meta:
         db_table = 'request_file'
 
+class KYCRecord(models.Model):
+    kyc_id = models.BigAutoField(primary_key=True)
+    id_document_front = models.TextField(null=True, blank=True)
+    face_photo = models.TextField(null=True, blank=True)
+    document_info_match = models.BooleanField(null=True, default=False)
+    face_match_score = models.FloatField(null=True, blank=True)
+    is_verified = models.BooleanField(null=True, default=False)
+    created_at = models.DateTimeField(null=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, auto_now=True)
+
+    class Meta:
+        db_table = 'kyc_record'
