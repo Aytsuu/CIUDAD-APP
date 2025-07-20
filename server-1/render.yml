@@ -2,30 +2,37 @@ services:
   - type: web
     name: server-1
     runtime: python
-    buildCommand: './build.sh'
-    startCommand: 'python -m gunicorn backend.asgi:application -k uvicorn.workers.UvicornWorker' 
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn backend.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:10000 --timeout 120"
     envVars:
       # Django Core
       - key: SECRET_KEY
-        generateValue: true
+        value: "your-actual-secret-key"
       - key: DEBUG
         value: "False"
       - key: DJANGO_SETTINGS_MODULE
-        value: "barangay_backend.settings"
+        value: "backend.settings"
       - key: ALLOWED_HOSTS
         value: ".onrender.com,localhost,127.0.0.1"
 
-      # Supabase PostgreSQL Configuration
+      # Database (Supabase)
       - key: DB_NAME
-        value: "postgres"  # Default Supabase database name
+        value: "postgres"
       - key: DB_USER
-        value: "postgres.isxckceeyjcwvjipndfd"  # Default Supabase user
+        value: "postgres.isxckceeyjcwvjipndfd"
       - key: DB_PASSWORD
-        value: research@capstone  # From Supabase Project Settings -> Database
+        value: "research@capstone" 
       - key: DB_HOST
-        value: aws-0-ap-southeast-1.pooler.supabase.com  # Supabase host URL
+        value: "aws-0-ap-southeast-1.pooler.supabase.com"
       - key: DB_PORT
-        value: "5432"  # Default PostgreSQL port
+        value: "5432"
+      - key: DB_OPTIONS
+        value: '{"connect_timeout": 5, "sslmode": "require"}'
 
+      # CORS
       - key: CORS_ALLOWED_ORIGINS
-        value: "http://localhost:5173"
+        value: "http://localhost:5173,https://ciudad-app.onrender.com"
+
+      # Static Files
+      - key: STATIC_URL
+        value: "/static/"

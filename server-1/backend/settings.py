@@ -141,6 +141,10 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
+        'OPTIONS': {
+            'connect_timeout': 5,
+            'sslmode': 'require',
+        },
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
@@ -215,7 +219,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",  # Add this for Vite sometimes
 ]
 
-ALLOWED_HOSTS = ['*'] 
+ALLOWED_HOSTS = [
+    'ciudad-app.onrender.com',
+    'localhost',
+    '127.0.0.1'
+]
+
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
