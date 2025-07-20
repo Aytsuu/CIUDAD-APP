@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api, api2 } from "@/api/api";
 import { formatDate } from "@/helpers/dateHelper";
 import { capitalize } from "@/helpers/capitalize";
 
@@ -8,6 +8,7 @@ import { capitalize } from "@/helpers/capitalize";
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/address/create/", data);
+    await api2.post("health-profiling/address/create/", data);
     return res.data;
   } catch (err) {
     throw err;
@@ -18,6 +19,7 @@ export const addAddress =  async (data: Record<string, any>[]) => {
 export const addPersonalAddress = async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/per_address/create/", data);
+    await api2.post("health-profiling/per_address/create/", data)
     return res.data;
   } catch (err) {
     throw err;
@@ -29,7 +31,6 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
   try {
     const res = await api.post("profiling/resident/create/combined/", {
       per: {
-        per_id: +personalInfo.per_id || null,
         per_lname: personalInfo.per_lname || null,
         per_fname: personalInfo.per_fname || null,
         per_mname: personalInfo.per_mname || null,
@@ -41,11 +42,29 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
         per_religion: personalInfo.per_religion || null,
         per_contact: personalInfo.per_contact || null,
       },
+      per_id: +personalInfo.per_id || null,
       staff: staffId || null
-    })
+    });
+
+    await api2.post("health-profiling/resident/create/combined/", {
+      per: {
+        per_lname: personalInfo.per_lname,
+        per_fname: personalInfo.per_fname,
+        per_mname: personalInfo.per_mname || null,
+        per_suffix: personalInfo.per_suffix || null,
+        per_dob: formatDate(personalInfo.per_dob),
+        per_sex: personalInfo.per_sex,
+        per_status: personalInfo.per_status,
+        per_edAttainment: personalInfo.per_edAttainment || null,
+        per_religion: personalInfo.per_religion,
+        per_contact: personalInfo.per_contact,
+      },
+      staff: staffId || null
+    });
     
     return res.data
   } catch (err) { 
+    console.error(err)
     throw err;
   }
 }
@@ -59,7 +78,7 @@ export const addFamily = async (
     const res = await api.post("profiling/family/create/", {
       fam_indigenous: capitalize(demographicInfo.indigenous),
       fam_building: capitalize(demographicInfo.building),
-      hh: demographicInfo.householdNo || null,
+      hh: demographicInfo.householdNo.split(" ")[0] || null,
       staff: staffId,
     });
 

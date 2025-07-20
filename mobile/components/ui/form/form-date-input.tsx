@@ -29,7 +29,7 @@ export const FormDateInput = ({ control, name, label }: DatePickerProps) => {
           <View className="flex relative">
             <Button
               onPress={() => setShowPicker(true)}
-              className={`h-[45px] font-PoppinsRegular border bg-white items-start ${
+              className={`h-[45px] rounded-md font-PoppinsRegular border bg-white items-start ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             >

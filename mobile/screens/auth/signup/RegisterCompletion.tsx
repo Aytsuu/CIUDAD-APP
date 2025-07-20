@@ -2,18 +2,15 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import {
   useAddPersonal,
   useAddRequest,
-  useAddRequestFile,
   useAddAddress,
   useAddPerAddress,
-} from "./queries/signupAddQueries";
+} from "../queries/authPostQueries";
 import React from "react";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { useRouter } from "expo-router";
 import { 
   View, 
   Text, 
-  TouchableOpacity, 
-  Image, 
   ScrollView, 
   Dimensions 
 } from "react-native";
@@ -22,42 +19,27 @@ import { Ionicons } from "@expo/vector-icons";
 import { useToastContext } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
-const { width } = Dimensions.get('window');
-
-export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus }: {
-  photo: string,
-  setPhoto: React.Dispatch<React.SetStateAction<Record<string, any>>>
-  setDetectionStatus: React.Dispatch<React.SetStateAction<string>>
-}) {
+export default function RegisterCompletion() {
   const { toast } = useToastContext();
   const router = useRouter();
   const [showFeedback, setShowFeedback] = React.useState(false);
   const [status, setStatus] = React.useState<"success" | "failure">("success");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { getValues } = useRegistrationFormContext();
+  const { getValues, setValue, reset } = useRegistrationFormContext();
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addRequest } = useAddRequest();
-  const { mutateAsync: addRequestFile } = useAddRequestFile();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
-
-  const cancel = () => {
-    setPhoto({});
-    setDetectionStatus("");
-  };
-
+  
   const submit = async () => {
     setIsSubmitting(true);
     try {
       const {per_addresses, ...data} = getValues("personalInfoSchema");
-      const dob = getValues("verificationSchema.dob");
-      const photoList = getValues("photoSchema.list");
-
-      console.log("Data:", data)
-      console.log("Addresses:", per_addresses.list)
-
-      addPersonal({...data, per_dob: dob }, {
+      const {confirmPassword, ...accountInfo} = getValues("accountFormSchema")
+      
+      addPersonal({...capitalizeAllFields(data)}, {
         onSuccess: (newData) => {
           addAddress(per_addresses.list, {
             onSuccess: (new_addresses) => {
@@ -68,21 +50,19 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
               addPersonalAddress(per_address)
             }
           })
-          addRequest(newData.per_id, {
-            onSuccess: (request) => {
-              const data = photoList.map((photo: any) => ({
-                ...photo,
-                req: request.req_id,
-              }));
 
-              console.log('file data:', data)
-              addRequestFile(data, {
-                onSuccess: () => {
-                  setStatus("success");
-                  setIsSubmitting(false);
-                  setShowFeedback(true);
-                }
-              });
+          addRequest({
+            per: newData.per_id,
+            acc: accountInfo
+          }, {
+            onSuccess: () => {
+              setStatus("success");
+              setIsSubmitting(false);
+              setShowFeedback(true);
+              reset();
+            },
+            onError: () => {
+              setIsSubmitting(false);
             }
           });
         }
@@ -127,33 +107,6 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
             </Text>
           </View>
 
-          {/* Photo Preview */}
-          <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-            <Text className="text-lg font-semibold text-gray-800 mb-4 text-center">
-              Your Photo
-            </Text>
-            <View className="items-center">
-              <View className="w-48 h-60 rounded-2xl overflow-hidden bg-gray-100 shadow-md">
-                {photo && (
-                  <Image
-                    source={{ uri: photo }}
-                    className="w-full h-full"
-                    resizeMode="cover"
-                  />
-                )}
-              </View>
-              <TouchableOpacity
-                onPress={cancel}
-                className="mt-4 px-4 py-2 bg-blue-50 rounded-full"
-                disabled={isSubmitting}
-              >
-                <Text className="text-blue-600 font-medium text-sm">
-                  Retake Photo
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Important Notice */}
           <View className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">
             <View className="flex-row items-start">
@@ -176,7 +129,6 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
         <View className="flex-row gap-4">
           <Button 
             variant={"secondary"}
-            onPress={cancel}
             disabled={isSubmitting}
             className={`flex-1 py-4 rounded-2xl ${
               isSubmitting ? 'opacity-50' : 'active:bg-gray-50'

@@ -21,6 +21,7 @@ ann_end_at: z
   ar_mode: z.array(z.string()).nonempty({ message: "Announcement mode is required" }), 
   positions: z.array(z.string()).optional(),
   ar_age: z.array(z.enum(["youth", "adult", "senior"])).optional(),
+  staff: z.string().optional()
 });
 
 export default AnnouncementSchema;

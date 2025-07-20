@@ -1,9 +1,10 @@
-"use client"
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, Calendar, Clock } from "lucide-react"
+import { AlertTriangle, Calendar, Clock, Plus } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button/button"
+import { Link } from "react-router"
+import { hasWeekPassed, monthNameToNumber } from "@/helpers/dateHelper"
 
 interface MissedWeeklyARProps {
   organizedData: Array<{
@@ -16,49 +17,17 @@ interface MissedWeeklyARProps {
     missedWeeksPassed: number
     hasData: boolean
   }>
+  selectedYear: number
 }
 
-// Helper function to check if a week has passed
-const hasWeekPassed = (month: string, weekNo: number) => {
-  const currentDate = new Date()
-  const currentYear = currentDate.getFullYear()
-
-  // Get the month index (0-11)
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ]
-  const monthIndex = monthNames.indexOf(month)
-
-  if (monthIndex === -1) return false
-
-  // Calculate the end date of the given week
-  const firstDayOfMonth = new Date(currentYear, monthIndex, 1)
-  const firstDayOfWeek = firstDayOfMonth.getDay()
-  const daysToFirstMonday = firstDayOfWeek === 0 ? 1 : 8 - firstDayOfWeek
-
-  // Calculate the end of the specified week
-  const weekEndDate = new Date(currentYear, monthIndex, daysToFirstMonday + (weekNo - 1) * 7 + 6)
-
-  return weekEndDate < currentDate
-}
-
-export default function MissedWeeklyAR({ organizedData }: MissedWeeklyARProps) {
+export default function MissedWeeklyAR({ organizedData, selectedYear }: MissedWeeklyARProps) {
   // Filter months that have missed weeks that have passed
   const monthsWithMissedWeeks = organizedData
     .map((monthData) => ({
       ...monthData,
-      missedWeeksPassedList: monthData.missingWeeks.filter((weekNo) => hasWeekPassed(monthData.month, weekNo)),
+      missedWeeksPassedList: monthData.missingWeeks.filter((weekNo) =>
+        hasWeekPassed(monthData.month, weekNo, selectedYear),
+      ),
     }))
     .filter((monthData) => monthData.missedWeeksPassedList.length > 0)
 
@@ -66,6 +35,8 @@ export default function MissedWeeklyAR({ organizedData }: MissedWeeklyARProps) {
     (total, monthData) => total + monthData.missedWeeksPassedList.length,
     0,
   )
+
+  console.log(organizedData)
 
   if (totalMissedWeeks === 0) {
     return (
@@ -81,7 +52,11 @@ export default function MissedWeeklyAR({ organizedData }: MissedWeeklyARProps) {
             <div className="text-green-600 mb-2">
               <Clock className="h-8 w-8 mx-auto" />
             </div>
-            <p className="text-sm text-muted-foreground">No missed reports! You're up to date.</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedYear > new Date().getFullYear()
+                ? `No missed reports for ${selectedYear} yet.`
+                : "No missed reports! You're up to date."}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -106,7 +81,9 @@ export default function MissedWeeklyAR({ organizedData }: MissedWeeklyARProps) {
               <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline">
                 <div className="flex items-center gap-2 w-full">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">{month}</span>
+                  <span className="font-medium text-sm">
+                    {month} {selectedYear}
+                  </span>
                   <Badge variant="destructive" className="ml-auto mr-2 text-xs">
                     {missedWeeksPassedList.length} missed
                   </Badge>
@@ -123,9 +100,20 @@ export default function MissedWeeklyAR({ organizedData }: MissedWeeklyARProps) {
                         <div className="w-2 h-2 bg-red-500 rounded-full" />
                         <span className="text-sm font-medium">Week {weekNo}</span>
                       </div>
-                      <Badge variant="destructive" className="text-xs">
-                        Overdue
-                      </Badge>
+                      <Link to={"missing-report/create"}
+                        state={{
+                          params: {
+                            year: selectedYear,
+                            month: month,
+                            week: weekNo,
+                          }
+                        }}
+                      >
+                        <Button variant={"link"} className="text-black/40 text-[13px] hover:text-black/80">
+                          <Plus />
+                          Create
+                        </Button>
+                      </Link>
                     </div>
                   ))}
                 </div>
@@ -133,15 +121,6 @@ export default function MissedWeeklyAR({ organizedData }: MissedWeeklyARProps) {
             </AccordionItem>
           ))}
         </Accordion>
-
-        {totalMissedWeeks > 0 && (
-          <div className="p-4 border-t">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total missed weeks:</span>
-              <Badge variant="destructive">{totalMissedWeeks}</Badge>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )

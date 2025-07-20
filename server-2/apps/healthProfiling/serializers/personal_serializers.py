@@ -3,14 +3,30 @@ from ..models import *
 from ..serializers.address_serializers import AddressBaseSerializer
 
 class PersonalBaseSerializer(serializers.ModelSerializer):
+    addresses = serializers.SerializerMethodField()
+
     class Meta:
         model = Personal
-        fields = '__all__'
+        fields = ['per_id','per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_dob', 
+                  'per_sex', 'per_status', 'per_edAttainment', 'per_religion', 
+                  'per_contact', 'addresses']
         extra_kwargs = {
-            'per_mname': {'required': False, 'allow_null': True, 'allow_blank': True},
-            'per_suffix': {'required': False, 'allow_null': True, 'allow_blank': True},
-            'per_edAttainment': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'per_lname': {'required': False, 'allow_null': True},
+            'per_fname': {'required': False, 'allow_null': True},
+            'per_mname': {'required': False, 'allow_null': True},
+            'per_suffix': {'required': False, 'allow_null': True},
+            'per_sex': {'required': False, 'allow_null': True},
+            'per_dob': {'required': False, 'allow_null': True},
+            'per_status': {'required': False, 'allow_null': True},
+            'per_contact': {'required': False, 'allow_null': True},
+            'per_edAttainment': {'required': False, 'allow_null': True},
+            'per_religion': {'required': False, 'allow_null': True},
         }
+        
+    def get_addresses(Self, obj):
+        per_addresses = PersonalAddress.objects.filter(per=obj.per_id)
+        addresses = [pa.add for pa in per_addresses.select_related('add')]
+        return AddressBaseSerializer(addresses, many=True).data
 
 class PersonalUpdateSerializer(serializers.ModelSerializer):
     per_addresses = serializers.ListField(child=AddressBaseSerializer(), required=False)

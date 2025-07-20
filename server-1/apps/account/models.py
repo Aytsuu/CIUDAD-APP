@@ -50,6 +50,13 @@ class Account(models.Model):
         related_name="account"
     )
 
+    br = models.OneToOneField(
+        "profiling.BusinessRespondent",
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="business_account"
+    )
+
     class Meta:
         db_table = 'account'
     

@@ -8,7 +8,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { DependentRecord } from "../../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { CircleAlert, Trash } from "lucide-react";
+import { CircleAlert, CircleCheck, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
@@ -149,69 +149,88 @@ export default function DependentsInfoLayout({
       const dependentsInfo = form.getValues().dependentsInfo.list;
 
       // Store information to the main database
-      const family = await addFamily({
+      await addFamily({
         demographicInfo: demographicInfo, 
         staffId: user?.staff?.staff_id || ""
+      }, {
+        onSuccess: (family) => {
+          let bulk_composition: {
+          fam: string, 
+          fc_role: string, 
+          rp: string}[] = [];
+
+          // Prepare composition data for both databases
+          selectedParents.forEach((parentId, index) => {
+            if(!parentId) return;
+            
+            const compositionData = {
+              fam: family.fam_id,
+              fc_role: PARENT_ROLES[index],
+              rp: parentId
+            };
+            
+            bulk_composition.push(compositionData);
+          });
+
+          dependentsInfo.forEach((dependent) => {
+            const dependentId = dependent.id?.split(" ")[0] as string;
+            
+            const compositionData = {
+              fam: family.fam_id,
+              fc_role: 'Dependent',
+              rp: dependentId
+            };
+            
+            bulk_composition.push(compositionData);
+          });
+
+          addFamilyComposition(bulk_composition);
+        }
       });
 
       // Store information to the health database
-      const familyHealth = await addFamilyHealth({
+      await addFamilyHealth({
         demographicInfo: demographicInfo, 
         staffId: user?.staff?.staff_id || ""
+      }, {
+        onSuccess: (family) => {
+          let bulk_composition: {
+          fam: string, 
+          fc_role: string, 
+          rp: string}[] = [];
+
+          // Prepare composition data for both databases
+          selectedParents.forEach((parentId, index) => {
+            if(!parentId) return;
+            
+            const compositionData = {
+              fam: family.fam_id,
+              fc_role: PARENT_ROLES[index],
+              rp: parentId
+            };
+            
+            bulk_composition.push(compositionData);
+          });
+
+          dependentsInfo.forEach((dependent) => {
+            const dependentId = dependent.id?.split(" ")[0] as string;
+            
+            const compositionData = {
+              fam: family.fam_id,
+              fc_role: 'Dependent',
+              rp: dependentId
+            };
+            
+            bulk_composition.push(compositionData);
+          });
+
+          addFamilyCompositionHealth(bulk_composition);
+        }
       });
 
-      let bulk_composition: {
-        fam: string, 
-        fc_role: string, 
-        rp: string}[] = [];
-
-      let bulk_composition_health: {
-        fam: string, 
-        fc_role: string, 
-        rp: string}[] = [];
-
-      // Prepare composition data for both databases
-      selectedParents.forEach((parentId, index) => {
-        if(!parentId) return;
-        
-        const compositionData = {
-          fam: family.fam_id,
-          fc_role: PARENT_ROLES[index],
-          rp: parentId
-        };
-        const compositionHealthData = {
-          fam: familyHealth.fam_id,
-          fc_role: PARENT_ROLES[index],
-          rp: parentId
-        };
-        
-        bulk_composition.push(compositionData);
-        bulk_composition_health.push(compositionHealthData);
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
       });
-
-      dependentsInfo.forEach((dependent) => {
-        const dependentId = dependent.id?.split(" ")[0] as string;
-        
-        const compositionData = {
-          fam: family.fam_id,
-          fc_role: 'Dependent',
-          rp: dependentId
-        };
-        const compositionHealthData = {
-          fam: familyHealth.fam_id,
-          fc_role: 'Dependent',
-          rp: dependentId
-        };
-        
-        bulk_composition.push(compositionData);
-        bulk_composition_health.push(compositionHealthData);
-      });
-
-      // Insert into main database
-      await addFamilyComposition(bulk_composition);
-      
-      // Insert into health database
-      await addFamilyCompositionHealth(bulk_composition_health);
 
       // Success - navigate back
       safeNavigate.back();

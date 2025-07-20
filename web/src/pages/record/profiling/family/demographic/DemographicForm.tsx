@@ -6,10 +6,9 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
-import { CircleAlert } from "lucide-react";
-import { toast } from "sonner";
 import { Link } from "react-router";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function DemographicForm({
   form,
@@ -30,15 +29,7 @@ export default function DemographicForm({
       onSubmit();
     } else {
       if (!householdId) setInvalidHousehold(true);
-      toast("Please fill out all required fields", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: '1px solid rgb(225, 193, 193)',
-          padding: '16px',
-          color: '#b91c1c',
-          background: '#fef2f2',
-        },
-      });
+      showErrorToast("Please fill out all required fields");
     }
   };
 

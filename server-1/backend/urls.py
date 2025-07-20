@@ -44,5 +44,6 @@ urlpatterns = [
     path('authentication/', include('apps.authentication.urls')),
     path('api/detection/', include('detection.urls')),
     path('gad/', include('apps.gad.urls')),
+    path('clerk/', include('apps.clerk.urls')),
     path('council/', include('apps.council.urls')),
 ]
