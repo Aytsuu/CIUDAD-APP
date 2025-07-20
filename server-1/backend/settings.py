@@ -22,11 +22,11 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # DEBUG = config('DEBUG', default=False, cast=bool)
 DEBUG=False
-ALLOWED_HOSTS = config(
+ALLOWED_HOSTS = [
     'ciudad-app.onrender.com',
     'localhost',
     '127.0.0.1'
-)
+]
 
 # ========================
 # SUPABASE CONFIGURATION
