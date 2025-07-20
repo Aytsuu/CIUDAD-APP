@@ -23,6 +23,9 @@ class Address(models.Model):
 
     class Meta:
         db_table = 'address'
+        indexes = [
+            models.Index(fields=['sitio']),
+        ]
 
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
@@ -57,7 +60,7 @@ class Personal(models.Model):
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
 
     class Meta:
@@ -72,6 +75,7 @@ class ResidentProfile(models.Model):
     class Meta:
         db_table = 'resident_profile'
         indexes = [
+            models.Index(fields=['rp_id']),
             models.Index(fields=['per']),
             models.Index(fields=['rp_date_registered'])
         ]
@@ -124,29 +128,42 @@ class FamilyComposition(models.Model):
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
     req_date = models.DateField(auto_now_add=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
-    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE)
+    req_is_archive = models.BooleanField(default=False)
 
     class Meta: 
         db_table = 'request_registration'
 
-    def __str__(self):
-        return f"Request #{self.req_id} by {self.per} on {self.req_date}"
+class RequestRegistrationComposition(models.Model):
+    rrc_id = models.BigAutoField(primary_key=True)
+    rrc_fam_role = models.CharField(max_length=50)
+    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name="request_composition")
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, null=True)
 
+    class Meta:
+        db_table = 'request_registration_composition'
+
+class BusinessRespondent(models.Model):
+    br_id = models.BigAutoField(primary_key=True)
+    br_lname = models.CharField(max_length=50)
+    br_fname = models.CharField(max_length=50)
+    br_mname = models.CharField(max_length=50, null=True, blank=True)
+    br_sex = models.CharField(max_length=50)
+    br_dob = models.DateField()
+    br_contact = models.CharField(max_length=20)
+    br_address = models.TextField()
+
+    class Meta:
+        db_table = 'business_respondent'
 
 class Business(models.Model):
     bus_id = models.BigAutoField(primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
-    bus_respondentLname = models.CharField(max_length=50)
-    bus_respondentFname = models.CharField(max_length=50)
-    bus_respondentMname = models.CharField(max_length=50)
-    bus_respondentSex = models.CharField(max_length=50)
-    bus_respondentDob = models.DateField()
-    bus_respondentAddress = models.CharField(max_length=500)
-    bus_respondentContact = models.CharField(max_length=20)
     bus_date_registered = models.DateField(default=date.today)
-    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, related_name="owned_business")
+    br = models.ForeignKey(BusinessRespondent, on_delete=models.CASCADE, null=True)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
 
     class Meta:
@@ -162,22 +179,22 @@ class BusinessFile(models.Model):
     bf_path = models.CharField(max_length=500)
     bf_url = models.URLField()
     bf_created_at = models.DateTimeField(auto_now_add=True)
-    bus = models.ForeignKey(Business, on_delete=models.CASCADE)
+    bus = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_files')
 
     class Meta:
         db_table = 'business_file'
 
-class RequestFile(models.Model):
-    rf_id = models.BigAutoField(primary_key=True)
-    rf_name = models.CharField(max_length=500)
-    rf_type = models.CharField(max_length=50)
-    rf_path = models.CharField(max_length=500)
-    rf_url = models.URLField()
-    rf_is_id = models.BooleanField(default=False)
-    rf_id_type = models.CharField(max_length=50, null=True ,blank=True)
-    rf_created_at = models.DateTimeField(auto_now_add=True)
-    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name='files') 
- 
-    class Meta:
-        db_table = 'request_file'
+class KYCRecord(models.Model):
+    kyc_id = models.BigAutoField(primary_key=True)
+    id_document_front = models.TextField(null=True, blank=True)
+    id_has_face = models.BooleanField(null=True, default=False)
+    id_face_embedding = models.BinaryField(null=True, blank=True)
+    face_photo = models.TextField(null=True, blank=True)
+    document_info_match = models.BooleanField(null=True, default=False)
+    face_match_score = models.FloatField(null=True, blank=True)
+    is_verified = models.BooleanField(null=True, default=False)
+    created_at = models.DateTimeField(null=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, auto_now=True)
 
+    class Meta:
+        db_table = 'kyc_record'

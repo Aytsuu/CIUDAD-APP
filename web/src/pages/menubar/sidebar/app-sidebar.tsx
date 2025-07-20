@@ -270,16 +270,23 @@ const items: MenuItem[] = [
     ],
   },
   {
+    title: "Report",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Incident", url: "/report/incident"},
+      { title: "Acknowledgement", url: "/report/acknowledgement"},
+      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
+      { title: "Securado", url: "/report/securado"}  
+    ],
+  },
+  {
     title: "Blotter",
     url: "/blotter-record",
   },
   {
     title: "Team",
-    url: "/report",
-  },
-  {
-    title: "Report",
-    url: "/report",
+    url: "/team",
   },
   {
     title: "Summon & Case Tracker",
@@ -301,10 +308,12 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+      { title: "Council Events", url: "/calendar-page" },
+      { title: "Attendance", url: "/attendance-page" },
       { title: "Ordinance", url: "/ord-page" },
       { title: "Resolution", url: "/res-page" },
       { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Attendance", url: "/attendance-page" },
+      { title: "Document Template", url: "/templates-main"}
     ],
   },
   {

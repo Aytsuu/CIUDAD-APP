@@ -117,12 +117,7 @@ export const useAddFamilyComposition = () => {
       queryClient.invalidateQueries({queryKey: ['familyCompositions']});
       queryClient.invalidateQueries({ queryKey: ["families"] });
       queryClient.invalidateQueries({queryKey: ['residents']});
-
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
-      }
+    }
   });
 };
 

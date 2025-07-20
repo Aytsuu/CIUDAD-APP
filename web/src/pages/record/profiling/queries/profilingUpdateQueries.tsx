@@ -99,11 +99,21 @@ export const useUpdateFamily = () => {
 }
 
 export const useUpdateBusiness = () => {
+  const queryclient = useQueryClient();
   return useMutation({
     mutationFn: ({data, businessId} : {
       data: Record<string, any>;
       businessId: string;
-    }) => updateBusiness(data, businessId)
+    }) => updateBusiness(data, businessId),
+    onSuccess: (newData) => {
+      queryclient.setQueryData(['businessInfo'], (old: any) => ({
+        ...(old || {}),
+        ...newData
+      }));
+
+      queryclient.invalidateQueries({queryKey: ['businesses']});
+      queryclient.invalidateQueries({queryKey: ['businessInfo']});
+    }
   })
 }
 

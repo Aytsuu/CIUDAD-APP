@@ -12,6 +12,7 @@ import { ord_router } from './ordinancePage-router';
 import { res_router } from './resolutionPage-router';
 import { attendance_router } from './attendacePage-router';
 import { mom_router } from './MinutesOfMeetingPage-router';
+import { template_router } from './template-router';
 import { council_calendar_router } from './calendarPage-route';
 import { patientQueue } from './patientsQueue';
 import { healthinventory } from './inventory';
@@ -32,13 +33,15 @@ import { patientsRecordRouter } from './patients-record-router';
 import { health_administration_router } from './administration-health-router';
 import { reports_router } from './reports-router';
 import { summon_router } from './summon-router';
+import { RouteWithTransition } from '@/components/route-transition/route-with-transition';
+import { withTransition } from '@/helpers/withTransition';
 
 
 export const main_router: RouteObject[] = [
     {
         path: "/",
         element: <MainLayout />,
-        children: [
+        children: withTransition([
             {
                 path: "/",
                 element: <Navigate to="/dashboard" />
@@ -59,6 +62,7 @@ export const main_router: RouteObject[] = [
             ...res_router,
             ...attendance_router,
             ...mom_router,
+            ...template_router,
             ...council_calendar_router,
             ...donation_router,
             ...treasurer_router,
@@ -80,6 +84,6 @@ export const main_router: RouteObject[] = [
             ...patientsRecordRouter,
             ...health_administration_router,
             
-        ]
+        ])
     }
 ]

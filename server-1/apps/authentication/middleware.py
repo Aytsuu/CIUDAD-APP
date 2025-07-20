@@ -1,10 +1,3 @@
-# from django.utils.deprecation import MiddlewareMixin
-
-# class AccountMiddleware(MiddlewareMixin):
-#     def process_request(self, request):
-#         if hasattr(request, 'user'):
-#             request.account = request.user
-
 from django.http import JsonResponse
 from utils.supabase_client import supabase
 import logging
@@ -41,7 +34,7 @@ class AuthCheckingMiddleware:
         access_token = auth_header.split(' ')[1]
         
         try:
-            # Verify token with Supabase
+        #     # Verify token with Supabase
             user_response = supabase.auth.get_user(access_token)
             supabase_user = user_response.user
             

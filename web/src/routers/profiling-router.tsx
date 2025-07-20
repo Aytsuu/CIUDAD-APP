@@ -13,6 +13,9 @@ import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLa
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
 import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
+import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
+import { Navigate } from "react-router";
+import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
 
 export const profiling_router = [
   // Account
@@ -31,12 +34,34 @@ export const profiling_router = [
     element: <ResidentFormLayout />,
   },
   {
+    path: "resident/registration",
+    element: <RegistrationLayout />,
+  },
+  {
     path: "resident/view",
     element: <ResidentFormLayout />,
   },
   {
-    path: "resident/pending",
+    path: "request/pending",
     element: <RegistrationRequests />,
+    children: [
+      {
+        path: "individual",
+        element: <RegistrationRequests />,
+      },
+      {
+        path: "family",
+        element: <RegistrationRequests />,
+      },
+    ]
+  },
+  {
+    path: "request/pending/individual/registration",
+    element: <RegistrationLayout />,
+  },
+  {
+    path: "request/pending/family/registration",
+    element: <RequestFamilyReg />,
   },
   {
     path: "resident/additional-registration",

@@ -8,7 +8,7 @@ export const api = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 10000, 
 });
 
 export const api2 = axios.create({
@@ -16,12 +16,12 @@ export const api2 = axios.create({
   timeout: 10000,
 });
 
-// // Request interceptor to add auth token
+// Request interceptor to add auth token
 // api.interceptors.request.use(async (config) => {
 //   // Skip auth for login and signup endpoints
 //   if (
-//     config.url?.includes("authentication/login/") ||
-//     config.url?.includes("authentication/signup/")
+//     config.url?.includes("/authentication/login/") ||
+//     config.url?.includes("/authentication/signup/")
 //   ) {
 //     return config;
 //   }
@@ -93,15 +93,6 @@ export const api2 = axios.create({
 //       }
 //     }
 
-//     return Promise.reject({
-//       config: error.config,
-//       response: {
-//         status: error.response?.status,
-//         data: {
-//           error: "API_REQUEST_FAILED",
-//           details: error.response?.data
-//         }
-//       }
-//     });
+//     return Promise.reject(error);
 //   }
 // );

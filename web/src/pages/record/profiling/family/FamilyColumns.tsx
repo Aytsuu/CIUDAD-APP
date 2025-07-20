@@ -18,7 +18,7 @@ import ViewButton from "@/components/ui/view-button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { capitalize } from "@/helpers/capitalize";
-import { useUpdateFamily, useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
+import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------

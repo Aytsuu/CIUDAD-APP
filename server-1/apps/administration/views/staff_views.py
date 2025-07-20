@@ -76,3 +76,7 @@ class StaffDataByTitleView(APIView):
     req_position = Position.objects.get(pos_title=title)
     staff = Staff.objects.filter(pos=req_position.pos_id)
     return Response(StaffTableSerializer(staff, many=True).data)
+
+class StaffLandingPageView(generics.ListAPIView):
+  serializer_class = StaffLandingPageSerializer
+  queryset = Staff.objects.filter(~Q(pos__pos_title='Admin') & Q(staff_type='Barangay Staff'))

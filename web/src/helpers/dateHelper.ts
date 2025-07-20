@@ -1,7 +1,11 @@
-// Format date (YYYY-MM-DD)
-export const formatDate = (date: string | Date) => {
+// Format date (YYYY-MM-DD) or (July 10, 2025)
+export const formatDate = (date: string | Date, isLong?: boolean) => {
   if(!date) return null;
-  return new Date(date).toISOString().split('T')[0]
+  return isLong ? new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }) : new Date(date).toISOString().split('T')[0]
 }
 
 // Get week number based on a given date format (YYYY-MM-DD)
@@ -33,7 +37,12 @@ export const lastDayOfTheWeek = (weekNo: number, month: number, year: number) =>
 };
 
 // Get the range of days in a week (e.g September 01-05, 2025)
-export const getRangeOfDaysInWeek = (week: number, month: string, year: number) => {
+export const getRangeOfDaysInWeek = (
+  week: number, 
+  month: string, 
+  year: number, 
+  onlyNumber: boolean = false
+) => {
   const monthNum = monthNameToNumber(month); // 1-based
   if (!monthNum) return null;
 
@@ -50,6 +59,7 @@ export const getRangeOfDaysInWeek = (week: number, month: string, year: number) 
   const startDate = new Date(year, monthIndex, start).getDate();
   const endDate = new Date(year, monthIndex, end).getDate();
 
+  if(onlyNumber) return { start_day: startDate, end_day: endDate }
   return `${month.toUpperCase()} ${startDate}-${endDate}, ${year}`;
 };
 // Get month in number based on a given month in text
