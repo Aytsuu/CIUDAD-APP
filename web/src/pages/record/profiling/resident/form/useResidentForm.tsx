@@ -8,6 +8,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { Origin } from "../../profilingEnums";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export const useResidentForm = (defaultData?: any, origin?: any) => {
   const navigate = useNavigate();
@@ -74,16 +75,12 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
   };
 
   const handleSubmitSuccess = (message: string, redirectPath?: string, state?: any) => {
-    toast(message, {
-      icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-    });
+    showSuccessToast(message);
     if (redirectPath) navigate(redirectPath, {state: state});
   };
 
   const handleSubmitError = (message: string) => {
-    toast(message, {
-      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-    });
+    showErrorToast(message);
   };
 
   return {

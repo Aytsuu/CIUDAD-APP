@@ -1,5 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
+import { BsFillPeopleFill, BsFillPersonPlusFill } from 'react-icons/bs';
+import { MdGroupWork } from "react-icons/md";
 import ParentsFormLayout from "./parent/ParentsFormLayout";
 import DependentsInfoLayout from "./dependent/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
@@ -14,6 +16,12 @@ import { DependentRecord } from "../profilingTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useHouseholdsList, useResidentsList } from "../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
+
+const registrationSteps = [
+  { label: "Demographic", minProgress: 30, icon: MdGroupWork },
+  { label: "Parent", minProgress: 60, icon: BsFillPeopleFill },
+  { label: "Dependent", minProgress: 100, icon: BsFillPersonPlusFill }
+];
 
 export default function FamilyProfileForm() {
   const { showLoading, hideLoading } = useLoading();
@@ -72,10 +80,11 @@ export default function FamilyProfileForm() {
       title="Family Profile"
       description="Provide your details to complete the registration process."
     >
+        <ProgressWithIcon 
+          progress={calculateProgress()}
+          steps={registrationSteps}
+        />
         <Card className="w-full">
-          <div className="pt-10">
-            <ProgressWithIcon progress={calculateProgress()} />
-          </div>
           {currentStep === 1 && (
             <DemographicForm
               form={form}

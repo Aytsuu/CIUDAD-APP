@@ -19,7 +19,7 @@ export const FormTextArea = React.memo(({ control, name, label, placeholder, rea
         <FormItem className={className}>
           <FormLabel className="text-black/70">{label}</FormLabel>
           <FormControl>
-            <Textarea placeholder={placeholder} {...field} readOnly={readOnly}/>
+            <Textarea placeholder={placeholder} {...field} readOnly={readOnly} rows={5}/>
           </FormControl>
           <FormMessage />
         </FormItem>

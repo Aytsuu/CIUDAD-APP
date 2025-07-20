@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button/button";
 import React from "react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { Check } from "lucide-react";
 
 export default function ARForm({
   form, 
@@ -69,7 +70,10 @@ export default function ARForm({
       {/* Submit button */}
       <div className="flex justify-end mt-8">
         {!isSubmitting ? (<ConfirmationModal 
-          trigger={<Button className="w-32">Create Report</Button>}
+          trigger={<Button className="w-auto">
+            <Check />
+            Create Report
+          </Button>}
           title="Confirm Create"
           description="Are you sure you want to create a report?"
           actionLabel="Confirm"

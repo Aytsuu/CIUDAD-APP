@@ -54,7 +54,7 @@ export default function HouseholdRecords() {
 
   return (
     // ----------------- RENDER --------------------
-    <MainLayoutComponent title="Household Profiling" description="View and manage household records">
+    <MainLayoutComponent title="Household" description="View and manage household records">
       <div className="space-y-6">
         <Card>
           {/* Search and Actions Bar */}

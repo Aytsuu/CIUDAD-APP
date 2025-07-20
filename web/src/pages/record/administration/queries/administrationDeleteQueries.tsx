@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteAssignedFeature, deletePosition } from "../restful-api/administrationDeleteAPI";
 import { api } from "@/api/api";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { CircleAlert, CircleCheck, X } from "lucide-react";
 
 // Deleting
 export const useDeletePosition = () => {
@@ -13,7 +13,7 @@ export const useDeletePosition = () => {
       queryClient.setQueryData(["positions"], (old: any[] = []) =>
         old.filter((position) => position.pos_id !== positionId)
       );
-    },
+    }
   });
 };
 

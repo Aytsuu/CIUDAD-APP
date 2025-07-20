@@ -422,7 +422,7 @@ const ReferralForm = () => {
 
             <View className="bg-white rounded-xl p-4 shadow-sm">
               <Text className="text-sm font-medium text-gray-700 mb-1">
-                Full Name <Text className="text-red-500">*</Text>
+                Name <Text className="text-red-500">*</Text>
               </Text>
               <TextInput
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 mb-3"

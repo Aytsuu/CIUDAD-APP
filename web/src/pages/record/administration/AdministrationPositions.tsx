@@ -21,7 +21,7 @@ export default function AdministrationPositions({
   setSelectedPosition: (value: string) => void
 }) {
   const navigate = useNavigate()
-  const { mutate: deletePosition, isPending: isDeleting } = useDeletePosition()
+  const { mutateAsync: deletePosition, isPending: isDeleting } = useDeletePosition()
   const [openCategories, setOpenCategories] = React.useState<Set<string>>(new Set())
 
   // Group positions by category
@@ -134,7 +134,7 @@ export default function AdministrationPositions({
             },
             {
               id: 'group',
-              name: 'Group Position',
+              name: 'New Group',
               variant: 'default'
             },
           ]}  
@@ -222,6 +222,7 @@ export default function AdministrationPositions({
                                       name: "Delete",
                                       icon: <Trash className="w-4 h-4" />,
                                       variant: "delete",
+                                      disabled: position.pos_is_predefined
                                     },
                                   ]}
                                   onSelect={handleAction}

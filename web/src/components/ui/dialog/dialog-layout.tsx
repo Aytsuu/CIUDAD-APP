@@ -40,10 +40,10 @@ export default function DialogLayout({
                 {trigger}
             </DialogTrigger>
             <DialogContent className={className}>
-                <DialogHeader>
-                    <DialogTitle className="text-darkBlue1">{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
-                </DialogHeader>
+                {(title || description) && <DialogHeader>
+                    {title && <DialogTitle className="text-darkBlue1">{title}</DialogTitle>}
+                    {description && <DialogDescription>{description}</DialogDescription>}
+                </DialogHeader>}
                 {mainContent}
             </DialogContent>
         </Dialog>

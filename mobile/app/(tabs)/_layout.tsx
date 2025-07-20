@@ -1,41 +1,39 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 import { Tabs } from 'expo-router'
+import { NavigationBar } from '@/components/tab/NavigationBar'
 
-const _layout = () => {
+export default () => {
   return (
-    <Tabs>
+    <Tabs tabBar={props => <NavigationBar {...props}/>}>
         <Tabs.Screen
             name="index"
             options={{
+                title: "Home",
                 headerShown: false,
             }}
-
         />
         <Tabs.Screen
-            name="home"
-            options = {{
-              title: "Home",
-              headerShown: false,
-            }}
-            
-        />
-        <Tabs.Screen
-            name="profile"
+            name="my-request"
             options={{
-              title: "Profile",
-              headerShown: false,
+                title: "My Request",
+                headerShown: false,
             }}
         />
         <Tabs.Screen
-            name="announcement"
+            name="inbox"
             options={{
-              title: "Announcements",
+              title: "Inbox",
+              headerShown: false,
+            }}
+        />
+        <Tabs.Screen
+            name="account"
+            options={{
+              title: "Account",
               headerShown: false,
             }}
         />
     </Tabs>
   )
 }
-
-export default _layout

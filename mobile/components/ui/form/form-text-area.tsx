@@ -31,7 +31,7 @@ export const FormTextArea = ({
             <Text className="text-[12px] font-PoppinsRegular">{label}</Text>
           )}
           <Textarea
-            className={`h-[200px] font-PoppinsRegular text-sm bg-white text-black ${
+            className={`font-PoppinsRegular native:text-sm bg-white text-black ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}
