@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: server-1
+    runtime: python
+    buildCommand: './build.sh'
+    startCommand: 'python -m gunicorn backend.asgi:application -k uvicorn.workers.UvicornWorker' 
+    envVars:
+      # Django Core
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "barangay_backend.settings"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com,localhost,127.0.0.1"
+
+      # Supabase PostgreSQL Configuration
+      - key: DB_NAME
+        value: "postgres"  # Default Supabase database name
+      - key: DB_USER
+        value: "postgres.isxckceeyjcwvjipndfd"  # Default Supabase user
+      - key: DB_PASSWORD
+        value: research@capstone  # From Supabase Project Settings -> Database
+      - key: DB_HOST
+        value: aws-0-ap-southeast-1.pooler.supabase.com  # Supabase host URL
+      - key: DB_PORT
+        value: "5432"  # Default PostgreSQL port
