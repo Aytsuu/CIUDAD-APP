@@ -11,7 +11,7 @@ from django.http import Http404
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
-from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer
+from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer, TransientAddressSerializer
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
 
 
@@ -24,6 +24,12 @@ def get_resident_profile_list(request):
     serializer = ResidentProfileListSerializer(residents, many=True)
     return Response(serializer.data)
 
+class TransientAddressView(generics.ListAPIView):
+    serializer_class = TransientAddressSerializer
+    queryset = TransientAddress.objects.all()
+
+    def get_queryset(self):
+        return TransientAddress.objects.all().order_by('-tradd_id')
 
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
@@ -116,8 +122,20 @@ class PatientView(generics.ListCreateAPIView):
                 
                 # create TransientAddress if address data is provided
                 transient_address = None
+                tradd_id_frontend = transient_data.get('tradd_id')
                 address_data = transient_data.get('address')
-                if address_data:
+
+                if tradd_id_frontend:
+                    try:
+                        transient_address = TransientAddress.objects.get(tradd_id=tradd_id_frontend)
+                        print(f"Existing tradd_id found: {transient_address.tradd_id}")
+                    except TransientAddress.DoesNotExist:
+                        return Response(
+                            {'error': f'TransientAddress with tradd_id {tradd_id_frontend} does not exist'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                elif address_data:
                     required_address_fields = ['tradd_province', 'tradd_city', 'tradd_barangay', 'tradd_street']
                     
                     for field in required_address_fields:
@@ -144,13 +162,25 @@ class PatientView(generics.ListCreateAPIView):
                                 status=status.HTTP_400_BAD_REQUEST
                             )
                     else: # create new transient address
-                        transient_address = TransientAddress.objects.create(
+                        transient_address_exists = TransientAddress.objects.filter(
                             tradd_province=address_data['tradd_province'],
                             tradd_city=address_data['tradd_city'],
                             tradd_barangay=address_data['tradd_barangay'],
                             tradd_street=address_data['tradd_street'],
                             tradd_sitio=address_data.get('tradd_sitio', '')
-                        )
+                        ).first()
+
+                        if transient_address_exists:
+                            transient_address = transient_address_exists
+                            print(f'Using existing tradd_id: {transient_address.tradd_id}')
+                        else:
+                            transient_address = TransientAddress.objects.create(
+                                tradd_province=address_data['tradd_province'],
+                                tradd_city=address_data['tradd_city'],
+                                tradd_barangay=address_data['tradd_barangay'],
+                                tradd_street=address_data['tradd_street'],
+                                tradd_sitio=address_data.get('tradd_sitio', '')
+                            )
                 
                 if is_update:
                     try:
@@ -192,7 +222,7 @@ class PatientView(generics.ListCreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST
                         )
                 else:
-                    # Generate unique trans_id
+                    # generate unique trans_id
                     year = datetime.now().year
                     prefix = f'T{year}'
                     

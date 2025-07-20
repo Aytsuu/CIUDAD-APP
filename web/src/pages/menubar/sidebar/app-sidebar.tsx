@@ -377,6 +377,7 @@ const items: MenuItem[] = [
       {title:"Forwarded Records", url: "/main-forwarded-records"},
       {title:"Archive", url: "/archiveMainInventoryStocks"},
       {title: "Schedules", url: "/health-schedules"},
+      {title: "Service Scheduler", url: "/health-services/scheduler"},
       {title:"Reports", url: "/healthcare-reports" }, 
 
       

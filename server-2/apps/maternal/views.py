@@ -2,15 +2,111 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
-from django.db.models import OuterRef, Exists
+from django.db.models import OuterRef, Exists, Prefetch
 from rest_framework.response import Response
-from .serializer import *
+from .serializer import (
+    MedicalHistorySerializer, ObstetricalHistorySerializer, PostpartumCompleteSerializer,
+    PrenatalCompleteSerializer, PregnancyDetailSerializer,BodyMeasurementReadSerializer,
+    ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer
+) 
+# PreviousHospitalizationSerializer, PreviousPregnancySerializer, TTStatusSerializer,
+#     Guide4ANCVisitSerializer, ChecklistSerializer,
 from apps.patientrecords.serializers.patients_serializers import *
+from .models import *
 
 from datetime import datetime
 import logging
 
 # Create your views here.
+
+class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
+    def get(self, request, pat_id):
+        patient = get_object_or_404(Patient, pat_id=pat_id)
+
+        try:
+            all_patrec_w_medhis = PatientRecord.objects.filter(
+                pat_id=patient,
+                patrec_type__in=['Prenatal', 'Familly Planning', 'Medical Consultation']
+            )
+            print("Found patient records w/ medical history for patient: ", patient.pat_id)
+
+            if not all_patrec_w_medhis:
+                return Response({
+                    'patient': patient.pat_id,
+                    'medical_history': [],
+                    'message': 'No medical history found for this patient'
+                })
+
+            medical_history_obj = MedicalHistory.objects.filter(
+                patrec_id__in=all_patrec_w_medhis 
+            ).select_related('ill_id', 'patrec_id').order_by('-created_at')
+
+            print(f'Found medical history for patient: {patient.pat_id}')
+
+            medhis_data = MedicalHistorySerializer(medical_history_obj, many=True).data
+            
+            return Response({
+                'patient': patient.pat_id,
+                'medical_history': medhis_data
+            })
+
+        except Exception as e:
+            print(f"Error fetching medical history: {e}")
+            return Response({
+                'patient': patient.pat_id,
+                'medical_history': []
+            })
+
+class PrenatalPatientObsHistoryView(generics.RetrieveAPIView):
+    def get(self, request, pat_id):
+        patient = get_object_or_404(Patient, pat_id=pat_id)
+
+        try:
+            obstetrical_history_obj = Obstetrical_History.objects.filter(
+                patrec_id__pat_id=patient
+            ).select_related('patrec_id').order_by('-obs_id').first()
+
+            print(f'Found obstetrical history for patient: {patient.pat_id}')
+
+            obs_data = ObstetricalHistorySerializer(obstetrical_history_obj).data
+            
+            return Response({
+                'patient': patient.pat_id,
+                'obstetrical_history': obs_data
+            })
+
+        except Exception as e:
+            print(f"Error fetching obstetrical history: {e}")
+            return Response({
+                'patient': patient.pat_id,
+                'obstetrical_history': []
+            })  
+
+
+class PrenatalPatientBodyMeasurementView(generics.RetrieveAPIView):
+    def get(self, request, pat_id):
+        patient = get_object_or_404(Patient, pat_id=pat_id)
+
+        try:
+            body_measurement_obj = BodyMeasurement.objects.filter(
+                patrec_id__pat_id=patient
+            ).select_related('patrec').order_by('-created_at').first()
+            print(f'Found body measurement for patient: {patient.pat_id}')
+
+            bm_data = BodyMeasurementReadSerializer(body_measurement_obj).data
+
+            return Response({
+                'patient': patient.pat_id,
+                'body_measurement': bm_data
+            })
+        
+        except Exception as e:
+            print(f'Error fetching body measurement: {e}')
+            return Response({
+                'patient': patient.pat_id,
+                'body_measurement': []
+            })
+
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +150,29 @@ class PostpartumRecordCreateView(generics.CreateAPIView):
                 {'error': f'Failed to create postpartum record: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+class PostpartumRecordDetailView(generics.RetrieveAPIView):
+    queryset = PostpartumRecord.objects.all()
+    serializer_class = PostpartumCompleteSerializer
+
+    def get(self, request, *args, **kwargs):
+        ppr_id = kwargs.get('ppr_id')
+        try:
+            record = self.get_object()
+            serializer = self.get_serializer(record)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except PostpartumRecord.DoesNotExist:
+            return Response(
+                {'error': f'Postpartum record with ID {ppr_id} does not exist'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error fetching postpartum record: {str(e)}")
+            return Response(
+                {'error': f'Failed to fetch postpartum record: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
 
 @api_view(['GET'])
 def get_maternal_patients(request):
@@ -70,7 +189,7 @@ def get_maternal_patients(request):
         return Response({
             'success': True,
             'patients': serializer.data,
-            'count': maternal_patients.count()
+            'count': maternal_patients.count()  
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -192,70 +311,72 @@ def get_patient_postpartum_records(request, pat_id):
             {'error': f'Failed to fetch postpartum records: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+   
+@api_view(['GET'])
+def get_patient_pregnancy_records(request, pat_id):
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+        
+        pregnancies = Pregnancy.objects.filter(pat_id=patient).order_by('-created_at').prefetch_related(
+            Prefetch('prenatal_form', queryset=Prenatal_Form.objects.all().order_by('-created_at')),
+            Prefetch('postpartum_record', queryset=PostpartumRecord.objects.prefetch_related('postpartum_delivery_record', 'vital_id').order_by('-created_at'))
+        )
+
+        serializer = PregnancyDetailSerializer(pregnancies, many=True)
+        return Response(
+            serializer.data,
+            status= status.HTTP_200_OK
+        )
+    except Patient.DoesNotExist:
+        return Response(
+            {'error': f'Patient with ID {pat_id} does not exist'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f'Error fetching pregnancy records for patient: {pat_id} - {str(e)}')
+        return Response(
+            {'error': f'Failed to fetch pregnancy records: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
 
 class PrenatalRecordCreateView(generics.CreateAPIView):
-    serializer_class = PrenatalFormSerializer
-    
+    serializer_class = PrenatalCompleteSerializer # Use the new complete serializer
+    queryset = Prenatal_Form.objects.all() # Keep queryset for DRF
+
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        logger.info(f"Creating prenatal record with data: {request.data}")
         
-        prenatal_record = serializer.save()
-        
-        return Response({
-            'pf_id': prenatal_record.pf_id,
-            'message': 'Prenatal record created successfully'
-        }, status=status.HTTP_201_CREATED)
+        try:
+            serializer = self.get_serializer(data=request.data)
+            
+            if not serializer.is_valid():
+                logger.error(f"Serializer validation errors: {serializer.errors}")
+                return Response(
+                    {
+                        'error': 'Validation failed',
+                        'details': serializer.errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            prenatal_record = serializer.save()
+            logger.info(f"Successfully created prenatal record: {prenatal_record.pf_id}")
+            
+            return Response(
+                {
+                    'message': 'Prenatal record created successfully',
+                    'pf_id': prenatal_record.pf_id,
+                    'patrec_id': prenatal_record.patrec_id.patrec_id if prenatal_record.patrec_id else None,
+                    'data': serializer.data # Return serialized data for confirmation
+                },
+                status=status.HTTP_201_CREATED
+            )
+                
+        except Exception as e:
+            logger.error(f"Error creating prenatal record: {str(e)}")
+            return Response(
+                {'error': f'Failed to create prenatal record: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
-# **Previous Hospitalization
-class PreviousHospitalizationView(generics.ListCreateAPIView):
-    serializer_class = PreviousHospitalizationSerializer
-    queryset = Previous_Hospitalization.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
-# **Previous Pregnancy**
-class PreviousPregnancyView(generics.ListCreateAPIView):
-    serializer_class = PreviousPregnancySerializer
-    queryset = Previous_Pregnancy.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
-# **TT Status**
-class TTStatusView(generics.ListCreateAPIView):
-    serializer_class = TTStatusSerializer
-    queryset = TT_Status.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
-# **Lab Result Dates**
-# class LabResultDatesView(generics.ListCreateAPIView):
-#     serializer_class = LabResultDatesSerializer
-#     queryset = Lab_Result_Dates.objects.all()
-
-#     def create(self, request, *args, **kwargs):
-#         return super().create(request, *args, **kwargs)
-    
-class Guide4ANCVisitView(generics.ListCreateAPIView):
-    serializer_class = Guide4ANCVisitSerializer
-    queryset = Guide4ANCVisit.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
-class ChecklistView(generics.ListCreateAPIView):
-    serializer_class = ChecklistSerializer
-    queryset = Checklist.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
-# class BirthPlanView(generics.ListCreateAPIView):
-#     serializer_class = BirthPlanSerializer
-#     queryset = BirthPlan.objects.all()
-
-#     def create(self, request, *args, **kwargs):
-#         return super().create(request, *args, **kwargs)

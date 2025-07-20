@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import OuterRef, Exists
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
@@ -14,7 +15,7 @@ from apps.healthProfiling.serializers.resident_profile_serializers import Reside
 from ..utils import *
 from ..models import FollowUpVisit
 
-from ..serializers.followvisits_serializers import FollowUpVisitSerializer, PatientSerializer
+from ..serializers.followvisits_serializers import FollowUpVisitSerializer, PatientSerializer, FollowUpVisitWithPatientSerializer
       
       
       
@@ -31,45 +32,26 @@ class AllFollowUpVisitsView(APIView):
     """
     def get(self, request):
         try:
-            # Fetch all follow-up visits with related patient data
-            visits = FollowUpVisit.objects.select_related(
-                'patrec_id__pat_id__rp_id__per',
-                'patrec_id__pat_id__trans_id__tradd_id'
-            ).prefetch_related(
-                'patrec_id__pat_id__rp_id__per__personaladdress_set__add__sitio',
-                'patrec_id__pat_id__rp_id__household_set__add__sitio'
-            ).order_by('-followv_date')
-            
-            # Serialize the data with patient information
-            serialized_visits = []
-            for visit in visits:
-                patient = visit.patrec_id.pat_id
-                
-                # Get patient serializer data
-                patient_serializer = PatientSerializer(patient, context={'request': request})
-                patient_data = patient_serializer.data
-                
-                visit_data = {
-                    'followv_id': visit.followv_id,
-                    'followv_date': visit.followv_date,
-                    'followv_description': visit.followv_description,
-                    'followv_status': visit.followv_status,
-                    'patrec_id': visit.patrec_id.patrec_id,
-                    'created_at': visit.created_at,
-                    'updated_at': visit.updated_at,
-                    'patient': patient_data,  # Include full patient data
-                }
-                serialized_visits.append(visit_data)
+            # Use the existing serializer to avoid custom logic
+            visits = FollowUpVisit.objects.all().order_by('-followv_date')
+            serializer = FollowUpVisitWithPatientSerializer(visits, many=True, context={'request': request})
             
             response_data = {
-                'count': len(serialized_visits),
-                'results': serialized_visits
+                'count': len(serializer.data),
+                'results': serializer.data
             }
             
             return Response(response_data, status=status.HTTP_200_OK)
             
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print(f"Error in AllFollowUpVisitsView: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            return Response({
+                'error': str(e),
+                'message': 'An error occurred while fetching follow-up visits'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

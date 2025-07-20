@@ -372,7 +372,7 @@ export default function ScreenLayout({
 
   // Main content component
   const MainContent = () => (
-    <View className="flex-1 pt-1" style={fullScreen ? {} : getContentPadding()}>
+    <View className="flex-1 pt-0 px-0" style={fullScreen ? {} : getContentPadding()}>
       {/* Custom Header Component */}
       {headerComponent && headerComponent}
 

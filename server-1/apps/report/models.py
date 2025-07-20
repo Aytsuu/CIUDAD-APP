@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date
 
 class ReportType(models.Model):
     rt_id = models.BigAutoField(primary_key=True)
@@ -30,7 +31,7 @@ class AcknowledgementReport(models.Model):
   ar_time_completed = models.TimeField()
   ar_action_taken = models.TextField()
   ar_result = models.TextField()
-  ar_created_at = models.DateField(auto_now_add=True)
+  ar_created_at = models.DateField(default=date.today)
   ar_status = models.CharField(max_length=20, default='Unsigned')
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
@@ -54,7 +55,8 @@ class ARFile(models.Model):
 
 class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
-  war_created_at = models.DateField(auto_now_add=True)
+  war_created_at = models.DateField(default=date.today)
+  war_created_for = models.DateField(default=date.today)
   war_status = models.CharField(max_length=50, default='Unsigned')
   war_is_archive = models.BooleanField(default=False)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
@@ -98,6 +100,9 @@ class ReportTemplate(models.Model):
   rte_logoRight = models.URLField(null=True)
   rte_headerText = models.TextField(null=True)
   rte_type = models.CharField(max_length=50, null=True)
+  rte_prepared_by = models.CharField(max_length=100, null=True)
+  rte_recommended_by = models.CharField(max_length=100, null=True)
+  rte_approved_by = models.CharField(max_length=100, null=True)
   
   class Meta:
     db_table = "report_template"

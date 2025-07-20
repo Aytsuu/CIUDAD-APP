@@ -1,17 +1,23 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { ArrowUpDown, Search, FileInput, Loader2, AlertCircle } from "lucide-react"
+import type { ColumnDef } from "@tanstack/react-table"
+
 import { DataTable } from "@/components/ui/table/data-table"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
-import type { ColumnDef } from "@tanstack/react-table"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import { ArrowUpDown, Search, FileInput, Loader2, AlertCircle } from "lucide-react"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+
+import ScheduleTab from "./schedule-tab"
+
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/patientsFetchQueries"
+
 
 export default function ScheduleRecords() {
   type ScheduleRecord = {
@@ -26,28 +32,50 @@ export default function ScheduleRecords() {
       patientId: string
     }
     scheduledDate: string
-    scheduledTime: string
     purpose: string
     status: "Pending" | "Completed" | "Missed" | "Cancelled"
     sitio: string
     type: "Transient" | "Resident"
+    patrecType: string
   }
 
-  // Fetch data using React Query
+  const [timeFrame, setTimeFrame] = useState("today");
+
+  // fetch data 
   const { data: followUpVisits, isLoading, error, refetch } = useAllFollowUpVisits()
 
   // Transform the Django API data to match our ScheduleRecord type
   const transformedData = useMemo((): ScheduleRecord[] => {
-    if (!followUpVisits || !Array.isArray(followUpVisits)) return []
+    // Handle different response structures
+    let visitsArray = []
+    if (followUpVisits) {
+      if (Array.isArray(followUpVisits)) {
+        visitsArray = followUpVisits
+      } else if (followUpVisits.results && Array.isArray(followUpVisits.results)) {
+        visitsArray = followUpVisits.results
+      } else {
+        console.error("Unexpected data structure:", followUpVisits)
+        return []
+      }
+    } else {
+      return []
+    }
 
     const validRecords: ScheduleRecord[] = []
 
-    followUpVisits.forEach((visit: any) => {
+    visitsArray.forEach((visit: any) => {
       try {
+        console.log("Processing visit:", visit)
+        
+        // Handle patient details from the new API structure
         const patientDetails = visit.patient_details
-        if (!patientDetails) return
+        if (!patientDetails) {
+          console.warn("No patient details found for visit:", visit)
+          return
+        }
 
-        const personalInfo = patientDetails.personal_info || {}
+        // Extract patient info - handle both patient_info and direct access
+        const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
         const address = patientDetails.address || {}
 
         // Calculate age from date of birth
@@ -68,10 +96,11 @@ export default function ScheduleRecords() {
           }
         }
 
-        const ageInfo = calculateAge(personalInfo.per_dob)
+        const ageInfo = calculateAge(patientInfo.per_dob)
 
         // Format date
         const formatDate = (dateStr: string) => {
+          if (!dateStr) return new Date().toISOString().split("T")[0]
           try {
             return new Date(dateStr).toISOString().split("T")[0]
           } catch {
@@ -80,32 +109,68 @@ export default function ScheduleRecords() {
         }
 
         const record: ScheduleRecord = {
-          id: visit.followv_id,
+          id: visit.followv_id || visit.id || 0,
           patient: {
-            firstName: personalInfo.per_fname || "Unknown",
-            lastName: personalInfo.per_lname || "Unknown",
-            middleName: personalInfo.per_mname || "",
-            gender: personalInfo.per_sex || "Unknown",
+            firstName: patientInfo.per_fname || "Unknown",
+            lastName: patientInfo.per_lname || "Unknown",
+            middleName: patientInfo.per_mname || "",
+            gender: patientInfo.per_sex || "Unknown",
             age: ageInfo.age,
             ageTime: ageInfo.ageTime,
-            patientId: patientDetails.pat_id || "",
+            patientId: patientDetails.pat_id || patientInfo.pat_id || "",
           },
-          scheduledDate: formatDate(visit.followv_date),
-          scheduledTime: visit.followv_time || "09:00 AM",
-          purpose: visit.followv_description || "Follow-up Visit",
-          status: visit.followv_status || "Pending",
-          sitio: address.sitio || "Unknown",
+          scheduledDate: formatDate(visit.followv_date || visit.date),
+          purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
+          status: visit.followv_status || visit.status || "Pending",
+          sitio: address.sitio || address.location || "Unknown",
           type: patientDetails.pat_type || "Unknown",
+          patrecType: patientDetails.patrec_type || "Unknown",
         }
 
+        console.log("Created record:", record)
         validRecords.push(record)
       } catch (error) {
         console.error("Error transforming visit data:", error, visit)
       }
     })
 
+    console.log("Final transformed data:", validRecords)
     return validRecords
   }, [followUpVisits])
+
+
+  const filteredDataByTimeFrame = (data: any) => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    const endOfWeek = new Date(today);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    switch (timeFrame) {
+      case 'today':
+        return data.filter((visit: any) => new Date(visit.scheduledDate).toDateString() === today.toDateString());
+
+      case 'thisWeek':
+        startOfWeek.setDate(today.getDate() - today.getDay())
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        return data.filter((visit: any) => {
+          const visitDate = new Date(visit.scheduledDate);
+          return visitDate >= startOfWeek && visitDate <= endOfWeek;
+        });
+
+      case 'thisMonth':
+        return data.filter((visit:any) => {
+          const visitDate = new Date(visit.scheduledDate);
+          return visitDate >= startOfMonth && visitDate <= endOfMonth;
+        })
+      
+      default:
+        return data;
+    }
+  };
+
+  const filteredTimeData = useMemo(() => filteredDataByTimeFrame(transformedData), [transformedData, timeFrame]);
+
 
   // Function to determine if appointment is missed
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
@@ -120,14 +185,13 @@ export default function ScheduleRecords() {
     return currentStatus
   }
 
-
   const columns: ColumnDef<ScheduleRecord>[] = [
     {
       accessorKey: "id",
       header: "Schedule ID",
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-md w-8 text-center font-semibold">
+          <div className="flex justify-center items-center gap-2 cursor-pointer bg-blue-100 text-blue-800 px-3 py-1 rounded-md w-8 text-center font-semibold">
             {row.original.id}
           </div>
         </div>
@@ -166,14 +230,13 @@ export default function ScheduleRecords() {
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Date <ArrowUpDown size={15} />
+          Scheduled Date <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
           <div className="text-center">
             <div className="font-medium">{row.original.scheduledDate}</div>
-            <div className="text-sm text-gray-500">{row.original.scheduledTime}</div>
           </div>
         </div>
       ),
@@ -193,10 +256,10 @@ export default function ScheduleRecords() {
       cell: ({ row }) => {
         const actualStatus = getAppointmentStatus(row.original.scheduledDate, row.original.status)
         const statusColors = {
-          Pending: "bg-yellow-100 text-yellow-800",
-          Completed: "bg-green-100 text-green-800",
-          Missed: "bg-red-100 text-red-800",
-          Cancelled: "bg-gray-100 text-gray-800",
+          pending: "bg-yellow-100 text-yellow-800",
+          completed: "bg-green-100 text-green-800",
+          missed: "bg-red-100 text-red-800",
+          cancelled: "bg-gray-100 text-gray-800",
         }
 
         return (
@@ -257,23 +320,24 @@ export default function ScheduleRecords() {
 
   const [searchTerm, setSearchTerm] = useState("")
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const filter = [
     { id: "All", name: "All" },
-    { id: "Pending", name: "Pending" },
-    { id: "Completed", name: "Completed" },
-    { id: "Missed", name: "Missed" },
-    { id: "Cancelled", name: "Cancelled" },
+    { id: "pending", name: "Pending" },
+    { id: "completed", name: "Completed" },
+    { id: "missed", name: "Missed" },
+    { id: "cancelled", name: "Cancelled" },
   ]
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].id)
+  const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
   // Filter and search logic
   const filteredData = useMemo(() => {
-    let filtered = transformedData
+    let filtered = filteredTimeData
 
     // Apply status filter
     if (selectedFilter !== "All") {
-      filtered = filtered.filter((item) => {
+      filtered = filtered.filter((item:any) => {
         const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
         return actualStatus === selectedFilter
       })
@@ -282,7 +346,7 @@ export default function ScheduleRecords() {
     // Apply search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase()
-      filtered = filtered.filter((item) => {
+      filtered = filtered.filter((item:any) => {
         const fullName = `${item.patient.firstName} ${item.patient.middleName} ${item.patient.lastName}`.toLowerCase()
         const purpose = item.purpose.toLowerCase()
         const sitio = item.sitio.toLowerCase()
@@ -293,20 +357,31 @@ export default function ScheduleRecords() {
           purpose.includes(searchLower) ||
           sitio.includes(searchLower) ||
           type.includes(searchLower) ||
-          item.id.toString().includes(searchLower)
+          item.id.toString().includes(searchLower) ||
+          item.patient.patientId.toLowerCase().includes(searchLower)
         )
       })
     }
 
     return filtered
-  }, [transformedData, selectedFilter, searchTerm])
-
+  }, [filteredTimeData, selectedFilter, searchTerm])
 
   // Sort data by date (most recent first)
   const sortedData = [...filteredData].sort((a, b) => {
     return new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
   })
 
+  // Pagination logic (similar to maternal records)
+  const totalEntries = Math.ceil(sortedData.length / itemsPerPage)
+  const paginatedData = sortedData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Reset to first page when filters change
+  useMemo(() => {
+    setCurrentPage(1)
+  }, [selectedFilter, searchTerm, itemsPerPage])
 
   // Export to CSV
   const exportToCSV = () => {
@@ -318,7 +393,6 @@ export default function ScheduleRecords() {
         record.id,
         fullName,
         record.scheduledDate,
-        record.scheduledTime,
         record.purpose,
         actualStatus,
         record.sitio,
@@ -352,7 +426,7 @@ export default function ScheduleRecords() {
   // Error state
   if (error) {
     return (
-      <LayoutWithBack title="Health Schedule Records" description="Manage and view patient appointment schedules">
+      <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
         <div className="flex flex-col items-center justify-center h-64">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-red-600 mb-2 text-lg font-semibold">Error loading data</p>
@@ -365,11 +439,14 @@ export default function ScheduleRecords() {
     )
   }
 
-
   return (
-    <LayoutWithBack title="Health Schedule Records" description="Manage and view patient appointment schedules">
+    <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
       <div className="w-full h-full flex flex-col">
+        <div className="mb-4 w-full">
+          <ScheduleTab onTimeFrameChange={setTimeFrame} />
+        </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
+          
           <div className="flex flex-col md:flex-row gap-4 w-full">
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
@@ -393,7 +470,7 @@ export default function ScheduleRecords() {
           </div>
 
           <div className="w-full sm:w-auto">
-            <Button variant="default">New Schedule</Button>
+            {/* <Button variant="default">New Schedule</Button> */}
           </div>
         </div>
 
@@ -425,15 +502,33 @@ export default function ScheduleRecords() {
               </DropdownMenu>
             </div>
           </div>
+
           <div className="bg-white w-full overflow-x-auto">
-            {transformedData.length === 0 && (
-              <DataTable columns={columns} data={sortedData.slice(0, itemsPerPage)} />
+            {paginatedData.length > 0 ? (
+              <DataTable columns={columns} data={paginatedData} />
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-gray-500">No follow-up visits found</p>
+              </div>
             )}
           </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-gray-600 pl-0 sm:pl-4">
-              Showing 1-{Math.min(itemsPerPage, sortedData.length)} of {sortedData.length} rows
+              Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, sortedData.length)} of {sortedData.length} rows
             </p>
+
+            {/* Pagination */}
+            <div className="w-full sm:w-auto flex justify-center">
+              {totalEntries > 1 && (
+                <PaginationLayout 
+                  currentPage={currentPage} 
+                  totalPages={totalEntries} 
+                  onPageChange={setCurrentPage} 
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

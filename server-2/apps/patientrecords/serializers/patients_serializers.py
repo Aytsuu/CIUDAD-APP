@@ -5,7 +5,7 @@ from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer,HouseholdMinimalSerializer
 from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
-from apps.maternal.models import PostpartumRecord
+from apps.maternal.models import PostpartumRecord, TT_Status, Prenatal_Form
 from apps.healthProfiling.serializers.minimal import *
 from .spouse_serializers import SpouseSerializer
 
@@ -68,46 +68,74 @@ class PatientSerializer(serializers.ModelSerializer):
         return None
 
     def get_family_compositions(self, obj):
-        if obj.pat_type == 'Resident' and obj.rp_id and hasattr(obj.rp_id, 'per'):
-            rp_ids = obj.rp_id.per.personal_information.all()
-            compositions = FamilyComposition.objects.filter(rp__in=rp_ids)
-            return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
+        if obj.pat_type == 'Resident' and obj.rp_id:
+            try:
+                current_compositions = FamilyComposition.objects.filter(
+                    rp=obj.rp_id
+                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+
+                if not current_compositions:
+                    return []
+
+                all_fam_composition = FamilyComposition.objects.filter(
+                    fam_id=current_compositions.fam_id
+                ).select_related('rp_id', 'rp_id__per')
+                return FCWithProfileDataSerializer(all_fam_composition, many=True, context=self.context).data
+            except Exception as e:
+                print(f'Error fetching family compositions for resident {obj.rp_id.rp_id}: {str(e)}')
+                return []
         return []
     
     
     def get_family(self, obj):
         if obj.pat_type == 'Resident' and obj.rp_id:
             try:
-                # Get all family compositions for this resident
-                all_compositions = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fc_id')
+                # get all family compositions for this resident
+                current_composition = FamilyComposition.objects.filter(
+                    rp=obj.rp_id
+                ).order_by('-fam_id__fam_date_registered','-fc_id').first()
                 
-                if not all_compositions.exists():
+                if not current_composition:
                     print(f'No family composition found for resident {obj.rp_id.rp_id}')
                     return None
 
-                # Try to find mother role first (existing logic)
+                fam_id = current_composition.fam_id
+
+                all_compositions = FamilyComposition.objects.filter(
+                    fam_id=fam_id
+                ).select_related('rp', 'rp__per')
+
+                current_role = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered','-fc_id').first()
+                if current_role:
+                    return{
+                        'fam_id': str(current_role.fam_id),
+                        'fc_role': current_role.fc_role,
+                        'fc_id': current_role.fc_id
+                    }
+
+                # try to find mother role first (existing logic)
                 mother_composition = all_compositions.filter(fc_role__iexact='Mother').first()
                 if mother_composition:
                     print(f'Found mother role for resident {obj.rp_id.rp_id}, using fam_id: {mother_composition.fam_id}')
                     print(f'Mother Info: {mother_composition}')
                     return {
-                        'fam_id': mother_composition.fam_id,
+                        'fam_id': str(mother_composition.fam_id),
                         'fc_role': 'Mother',
                         'fc_id': mother_composition.fc_id
                     }
                 
-                # Try to find father role
+                # try to find father role
                 father_composition = all_compositions.filter(fc_role__iexact='Father').first()
                 if father_composition:
                     print(f'Found father role for resident {obj.rp_id.rp_id}, using fam_id: {father_composition.fam_id}')
                     print(f'Father Info: {father_composition}')
                     return {
-                        'fam_id': father_composition.fam_id,
+                        'fam_id': str(father_composition.fam_id),
                         'fc_role': 'Father',
                         'fc_id': father_composition.fc_id
                     }
                 
-                # Fallback to other roles (existing logic)
+                # fallback to other roles
                 other_composition = all_compositions.exclude(
                     fc_role__iexact='Mother'
                 ).exclude(
@@ -117,7 +145,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 if other_composition:
                     print(f'Using other role ({other_composition.fc_role}) for resident {obj.rp_id.rp_id}')
                     return {
-                        'fam_id': other_composition.fam_id,
+                        'fam_id': str(other_composition.fam_id),
                         'fc_role': other_composition.fc_role,
                         'fc_id': other_composition.fc_id
                     }
@@ -129,27 +157,63 @@ class PatientSerializer(serializers.ModelSerializer):
                 print(f'Error fetching fam_id for resident {obj.rp_id.rp_id}: {str(e)}')
                 return None
             
-        
         return None
+    
+    # method to retrieve a mother's TT Status
+    def get_mother_tt_status(self, mother_rp):
+        try:
+            # check if mother is registered as patient
+            mother_patient = Patient.objects.filter(rp_id=mother_rp, pat_type='Resident').first()
+
+            if not mother_patient:
+                return f'TT Status not found - Not a patient'
+
+            mom_prenatal_record = PatientRecord.objects.filter(
+                pat_id=mother_patient,
+                patrec_type__icontains='Prenatal'
+            ).order_by('-created_at')
+
+            if not mom_prenatal_record.exists():
+                return f'TT Status not found - No prenatal record'
+            
+            for i, pat_record in enumerate(mom_prenatal_record[:2]):
+                try:
+                    if hasattr(pat_record, 'prenatal_form') and pat_record.prenatal_form:
+                        prenatal = pat_record.prenatal_form
+                        
+                        tt_status_record = TT_Status.objects.filter(pf_id=prenatal).first()
+                        if tt_status_record:
+                            record_rank = "latest" if i == 0 else "previous"
+                            print(f'Found tt status in record {record_rank}')
+
+                            if hasattr(tt_status_record, 'tts_status'):
+                                return tt_status_record.tts_status
+                except Exception as record_error:
+                    print(f'Error fetching in record {i+1}: {str(record_error)}')   
+                    continue
+            return f'TT Status not found - No TT Status records'
+        
+        except Exception as e:
+            print(f'Error in getting mother tt status: {str(e)}')
+            return f'TT Status not found - {str(e)}'
+
 
     def get_family_head_info(self, obj):
+        family_heads = {}
         if obj.pat_type == 'Resident' and obj.rp_id:
             try:
-                # Get the family ID from the current resident
-                fam_info = self.get_family(obj)
-                if not fam_info or not fam_info.get('fam_id'):
+                # family of current resident
+                current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered','-fc_id').first()
+                if not current_composition:
                     return None
                 
-                fam_id = fam_info['fam_id']
+                fam_id = current_composition.fam_id
                 
-                # Find all family members in the same family
+                # all family members in the same family
                 family_compositions = FamilyComposition.objects.filter(
                     fam_id=fam_id
                 ).select_related('rp', 'rp__per')
                 
-                family_heads = {}
-                
-                # Look for mother and father in the family
                 for composition in family_compositions:
                     role = composition.fc_role.lower()
                     if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
@@ -160,6 +224,11 @@ class PatientSerializer(serializers.ModelSerializer):
                             'personal_info': PersonalSerializer(personal, context=self.context).data,
                             'composition_id': composition.fc_id
                         }
+
+                        # check if mother has TT status
+                        if role == 'mother':
+                            tt_status = self.get_mother_tt_status(composition.rp)
+                            family_heads['tt_status'] = tt_status
                 
                 return {
                     'fam_id': fam_id,
@@ -172,13 +241,9 @@ class PatientSerializer(serializers.ModelSerializer):
                 print(f"Error in get_family_head_info: {str(e)}")
                 return None
                 
-                
-                
         elif obj.pat_type == 'Transient' and obj.trans_id:
             try:
                 trans = obj.trans_id
-                family_heads = {}
-
                 if trans.mother_fname or trans.mother_lname:
                     family_heads['mother'] = {
                         'role': 'Mother',
@@ -410,11 +475,23 @@ class PatientSerializer(serializers.ModelSerializer):
 
     def _check_medical_records_for_spouse(self, obj):
         try:
-            # Direct approach: Query PostpartumRecord with spouse
+            # family_planning_with_spouse = PostpartumRecord.objects.filter(
+            #     patrec_id__pat_id=obj,
+            #     spouse_id__isnull=False
+            # ).select_related('spouse_id').order_by('-created_at').first()
+            
+            # if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
+            #     return {
+            #         'spouse_exists': True,
+            #         'spouse_source': 'postpartum_record',
+            #         'spouse_info': SpouseSerializer(family_planning_with_spouse.spouse_id, context=self.context).data
+            #     }
+
+            # query PostpartumRecord with spouse
             postpartum_with_spouse = PostpartumRecord.objects.filter(
                 patrec_id__pat_id=obj,
                 spouse_id__isnull=False
-            ).select_related('spouse_id').first()
+            ).select_related('spouse_id').order_by('-created_at').first()
             
             if postpartum_with_spouse and postpartum_with_spouse.spouse_id:
                 return {
@@ -423,21 +500,34 @@ class PatientSerializer(serializers.ModelSerializer):
                     'spouse_info': SpouseSerializer(postpartum_with_spouse.spouse_id, context=self.context).data
                 }
             
-            # Check prenatal records if no postpartum spouse found
-            patient_records = PatientRecord.objects.filter(
-                pat_id=obj,
-                patrec_type__icontains='Prenatal'
-            )
+            # query Prenatal_Form with spouse
+            prental_with_spouse = Prenatal_Form.objects.filter(
+                patrec_id__pat_id=obj,
+                spouse_id__isnull=False
+            ).select_related('spouse_id').order_by('-created_at').first()
             
-            for pat_record in patient_records:
-                if hasattr(pat_record, 'prenatal_form') and pat_record.prenatal_form:
-                    prenatal = pat_record.prenatal_form
-                    if hasattr(prenatal, 'spouse_id') and prenatal.spouse_id:
-                        return {
-                            'spouse_exists': True,
-                            'spouse_source': 'prenatal_record',
-                            'spouse_info': SpouseSerializer(prenatal.spouse_id, context=self.context).data
-                        }
+            if prental_with_spouse and prental_with_spouse.spouse_id:
+                return {
+                    'spouse_exists': True,
+                    'spouse_source': 'prenatal_form',
+                    'spouse_info': SpouseSerializer(prental_with_spouse.spouse_id, context=self.context).data
+                }
+            
+            # Check prenatal records if no postpartum spouse found
+            # patient_records = PatientRecord.objects.filter(
+            #     pat_id=obj,
+            #     patrec_type__icontains='Prenatal'
+            # )
+            
+            # for pat_record in patient_records:
+            #     if hasattr(pat_record, 'prenatal_form') and pat_record.prenatal_form:
+            #         prenatal = pat_record.prenatal_form
+            #         if hasattr(prenatal, 'spouse_id') and prenatal.spouse_id:
+            #             return {
+            #                 'spouse_exists': True,
+            #                 'spouse_source': 'prenatal_record',
+            #                 'spouse_info': SpouseSerializer(prenatal.spouse_id, context=self.context).data
+            #             }
             
             # No spouse found in medical records
             return {
@@ -462,5 +552,3 @@ class PatientRecordSerializer(serializers.ModelSerializer):
         model = PatientRecord
         fields = '__all__'
   
-    
-

@@ -478,7 +478,7 @@ console.log("formaated child data",formattedChildHealthData)
                     ID: <span className="font-medium text-foreground">{patientId}</span>
                   </span>
                   <span>•</span>
-                  <span>{calculateAge(patientData.dateOfBirth)} years old</span>
+                  <span>{calculateAge(patientData.dateOfBirth)} {calculateAge(patientData.dateOfBirth) <= 1 ? "year" : "years"} old</span>
                   <span>•</span>
                   <span>{patientData.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
                 </div>

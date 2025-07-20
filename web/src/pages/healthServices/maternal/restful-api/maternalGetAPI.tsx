@@ -34,7 +34,6 @@ export const getPatientPostpartumCount = async (patientId: string): Promise<numb
     if (error) {
       console.error("Get Patient Postpartum Count Error:", (error as any)?.data || (error as any)?.message)
 
-      // If patient not found or no records, return 0
       if (
         typeof error === "object" &&
         error !== null &&
@@ -48,7 +47,50 @@ export const getPatientPostpartumCount = async (patientId: string): Promise<numb
       console.error("Unexpected Error:", error)
     }
 
-    // Return 0 on error to prevent UI issues
     return 0
+  }
+}
+
+
+export const getPregnancyDetails = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/pregnancy/${patientId}/details/`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching pregnancy details: ", error);
+    throw error;
+  }
+}
+
+
+export const getPrenatalPatientMedHistory = async (patientId: string) => {
+  try { 
+    const res = await api2.get(`maternal/patient/${patientId}/medicalhistory`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal patient medical history: ", error);
+    throw error;
+  }
+}
+
+
+export const getPrenatalPatientObsHistory = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/patient/${patientId}/obstetricalhistory`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal patient obstetrical history: ", error);
+    throw error;
+  }
+}
+
+
+export const getPrenatalPatientBodyMeasurement = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/patient/${patientId}/bodymeasurement`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal patient body measurement: ", error);
+    throw error;
   }
 }

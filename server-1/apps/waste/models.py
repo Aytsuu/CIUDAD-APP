@@ -115,7 +115,7 @@ class WasteReport_File(models.Model):
 
 class WastePersonnel(models.Model):
     wstp_id = models.BigAutoField(primary_key=True)
-    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'waste_personnel'

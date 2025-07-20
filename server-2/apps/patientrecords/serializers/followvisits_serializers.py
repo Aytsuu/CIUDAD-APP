@@ -34,7 +34,7 @@ class FollowUpVisitWithPatientSerializer(serializers.ModelSerializer):
             'patrec_id',
             'created_at',
             'updated_at',
-            'patient_details'  # This will contain all patient info
+            'patient_details',
         ]
     
     def get_patient_details(self, obj):
@@ -42,12 +42,13 @@ class FollowUpVisitWithPatientSerializer(serializers.ModelSerializer):
         Get complete patient details from the related patient record
         """
         try:
-            if obj.patrec_id and obj.patrec_id.pat_id:
-                patient = obj.patrec_id.pat_id
-                # Use your existing PatientSerializer to get all patient data
+            if obj.patrec_id and obj.patrec.pat_id:
+                patient = obj.patrec.pat_id
                 patient_serializer = PatientSerializer(patient, context=self.context)
+
                 return patient_serializer.data
             return None
+        
         except Exception as e:
             print(f"Error getting patient details: {str(e)}")
             return None

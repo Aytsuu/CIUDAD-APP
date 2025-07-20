@@ -31,7 +31,10 @@ export interface Patient {
     add_sitio?: string;
     full_address?: string;
   };
-  family?: { fam_id: string };
+  family?: {
+    fam_id: string;
+    fc_role: string;
+  };
   family_head_info?: {
     fam_id: string | null;
     family_heads?: {
@@ -57,7 +60,15 @@ export interface Patient {
       };
     };
   };
-  spouse_info?: Record<string, unknown>;
+  spouse_info?: {
+    spouse_info?: {
+      spouse_fname?: string
+      spouse_lname?: string
+      spouse_mname?: string
+      spouse_dob?: string
+      spouse_occupation?: string
+    }
+  };
 }
 
 interface PatientSearchProps {

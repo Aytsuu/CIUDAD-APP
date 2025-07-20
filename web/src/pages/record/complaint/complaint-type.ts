@@ -13,7 +13,7 @@ export interface Complainant {
   add: Address;
 }
 
-export interface AccusedPerson {
+export interface Accused {
   acsd_id: number;
   acsd_name: string;
   add: Address;
@@ -24,7 +24,7 @@ export interface ComplaintFile {
   file: any;
 }
 
-export interface ComplaintRecord {
+export interface Complaint{
   comp_id: number;
   comp_incident_type: string;
   comp_datetime: string;
@@ -33,9 +33,10 @@ export interface ComplaintRecord {
   comp_created_at: string;
   comp_is_archive: boolean;
   cpnt: Complainant;
-  accused_persons: AccusedPerson[];
+  accused_persons: Accused[];
   complaint_files?: ComplaintFile[];
 }
+
 
 // This interface matches what your Django view expects
 export interface ComplaintFormValues {

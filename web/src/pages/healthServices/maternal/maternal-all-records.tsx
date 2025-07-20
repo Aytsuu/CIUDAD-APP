@@ -5,7 +5,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
@@ -13,7 +12,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Loader2, Search, RefreshCw } from "lucide-react";
 import { FileInput } from "lucide-react";
 import WomanRoundedIcon from '@mui/icons-material/WomanRounded';
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
@@ -41,15 +40,16 @@ export default function MaternalAllRecords() {
       add_city?: string;
       add_province?: string;
       add_external_sitio?: string;
+      add_sitio?: string;
     }
-    
-    sitio?: string;
+   
     pat_type: "Transient" | "Resident";
     patrec_type?: string;
   };
 
 
-  const { data: maternalRecordsData, isLoading } = useMaternalRecords();
+  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords();
+  const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesCount, setEntriesCount] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,8 +101,8 @@ export default function MaternalAllRecords() {
           add_city: address?.add_city,
           add_province: address?.add_province,
           add_external_sitio: address?.add_external_sitio,
+          add_sitio: address?.add_sitio || "N/A",
         },
-        sitio: address?.sitio || "N/A",
         pat_type: record.pat_type || "N/A",
       };
     });
@@ -179,7 +179,7 @@ export default function MaternalAllRecords() {
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
+          <div className="text-center w-full">{row.original.address?.add_sitio}</div>
         </div>
       ),
     },
@@ -218,7 +218,6 @@ export default function MaternalAllRecords() {
                             per_dob: row.original.personal_info.per_dob,
                             ageTime: row.original.personal_info.ageTime, 
                           },
-                          sitio: row.original.sitio,
                           patrec_type: row.original.patrec_type,
                         }
                       }
@@ -257,6 +256,7 @@ export default function MaternalAllRecords() {
   })
 
   const totalRecords = filteredData.length;
+  // const activePregnancies = data.filter((item) => item.pregnancy.status === "Active").length;
 
   const totalEntries = Math.ceil(filteredData.length / entriesCount);
   const maternalPagination = filteredData.slice(
@@ -264,15 +264,26 @@ export default function MaternalAllRecords() {
     currentPage * entriesCount
   )
 
+  const handleRefetching = async () => {
+    try {
+      setIsRefetching(true);
+      await refetch();
+    } catch (error){
+      console.error("Error fetching records")
+    } finally {
+      setIsRefetching(false);
+    }
+  }
+
 
   if(isLoading){
      return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
+      <LayoutWithBack title="Maternal Health Records" description="Manage and view mother's maternal information">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading maternal patients...</span>
+        </div>
+      </LayoutWithBack>
     );
   }
 
@@ -280,7 +291,7 @@ export default function MaternalAllRecords() {
   return (
     <LayoutWithBack 
       title="Maternal Health Records  "
-      description="Manage and view mother's information"
+      description="Manage and view mother's maternal information"
     >
       <div className="w-full h-full flex flex-col">
         <div className="w-full">
@@ -326,9 +337,20 @@ export default function MaternalAllRecords() {
             />
           </div>
         </div>
+
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}
-          <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex flex-col md:flex-row gap-2 w-full">
+            <div>
+              <Button 
+                className="hover:bg-gray-100 transition-colors duration-200 ease-in-out" 
+                variant="outline" 
+                onClick={handleRefetching} 
+                disabled={isRefetching || isLoading}
+              >
+                <RefreshCw className={`${isRefetching ? 'animate-spin' : ''}`} size={20} />
+              </Button>
+            </div>
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
                 <Search

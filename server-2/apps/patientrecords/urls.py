@@ -19,6 +19,8 @@ urlpatterns = [
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patient/', PatientView.as_view(), name='patient'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+	 
+    path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
     path('update-transient/<str:trans_id>/', UpdateTransientView.as_view(), name='update-transient-patient'),
 

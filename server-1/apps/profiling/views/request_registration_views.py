@@ -35,7 +35,7 @@ class RequestTableView(generics.ListAPIView):
     return queryset
 
 class RequestCreateView(generics.CreateAPIView):
-  serializer_class = RequestBaseSerializer
+  serializer_class = RequestCreateSerializer
   queryset = RequestRegistration.objects.all()
 
 

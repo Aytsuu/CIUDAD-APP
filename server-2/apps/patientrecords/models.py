@@ -257,10 +257,19 @@ class Finding(models.Model):
 
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
+<<<<<<< HEAD
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True)
     # medrec = models.ForeignKey("medicalConsultation.MedicalConsultation_Record", on_delete=models.CASCADE, related_name='medical_history', null=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
+=======
+    ill_id = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', db_column='ill_id', null=True)
+    year = models.IntegerField(null=True, blank=True)
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', db_column='patrec_id', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # medrec = models.ForeignKey("medicalConsultation.MedicalConsultation_Record", on_delete=models.CASCADE, related_name='medical_history', null=True)
+
+>>>>>>> frontend/feature/maternal-services
     class Meta:
         db_table = 'medical_history'  
         
