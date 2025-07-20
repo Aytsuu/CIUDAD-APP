@@ -65,13 +65,20 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "id",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full justify-center items-center gap-2 cursor-pointer "
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Patient No.
         <ArrowUpDown size={14} />
       </div>
     ),
+    cell: ({ row }) => (
+      <div className="flex w-full justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+            {row.original.id}
+          </div>
+        </div>
+    )
   },
   {
     accessorKey: "sitio",
@@ -120,6 +127,11 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "type",
     header: "Type",
+    cell: ({ row }) => <div className="hidden xl:block">{row.getValue("type")}</div>,
+  },
+  {
+    accessorKey: "noOfRecords",
+    header: "No. of Records",
     cell: ({ row }) => <div className="hidden xl:block">{row.getValue("type")}</div>,
   },
   {
@@ -254,7 +266,7 @@ const transformPatientsToReports = (patients: Patients[]): Report[] => {
     sitio: patient.address?.add_sitio || "N/A",
     lastName: patient.personal_info?.per_lname || "",
     firstName: patient.personal_info?.per_fname || "",
-    mi: patient.personal_info?.per_mname || "",
+    mi: patient.personal_info?.per_mname || "N/A",
     type: patient.pat_type || "Resident", // assuming pat_type maps to resident/transient
   }));
 };

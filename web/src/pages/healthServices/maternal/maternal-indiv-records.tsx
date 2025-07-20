@@ -144,19 +144,6 @@ export default function MaternalIndivRecords() {
     }
   }, [location.state])
 
-  
-  function calculateGestationalWeek(lmp: string, visitDate: string): number {
-    const lmpDate = new Date(lmp);
-    const visit = new Date(visitDate);
-
-    if (isNaN(lmpDate.getTime()) || isNaN(visit.getTime())) {
-      return 0; 
-    }
-
-    const diffTime = Math.abs(visit.getTime() - lmpDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.floor(diffDays / 7);
-  }
 
   const groupPregnancies = (
     pregnancies: PregnancyDataDetails[],

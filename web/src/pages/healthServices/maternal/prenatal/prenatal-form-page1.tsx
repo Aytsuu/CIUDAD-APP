@@ -123,12 +123,21 @@ export default function PrenatalFormFirstPg({
       setValue("obstetricHistory.noOfAbortion", currObs?.obs_abortion || 0)
       setValue("obstetricHistory.noOfStillBirths", currObs?.obs_still_birth || 0)
       setValue("obstetricHistory.historyOfLBabies", currObs?.obs_lbabies || 0)
+      setValue("presentPregnancy.gravida", currObs?.obs_gravida || 0)
+      setValue("presentPregnancy.para", currObs?.obs_para || 0)
+      setValue("presentPregnancy.fullterm", currObs?.obs_fullterm || 0)
+      setValue("presentPregnancy.preterm", currObs?.obs_preterm || 0)
+
     } else {
-      setValue("obstetricHistory.noOfChBornAlive", 0)
-      setValue("obstetricHistory.noOfLivingCh", 0)
-      setValue("obstetricHistory.noOfAbortion", 0)
-      setValue("obstetricHistory.noOfStillBirths", 0)
-      setValue("obstetricHistory.historyOfLBabies", 0)
+      setValue("obstetricHistory.noOfChBornAlive", undefined)
+      setValue("obstetricHistory.noOfLivingCh", undefined)
+      setValue("obstetricHistory.noOfAbortion", undefined)
+      setValue("obstetricHistory.noOfStillBirths", undefined)
+      setValue("obstetricHistory.historyOfLBabies", undefined)
+      setValue("presentPregnancy.gravida", undefined)
+      setValue("presentPregnancy.para", undefined)
+      setValue("presentPregnancy.fullterm", undefined)
+      setValue("presentPregnancy.preterm", undefined)
     }
   }, [obsHistoryData, obsLoading, setValue])
 
