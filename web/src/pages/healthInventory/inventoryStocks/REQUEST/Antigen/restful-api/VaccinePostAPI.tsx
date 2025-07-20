@@ -37,7 +37,7 @@ export const AntigenTransaction = async (
   vacStck_id: number,
   string_qty: string,
   action: string,
-  staffId: number
+  staffId: string
 ) => {
   try {
     const res = await api2.post("inventory/antigens_stocks/transaction/", {

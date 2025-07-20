@@ -3,7 +3,7 @@ from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
 from django.core.validators import MinValueValidator
-
+from apps.administration.models import Staff
 # kene,e
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
@@ -81,7 +81,7 @@ class FirstAidList(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     cat = models.ForeignKey(Category, on_delete=models.PROTECT , related_name='firstaid_category')
-
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=True)  
     class Meta:
         db_table = 'firstaid_list'
         
@@ -159,12 +159,16 @@ class MedicineInventory(models.Model):
     # committed_qty = models.PositiveIntegerField(default=0)  # Ensure non-negative
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,  db_column='inv_id')
     med_id = models.ForeignKey('Medicinelist', on_delete=models.PROTECT, db_column='med_id')
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+
     # APP NA END
     # min_qty_to_display = models.PositiveIntegerField(default=0)
     # set_low_stock = models.PositiveBigIntegerField(default=0)
     # set_near_expiry =models.PositiveBigIntegerField(default=0)
     class Meta: 
         db_table = 'medicine_inventory'
+        ordering = ['-created_at']
 
 
 
@@ -174,11 +178,12 @@ class MedicineTransactions(models.Model):
     mdt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    
-    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,  db_column='minv_id')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
+    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,related_name='medicine_transaction',  db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'
+        ordering = ['-created_at']
 
 
         
@@ -192,6 +197,8 @@ class CommodityInventory(models.Model):
     cinv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE, db_column='inv_id')
     com_id = models.ForeignKey('CommodityList', on_delete=models.PROTECT,db_column ='com_id')
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:
@@ -204,10 +211,12 @@ class CommodityTransaction(models.Model):
     comt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,  db_column='cinv_id')
+    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,related_name='commodity_transaction',  db_column='cinv_id')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='commodity_transaction', null=True, blank=True)  
 
     class Meta:
         db_table = 'commodity_transaction'
+        ordering = ['-created_at']
 
 
 
@@ -222,12 +231,11 @@ class FirstAidInventory(models.Model):
     inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id',related_name='inventory_firstaid')
     fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id', related_name='firstaid_inventory')
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
-    
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     class Meta:
         db_table = 'firstaid_inventory'
         
   
-
 class FirstAidTransactions(models.Model):
     fat_id =models.BigAutoField(primary_key=True)
     fat_qty = models.CharField(max_length=100)
@@ -235,9 +243,11 @@ class FirstAidTransactions(models.Model):
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='firstaid_transaction', null=True, blank=True)  
 
     class Meta:
         db_table = 'firstaid_transaction'
+        ordering = ['-created_at']
 
 # VACCINATION MODELS
 
@@ -269,6 +279,7 @@ class VaccineList(models.Model):
     ageGroup = models.ForeignKey(Agegroup, on_delete=models.PROTECT, db_column='ageGroup', related_name='vaccines', null=True, blank=True)
     class Meta:
         db_table = 'vaccines'
+        ordering = ['-created_at']
         
     
         
@@ -326,9 +337,11 @@ class VaccineStock(models.Model):
     # ageGroup = models.ForeignKey(Agegroup, on_delete=models.PROTECT, db_column='ageGroup', related_name='vaccine_stock', null=True, blank=True)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
     vac_id = models.ForeignKey('VaccineList',on_delete=models.PROTECT,related_name='vaccine_stock',db_column='vac_id')
- 
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+
     class Meta:
         db_table = 'vaccine_stocks'
+        ordering = ['-created_at']
 
         
 
@@ -342,6 +355,7 @@ class ImmunizationSupplies(models.Model):
     
     class Meta:
         db_table = 'immunization_supplies'
+        ordering = ['-created_at']
         
         
 class ImmunizationStock(models.Model):
@@ -362,6 +376,7 @@ class ImmunizationStock(models.Model):
     
     class Meta:
         db_table = 'immunizationsupplies_stock'
+        ordering = ['-created_at']
         
   
 class ImmunizationTransaction(models.Model):
@@ -372,7 +387,6 @@ class ImmunizationTransaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  
     imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.PROTECT, db_column='imzStck_id')
 
-
     class Meta:
         db_table = 'immunization_transaction'
         
@@ -381,13 +395,14 @@ class AntigenTransaction(models.Model):
     antt_id =models.BigAutoField(primary_key=True)
     antt_qty = models.CharField(max_length=100)
     antt_action = models.CharField(max_length=100)
-    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
     vacStck_id = models.ForeignKey(VaccineStock, on_delete=models.PROTECT,  db_column='vacStck_id',related_name='antigen_transactions', null=True, blank=True)
     imzStck_id = models.ForeignKey(ImmunizationStock, on_delete=models.PROTECT, db_column='imzStck_id',related_name='antigen_transactions' ,null=True, blank=True)
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='antigen_transactions', null=True, blank=True)  
 
 
     class Meta:
         db_table = 'antigen_transaction'
+        ordering = ['-created_at']
 
         

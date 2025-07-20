@@ -2,13 +2,15 @@ import {api2} from "@/api/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // 2. Wrapped function version (still fully combined)
-export const addInventory = async (data:any, inv_type: string) => {
+export const addInventory = async (data:any, inv_type: string,staff:string) => {
   try {
     const res = await api2.post("inventory/inventorylist/", {
       expiry_date: data.expiryDate,
       inv_type: inv_type,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      staff:staff||null
+
     });
     return res.data;
   } catch (err: any) {
@@ -19,8 +21,8 @@ export const addInventory = async (data:any, inv_type: string) => {
 
 export const useAddInventory = () => {
   return useMutation({
-    mutationFn: ({ data, inv_type }: { data: any; inv_type: string }) =>
-      addInventory(data, inv_type),
+    mutationFn: ({ data, inv_type,staff }: { data: any; inv_type: string,staff:string }) =>
+      addInventory(data, inv_type,staff),
     onError: (error: Error) => {
       console.error("Error adding inventory:", error.message);
     },

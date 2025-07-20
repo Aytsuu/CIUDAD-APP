@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Search, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
 
 interface Illness {
@@ -19,7 +20,7 @@ interface IllnessComponentProps {
   isRequired?: boolean;
 }
 
-const getIllness = async () => {
+const fetchIllnesses = async () => {
   try {
     const response = await api2.get(`patientrecords/illness/`);
     return response.data;
@@ -45,54 +46,48 @@ export const IllnessComponent = ({
   onAssessmentUpdate = () => {},
   isRequired = false,
 }: IllnessComponentProps) => {
-  const [illnesses, setIllnesses] = useState<Illness[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchIllnesses = async () => {
-      try {
-        setIsLoading(true);
-        const illnessesData = await getIllness();
-        setIllnesses(illnessesData);
-      } catch (err) {
-        console.error("Error fetching illnesses:", err);
-        toast.error("Failed to load illnesses");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Fetch illnesses with caching
+  const {
+    data: illnesses = [],
+    isLoading,
+    isError,
+  } = useQuery<Illness[]>({
+    queryKey: ['illnesses'],
+    queryFn: fetchIllnesses,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
 
-    fetchIllnesses();
-  }, []);
-
-  const illnessExists = (name: string) => {
-    return illnesses.some(
-      (illness) => illness.illname.toLowerCase() === name.toLowerCase()
-    );
-  };
-
-  const handleAddIllness = async (name: string) => {
-    if (!name.trim()) return;
-
-    try {
+  // Mutation for adding new illness
+  const { mutate: addIllness } = useMutation({
+    mutationFn: createIllness,
+    onMutate: async (newIllnessName) => {
       setIsAdding(true);
+      await queryClient.cancelQueries({ queryKey: ['illnesses'] });
       
-      if (illnessExists(name)) {
-        toast.error("This illness already exists");
-        return;
-      }
-
-      const createdIllness = await createIllness(name);
-      // Add new illness to the beginning of the array
-      setIllnesses([createdIllness, ...illnesses]);
-
+      const previousIllnesses = queryClient.getQueryData<Illness[]>(['illnesses']);
+      
+      queryClient.setQueryData<Illness[]>(['illnesses'], (old = []) => [
+        { ill_id: Date.now(), illname: newIllnessName, created_at: new Date().toISOString() },
+        ...old,
+      ]);
+      
+      return { previousIllnesses };
+    },
+    onError: (err, newIllness, context) => {
+      queryClient.setQueryData(['illnesses'], context?.previousIllnesses);
+      toast.error("Failed to add illness");
+    },
+    onSuccess: (createdIllness) => {
       // Automatically check the newly added illness
       const updatedSelected = [...selectedIllnesses, createdIllness.ill_id];
       onIllnessSelectionChange(updatedSelected);
-
-      // Update assessment with all selected illnesses including the new one
+      
+      // Update assessment
       const selectedIllnessNames = [...illnesses, createdIllness]
         .filter((illness) => updatedSelected.includes(illness.ill_id))
         .map((illness) => illness.illname)
@@ -100,23 +95,33 @@ export const IllnessComponent = ({
       
       onAssessmentUpdate(selectedIllnessNames);
       toast.success("Illness added and selected successfully");
-    } catch (err) {
-      console.error("Error adding illness:", err);
-      toast.error("Failed to add illness");
-    } finally {
+    },
+    onSettled: () => {
       setIsAdding(false);
       setSearchTerm("");
+    },
+  });
+
+  const illnessExists = (name: string) => {
+    return illnesses.some(
+      (illness) => illness.illname.toLowerCase() === name.toLowerCase()
+    );
+  };
+
+  const handleAddIllness = (name: string) => {
+    if (!name.trim()) return;
+    if (illnessExists(name)) {
+      toast.error("This illness already exists");
+      return;
     }
+    addIllness(name);
   };
 
   const handleIllnessCheckboxChange = (illnessId: number, checked: boolean) => {
-    console.log("Checkbox clicked:", { illnessId, checked, currentSelected: selectedIllnesses });
-    
     const updatedSelected = checked
       ? [...selectedIllnesses, illnessId]
       : selectedIllnesses.filter((id) => id !== illnessId);
 
-    console.log("Updated selection:", updatedSelected);
     onIllnessSelectionChange(updatedSelected);
 
     const selectedIllnessNames = illnesses
@@ -124,7 +129,6 @@ export const IllnessComponent = ({
       .map((illness) => illness.illname)
       .join(", ");
     
-    console.log("Updated assessment:", selectedIllnessNames);
     onAssessmentUpdate(selectedIllnessNames);
   };
 
@@ -135,6 +139,16 @@ export const IllnessComponent = ({
   const showAddButton = searchTerm && 
                        !illnessExists(searchTerm) && 
                        !filteredIllnesses.length;
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <div className="text-red-500 p-4 border rounded-lg bg-red-50">
+          Failed to load illnesses. Please try again later.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -200,15 +214,11 @@ export const IllnessComponent = ({
               key={illness.ill_id}
               className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
             >
-              {/* REPLACED CUSTOM CHECKBOX WITH NATIVE HTML CHECKBOX */}
               <input
                 type="checkbox"
                 id={`illness-${illness.ill_id}`}
                 checked={selectedIllnesses.includes(illness.ill_id)}
-                onChange={(e) => {
-                  console.log(`Checkbox ${illness.ill_id} changed to:`, e.target.checked);
-                  handleIllnessCheckboxChange(illness.ill_id, e.target.checked);
-                }}
+                onChange={(e) => handleIllnessCheckboxChange(illness.ill_id, e.target.checked)}
                 className="w-5 h-5 text-blue-600 border-2 border-zinc-400 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
               />
               <label

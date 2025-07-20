@@ -11,6 +11,16 @@ export const CommodityStocksColumns = (
   setCommodityToArchive: (id: string | null) => void,
   setIsArchiveConfirmationOpen: (value: boolean) => void 
 ): ColumnDef<CommodityStocksRecord>[] => [
+
+  {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => (
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+        {row.original.inv_id}
+      </div>
+    )
+  },
   {
     accessorKey: "commodityInfo",
     header: "Commodity",
@@ -183,7 +193,7 @@ export const CommodityStocksColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
-          <Button variant="outline" disabled={expired} >
+          {/* <Button variant="outline" disabled={expired} >
             <Link
               to="/editCommodityStock"
               state={{
@@ -194,7 +204,7 @@ export const CommodityStocksColumns = (
             >
               <Plus size={16} />
               </Link>
-          </Button>
+          </Button> */}
           <Button
             variant="destructive"
             size="sm"

@@ -3,11 +3,21 @@ import { Button } from "@/components/ui/button/button";
 import { Archive , Plus } from "lucide-react";
 import { Link } from "react-router";
 import { MedicineStocksRecord } from "../type";
-import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";
+import { isNearExpiry, isExpired, isLowStock } from "@/helpers/StocksAlert";
 
 export const getColumns = (
   handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<MedicineStocksRecord>[] => [
+
+  {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => (
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+        {row.original.inv_id}
+      </div>
+    )
+  },
   {
     accessorKey: "medicineInfo",
     header: "Medicine",
@@ -196,7 +206,7 @@ export const getColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
-          <Button variant="outline" disabled={expired}>
+          {/* <Button variant="outline" disabled={expired}>
             <Link
               to="/editMedicineStock"
               state={{
@@ -207,7 +217,7 @@ export const getColumns = (
             >
               <Plus size={16} />
             </Link>
-          </Button>
+          </Button> */}
           <Button
             variant="destructive"
             size="sm"

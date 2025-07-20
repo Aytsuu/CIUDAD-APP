@@ -60,6 +60,7 @@ export type CommodityStocksRecord = {
 export type StockRecords = {
   id: number;
   batchNumber: string;
+  created_at:string
   category: string;
   item: {
     antigen: string;

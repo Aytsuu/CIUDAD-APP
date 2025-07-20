@@ -85,7 +85,7 @@ export const FirstAidDisplay = ({
         if (isChecked) {
           const firstAidExists = prev.some((fa) => fa.finv_id === finv_id);
           if (!firstAidExists) {
-            return [...prev, { finv_id, qty: 1, reason: "" }];
+            return [...prev, { finv_id, qty: 0, reason: "" }];
           }
           return prev;
         }
@@ -341,18 +341,22 @@ export const FirstAidDisplay = ({
                             type="number"
                             min="0"
                             max={firstAid.avail}
-                            className="border rounded-lg px-3 py-1 w-20 text-center focus:ring-2"
+                            className={`border rounded-lg px-3 py-1 w-20 text-center focus:ring-2 ${
+                              (selectedFirstAid?.qty ?? 0) === 0 
+                                ? 'bg-yellow-50 border-yellow-300' 
+                                : ''
+                            }`}
                             value={selectedFirstAid?.qty ?? 0}
                             onChange={(e) => {
                               const value = parseInt(e.target.value) || 0;
                               handleQuantityChange(firstAid.id, value);
                             }}
                           />
-                          {(selectedFirstAid?.qty ?? 0) < 1 && (
-                            <span className="text-red-500 text-xs">
-                              Quantity must be at least 1
+                          {/* {(selectedFirstAid?.qty ?? 0) === 0 && (
+                            <span className="text-yellow-600 text-xs">
+                              Zero quantity
                             </span>
-                          )}
+                          )} */}
                           {(selectedFirstAid?.qty ?? 0) > firstAid.avail && (
                             <span className="text-red-500 text-xs">
                               Exceeds available stock

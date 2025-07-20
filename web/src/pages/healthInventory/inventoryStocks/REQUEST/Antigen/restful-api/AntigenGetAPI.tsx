@@ -43,7 +43,7 @@ export const getCombinedStock = async () => {
           vac_id: stock.vac_id,
           qty_number: stock.qty,
           isArchived: stock.inv_details?.is_Archived, // Added property
-
+          created_at:stock.created_at
         };
       }
 
@@ -70,7 +70,7 @@ export const getCombinedStock = async () => {
         vac_id: stock.vac_id,
         qty_number: stock.qty,
         isArchived: stock.inv_details?.is_Archived, // Added property
-
+        created_at:stock.created_at
       };
     });
 
@@ -112,7 +112,7 @@ export const getCombinedStock = async () => {
         imzStck_pcs: stock.imzStck_pcs,
         qty_number: stock.imzStck_qty,
         isArchived: stock.inv_detail?.is_Archived, // Added property
-
+        created_at:stock.created_at
 
       };
     });

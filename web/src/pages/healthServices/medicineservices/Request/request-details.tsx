@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { MedicineRequestDetailProps, MedicineRequestItem } from "./types";
 import { fetchRequestItems } from "./restful-api/get";
-import { createPatients } from "@/pages/record/health/patientsRecord/restful-api/patientsPostAPI";
+import { createPatients } from "@/pages/record/health/patientsRecord/restful-api/post";
 import {
   createPatientRecord,
   createMedicineRecord,
@@ -326,7 +326,7 @@ export default function MedicineRequestDetail() {
 
       if (effectivePatId) {
         try {
-          const patientRecordResponse = await createPatientRecord(effectivePatId);
+          const patientRecordResponse = await createPatientRecord(effectivePatId, "Medicine Record");
           patientRecordId = patientRecordResponse.patrec_id;
         } catch (error) {
           console.error("Error creating patient record:", error);

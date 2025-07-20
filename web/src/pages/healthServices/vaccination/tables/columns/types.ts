@@ -99,11 +99,11 @@ export interface VaccinationRecord {
   }
   export  type filter = "all" | "partially_vaccinated" | "completed";
 
-  export interface VaccinationCountsCardProps {
-    residentCount: number;
-    transientCount: number;
-    totalCount: number;
-  }
+//   export interface VaccinationCountsCardProps {
+//     residentCount: number;
+//     transientCount: number;
+//     totalCount: number;
+//   }
   
   export interface VaccinationCounts {
     residentCount: number;
@@ -113,44 +113,123 @@ export interface VaccinationRecord {
 
 
 
-  interface Address {
-    add_street?: string;
-    sitio?: string;
-    add_barangay?: string;
-    add_city?: string;
-    add_province?: string;
-  }
-  
-  interface PersonalInfo {
-    per_lname: string;
-    per_fname: string;
-    per_mname: string | null;
-    per_sex: string;
-    per_dob: string;
-    per_addresses: Address[];
-  }
-  
-  export interface Resident {
-    pat_id: string;
-    rp_id: string | null;
-    personal_info: PersonalInfo;
-    vaccine_not_received: string;
-  }
-  
-  export interface UnvaccinatedResident {
-    vaccine_name: string;
-    pat_id: string;
-    fname: string;
-    lname: string;
-    mname: string;
-    sex: string;
-    age: string;
-    dob: string;
-    sitio: string;
-    address: string;
-    pat_type: string;
-  }
 
-  export interface VaccineCounts {
-    [key: string]: number;
+//   interface Address {
+//     add_street?: string;
+//     sitio?: string;
+//     add_barangay?: string;
+//     add_city?: string;
+//     add_province?: string;
+//   }
+  
+//   interface PersonalInfo {
+//     per_lname: string;
+//     per_fname: string;
+//     per_mname: string | null;
+//     per_sex: string;
+//     per_dob: string;
+//     per_addresses: Address[];
+//   }
+  
+//   export interface Resident {
+//     pat_id: string;
+//     rp_id: string | null;
+//     personal_info: PersonalInfo;
+//     vaccine_not_received: string;
+//   }
+  
+//   export interface UnvaccinatedResident {
+//     vaccine_name: string;
+//     pat_id: string;
+//     fname: string;
+//     lname: string;
+//     mname: string;
+//     sex: string;
+//     age: string;
+//     dob: string;
+//     sitio: string;
+//     address: string;
+//     pat_type: string;
+//   }
+export interface PersonalInfo {
+  per_id: number
+  per_lname: string
+  per_fname: string
+  per_mname: string | null
+  per_suffix: string | null
+  per_sex: string
+  per_dob: string
+  per_status: string
+  per_edAttainment: string
+  per_religion: string
+  per_contact: string
+  per_addresses: Array<{
+    add_id: number
+    add_province: string
+    add_city: string
+    add_barangay: string
+    add_external_sitio: string
+    add_street: string
+    sitio: string
+  }>
+}
+
+export interface AgeGroup {
+  agegrp_id: number
+  agegroup_name: string
+  min_age: number
+  max_age: number
+  time_unit: "years" | "months" | "weeks" | "days" | "NA" // This is the source type
+  created_at: string
+  updated_at: string
+}
+
+export interface VaccineNotReceived {
+  vac_id: number
+  intervals: any[] // You might want to define a more specific type for intervals
+  routine_frequency: any // You might want to define a more specific type for routine_frequency
+  age_group: AgeGroup
+  vac_type_choices: string
+  vac_name: string
+  no_of_doses: number
+  created_at: string
+  updated_at: string
+  category: string
+  ageGroup: number
+}
+
+export interface Resident {
+  status: string
+  pat_id: number | null
+  rp_id: string
+  personal_info: PersonalInfo
+  vaccine_not_received: VaccineNotReceived
+}
+
+export interface UnvaccinatedResident {
+  vaccine_name: string
+  pat_id: string
+  fname: string
+  lname: string
+  mname: string | null
+  sex: string
+  dob: string
+  age: string
+  sitio: string
+  address: string
+  pat_type: string
+  age_group_name: string
+  min_age: number
+  max_age: number
+  time_unit: "years" | "months" | "weeks" | "days" | "NA" // Made consistent with AgeGroup
+}
+
+export interface VaccineCounts {
+  [vaccineName: string]: number
+}
+
+export interface GroupedResidents {
+  [vaccineName: string]: {
+    [ageGroupName: string]: UnvaccinatedResident[]
   }
+}

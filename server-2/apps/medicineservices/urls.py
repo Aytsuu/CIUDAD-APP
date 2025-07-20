@@ -12,7 +12,7 @@ urlpatterns=[
       
       
         path('medicine-request/<int:medreq_id>/', DeleteUpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
-        path('delete-medicine-request-item/int<medreqitem_id>/',MedicineRequestItemDelete.as_view(),name="delete-medicine-request-item")
-
+        path('delete-medicine-request-item/int<medreqitem_id>/',MedicineRequestItemDelete.as_view(),name="delete-medicine-request-item"),
+        path('childmedicine/', ChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
 
    ]

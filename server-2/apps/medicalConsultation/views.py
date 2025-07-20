@@ -12,7 +12,6 @@ from apps.patientrecords.serializers.patients_serializers import PatientSerializ
 from apps.patientrecords.models import *
 from .utils import get_medcon_record_count
 from django.db.models import Count, Q
-
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
 
@@ -80,4 +79,11 @@ class GetMedConCountView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-
+class PendingMedConCountView(APIView):
+    def get(self, request, *args, **kwargs):
+        count = (
+            MedicalConsultation_Record.objects
+            .filter(medrec_status="pending")
+            .count()
+        )
+        return Response({"count": count})

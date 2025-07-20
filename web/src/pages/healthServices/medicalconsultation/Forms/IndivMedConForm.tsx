@@ -199,7 +199,7 @@ export default function IndivMedicalForm() {
         height: parseFloat(data.height?.toFixed(2)),
         weight: parseFloat(data.weight?.toFixed(2)),
         age: patientData?.age,
-        bmi: parseFloat(bmiValue.toFixed(2)),
+        // bmi: parseFloat(bmiValue.toFixed(2)),
         created_at: new Date().toISOString(),
         patrec: patrec,
       });

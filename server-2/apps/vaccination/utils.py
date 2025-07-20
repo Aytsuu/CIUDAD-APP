@@ -1,5 +1,6 @@
 from .models import *
 from apps.inventory.models import *
+from apps.inventory.serializers import VacccinationListSerializer
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer
 from apps.patientrecords.models import *
 from django.db.models import Q
@@ -96,7 +97,9 @@ def get_all_residents_not_vaccinated():
     all_residents = ResidentProfile.objects.select_related('per').all()
 
     # 📋 All Resident-type, Active Patients
-    patients = Patient.objects.filter(pat_type="Resident", pat_status="Active").select_related('rp_id', 'rp_id__per')
+    patients = Patient.objects.filter(
+        pat_type="Resident", pat_status="Active"
+    ).select_related('rp_id', 'rp_id__per')
 
     # Map rp_id -> patient
     patient_map = {p.rp_id.rp_id: p for p in patients if p.rp_id}
@@ -105,6 +108,9 @@ def get_all_residents_not_vaccinated():
     all_vaccines = VaccineList.objects.all()
 
     for vaccine in all_vaccines:
+        # Serialize vaccine full data
+        vaccine_data = VacccinationListSerializer(vaccine).data
+
         # 🧪 Get pat_id of patients who already got this vaccine
         vaccinated_ids = VaccinationHistory.objects.filter(
             vacStck_id__vac_id=vaccine.vac_id
@@ -115,7 +121,7 @@ def get_all_residents_not_vaccinated():
             personal_info = ResidentPersonalInfoSerializer(resident).data
 
             patient = patient_map.get(rp_id)
-
+ 
             if patient:
                 # Has patient — check if vaccinated
                 if patient.pat_id not in vaccinated_ids:
@@ -124,7 +130,7 @@ def get_all_residents_not_vaccinated():
                         "pat_id": patient.pat_id,
                         "rp_id": rp_id,
                         "personal_info": personal_info,
-                        "vaccine_not_received": vaccine.vac_name
+                        "vaccine_not_received": vaccine_data
                     })
             else:
                 # No patient — definitely not vaccinated for this vaccine
@@ -133,10 +139,11 @@ def get_all_residents_not_vaccinated():
                     "pat_id": None,
                     "rp_id": rp_id,
                     "personal_info": personal_info,
-                    "vaccine_not_received": vaccine.vac_name
+                    "vaccine_not_received": vaccine_data
                 })
 
     return result
+
 
 def count_vaccinated_by_patient_type():
     try:

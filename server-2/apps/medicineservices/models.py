@@ -3,7 +3,7 @@ from django.apps import apps
 from apps.patientrecords.models import *
 from apps.inventory.models import *
 from apps.healthProfiling.models import *
-
+from apps.administration.models import Staff
         
         
 class MedicineRequest(models.Model):
@@ -51,6 +51,7 @@ class MedicineRecord(models.Model):
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, blank=True,null=True, db_column='patrec_id', related_name='medicine_records')
     minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_records')
     medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, db_column='medreq_id', related_name='medicine_records',blank=True,null=True,)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_records', null=True, blank=True)
 
     def __str__(self):
         return f"MedicineRecord #{self.medrec_id}"

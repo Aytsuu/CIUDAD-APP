@@ -26,64 +26,65 @@ export default function AllVaccinationRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
 
-  const { data: basicInfoVaccinationRecord, isLoading } = useVaccinationRecords();
+  const { data: basicInfoVaccinationRecord, isLoading } =
+    useVaccinationRecords();
 
+  const formatVaccinationData =
+    React.useCallback((): BasicInfoVaccinationRecord[] => {
+      if (!basicInfoVaccinationRecord) return [];
 
+      return basicInfoVaccinationRecord.map((record: any) => {
+        const info = record.patient_details.personal_info || {};
+        const address = record.patient_details.address || {};
 
-  const formatVaccinationData = React.useCallback((): BasicInfoVaccinationRecord[] => {
-    if (!basicInfoVaccinationRecord) return [];
+        const addressString =
+          [
+            address.add_street,
+            address.add_barangay,
+            address.add_city,
+            address.add_province,
+          ]
+            .filter((part) => part && part.trim().length > 0)
+            .join(", ") || "";
 
-    return basicInfoVaccinationRecord.map((record: any) => {
-      const info = record.patient_details.personal_info || {};
-      const address = record.patient_details.address || {};
+        return {
+          pat_id: record.pat_id,
+          fname: info.per_fname || "",
+          lname: info.per_lname || "",
+          mname: info.per_mname || "",
+          sex: info.per_sex || "",
+          age: calculateAge(info.per_dob).toString(),
+          dob: info.per_dob || "",
+          householdno: record.patient_details?.households?.[0]?.hh_id || "",
+          street: address.add_street || "",
+          sitio: address.add_sitio || "",
+          barangay: address.add_barangay || "",
+          city: address.add_city || "",
+          province: address.add_province || "",
+          pat_type: record.patient_details.pat_type || "",
+          address: addressString,
+          vaccination_count: record.vaccination_count || 0,
+        };
+      });
+    }, [basicInfoVaccinationRecord]);
 
-      const addressString =
-        [
-          address.add_street,
-          address.add_barangay,
-          address.add_city,
-          address.add_province,
-        ]
-          .filter((part) => part && part.trim().length > 0)
-          .join(", ") || "";
+  const { residentCount, transientCount, totalCount }: VaccinationCounts =
+    React.useMemo(() => {
+      const formattedData = formatVaccinationData();
+      const resident = formattedData.filter(
+        (record) => record.pat_type.toLowerCase() === "resident"
+      ).length;
+      const transient = formattedData.filter(
+        (record) => record.pat_type.toLowerCase() === "transient"
+      ).length;
+      const total = formattedData.length;
 
       return {
-        pat_id: record.pat_id,
-        fname: info.per_fname || "",
-        lname: info.per_lname || "",
-        mname: info.per_mname || "",
-        sex: info.per_sex || "",
-        age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob || "",
-        householdno: record.patient_details?.households?.[0]?.hh_id || "",
-        street: address.add_street || "",
-        sitio: address.sitio || "",
-        barangay: address.add_barangay || "",
-        city: address.add_city || "",
-        province: address.add_province || "",
-        pat_type: record.patient_details.pat_type || "",
-        address: addressString,
-        vaccination_count: record.vaccination_count || 0,
+        residentCount: resident,
+        transientCount: transient,
+        totalCount: total,
       };
-    });
-  }, [basicInfoVaccinationRecord]);
-
-  const { residentCount, transientCount, totalCount }: VaccinationCounts = React.useMemo(() => {
-    const formattedData = formatVaccinationData();
-    const resident = formattedData.filter(
-      (record) => record.pat_type.toLowerCase() === "resident"
-    ).length;
-    const transient = formattedData.filter(
-      (record) => record.pat_type.toLowerCase() === "transient"
-    ).length;
-    const total = formattedData.length;
-
-    return {
-      residentCount: resident,
-      transientCount: transient,
-      totalCount: total,
-    };
-  }, [formatVaccinationData]);
+    }, [formatVaccinationData]);
 
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
@@ -144,9 +145,7 @@ export default function AllVaccinationRecords() {
               </div>
             }
             content={
-              <div className="text-2xl font-bold px-6  ">
-                {transientCount}
-              </div>
+              <div className="text-2xl font-bold px-6  ">{transientCount}</div>
             }
           />
 
@@ -158,9 +157,7 @@ export default function AllVaccinationRecords() {
               </div>
             }
             content={
-              <div className="text-2xl font-bold px-6  ">
-                {totalCount}
-              </div>
+              <div className="text-2xl font-bold px-6  ">{totalCount}</div>
             }
           />
         </div>
@@ -195,7 +192,12 @@ export default function AllVaccinationRecords() {
 
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Link to={`/patNewVacRecForm`}>New Record</Link>
+              <Link
+                to="/patNewVacRecForm"
+                state={{ mode: "newvaccination_record" }}
+              >
+                New Record
+              </Link>
             </Button>
           </div>
         </div>

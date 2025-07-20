@@ -4,7 +4,6 @@ import { CircleAlert } from 'lucide-react';
 import { 
   getVaccineStock, 
   getVaccinationHistory,
-  createPatientRecord, 
   createVaccinationRecord, 
   createVaccinationHistory, 
   createVitalSigns, 
@@ -21,7 +20,7 @@ import { VaccineSchemaType, VitalSignsType } from '@/form-schema/vaccineSchema';
 import { api2 } from '@/api/api';
 import { Dispatch, SetStateAction } from 'react';
 import { useNavigate } from 'react-router';
-
+import {createPatientRecord }  from "@/pages/healthServices/restful-api-patient/createPatientRecord" 
 
 
 // Mutation for deducting vaccine stock
@@ -30,7 +29,7 @@ export const useDeductVaccineStock = () => {
   const navigate =useNavigate()
 
   return useMutation({
-    mutationFn: async (vacStck_id: number) => {
+    mutationFn: async ({ vacStck_id, staff_id }: { vacStck_id: number; staff_id: string }) => {
 
 
     
@@ -53,7 +52,7 @@ export const useDeductVaccineStock = () => {
       };
 
       await api2.put(`inventory/vaccine_stocks/${vacStck_id}/`, updatePayload);
-      const transaction = await createAntigenStockTransaction(vacStck_id);
+      const transaction = await createAntigenStockTransaction(vacStck_id,staff_id);
       console.log("Vaccine stock updated successfully:", updatePayload);
       console.log("Antigen stock transaction created:", transaction);
       return true;
@@ -75,10 +74,12 @@ export const useSubmitStep1 = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: async ({
+      staff_id,
       data,
       assignmentOption,
       form,
     }: {
+      staff_id:string
       data: VaccineSchemaType;
       assignmentOption: 'self' | 'other';
       form: { setError: any; getValues: any; reset: any };
@@ -100,14 +101,14 @@ export const useSubmitStep1 = () => {
         let vacrec_id: string | null = null;
 
         try {
-          const patientRecord = await createPatientRecord(data.pat_id);
+          const patientRecord = await createPatientRecord(data.pat_id,"Vaccination Record",staff_id);
           patrec_id = patientRecord.patrec_id;
 
           if (!patrec_id) {
             throw new Error("Patient record ID is null. Cannot create vaccination record.");
           }
 
-          const vaccinationRecord = await createVaccinationRecord(patrec_id,  1);
+          const vaccinationRecord = await createVaccinationRecord(patrec_id,  staff_id,1);
           vacrec_id = vaccinationRecord.vacrec_id;
 
           if (vacrec_id) {
@@ -124,7 +125,7 @@ export const useSubmitStep1 = () => {
             throw new Error("Vaccination record ID is null. Cannot create vaccination history.");
           } 
 
-          await deductVaccineStock.mutateAsync(Number(data.vaccinetype));
+          await deductVaccineStock.mutateAsync({ vacStck_id: Number(data.vaccinetype), staff_id });
 
           return { success: true, message: "Form assigned to others for Step 2 completion!" };
         } catch (error) {
@@ -158,6 +159,7 @@ export const useSubmitStep2 = () => {
 
   return useMutation({
     mutationFn: async ({
+      staff_id,
       data,
       patientId,
       vaccinationData,
@@ -166,6 +168,7 @@ export const useSubmitStep2 = () => {
       setAssignmentOption,
       calculateNextVisitDate,
     }: {
+      staff_id: string;
       data: VitalSignsType;
       patientId: string;
       vaccinationData: {
@@ -217,20 +220,20 @@ export const useSubmitStep2 = () => {
           vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
           // vacStck_used: vaccineData.vacStck_used + 1,
         });
-        await createAntigenStockTransaction(parseInt(vacStck, 10));
+        await createAntigenStockTransaction(parseInt(vacStck, 10),staff_id);
 
         
         if (vac_type === "routine") {
           await updateFollowUpVisit(oldFollowv_id, "completed");
 
-          const patientRec = await createPatientRecord(patientId);
+          const patientRec = await createPatientRecord(patientId,"Vaccination Record",staff_id);
           newpatrec_id = patientRec.patrec_id;
 
           if (!newpatrec_id) {
             throw new Error("Patient record ID is null. Cannot create vaccination record.");
           }
 
-          const newVaccinationRecord = await createVaccinationRecord(newpatrec_id, 1);
+          const newVaccinationRecord = await createVaccinationRecord(newpatrec_id,staff_id, 1);
           newVaccrec_id = newVaccinationRecord.vacrec_id;
 
           const { interval, time_unit } = vaccineData.vaccinelist.routine_frequency || {};
@@ -303,7 +306,8 @@ export const useSubmitStep2 = () => {
               "completed",
               form.getValues("age") ?? "",
               vital_id,
-              null
+              null,
+              // staff_id
             );
             vachist_id = vaccinationHistory.vachist_id;
           }

@@ -9,4 +9,5 @@ urlpatterns=[
     path('view-medconpending-record/<str:pat_id>/', ViewMedicalWithPendingRecordView.as_view(), name='medical-consultation-record-detail'),
     path('update-medcon/<int:medrec_id>/', UpdateMedicalConsultationRecordView.as_view(), name='update-medical-consultation-record'),
     path('medcon-record-count/<str:pat_id>/', GetMedConCountView.as_view(), name='med-record-count'),
+    path('pending-medcon-record-count/', PendingMedConCountView.as_view(), name='pending-med-record-count'),
 ]

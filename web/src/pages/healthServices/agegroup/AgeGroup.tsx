@@ -150,7 +150,7 @@ export default function AgeGroup() {
           </p>
         </div>
 
-        <Link to="/addAgeGroupFrom">
+        <Link to="/age-group-management">
           <Button
             disabled={isFormActive}
             className="flex items-center"

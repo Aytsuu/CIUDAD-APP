@@ -16,7 +16,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 
 import ScheduleTab from "./schedule-tab"
 
-import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/patientsFetchQueries"
+import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
 
 
 export default function ScheduleRecords() {

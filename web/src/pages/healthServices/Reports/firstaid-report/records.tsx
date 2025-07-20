@@ -23,28 +23,48 @@ export default function MonthlyFirstAidDetails() {
   const { month, monthName, records = [], recordCount = 0 } = state;
 
   const columns: ColumnDef<FirstAidRecord>[] = [
+    
     {
-      accessorKey: "farec_id",
-      header: "Record ID",
+      accessorKey: "created_at",
+      header: "Date Administered",
       cell: ({ row }) => (
-        <div className="text-center">{row.original.farec_id}</div>
+        <div className="text-center">
+          {row.original.created_at
+            ? new Date(row.original.created_at).toLocaleDateString()
+            : "N/A"}
+        </div>
       ),
     },
+    {
+      accessorKey: "patrec_details",
+      header: "Patient",
+      cell: ({ row }) => {
+        const patient = row.original.patrec_details;
+        const personalInfo = patient?.pat_details?.personal_info;
+        const fullName = [
+          personalInfo?.per_fname,
+          personalInfo?.per_mname,
+          personalInfo?.per_lname
+        ].filter(Boolean).join(' ');
+        
+        return (
+          <div className="text-center">
+            {fullName || "N/A"}
+            <div className="text-xs text-gray-500">
+              {patient?.pat_details?.pat_id || ''}
+            </div>
+          </div>
+        );
+      },
+    },
+    
+  
     {
       accessorKey: "finv_details.fa_detail.fa_name",
       header: "Item Name",
       cell: ({ row }) => (
         <div className="text-center">
           {row.original.finv_details?.fa_detail?.fa_name ?? "N/A"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "finv_details.fa_detail.catlist",
-      header: "Category",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.finv_details?.fa_detail?.catlist ?? "N/A"}
         </div>
       ),
     },
@@ -64,30 +84,7 @@ export default function MonthlyFirstAidDetails() {
         </div>
       ),
     },
-    {
-      accessorKey: "created_at",
-      header: "Date",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.created_at
-            ? new Date(row.original.created_at).toLocaleDateString()
-            : "N/A"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "finv_details.finv_qty_avail",
-      header: "Available Qty",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.finv_details?.finv_qty_avail ?? 0}{" "}
-          {row.original.finv_details?.finv_qty_unit ?? ""}
-        </div>
-      ),
-    },
   ];
-
- 
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -123,7 +120,10 @@ export default function MonthlyFirstAidDetails() {
         </div>
 
         <div className="overflow-x-auto">
-          <DataTable columns={columns} data={records} />
+          <DataTable 
+            columns={columns} 
+            data={records} 
+          />
         </div>
       </div>
     </div>

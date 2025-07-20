@@ -20,9 +20,12 @@ import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/ImzFetchAPI";
-
+import { useAuth } from "@/context/AuthContext";
 
 export default function AddImzSupplyStock() {
+  const {user} =useAuth()
+  const staff_id=user?.staff?.staff_id
+  
   const form = useForm<ImmunizationSuppliesType>({
     resolver: zodResolver(ImmunizationSuppliesSchema),
     defaultValues: {
@@ -94,7 +97,7 @@ export default function AddImzSupplyStock() {
   const handleConfirm = () => {
     if (!formData) return;
     setIsConfirmationOpen(false);
-    submit(formData);
+    submit({ data: formData, staff_id });
   };
 
   return (

@@ -16,13 +16,9 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { Toaster } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getMedicalRecord } from "../restful-api/GetMedicalRecord";
+import { TableSkeleton } from "../../skeleton/table-skeleton";
 
 export interface MedicalRecord {
   pat_id: number;
@@ -44,7 +40,6 @@ export interface MedicalRecord {
 }
 
 export default function AllMedicalConsRecord() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
   const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [value, setValue] = useState("");
@@ -54,7 +49,6 @@ export default function AllMedicalConsRecord() {
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const queryClient = useQueryClient();
 
-  // Fetch medical records from API
   const { data: MedicalRecord, isLoading } = useQuery<[MedicalRecord]>({
     queryKey: ["MedicalRecord"],
     queryFn: getMedicalRecord,
@@ -70,45 +64,44 @@ export default function AllMedicalConsRecord() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
-      // Construct address string - returns empty string if no address components
-      const addressString = [
-        address.add_street || info.per_address || "",
-        address.add_barangay || "",
-        address.add_city || "",
-        address.add_province || ""
-      ]
-        .filter(part => part.trim().length > 0) // Remove empty parts
-        .join(", ") || ""; // Join with commas or return empty string
+      const addressString =
+        [
+          address.add_street || info.per_address || "",
+          address.add_barangay || "",
+          address.add_city || "",
+          address.add_province || "",
+        ]
+          .filter((part) => part.trim().length > 0)
+          .join(", ") || "";
 
       return {
         pat_id: record.pat_id,
-        fname: info.per_fname || '',
-        lname: info.per_lname || '',
-        mname: info.per_mname || '',
-        sex: info.per_sex || '',
+        fname: info.per_fname || "",
+        lname: info.per_lname || "",
+        mname: info.per_mname || "",
+        sex: info.per_sex || "",
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob || '',
+        dob: info.per_dob || "",
         householdno: details.households?.[0]?.hh_id || "",
-        street: address.add_street || '',
-        sitio: address.sitio || '',
-        barangay: address.add_barangay || '',
-        city: address.add_city || '',
-        province: address.add_province || '',
-        pat_type: details.pat_type || '',
-        address: addressString, // Will be empty string if no address parts
+        street: address.add_street || "",
+        sitio: address.add_sitio || "",
+        barangay: address.add_barangay || "",
+        city: address.add_city || "",
+        province: address.add_province || "",
+        pat_type: details.pat_type || "",
+        address: addressString,
         medicalrec_count: record.medicalrec_count || 0,
       };
     });
   }, [MedicalRecord]);
 
-  // Filter data based on search query and patient type
   const filteredData = React.useMemo(() => {
     return formatMedicalData().filter((record: MedicalRecord) => {
       const searchText = `${record.pat_id} 
         ${record.lname} 
         ${record.fname} 
         ${record.sitio}`.toLowerCase();
-      
+
       const typeMatches =
         patientTypeFilter === "all" ||
         record.pat_type.toLowerCase() === patientTypeFilter.toLowerCase();
@@ -117,28 +110,11 @@ export default function AllMedicalConsRecord() {
     });
   }, [searchQuery, formatMedicalData, patientTypeFilter]);
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  // Archive confirmation handler
-  const confirmArchiveRecord = async () => {
-    if (recordToArchive !== null) {
-      try {
-        // Add your archive logic here
-        toast.success("Record archived successfully!");
-        queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
-      } catch (error) {
-        toast.error("Failed to archive the record.");
-      } finally {
-        setIsArchiveConfirmationOpen(false);
-        setRecordToArchive(null);
-      }
-    }
-  };
 
   const columns: ColumnDef<MedicalRecord>[] = [
     {
@@ -179,7 +155,9 @@ export default function AllMedicalConsRecord() {
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="w-full truncate">
-            {row.original.address ? row.original.address : "No address provided"}
+            {row.original.address
+              ? row.original.address
+              : "No address provided"}
           </div>
         </div>
       ),
@@ -232,13 +210,14 @@ export default function AllMedicalConsRecord() {
                         pat_id: row.original.pat_id,
                         pat_type: row.original.pat_type,
                         age: row.original.age,
-                        addressFull: row.original.address || "No address provided",
+                        addressFull:
+                          row.original.address || "No address provided",
                         address: {
                           add_street: row.original.street,
                           add_barangay: row.original.barangay,
                           add_city: row.original.city,
                           add_province: row.original.province,
-                          sitio: row.original.sitio,
+                          add_sitio: row.original.sitio,
                         },
                         households: [{ hh_id: row.original.householdno }],
                         personal_info: {
@@ -252,7 +231,7 @@ export default function AllMedicalConsRecord() {
                     },
                   }}
                 >
-                  <Eye size={15} />
+                  View{" "}
                 </Link>
               </div>
             }
@@ -262,21 +241,9 @@ export default function AllMedicalConsRecord() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="w-full h-full flex flex-col">
-        {/* Header Section */}
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Medical Consultation Records
@@ -322,7 +289,6 @@ export default function AllMedicalConsRecord() {
           </div>
         </div>
 
-        {/* Table Container */}
         <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
@@ -355,8 +321,13 @@ export default function AllMedicalConsRecord() {
               </DropdownMenu>
             </div>
           </div>
+
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+            {isLoading ? (
+              <TableSkeleton columns={columns} rowCount={5} />
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
@@ -376,14 +347,6 @@ export default function AllMedicalConsRecord() {
           </div>
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={isArchiveConfirmationOpen}
-        onOpenChange={setIsArchiveConfirmationOpen}
-        onConfirm={confirmArchiveRecord}
-        title="Archive Medical Record"
-        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
-      />
     </>
   );
 }

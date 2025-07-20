@@ -8,54 +8,11 @@ export const getVaccineStock = async (vaccineTypeId: string) => {
   return response.data;
 };
 
-export const createPatientRecord = async (pat_id: string) => {
-  try {
-    console.log("Sending request to create patient record:", {
-      patrec_type: "Vaccination",
-      pat_id,
-      created_at: new Date().toISOString()
-    });
 
-    const response = await api2.post("patientrecords/patient-record/", {
-      patrec_type: "Vaccination",
-      pat_id: pat_id,
-      created_at: new Date().toISOString(),
-    });
-
-    console.log("API Response:", response.data);
-    return response.data;
-
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // Handle 400 Bad Request specifically
-      if (error.response?.status === 400) {
-        console.error("Bad Request Details:", {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers
-        });
-        
-        // Extract validation errors if available
-        const validationErrors = error.response.data;
-        throw new Error(`Validation failed: ${JSON.stringify(validationErrors)}`);
-      }
-
-      // Handle other HTTP errors
-      console.error("API Error:", {
-        message: error.message,
-        code: error.code,
-        config: error.config
-      });
-    } else {
-      console.error("Unexpected Error:", error);
-    }
-    
-    throw error; // Re-throw for calling code
-  }
-};
 
 export const createVaccinationRecord = async (
   patrec_id: string,
+  staff_id: string | null = null,
   // status: "forwarded" | "completed" | "partially vaccinated",
   totalDoses: number
 ) => {
@@ -66,6 +23,7 @@ export const createVaccinationRecord = async (
     vacrec_totaldose: totalDoses,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    staff: staff_id || null, // Ensure staff_id is parsed as an integer
   });
   return response.data;
 };
@@ -76,8 +34,9 @@ export const createVaccinationHistory = async (
   doseNo: number,
   status: "forwarded" | "completed" | "partially vaccinated",
   age:string,
-  vital_id: string | null = null,
-  followv_id: string | null = null,
+  staff_id: string | null,
+  vital_id?: string | null,
+  followv_id?: string | null ,
   
 ) => {
   try {
@@ -85,13 +44,14 @@ export const createVaccinationHistory = async (
       vachist_doseNo: doseNo,
       vachist_status: status,
       vachist_age: age,
-      staff_id: 1,
+      staff: staff_id,
       vacrec: vacrec_id,
       vital: vital_id,
       created_at: new Date().toISOString(),
       vacStck_id: parseInt(vacStck_id, 10),
       assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
       followv: followv_id,
+      // staff:staff_id|| null
     });
     return response.data;
   } catch (error) {
@@ -222,14 +182,14 @@ export const deleteVaccinationHistory = async (vachist_id: string) => {
 
 export const createAntigenStockTransaction = async (
   vacStck_id: number,
+  staff_id: string,
   qty: string = "1 dose",
   action: string = "Administered",
-  staffId: number = 1
 ) => {
   const transactionPayload = {
     antt_qty: qty,
     antt_action: action,
-    staff: staffId,
+    staff: staff_id,
     vacStck_id: vacStck_id,
   };
 

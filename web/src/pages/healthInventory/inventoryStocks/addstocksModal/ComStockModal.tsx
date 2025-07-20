@@ -25,8 +25,12 @@ import { CircleCheck, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AddCommodityStock() {
+
+  const {user}=useAuth()
+  const staff_id = user?.staff?.staff_id
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
@@ -75,7 +79,7 @@ export default function AddCommodityStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit(formData);
+    submit({data: formData, staff: staff_id});
   };
 
   return (
