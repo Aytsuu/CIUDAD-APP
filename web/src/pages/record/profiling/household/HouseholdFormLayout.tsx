@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,13 +7,11 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { useForm } from "react-hook-form"
 import { householdFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { toast } from "sonner"
-import { CircleAlert, MapPin, Users, CheckCircle2, HousePlus, Plus } from "lucide-react"
+import { MapPin, Users, HousePlus, Plus } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { useAuth } from "@/context/AuthContext"
 import { useAddHousehold } from "../queries/profilingAddQueries"
 import { usePerAddressesList, useResidentsList } from "../queries/profilingFetchQueries"
-import { useAddHouseholdHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
@@ -47,7 +43,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
   // =============== QUERIES ==================
   const { mutateAsync: addHousehold } = useAddHousehold()
-  const { mutateAsync: addHouseholdHealth } = useAddHouseholdHealth()
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
   const { data: perAddressList, isLoading: isLoadingPerAddress } = usePerAddressesList()
 
@@ -111,12 +106,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
       // Add to main household database
       await addHousehold({
-        householdInfo: householdInfo,
-        staffId: user?.staff?.staff_id,
-      })
-
-      // Add to health database
-      await addHouseholdHealth({
         householdInfo: householdInfo,
         staffId: user?.staff?.staff_id,
       })
