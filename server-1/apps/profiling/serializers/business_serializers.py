@@ -172,4 +172,11 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
       ])
     return instance
 
-    
+class ForSpecificOwnerSerializer(serializers.ModelSerializer):
+  sitio = serializers.CharField(source="add.sitio.sitio_name")
+  bus_street = serializers.CharField(source='add.add_street')
+  class Meta:
+    model = Business
+    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_street', 'sitio', 'bus_date_registered']
+
+  

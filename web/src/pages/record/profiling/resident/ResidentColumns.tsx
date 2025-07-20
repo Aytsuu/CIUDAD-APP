@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { ArrowUpDown, Building, CircleAlert, CircleUserRound, House, UserRoundPlus, UsersRound } from "lucide-react";
-import { ResidentAdditionalRecord, ResidentRecord } from "../profilingTypes";
+import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { getPersonalInfo } from "../restful-api/profilingGetAPI";
@@ -308,27 +308,18 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const { showLoading, hideLoading } = useLoading();
-
       const handleViewClick = async () => {
-        showLoading();
-        try {
-          const personalInfo = await getPersonalInfo(row.original.rp_id);
-          navigate("/resident/view", {
-            state: {
-              params: {
-                type: 'viewing',
-                data: {
-                  personalInfo: personalInfo,
-                  residentId: row.original.rp_id,
-                  familyId: row.original.family_no
-                },
-              }
+        navigate("/resident/view", {
+          state: {
+            params: {
+              type: 'viewing',
+              data: {
+                residentId: row.original.rp_id,
+                familyId: row.original.family_no
+              },
             }
-          });
-        } finally {
-          hideLoading();
-        }
+          }
+        });
       }
     
       return (
@@ -342,7 +333,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const additionalDetailsColumns = (residentId: string, familyId: string): ColumnDef<ResidentAdditionalRecord>[] => [
+export const familyDetailsColumns = (residentId: string, familyId: string): ColumnDef<ResidentFamilyRecord>[] => [
   {
     accessorKey: 'rp_id',
     header: 'Resident No.'
@@ -377,30 +368,20 @@ export const additionalDetailsColumns = (residentId: string, familyId: string): 
     header: "",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const { showLoading, hideLoading } = useLoading();
 
       const handleViewClick = async () => {
-        if(row.original.rp_id === residentId) return;
-
-        showLoading();
-        try {
-          const personalInfo = await getPersonalInfo(row.original.rp_id);
-          navigate("/resident/view", {
-            state: {
-              params: {
-                type: 'viewing',
-                data: {
-                  personalInfo: personalInfo,
-                  residentId: row.original.rp_id,
-                  familyId: familyId
-                },
-              }
-            },
-            replace: true
-          });
-        } finally {
-          hideLoading();
-        }
+        navigate("/resident/view", {
+          state: {
+            params: {
+              type: 'viewing',
+              data: {
+                residentId: row.original.rp_id,
+                familyId: familyId
+              },
+            }
+          },
+          replace: true
+        });
       }
 
       if(row.original.rp_id === residentId) {
@@ -411,6 +392,45 @@ export const additionalDetailsColumns = (residentId: string, familyId: string): 
         )
       }
     
+      return (
+        <ViewButton onClick={handleViewClick} />
+      )
+    },
+    enableSorting: false,
+    enableHiding: false,
+  }
+]
+
+export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] => [
+  {
+    accessorKey: 'bus_id',
+    header: 'Business No.'
+  },
+  {
+    accessorKey: 'bus_name',
+    header: 'Name'
+  },
+  {
+    accessorKey: 'location',
+    header: 'Location'
+  },
+  {
+    accessorKey: 'bus_gross_sales',
+    header: 'Gross Sales'
+  },
+  {
+    accessorKey: 'bus_date_registered',
+    header: 'Date Registered'
+  },
+  {
+    accessorKey: "action",
+    header: "",
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const handleViewClick = async () => {
+        
+      }
+
       return (
         <ViewButton onClick={handleViewClick} />
       )

@@ -9,6 +9,7 @@ import {
   getHouseholdList,
   getHouseholdTable,
   getPerAddressesList,
+  getPersonalInfo,
   getRequests,
   getResidentsFamSpecificList,
   getResidentsList,
@@ -28,6 +29,14 @@ export const usePerAddressesList = () => {
 };
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
+export const usePersonalInfo = (residentId: string) => {
+  return useQuery({
+    queryKey: ['personalInfo', residentId],
+    queryFn: () => getPersonalInfo(residentId),
+    staleTime: 5000
+  })
+}
+
 export const useResidentsList = (
   is_staff: boolean = false,
   exclude_independent: boolean = false,
@@ -181,6 +190,23 @@ export const useBusinessInfo = (busId: number) => {
     },
     staleTime: 5000,
   });
+}
+
+export const useOwnedBusinesses = (data: Record<string, any>) => {
+  return useQuery({
+    queryKey: ['ownedBusinesses', data],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/business/specific/ownership', {
+          params: data
+        });
+
+        return res.data;
+      } catch (err){
+        throw err;
+      }
+    }
+  })
 }
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)

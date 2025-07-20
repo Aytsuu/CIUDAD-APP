@@ -14,13 +14,20 @@ export type ResidentRecord = {
   has_account: boolean;
 };
 
-export type ResidentAdditionalRecord = {
+export type ResidentFamilyRecord = {
   rp_id: string;
   fc_role: string;
   name: string;
   sex: string;
   dob: string;
   status: string;
+}
+
+export type ResidentBusinessRecord = {
+  bus_id: string;
+  bus_name: string;
+  bus_gross_sales: string;
+  bus_date_registered: string;
 }
 
 export type DependentRecord = {

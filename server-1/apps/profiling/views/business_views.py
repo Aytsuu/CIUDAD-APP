@@ -105,3 +105,18 @@ class VerifyBusinessRespondent(APIView):
       return Response(data=data, status=status.HTTP_200_OK)
     
     return Response(status=status.HTTP_404_NOT_FOUND)
+
+class SpecificOwnerView(APIView):
+  def get(self, request, *args, **kwargs):
+    rp = request.query_params.get('rp', None)
+    br = request.query_params.get('br', None)
+
+    if rp:
+      queryset = Business.objects.filter(rp=rp)
+    else: 
+      queryset = Business.objects.filter(br=br)
+    
+    if queryset:
+      return Response(data=ForSpecificOwnerSerializer(queryset).data, status=status.HTTP_200_OK)
+    return Response(data=None)
+

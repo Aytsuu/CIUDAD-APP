@@ -19,6 +19,7 @@ export const addAddress =  async (data: Record<string, any>[]) => {
 export const addPersonalAddress = async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/per_address/create/", data);
+    await api2.post("health-profiling/per_address/create/", data)
     return res.data;
   } catch (err) {
     throw err;
@@ -43,7 +44,23 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
       },
       per_id: +personalInfo.per_id || null,
       staff: staffId || null
-    })
+    });
+
+    await api2.post("health-profiling/resident/create/combined/", {
+      per: {
+        per_lname: personalInfo.per_lname,
+        per_fname: personalInfo.per_fname,
+        per_mname: personalInfo.per_mname || null,
+        per_suffix: personalInfo.per_suffix || null,
+        per_dob: formatDate(personalInfo.per_dob),
+        per_sex: personalInfo.per_sex,
+        per_status: personalInfo.per_status,
+        per_edAttainment: personalInfo.per_edAttainment || null,
+        per_religion: personalInfo.per_religion,
+        per_contact: personalInfo.per_contact,
+      },
+      staff: staffId || null
+    });
     
     return res.data
   } catch (err) { 

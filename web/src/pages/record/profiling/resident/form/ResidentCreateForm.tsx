@@ -15,11 +15,6 @@ import {
   useAddResidentAndPersonal,
 } from "../../queries/profilingAddQueries";
 import {
-  useAddResidentAndPersonalHealth,
-  useAddAddressHealth,
-  useAddPerAddressHealth,
-} from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
-import {
   useResidentsList,
   useSitioList,
 } from "../../queries/profilingFetchQueries";
@@ -67,16 +62,9 @@ export default function ResidentCreateForm({
     },
   ]);
 
-  // Main database mutations
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
-
-  // Health database mutations
-  const { mutateAsync: addResidentAndPersonalHealth } =
-    useAddResidentAndPersonalHealth();
-  const { mutateAsync: addAddressHealth } = useAddAddressHealth();
-  const { mutateAsync: addPersonalAddressHealth } = useAddPerAddressHealth();
 
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] =
@@ -204,104 +192,27 @@ export default function ResidentCreateForm({
         throw new Error("Staff information not available");
       }
 
-      // Main database insertion
-      await addResidentAndPersonal(
-        {
-          personalInfo: personalInfo,
-          staffId: staffId,
-        },
-        {
-          onSuccess: (resident) => {
-            // Insert addresses to main database
-            addAddress(addresses, {
-              onSuccess: (new_addresses) => {
-                // Link addresses to resident in main database
-                const per_address = new_addresses?.map((address: any) => ({
-                  add: address.add_id,
-                  per: resident.per.per_id,
-                }));
+      const resident = await addResidentAndPersonal({
+        personalInfo: personalInfo,
+        staffId: staffId
+      })
 
-                addPersonalAddress(per_address, {
-                  onSuccess: () => {
-                    // Main database operations completed successfully
-                    showSuccessToast('Successfully registered new resident!')
-                    if (params?.isRegistrationTab) {
-                      params.setResidentId(resident.rp_id);
-                      params.setAddresses(new_addresses);
-                      params?.next();
-                    }
-                    setIsSubmitting(false);
-                    form.reset(defaultValues);
-                  },
-                  onError: (error) => {
-                    setIsSubmitting(false);
-                    showErrorToast(
-                      "Failed to link address to resident in main database. Please try again."
-                    );
-                    console.error("Main address linking error:", error);
-                  },
-                });
-              },
-              onError: (error) => {
-                setIsSubmitting(false);
-                showErrorToast(
-                  "Failed to create address in main database. Please try again."
-                );
-                console.error("Main address creation error:", error);
-              },
-            });
-          },
-          onError: (error) => {
-            setIsSubmitting(false);
-            showErrorToast(
-              "Failed to create main database record. Please try again."
-            );
-            console.error("Main database insertion error:", error);
-          },
-        }
-      );
+      const new_addresses = await addAddress(addresses)
 
-      await addResidentAndPersonalHealth(
-        {
-          personalInfo: personalInfo,
-          staffId: staffId,
-        },
-        {
-          onSuccess: (healthResident) => {
-            // Insert addresses to health database
-            addAddressHealth(addresses, {
-              onSuccess: (new_addresses_health) => {
-                // Link addresses to resident in health database
-                const per_address_health = new_addresses_health?.map((address: any) => ({
-                  add: address.add_id,
-                  per: healthResident.per.per_id,
-                }));
+      await addPersonalAddress(new_addresses?.map((address: any) => ({
+        add: address.add_id,
+        per: resident.per.per_id,
+      })))
+      
+      showSuccessToast('Successfully registered new resident!')
+      if (params?.isRegistrationTab) {
+        params.setResidentId(resident.rp_id);
+        params.setAddresses(new_addresses);
+        params?.next();
+      }
+      setIsSubmitting(false);
+      form.reset(defaultValues);
 
-                addPersonalAddressHealth(per_address_health, {
-                  onSuccess: () => {
-                    console.log("Health database insertion completed successfully");
-                  },
-                  onError: (error) => {
-                    setIsSubmitting(false);
-                    showErrorToast("Failed to link address to resident in main database. Please try again.");
-                    console.error("Main address linking error:", error);
-                  }
-                });
-              },
-              onError: (error) => {
-                setIsSubmitting(false);
-                showErrorToast("Failed to create address in main database. Please try again.");
-                console.error("Main address creation error:", error);
-              }
-            });
-          },
-          onError: (error) => {
-            setIsSubmitting(false);
-            showErrorToast("Failed to create main database record. Please try again.");
-            console.error("Main database insertion error:", error);
-          }
-        }
-      );
     } catch (err) {
       setIsSubmitting(false);
       showErrorToast(
