@@ -10,4 +10,5 @@ urlpatterns = [
     path("payment-webhook/", payment_webhook),
     path("online-donations/", OnlineDonationListView.as_view()),
     path("payment-status/<str:payment_intent_id>/", PaymentStatus.as_view()),
+    
 ]

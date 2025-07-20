@@ -76,12 +76,12 @@ INSTALLED_APPS = [
     'apps.complaint',
     'apps.report',
     'apps.council',
-    'apps.drr',
     'apps.donation',
     'apps.notification',
     'apps.announcement',
     'apps.authentication',
     'apps.gad',
+    'apps.clerk',
     'backend.firebase.notifications',
     'detection'
 ]
@@ -96,7 +96,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AccountMiddleware',
+    'apps.authentication.middleware.AuthCheckingMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -126,6 +126,17 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = 'backend.asgi.application'
 
 # ========================
+# EMAIL CONFIGURATION
+# ========================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ========================
 # DATABASE CONFIGURATION
 # ========================
 DATABASES = {
@@ -136,7 +147,7 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
-    },
+    }
 }
 
 # Password validation
@@ -255,3 +266,10 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+
+# ========================
+# SCHEDULER
+# ========================
+SCHEDULER_AUTOSTART = True
+# SCHEDULER_AUTOSTART = not DEBUG # for production

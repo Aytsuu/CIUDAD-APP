@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateBusiness, updateFamily, updateFamilyRole, updateHousehold, updateProfile } from "../restful-api/profilingPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
+import { api } from "@/api/api";
 
 export const useUpdateHousehold = () => {
   const queryClient = useQueryClient();
@@ -98,12 +99,37 @@ export const useUpdateFamily = () => {
 }
 
 export const useUpdateBusiness = () => {
+  const queryclient = useQueryClient();
   return useMutation({
     mutationFn: ({data, businessId} : {
       data: Record<string, any>;
       businessId: string;
-    }) => updateBusiness(data, businessId)
+    }) => updateBusiness(data, businessId),
+    onSuccess: (newData) => {
+      queryclient.setQueryData(['businessInfo'], (old: any) => ({
+        ...(old || {}),
+        ...newData
+      }));
+
+      queryclient.invalidateQueries({queryKey: ['businesses']});
+      queryclient.invalidateQueries({queryKey: ['businessInfo']});
+    }
   })
 }
 
 
+export const useUpdateAccount = () => {
+  return useMutation({
+    mutationFn: async ({accNo, data} : {
+        accNo: number, 
+        data: Record<string, any>
+      }) => {
+      try {
+        const res = await api.put(`account/${accNo}/`, data);
+        return res.data
+      } catch (err) {
+        throw err;
+      }
+    }
+  })
+}

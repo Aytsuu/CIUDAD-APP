@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.db import transaction
 from ..models import *
-from apps.profiling.models import Address
+from apps.profiling.models import Address, Sitio
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 from ..serializers.incident_report_serializers import IRBaseSerializer
 import datetime
@@ -54,7 +54,7 @@ class ARCreateSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = AcknowledgementReport
-    fields = ['ar_id', 'ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 
+    fields = ['ar_id', 'ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 'ar_created_at', 
               'ar_time_completed', 'ar_action_taken', 'ir_sitio', 'ir_street', 'ir', 'rt', 'staff'] 
     extra_kwargs = {
       'ar_id' : {'read_only': True}
@@ -79,14 +79,13 @@ class ARCreateSerializer(serializers.ModelSerializer):
           'add_province': 'Cebu',
           'add_city': 'Cebu City',
           'add_barangay': 'San Roque',
-          'sitio': sitio,
+          'sitio': Sitio.objects.filter(sitio_id=sitio).first(),
           'add_street': street
         }
 
-        new_add = AddressBaseSerializer(data=data)
-        if new_add.is_valid():
-          new_add.save()
-          validated_data['add'] = new_add
+        new_add = Address(**data)
+        new_add.save()
+        validated_data['add'] = new_add
 
     if incident_report:
       is_archive = {

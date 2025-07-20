@@ -125,27 +125,30 @@ export const householdFormSchema = z.object({
 });
 
 export const businessFormSchema = z.object({
-  bus_respondentLname: z.string()
-    .min(1, 'Last Name is required')
-    .min(2, 'Last Name must be atleast 2 letters'),
-  bus_respondentFname: z.string()
-    .min(1, 'First Name is required')
-    .min(2, 'First Name must be atleast 2 letters'),
-  bus_respondentMname: z.string()
-    .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
-    .optional(),
-  bus_respondentContact: z.string()
-    .min(1, "Contact is required")
-    .regex(
-      /^09\d{9}$/,
-      "Must be a valid mobile number (e.g., 09171234567)"
-    )
-    .refine((val) => val.length === 11, {
-      message: "Must be 11 digits (e.g., 09171234567)",
-    }),
-  bus_respondentAddress: z.string().min(1, 'Address is required'),
-  bus_respondentSex: z.string().min(1, 'Sex is required'),
-  bus_respondentDob: z.string().min(1, 'Date of Birth is required'),
+  respondent: z.object({
+    rp_id: z.string().optional(),
+    br_lname: z.string()
+      .min(1, 'Last Name is required')
+      .min(2, 'Last Name must be atleast 2 letters'),
+    br_fname: z.string()
+      .min(1, 'First Name is required')
+      .min(2, 'First Name must be atleast 2 letters'),
+    br_mname: z.string()
+      .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
+      .optional(),
+    br_sex: z.string().min(1, 'Sex is required'),
+    br_dob: z.string().min(1, 'Date of Birth is required'),
+    br_contact: z.string()
+      .min(1, "Contact is required")
+      .regex(
+        /^09\d{9}$/,
+        "Must be a valid mobile number (e.g., 09171234567)"
+      )
+      .refine((val) => val.length === 11, {
+        message: "Must be 11 digits (e.g., 09171234567)",
+      }),
+    br_address: z.string().min(1, 'Address is required'),
+  }),
   bus_name: z.string().min(1, 'Business Name is required'),
   bus_gross_sales: z.string().min(1, 'Gross Sales is required'),
   bus_street: z.string().min(1, 'Street Address is required'),
@@ -153,7 +156,7 @@ export const businessFormSchema = z.object({
 });
 
 export const newMemberFormSchema = z.object({
+  familyId: z.string(),
   id: z.string(),
   role: z.string().min(1, "Role is required")
 })
-

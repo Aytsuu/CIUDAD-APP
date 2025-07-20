@@ -34,7 +34,6 @@ type PersonalInfoFormProps = {
   setIsAssignmentOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
-  reject?: () => void;
   onComboboxChange?: () => void;  
 };
 
@@ -69,7 +68,6 @@ const PersonalInfoForm = ({
   setIsAssignmentOpen,
   setFormType,
   submit,
-  reject,
   onComboboxChange,
 }: PersonalInfoFormProps) => {
   // ============= INITIALIZING STATES =============
@@ -260,7 +258,6 @@ const PersonalInfoForm = ({
           setIsAssignmentOpen,
           setFormType,
           submit,
-          reject
         })}
       </div>
     </>

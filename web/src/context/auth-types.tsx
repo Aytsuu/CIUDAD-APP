@@ -1,35 +1,14 @@
-export const STAFF_TYPES = {
-  BARANGAY: 'Barangay Staff',
-  HEALTH: 'Health Staff'
-} as const;
-
-// Interfaces
-export interface Assignment {
-  id: string;
-  
-  [key: string]: any; // Replace with actual assignment fields
-}
-
-export interface Staff {
-  staff_id: string;
-  staff_type: typeof STAFF_TYPES[keyof typeof STAFF_TYPES] | string;
-  assignments: Assignment[];
-}
-
-export interface Resident {
-  rp_id: string;
-  staff?: Staff;
-}
-
 export interface User {
   acc_id?: string;
   supabase_id: string;
   username: string;
   email: string;
   profile_image?: string | null;
-  resident?: Resident;
+  resident?: Record<string, any>;
   staff?: Record<string, any>;
 }
+
+
 
 export interface AuthContextType {
   user: User | null;
@@ -39,7 +18,44 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signUp: (email: string, password: string, username?: string) => Promise<{ requiresConfirmation?: boolean }>;
-  signInWithGoogle: () => Promise<void>;
   refreshSession: () => Promise<void>;
   clearError: () => void;
+}
+
+// Notification types
+
+export interface NotificationContextType {
+  notifications: Notification[];
+  unreadCount: number;
+  send: (payload: CreateNotificationPayload) => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
+  refresh: () => Promise<void>;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  created_at: string;
+  sender_id?: Record<string, any>;
+  is_read?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface CreateNotificationPayload{
+  title: string;
+  message: string;
+  recipient_ids: string[];
+  metadata?: Record<string, any>;
+}
+
+export interface NotficationFormat{
+    title: string;
+    message: string;
+    recipient_ids: (string | number)[];
+    metadata: {
+        action_url: string,
+        sender_name: string,
+        sender_avatar: string,
+    };
 }

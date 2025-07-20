@@ -1,8 +1,9 @@
 
 export type ResidentRecord = {
   rp_id: string;
-  household_noe: string;
+  household_no: string;
   family_no: string;
+  business_owner: boolean;
   sitio_name: string;
   lname: string;
   fname: string;
@@ -13,13 +14,20 @@ export type ResidentRecord = {
   has_account: boolean;
 };
 
-export type ResidentAdditionalRecord = {
+export type ResidentFamilyRecord = {
   rp_id: string;
   fc_role: string;
   name: string;
   sex: string;
   dob: string;
   status: string;
+}
+
+export type ResidentBusinessRecord = {
+  bus_id: string;
+  bus_name: string;
+  bus_gross_sales: string;
+  bus_date_registered: string;
 }
 
 export type DependentRecord = {
@@ -68,7 +76,7 @@ export type SitioRecord = {
   sitio_name: string;
 }
 
-export type RequestRecord = {
+export type IndividualRequestRecord = {
   req_id: string;
   per_lname: string;
   per_fname: string;
@@ -85,17 +93,20 @@ export type RequestRecord = {
   req_date: string;
 }
 
+export type FamilyRequestRecord = {
+  req_id: string;
+  respondent: Record<string, any>;
+  compositions: Record<string, any>[];
+  req_date: string;
+}
+
 export type BusinessRecord = {
   bus_id: string;
   bus_name: string;
   bus_gross_sales: string;
   sitio: string;
   bus_street: string;
-  bus_respondentLname: string;
-  bus_respondentFname: string;
-  bus_respondentMname: string;
   bus_date_registered: string;
-  bus_registered_by: string;
-  files: Record<string, any>[];
+  rp: string;
 }
 
