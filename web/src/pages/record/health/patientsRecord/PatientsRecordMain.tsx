@@ -30,7 +30,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
 
-import { usePatients } from "./queries/patientsFetchQueries";
+import { usePatients } from "./queries/fetch";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
 type Report = {

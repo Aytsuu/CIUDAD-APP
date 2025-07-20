@@ -13,124 +13,29 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { usePatientDetails } from "../queries/patientsFetchQueries"
+import { usePatientDetails } from "../queries/fetch"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries"
 import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv"
 import { usePatientPostpartumCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries"
 import { toast } from "sonner"
-import { useUpdatePatient } from "../queries/patientsUpdateQueries"
+import { useUpdatePatient } from "../queries/update"
 import CardLayout from "@/components/ui/card/card-layout"
 import PersonalInfoTab from "./PersonalInfoTab"
 import Records from "./Records"
 import VisitHistoryTab from "./VisitHistoryTab"
 import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
-import PatientRecordSkeleton from "../../../../healthServices/skeleton/patient-rec-main-skeleton"
-import { useQuery } from "@tanstack/react-query"
-import {api2} from "@/api/api"
-// IMPORTANT: Replace this placeholder with your actual api2 instance
-// For example, if api2 is an axios instance:
-// import api2 from 'path/to/your/api2-instance';
-// Or if it's a global object, ensure it's available in your context.
-
-export const getchilddata = async (pat_id: string) => {
-  try {
-    const childres = await api2.get(`/child-health/child-health-records/by-patient/${pat_id}`)
-    return childres.data
-  } catch (error) {
-    console.error("Error fetching child health records:", error)
-    throw new Error("Failed to fetch child health records. Please try again later.")
-  }
-}
-
-export interface ChildHealthRecord {
-  chrec_id: number
-  pat_id: string
-  fname: string
-  lname: string
-  mname: string
-  sex: string
-  age: string
-  dob: string
-  householdno: string
-  street: string
-  sitio: string
-  barangay: string
-  city: string
-  province: string
-  landmarks: string
-  pat_type: string
-  address: string 
-  mother_fname: string
-  mother_lname: string
-  mother_mname: string
-  mother_contact: string
-  mother_occupation: string
-  father_fname: string
-  father_lname: string
-  father_mname: string
-  father_contact: string
-  father_occupation: string
-  family_no: string
-  birth_weight: number
-  birth_height: number
-  type_of_feeding: string
-  delivery_type: string
-  place_of_delivery_type: string
-  pod_location: string
-  pod_location_details: string
-  health_checkup_count: number
-  birth_order: number
-  tt_status: string
-}
-
-interface PatientData {
-  pat_id: string
-  pat_type: string
-  trans_id?: string
-  households: { hh_id: string }[]
-  personal_info: {
-    per_fname: string
-    per_mname: string
-    per_lname: string
-    per_sex: string
-    per_contact: string
-    per_dob: string
-    ageTime?: "yrs"
-  }
-  address: {
-    add_street?: string
-    add_barangay?: string
-    add_city?: string
-    add_province?: string
-    sitio: string
-  } | null
-  bloodType?: string
-  allergies?: string
-  chronicConditions?: string
-  lastVisit?: string
-  visits?: Array<{ date: string; reason: string; doctor: string }>
-}
+import {PatientData,ChildHealthRecord} from "./types"
+import {useChildHealthRecords} from "../queries/fetch"
+import { calculateAge } from "@/helpers/ageCalculator"
 
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
   const [isEditable, setIsEditable] = useState(false)
   const { patientId } = useParams<{ patientId: string }>()
-
   const { data: patientsData, isLoading, error, isError } = usePatientDetails(patientId ?? "")
-
- 
-
-  // useQuery for child health records
-  const { data: rawChildHealthRecords, isLoading: isLoadingChildHealthRecords } = useQuery({
-    queryKey: ["childHealthRecords", patientId],
-    queryFn: () => getchilddata(patientId ?? ""),
-    refetchOnMount: false,
-    staleTime: 300000,
-    gcTime: 600000,
-  })
-
+  const { data: rawChildHealthRecords, isLoading: isLoadingChildHealthRecords } = useChildHealthRecords(patientId);
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
@@ -156,7 +61,6 @@ export default function ViewPatientRecord() {
     return patientArray.find((patient: PatientData) => patient.pat_id === patientId) ?? null
   }, [patientsData, patientId])
 
-  // Debug logging for address data
   useEffect(() => {
     if (currentPatient) {
       console.log("Current Patient Data:", currentPatient)
@@ -218,14 +122,7 @@ export default function ViewPatientRecord() {
 
   const getInitials = () => (patientData ? `${patientData.firstName[0] ?? ""}${patientData.lastName[0] ?? ""}` : "")
 
-  const calculateAge = (dob: string) => {
-    const today = new Date()
-    const birthDate = new Date(dob)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--
-    return age
-  }
+
 
   const getFullAddress = () => {
     if (!currentPatient || !currentPatient.address) return "No address provided"
@@ -239,7 +136,6 @@ export default function ViewPatientRecord() {
     return addressParts.length > 0 ? addressParts.join(", ") : "No address provided"
   }
 
-  // Helper function to safely get address field value
   const getAddressField = (field: string | undefined | null): string => {
     if (!field || field.trim() === "" || field.toLowerCase() === "n/a") {
       return ""
@@ -282,7 +178,6 @@ export default function ViewPatientRecord() {
     return linkData
   }, [currentPatient, patientData, patientId])
 
-  // Helper to format full address for child health records
   const formatFullAddressForChildHealth = (address: any): string => {
     if (!address) return "No address provided"
     const addressParts = [
@@ -344,8 +239,8 @@ export default function ViewPatientRecord() {
         delivery_type: chrecDetails.place_of_delivery_type || "",
         place_of_delivery_type: chrecDetails.place_of_delivery_type || "",
         pod_location: chrecDetails.pod_location || "",
-        pod_location_details: "", // Not found in JSON
-        health_checkup_count: 0, // Not found in JSON
+        pod_location_details: "",
+        health_checkup_count: 0,
         birth_order: chrecDetails.birth_order || 0,
         tt_status: record.tt_status || "",
       }
@@ -353,7 +248,7 @@ export default function ViewPatientRecord() {
   }, [rawChildHealthRecords])
 
   const formattedChildHealthData = formatChildHealthData()
-console.log("formaated child data",formattedChildHealthData)
+
   const handleEdit = () => {
     setIsEditable(true)
   }
@@ -401,11 +296,6 @@ console.log("formaated child data",formattedChildHealthData)
     setIsEditable(false)
     toast("Edit cancelled. No changes were made.")
   }
-
-  // if (isLoading || isLoadingChildHealthRecords) {
-  //   // Combined loading states
-  //   return <PatientRecordSkeleton /> // Use the new Skeleton component
-  // }
 
   if (isError) {
     return (
@@ -478,7 +368,7 @@ console.log("formaated child data",formattedChildHealthData)
                     ID: <span className="font-medium text-foreground">{patientId}</span>
                   </span>
                   <span>•</span>
-                  <span>{calculateAge(patientData.dateOfBirth)} {calculateAge(patientData.dateOfBirth) <= 1 ? "year" : "years"} old</span>
+                  <span>{calculateAge(patientData.dateOfBirth)}</span>
                   <span>•</span>
                   <span>{patientData.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
                 </div>
@@ -495,10 +385,11 @@ console.log("formaated child data",formattedChildHealthData)
           contentClassName="p-4"
         />
       </div>
+      
       <Tabs
-        defaultValue="personal"
-        className="ml-2"
+        value={activeTab}
         onValueChange={(value) => setActiveTab(value as "personal" | "medical" | "visits")}
+        className="ml-2"
       >
         <TabsList className="mb-4 bg-background border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
           <TabsTrigger
@@ -520,26 +411,34 @@ console.log("formaated child data",formattedChildHealthData)
             Follow up Visits
           </TabsTrigger>
         </TabsList>
-        <PersonalInfoTab
-          form={form}
-          isEditable={isEditable}
-          isTransient={isTransient}
-          patientData={patientData}
-          handleSaveEdit={handleSaveEdit}
-          handleCancelEdit={handleCancelEdit}
-        />
-        <Records
-          vaccinationCount={vaccinationCount}
-          medicineCount={medicineCount}
-          firstAidCount={firstAidCount}
-          postpartumCount={postpartumCount}
-          patientLinkData={patientLinkData}
-          medicalconCount={medconCount}
-          childHealthCount={childHealthCountData}
-          childHealthRecords={formattedChildHealthData}
 
-        />
-        <VisitHistoryTab completedData={completedData} pendingData={pendingData} />
+        {activeTab === "personal" && (
+          <PersonalInfoTab
+            form={form}
+            isEditable={isEditable}
+            isTransient={isTransient}
+            patientData={patientData}
+            handleSaveEdit={handleSaveEdit}
+            handleCancelEdit={handleCancelEdit}
+          />
+        )}
+
+        {activeTab === "medical" && (
+          <Records
+            vaccinationCount={vaccinationCount}
+            medicineCount={medicineCount}
+            firstAidCount={firstAidCount}
+            postpartumCount={postpartumCount}
+            patientLinkData={patientLinkData}
+            medicalconCount={medconCount}
+            childHealthCount={childHealthCountData}
+            childHealthRecords={formattedChildHealthData}
+          />
+        )}
+
+        {activeTab === "visits" && (
+          <VisitHistoryTab completedData={completedData} pendingData={pendingData} />
+        )}
       </Tabs>
     </div>
   )

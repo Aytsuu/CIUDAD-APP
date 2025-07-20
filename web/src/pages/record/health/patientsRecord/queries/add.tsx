@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPatients } from "../restful-api/patientsPostAPI";
+import { createPatients } from "../restful-api/post";
 
 // query keys
 export const patientQueryKey = {
@@ -11,7 +11,7 @@ export const patientQueryKey = {
 	search: (params:any) => [...patientQueryKey.allPatients, "search", params]  
 }
 
-export const useUpdatePatient = () => {
+export const useAddPatient = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({

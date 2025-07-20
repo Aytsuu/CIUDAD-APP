@@ -23,8 +23,8 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { Combobox } from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
 
-import { useResidents, useAllTransientAddresses } from "./queries/patientsFetchQueries"
-import { useAddPatient } from "./queries/patientsAddQueries"
+import { useResidents, useAllTransientAddresses } from "./queries/fetch"
+import { useAddPatient } from "./queries/add"
 
 interface ResidentProfile {
   rp_id: string

@@ -5,8 +5,19 @@ import {
 	getPatientDetails, 
 	getAllFollowUpVisits, 
 	getAllTransientAddresses,
- } from "../restful-api/patientsGetAPI";
+	getchilddata
+ } from "../restful-api/get";
 
+
+ export const useChildHealthRecords = (patientId: string | undefined) => {
+	return useQuery({
+	  queryKey: ["childHealthRecords", patientId],
+	  queryFn: () => getchilddata(patientId ?? ""),
+	  refetchOnMount: false,
+	  staleTime: 300000, // 5 minutes
+	  gcTime: 600000, // 10 minutes
+	});
+  };
 // resident query keys
 export const residentQueryKey = {
 	allResidents: ["residents"],

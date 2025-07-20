@@ -70,3 +70,15 @@ export const getAllTransientAddresses = async () => {
 		return []
 	}
 }
+
+
+
+export const getchilddata = async (pat_id: string) => {
+	try {
+	  const childres = await api2.get(`/child-health/child-health-records/by-patient/${pat_id}`)
+	  return childres.data
+	} catch (error) {
+	  console.error("Error fetching child health records:", error)
+	  throw new Error("Failed to fetch child health records. Please try again later.")
+	}
+  }
