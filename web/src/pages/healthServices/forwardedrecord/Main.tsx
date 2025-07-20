@@ -59,7 +59,7 @@ export default function MainForwardedRecord() {
           </div>
         </div>
       ) : hasNoRecords ? (
-        <div className="bg-white p-8 rounded-md shadow-md">
+        <div className="bg-white p-8 rounded-md shadow-md flex justify-center flex-col items-center text-center">
           <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-gray-100 mb-4">
             <Frown className="w-12 h-12 text-gray-400" />
           </div>

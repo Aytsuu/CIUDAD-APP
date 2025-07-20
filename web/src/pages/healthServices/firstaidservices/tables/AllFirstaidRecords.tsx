@@ -14,12 +14,10 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getFirstaidRecords } from "../restful-api/getAPI";
 import { useNavigate } from "react-router";
+import { TableSkeleton } from "../../skeleton/table-skeleton";
 
 export interface FirstAidRecord {
   pat_id: string;
@@ -236,11 +234,8 @@ export default function AllFirstAidRecords() {
     },
   ];
 
-
-
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-col items-center ">
@@ -284,16 +279,16 @@ export default function AllFirstAidRecords() {
 
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-                <Link 
-                 to="/firstaid-request-form"
-                 state={{
-                   params: {
-                     mode: 'fromallrecordtable'
-                   }
-                 }}
-               >
-                 New Request
-               </Link>   
+              <Link
+                to="/firstaid-request-form"
+                state={{
+                  params: {
+                    mode: "fromallrecordtable",
+                  },
+                }}
+              >
+                New Request
+              </Link>
             </Button>
           </div>
         </div>
@@ -336,37 +331,13 @@ export default function AllFirstAidRecords() {
             </div>
           </div>
 
-       
           <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <div className="bg-white rounded-md border border-gray-200">
-              {/* Skeleton for table header */}
-              <div className="w-full h-16 bg-gray-50 flex items-center p-4">
-                {columns.map((_, i) => (
-                  <Skeleton key={`header-${i}`} className="h-6 flex-1 mx-2" />
-                ))}
-              </div>
-              {/* Skeleton for table rows */}
-              <div className="p-4 space-y-4">
-                {[...Array(5)].map((_, rowIndex) => (
-                  <div 
-                    key={`row-${rowIndex}`} 
-                    className="flex items-center justify-between space-x-4"
-                  >
-                    {columns.map((_, colIndex) => (
-                      <Skeleton 
-                        key={`cell-${rowIndex}-${colIndex}`} 
-                        className="h-12 flex-1 mx-2" 
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={paginatedData} />
-          )}
-        </div>
+            {isLoading ? (
+              <TableSkeleton columns={columns} rowCount={5} />
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}

@@ -125,7 +125,6 @@ class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
     req_date = models.DateField(auto_now_add=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
-    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE)
 
     class Meta: 
         db_table = 'request_registration'
@@ -180,4 +179,3 @@ class RequestFile(models.Model):
  
     class Meta:
         db_table = 'request_file'
-

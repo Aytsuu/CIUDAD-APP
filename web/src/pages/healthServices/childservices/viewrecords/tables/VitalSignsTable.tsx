@@ -87,7 +87,7 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                 return (
                   <TableRow
                     key={record.chhist_id}
-                    className={`hover:bg-inherit ${isCurrentRecord ? "bg-blue-50 font-medium" : ""}`}
+                    className={`hover:bg-inherit ${isCurrentRecord ? "font-medium" : ""}`}
                   >
                     <TableCell className="border-r">
                       {record.created_at && isValid(new Date(record.created_at))

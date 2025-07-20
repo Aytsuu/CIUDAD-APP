@@ -76,7 +76,7 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
                   <TableRow
                     key={`${status.chssupplementstat_id}-${index}`}
                     className={`hover:bg-inherit ${
-                      isCurrentRecord ? "bg-blue-50 font-medium" : ""
+                      isCurrentRecord ? "font-medium" : ""
                     }`}
                   >
                     <TableCell className="border-r">

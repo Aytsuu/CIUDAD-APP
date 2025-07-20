@@ -61,7 +61,7 @@ export interface ChildHealthRecord {
   province: string
   landmarks: string
   pat_type: string
-  address: string // Full formatted address
+  address: string 
   mother_fname: string
   mother_lname: string
   mother_mname: string

@@ -507,7 +507,7 @@ export default function LastPage({
           )}
 
           {showVitalSignsForm && (
-            <div className="rounded-lg border bg-blue-50 p-4">
+            <div className="rounded-lg border p-4">
               <h3 className="mb-4 text-lg font-bold">Add New Vital Signs</h3>
               <Form {...vitalSignForm}>
                 <div className="space-y-4">
@@ -626,7 +626,6 @@ export default function LastPage({
               <div className="space-y-6 p-6">
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
                   <div className="mb-4 flex items-center">
-                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                     <h4 className="flex items-center gap-2 text-base font-medium text-gray-700">
                       <HeartPulse className="h-5 w-5 text-red-600" />
                       Anemia Screening
@@ -839,7 +838,7 @@ export default function LastPage({
             </div>
           )}
 
-          <div className="mb-10 rounded-lg border bg-blue-50 p-4">
+          <div className="mb-10 rounded-lg border p-4">
             <h3 className="mb-4 text-lg font-bold">Medicine Prescription</h3>
             <div className="grid grid-cols-1 gap-6">
               {isMedicinesLoading ? (

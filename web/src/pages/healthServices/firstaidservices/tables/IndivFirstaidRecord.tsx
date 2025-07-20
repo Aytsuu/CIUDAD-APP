@@ -27,7 +27,7 @@ import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useFirstAidCount } from "../queries/FirstAidCountQueries";
 import { Heart } from "lucide-react";
-
+import { TableSkeleton } from "../../skeleton/table-skeleton";
 export interface FirstAidRecord {
   farec_id: number;
   qty: string;
@@ -313,30 +313,8 @@ export default function IndivFirstAidRecords() {
         
           <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="bg-white rounded-md border border-gray-200">
-              {/* Skeleton for table header */}
-              <div className="w-full h-16 bg-gray-50 flex items-center p-4">
-                {columns.map((_, i) => (
-                  <Skeleton key={`header-${i}`} className="h-6 flex-1 mx-2" />
-                ))}
-              </div>
-              {/* Skeleton for table rows */}
-              <div className="p-4 space-y-4">
-                {[...Array(3)].map((_, rowIndex) => (
-                  <div 
-                    key={`row-${rowIndex}`} 
-                    className="flex items-center justify-between space-x-4"
-                  >
-                    {columns.map((_, colIndex) => (
-                      <Skeleton 
-                        key={`cell-${rowIndex}-${colIndex}`} 
-                        className="h-12 flex-1 mx-2" 
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+                <TableSkeleton columns={columns} rowCount={3} />
+
           ) : (
             <DataTable columns={columns} data={paginatedData} />
           )}

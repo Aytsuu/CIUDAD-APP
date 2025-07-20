@@ -7,12 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
-import {
-  ChevronLeft,
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
+import { ChevronLeft, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchMedicinesWithStock } from "./restful-api/fetchAPI";
 import {
@@ -32,34 +27,35 @@ export default function MedicineRequestForm() {
   const location = useLocation();
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id || null;
-  
+
   // Determine mode from location state
-  const mode = location.state?.params?.mode || 'fromallrecordtable';
-  
+  const mode = location.state?.params?.mode || "fromallrecordtable";
+
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  
+
   const {
     data: medicineStocksOptions,
     isLoading: isMedicinesLoading,
     isError: isMedicinesError,
     error: medicinesError,
   } = fetchMedicinesWithStock();
-  
+
   const [selectedMedicines, setSelectedMedicines] = useState<
     { minv_id: string; medrec_qty: number; reason: string }[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  
+
   const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } =
     useMedicineRequestMutation();
 
   // Initialize patient data based on mode
   useEffect(() => {
-    if (mode === 'fromindivrecord' && location.state?.params?.patientData) {
+    if (mode === "fromindivrecord" && location.state?.params?.patientData) {
       const patientData = location.state.params.patientData;
       setSelectedPatientData(patientData);
       setSelectedPatientId(patientData.pat_id);
@@ -78,7 +74,13 @@ export default function MedicineRequestForm() {
   };
 
   const handleSelectedMedicinesChange = useCallback(
-    (updatedMedicines: { minv_id: string; medrec_qty: number; reason: string }[]) => {
+    (
+      updatedMedicines: {
+        minv_id: string;
+        medrec_qty: number;
+        reason: string;
+      }[]
+    ) => {
       setSelectedMedicines(updatedMedicines);
     },
     []
@@ -100,19 +102,22 @@ export default function MedicineRequestForm() {
     form.setValue("medicines", selectedMedicines);
   }, [selectedMedicines, form]);
 
-  const onSubmit = useCallback(async (data: MedicineRequestArrayType) => {
-    setIsConfirming(true);
-    const requestData = {
-      pat_id: data.pat_id,
-      medicines: selectedMedicines.map((med) => ({
-        minv_id: med.minv_id,
-        medrec_qty: med.medrec_qty,
-        reason: med.reason || "No reason provided",
-      })),
-    };
-    await submitMedicineRequest({ data: requestData, staff_id: staffId });
-    setIsConfirming(false);
-  }, [selectedMedicines, submitMedicineRequest, staffId]);
+  const onSubmit = useCallback(
+    async (data: MedicineRequestArrayType) => {
+      setIsConfirming(true);
+      const requestData = {
+        pat_id: data.pat_id,
+        medicines: selectedMedicines.map((med) => ({
+          minv_id: med.minv_id,
+          medrec_qty: med.medrec_qty,
+          reason: med.reason || "No reason provided",
+        })),
+      };
+      await submitMedicineRequest({ data: requestData, staff_id: staffId });
+      setIsConfirming(false);
+    },
+    [selectedMedicines, submitMedicineRequest, staffId]
+  );
 
   const totalSelectedQuantity = selectedMedicines.reduce(
     (sum, med) => sum + med.medrec_qty,
@@ -120,24 +125,35 @@ export default function MedicineRequestForm() {
   );
 
   const hasInvalidQuantities = selectedMedicines.some((med) => {
-    const medicine = medicineStocksOptions?.find(m => m.id === med.minv_id);
+    const medicine = medicineStocksOptions?.find((m) => m.id === med.minv_id);
     return med.medrec_qty < 1 || (medicine && med.medrec_qty > medicine.avail);
   });
 
   const hasExceededStock = selectedMedicines.some((med) => {
-    const medicine = medicineStocksOptions?.find(m => m.id === med.minv_id);
+    const medicine = medicineStocksOptions?.find((m) => m.id === med.minv_id);
     return medicine && med.medrec_qty > medicine.avail;
   });
 
   const handlePreview = useCallback(() => {
-    const patientCheck = mode === 'fromindivrecord' ? selectedPatientData : selectedPatientId;
-    
-    if (!patientCheck || selectedMedicines.length === 0 || hasInvalidQuantities) {
+    const patientCheck =
+      mode === "fromindivrecord" ? selectedPatientData : selectedPatientId;
+
+    if (
+      !patientCheck ||
+      selectedMedicines.length === 0 ||
+      hasInvalidQuantities
+    ) {
       toast.error("Please complete all required fields");
       return;
     }
     setShowSummary(true);
-  }, [selectedPatientData, selectedPatientId, selectedMedicines, hasInvalidQuantities, mode]);
+  }, [
+    selectedPatientData,
+    selectedPatientId,
+    selectedMedicines,
+    hasInvalidQuantities,
+    mode,
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -155,46 +171,47 @@ export default function MedicineRequestForm() {
               Medicine Request
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              {mode === 'fromindivrecord' 
-                ? "Request medicines for a patient" 
+              {mode === "fromindivrecord"
+                ? "Request medicines for a patient"
                 : "Manage and view patient's medicine records"}
             </p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        {/* Patient Selection Section - only shown in fromallrecordtable mode */}
-        {mode === 'fromallrecordtable' && (
-          <PatientSearch
-            value={selectedPatientId}
-            onChange={setSelectedPatientId}
-            onPatientSelect={handlePatientSelect}
-            className="mb-4"
-          />
-        )}
-
-        {/* Patient Information Card */}
-        {selectedPatientData && (
-          <div className="mb-4">
-            <PatientInfoCard patient={selectedPatientData} />
-          </div>
-        )}
-
-        {mode === 'fromindivrecord' && !selectedPatientData && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <Label className="text-base font-semibold text-red-500">
-                No patient selected
-              </Label>
-            </div>
-            <p className="text-sm text-gray-600">
-              Please select a patient from the medicine records page first.
-            </p>
-          </div>
-        )}
-
         <div className="bg-white rounded-md pt-10 pb-5">
+          <div className="px-4 s mb-4">
+            {/* Patient Selection Section - only shown in fromallrecordtable mode */}
+            {mode === "fromallrecordtable" && (
+              <PatientSearch
+                value={selectedPatientId}
+                onChange={setSelectedPatientId}
+                onPatientSelect={handlePatientSelect}
+                className="mb-4"
+              />
+            )}
+
+            {/* Patient Information Card */}
+            {selectedPatientData && (
+              <div className="mb-4">
+                <PatientInfoCard patient={selectedPatientData} />
+              </div>
+            )}
+
+            {mode === "fromindivrecord" && !selectedPatientData && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <Label className="text-base font-semibold text-red-500">
+                    No patient selected
+                  </Label>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Please select a patient from the medicine records page first.
+                </p>
+              </div>
+            )}
+          </div>
           {isMedicinesLoading ? (
             <div className="p-4 flex justify-center items-center space-y-4">
               <p className="text-center text-red-600">Loading medicines...</p>
@@ -243,19 +260,19 @@ export default function MedicineRequestForm() {
             </div>
           )}
 
-          {((mode === 'fromindivrecord' && !selectedPatientData) ||
-           (mode === 'fromallrecordtable' && !selectedPatientId) ||
-           selectedMedicines.length === 0 ||
-           hasInvalidQuantities) && (
+          {((mode === "fromindivrecord" && !selectedPatientData) ||
+            (mode === "fromallrecordtable" && !selectedPatientId) ||
+            selectedMedicines.length === 0 ||
+            hasInvalidQuantities) && (
             <div className="mx-3 mb-4 mt-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-amber-900">
-                      {mode === 'fromindivrecord' && !selectedPatientData
+                      {mode === "fromindivrecord" && !selectedPatientData
                         ? "Patient Required"
-                        : mode === 'fromallrecordtable' && !selectedPatientId
+                        : mode === "fromallrecordtable" && !selectedPatientId
                         ? "Patient Required"
                         : selectedMedicines.length === 0
                         ? "Medicines Required"
@@ -264,9 +281,9 @@ export default function MedicineRequestForm() {
                         : "Invalid Quantities"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
-                      {mode === 'fromindivrecord' && !selectedPatientData
+                      {mode === "fromindivrecord" && !selectedPatientData
                         ? "Please select a patient first from the medicine records page."
-                        : mode === 'fromallrecordtable' && !selectedPatientId
+                        : mode === "fromallrecordtable" && !selectedPatientId
                         ? "Please select a patient to continue with the medicine request."
                         : selectedMedicines.length === 0
                         ? "Please select at least one medicine to submit the request."
@@ -293,8 +310,8 @@ export default function MedicineRequestForm() {
                 <Button
                   onClick={handlePreview}
                   disabled={
-                    (mode === 'fromindivrecord' && !selectedPatientData) ||
-                    (mode === 'fromallrecordtable' && !selectedPatientId) ||
+                    (mode === "fromindivrecord" && !selectedPatientData) ||
+                    (mode === "fromallrecordtable" && !selectedPatientId) ||
                     selectedMedicines.length === 0 ||
                     hasInvalidQuantities ||
                     isMedicinesLoading
