@@ -279,8 +279,6 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
       row.original.family_no && completed.push('family')
       row.original.business_owner && completed.push('business')
 
-      console.log(completed)
-
       return (
         <div className="flex items-center justify-between px-5">
           {profiles.map((profile: any) => (

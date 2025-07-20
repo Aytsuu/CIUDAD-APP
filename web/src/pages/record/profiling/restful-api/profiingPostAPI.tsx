@@ -64,6 +64,7 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
     
     return res.data
   } catch (err) { 
+    console.error(err)
     throw err;
   }
 }
