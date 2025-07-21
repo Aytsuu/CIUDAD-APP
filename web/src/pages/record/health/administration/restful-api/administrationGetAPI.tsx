@@ -1,0 +1,48 @@
+import { api2 } from "@/api/api";
+
+// Fetch staffs
+export const getStaffsHealth = async () => {
+  try {
+    const res = await api2.get("administration/staff/");
+    return res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// Fetch positions
+export const getPositionsHealth = async () => {
+  try {
+    const res = await api2.get("administration/position/");
+    return res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const getFeaturesHealth = async () => {
+  try {
+    const res = await api2.get("administration/feature/");
+    return res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const getAssignedFeaturesHealth = async (selectedPosition: string) => {
+  try {
+    const res = await api2.get(`administration/assignment/${selectedPosition}/`);
+    return res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const getAllAssignedFeaturesHealth = async () => {
+  try {
+    const res = await api2.get("administration/assignment/");
+    return res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};

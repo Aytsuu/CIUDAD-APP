@@ -1,0 +1,12 @@
+diff --git a/node_modules/expo-image-loader/android/build.gradle b/node_modules/expo-image-loader/android/build.gradle
+index 30e7970..ddcae3e 100644
+--- a/node_modules/expo-image-loader/android/build.gradle
++++ b/node_modules/expo-image-loader/android/build.gradle
+@@ -1,6 +1,6 @@
+ plugins {
+   id 'com.android.library'
+-  id 'expo-module-gradle-plugin'
++  id 'expo-module'
+ }
+ 
+ group = 'host.exp.exponent'
