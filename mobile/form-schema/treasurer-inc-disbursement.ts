@@ -7,5 +7,6 @@ export const CreateFolderSchema = z.object({
   name: z.string()
     .min(1, "Folder name is required")
     .max(100, "Name must be 100 characters or less"),
-  year: z.string().min(4, "Folder year is required")
+  year: z.string().min(4, "Folder year is required"),
+  desc: z.string().optional()
 })

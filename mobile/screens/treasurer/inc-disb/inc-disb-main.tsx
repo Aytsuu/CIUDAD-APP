@@ -26,6 +26,9 @@ import {
   useRestoreDisbursementFolder,
   useRestoreIncomeFolder
 } from "./queries";
+import { formatDate } from "@/helpers/dateFormatter";
+import PageLayout from "@/screens/_PageLayout";
+import { SearchInput } from "@/components/ui/search-input";
 
 const PLACEHOLDER_IMAGE = "/placeholder-image.png";
 
@@ -305,7 +308,9 @@ const IncomeandDisbursementMain = () => {
             {album.type === "income" ? album.inf_name || "Unnamed Income" : album.dis_name || "Unnamed Disbursement"}
           </Text>
           <Text className="text-xs text-gray-500">
-            Date Uploaded: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).infi_upload_date || "N/A" : (album.images[0] as DisbursementImage).disf_upload_date || "N/A"}
+            Date Uploaded: {album.images[0]?.type === "income" 
+            ? formatDate((album.images[0] as IncomeImage).infi_upload_date) || "N/A" 
+            : formatDate((album.images[0] as DisbursementImage).disf_upload_date) || "N/A"}
           </Text>
           <Text className="text-xs text-gray-500">
             For Year: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).inf_year || "N/A" : (album.images[0] as DisbursementImage).dis_year || "N/A"}
@@ -406,41 +411,41 @@ const IncomeandDisbursementMain = () => {
 
   if (incomeError || disbursementError) {
     return (
-      <ScreenLayout
-        customLeftAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={30} color="black" className="text-black" />
-          </TouchableOpacity>
-        }
-        headerBetweenAction={<Text className="text-[13px]">Income & Disbursement Monitoring</Text>}
-        showExitButton={false}
-        headerAlign="left"
-        scrollable={false}
-        keyboardAvoiding={true}
-        contentPadding="medium"
-      >
+       <PageLayout
+          leftAction={
+            <TouchableOpacity onPress={() => router.back()}>
+              <ChevronLeft size={30} color="black" className="text-black" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text>Income & Disbursement Monitoring</Text>}
+          rightAction={
+            <TouchableOpacity>
+              <ChevronLeft size={30} color="black" className="text-white" />
+            </TouchableOpacity>
+          }
+        >
         <View className="flex-1 p-4">
           <Text className="text-red-500">
             Error: {(incomeError || disbursementError)?.message}
           </Text>
         </View>
-      </ScreenLayout>
+      </PageLayout>
     );
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={<Text className="text-[13px]">Income & Disbursement Monitoring</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={false}
-      keyboardAvoiding={true}
-      contentPadding="medium"
+    <PageLayout
+      leftAction={
+            <TouchableOpacity onPress={() => router.back()}>
+              <ChevronLeft size={30} color="black" className="text-black" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text>Income & Disbursement Monitoring</Text>}
+          rightAction={
+            <TouchableOpacity>
+              <ChevronLeft size={30} color="black" className="text-white" />
+            </TouchableOpacity>
+          }
     >
       <View className="flex-1 p-4">
         <View className="flex flex-col gap-4 mb-4">
@@ -665,7 +670,7 @@ const IncomeandDisbursementMain = () => {
           </View>
         </Modal>
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 

@@ -12,9 +12,16 @@ import { ConfirmationModal } from '@/components/ui/confirmationModal';
 export interface ProjectProposalViewProps {
   project: ProjectProposal;
   onBack?: () => void;
+  customHeaderActions?: React.ReactNode;
+  disableDocumentManagement?: boolean;
 }
 
-export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({ project, onBack }) => {
+export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
+  project,
+  onBack,
+  customHeaderActions,
+  disableDocumentManagement = false,
+}) => {
   const [activeTab, setActiveTab] = useState<'soft' | 'supporting'>('soft');
   const [supportDocsViewMode, setSupportDocsViewMode] = useState<'active' | 'archived'>('active');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -103,32 +110,36 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({ projec
 
   const renderSupportingDocument = () => (
     <ScrollView className="flex-1 bg-white p-4">
-      <View className="flex-row justify-between items-center mb-4">
-        <TouchableOpacity 
-          className={`px-4 py-2 rounded-lg ${project.gprIsArchive ? 'bg-gray-300' : 'bg-blue-500'}`}
-          onPress={() => !project.gprIsArchive && setShowUploadModal(true)}
-          disabled={project.gprIsArchive}
-        >
-          <Text className={`font-medium ${project.gprIsArchive ? 'text-gray-500' : 'text-white'}`}>
-            Add Documents
-          </Text>
-        </TouchableOpacity>
-        
-        <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
-          <TouchableOpacity
-            className={`px-4 py-2 ${supportDocsViewMode === 'active' ? 'bg-white' : ''}`}
-            onPress={() => setSupportDocsViewMode('active')}
-          >
-            <Text className="text-sm">Active</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`px-4 py-2 ${supportDocsViewMode === 'archived' ? 'bg-white' : ''}`}
-            onPress={() => setSupportDocsViewMode('archived')}
-          >
-            <Text className="text-sm">Archived</Text>
-          </TouchableOpacity>
+      {!disableDocumentManagement && (
+        <View className="flex-row justify-between items-center mb-4">
+          {(project.status === "Pending" || project.status === "Amend") && (
+            <TouchableOpacity 
+              className={`px-4 py-2 rounded-lg ${project.gprIsArchive ? 'bg-gray-300' : 'bg-blue-500'}`}
+              onPress={() => !project.gprIsArchive && setShowUploadModal(true)}
+              disabled={project.gprIsArchive}
+            >
+              <Text className={`font-medium ${project.gprIsArchive ? 'text-gray-500' : 'text-white'}`}>
+                Add Documents
+              </Text>
+            </TouchableOpacity>
+          )}
+          
+          <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
+            <TouchableOpacity
+              className={`px-4 py-2 ${supportDocsViewMode === 'active' ? 'bg-white' : ''}`}
+              onPress={() => setSupportDocsViewMode('active')}
+            >
+              <Text className="text-sm">Active</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`px-4 py-2 ${supportDocsViewMode === 'archived' ? 'bg-white' : ''}`}
+              onPress={() => setSupportDocsViewMode('archived')}
+            >
+              <Text className="text-sm">Archived</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       {project.gprIsArchive && (
         <View className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
@@ -158,51 +169,53 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({ projec
               </View>
             )}
             
-            <View className="p-4 bg-white border-t gap-2 border-gray-200 flex-row justify-end space-x-2">
-              {supportDocsViewMode === 'active' ? (
-                !project.gprIsArchive && (
-                  <ConfirmationModal
-                    trigger={
-                      <TouchableOpacity className="p-2 rounded-lg">
-                        <Archive size={20} color="#ef4444" />
-                      </TouchableOpacity>
-                    }
-                    title="Archive Document"
-                    description="Are you sure you want to archive this document?"
-                    actionLabel="Archive"
-                    onPress={() => handleArchiveSupportDoc(doc.psd_id)}
-                  />
-                )
-              ) : (
-                !project.gprIsArchive && (
-                  <>
+            {!disableDocumentManagement && (
+              <View className="p-4 bg-white border-t gap-2 border-gray-200 flex-row justify-end space-x-2">
+                {supportDocsViewMode === 'active' ? (
+                  !project.gprIsArchive && (
                     <ConfirmationModal
                       trigger={
-                        <TouchableOpacity className="p-2 bg-green-100 rounded-lg">
-                          <ArchiveRestore size={20} color="#10b981" />
+                        <TouchableOpacity className="p-2 rounded-lg">
+                          <Archive size={20} color="#ef4444" />
                         </TouchableOpacity>
                       }
-                      title="Restore Document"
-                      description="Are you sure you want to restore this document?"
-                      actionLabel="Restore"
-                      onPress={() => handleRestoreSupportDoc(doc.psd_id)}
+                      title="Archive Document"
+                      description="Are you sure you want to archive this document?"
+                      actionLabel="Archive"
+                      onPress={() => handleArchiveSupportDoc(doc.psd_id)}
                     />
-                    <ConfirmationModal
-                      trigger={
-                        <TouchableOpacity className="p-2 bg-red-100 rounded-lg">
-                          <Trash size={20} color="#ef4444" />
-                        </TouchableOpacity>
-                      }
-                      title="Delete Document"
-                      description="Are you sure you want to permanently delete this document?"
-                      actionLabel="Delete"
-                      variant="destructive"
-                      onPress={() => handleDeleteSupportDoc(doc.psd_id)}
-                    />
-                  </>
-                )
-              )}
-            </View>
+                  )
+                ) : (
+                  !project.gprIsArchive && (
+                    <>
+                      <ConfirmationModal
+                        trigger={
+                          <TouchableOpacity className="p-2 bg-green-100 rounded-lg">
+                            <ArchiveRestore size={20} color="#10b981" />
+                          </TouchableOpacity>
+                        }
+                        title="Restore Document"
+                        description="Are you sure you want to restore this document?"
+                        actionLabel="Restore"
+                        onPress={() => handleRestoreSupportDoc(doc.psd_id)}
+                      />
+                      <ConfirmationModal
+                        trigger={
+                          <TouchableOpacity className="p-2 bg-red-100 rounded-lg">
+                            <Trash size={20} color="#ef4444" />
+                          </TouchableOpacity>
+                        }
+                        title="Delete Document"
+                        description="Are you sure you want to permanently delete this document?"
+                        actionLabel="Delete"
+                        variant="destructive"
+                        onPress={() => handleDeleteSupportDoc(doc.psd_id)}
+                      />
+                    </>
+                  )
+                )}
+              </View>
+            )}
           </View>
         ))
       )}
@@ -386,10 +399,13 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({ projec
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <View className="mt-16 flex-row justify-between items-center p-4 border-b border-gray-200">
-        <TouchableOpacity onPress={onBack || (() => router.back())} className="flex-row items-center">
+        <TouchableOpacity onPress={onBack || (() => router.back())} className="flex-row items-center flex-1">
           <ChevronLeft color="#374151" size={20} />
-          <Text className="ml-2 text-blue-500 font-medium">{project.projectTitle}</Text>
+          <Text className="ml-2 text-blue-500 font-medium flex-1" numberOfLines={1}>
+            {project.projectTitle}
+          </Text>
         </TouchableOpacity>
+        {customHeaderActions}
       </View>
 
       <View className="flex-row p-4">
@@ -419,29 +435,31 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({ projec
 
       {activeTab === 'soft' ? renderSoftCopy() : renderSupportingDocument()}
 
-      <Modal
-        visible={showUploadModal && !project.gprIsArchive}
-        animationType="slide"
-        onRequestClose={() => setShowUploadModal(false)}
-      >
-        <SafeAreaView className="flex-1 bg-white">
-          <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-            <TouchableOpacity onPress={() => setShowUploadModal(false)}>
-              <Text className="text-blue-500">Cancel</Text>
-            </TouchableOpacity>
-            <Text className="text-lg font-semibold">Add Supporting Documents</Text>
-            <TouchableOpacity onPress={handleUploadFiles} disabled={mediaFiles.length === 0}>
-              <Text className={`${mediaFiles.length === 0 ? 'text-gray-400' : 'text-blue-500'}`}>Upload</Text>
-            </TouchableOpacity>
-          </View>
+      {!disableDocumentManagement && (
+        <Modal
+          visible={showUploadModal && !project.gprIsArchive}
+          animationType="slide"
+          onRequestClose={() => setShowUploadModal(false)}
+        >
+          <SafeAreaView className="flex-1 bg-white">
+            <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
+              <TouchableOpacity onPress={() => setShowUploadModal(false)}>
+                <Text className="text-blue-500">Cancel</Text>
+              </TouchableOpacity>
+              <Text className="text-lg font-semibold">Add Supporting Documents</Text>
+              <TouchableOpacity onPress={handleUploadFiles} disabled={mediaFiles.length === 0}>
+                <Text className={`${mediaFiles.length === 0 ? 'text-gray-400' : 'text-blue-500'}`}>Upload</Text>
+              </TouchableOpacity>
+            </View>
 
-          <MultiImageUploader
-            mediaFiles={mediaFiles}
-            setMediaFiles={setMediaFiles}
-            maxFiles={10}
-          />
-        </SafeAreaView>
-      </Modal>
+            <MultiImageUploader
+              mediaFiles={mediaFiles}
+              setMediaFiles={setMediaFiles}
+              maxFiles={10}
+            />
+          </SafeAreaView>
+        </Modal>
+      )}
 
       <Modal
         visible={viewImageModalVisible}

@@ -20,7 +20,7 @@ urlpatterns=[
     path('delete-template/<int:temp_id>/', DeleteTemplateView.as_view(), name='delete-document-template'), 
     path('update-template-pr-id/', UpdateTemplateByPrIdView.as_view(), name='update-template-pr-id'),
     path('delete-template-with-pr-id/<int:pr_id>/', DeleteTemplateByPrIdView.as_view(), name='delete-template-pr-id'),
-    path('service-charge-templates/', ServiceChargeTemplateListView.as_view(), name='service-charge-templates'),
+    path('summon-template/', SummonTemplateView.as_view(), name='summon-template'),
 
     path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
     path('mom-area-of-focus/', MOMAreaOfFocusView.as_view(), name='mom-area-of-focus'),

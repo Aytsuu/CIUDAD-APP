@@ -484,10 +484,10 @@ function IncomeandExpenseTracking() {
         iet_num: number,
         iet_amount: number,
         iet_actual_amount: number,
-        dtl_id: number
+        exp_id: number
     ) => {
 
-        const matchingBudgetItem = budgetItems.find(item => item.id === dtl_id.toString());
+        const matchingBudgetItem = budgetItems.find(item => item.id === exp_id.toString());
         let totalBudget = 0.00;
         let totalExpense = 0.00;
         let proposedBud = 0.00;
@@ -514,7 +514,7 @@ function IncomeandExpenseTracking() {
         const allValues = {
             iet_num: iet_num,
             iet_is_archive: true,
-            dtl_id: dtl_id,
+            exp_id: exp_id,
             year,
             totalBudget, 
             totalExpense, 
@@ -530,10 +530,10 @@ function IncomeandExpenseTracking() {
         iet_num: number,
         iet_amount: number,
         iet_actual_amount: number,
-        dtl_id: number
+        exp_id: number
     ) => {
         
-        const matchingBudgetItem = budgetItems.find(item => item.id === dtl_id.toString());
+        const matchingBudgetItem = budgetItems.find(item => item.id === exp_id.toString());
         let totalBudget = 0.00;
         let totalExpense = 0.00;
         let proposedBud = 0.00;
@@ -560,7 +560,7 @@ function IncomeandExpenseTracking() {
         const allValues = {
             iet_num: iet_num,
             iet_is_archive: false,
-            dtl_id: dtl_id,
+            exp_id: exp_id,
             year,
             totalBudget, 
             totalExpense, 
@@ -585,31 +585,37 @@ function IncomeandExpenseTracking() {
                     <ArrowUpDown size={14}/>
                 </div>
             ),
-            cell: ({row}) => (
-                <div className="text-center">{new Date(row.getValue("iet_datetime")).toLocaleString()}</div>
+            cell: ({ row }) => (
+                <div className="text-center">
+                    {new Date(row.getValue("iet_datetime")).toLocaleString("en-US", {
+                        timeZone: "UTC",
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                    })}
+                </div>
             )
         },
         { 
-            accessorKey: "dtl_budget_item", 
+            accessorKey: "exp_budget_item", 
             header: "Particulars",
             cell: ({row}) => (
-                <div>{row.getValue("dtl_budget_item")}</div>
+                <div>{row.getValue("exp_budget_item")}</div>
             )
         },
         { 
             accessorKey: "iet_amount", 
-            header: "Proposed Amount" ,
+            header: "Amount" ,
             cell: ({row}) => (
                 <div>₱{row.getValue("iet_amount")}</div>
             )
         },
-        {
+        { 
             accessorKey: "iet_actual_amount", 
             header: "Actual Amount" ,
             cell: ({row}) => (
                 <div>₱{row.getValue("iet_actual_amount")}</div>
             )
-        },
+        },        
         // {
         //     accessorKey: "files",
         //     header: "Supporting Documents",
@@ -717,8 +723,8 @@ function IncomeandExpenseTracking() {
                                             iet_entryType={row.original.iet_entryType}
                                             iet_amount={String(row.original.iet_amount)}
                                             iet_actual_amount={String(row.original.iet_actual_amount)}
-                                            iet_particular_id={row.original.dtl_id}
-                                            iet_particulars_name={row.original.dtl_budget_item}
+                                            iet_particular_id={row.original.exp_id}
+                                            iet_particulars_name={row.original.exp_budget_item}
                                             iet_additional_notes={row.original.iet_additional_notes}
                                             iet_receipt_image={row.original.iet_receipt_image}
                                             inv_num={row.original.inv_num}
@@ -748,7 +754,7 @@ function IncomeandExpenseTracking() {
                                         row.original.iet_num,
                                         row.original.iet_amount,
                                         row.original.iet_actual_amount,
-                                        row.original.dtl_id,
+                                        row.original.exp_id,
                                     )} 
                                 />                    
                             </div>                   
@@ -782,7 +788,7 @@ function IncomeandExpenseTracking() {
                                             row.original.iet_num,
                                             row.original.iet_amount,
                                             row.original.iet_actual_amount,
-                                            row.original.dtl_id,
+                                            row.original.exp_id,
                                         )}
                                     />
                                 </div>
@@ -1007,6 +1013,4 @@ function IncomeandExpenseTracking() {
 }
 
 export default IncomeandExpenseTracking;
-
-
 

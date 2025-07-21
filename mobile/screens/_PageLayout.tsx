@@ -13,6 +13,7 @@ interface PageLayoutProps {
   rightAction?: React.ReactNode
   // Style customization
   contentPadding?: number
+  backgroundColor?: string
 }
 
 export default function PageLayout({
@@ -21,7 +22,8 @@ export default function PageLayout({
   headerTitle,
   leftAction,
   rightAction,
-  contentPadding = 16
+  contentPadding = 16,
+  backgroundColor = 'bg-transparent'
 }: PageLayoutProps) {
   // Responsive header height based on screen size
   const getResponsiveHeaderHeight = () => {
@@ -64,7 +66,7 @@ export default function PageLayout({
   const responsivePadding = getResponsivePadding()
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className={`flex-1 ${backgroundColor}`}>
       {showHeader && (
         <View
           className="border-none shadow-none"

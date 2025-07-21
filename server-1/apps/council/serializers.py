@@ -90,32 +90,6 @@ class PurposeRatesListViewSerializer(serializers.ModelSerializer):
         model = Purpose_And_Rates
         fields = ['pr_id', 'pr_purpose', 'pr_is_archive']
 
-# class ResolutionSerializer(serializers.ModelSerializer):
-#     rf_id = serializers.SerializerMethodField()
-#     rf_url = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = Resolution
-#         fields = [
-#             'res_num',
-#             'res_title',
-#             'res_date_approved',
-#             'res_area_of_focus',
-#             'res_is_archive',
-#             'staff',
-#             'rf_id',
-#             'rf_url'
-#         ]
-
-#     def get_rf_id(self, obj):
-#         if obj.resolution_files.exists():
-#             return obj.resolution_files.first().rf_id
-#         return None
-
-#     def get_rf_url(self, obj):
-#         if obj.resolution_files.exists():
-#             return obj.resolution_files.first().rf_url
-#         return None
 
 class MOMSuppDocSerializer(serializers.ModelSerializer):
     class Meta: 

@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "./view-projprop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 function DocumentCard({
   doc,
@@ -179,17 +180,19 @@ function GADProjectProposal() {
     projStat: {
       pending: "text-blue",
       approved: "text-green-500",
-      rejected: "text-red",
+      amend: "text-yellow-500",
+      rejected: "text-red-500",
       viewed: "text-darkGray",
     },
   };
 
   const filter = [
     { id: "All", name: "All" },
-    { id: "Approved", name: "Approved" },
     { id: "Pending", name: "Pending" },
-    { id: "Rejected", name: "Rejected" },
     { id: "Viewed", name: "Viewed" },
+    { id: "Amend", name: "Amend" },
+    { id: "Approved", name: "Approved" },
+    { id: "Rejected", name: "Rejected" },
   ];
 
   const {
@@ -223,6 +226,8 @@ function GADProjectProposal() {
   const [isDeletingDoc, setIsDeletingDoc] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [suppDocTab, setSuppDocTab] = useState<"active" | "archived">("active");
+  const [pageSize, setPageSize] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -264,6 +269,13 @@ function GADProjectProposal() {
       const search = searchTerm.toLowerCase();
       return title.includes(search) || background.includes(search);
     });
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredProjects.length / pageSize);
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const handleDelete = (gprId: number) => {
     setIsDeleting(true);
@@ -371,6 +383,19 @@ function GADProjectProposal() {
       }
     );
   };
+
+  // Calculate total budget of all displayed projects
+  const totalBudget = filteredProjects.reduce((sum, project) => {
+    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
+
+    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
+      const amount = item.amount || 0;
+      const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
+      return projectSum + (paxCount * amount);
+    }, 0);
+
+    return sum + projectTotal;
+  }, 0);
 
   if (isLoading) {
     return (
@@ -483,14 +508,29 @@ function GADProjectProposal() {
         </Tabs>
       </div>
 
-      <div className="flex flex-col mt-4 gap-4">
-        {filteredProjects.length === 0 && (
+      {/* Dynamic Total Budget Display */}
+      <div className="flex justify-end mt-2 mb-2">
+        <div className="bg-blue-50 px-4 py-2 rounded-lg">
+          <span className="font-medium text-blue-800">
+            Grand Total:{" "}
+            <span className="font-bold text-green-700">
+              ₱{new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2 
+              }).format(totalBudget)}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {paginatedProjects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No {viewMode === "active" ? "active" : "archived"} project proposals
             found.
           </div>
         )}
-        {filteredProjects.map((project: ProjectProposal, index: number) => {
+        {paginatedProjects.map((project: ProjectProposal, index: number) => {
           const status =
             project.status.toLowerCase() as keyof typeof style.projStat;
           const reason = project.statusReason || "No reason provided";
@@ -510,7 +550,7 @@ function GADProjectProposal() {
                       onClick={() => handleViewProject(project)}
                     />
                     {viewMode === "active" ? (
-                      project.status !== 'Viewed' && (
+                      project.status !== 'Viewed' && project.status !== 'Amend' && (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -569,6 +609,26 @@ function GADProjectProposal() {
                       Date: {project.date || "No date provided"}
                     </span>
                   </div>
+                  <span className="text-xs text-gray-500 underline">
+                       Total Budget: ₱{
+                          project.budgetItems && project.budgetItems.length > 0
+                            ? new Intl.NumberFormat('en-US', { 
+                                style: 'decimal', 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              }).format(
+                                project.budgetItems.reduce((grandTotal, item) => {
+                                  const amount = item.amount || 0;
+                                  const paxCount = 
+                                    item.pax?.includes("pax") 
+                                      ? parseInt(item.pax) || 1 
+                                      : 1;
+                                  return grandTotal + (paxCount * amount);
+                                }, 0)
+                              )
+                            : "N/A"
+                        }
+                    </span>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex flex-col gap-1">
                       <span
@@ -579,7 +639,7 @@ function GADProjectProposal() {
                         {project.status || "Pending"}
                       </span>
                       <span className="text-xs text-gray-400">
-                        Reason: {reason}
+                        Remark(s): {reason}
                       </span>
                     </div>
                     <div>
@@ -602,7 +662,26 @@ function GADProjectProposal() {
             />
           );
         })}
+
+        {/* Pagination Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+          <p className="text-xs sm:text-sm text-darkGray">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
+            {filteredProjects.length} rows
+          </p>
+          {filteredProjects.length > 0 && (
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+              }}
+            />
+          )}
+        </div>
       </div>
+
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
         <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
           <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
@@ -616,7 +695,7 @@ function GADProjectProposal() {
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
                   disabled={
-                    !selectedProject || selectedProject.status !== "Pending" || selectedProject.gprIsArchive === true
+                    !selectedProject || (selectedProject.status !== "Pending" && selectedProject.status !== "Amend")|| selectedProject.gprIsArchive === true
                   }
                 >
                   <Edit size={16} /> Edit

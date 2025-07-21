@@ -10,10 +10,17 @@ urlpatterns=[
     path('budget-plan/<int:plan_id>/', DeleteRetrieveBudgetPlanAndDetails.as_view(), name='treasurer-manage-budget-plan'),
     path('update-budget-plan/<int:plan_id>/', UpdateBudgetPlan.as_view(), name='treasurer-update-budget-plan'),
     path('update-budget-details/<int:dtl_id>/', UpdateBudgetDetails.as_view(), name='treasurer-update-budget-details'),
+    path('budget-plan-file/', BudgetPlanFileView.as_view(), name = 'budget-plan-file'),
+    path('budget-plan-file/<int:plan_id>/', BudgetPlanFileRetrieveView.as_view(), name = 'budget-plan-file-records'),
+    path('delete-budget-plan-file/<int:bpf_id>/', DeleteBudgetPlanFile.as_view(), name = 'delete-budget-plan-file'),
     path('budget-plan-history/', BudgetPlanHistoryView.as_view(), name='budget-plan-history'),
     path('budget-plan-detail-history/', BudgetPlanDetailHistoryView.as_view(), name= 'budget-plan-detail-history'),
     path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryRetrieveView.as_view(), name='budget-plan-history-records'),
     path('budget-plan-and-detail-history/<int:bph_id>/', BudgetPlanAndDetailHistoryView.as_view(), name='budget-plan-and-detail-history'),
+    path('previous-budget-plan/', PreviousYearBudgetPlanView.as_view(), name='previous-budget-plan'),
+    path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
+
+
 
     #Income and Disbursement URL
     # Income Folder URLs
@@ -33,9 +40,13 @@ urlpatterns=[
     
     #EXPENSE URL
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
-    path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
     path('update-income-expense-tracking/<int:iet_num>/', UpdateIncomeExpenseView.as_view(), name='treasurer-income-expense-tracking-update'),
     path('income-expense-tracking/<int:iet_num>/', DeleteIncomeExpenseView.as_view(), name = 'treasurer-income-expense-tracking-delete'),
+    path('expense-particular/', ExpenseParticulartView.as_view(), name='treasurer-expense-particular'),
+    path('get-expense_particular/', GetExpenseParticularsView.as_view(), name='current-year-expense-particular'),
+    path('update-expense-particular/<int:year>/<int:exp_id>/', UpdateExpenseParticularView.as_view(), name = 'treasurer-update-expense-particular'),
+
+    path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
     path('update-budget-detail/<int:year>/<int:dtl_id>/', UpdateBudgetPlanDetailView.as_view(), name = 'treasurer-update-budget-plan-detail'),
 
     #INCOME URL

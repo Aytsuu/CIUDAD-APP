@@ -3,8 +3,8 @@ import { Alert } from "react-native"
 import { putProjectProposal, patchProjectProposalStatus } from "../api/putreq"
 import type { ProjectProposal, ProjectProposalInput } from "./fetchqueries"
 import { useToastContext } from "@/components/ui/toast"
+import { ProposalStatus } from "./fetchqueries"
 
-type ProposalStatus = "Pending" | "Approved" | "Rejected" | "Viewed"
 
 export const useUpdateProjectProposal = () => {
     const queryClient = useQueryClient()

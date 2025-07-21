@@ -6,6 +6,7 @@ import IncomeExpenseFormSchema from "../schema";
 import IncomeFormSchema from "@/form-schema/treasurer/treasurer-income-schema";
 import { updateIncomeExpense } from "../request/income-expense-PutRequest";
 import { updateIncomeExpenseMain } from "../request/income-expense-PostRequest";
+import { updateExpenseParticular } from "../request/income-expense-PostRequest";
 import { updateBudgetPlanDetail } from "../request/income-expense-PostRequest";
 import { updateIncomeTracking } from "../request/income-expense-PutRequest";
 import { updateIncomeMain } from "../request/income-expense-PostRequest";
@@ -50,9 +51,9 @@ export const useUpdateIncomeExpense = (
       });
   
       //handle particular
-      await updateBudgetPlanDetail(values.particularId, {
+      await updateExpenseParticular(values.particularId, {
         years: values.years,
-        dtl_proposed_budget: values.proposedBud,
+        exp_proposed_budget: values.proposedBud,
       });
       
       return iet_num;

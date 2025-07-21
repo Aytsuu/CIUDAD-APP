@@ -127,7 +127,7 @@ export const createDisbursementImage = async (data: {
   return res.data
 }
 
-export const createFolder = async (data: { type: "income" | "disbursement"; name: string; year: string }) => {
+export const createFolder = async (data: { type: "income" | "disbursement"; name: string; year: string, desc?: string }) => {
   const endpoint = data.type === "income" 
     ? "treasurer/income-tab/folders/" 
     : "treasurer/disbursement-tab/folders/";
@@ -137,11 +137,13 @@ export const createFolder = async (data: { type: "income" | "disbursement"; name
     ? {
         inf_name: data.name,
         inf_year: data.year,
+        inf_desc: data.desc,
         inf_is_archive: false,
       }
     : {
         dis_name: data.name,
         dis_year: data.year,
+        dis_desc: data.desc,
         dis_is_archive: false,
       };
 
@@ -152,12 +154,12 @@ export const createFolder = async (data: { type: "income" | "disbursement"; name
   return res.data;
 }
 
-export const updateIncomeFolder = async (inf_num: number, data: { inf_name: string; inf_year: string }) => {
+export const updateIncomeFolder = async (inf_num: number, data: { inf_name: string; inf_year: string , inf_desc?: string}) => {
   const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/`, data)
   return res.data
 }
 
-export const updateDisbursementFolder = async (dis_num: number, data: { dis_name: string; dis_year: string }) => {
+export const updateDisbursementFolder = async (dis_num: number, data: { dis_name: string; dis_year: string; dis_desc?: string }) => {
   const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/`, data)
   return res.data
 }

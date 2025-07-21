@@ -37,6 +37,34 @@ class Budget_Plan_Detail(models.Model):
         db_table = 'budget_plan_detail'
 
 
+class BudgetPlan_File(models.Model):
+    bpf_id = models.BigAutoField(primary_key=True)
+    bpf_upload_date = models.DateTimeField(auto_now_add=True)
+    bpf_type = models.CharField(max_length=100, null=True)
+    bpf_name = models.CharField(max_length=255, null=True)
+    bpf_path = models.CharField(max_length=500, null=True)
+    bpf_url = models.CharField(max_length=500, null=True)
+
+    plan_id = models.ForeignKey(
+        Budget_Plan,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        db_column='plan_id'
+    )
+
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+
+    class Meta:
+        db_table = 'budget_plan_file'
+
+
 class Budget_Plan_History(models.Model):
     bph_id = models.BigAutoField(primary_key=True)
     plan = models.ForeignKey('Budget_Plan', on_delete=models.CASCADE, related_name='history')
@@ -85,6 +113,7 @@ class Income_File_Folder(models.Model):
     inf_num = models.BigAutoField(primary_key=True)
     inf_year = models.CharField(max_length=4)
     inf_name = models.CharField(max_length=100, default='')
+    inf_desc = models.CharField(default='', null=True)
     inf_is_archive = models.BooleanField(default=False)
 
     staff = models.ForeignKey(
@@ -100,7 +129,7 @@ class Income_File_Folder(models.Model):
 
 class Income_Image(models.Model):
     infi_num = models.BigAutoField(primary_key=True)
-    infi_upload_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
+    infi_upload_date = models.CharField(default=date.today)
     infi_is_archive = models.BooleanField(default=False)
     infi_type = models.CharField(max_length=100, null=True)
     infi_name = models.CharField(max_length=255, null=True)
@@ -131,6 +160,7 @@ class Disbursement_File_Folder(models.Model):
     dis_num = models.BigAutoField(primary_key=True)
     dis_year = models.CharField(max_length=4)
     dis_name = models.CharField(max_length=100, default='')
+    dis_desc = models.CharField(default='', null=True)
     dis_is_archive = models.BooleanField(default=False)
 
     staff = models.ForeignKey(
@@ -145,7 +175,7 @@ class Disbursement_File_Folder(models.Model):
 
 class Disbursement_Image(models.Model):
     disf_num = models.BigAutoField(primary_key=True)
-    disf_upload_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
+    disf_upload_date = models.CharField(default=date.today)
     disf_is_archive = models.BooleanField(default=False)
     disf_type = models.CharField(max_length=100, null=True)  # File type (e.g., image/jpeg)
     disf_name = models.CharField(max_length=255, null=True)  # File name
@@ -190,6 +220,16 @@ class Invoice(models.Model):
 
 #======================================================================================
 
+class Expense_Particular(models.Model):
+    exp_id = models.BigAutoField(primary_key = True)
+    exp_budget_item = models.CharField(max_length=200)
+    exp_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    exp_budget_category = models.CharField(max_length=200)
+    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='expense_particulars')
+    class Meta: 
+        db_table = 'expense_particular'    
+        
+
 class Income_Expense_Tracking(models.Model):
     iet_num = models.BigAutoField(primary_key=True)
     iet_serial_num = models.CharField(max_length=100, default='DEFAULT_SERIAL') 
@@ -200,7 +240,7 @@ class Income_Expense_Tracking(models.Model):
     iet_additional_notes = models.CharField(max_length=100)
     iet_receipt_image = models.CharField(null=True, blank=True)
     iet_is_archive = models.BooleanField(default=False)
-    dtl_id = models.ForeignKey('budget_plan_detail', on_delete=models.CASCADE)
+    exp_id = models.ForeignKey('expense_particular', on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "income_expense_tracking"

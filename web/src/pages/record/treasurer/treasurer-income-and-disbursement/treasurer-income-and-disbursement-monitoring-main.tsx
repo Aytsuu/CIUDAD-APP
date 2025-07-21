@@ -35,6 +35,7 @@ import {
   usePermanentDeleteDisbursementFolder,
   useRestoreDisbursementFolder,
 } from "./queries/delqueries";
+import { formatDate } from "@/helpers/dateFormatter";
 
 function IncomeandDisbursementView() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -376,12 +377,17 @@ const getDeleteAllDescription = (album: Album) => {
                       : album.dis_name || "Unnamed Disbursement"}
                   </h3>
                   <p className="text-xs text-gray-500">
-                    Date:{" "}
+                     Date Uploaded: {album.images[0]?.type === "income" 
+                      ? formatDate((album.images[0] as IncomeImage).infi_upload_date) || "N/A" 
+                      : formatDate((album.images[0] as DisbursementImage).disf_upload_date) || "N/A"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Description:{" "}
                     {album.images[0]?.type === "income"
-                      ? (album.images[0] as IncomeImage).infi_upload_date ||
+                      ? (album.images[0] as IncomeImage).inf_desc ||
                         "N/A"
                       : (album.images[0] as DisbursementImage)
-                          .disf_upload_date || "N/A"}
+                          .dis_desc || "N/A"}
                   </p>
                 </div>
 
@@ -430,10 +436,10 @@ const getDeleteAllDescription = (album: Album) => {
                             <div className="mt-2 flex justify-between items-center w-full">
                               <span className="text-xs text-gray-500">
                                 {image.type === "income"
-                                  ? (image as IncomeImage).infi_upload_date ||
+                                  ? (image as IncomeImage).infi_name ||
                                     "N/A"
                                   : (image as DisbursementImage)
-                                      .disf_upload_date || "N/A"}
+                                      .disf_name || "N/A"}
                               </span>
                               <div className="flex gap-2">
                                 {viewMode === "archived" ? (

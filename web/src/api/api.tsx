@@ -2,9 +2,11 @@ import axios from 'axios';
 import supabase from '@/supabase/supabase';
 
 export const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: "https://ciudad-app.onrender.com",
+  withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
+    "Accept": "application/json",
   },
 });
 

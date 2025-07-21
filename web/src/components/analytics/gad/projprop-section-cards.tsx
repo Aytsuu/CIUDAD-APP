@@ -13,6 +13,11 @@ const sectionpending = [
     dataKey: "viewed",
   },
   {
+    title: "Amend Projects",
+    description: "",
+    dataKey: "amend",
+  },
+  {
     title: "Approved Projects",
     description: "",
     dataKey: "approved",

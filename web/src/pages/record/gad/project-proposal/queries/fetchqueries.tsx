@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs } from "../api/getreq";
+import { ProposalStatus } from "./updatequeries";
 
 export type ProjectProposalLog = {
   gprlId: number;
   gprlDateApprovedRejected: string;
   gprlReason: string | null;
   gprlDateSubmitted: string;
-  gprlStatus: "Pending" | "Approved" | "Rejected" | "Viewed";
+  gprlStatus: "Pending" | "Amend" |"Approved" | "Rejected" | "Viewed";
   staffId: number | null;
 };
 
@@ -35,11 +36,16 @@ export type ProjectProposal = {
   gprIsArchive: boolean;
   staffId: number | null;
   staffName: string;
-  status: "Pending" | "Approved" | "Rejected" | "Viewed";
+  status: ProposalStatus;
   statusReason: string | null;
   logs: ProjectProposalLog[];
   paperSize: "a4" | "letter" | "legal";
   supportDocs: SupportDoc[];
+  current_budget_balance?: number | null;
+  gbud?: {
+    gbud_num: number;
+    gbud_remaining_bal: number;
+  }
 };
 
 export type ProjectProposalInput = {

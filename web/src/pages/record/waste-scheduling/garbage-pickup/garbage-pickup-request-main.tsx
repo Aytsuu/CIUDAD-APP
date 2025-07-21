@@ -4,8 +4,7 @@ import PendingTable from "./tables/pending-table";
 import AcceptedTable from "./tables/accepted-table";
 import CompletedTable from "./tables/completed-table";
 import RejectedTable from "./tables/rejected-table";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+
 
 function GarbagePickupRequestMain() {
   const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
@@ -24,7 +23,7 @@ function GarbagePickupRequestMain() {
       </div>
       <hr className="border-gray mb-7 sm:mb-8" />
 
-      <Tabs defaultValue="pending" className="mb-6">
+      <Tabs defaultValue="pending" className="pb-2">
         <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
           <TabsTrigger 
             value="pending" 
@@ -56,13 +55,13 @@ function GarbagePickupRequestMain() {
           </TabsTrigger>
         </TabsList>
 
-        <div className="bg-white rounded-lg shadow-sm mt-6 dl mb-5">
+        <div className="bg-white rounded-lg shadow-sm">
           <TabsContent value="pending">
-            <PendingTable/>
+            <PendingTable />
           </TabsContent>
 
           <TabsContent value="accepted">
-            <AcceptedTable/>
+            <AcceptedTable />
           </TabsContent>
 
           <TabsContent value="completed">
@@ -70,9 +69,10 @@ function GarbagePickupRequestMain() {
           </TabsContent>
 
           <TabsContent value="rejected">
-            <RejectedTable/>
+            <RejectedTable />
           </TabsContent>
         </div>
+
       </Tabs>
     </div>
   );

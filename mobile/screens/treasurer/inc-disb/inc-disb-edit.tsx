@@ -1,10 +1,6 @@
 import "@/global.css";
 import { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +18,7 @@ import {
   useUpdateImage,
   useGetIncomeImages,
   useGetDisbursementImages,
-  useUploadImage
+  useUploadImage,
 } from "./queries";
 import MultiImageUploader, {
   MediaFileType,
@@ -32,6 +28,7 @@ import {
   DisbursementFolder,
   IncomeImage,
   DisbursementImage,
+  CreateFolderFormValues,
 } from "./queries";
 
 const EditFolderForm = () => {
@@ -42,21 +39,17 @@ const EditFolderForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
   const [initialImages, setInitialImages] = useState<MediaFileType[]>([]);
-
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<{
-    type: "income" | "disbursement";
-    name: string;
-    year: string;
-  }>({
+  } = useForm<CreateFolderFormValues>({
     resolver: zodResolver(CreateFolderSchema),
     defaultValues: {
       type: "income",
       name: "",
+      desc: undefined, // Matches optional desc
       year: new Date().getFullYear().toString(),
     },
     mode: "onBlur",
@@ -102,6 +95,10 @@ const EditFolderForm = () => {
             folderType === "income"
               ? (folder as IncomeFolder).inf_year
               : (folder as DisbursementFolder).dis_year,
+          desc:
+            folderType === "income"
+              ? (folder as IncomeFolder).inf_desc
+              : (folder as DisbursementFolder).dis_desc,
         });
       }
 
@@ -151,55 +148,69 @@ const EditFolderForm = () => {
   ]);
 
   const uploadImageMutation = useUploadImage(folderType === "income");
-  const onSubmit = async (data: { type: "income" | "disbursement"; name: string; year: string }) => {
+  const onSubmit = async (data: {
+    type: "income" | "disbursement";
+    name: string;
+    desc?: string;
+    year: string;
+  }) => {
     setIsSubmitting(true);
     try {
       if (folderId && folderType) {
         const folderIdNum = parseInt(folderId, 10);
-        
+
         // 1. Update folder details
         await updateFolderMutation.mutateAsync({
           id: folderIdNum,
           type: data.type,
-          data: { name: data.name.trim(), year: data.year }
+          data: { name: data.name, year: data.year, desc: data.desc ?? "" },
         });
 
         // 2. Handle new images using useUploadImage (same as create form)
-        const newFiles = mediaFiles.filter(file => 
-          file.status === 'uploaded' && 
-          !initialImages.some(i => i.id === file.id)
+        const newFiles = mediaFiles.filter(
+          (file) =>
+            file.status === "uploaded" &&
+            !initialImages.some((i) => i.id === file.id)
         );
 
         await Promise.all(
-          newFiles.map(file => {
+          newFiles.map((file) => {
             return uploadImageMutation.mutateAsync({
               upload_date: new Date().toISOString(),
               type: file.type || "image/jpeg",
-              name: file.name || file.path.split('/').pop() || `image_${Date.now()}.jpg`,
+              name:
+                file.name ||
+                file.path.split("/").pop() ||
+                `image_${Date.now()}.jpg`,
               path: file.path || "",
               url: file.publicUrl || file.uri || "",
-              folder: folderIdNum
+              folder: folderIdNum,
             });
           })
         );
 
         // 3. Handle updated images (keep using updateImageMutation)
-        const updatedFiles = mediaFiles.filter(file => 
-          initialImages.some(i => i.id === file.id && (i.uri !== file.uri || i.path !== file.path))
+        const updatedFiles = mediaFiles.filter((file) =>
+          initialImages.some(
+            (i) =>
+              i.id === file.id && (i.uri !== file.uri || i.path !== file.path)
+          )
         );
 
         await Promise.all(
-          updatedFiles.map(file => {
-            const initialImage = initialImages.find(i => i.id === file.id);
+          updatedFiles.map((file) => {
+            const initialImage = initialImages.find((i) => i.id === file.id);
             if (!initialImage) return Promise.resolve();
 
             return updateImageMutation.mutateAsync({
               id: parseInt(initialImage.id, 10),
               type: data.type,
               data: {
-                [data.type === "income" ? "infi_url" : "disf_url"]: file.publicUrl || file.uri,
-                [data.type === "income" ? "infi_path" : "disf_path"]: file.path || "",
-              }
+                [data.type === "income" ? "infi_url" : "disf_url"]:
+                  file.publicUrl || file.uri,
+                [data.type === "income" ? "infi_path" : "disf_path"]:
+                  file.path || "",
+              },
             });
           })
         );
@@ -211,7 +222,8 @@ const EditFolderForm = () => {
       } else {
         const folderPayload = {
           type: data.type,
-          name: data.name.trim(),
+          name: data.name,
+          desc: data.desc ?? "",
           year: data.year,
         };
         const newFolder = await createFolderMutation.mutateAsync(folderPayload);
@@ -279,6 +291,13 @@ const EditFolderForm = () => {
         label="Year"
         placeholder="Enter year (e.g., 2025)"
         keyboardType="numeric"
+        maxInput={4}
+      />
+      <FormInput
+        control={control}
+        name="desc"
+        label="Description"
+        placeholder="Enter description"
       />
       <View className="mb-4">
         <Text className="text-lg font-bold text-gray-800 mb-2">

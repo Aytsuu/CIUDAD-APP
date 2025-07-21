@@ -310,6 +310,7 @@ export type IncomeImage = {
   inf_year: string;
   infi_is_archive: boolean;
   inf_name: string;
+  inf_desc?: string;
 };
 
 export type DisbursementImage = {
@@ -324,6 +325,7 @@ export type DisbursementImage = {
   dis_year: string;
   disf_is_archive: boolean;
   dis_name: string;
+  dis_desc?: string;
 };
 
 export const useGetIncomeImages = (archive: boolean = false, folderId: number | undefined = undefined) => {
@@ -355,6 +357,7 @@ export type IncomeFolder = {
   inf_year: string;
   inf_name: string;
   inf_is_archive: boolean;
+  inf_desc?: string;
 };
 
 export type DisbursementFolder = {
@@ -362,6 +365,7 @@ export type DisbursementFolder = {
   dis_year: string;
   dis_name: string;
   dis_is_archive: boolean;
+  dis_desc?: string;
 };
 
 // Define the expected response type from useCreateFolder mutation
@@ -370,6 +374,7 @@ export interface CreateFolderResponse {
   type: "income" | "disbursement";
   name: string;
   year: number;
+  desc?: string;
   is_archive: boolean;
   dis_num: number;
   inf_num: number;
@@ -380,6 +385,7 @@ export interface CreateFolderFormValues {
   type: "income" | "disbursement";
   name: string;
   year: string;
+  desc?: string;
 }
 
 export const useGetIncomeFolder = (inf_num: number | null) => {
@@ -405,16 +411,18 @@ export const useUpdateFolder = () => {
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: async ({ id, type, data }: { id: number; type: "income" | "disbursement"; data: { name: string; year: string } }) => {
+    mutationFn: async ({ id, type, data }: { id: number; type: "income" | "disbursement"; data: { name: string; year: string, desc?: string } }) => {
       const updateFn = type === "income" ? updateIncomeFolder : updateDisbursementFolder;
       const payload = type === "income"
         ? {
             inf_name: data.name,
             inf_year: data.year,
+            inf_desc: data.desc,
           }
         : {
             dis_name: data.name,
             dis_year: data.year,
+            dis_desc: data.desc,
           };
       return await updateFn(id, payload as any);
     },
@@ -451,7 +459,7 @@ export const useUpdateFolder = () => {
     onSettled: (data, error, variables) => {
       // Ensure we have fresh data after mutation completes
       queryClient.invalidateQueries({ queryKey: [`${variables.type}Folders`] });
-      router.push("/treasurer/inc-disbursement/inc-disb-main");
+      router.push("/(treasurer)/inc-disbursement/inc-disb-main");
     }
   });
 };

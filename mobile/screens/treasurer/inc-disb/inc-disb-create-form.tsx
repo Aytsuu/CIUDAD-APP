@@ -22,6 +22,7 @@ const CreateFolderForm = () => {
     defaultValues: {
       type: "income",
       name: "",
+      desc: "",
       year: new Date().getFullYear().toString(),
     },
     mode: "onBlur",
@@ -38,6 +39,7 @@ const CreateFolderForm = () => {
         type: data.type,
         name: data.name,
         year: data.year,
+        desc: data.desc,
         is_archive: false,
       }
 
@@ -116,6 +118,14 @@ const CreateFolderForm = () => {
             label="Year"
             placeholder="Enter year (e.g., 2025)"
             keyboardType="numeric"
+            maxInput={4}
+          />
+
+          <FormInput
+            control={control}
+            name="desc"
+            label="Description"
+            placeholder="Enter description"
           />
 
           <View className="mb-4">

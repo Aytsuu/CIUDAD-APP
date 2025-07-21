@@ -3,6 +3,7 @@ import { useToastContext } from "@/components/ui/toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { archiveOrRestoreExpense } from "../request/income-expense-DeleteRequest";
 import { updateIncomeExpenseMain } from "../request/income-expense-PostRequest";
+import { updateExpenseParticular } from "../request/income-expense-PostRequest";
 import { updateBudgetPlanDetail } from "../request/income-expense-PostRequest";
 import { deleteIncomeExpense } from "../request/income-expense-DeleteRequest";
 import { deleteIncome } from "../request/income-expense-DeleteRequest";
@@ -14,7 +15,7 @@ import { updateIncomeMain } from "../request/income-expense-PostRequest";
 interface ArchivePayload {
   iet_num: number;
   iet_is_archive: boolean;
-  dtl_id: number;
+  exp_id: number;
   year: number;
   totalBudget: number;
   totalExpense: number;
@@ -40,9 +41,9 @@ export const useArchiveOrRestoreExpense = (onSuccess?: () => void) => {
 
 
       // 3. Update the budget plan detail
-      await updateBudgetPlanDetail(data.dtl_id, {
+      await updateExpenseParticular(data.exp_id, {
         years: data.year,
-        dtl_proposed_budget: data.proposedBud,
+        exp_proposed_budget: data.proposedBud,
       });
 
       return data.iet_num;

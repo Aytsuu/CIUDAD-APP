@@ -11,8 +11,9 @@ import WasteHotspotMain from "@/screens/waste/waste-hotspot/waste-hotspot-main";
 // import GarbagePickupForm from "@/screens/waste/waste-garbage-pickup-request/resident/garbage-pickup-form";
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 import WasteCollectionMain from "@/screens/waste/waste-collection/waste-collection-main";
+import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
 import Request from "../(request)";
 
 export default () => {
-    return <Request/>
+    return <ReceiptPage/>
 }

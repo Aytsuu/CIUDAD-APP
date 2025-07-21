@@ -137,8 +137,8 @@ class ResolutionFile(models.Model):
 
 class ResolutionSupDocs(models.Model):
     rsd_id = models.BigAutoField(primary_key=True)
-    rsfd_name = models.CharField(max_length=500)
-    rsfd_type = models.CharField(max_length=500)
+    rsd_name = models.CharField(max_length=500)
+    rsd_type = models.CharField(max_length=500)
     rsd_path = models.CharField(max_length=500)
     rsd_url = models.CharField(max_length=500)
 

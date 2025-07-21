@@ -38,12 +38,15 @@ export type WasteReport = {
     rep_date: string;
     rep_anonymous: boolean;
     rep_date_resolved: string;
-    rep_resolved_img: string;
     sitio_id: number;
     sitio_name: string;
     waste_report_file: {
         wrf_id: number;
         wrf_url: string;
+    }[];
+    waste_report_rslv_file: {
+        wrsf_id: number;
+        wrsf_url: string;
     }[];
 };
   
