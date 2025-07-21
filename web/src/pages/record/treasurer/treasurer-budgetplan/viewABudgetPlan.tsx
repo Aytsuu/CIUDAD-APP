@@ -12,6 +12,8 @@ import DisplayBreakdown from "./netBreakdownDisplay";
 import { Label } from "@/components/ui/label";
 import { BudgetPlanDetail } from "./budgetPlanInterfaces";
 import { usegetBudgetPlanDetail } from "./queries/budgetplanFetchQueries";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import BudgetPlanHistory from "./budgetPlanHistory";
 
 const styles = {
     mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -20,12 +22,13 @@ const styles = {
     budgetItem: "flex flex-col space-y-1 p-3 rounded-lg bg-white shadow-lg",
     budgetLabel: "text-sm font-semibold text-gray-600",
     budgetValue: "font-semibold",
-    headerTitle: "text-center text-2xl font-bold text-blue mb-4 absolute left-1/2 transform -translate-x-1/2",
+    headerTitle: "text-2xl font-bold text-blue text-center mx-auto",
     budgetHeaderGrid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4", 
     rowItem: "flex text-sm font-semibold text-left w-full",
     rowValue: "text-sm",
     budgetFooter: "text-sm font-bold text-blue",
     indentedRowItem: "ml-6 text-sm flex font-semibold text-left w-full text-gray-700",
+    tabContent: "w-full h-full bg-snow flex flex-col gap-3 p-4",
 };
 
 // Table Header
@@ -38,11 +41,9 @@ function ViewBudgetPlan(){
     const location = useLocation();
     const planId = location.state?.planId;
     const [currentPage, setCurrentPage] = useState(1);
+    const [activeTab, setActiveTab] = useState("current");
 
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
-    console.log('Api res:', fetchedData)
-    console.log('Detail:', fetchedData?.details)
-
 
     // calculating net available resources
     const availableResources = 
@@ -52,9 +53,7 @@ function ViewBudgetPlan(){
     Number(fetchedData?.plan_cert_fees || 0) +
     Number(fetchedData?.plan_other_income || 0);
 
-
-
-    // calculating totals per category
+    // calculating totals per category (using original unsorted data)
     const personalServiceTotal = fetchedData?.details
                                 ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category === "Personal Service")
                                 ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0;
@@ -82,17 +81,22 @@ function ViewBudgetPlan(){
     const skfundLimit = availableResources * ((fetchedData?.plan_skFund_limit ?? 0) / 100);
     const calamityfundLimit = availableResources * ((fetchedData?.plan_calamityFund_limit ?? 0) / 100);
 
-    // populating the rows
-    const rowsProp = fetchedData?.details?.reduce((acc: any[], detail: BudgetPlanDetail) => {
+    // Create sorted copy of details only for display
+    const sortedDetails = [...(fetchedData?.details || [])].sort((a, b) => 
+        (a.dtl_id || 0) - (b.dtl_id || 0)
+    );
 
+    // populating the rows using SORTED details for display only
+    const rowsProp = sortedDetails.reduce((acc: any[], detail: BudgetPlanDetail) => {
         // adding title at the beginning of the table
         if(acc.length == 0){
             acc.push(
                 [<span className={styles.mainCategory}>CURRENT OPERATING EXPENDITURES</span>],
-                [<span className={styles.subCategory}>Personal Services</span>]
+                [<span className={styles.subCategory}>Personal Services ({fetchedData?.plan_personalService_limit}%)</span>]
             )
         }
 
+        // Indented rows
         const isIndented = [
             "GAD Program",
             "Senior Citizen/ PWD Program",
@@ -104,8 +108,13 @@ function ViewBudgetPlan(){
             "Disaster Response Program"
         ].includes(detail.dtl_budget_item);
 
+        const itemLabel = detail.dtl_budget_item === "Extraordinary & Miscellaneous Expense"
+        ? `${detail.dtl_budget_item} (${fetchedData?.plan_miscExpense_limit ?? 0}%)`
+        : detail.dtl_budget_item;
+
+
         const mainRow = [
-            <span className={isIndented ? styles.indentedRowItem : styles.rowItem}>{detail.dtl_budget_item} </span>,
+            <span className={isIndented ? styles.indentedRowItem : styles.rowItem}>{itemLabel}</span>,
             <span className={styles.rowValue}>{formatNumber(detail.dtl_proposed_budget)}</span>
         ];
 
@@ -127,7 +136,6 @@ function ViewBudgetPlan(){
         }
         acc.push(mainRow);
     
-
         if (detail.dtl_budget_item === "Commutation of Leave Credits") {
             acc.push(
                 [
@@ -148,18 +156,13 @@ function ViewBudgetPlan(){
                     <div className={styles.budgetFooter}>{formatNumber(calamityfundLimit - calamityFundTotal)}</div>
                 ])
         } else if(detail.dtl_budget_item == "Repair and Maintenance of Motor Vehicle"){
-
             acc.push( 
                 [<span className={styles.subCategory}>Maint. & Other Operating Expenses</span>],
-                
             )
-
         }else if(detail.dtl_budget_item == "Insurance Expenses"){
-
             acc.push([
                 <span className={styles.rowItem}>Other Maint. & Operating Expenses</span>
             ])
-
         }else if(detail.dtl_budget_item == "Rehabilitation of Multi-Purpose"){
             acc.push(
                 [
@@ -169,19 +172,17 @@ function ViewBudgetPlan(){
                     <div className={styles.budgetFooter}>{formatNumber(nonOfficeLimit - nonOfficeTotal)}</div>
                 ],
                 [],
-                [<span className={styles.subCategory}>Sangguniang Kabataan Fund</span>],
-        )
+                [<span className={styles.subCategory}>Sangguniang Kabataan Fund ({fetchedData?.plan_skFund_limit}% )</span>],
+            )
         }else if(detail.dtl_budget_item == "Total Capital Outlays"){
             acc.push([
                 <div ></div>, 
                 <div className={styles.budgetFooter}>Total: {formatNumber(capitalOutlaysTotal)}</div>,
-            
             ],
             [<span className={styles.mainCategory}>NON-OFFICE</span>],
-            [<span className={styles.subCategory}>Local Development Fund</span>],
-        );
-
-        }else if(detail.dtl_budget_item == "Extraordinary & Miscellaneous Expense"){
+            [<span className={styles.subCategory}>Local Development Fund ({fetchedData?.plan_localDev_limit}%)</span>],
+            );
+        }else if(detail.dtl_budget_item.startsWith("Extraordinary & Miscellaneous Expense")){
             acc.push([
                 <div ></div>, 
                 <div className={styles.budgetFooter}>Total: {formatNumber(otherExpenseTotal)}</div>,
@@ -190,7 +191,7 @@ function ViewBudgetPlan(){
             );
         } else if(detail.dtl_budget_item == "Subsidy to Sangguniang Kabataan (SK) Fund"){
             acc.push(
-                [<span className={styles.subCategory}>LDRRM Fund (Calamity Fund)</span>],
+                [<span className={styles.subCategory}>LDRRM Fund /Calamity Fund ({fetchedData?.plan_calamityFund_limit}%)</span>],
             )
         }
     
@@ -216,90 +217,107 @@ function ViewBudgetPlan(){
     const endIndex = startIndex + 12;
     const currentRows = rowsProp.slice(startIndex, endIndex);
 
-
-    return(
-        <div className="w-full h-full bg-snow flex flex-col gap-3 p-4">
-        {/* Budget Header */}
-        <div className="w-full">
+    return (
+        <Tabs defaultValue="current" className="w-full">
             <div className="flex items-center justify-between mb-4">
-                <Link to="/treasurer-budget-plan"> <Button className="text-black p-2" variant="outline"><ChevronLeft /> </Button> </Link>
-                <h1 className={`${styles.headerTitle} text-center flex-grow`}>
+                <Link to="/treasurer-budget-plan"> 
+                    <Button className="text-black p-2" variant="outline">
+                        <ChevronLeft /> 
+                    </Button> 
+                </Link>
+                
+                <h1 className={styles.headerTitle}>
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
+
+                
                 <Link to={'/budgetplan-forms'}
-                        state={{budgetData: fetchedData, isEdit: true, from: 'view', plan_id: planId}} > 
+                    state={{budgetData: fetchedData, isEdit: true, from: 'view', plan_id: planId}} > 
                     <Button>
                         <Pen size={16} /> <span>Edit</span>
                     </Button>
                 </Link>
             </div>
-            
-            <div className={styles.budgetHeaderGrid}>
 
-                <DialogLayout
-                trigger={
-                        <div className="p-4 bg-white flex flex-col gap-4 rounded-lg shadow-lg cursor-pointer transition-transform hover:scale-[1.02]">
-                        <div className="flex items-center justify-between">
-                            <Label className={styles.budgetLabel}>NET Available Resources:</Label>
-                            <ChevronRightIcon className="w-5 h-5 text-blue-500" />
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="current" onClick={() => setActiveTab("current")}>
+                    Current Budget Plan
+                </TabsTrigger>
+                <TabsTrigger value="history" onClick={() => setActiveTab("history")}>
+                    Revision History
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="current" className={styles.tabContent}>
+                {/* Current Budget Plan Content */}
+                <div className="w-full">
+                    <div className={styles.budgetHeaderGrid}>
+                        <DialogLayout
+                        trigger={
+                                <div className="p-4 bg-white flex flex-col gap-4 rounded-lg shadow-lg cursor-pointer transition-transform hover:scale-[1.02]">
+                                <div className="flex items-center justify-between">
+                                    <Label className={styles.budgetLabel}>NET Available Resources:</Label>
+                                    <ChevronRightIcon className="w-5 h-5 text-blue-500" />
+                                </div>
+                                <Label>{formatNumber(availableResources)}</Label>
+                            </div>
+                        }
+                        title="Breakdown of NET Available Resources"
+                        description=""
+                        mainContent={
+                            <DisplayBreakdown
+                            balance={fetchedData?.plan_balance ?? 0}
+                            realtyTaxShare={fetchedData?.plan_tax_share ?? 0}
+                            taxAllotment={fetchedData?.plan_tax_allotment ?? 0}
+                            clearanceAndCertFees={fetchedData?.plan_cert_fees ?? 0}
+                            otherSpecificIncome={fetchedData?.plan_other_income ?? 0}/>
+                        }/>
+                        
+                        {/* HEADER CARDS */}
+                        <div className={styles.budgetItem}>
+                            <div className={styles.budgetLabel}>Year:</div>
+                            <div className={styles.budgetValue}>{fetchedData?.plan_year}</div>
                         </div>
-                        <Label>{formatNumber(availableResources)}</Label>
+                        
+                        <div className={styles.budgetItem}>
+                            <div className={styles.budgetLabel}>TOTAL BUDGETARY OBLIGATION:</div>
+                            <div className="font-semibold text-red-500">{formatNumber(fetchedData?.plan_budgetaryObligations ?? 0)}</div>
+                        </div>
+                        
+                        <div className={styles.budgetItem}>
+                            <div className={styles.budgetLabel}>Actual Income:</div>
+                            <div className={styles.budgetValue}>{formatNumber(fetchedData?.plan_actual_income ?? 0)}</div>
+                        </div>
+                        
+                        <div className={styles.budgetItem}>
+                            <div className={styles.budgetLabel}>Actual RPT Income:</div>
+                            <div className={styles.budgetValue}>{formatNumber(fetchedData?.plan_rpt_income ?? 0)}</div>
+                        </div>
+                        
+                        <div className={styles.budgetItem}>
+                            <div className={styles.budgetLabel}>BALANCE UNAPPROPRIATED:</div>
+                            <div className="font-semibold text-green-700">{formatNumber(fetchedData?.plan_balUnappropriated ?? 0)}</div>
+                        </div>
                     </div>
-                }
-                title="Breakdown of NET Available Resources"
-                description=""
-                mainContent={
-                    <DisplayBreakdown
-                    balance={fetchedData?.plan_balance ?? 0}
-                    realtyTaxShare={fetchedData?.plan_tax_share ?? 0}
-                    taxAllotment={fetchedData?.plan_tax_allotment ?? 0}
-                    clearanceAndCertFees={fetchedData?.plan_cert_fees ?? 0}
-                    otherSpecificIncome={fetchedData?.plan_other_income ?? 0}/>
-                }/>
-                
-                <div className={styles.budgetItem}>
-                    <div className={styles.budgetLabel}>Year:</div>
-                    <div className={styles.budgetValue}>{fetchedData?.plan_year}</div>
                 </div>
-                
-                <div className={styles.budgetItem}>
-                    <div className={styles.budgetLabel}>TOTAL BUDGETARY OBLIGATION:</div>
-                    <div className="font-semibold text-red-500">{formatNumber(fetchedData?.plan_budgetaryObligations ?? 0)}</div>
-                </div>
-                
-                <div className={styles.budgetItem}>
-                    <div className={styles.budgetLabel}>Actual Income:</div>
-                    <div className={styles.budgetValue}>{formatNumber(fetchedData?.plan_actual_income ?? 0)}</div>
-                </div>
-                
-                <div className={styles.budgetItem}>
-                    <div className={styles.budgetLabel}>Actual RPT Income:</div>
-                    <div className={styles.budgetValue}>{formatNumber(fetchedData?.plan_rpt_income ?? 0)}</div>
-                </div>
-                
-                <div className={styles.budgetItem}>
-                    <div className={styles.budgetLabel}>BALANCE UNAPPROPRIATED:</div>
-                    <div className="font-semibold text-green-700">{formatNumber(fetchedData?.plan_balUnappropriated ?? 0)}</div>
-                </div>
-            </div>
-        </div>
 
-        {/* Budget Table */}
-        <div className="bg-white p-5 overflow-x-auto">
-            <TableLayout header={headerProp} rows={currentRows} />
-        </div>
+                {/* Budget Table */}
+                <div className="bg-white p-5 overflow-x-auto">
+                    <TableLayout header={headerProp} rows={currentRows} />
+                </div>
 
-        {/* Pagination */}
-        <div className="mt-4 flex justify-center">
-            <PaginationLayout
-                totalPages={totalPages}
-                currentPage={currentPage}
-                onPageChange={handlePageChange}
-            />
-        </div>
-        {/* <Outlet/> */}
-    </div>
-    )
+                {/* Pagination */}
+                <div className="mt-4 flex justify-center">
+                    <PaginationLayout totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange} />
+                </div>
+            </TabsContent>
 
+            <TabsContent value="history" className={styles.tabContent}>
+                {/* History Content */}
+                <BudgetPlanHistory planId={planId}/>
+            </TabsContent>
+        </Tabs>
+    );
 }
-export default ViewBudgetPlan
+
+export default ViewBudgetPlan;

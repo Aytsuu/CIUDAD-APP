@@ -41,6 +41,7 @@ export const FormSelect = <T extends FieldValues>({
             disabled={disabled}
             maxHeight={maxHeight}
             className={className}
+            isInModal={isInModal}
           />
         </View>
       )}

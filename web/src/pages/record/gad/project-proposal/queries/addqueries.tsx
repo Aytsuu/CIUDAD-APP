@@ -38,10 +38,10 @@ export const useAddSupportDocument = () => {
     }: { 
       gprId: number; // Ensure this is required
       fileData: {
-        file_url: string;
-        file_path: string;
-        file_name: string;
-        file_type: string;
+        psd_url: string;
+        psd_path: string;
+        psd_name: string;
+        psd_type: string;
       };
     }) => {
       if (!gprId) {

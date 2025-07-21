@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
 import { archiveProjectProposal, 
   restoreProjectProposal,
-  permanentDeleteProjectProposal, deleteSupportDocument } from "../api/delreq";
+  permanentDeleteProjectProposal, deleteSupportDocument, archiveSupportDocument, restoreSupportDocument } from "../api/delreq";
 import { ProjectProposal } from "./fetchqueries";
 
 
@@ -154,23 +154,92 @@ export const usePermanentDeleteProjectProposal = () => {
 //   });
 // };
 
-export const useDeleteSupportDocument = () => {
+// export const useDeleteSupportDocument = () => {
+//   const queryClient = useQueryClient();
+
+//   return useMutation({
+//     mutationFn: (psdId: number) => deleteSupportDocument(psdId),
+//     onSuccess: (data, psdId) => {
+//       queryClient.invalidateQueries({ queryKey: ["supportDocs"] });
+//       // toast.success("Support document deleted successfully", {
+//       //   icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+//       //   duration: 2000,
+//       // });
+//     },
+//     onError: (error: Error) => {
+//       // toast.error("Failed to delete support document", {
+//       //   description: error.message,
+//       //   duration: 2000,
+//       // });
+//     },
+//   });
+// };
+
+ export const useDeleteSupportDocument = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (psdId: number) => deleteSupportDocument(psdId),
-    onSuccess: (data, psdId) => {
-      queryClient.invalidateQueries({ queryKey: ["supportDocs"] });
-      // toast.success("Support document deleted successfully", {
-      //   icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      //   duration: 2000,
-      // });
+    mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
+      return deleteSupportDocument(gprId, psdId);
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
+      toast.success("Support document deleted successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
     },
     onError: (error: Error) => {
-      // toast.error("Failed to delete support document", {
-      //   description: error.message,
-      //   duration: 2000,
-      // });
+      toast.error("Failed to delete support document", {
+        description: error.message,
+        duration: 2000,
+      });
+    },
+  });
+};
+
+export const useArchiveSupportDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
+      return archiveSupportDocument(gprId, psdId);
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
+      toast.success("Support document archived successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete archive document", {
+        description: error.message,
+        duration: 2000,
+      });
+    },
+  });
+};
+
+export const useRestoreSupportDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
+      return restoreSupportDocument(gprId, psdId);
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
+      toast.success("Support document restored successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to restore support document", {
+        description: error.message,
+        duration: 2000,
+      });
     },
   });
 };
