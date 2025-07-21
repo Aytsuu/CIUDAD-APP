@@ -26,15 +26,14 @@ import {createPatientRecord }  from "@/pages/healthServices/restful-api-patient/
 // Mutation for deducting vaccine stock
 export const useDeductVaccineStock = () => {
   const queryClient = useQueryClient();
-  const navigate =useNavigate()
 
   return useMutation({
     mutationFn: async ({ vacStck_id, staff_id }: { vacStck_id: number; staff_id: string }) => {
-
-
     
+      if (!vacStck_id) {
+        throw new Error("Vaccine stock ID is required");
+      }
       const existingItem = await getVaccineStock(vacStck_id.toString());
-
       if (!existingItem) {
         throw new Error("Vaccine item not found. Please check the ID.");
       }
@@ -118,7 +117,8 @@ export const useSubmitStep1 = () => {
               data.vaccinetype,
               0,
               "forwarded",
-              data.age ?? ""
+              data.age ?? "",
+              staff_id
             );
 
           } else {
@@ -186,6 +186,8 @@ export const useSubmitStep2 = () => {
     }) => {
       const vaccineType = form.getValues("vaccinetype");
 
+      console.log("Vaccine Type:", vaccineType);
+      console.log("Vacination Data:", vaccinationData);
       if (!vaccineType) {
         form.setError("vaccinetype", {
           type: "manual",
@@ -193,6 +195,8 @@ export const useSubmitStep2 = () => {
         });
         throw new Error("Please select a vaccine type");
       }
+
+
       
       let patrec_id = vaccinationData.patrec_id;
       let vital_id: string | null = null;
@@ -223,9 +227,10 @@ export const useSubmitStep2 = () => {
         await createAntigenStockTransaction(parseInt(vacStck, 10),staff_id);
 
         
+
+
         if (vac_type === "routine") {
           await updateFollowUpVisit(oldFollowv_id, "completed");
-
           const patientRec = await createPatientRecord(patientId,"Vaccination Record",staff_id);
           newpatrec_id = patientRec.patrec_id;
 
@@ -247,11 +252,12 @@ export const useSubmitStep2 = () => {
 
           const vaccinationHistory = await createVaccinationHistory(
             newVaccrec_id ?? "",
-            { ...data, age: form.getValues("age"), patrec: newpatrec_id },
+            { ...data},
             vacStck,
             1,
             "completed",
             form.getValues("age") ?? "",
+            staff_id, 
             vital_id,
             newfollowv_id
           );
@@ -290,6 +296,7 @@ export const useSubmitStep2 = () => {
               doseNumber,
               "partially vaccinated",
               form.getValues("age") ?? "",
+              staff_id,
               vital_id,
               newfollowv_id
             );
@@ -300,11 +307,12 @@ export const useSubmitStep2 = () => {
 
             const vaccinationHistory = await createVaccinationHistory(
               oldVaccrec_id,
-              { ...data, age: form.getValues("age"), patrec: oldpatrec_id },
+              { ...data },
               vacStck,
               doseNumber,
               "completed",
               form.getValues("age") ?? "",
+              staff_id,
               vital_id,
               null,
               // staff_id
@@ -313,7 +321,7 @@ export const useSubmitStep2 = () => {
           }
         }
 
-        await deductVaccineStock.mutateAsync(vacStck);
+        await deductVaccineStock.mutateAsync({ vacStck_id: parseInt(vacStck, 10), staff_id });
 
         return { success: true, message: "Vaccination record updated successfully!" };
       } catch (error) {

@@ -137,6 +137,7 @@ export default function UpdateVaccinationForm() {
   const submitStep2 = useSubmitStep2();
 
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
+    
       await submitStep1.mutateAsync({
         staff_id,
         data,
@@ -150,6 +151,8 @@ export default function UpdateVaccinationForm() {
   };
 
   const onSubmitStep2 = async (data: VitalSignsType) => {
+
+    console.log("Submitting Step 2 with data:", data);
       await submitStep2.mutateAsync({
         staff_id,
         data,

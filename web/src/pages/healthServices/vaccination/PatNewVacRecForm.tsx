@@ -239,7 +239,14 @@ export default function VaccinationRecordForm() {
         <hr className="border-gray mb-5 sm:mb-8" />
 
         {/* Patient Selection Section - Conditionally rendered */}
-        {shouldShowPatientSearch && <PatientSearch onPatientSelect={handlePatientSelect} className="mb-4" />}
+        {shouldShowPatientSearch && (
+          <PatientSearch
+            value={selectedPatientId}
+            onChange={(value) => setSelectedPatientId(value)}
+            onPatientSelect={handlePatientSelect}
+            className="mb-4"
+          />
+        )}
 
         {/* Patient Information Card */}
         <div className="mb-4 bg-white">
