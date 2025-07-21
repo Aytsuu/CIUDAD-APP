@@ -45,12 +45,13 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
             sr_payment_status="Paid",
             sr_type="Summon"
         ).select_related(
-            'comp'  # Changed from 'comp__cpnt' to match your model
+            'comp'
         ).prefetch_related(
+            'comp__complainant', 
             'comp__complaintaccused_set__acsd',
             Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
         )
-        
+            
 class CaseActivityView(generics.ListCreateAPIView):
     serializer_class = CaseActivitySerializer
     queryset = CaseActivity.objects.all()

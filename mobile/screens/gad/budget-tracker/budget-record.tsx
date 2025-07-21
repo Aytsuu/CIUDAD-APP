@@ -32,6 +32,7 @@ import { useGADBudgets, GADBudgetEntryUI } from './queries/fetch';
 import { useArchiveGADBudget, useRestoreGADBudget, usePermanentDeleteGADBudget } from './queries/del';
 import { useGetGADYearBudgets } from './queries/yearqueries';
 import { Input } from '@/components/ui/input';
+import PageLayout from '@/screens/_PageLayout';
 
 type DropdownOption = {
   label: string;
@@ -273,22 +274,27 @@ const totalProposedBudget = entries
   );
 
   return (
-    <ScreenLayout
-      header={
-        <View>
-          <View className="flex-row items-center mb-4">
-            <TouchableOpacity onPress={() => router.back()}>
+    <PageLayout
+      leftAction={
+        <View className="flex-row items-center">
+        <TouchableOpacity onPress={() => router.back()}>
               <ChevronLeft size={24} color="#2a3a61" />
             </TouchableOpacity>
-            <View className="rounded-full border-2 border-[#2a3a61] p-2 ml-2">
+            {/* <View className="rounded-full border-2 border-[#2a3a61] p-2 ml-2">
               <Calendar size={20} color="#2a3a61" />
+            </View> */}
+            
             </View>
-            <Text className="text-xl text-[#2a3a61] ml-2">{year}</Text>
-          </View>
-          <Text className="text-sm text-gray-500">
-            Manage and view budget records for this year.
-          </Text>
-          <View className="flex-row items-center mt-2">
+      }
+      headerTitle={<Text>{year} Budget Records</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
+      }
+    >
+       <View className="flex p-2">
+          <View className="flex-row items-center">
             <Text className="text-gray-600">Budget:</Text>
             <Text className="text-red-500 font-bold ml-2">
               ₱{Number(currentYearBudget).toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -307,16 +313,9 @@ const totalProposedBudget = entries
             </Text>
           </View>
         </View>
-      }
-      scrollable={false}
-      contentPadding="medium"
-      loading={isLoading}
-      loadingMessage="Loading budget data..."
-      showBackButton={false}
-      showExitButton={false}
-    >
+        
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-      <View className="mb-4 flex-row gap-2">
+      <View className="mb-4 flex-row gap-2 p-2">
         <SelectLayout
           options={[
             { label: 'All', value: 'All' },
@@ -351,7 +350,7 @@ const totalProposedBudget = entries
         />
       </View>
 
-      <View className="mb-4">
+      <View className="mb-4 p-2">
         <View className="relative">
           <Search className="absolute left-3 top-3 text-gray-500" size={17} />
           <Input
@@ -484,7 +483,7 @@ const totalProposedBudget = entries
         </View>
       </Modal>
       </ScrollView>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 

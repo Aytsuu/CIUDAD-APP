@@ -12,8 +12,8 @@ import { formatDateForSummon, formatTimestampToDate } from "@/helpers/summonTime
 interface SummonPreviewProps {
   sr_code: string;
   incident_type: string;
-  complainant: string;
-  complainant_address: string;
+  complainant: string[];
+  complainant_address: string[];
   accused: string[];
   accused_address: string[];
   hearingDate: string;
@@ -45,6 +45,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
   const marginSetting = template?.temp_margin || "normal";
   const paperSizeSetting = template?.temp_paperSize || "letter";
   const withSeal = template?.temp_w_seal || false;
+  console.log(paperSizeSetting)
 
   const registerFonts = (doc: jsPDF) => {
     doc.addFileToVFS('VeraMono-normal.ttf', veraMonoNormal);
@@ -161,21 +162,31 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
         yPos += lineHeight * 2;  // Extra space after header
 
         // Left-aligned complainant details
-        setCurrentFont('bold');
-        doc.text(`NAME: ${complainant}`, marginValue, yPos);
-        yPos += lineHeight;
-
-        setCurrentFont('normal');
-        doc.text(`ADDRESS: ${complainant_address}`, marginValue, yPos);
-        yPos += lineHeight;
+        for (let i = 0; i < complainant.length; i++) {
+          // Print name
+          setCurrentFont('bold');
+          doc.text(`NAME:`, marginValue, yPos);
+          setCurrentFont('bold');
+          doc.text(`${complainant[i]}`, marginValue + 35, yPos);
+          yPos += lineHeight;
+          
+          // Print corresponding address if available
+          if (i < complainant_address.length) {
+            setCurrentFont('normal');
+            doc.text(`ADDRESS:`, marginValue, yPos);
+            setCurrentFont('normal');
+            doc.text(`${complainant_address[i]}`, marginValue + 50, yPos);
+            yPos += lineHeight;
+          }
+        }
 
         doc.text(`COMPLAINANT/S`, marginValue, yPos);
-        yPos += lineHeight * 2;  // Extra space before divider
+        yPos += lineHeight * 1.5;  // Extra space before divider
 
         // Divider
         setCurrentFont('bold');
         doc.text(`-AGAINST-`, marginValue, yPos);
-        yPos += lineHeight * 2;  // Extra space after divider
+        yPos += lineHeight * 1.5;  // Extra space after divider
 
         // Left-aligned respondent details
         for (let i = 0; i < accused.length; i++) {
@@ -194,14 +205,9 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
             doc.text(`${accused_address[i]}`, marginValue + 50, yPos);
             yPos += lineHeight;
           }
-          
-          // Add extra space between entries if not last item
-          if (i < accused.length - 1) {
-            yPos += lineHeight * 0.5;
-          }
         }
 
-        doc.text(`RESPONDENT`, marginValue, yPos);
+        doc.text(`RESPONDENT/S`, marginValue, yPos);
         yPos += lineHeight * 2;  
 
         // Title
@@ -260,7 +266,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
         const positionX = pageWidth - marginValue - (nameWidth - positionWidth)/2;
         doc.text(position, positionX, yPos + lineHeight, { align: "right" });
 
-        yPos += lineHeight * 5;
+        yPos += lineHeight * 4;
 
         // Signature fields
         setCurrentFont('normal');

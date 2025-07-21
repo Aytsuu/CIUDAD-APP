@@ -3,15 +3,13 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
   RefreshControl, ScrollView
 } from 'react-native';
-import { Search, Calendar, X, ChevronLeft } from 'lucide-react-native';
+import { Calendar, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useGetGADYearBudgets } from './queries/yearqueries';
-import ScreenLayout from '@/screens/_ScreenLayout';
-import { Input } from '@/components/ui/input';
+import PageLayout from '@/screens/_PageLayout';
+import { SearchInput } from '@/components/ui/search-input';
 
 const GADBudgetTrackerMain = () => {
   const router = useRouter();
@@ -25,10 +23,11 @@ const GADBudgetTrackerMain = () => {
     refetch 
   } = useGetGADYearBudgets();
 
-  // Filter data based on search query
-  const filteredData = fetchedData.filter(tracker =>
+  const filteredData = fetchedData
+  .filter(tracker =>
     tracker.gbudy_year.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  )
+  .sort((a, b) => parseInt(b.gbudy_year) - parseInt(a.gbudy_year));
 
   const handleCardClick = (year: string, totalBud: number, totalExp: number, totalInc: number) => {
     router.push({
@@ -58,16 +57,13 @@ const GADBudgetTrackerMain = () => {
 
   if (isError) {
     return (
-      <ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Budget Tracker</Text>}
-      showExitButton={false}
-      loading={isLoading}
-      loadingMessage='Loading...'
+      headerTitle={<Text className="text-[13px]">Budget Tracker</Text>}
       >
         
         <View className="flex-1 justify-center items-center">
@@ -81,35 +77,34 @@ const GADBudgetTrackerMain = () => {
             <Text className="text-white">Try Again</Text>
           </TouchableOpacity>
         </View>
-      </ScreenLayout>
+      </PageLayout>
     );
   }
 
   return (
-    <ScreenLayout
-        customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+          <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Budget Tracker</Text>}
-      showExitButton={false}
-      loading={isLoading}
-      loadingMessage='Loading...'
-      scrollable={false}
-      >
+      headerTitle={<Text>Budget Tracker</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
+      }
+    >
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       {/* Search Bar */}
-      <View className="mb-4">
-        <View className="relative">
-          <Search className="absolute left-3 top-3.5 text-gray-500" size={17} />
-          <Input
-            placeholder="Search by year"
-            className="pl-10 w-full bg-white text-sm rounded-lg p-2 border border-gray-300"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+     <View className="mb-4">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={() => {
+            // Optional submit logic
+          }}
+        />
       </View>
 
       {/* Budget Cards */}
@@ -197,7 +192,7 @@ const GADBudgetTrackerMain = () => {
         )}
       </View>
       </ScrollView>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 

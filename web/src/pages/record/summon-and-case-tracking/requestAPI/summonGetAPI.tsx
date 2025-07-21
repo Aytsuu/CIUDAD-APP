@@ -14,6 +14,9 @@ export const getServiceChargeRequest = async () => {
 export const getCaseDetails = async (srId: string) => {
     try{
         const res = await api.get(`clerk/case-details/${srId}/`)
+
+        console.log('complainants', res.data.complainant)
+
         return res.data
     } catch(err){
         console.error(err)

@@ -6,7 +6,8 @@ import { Search, Plus, Eye, ArrowLeft, ChevronLeft } from "lucide-react-native"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetDonations, type Donation } from "./queries"
 import { useRouter } from "expo-router"
-import ScreenLayout from "../../_ScreenLayout"
+import { SearchInput } from "@/components/ui/search-input"
+import PageLayout from "@/screens/_PageLayout"
 
 const DonationTracker = () => {
   const router = useRouter()
@@ -62,39 +63,35 @@ const DonationTracker = () => {
     
 
   return (
-    <ScreenLayout
-      customLeftAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={30} color="black" className="text-black" />
-          </TouchableOpacity>
-        }
-        headerBetweenAction={<Text className="text-[13px]">Donation Records</Text>}
-        showExitButton={false}
-        headerAlign="left"
-        scrollable={false}
-        keyboardAvoiding={true}
-        contentPadding="medium"
-      loading={isLoading}
-      loadingMessage="Loading donations..."
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" className="text-black" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text>Donation Records</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
+      }
     >
         <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <View className="mb-4" onStartShouldSetResponder={() => true}>
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm flex-1 mr-2">
-              <TextInput
-                placeholder="Search donations..."
-                className="flex-1 text-sm text-gray-800"
-                placeholderTextColor="#666"
+          <View className="mb-4 flex-row items-center justify-between">
+            <View className="flex-1">
+              <SearchInput
                 value={searchTerm}
-                onChangeText={setSearchTerm}
-                returnKeyType="search"
-                autoCapitalize="none"
-                autoCorrect={false}
-                blurOnSubmit={false}
+                onChange={setSearchTerm}
+                onSubmit={() => {
+                  // Optional: Add any submit logic if needed
+                }}
               />
-              <Search size={18} color="#666" />
             </View>
-            <TouchableOpacity className="bg-blue-500 rounded-full p-3" onPress={handleAddDonation}>
+            <TouchableOpacity 
+              className="bg-blue-500 rounded-full p-3 flex mr-5" 
+              onPress={handleAddDonation}
+            >
               <Plus size={20} color="white" />
             </TouchableOpacity>
           </View>
@@ -143,7 +140,7 @@ const DonationTracker = () => {
             </View>
           )}
           </ScrollView>
-    </ScreenLayout>
+    </PageLayout>
   )
 }
 

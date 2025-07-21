@@ -27,6 +27,7 @@ import ScreenLayout from "@/screens/_ScreenLayout";
 import { useRouter } from "expo-router";
 import { SelectLayout } from "@/components/ui/select-layout";
 import { ProposalStatus } from "./queries/fetchqueries";
+import { SearchInput } from "@/components/ui/search-input";
 
 const StatusUpdateModal: React.FC<{
   visible: boolean;
@@ -398,7 +399,7 @@ const AdminUpdateStatusContent: React.FC = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <View className="mt-2 px-4 pt-4 pb-2">
-        <View className="relative mb-4">
+        {/* <View className="relative mb-4">
           <Search className="absolute left-3 top-3 text-gray-400" size={20} />
           <TextInput
             placeholder="Search..."
@@ -406,7 +407,7 @@ const AdminUpdateStatusContent: React.FC = () => {
             onChangeText={setSearchTerm}
             className="bg-white pl-10 pr-4 py-3 rounded-lg border border-gray-200 text-sm"
           />
-        </View>
+        </View> */}
 
         <View className="mb-4">
           <SelectLayout

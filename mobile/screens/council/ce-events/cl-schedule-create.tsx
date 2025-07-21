@@ -17,7 +17,7 @@ import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
-import { FormTimeInput } from '@/components/ui/form/form-time-input';
+import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { formatDate } from '@/helpers/dateFormatter';
 import type { Staff } from './queries';
@@ -202,11 +202,11 @@ const CLCreateEvent = () => {
               ]}
             />
 
-            <FormTimeInput
+            <FormDateTimeInput
               control={control}
               name="eventTime"
               label="Event Time"
-              mode="24h"
+              type="time"
             />
 
             <FormTextArea

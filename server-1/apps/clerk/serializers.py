@@ -50,10 +50,12 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
                 ]
 
     def get_complainant_name(self, obj):
-        if hasattr(obj, 'comp') and hasattr(obj.comp, 'cpnt'):
-            return obj.comp.cpnt.cpnt_name
-        return None
+        if not obj.comp:
+            return ""
 
+        complainant_names = obj.comp.complainant.values_list('cpnt_name', flat=True)
+        return ", ".join(complainant_names)
+    
     def get_accused_names(self, obj):
         if not hasattr(obj, 'comp'):
             return []
@@ -99,7 +101,7 @@ class CaseActivitySerializer(serializers.ModelSerializer):
     supporting_documents = CaseSuppDocSerializer(
         source='supporting_docs',
         many=True,
-        read_only=True 
+        read_only=True
     )
 
     class Meta:
@@ -202,17 +204,19 @@ class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
     
     def get_complainant(self, obj):
         if not obj.comp:
-            return None
-            
-        complaint_complainant = obj.comp.complaintcomplainant_set.first()
-        if not complaint_complainant or not complaint_complainant.cpnt:
-            return None
-            
-        return {
-            'cpnt_id': complaint_complainant.cpnt.cpnt_id,
-            'cpnt_name': complaint_complainant.cpnt.cpnt_name,
-            'address': AddressDetailsSerializer(complaint_complainant.cpnt.add).data
-        }
+            print("No Complaint linked to ServiceChargeRequest ID:", obj.sr_id)
+            return []
+
+        complainants = obj.comp.complainant.all().select_related('add')
+        return [
+            {
+                'cpnt_id': cpnt.cpnt_id,
+                'cpnt_name': cpnt.cpnt_name,
+                'address': AddressDetailsSerializer(cpnt.add).data
+            }
+            for cpnt in complainants
+        ]
+
     
     def get_complaint(self, obj):
         if not obj.comp:
