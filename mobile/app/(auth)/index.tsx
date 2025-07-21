@@ -15,5 +15,5 @@ import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
 import Request from "../(request)";
 
 export default () => {
-    return <IncomeExpenseMain/>
+    return <WasteIllegalDumping/>
 }

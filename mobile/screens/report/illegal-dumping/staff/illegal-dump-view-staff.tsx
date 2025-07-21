@@ -609,7 +609,7 @@ export default function WasteIllegalDumpingDetails() {
   return (
     <>
       <_ScreenLayout
-        headerBetweenAction={<Text className="text-[18px] font-semibold">Report Details</Text>}
+        headerBetweenAction={<Text className="text-[18px] font-semibold">Report No. {rep_id}</Text>}
         showExitButton={true}
         showBackButton={false}
         customRightAction={
