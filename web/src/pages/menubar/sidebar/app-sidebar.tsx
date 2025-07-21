@@ -341,6 +341,10 @@ const items: MenuItem[] = [
           { title: "Rates", url: "/treasurer-rates" },
         ],
       },
+      {
+        title: "Receipts",
+        url: "/treasurer-receipts",
+      },
     ],
   },
   {
@@ -350,6 +354,10 @@ const items: MenuItem[] = [
   {
     title: "Illegal Dumping Reports",
     url: "/waste-illegaldumping-report",
+  },
+  {
+    title: "Garbage Pickup Request",
+    url: "/garbage-pickup-request"
   },
   {
     title: "Waste Personnel & Collection Vehicle",

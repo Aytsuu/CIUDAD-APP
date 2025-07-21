@@ -10,14 +10,21 @@ import { getIncomeExpenseMainCard } from "../request/income-ExpenseTrackingGetRe
 export type IncomeExpense = {
     iet_num: number;
     iet_serial_num: string;
-    iet_date: string;
+    iet_datetime: string;
     dtl_budget_item: string;
     dtl_id: number;
     iet_amount: number;
+    iet_actual_amount: number;
     iet_entryType: "Income" | "Expense";
     iet_additional_notes: string;
     iet_receipt_image: string;
+    iet_is_archive: boolean;
     inv_num: string;
+    files: {  
+        ief_id: number;
+        ief_url: string;
+        ief_name: string;
+    }[];
 };
   
 // Retrieving income/expense data
@@ -130,13 +137,15 @@ export const useIncomeParticular = () => {
 export type Income = {
     inc_num: number;
     inc_serial_num: string;
-    inc_date: string;
+    inc_transac_num: string;
+    inc_datetime: string;
     incp_item: string;
     incp_id: number;
     inc_amount: number;
     inc_entryType: "Income" | "Expense";
     inc_additional_notes: string;
     inc_receipt_image: string;
+    inc_is_archive: boolean;
 };
 
 // export const useIncomeData = () => {
@@ -162,6 +171,7 @@ export const useIncomeData = (year?: number) => {
 export type IncomeExpenseCard = {
     ie_main_year: string;
     ie_main_tot_budget: number;
+    ie_remaining_bal: number;
     ie_main_inc: number;
     ie_main_exp: number;
 };

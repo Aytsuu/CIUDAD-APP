@@ -1,0 +1,226 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
+import { DonorSelect } from '../personalizedCompo/search_input';
+import { useRouter } from 'expo-router';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Loader2, Check, ChevronLeft } from 'lucide-react-native';
+import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
+import { useAddDonation, Personal, useGetPersonalList } from './queries';
+import { FormInput } from '@/components/ui/form/form-input';
+import { FormSelect } from '@/components/ui/form/form-select';
+import { FormDateInput } from '@/components/ui/form/form-date-input';
+import ScreenLayout from "@/screens/_ScreenLayout";
+import { ConfirmationModal } from '@/components/ui/confirmationModal';
+
+const DonationAdd = () => {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { control, handleSubmit, watch, setValue, trigger } = useForm({
+    resolver: zodResolver(ClerkDonateCreateSchema),
+    defaultValues: {
+      don_donor: '',
+      per_id: null as number | null,
+      don_item_name: '',
+      don_qty: '',
+      don_description: undefined,
+      don_category: '',
+      don_date: new Date().toISOString().split('T')[0],
+    },
+  });
+
+  const donCategory = watch('don_category');
+  const isMonetary = donCategory === 'Monetary Donations';
+  const addDonationMutation = useAddDonation();
+  const { data: personalList = [], isLoading: isPersonalLoading } = useGetPersonalList();
+
+  useEffect(() => {
+    if (donCategory === 'Monetary Donations') {
+      setValue('don_item_name', '');
+    }
+  }, [donCategory, setValue]);
+
+  // Convert personalList to options format
+  const donorOptions = personalList.map((person: Personal) => ({
+    id: person.per_id.toString(),
+    name: person.full_name,
+  }));
+
+  // Add Anonymous option
+  const allDonorOptions = [
+    { id: 'anonymous', name: 'Anonymous' },
+    ...donorOptions,
+  ];
+
+  const handleAddDonor = (newDonorName: string) => {
+    setValue('don_donor', newDonorName);
+    setValue('per_id', null);
+  };
+
+  const handleSelectDonor = (selectedId: string) => {
+    if (selectedId === 'anonymous') {
+      setValue('don_donor', 'Anonymous');
+      setValue('per_id', null);
+    } else {
+      const selectedPerson = personalList.find(
+        (person) => person.per_id.toString() === selectedId
+      );
+      if (selectedPerson) {
+        setValue('don_donor', selectedPerson.full_name);
+        setValue('per_id', selectedPerson.per_id);
+      }
+    }
+  };
+
+  const onSubmit = async (formData: any) => {
+    const isValid = await trigger();
+    if (!isValid) {
+      console.log('Form Errors:', control._formState.errors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        ...formData,
+        don_qty: formData.don_qty.toString(),
+      };
+
+      await addDonationMutation.mutateAsync(payload);
+      router.back();
+    } catch (error) {
+      console.error('Error submitting donation', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
+  return (
+    <ScreenLayout
+      customLeftAction={
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" className="text-black" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">Add Donation Entry</Text>}
+      showExitButton={false}
+      headerAlign="left"
+      scrollable={true}
+      keyboardAvoiding={true}
+      contentPadding="medium"
+    >
+      <View className="space-y-4">
+        <View className="mb-4">
+          <DonorSelect
+            placeholder="Select donor or enter name"
+            label="Donor Name"
+            people={personalList}
+            selectedDonor={watch('don_donor')}
+            onSelect={(donorName) => {
+              setValue('don_donor', donorName);
+            }}
+          />
+        </View>
+
+        {/* Category */}
+        <FormSelect
+          control={control}
+          name="don_category"
+          label="Category"
+          options={[
+            { label: 'Monetary Donations', value: 'Monetary Donations' },
+            { label: 'Essential Goods', value: 'Essential Goods' },
+            { label: 'Medical Supplies', value: 'Medical Supplies' },
+            { label: 'Household Items', value: 'Household Items' },
+            { label: 'Educational Supplies', value: 'Educational Supplies' },
+            { label: 'Baby & Childcare Items', value: 'Baby & Childcare Items' },
+            { label: 'Animal Welfare Items', value: 'Animal Welfare Items' },
+            { label: 'Shelter & Homeless Aid', value: 'Shelter & Homeless Aid' },
+            { label: 'Disaster Relief Supplies', value: 'Disaster Relief Supplies' },
+          ]}
+        />
+
+        {/* Item Name - Changes based on category */}
+        {isMonetary ? (
+          <FormSelect
+            control={control}
+            name="don_item_name"
+            label="Money Type"
+            options={[
+              { label: 'Cash', value: 'Cash' },
+              { label: 'Cheque', value: 'Cheque' },
+              { label: 'E-Money', value: 'E-Money' },
+            ]}
+          />
+        ) : (
+          <FormInput
+            control={control}
+            name="don_item_name"
+            label="Item Name"
+            placeholder="Enter item name"
+          />
+        )}
+
+        {/* Quantity/Amount */}
+        <FormInput
+          control={control}
+          name="don_qty"
+          label={isMonetary ? 'Amount' : 'Quantity'}
+          placeholder={isMonetary ? 'Enter amount' : 'Enter quantity'}
+          keyboardType="numeric"
+        />
+
+        {/* Description */}
+        <FormInput
+          control={control}
+          name="don_description"
+          label="Description"
+          placeholder="Enter description"
+        />
+
+        {/* Date */}
+        <FormDateInput
+          control={control}
+          name="don_date"
+          label="Donation Date"
+        />
+
+        {/* Submit Button with Confirmation Modal */}
+        <View className="mt-6">
+          <ConfirmationModal
+            trigger={
+              <TouchableOpacity
+                className="bg-blue-500 py-3 rounded-lg flex-row justify-center items-center"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={20} color="white" className="animate-spin mr-2" />
+                    <Text className="text-white text-lg font-medium">Saving...</Text>
+                  </>
+                ) : (
+                  <Text className="text-white text-lg font-medium">Save</Text>
+                )}
+              </TouchableOpacity>
+            }
+            title="Confirm Donation"
+            description="Are you sure you want to save this donation?"
+            actionLabel="Save Donation"
+            onPress={handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            loadingMessage="Saving donation..."
+          />
+        </View>
+      </View>
+    </ScreenLayout>
+  );
+};
+
+export default DonationAdd;

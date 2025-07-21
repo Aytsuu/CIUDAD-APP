@@ -3,7 +3,7 @@ import { parseFloatSafe } from "@/helpers/floatformatter";
 
 
 
-const updateBudgetPlan = async(budgetInfo: Record<string, any>) => {
+export const updateBudgetPlan = async(budgetInfo: Record<string, any>) => {
     try{
 
         console.log({
@@ -50,32 +50,61 @@ const updateBudgetPlan = async(budgetInfo: Record<string, any>) => {
 }
 
 
-const updateBudgetDetails = async (details: Array<{dtl_id: number; dtl_budget_item?: string; dtl_proposed_budget?: number; dtl_budget_category?: string;}>) => {
-    try {
-        const results = await Promise.allSettled(
-            details.map(item => 
-                api.patch(`treasurer/update-budget-details/${item.dtl_id}/`, {
-                    dtl_budget_item: item.dtl_budget_item,
-                    dtl_proposed_budget: item.dtl_proposed_budget,
-                    dtl_budget_category: item.dtl_budget_category,
-                })
-            )
-        );
 
-        // Check for any failures
-        const failedUpdates = results.filter(r => r.status === 'rejected');
-        if (failedUpdates.length > 0) {
-            console.error('Some updates failed:', failedUpdates);
-            throw new Error(`${failedUpdates.length} detail updates failed`);
-        }
+export const updateBudgetDetails = async (details: Array<{ dtl_id?: number; dtl_budget_item?: string; dtl_proposed_budget?: number; dtl_budget_category?: string;}>) => {
+  try {
+    // Sort details by dtl_id in ascending order
+    const sortedDetails = [...details].sort((a, b) => {
+      // Handle cases where dtl_id might be undefined (though your types suggest it's optional)
+      const idA = a.dtl_id || 0;
+      const idB = b.dtl_id || 0;
+      return idA - idB;
+    });
 
-        return results.map(r => 
-            r.status === 'fulfilled' ? r.value.data : null
-        ).filter(Boolean);
-    } catch (error) {
-        console.error("Error updating budget details:", error);
-        throw error;
-    }
+    const results = await Promise.allSettled(
+      sortedDetails.map(item => 
+        api.patch(`treasurer/update-budget-details/${item.dtl_id}/`, {
+          dtl_proposed_budget: item.dtl_proposed_budget,
+          dtl_budget_item: item.dtl_budget_item,
+          dtl_budget_category: item.dtl_budget_category,
+        })
+      )
+    );
+
+    // Check for any failures
+    const failedUpdates = results.filter(r => r.status === 'rejected');
+    if (failedUpdates.length > 0) {
+      console.error('Some updates failed:', failedUpdates);
+      throw new Error(`${failedUpdates.length} detail updates failed`);
+    }   
+
+    return results.map(r => 
+      r.status === 'fulfilled' ? r.value.data : null
+    ).filter(Boolean);
+  } catch (error) {
+    console.error("Error updating budget details:", error);
+    throw error;
+  }
 };
 
-export {updateBudgetPlan, updateBudgetDetails}
+export const archiveBudgetPlan = async (planId: number) => {
+    try{
+        const res = await api.put(`treasurer/update-budget-plan/${planId}/`, {
+            plan_is_archive: true
+        })
+
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const restoreBudgetPlan = async (planId: number) => {
+    try{
+        const res = await api.put(`treasurer/update-budget-plan/${planId}/`, {
+            plan_is_archive: false
+        })
+
+    }catch(err){
+        console.error(err)
+    }
+}

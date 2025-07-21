@@ -69,21 +69,21 @@ function DonationTracker() {
       accessorKey: "don_donor", 
       header: "Donor",
       cell: ({ row }) => (
-        <div className="text-left">{row.getValue("don_donor")}</div>
+        <div className="text-center">{row.getValue("don_donor")}</div>
       ),
     },
     {
       accessorKey: "don_item_name", 
       header: "Item Name",
       cell: ({ row }) => (
-        <div className="text-left">{row.getValue("don_item_name")}</div>
+        <div className="text-center">{row.getValue("don_item_name")}</div>
       ),
     },
     {
       accessorKey: "don_category", 
       header: "Item Category",
       cell: ({ row }) => (
-        <div className="text-left">{row.getValue("don_category")}</div>
+        <div className="text-center">{row.getValue("don_category")}</div>
       ),
     },
     {

@@ -1,7 +1,8 @@
 import {api} from '@/api/api'
 import { parseFloatSafe } from '@/helpers/floatformatter';
+import { BudgetHeaderUpdate, ProcessedOldBudgetDetail } from '../budgetPlanInterfaces';
 
-const budget_plan = async (budgetInfo: Record<string, any>) => {
+export const budget_plan = async (budgetInfo: Record<string, any>) => {
     try {
         console.log({
             plan_year: new Date().getFullYear().toString(),
@@ -39,6 +40,7 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
             plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
             plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
+            plan_is_archive: false,
         });
 
         return res.data.plan_id;
@@ -47,17 +49,17 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
     }
 };
 
-const budget_plan_details = async (detailInfo: Array<{ dtl_budget_item: string; dtl_proposed_budget: string, dtl_budget_category: string }>, planId: number) => {
+export const budget_plan_details = async (detailInfo: Array<{ dtl_proposed_budget: number, dtl_budget_item: string, dtl_budget_category: string }>, planId: number) => {
     try {
         const transformedDetails = detailInfo.map((item) => ({
+            dtl_proposed_budget: item.dtl_proposed_budget || 0.00,
             dtl_budget_item: item.dtl_budget_item,
-            dtl_proposed_budget: parseFloatSafe(item.dtl_proposed_budget) || 0.00,
             dtl_budget_category: item.dtl_budget_category,
             plan: planId,
         }));
         console.log("Submitting Budget Plan Details:", transformedDetails);
 
-        const res = await api.post('treasurer/budget-plan-details/', transformedDetails);
+        const res = await api.post('treasurer/budget-plan-detail/', transformedDetails);
         return res.data;
     } catch (error) {
         const axiosError = error as { response?: { data: any }; message: string };
@@ -66,4 +68,75 @@ const budget_plan_details = async (detailInfo: Array<{ dtl_budget_item: string; 
 };
 
 
-export {budget_plan, budget_plan_details}
+
+// budgetPlanPostAPI.ts
+export const createBudgetPlanHistory = async (headerHistoryInfo: BudgetHeaderUpdate) => {
+    try {
+        console.log({
+            plan: headerHistoryInfo.plan_id,
+            bph_change_date: new Date().toISOString().toString(),
+            bph_year: new Date().getFullYear().toString(),
+            bph_actual_income: headerHistoryInfo.plan_actual_income,
+            bph_rpt_income: headerHistoryInfo.plan_rpt_income,
+            bph_balance: headerHistoryInfo.plan_balance,
+            bph_tax_share: headerHistoryInfo.plan_tax_share,
+            bph_tax_allotment: headerHistoryInfo.plan_tax_allotment,
+            bph_cert_fees: headerHistoryInfo.plan_cert_fees,
+            bph_other_income: headerHistoryInfo.plan_other_income,
+            bph_budgetaryObligations: headerHistoryInfo.plan_budgetaryObligations,
+            bph_balUnappropriated: headerHistoryInfo.plan_balUnappropriated,
+            bph_personalService_limit: headerHistoryInfo.plan_personalService_limit,
+            bph_miscExpense_limit: headerHistoryInfo.plan_miscExpense_limit,
+            bph_localDev_limit: headerHistoryInfo.plan_localDev_limit,
+            bph_skFund_limit: headerHistoryInfo.plan_skFund_limit,
+            bph_calamityFund_limit: headerHistoryInfo.plan_calamityFund_limit,
+        })
+        const res = await api.post('treasurer/budget-plan-history/', {
+            plan: headerHistoryInfo.plan_id,
+            bph_change_date: new Date().toISOString().toString(),
+            bph_year: new Date().getFullYear().toString(),
+            bph_actual_income: headerHistoryInfo.plan_actual_income,
+            bph_rpt_income: headerHistoryInfo.plan_rpt_income,
+            bph_balance: headerHistoryInfo.plan_balance,
+            bph_tax_share: headerHistoryInfo.plan_tax_share,
+            bph_tax_allotment: headerHistoryInfo.plan_tax_allotment,
+            bph_cert_fees: headerHistoryInfo.plan_cert_fees,
+            bph_other_income: headerHistoryInfo.plan_other_income,
+            bph_budgetaryObligations: headerHistoryInfo.plan_budgetaryObligations,
+            bph_balUnappropriated: headerHistoryInfo.plan_balUnappropriated,
+            bph_personalService_limit: headerHistoryInfo.plan_personalService_limit,
+            bph_miscExpense_limit: headerHistoryInfo.plan_miscExpense_limit,
+            bph_localDev_limit: headerHistoryInfo.plan_localDev_limit,
+            bph_skFund_limit: headerHistoryInfo.plan_skFund_limit,
+            bph_calamityFund_limit: headerHistoryInfo.plan_calamityFund_limit,
+        });
+        return res;
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+};
+
+export const createBudgetPlanDetailHistory = async (bph_id: string, detailHistory: ProcessedOldBudgetDetail) => {
+    try {
+        console.log('Test',{ 
+            bph: bph_id,
+            bpdh_budget_item: detailHistory.budget_item,
+            bpdh_proposed_budget: detailHistory.proposed_budget.toString(),
+            bpdh_budget_category: detailHistory.category,
+            bpdh_is_changed: detailHistory.is_changed
+        })
+
+        const res = await api.post('treasurer/budget-plan-detail-history/', {
+            bph: bph_id,
+            bpdh_budget_item: detailHistory.budget_item,
+            bpdh_proposed_budget: detailHistory.proposed_budget.toString(),
+            bpdh_budget_category: detailHistory.category,
+            bpdh_is_changed: detailHistory.is_changed
+        });
+        return res;
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+};
