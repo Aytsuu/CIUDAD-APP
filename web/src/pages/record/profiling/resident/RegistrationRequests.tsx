@@ -1,4 +1,3 @@
-"use client"
 import React from "react"
 import { Search, FileText, Clock, Loader2, User, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"

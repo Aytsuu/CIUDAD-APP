@@ -21,10 +21,10 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormTimeInput } from '@/components/ui/form/form-time-input';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
-import { formatDate } from '@/helpers/dateFormatter';
 import type { Staff } from './queries';
 import { useQueryClient } from '@tanstack/react-query';
 import ScreenLayout from "@/screens/_ScreenLayout"
+import { formatDate } from '@/helpers/dateHelpers';
 
 const CLCreateEvent = () => {
   const router = useRouter();

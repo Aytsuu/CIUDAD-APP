@@ -58,6 +58,20 @@ class Personal(models.Model):
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
 
+class PersonalHistory(models.Model):
+    ph_id = models.BigAutoField(primary_key=True)
+    per_lname = models.CharField(max_length=100)
+    per_fname = models.CharField(max_length=100)
+    per_mname = models.CharField(max_length=100, null=True)
+    per_suffix = models.CharField(max_length=100, null=True)
+    per_dob = models.DateField()
+    per_sex = models.CharField(max_length=100)
+    per_status = models.CharField(max_length=100)
+    per_edAttainment = models.CharField(max_length=100, null=True)
+    per_religion = models.CharField(max_length=100)
+    per_contact = models.CharField(max_length=20)  
+    
+
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
