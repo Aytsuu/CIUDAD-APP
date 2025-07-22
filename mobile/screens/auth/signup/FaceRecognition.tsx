@@ -3,7 +3,7 @@ import {
   useCameraDevice,
   Camera,
 } from "react-native-vision-camera";
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, ViewStyle } from "react-native";
 import { supabase } from "@/lib/supabase";
 import * as FileSystem from 'expo-file-system';
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -26,6 +26,11 @@ export const FaceRecognition = React.forwardRef<FaceRecognitionCamHandle, FaceRe
     const [hasPermission, setHasPermission] = React.useState<boolean | null>(
       null
     );
+
+    const [uiRotation, setUiRotation] = React.useState(0)
+    const uiStyle: ViewStyle = {
+      transform: [{ rotate: `${uiRotation}deg` }]
+    }
 
     React.useEffect(() => {
       const requestCameraPermission = async () => {
@@ -68,13 +73,13 @@ export const FaceRecognition = React.forwardRef<FaceRecognitionCamHandle, FaceRe
                         {
                           event: "UPDATE",
                           schema: "public",
-                          table: "face_detection_request",
-                          filter: `id=eq.${kyc_id}`,
+                          table: "kyc_record",
+                          filter: `kyc_id=eq.${kyc_id}`,
                         },
                         async (payload) => {
-                          if (payload.new.status === "processed") {
+                          if (payload.new.is_verified) {
                             subscription.unsubscribe();
-                            
+                            resolve({ success: true });
                           } else {
                             subscription.unsubscribe();
                             resolve({ success: false });
@@ -87,15 +92,25 @@ export const FaceRecognition = React.forwardRef<FaceRecognitionCamHandle, FaceRe
                       });
 
                     // Trigger the processing
-                    await postFaceData({
-                      kyc_id: kyc_id,
-                      image: `data:image/jpeg;base64,${base64Data}`,
-                    });
+
+                    try {
+                      const request = await postFaceData({
+                        kyc_id: kyc_id,
+                        image: `data:image/jpeg;base64,${base64Data}`,
+                      });
+
+                      console.log('post_result:', request)
+                    } catch (err) {
+                      subscription.unsubscribe();
+                      resolve({ success: false });
+                    }
+                    
                   }
                 ),
-                5000
+                30000
               );
 
+              console.log('resolve:', result.success);
               return result.success ? result.success : null;
             } catch (err) {
               console.log("Detection error:", err);

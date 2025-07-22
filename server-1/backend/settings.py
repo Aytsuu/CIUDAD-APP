@@ -64,17 +64,18 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'rest_framework',
-    'corsheaders',
     
     # Local apps
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
+    'corsheaders',
     'apps.account',
     'apps.file',
     'apps.complaint',
     'apps.report',
+    'apps.council',
     'apps.donation',
     'apps.notification',
     'apps.announcement',
@@ -90,6 +91,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

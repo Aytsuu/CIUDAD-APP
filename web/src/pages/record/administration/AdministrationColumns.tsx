@@ -19,8 +19,8 @@ import { Button } from "@/components/ui/button/button";
 import { Action } from "./administrationEnums";
 import { useUpdateStaff } from "./queries/administrationUpdateQueries";
 import { useDeleteStaff } from "./queries/administrationDeleteQueries";
-import { useDeleteStaffHealth } from "../health/administration/queries/administrationDeleteQueries";
-import { useUpdateStaffHealth } from "../health/administration/queries/administrationUpdateQueries"; // Add health database imports
+import { useDeleteStaffHealth } from "./queries/administrationDeleteQueries";
+import { useUpdateStaffHealth } from "./queries/administrationUpdateQueries"; // Add health database imports
  // Add health database imports
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import React from "react";

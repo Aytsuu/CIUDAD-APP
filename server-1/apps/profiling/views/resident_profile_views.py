@@ -119,22 +119,35 @@ class ResidentProfileFamSpecificListView(generics.ListAPIView):
 
 # For verification in link registration
 class LinkRegVerificationView(APIView):
+    def post(self, request, *args, **kwargs):
+        rp_id = request.data.get('rp_id', None)
+        personal_info = request.data.get('personal_info', None)
 
-    def post(self, request):
-        resident_id = request.data.get('resident_id')
-        account = Account.objects.filter(rp=resident_id).first()
-        if account: 
+        if rp_id:
+            exists = ResidentProfile.objects.filter(rp_id=rp_id).first()
+            if exists:
+                has_account = Account.objects.filter(rp=exists).first()
+            else:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            exists = ResidentProfile.objects.filter(
+                per__per_lname=personal_info['lname'],
+                per__per_fname=personal_info['fname'],
+                per__per_dob=personal_info['dob'],
+                per__per_contact=personal_info['contact']
+            ).first()
+            if exists:
+                has_account = Account.objects.filter(rp=exists).first()
+            else:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if has_account: 
             return Response(status=status.HTTP_409_CONFLICT)
-
-        profile = ResidentProfile.objects.filter(rp_id=resident_id).first()
-        if not profile:
-            return Response(status=status.HTTP_404_NOT_FOUND)
         
-        dob = profile.per.per_dob
-        today = date.today()
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if age < 13:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        
-        return Response(status=status.HTTP_200_OK, data=ResidentProfileBaseSerializer(profile).data)
-        
+        if exists:
+            data = {
+                'rp_id': exists.rp_id
+            }
+            return Response(data=data, status=status.HTTP_200_OK)
+            
+        return Response(status=status.HTTP_404_NOT_FOUND)

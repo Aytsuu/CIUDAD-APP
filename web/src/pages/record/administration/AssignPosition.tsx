@@ -15,10 +15,10 @@ import { toast } from "sonner";
 
 // Import hooks for both databases
 import { usePositions } from "./queries/administrationFetchQueries";
-import { usePositionsHealth } from "../health/administration/queries/administrationFetchQueries";
+import { usePositionsHealth } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddStaffHealth } from "../health/administration/queries/administrationAddQueries";
+import { useAddStaffHealth } from "./queries/administrationAddQueries";
 import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
 import { useAddResidentAndPersonalHealth } from "../health-family-profiling/family-profling/queries/profilingAddQueries";
 

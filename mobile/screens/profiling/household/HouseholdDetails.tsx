@@ -176,28 +176,23 @@ export default function HouseholdDetails() {
           Household Details
         </Text>
       }
-      rightAction={
-        <TouchableOpacity
-          onPress={handleEdit}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <Edit size={20} className="text-gray-700" />
-        </TouchableOpacity>
-      }
+      rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView className="flex-1 bg-gray-50">
+      <ScrollView className="flex-1 px-5"
+        overScrollMode="never"
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Household Header */}
-        <Card className="mx-5 mt-4 p-6 bg-white shadow-sm border border-gray-100">
+        <View className="pb-6">
           <View className="items-center">
-            <View className="w-24 h-24 bg-blue-100 rounded-full items-center justify-center mb-4">
-              <Text className="text-blue-600 font-bold text-2xl">
-                {householdInitials}
-              </Text>
-            </View>
-            <Text className="text-gray-900 font-bold text-xl text-center mb-2">
-              Household {household.hh_id}
+            <Text className="text-gray-500 text-sm text-center mb-2">
+              Household ID
             </Text>
-            <View className="flex-row items-center space-x-2">
+            <Text className="text-gray-900 font-bold text-xl text-center mb-2">
+              {household.hh_id}
+            </Text>
+            <View className="flex-row items-center gap-2">
               <View className="bg-blue-100 px-3 py-1 rounded-full">
                 <Text className="text-blue-600 font-medium text-sm">
                   {household.total_families} {household.total_families === 1 ? 'Family' : 'Families'}
@@ -212,10 +207,10 @@ export default function HouseholdDetails() {
               )}
             </View>
           </View>
-        </Card>
+        </View>
 
         {/* Household Overview */}
-        <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
+        <Card className="mt-4 p-4">
           <Text className="text-gray-900 font-semibold text-lg mb-4">
             Household Overview
           </Text>
@@ -262,7 +257,7 @@ export default function HouseholdDetails() {
         </Card>
 
         {/* Location Details */}
-        <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
+        <Card className="mt-4 p-4">
           <Text className="text-gray-900 font-semibold text-lg mb-4">
             Location Details
           </Text>
@@ -310,7 +305,7 @@ export default function HouseholdDetails() {
 
         {/* NHTS Information */}
         {household.nhts && (
-          <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
+          <Card className="mt-4 p-4">
             <View className="flex-row items-center mb-4">
               <CheckCircle size={20} className="text-green-600 mr-2" />
               <Text className="text-gray-900 font-semibold text-lg">
@@ -336,7 +331,7 @@ export default function HouseholdDetails() {
 
         {/* Families in Household */}
         {householdFamilies.length > 0 && (
-          <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
+          <Card className="mt-4 p-4 bg-white shadow-sm border border-gray-100">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-gray-900 font-semibold text-lg">
                 Families in Household
@@ -357,71 +352,6 @@ export default function HouseholdDetails() {
             />
           </Card>
         )}
-
-        {/* Contact Information (if available) */}
-        {(household.contact_number || household.email) && (
-          <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">
-              Contact Information
-            </Text>
-            
-            {household.contact_number && (
-              <InfoRow 
-                icon={Phone} 
-                label="Contact Number" 
-                value={household.contact_number} 
-              />
-            )}
-            
-            {household.email && (
-              <InfoRow 
-                icon={Mail} 
-                label="Email Address" 
-                value={household.email} 
-              />
-            )}
-          </Card>
-        )}
-
-        {/* Additional Information */}
-        <Card className="mx-5 mt-4 mb-6 p-4 bg-white shadow-sm border border-gray-100">
-          <Text className="text-gray-900 font-semibold text-lg mb-4">
-            Additional Information
-          </Text>
-          
-          {household.household_type && (
-            <InfoRow 
-              icon={Home} 
-              label="Household Type" 
-              value={household.household_type} 
-            />
-          )}
-          
-          {household.housing_type && (
-            <InfoRow 
-              icon={Building} 
-              label="Housing Type" 
-              value={household.housing_type} 
-            />
-          )}
-          
-          {household.total_members && (
-            <InfoRow 
-              icon={UsersRound} 
-              label="Total Members" 
-              value={`${household.total_members} ${household.total_members === 1 ? 'Member' : 'Members'}`} 
-            />
-          )}
-          
-          {household.remarks && (
-            <View className="pt-3 border-t border-gray-100">
-              <Text className="text-gray-500 text-sm mb-2">Remarks</Text>
-              <Text className="text-gray-900 text-sm leading-5">
-                {household.remarks}
-              </Text>
-            </View>
-          )}
-        </Card>
       </ScrollView>
     </PageLayout>
   );

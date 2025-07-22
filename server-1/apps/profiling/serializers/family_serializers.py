@@ -12,13 +12,14 @@ class FamilyTableSerializer(serializers.ModelSerializer):
   members = serializers.SerializerMethodField()
   household_no = serializers.CharField(source='hh.hh_id')
   sitio = serializers.CharField(source='hh.add.sitio.sitio_name')
+  street = serializers.CharField(source='hh.add.add_street')
   father = serializers.SerializerMethodField()
   mother = serializers.SerializerMethodField()
   guardian = serializers.SerializerMethodField()
   registered_by = serializers.SerializerMethodField()
   class Meta: 
     model = Family
-    fields = ['fam_id', 'household_no', 'sitio', 'fam_building', 'fam_indigenous', 'mother', 
+    fields = ['fam_id', 'household_no', 'sitio', 'street', 'fam_building', 'fam_indigenous', 'mother', 
               'father', 'guardian', 'fam_date_registered', 'members', 'registered_by']
     
   def get_members(self, obj):

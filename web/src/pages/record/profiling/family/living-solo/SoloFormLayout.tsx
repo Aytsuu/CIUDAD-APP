@@ -6,12 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import LivingSoloForm from "./LivingSoloForm"
 import { formatHouseholds, formatResidents } from "../../profilingFormats"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { toast } from "sonner"
 import {
   User,
   Home,
   Users,
-  UserCheck,
   MoveRight,
   UsersRound,
 } from "lucide-react"

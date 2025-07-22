@@ -61,15 +61,15 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
             return f"{prefix}{staff_id}"
         return "-"
 
-
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()
+    per_id = serializers.IntegerField(write_only=True, allow_null=True, required=False)
     staff = serializers.CharField(allow_null=True, required=False) 
 
     class Meta:
         model = ResidentProfile
-        fields = ['per', 'staff', 'rp_id', 'rp_date_registered']
-        read_only_fields = ['rp_id', 'rp_date_registered']
+        fields = ['per', 'per_id', 'staff', 'rp_id']
+        read_only_fields = ['rp_id']
         extra_kwargs = {
             'staff': {'required': False}
         }
@@ -78,21 +78,35 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):   
         # Extract personal data
         personal_data = validated_data.pop('per')
-        
-        # Create Personal record
-        personal_serializer = PersonalBaseSerializer(data=personal_data)
-        personal_serializer.is_valid(raise_exception=True)
-        personal = personal_serializer.save()
+        per = validated_data.pop('per_id', None)
+        if per:
+            personal = Personal.objects.get(per_id=per)
+        else:
+            # Create Personal record
+            personal_serializer = PersonalBaseSerializer(data=personal_data)
+            personal_serializer.is_valid(raise_exception=True)
+            personal = personal_serializer.save()
 
         # Create ResidentProfile record
         resident_profile = ResidentProfile.objects.create(
             rp_id = self.generate_resident_no(),
-            rp_date_registered = timezone.now().date(),
             per = personal,
             staff_id = validated_data.get('staff', None)
         )
         
         return resident_profile
+
+    def generate_resident_no(self):
+        next_val = ResidentProfile.objects.count() + 1
+        date = datetime.now()
+        year = str(date.year - 2000)
+        month = str(date.month).zfill(2)
+        day = str(date.day).zfill(2)
+
+        formatted = f"{next_val:05d}"
+        resident_id = f"{formatted}{year}{month}{day}"
+        
+        return resident_id
 
     def generate_resident_no(self):
         next_val = ResidentProfile.objects.count() + 1

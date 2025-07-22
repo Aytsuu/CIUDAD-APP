@@ -12,22 +12,12 @@ import { useAllAssignedFeatures, usePositions } from "./queries/administrationFe
 import { Users, Settings, Shield } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAuth } from "@/context/AuthContext"
-import { getPositionFilterContext } from "./utils/staffFilterUtils"
 
 export default function RoleLayout() {
-  const { user } = useAuth()
   const location = useLocation()
   const params = React.useMemo(() => location.state?.params || {}, [location.state])
   const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures } = useAllAssignedFeatures()
-  
-  // Get filtering context based on logged-in user
-  const filterContext = React.useMemo(() => getPositionFilterContext(user), [user])
-  
-  const { data: positions, isLoading: isLoadingPositions } = usePositions(
-    user?.staff?.staff_type as 'Admin' | 'Health Staff' | 'Barangay Staff'
-  )
-  
+  const { data: positions, isLoading: isLoadingPositions } = usePositions()
   const [selectedPosition, setSelectedPosition] = React.useState<string>("")
   const [positionFeaturesMap, setPositionFeaturesMap] = React.useState<Map<number, Assigned[]>>(new Map())
 

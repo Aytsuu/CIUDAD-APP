@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from ..models import Business, BusinessFile, Address, Sitio
+from ..models import *
+from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 
 
 class BusinessBaseSerializer(serializers.ModelSerializer):
@@ -12,24 +13,45 @@ class BusinessFileBaseSerializer(serializers.ModelSerializer):
     model = BusinessFile
     fields = '__all__'
 
+class BusinessRespondentBaseSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = BusinessRespondent
+    fields = '__all__'
+
 class BusinessTableSerializer(serializers.ModelSerializer):
   sitio = serializers.CharField(source="add.sitio.sitio_name")
   bus_street = serializers.CharField(source='add.add_street')
-  bus_registered_by = serializers.SerializerMethodField()
-  files = serializers.SerializerMethodField()
+  respondent = serializers.SerializerMethodField()
 
   class Meta:
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 
-              'bus_respondentLname', 'bus_respondentFname', 'bus_respondentMname',
-              'bus_respondentSex', 'bus_respondentDob', 'bus_respondentContact', 
-              'bus_respondentAddress', 'bus_date_registered', 'bus_registered_by', 'files']
+              'bus_date_registered', 'respondent', 'rp']
+    
+  def get_respondent(self, obj):
+    if obj.br:
+      return f"{obj.br.br_lname}, {obj.br.br_fname} " \
+             f"{obj.br.br_mname}" if obj.br.br_mname else None
+    
+    if obj.rp:
+      return f"{obj.rp.per.per_lname}, {obj.rp.per.per_fname} " \
+             f"{obj.rp.per.per_mname}" if obj.rp.per.per_mname else None
+    
+    return None
+  
+class BusinessInfoSerializer(serializers.ModelSerializer):
+  sitio = serializers.CharField(source="add.sitio.sitio_name")
+  bus_street = serializers.CharField(source='add.add_street')
+  bus_registered_by = serializers.SerializerMethodField()
+  br = BusinessRespondentBaseSerializer()
+  rp = ResidentPersonalInfoSerializer()
+  files = serializers.SerializerMethodField()
 
-  def get_bus_registered_by(self, obj):
-    info = obj.staff.rp.per
-    return f'{info.per_lname}, {info.per_fname} ' \
-          f'{info.per_mname[0]}' if info.per_mname else None 
-
+  class Meta:
+    model = Business
+    fields = ['bus_id', 'br', 'rp', 'bus_name', 'bus_gross_sales', 'sitio', 
+              'bus_street', 'bus_date_registered', 'bus_registered_by', 'files']
+    
   def get_files(self, obj):
     files = BusinessFile.objects.filter(bus=obj)
     return [
@@ -44,13 +66,26 @@ class BusinessTableSerializer(serializers.ModelSerializer):
       }
       for file in files
     ]
-
+  
+  def get_bus_registered_by(self, obj):
+    info = obj.staff.rp.per
+    return f'{info.per_lname}, {info.per_fname} ' \
+          f'{info.per_mname}' if info.per_mname else None 
   
 class BusinessFileInputSerializer(serializers.Serializer):
-    bf_name = serializers.CharField()
-    bf_type = serializers.CharField()
-    bf_path = serializers.CharField()
-    bf_url = serializers.CharField()
+  bf_name = serializers.CharField()
+  bf_type = serializers.CharField()
+  bf_path = serializers.CharField()
+  bf_url = serializers.CharField()
+
+class RespondentInputSerializer(serializers.Serializer):
+  br_lname = serializers.CharField()
+  br_fname = serializers.CharField()
+  br_mname = serializers.CharField()
+  br_sex = serializers.CharField() 
+  br_dob = serializers.DateField()
+  br_contact = serializers.CharField()
+  br_address = serializers.CharField()
   
 class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   bus_street = serializers.CharField(write_only=True, required=False)
@@ -60,17 +95,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     write_only=True, 
     required=False)
   files = BusinessFileInputSerializer(write_only=True, many=True, required=False)
+  respondent = RespondentInputSerializer(write_only=True, required=False)
+  rp = serializers.CharField(write_only=True, required=False)
 
   class Meta:
     model = Business
-    fields = ['bus_name', 'bus_gross_sales', 'sitio', 'bus_street', 'bus_respondentLname',
-              'bus_respondentFname', 'bus_respondentMname', 'bus_respondentSex', 'bus_respondentDob',
-              'bus_respondentContact', 'bus_respondentAddress', 'staff', 'files', ]
+    fields = ['bus_name', 'rp', 'respondent', 'bus_gross_sales', 
+              'sitio', 'bus_street', 'staff', 'files', ]
 
   def create(self, validated_data):
-    sitio = validated_data.pop('sitio')
-    street = validated_data.pop('bus_street')
-    files = validated_data.pop('files')
+    sitio = validated_data.pop('sitio', None)
+    street = validated_data.pop('bus_street', None)
+    files = validated_data.pop('files', None)
+    respondent = validated_data.pop('respondent', None)
+    rp = validated_data.pop('rp', None)
 
     address, _ = Address.objects.get_or_create(
         sitio=sitio,
@@ -82,7 +120,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         }
     )
 
-    business_instance = Business.objects.create(add=address, **validated_data)
+    if respondent:
+      respondent_instance = BusinessRespondent.objects.create(**respondent)
+      if respondent_instance:
+        business_instance = Business.objects.create(
+          br=respondent_instance, 
+          add=address, 
+          **validated_data
+        )
+    else:
+      business_instance = Business.objects.create(
+        rp=ResidentProfile.objects.get(rp_id=rp), 
+        add=address, 
+        **validated_data
+      )
 
     BusinessFile.objects.bulk_create([
       BusinessFile(bus=business_instance, **file)
@@ -121,5 +172,11 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
       ])
     return instance
 
-      
-    
+class ForSpecificOwnerSerializer(serializers.ModelSerializer):
+  sitio = serializers.CharField(source="add.sitio.sitio_name")
+  bus_street = serializers.CharField(source='add.add_street')
+  class Meta:
+    model = Business
+    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_street', 'sitio', 'bus_date_registered']
+
+  

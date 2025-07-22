@@ -1,8 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { BusinessRecord } from "../profilingTypes";
 import { useNavigate } from "react-router";
-import { getSitioList } from "../restful-api/profilingGetAPI";
-import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 
 export const businessColumns: ColumnDef<BusinessRecord>[] = [
@@ -19,20 +17,15 @@ export const businessColumns: ColumnDef<BusinessRecord>[] = [
     header: "Gross Sales",
   },
   {
-    accessorKey: "sitio",
-    header: "Sitio",
-  },
-  {
-    accessorKey: "bus_street",
-    header: "Street",
+    accessorKey: "location",
+    header: "Location",
+    cell: ({ row }) => (
+      `${row.original.bus_street}, Sitio ${row.original.sitio}`
+    ) 
   },
   {
     accessorKey: "respondent",
     header: "Respondent",
-    cell: ({ row }) => (
-      (`${row.original.bus_respondentLname}, ${row.original.bus_respondentFname}` 
-        + ` ${row.original.bus_respondentMname ? `${row.original.bus_respondentMname[0]}.` : ''}`)
-    )
   },
   {
     accessorKey: "bus_date_registered",
@@ -43,28 +36,17 @@ export const businessColumns: ColumnDef<BusinessRecord>[] = [
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const {showLoading, hideLoading} = useLoading();
 
       const handleViewClick = async () => {
-        showLoading();
-        try {
-          const sitio = await getSitioList();
-          if(sitio) {
-            navigate("/business/form", {
-              state: {
-                params: {
-                  type: "viewing",
-                  sitio: sitio,
-                  business: row.original
-                }
-              }
-            })
-            hideLoading();
+        navigate("/business/form", {
+          state: {
+            params: {
+              type: "viewing",
+              busId: row.original.bus_id,
+              rpId: row.original?.rp
+            }
           }
-        } catch (err) {
-          hideLoading();
-          throw new Error(err as string);
-        }
+        })
       }
       
       return (

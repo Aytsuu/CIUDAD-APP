@@ -9,7 +9,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { useNavigate } from "react-router"
 import { Action, Type } from "./administrationEnums"
 import { useDeletePosition } from "./queries/administrationDeleteQueries"
-import { useDeletePositionHealth } from "../health/administration/queries/administrationDeleteQueries" // Add this import
+import { useDeletePositionHealth } from "./queries/administrationDeleteQueries" // Add this import
 import { ChevronRight, ChevronDown, Ellipsis, Trash, Loader2, Plus, Pen, Users, FolderOpen } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { getPositionFilterContext } from "./utils/staffFilterUtils"

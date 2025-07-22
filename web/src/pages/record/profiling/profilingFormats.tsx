@@ -58,22 +58,21 @@ export const formatAddresses = (addresses: any) => {
 
   return addresses.map( (item: {
       per: string,
-      add: string,
-      add_sitio: string,
+      add_id: string,
+      sitio: string,
       add_street: string,
     }, idx: number) => {
-      if(item.add_sitio) {
+      if(item.sitio) {
         return {
           per_id: item.per,
-          add_id: item.add,
-          id: `address ${idx+1} - ${item.add_sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
-          name: `Address ${idx+1} - ${capitalize(item.add_sitio)}, ${item.add_street}`, 
+          add_id: item.add_id,
+          id: `address ${idx+1} - ${item.sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
+          name: `Address ${idx+1} - ${capitalize(item.sitio)}, ${item.add_street}`, 
         }
       }
     }
   )
 }
-
 export const formatFamiles = (families: any) => {
   if (!families) return [];
 
@@ -90,4 +89,13 @@ export const formatFamiles = (families: any) => {
       </div>
     ),
   }));
+}
+
+export const formatRequestComposition = (compositions: any) => {
+  if (!compositions) return [];
+
+  return compositions.map((comp: any) => ({
+    id: comp.per_id,
+    name: <p>{`${comp.per_lname}, ${comp.per_fname}${comp.per_mname ? ` ${comp.per_mname}` : ""}`}</p>
+  }))
 }

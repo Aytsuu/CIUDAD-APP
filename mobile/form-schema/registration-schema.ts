@@ -45,10 +45,6 @@ export const accountUpdateSchema = z.object({
   path: ["form"]
 });
 
-export const verificationSchema = z.object({
-  dob: z.string().date("Date of birth must be a valid date")
-});
-
 export const fileSchema = z.object({
   rf_name: z.string(),
   rf_type: z.string(),
@@ -73,6 +69,7 @@ export const personalInfoSchema = z.object({
   per_fname: z.string().min(1, "First Name is required"),
   per_mname: z.string(),
   per_suffix: z.string(),
+  per_dob: z.string().date("Date of birth must be a valid date"),
   per_sex: z.string().min(1, "Sex is required"),
   per_status: z.string().min(1, "Status is required"),
   per_edAttainment: z.string(),
@@ -82,7 +79,7 @@ export const personalInfoSchema = z.object({
   per_addresses: z.object({
     list: z.array(addressSchema).default([]),
     new: addressSchema
-  })
+  }),
 })  
 
 export const uploadIdSchema = z.object({
@@ -92,12 +89,53 @@ export const uploadIdSchema = z.object({
 export const photoSchema = z.object({
   list: z.array(fileSchema).default([]),
 })
+
+
+export const linkAccountSchema = z.object({
+  id: z.string(),
+  lname: z.string()
+    .min(1, 'Last Name is required')
+    .min(2, 'Last Name must be atleast 2 letters'),
+  fname: z.string()
+    .min(1, 'First Name is required')
+    .min(2, 'First Name must be atleast 2 letters'),
+  dob: z.string().min(1, 'Date of Birth is required'),
+  contact: z.string()
+    .min(1, "Contact is required")
+    .regex(
+      /^09\d{9}$/,
+      "Must be a valid mobile number (e.g., 09171234567)"
+    )
+    .refine((val) => val.length === 11, {
+      message: "Must be 11 digits (e.g., 09171234567)",
+    }),
+})
+
+export const familyFormSchema = z.object({
+  fam_id: z.string(),
+  fam_role: z.string().min(1, "Please select a role in the family")
+})
   
 export const RegistrationFormSchema = z.object({
-  residentId: z.string().min(1, "Resident ID is required"),
-  verificationSchema,
   accountFormSchema,
   personalInfoSchema,
   uploadIdSchema,
-  photoSchema
+  photoSchema,
+  linkAccountSchema,
+  familyFormSchema,
+  motherInfoSchema: personalInfoSchema.extend({
+    role: z.string()
+  }),
+  fatherInfoSchema: personalInfoSchema.extend({
+    role: z.string()
+  }),
+  guardianInfoSchema: personalInfoSchema.extend({
+    role: z.string()
+  }),
+  dependentInfoSchema: z.object({
+    list: z.array(personalInfoSchema).default([]),
+    new: personalInfoSchema.extend({
+      role: z.string()
+    })
+  })
 })

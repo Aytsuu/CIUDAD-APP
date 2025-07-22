@@ -1,7 +1,11 @@
-// Format date (YYYY-MM-DD)
-export const formatDate = (date: string | Date) => {
+// Format date (YYYY-MM-DD) or (July 10, 2025)
+export const formatDate = (date: string | Date, isLong?: boolean) => {
   if(!date) return null;
-  return new Date(date).toISOString().split('T')[0]
+  return isLong ? new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }) : new Date(date).toISOString().split('T')[0]
 }
 
 // Get week number based on a given date format (YYYY-MM-DD)

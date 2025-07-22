@@ -11,13 +11,13 @@ import { CircleAlert, Users, Badge, Hash, Info, CheckCircle } from "lucide-react
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useAddPosition } from "./queries/administrationAddQueries";
-import { useAddPositionHealth } from "../health/administration/queries/administrationAddQueries";
+import { useAddPositionHealth } from "./queries/administrationAddQueries";
 import { useEditPosition } from "./queries/administrationUpdateQueries";
-import { useEditPositionHealth } from "../health/administration/queries/administrationUpdateQueries";
+import { useEditPositionHealth } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./administrationActionConfig";
 import { Type } from "./administrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
-import { usePositionGroupsHealth } from "../health/administration/queries/administrationFetchQueries";
+import { usePositionGroupsHealth } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";
 
@@ -33,6 +33,7 @@ export default function NewPositionForm() {
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params || {}, [location.state]);
   const formType = React.useMemo(() => params?.type || '', [params]);
+  const formattedPositionGroups = React.useMemo(() => formatPositionGroups(positionGroups) || [], [positionGroups])
   const { isPositionUnique } = useValidatePosition();
   
   const form = useForm({
@@ -172,7 +173,7 @@ export default function NewPositionForm() {
   }, [addPosition, addPositionHealth, editPosition, editPositionHealth, user, formType, params.data, form]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <main className="min-h-screen py-8">
       <div className="max-w-2xl mx-auto px-4">
         <LayoutWithBack
           title={params.title}
@@ -202,7 +203,7 @@ export default function NewPositionForm() {
                         control={form.control} 
                         name="pos_group" 
                         label="Position Group" 
-                        options={formatPositionGroups(positionGroups)}
+                        options={formattedPositionGroups}
                       />
                       <p className="text-xs text-gray-500 ml-1">
                         Choose which organizational group this position belongs to
