@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, Dimensions } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, Dimensions, ScrollView, RefreshControl } from "react-native";
 import { router } from "expo-router";
 import { Input } from "@/components/ui/input";
 import { Search, Trash, Archive, ArchiveRestore, Edit, X, ChevronLeft } from "lucide-react-native";
@@ -12,18 +12,23 @@ import {
   IncomeImage, 
   DisbursementImage,
   Album,
-  ImageItem
-} from "./queries";
-import { 
+  ImageItem,
   useArchiveIncomeImage,
   useRestoreIncomeImage,
+  useDeleteIncomeImage,
   usePermanentDeleteIncomeImage,
   useArchiveDisbursementImage,
   useRestoreDisbursementImage,
+  useDeleteDisbursementImage,
   usePermanentDeleteDisbursementImage,
-  useDeleteIncomeImage,
-  useDeleteDisbursementImage
+  usePermanentDeleteDisbursementFolder,
+  usePermanentDeleteIncomeFolder,
+  useRestoreDisbursementFolder,
+  useRestoreIncomeFolder
 } from "./queries";
+import { formatDate } from "@/helpers/dateHelpers";
+import PageLayout from "@/screens/_PageLayout";
+import { SearchInput } from "@/components/ui/search-input";
 
 const PLACEHOLDER_IMAGE = "/placeholder-image.png";
 
@@ -37,7 +42,7 @@ const IncomeandDisbursementMain = () => {
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [zoomVisible, setZoomVisible] = useState(false);
 
-  const { data: incomeImages = [], isLoading: isIncomeLoading, error: incomeError } = useGetIncomeImages(viewMode === "archived");
+  const { data: incomeImages = [], isLoading: isIncomeLoading, error: incomeError, refetch } = useGetIncomeImages(viewMode === "archived");
   const { data: disbursementImages = [], isLoading: isDisbursementLoading, error: disbursementError } = useGetDisbursementImages(viewMode === "archived");
 
   const archiveIncomeImage = useArchiveIncomeImage();
@@ -48,7 +53,19 @@ const IncomeandDisbursementMain = () => {
   const restoreDisbursementImage = useRestoreDisbursementImage();
   const deleteDisbursementImage = useDeleteDisbursementImage();
   const permanentDeleteDisbursementImage = usePermanentDeleteDisbursementImage();
+  const permanentDeleteIncomeFolder = usePermanentDeleteIncomeFolder();
+  const restoreIncomeFolder = useRestoreIncomeFolder();
+  const permanentDeleteDisbursementFolder = usePermanentDeleteDisbursementFolder();
+  const restoreDisbursementFolder = useRestoreDisbursementFolder();
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   const typeOptions = [
     { label: "All Types", value: "all" },
@@ -72,6 +89,7 @@ const IncomeandDisbursementMain = () => {
     const albumMap: { [key: string]: Album } = {};
 
     incomeImages.forEach((img) => {
+      if (!img.inf_name) console.warn(`Missing inf_name for inf_num: ${img.infi_num}`);
       const key = `income-${img.inf_num}`;
       if (!albumMap[key]) {
         albumMap[key] = {
@@ -92,6 +110,7 @@ const IncomeandDisbursementMain = () => {
     });
 
     disbursementImages.forEach((img) => {
+      if (!img.dis_name) console.warn(`Missing dis_name for dis_num: ${img.disf_num}`);
       const key = `disbursement-${img.dis_num}`;
       if (!albumMap[key]) {
         albumMap[key] = {
@@ -151,11 +170,66 @@ const IncomeandDisbursementMain = () => {
     currentPage * pageSize
   );
 
-  const handleAction = useCallback((action: string, items: ImageItem | ImageItem[], onSuccess?: () => void) => {
-    // Normalize input to always work with an array of items
-    const itemsArray = Array.isArray(items) ? items : [items];
+  const handlePermanentDeleteImage = useCallback((item: ImageItem) => {
+    const mutate = item.type === "income" ? permanentDeleteIncomeImage.mutate : permanentDeleteDisbursementImage.mutate;
+    const id = item.type === "income" ? (item as IncomeImage).infi_num : (item as DisbursementImage).disf_num;
+    
+    mutate(id, {
+      onError: (error) => console.error("Error deleting image:", error)
+    });
+  }, [permanentDeleteIncomeImage, permanentDeleteDisbursementImage]);
 
-    // Process each item in the array
+  const handlePermanentDeleteFolder = useCallback((album: Album) => {
+    const allArchived = album.images.every(img => 
+      (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+      (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+    );
+
+    if (allArchived) {
+      if (album.type === 'income') {
+        permanentDeleteIncomeFolder.mutate(album.id, {
+          onError: (error) => console.error("Error deleting folder:", error)
+        });
+      } else {
+        permanentDeleteDisbursementFolder.mutate(album.id, {
+          onError: (error) => console.error("Error deleting folder:", error)
+        });
+      }
+    } else {
+      album.images.forEach((img) => {
+        const isArchived = img.type === 'income' 
+          ? (img as IncomeImage).infi_is_archive 
+          : (img as DisbursementImage).disf_is_archive;
+          
+        if (isArchived) {
+          handlePermanentDeleteImage(img);
+        }
+      });
+    }
+  }, [permanentDeleteIncomeFolder, permanentDeleteDisbursementFolder, handlePermanentDeleteImage]);
+
+  const getDeleteAllTitle = (album: Album) => {
+    const allArchived = album.images.every(img => 
+      (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+      (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+    );
+    return allArchived ? "Delete Image(s)" : "Delete Archived Images";
+  };
+
+  const getDeleteAllDescription = (album: Album) => {
+    const allArchived = album.images.every(img => 
+      (img.type === 'income' && (img as IncomeImage).infi_is_archive) ||
+      (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
+    );
+    return allArchived 
+      ? "This will permanently delete the image(s). This action cannot be undone."
+      : "This will permanently delete only the archived images in this folder. Active images will remain.";
+  };
+
+  const handleAction = useCallback((action: string, items: ImageItem | ImageItem[] | Album, onSuccess?: () => void) => {
+    const itemsArray = Array.isArray(items) ? items : [items];
+    let hasErrors = false;
+
     const mutations = itemsArray.map((item) => {
       const mutate = {
         archive: item.type === "income" ? archiveIncomeImage.mutate : archiveDisbursementImage.mutate,
@@ -169,9 +243,14 @@ const IncomeandDisbursementMain = () => {
         return new Promise<void>((resolve) => {
           mutate(id, {
             onSuccess: () => resolve(),
-            onError: (error) => {
-              console.error(`Error performing ${action} on item ${id}:`, error);
-              resolve(); // Continue even if one fails
+            onError: (error: any) => {
+              if (error.message.includes("Network Error") || error.response?.status === 404) {
+                console.warn(`Network error for ${action} on item ${id}, possibly already deleted:`, error);
+              } else {
+                console.error(`Error performing ${action} on item ${id}:`, error);
+                hasErrors = true;
+              }
+              resolve();
             },
           });
         });
@@ -179,10 +258,12 @@ const IncomeandDisbursementMain = () => {
       return Promise.resolve();
     });
 
-    // Wait for all mutations to complete
-    Promise.all(mutations).then(() => {
+    return Promise.all(mutations).then(() => {
       if (onSuccess) onSuccess();
-      setZoomVisible(false); // Close modal after all actions are complete
+      setZoomVisible(false);
+      if (hasErrors) {
+        console.log("Some images failed to process");
+      }
     });
   }, [
     archiveIncomeImage,
@@ -210,14 +291,14 @@ const IncomeandDisbursementMain = () => {
       >
         <View className="w-full h-32 bg-gray-100 rounded-t-lg flex items-center justify-center relative overflow-hidden">
           <Image
-            source={{ uri: album.images[0]?.infi_url || album.images[0]?.disf_url || PLACEHOLDER_IMAGE }}
+            source={{ uri: album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).infi_url : (album.images[0] as DisbursementImage).disf_url || PLACEHOLDER_IMAGE }}
             className="w-full h-full"
           />
           <Text className="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
             {album.images.length} {album.images.length === 1 ? "Image" : "Images"}
           </Text>
           {album.images.some((img) => (img as IncomeImage).infi_is_archive || (img as DisbursementImage).disf_is_archive) && !album.is_archive && (
-            <Text className="absolute top-1 right-1 bg-yellow-500 text-white text-xs px-1 py-0.5 rounded">
+            <Text className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded">
               Partially Archived
             </Text>
           )}
@@ -227,7 +308,9 @@ const IncomeandDisbursementMain = () => {
             {album.type === "income" ? album.inf_name || "Unnamed Income" : album.dis_name || "Unnamed Disbursement"}
           </Text>
           <Text className="text-xs text-gray-500">
-            Date Uploaded: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).infi_upload_date || "N/A" : (album.images[0] as DisbursementImage).disf_upload_date || "N/A"}
+            Date Uploaded: {album.images[0]?.type === "income" 
+            ? formatDate((album.images[0] as IncomeImage).infi_upload_date) || "N/A" 
+            : formatDate((album.images[0] as DisbursementImage).disf_upload_date) || "N/A"}
           </Text>
           <Text className="text-xs text-gray-500">
             For Year: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).inf_year || "N/A" : (album.images[0] as DisbursementImage).dis_year || "N/A"}
@@ -240,22 +323,18 @@ const IncomeandDisbursementMain = () => {
                 className="bg-blue-600 p-1 rounded-md"
                 onPress={(e) => {
                   e.stopPropagation();
-                  if (viewMode !== "archived") {
-                    router.push({
-                      pathname: "/treasurer/inc-disbursement/inc-disb-edit",
-                      params: { id: album.id.toString(), type: album.type },
-                    });
-                  }
+                  router.push({
+                    pathname: "/(treasurer)/inc-disbursement/inc-disb-edit",
+                    params: { id: album.id.toString(), type: album.type },
+                  });
                 }}
-                disabled={viewMode === "archived"}
               >
-                <Edit size={16} color={viewMode === "archived" ? "gray" : "white"} />
+                <Edit size={16} color="white" />
               </TouchableOpacity>
-              
               <View>
                 <ConfirmationModal
                   trigger={
-                    <TouchableOpacity className="bg-yellow-600 p-1 rounded-md">
+                    <TouchableOpacity className="bg-red-600 p-1 rounded-md">
                       <Archive size={16} color="white" />
                     </TouchableOpacity>
                   }
@@ -263,12 +342,11 @@ const IncomeandDisbursementMain = () => {
                   description="Are you sure you want to archive this album? This will archive all images within it."
                   actionLabel="Archive"
                   variant="default"
-                  onPress={() => handleAction("archive", album.images)} // Pass all images in the album
+                  onPress={() => handleAction("archive", album.images)}
                 />
               </View>
             </>
           )}
-          
           {viewMode === "archived" && (
             <>
               <View>
@@ -282,10 +360,9 @@ const IncomeandDisbursementMain = () => {
                   description="Are you sure you want to restore this album? This will restore all images within it."
                   actionLabel="Restore"
                   variant="default"
-                  onPress={() => handleAction("restore", album.images)} // Pass all images in the album
+                  onPress={() => handleAction("restore", album.images)}
                 />
               </View>
-              
               <View>
                 <ConfirmationModal
                   trigger={
@@ -293,11 +370,11 @@ const IncomeandDisbursementMain = () => {
                       <Trash size={16} color="white" />
                     </TouchableOpacity>
                   }
-                  title="Permanently Delete Album"
-                  description="This action cannot be undone. Are you sure you want to permanently delete this album and all its images?"
+                  title={getDeleteAllTitle(album)}
+                  description={getDeleteAllDescription(album)}
                   actionLabel="Delete"
                   variant="destructive"
-                  onPress={() => handleAction("permanentDelete", album.images)} // Pass all images in the album
+                  onPress={() => handlePermanentDeleteFolder(album)}
                 />
               </View>
             </>
@@ -311,16 +388,16 @@ const IncomeandDisbursementMain = () => {
     return (
       <ScreenLayout
         customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={<Text className="text-[13px]">Income & Disbursement Monitoring</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={false}
-      keyboardAvoiding={true}
-      contentPadding="medium"
+          <TouchableOpacity onPress={() => router.back()}>
+            <ChevronLeft size={30} color="black" className="text-black" />
+          </TouchableOpacity>
+        }
+        headerBetweenAction={<Text className="text-[13px]">Income & Disbursement Monitoring</Text>}
+        showExitButton={false}
+        headerAlign="left"
+        scrollable={false}
+        keyboardAvoiding={true}
+        contentPadding="medium"
       >
         <View className="flex-1 p-4">
           <View className="h-10 w-1/6 mb-3 bg-gray-200 opacity-30" />
@@ -334,41 +411,41 @@ const IncomeandDisbursementMain = () => {
 
   if (incomeError || disbursementError) {
     return (
-      <ScreenLayout
-        customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={<Text className="text-[13px]">Income & Disbursement Monitoring</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={false}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      >
+       <PageLayout
+          leftAction={
+            <TouchableOpacity onPress={() => router.back()}>
+              <ChevronLeft size={30} color="black" className="text-black" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text>Income & Disbursement Monitoring</Text>}
+          rightAction={
+            <TouchableOpacity>
+              <ChevronLeft size={30} color="black" className="text-white" />
+            </TouchableOpacity>
+          }
+        >
         <View className="flex-1 p-4">
           <Text className="text-red-500">
             Error: {(incomeError || disbursementError)?.message}
           </Text>
         </View>
-      </ScreenLayout>
+      </PageLayout>
     );
   }
 
   return (
-    <ScreenLayout
-       customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={<Text className="text-[13px]">Income & Disbursement Monitoring</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={false}
-      keyboardAvoiding={true}
-      contentPadding="medium"
+    <PageLayout
+      leftAction={
+            <TouchableOpacity onPress={() => router.back()}>
+              <ChevronLeft size={30} color="black" className="text-black" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text>Income & Disbursement Monitoring</Text>}
+          rightAction={
+            <TouchableOpacity>
+              <ChevronLeft size={30} color="black" className="text-white" />
+            </TouchableOpacity>
+          }
     >
       <View className="flex-1 p-4">
         <View className="flex flex-col gap-4 mb-4">
@@ -437,7 +514,7 @@ const IncomeandDisbursementMain = () => {
             </View>
             <TouchableOpacity
               className="bg-blue-600 px-4 py-2 rounded-md"
-              onPress={() => router.push("/treasurer/inc-disbursement/inc-disb-create")}
+              onPress={() => router.push("/(treasurer)/inc-disbursement/inc-disb-create")}
             >
               <Text className="text-white text-base font-semibold">Create New</Text>
             </TouchableOpacity>
@@ -461,6 +538,12 @@ const IncomeandDisbursementMain = () => {
               initialNumToRender={10}
               maxToRenderPerBatch={10}
               windowSize={11}
+              refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+              />
+            }
             />
           )}
         </View>
@@ -504,90 +587,90 @@ const IncomeandDisbursementMain = () => {
             </View>
           </View>
         </View>
-      </View>
 
-      <Modal visible={zoomVisible} transparent={true} onRequestClose={() => setZoomVisible(false)}>
-        <View className="flex-1 bg-black/80 justify-center items-center">
-          <View className="w-[90%] h-[80%] bg-white rounded-lg overflow-hidden">
-            <TouchableOpacity 
-              className="absolute top-3 right-3 bg-black/50 w-8 h-8 rounded-full justify-center items-center z-10"
-              onPress={() => setZoomVisible(false)}
-            >
-              <X size={20} color="white" />
-            </TouchableOpacity>
-            <FlatList
-              data={selectedAlbum?.images || []}
-              horizontal
-              pagingEnabled
-              keyExtractor={(item, index) => `${item.type}-${(item as IncomeImage).infi_num || (item as DisbursementImage).disf_num}-${index}`}
-              renderItem={({ item }) => (
-                <View className="flex-1 justify-center items-center" style={{ width: screenWidth * 0.9 }}>
-                  <Image
-                    source={{ 
-                      uri: (item as IncomeImage).infi_url || (item as DisbursementImage).disf_url || PLACEHOLDER_IMAGE,
-                      cache: 'force-cache'
-                    }}
-                    className="w-full h-full"
-                    resizeMode="contain"
-                    onError={() => console.log("Image failed to load")}
-                    style={{ width: screenWidth * 0.9, height: screenHeight * 0.8 }}
-                  />
-                  <View className="mt-2 flex-row justify-end gap-1 absolute bottom-2 right-2">
-                    {viewMode === "active" && (
-                      <ConfirmationModal
-                        trigger={
-                          <TouchableOpacity className="bg-[#ef4444]">
-                            <Archive size={16} color="white" />
-                          </TouchableOpacity>
-                        }
-                        title="Archive Image"
-                        description="Are you sure you want to archive this image?"
-                        actionLabel="Archive"
-                        variant="default"
-                        onPress={() => handleAction("archive", item)} // Per-image archiving
-                      />
-                    )}
-                    {viewMode === "archived" && (
-                      <>
+        <Modal visible={zoomVisible} transparent={true} onRequestClose={() => setZoomVisible(false)}>
+          <View className="flex-1 bg-black/80 justify-center items-center">
+            <View className="w-[90%] h-[80%] bg-white rounded-lg overflow-hidden">
+              <TouchableOpacity 
+                className="absolute top-3 right-3 bg-black/50 w-8 h-8 rounded-full justify-center items-center z-10"
+                onPress={() => setZoomVisible(false)}
+              >
+                <X size={20} color="white" />
+              </TouchableOpacity>
+              <FlatList
+                data={selectedAlbum?.images || []}
+                horizontal
+                pagingEnabled
+                keyExtractor={(item, index) => `${item.type}-${(item as IncomeImage).infi_num || (item as DisbursementImage).disf_num}-${index}`}
+                renderItem={({ item }) => (
+                  <View className="flex-1 justify-center items-center" style={{ width: screenWidth * 0.9 }}>
+                    <Image
+                      source={{ 
+                        uri: item.type === "income" ? (item as IncomeImage).infi_url : (item as DisbursementImage).disf_url || PLACEHOLDER_IMAGE,
+                        cache: 'force-cache'
+                      }}
+                      className="w-full h-full"
+                      resizeMode="contain"
+                      onError={() => console.log("Image failed to load")}
+                      style={{ width: screenWidth * 0.9, height: screenHeight * 0.8 }}
+                    />
+                    <View className="mt-2 flex-row justify-end gap-1 absolute bottom-2 right-2">
+                      {viewMode === "active" && (
                         <ConfirmationModal
                           trigger={
-                            <TouchableOpacity className="bg-green-600 p-1 rounded-md">
-                              <ArchiveRestore size={16} color="white" />
+                            <TouchableOpacity>
+                              <Archive size={20} color="red" />
                             </TouchableOpacity>
                           }
-                          title="Restore Image"
-                          description="Are you sure you want to restore this image?"
-                          actionLabel="Restore"
+                          title="Archive Image"
+                          description="Are you sure you want to archive this image?"
+                          actionLabel="Archive"
                           variant="default"
-                          onPress={() => handleAction("restore", item)} // Per-image restoring
+                          onPress={() => handleAction("archive", item)}
                         />
-                        <ConfirmationModal
-                          trigger={
-                            <TouchableOpacity className="bg-red-600 p-1 rounded-md">
-                              <Trash size={16} color="white" />
-                            </TouchableOpacity>
-                          }
-                          title="Permanently Delete Image"
-                          description="This action cannot be undone. Are you sure you want to permanently delete this image?"
-                          actionLabel="Delete"
-                          variant="destructive"
-                          onPress={() => handleAction("permanentDelete", item)} // Per-image permanent delete
-                        />
-                      </>
-                    )}
+                      )}
+                      {viewMode === "archived" && (
+                        <>
+                          <ConfirmationModal
+                            trigger={
+                              <TouchableOpacity className="bg-green-600 p-1 rounded-md">
+                                <ArchiveRestore size={16} color="white" />
+                              </TouchableOpacity>
+                            }
+                            title="Restore Image"
+                            description="Are you sure you want to restore this image?"
+                            actionLabel="Restore"
+                            variant="default"
+                            onPress={() => handleAction("restore", item)}
+                          />
+                          <ConfirmationModal
+                            trigger={
+                              <TouchableOpacity className="bg-red-600 p-1 rounded-md">
+                                <Trash size={16} color="white" />
+                              </TouchableOpacity>
+                            }
+                            title="Delete Image"
+                            description="This will permanently delete this image. This action cannot be undone."
+                            actionLabel="Delete"
+                            variant="destructive"
+                            onPress={() => handlePermanentDeleteImage(item)}
+                          />
+                        </>
+                      )}
+                    </View>
                   </View>
-                </View>
-              )}
-              getItemLayout={(data, index) => ({
-                length: screenWidth * 0.9,
-                offset: screenWidth * 0.9 * index,
-                index,
-              })}
-            />
+                )}
+                getItemLayout={(data, index) => ({
+                  length: screenWidth * 0.9,
+                  offset: screenWidth * 0.9 * index,
+                  index,
+                })}
+              />
+            </View>
           </View>
-        </View>
-      </Modal>
-    </ScreenLayout>
+        </Modal>
+      </View>
+    </PageLayout>
   );
 };
 

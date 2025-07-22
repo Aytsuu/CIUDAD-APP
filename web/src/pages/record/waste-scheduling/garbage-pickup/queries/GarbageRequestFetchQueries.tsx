@@ -88,6 +88,7 @@ export type GarbageRequestPending = {
     garb_created_at: string;
     garb_additional_notes: string; 
     file_url: string;
+    sitio_name: string;
 }  
 
 export const useGetGarbagePendingRequest = () => {
@@ -127,6 +128,7 @@ export type GarbageRequestAccept = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_additional_notes: string; 
   dec_date: string;
   truck_id: string | null;
   driver_id: string | null;

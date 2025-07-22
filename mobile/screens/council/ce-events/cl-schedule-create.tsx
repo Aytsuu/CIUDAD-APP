@@ -3,8 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
@@ -19,12 +17,12 @@ import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
-import { FormTimeInput } from '@/components/ui/form/form-time-input';
+import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
+import { formatDate } from '@/helpers/dateHelpers';
 import type { Staff } from './queries';
 import { useQueryClient } from '@tanstack/react-query';
-import ScreenLayout from "@/screens/_ScreenLayout"
-import { formatDate } from '@/helpers/dateHelpers';
+import PageLayout from '@/screens/_PageLayout';
 
 const CLCreateEvent = () => {
   const router = useRouter();
@@ -159,21 +157,20 @@ const CLCreateEvent = () => {
   };
 
   return (
-    <ScreenLayout
-       customLeftAction={
+    <PageLayout
+       leftAction={
           <TouchableOpacity onPress={() => router.back()}>
             <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Schedule Events</Text>}
-        showExitButton={false}
-        headerAlign="left"
-        keyboardAvoiding={true}
-        contentPadding="medium"
-      scrollable={false}
+        headerTitle={<Text>Schedule Events</Text>}
+        rightAction={
+          <TouchableOpacity>
+            <ChevronLeft size={30} color="black" className="text-white" />
+          </TouchableOpacity>
+        }
     >
-      <KeyboardAvoidingView behavior="height" style={{ flex: 1 }}>
-        <ScrollView className="flex-1 px-4 py-4">
+        <View className="flex-1 px-4 py-4">
           <View className="space-y-4">
             <FormInput
               control={control}
@@ -205,11 +202,11 @@ const CLCreateEvent = () => {
               ]}
             />
 
-            <FormTimeInput
+            <FormDateTimeInput
               control={control}
               name="eventTime"
               label="Event Time"
-              mode="24h"
+              type="time"
             />
 
             <FormTextArea
@@ -270,9 +267,8 @@ const CLCreateEvent = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </ScreenLayout>
+        </View>
+    </PageLayout>
   );
 };
 

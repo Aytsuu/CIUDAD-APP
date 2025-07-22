@@ -14,6 +14,8 @@ import { BudgetPlanDetail } from "./budgetPlanInterfaces";
 import { usegetBudgetPlanDetail } from "./queries/budgetplanFetchQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BudgetPlanHistory from "./budgetPlanHistory";
+import BudgetPlanSuppDocs from "./budgetplanSuppDocs";
+
 
 const styles = {
     mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -230,21 +232,31 @@ function ViewBudgetPlan(){
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
 
-                
-                <Link to={'/budgetplan-forms'}
-                    state={{budgetData: fetchedData, isEdit: true, from: 'view', plan_id: planId}} > 
-                    <Button>
-                        <Pen size={16} /> <span>Edit</span>
-                    </Button>
-                </Link>
+                {fetchedData?.plan_year  === String(new Date().getFullYear()) && (
+                    <Link to="/budgetplan-forms" state={{
+                            budgetData: fetchedData,
+                            isEdit: true,
+                            from: 'view',
+                            plan_id: planId
+                        }}
+                    >
+                        <Button>
+                            <Pen size={16} /> <span>Edit</span>
+                        </Button>
+                    </Link>
+                )}
+
             </div>
 
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="current" onClick={() => setActiveTab("current")}>
                     Current Budget Plan
                 </TabsTrigger>
                 <TabsTrigger value="history" onClick={() => setActiveTab("history")}>
                     Revision History
+                </TabsTrigger>
+                 <TabsTrigger value="documents" onClick={() => setActiveTab("documents")}>
+                    Supporting Documents
                 </TabsTrigger>
             </TabsList>
 
@@ -315,6 +327,10 @@ function ViewBudgetPlan(){
             <TabsContent value="history" className={styles.tabContent}>
                 {/* History Content */}
                 <BudgetPlanHistory planId={planId}/>
+            </TabsContent>
+
+            <TabsContent value="documents" className={styles.tabContent}>
+                <BudgetPlanSuppDocs plan_id={fetchedData?.plan_id || 0}/>
             </TabsContent>
         </Tabs>
     );

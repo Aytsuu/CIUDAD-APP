@@ -2,6 +2,7 @@ import React from "react";
 import { Film, Play, Image, Plus, X, FileText, Loader2 } from "lucide-react";
 import { Label } from "./label";
 import supabase from "@/supabase/supabase";
+import { cn } from "@/lib/utils";
 
 export const MediaUpload = ({
   title,
@@ -10,7 +11,8 @@ export const MediaUpload = ({
   activeVideoId,
   setMediaFiles,
   setActiveVideoId,
-  onFileRemoved, // Add optional prop
+  onFileRemoved, 
+  maxFiles,
 }: {
   title: string;
   description: string;
@@ -18,7 +20,8 @@ export const MediaUpload = ({
   activeVideoId: string;
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>;
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
-  onFileRemoved?: (id: string) => void; // Optional callback
+  onFileRemoved?: (id: string) => void;
+  maxFiles?: number;
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -62,6 +65,7 @@ export const MediaUpload = ({
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+
     const newMediaFiles = files.map((file) => {
       const previewUrl = URL.createObjectURL(file);
       const type = file.type.startsWith("image/")
@@ -80,6 +84,7 @@ export const MediaUpload = ({
     });
 
     setMediaFiles((prev) => [...prev, ...newMediaFiles]);
+    
 
     // Upload files and update state with URLs
     for (const media of newMediaFiles) {
@@ -101,6 +106,8 @@ export const MediaUpload = ({
 
     e.target.value = "";
   };
+  
+  const isMaxFilesReached = maxFiles ? mediaFiles.length >= maxFiles : false;
 
   const toggleVideoPlayback = (id: string) => {
     setActiveVideoId(activeVideoId === id ? "" : id);
@@ -212,12 +219,23 @@ export const MediaUpload = ({
   
         {/* Add media button remains the same */}
         <div
-          onClick={handleAddMediaClick}
-          className="aspect-square border-2 border-dashed border-gray-300 rounded-md flex 
-                    flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
+          onClick={!isMaxFilesReached ? handleAddMediaClick : undefined}
+          className={cn(
+            "aspect-square border-2 border-dashed rounded-md flex flex-col items-center justify-center",
+            isMaxFilesReached
+              ? "border-gray-200 bg-gray-50 cursor-not-allowed"
+              : "border-gray-300 cursor-pointer hover:bg-gray-50"
+          )}
+          aria-disabled={isMaxFilesReached}
         >
-          <Plus size={24} className="text-gray-400 mb-1" />
-          <p className="text-xs text-gray-500">Add Media</p>
+          <Plus size={24} className={isMaxFilesReached ? "text-gray-300" : "text-gray-400"}
+          />
+          <p className={cn(
+            "text-xs mt-1",
+            isMaxFilesReached ? "text-gray-300" : "text-gray-500"
+          )}>
+            {isMaxFilesReached ? "Maximum reached" : "Add Media"}
+          </p>
           <input
             type="file"
             ref={fileInputRef}
@@ -225,6 +243,7 @@ export const MediaUpload = ({
             accept="image/*,video/*,.pdf,.doc,.docx"
             multiple
             className="hidden"
+            disabled={isMaxFilesReached}
           />
         </div>
       </div>

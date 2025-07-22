@@ -1,23 +1,31 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, ScrollView } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, ScrollView, RefreshControl  } from "react-native"
 import { Search, Plus, Eye, ArrowLeft, ChevronLeft } from "lucide-react-native"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetDonations, type Donation } from "./queries"
 import { useRouter } from "expo-router"
-import ScreenLayout from "../../_ScreenLayout"
+import { SearchInput } from "@/components/ui/search-input"
+import PageLayout from "@/screens/_PageLayout"
 
 const DonationTracker = () => {
   const router = useRouter()
   const { data: donations = [], isLoading, refetch } = useGetDonations()
   const [searchTerm, setSearchTerm] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   // Use useMemo to prevent re-rendering issues with search
   const filteredData = useMemo(() => {
     return donations.filter((donation: Donation) => {
       const searchableText = [
-        donation.don_num?.toString(),
+        donation.don_num,
         donation.don_donor,
         donation.don_item_name,
         donation.don_category,
@@ -39,7 +47,7 @@ const DonationTracker = () => {
     }
   }
 
-  const handleViewDonation = (donationNum: number) => {
+  const handleViewDonation = (donationNum: string) => {
     console.log("Navigating to view donation:", donationNum)
     try {
       router.push({
@@ -55,39 +63,35 @@ const DonationTracker = () => {
     
 
   return (
-    <ScreenLayout
-      customLeftAction={
-          <TouchableOpacity onPress={() => router.back()}>
-            <ChevronLeft size={30} color="black" className="text-black" />
-          </TouchableOpacity>
-        }
-        headerBetweenAction={<Text className="text-[13px]">Donation Records</Text>}
-        showExitButton={false}
-        headerAlign="left"
-        scrollable={true}
-        keyboardAvoiding={true}
-        contentPadding="medium"
-      loading={isLoading}
-      loadingMessage="Loading donations..."
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()}>
+          <ChevronLeft size={30} color="black" className="text-black" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text>Donation Records</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
+      }
     >
-        {/* Search Bar */}
+        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <View className="mb-4" onStartShouldSetResponder={() => true}>
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm flex-1 mr-2">
-              <TextInput
-                placeholder="Search donations..."
-                className="flex-1 text-sm text-gray-800"
-                placeholderTextColor="#666"
+          <View className="mb-4 flex-row items-center justify-between">
+            <View className="flex-1">
+              <SearchInput
                 value={searchTerm}
-                onChangeText={setSearchTerm}
-                returnKeyType="search"
-                autoCapitalize="none"
-                autoCorrect={false}
-                blurOnSubmit={false}
+                onChange={setSearchTerm}
+                onSubmit={() => {
+                  // Optional: Add any submit logic if needed
+                }}
               />
-              <Search size={18} color="#666" />
             </View>
-            <TouchableOpacity className="bg-blue-500 rounded-full p-3" onPress={handleAddDonation}>
+            <TouchableOpacity 
+              className="bg-blue-500 rounded-full p-3 flex mr-5" 
+              onPress={handleAddDonation}
+            >
               <Plus size={20} color="white" />
             </TouchableOpacity>
           </View>
@@ -101,10 +105,10 @@ const DonationTracker = () => {
               accessibilityRole="button"
               activeOpacity={0.7}
             >
-              <Card className={`bg-[#07143F] border-gray-200 ${index === filteredData.length - 1 ? "mb-0" : "mb-4"}`}>
+              <Card className={`bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100 ${index === filteredData.length - 1 ? "mb-0" : "mb-4"}`}>
                 <CardHeader className="pb-3">
                   <View className="flex-row items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-white flex-1 pr-2">
+                    <CardTitle className="text-lg font-semibold text-black flex-1 pr-2">
                       {donation.don_item_name}
                     </CardTitle>
                     <TouchableOpacity
@@ -117,12 +121,12 @@ const DonationTracker = () => {
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  <Text className="text-sm text-white leading-5 mb-4">Donor: {donation.don_donor}</Text>
+                  <Text className="text-sm text-black leading-5 mb-4">Donor: {donation.don_donor}</Text>
                   <View className="border-t border-gray-200 pt-3">
-                    <Text className="text-sm font-medium text-white">Category: {donation.don_category}</Text>
-                    <Text className="text-sm font-medium text-white">Quantity: {donation.don_qty}</Text>
-                    <Text className="text-sm font-medium text-white">Date: {donation.don_date}</Text>
-                    <Text className="text-sm font-medium text-white">Reference No: {donation.don_num}</Text>
+                    <Text className="text-sm font-medium text-black">Category: {donation.don_category}</Text>
+                    <Text className="text-sm font-medium text-black">Quantity: {donation.don_qty}</Text>
+                    <Text className="text-sm font-medium text-black">Date: {donation.don_date}</Text>
+                    <Text className="text-sm font-medium text-blac">Reference No: {donation.don_num}</Text>
                   </View>
                 </CardContent>
               </Card>
@@ -135,7 +139,8 @@ const DonationTracker = () => {
               <Text className="text-gray-500 text-center">No donation records found</Text>
             </View>
           )}
-    </ScreenLayout>
+          </ScrollView>
+    </PageLayout>
   )
 }
 

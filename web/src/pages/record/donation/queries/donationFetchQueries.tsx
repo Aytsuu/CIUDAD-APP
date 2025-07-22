@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getdonationreq, getPersonalList } from "../request-db/donationGetRequest";
 
 export type Donation = {
-  don_num: number;
+  don_num: string;
   don_donor: string;
   don_item_name: string;
   don_qty: string;

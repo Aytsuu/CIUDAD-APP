@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { postdonationreq } from "../request-db/donationPostRequest";
 
 export type DonationInput = {
-  don_num?: number;
+  don_num?: string;
   don_donor: string;
   don_item_name: string;
   don_qty: string;

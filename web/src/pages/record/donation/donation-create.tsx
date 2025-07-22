@@ -126,7 +126,21 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
                             }
                           }}
                         />
-                        <CommandList>
+                        <CommandList 
+                          className="max-h-64 overflow-auto"
+                          onWheel={(e) => {
+                            e.stopPropagation()
+                            const el = e.currentTarget
+                            if (e.deltaY > 0 && el.scrollTop >= el.scrollHeight - el.clientHeight) {
+                              return
+                            }
+                            if (e.deltaY < 0 && el.scrollTop <= 0) {
+                              return
+                            }
+                            e.preventDefault()
+                            el.scrollTop += e.deltaY
+                          }}
+                        >
                           <CommandEmpty>
                             No donor found. Enter name manually or select Anonymous.
                           </CommandEmpty>

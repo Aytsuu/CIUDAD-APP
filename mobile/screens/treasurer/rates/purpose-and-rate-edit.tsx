@@ -58,7 +58,7 @@ export default function PurposeAndRateEditForm() {
                             label="Purpose"
                             name="purpose"
                             placeholder="Enter purpose"
-                        
+                            editable={false}
                         />
 
                         <FormInput

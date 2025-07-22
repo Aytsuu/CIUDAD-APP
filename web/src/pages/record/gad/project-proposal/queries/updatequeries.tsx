@@ -4,7 +4,7 @@ import { CircleCheck } from "lucide-react";
 import { putProjectProposal, patchProjectProposalStatus } from "../api/putreq";
 import { ProjectProposal, ProjectProposalInput } from "./fetchqueries";
 
-type ProposalStatus = "Pending" | "Approved" | "Rejected" | "Viewed";
+export type ProposalStatus = "Pending" | "Amend" |"Approved" | "Rejected" | "Viewed";
 
 export const useUpdateProjectProposal = () => {
   const queryClient = useQueryClient();
