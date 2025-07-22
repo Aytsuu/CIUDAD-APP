@@ -1,14 +1,14 @@
 from rest_framework import serializers
 from .models import *
-from profiling.models import *
-from complaint.models import *
+from apps.profiling.models import *
+from apps.complaint.models import *
     
 class AddressDetailsSerializer(serializers.ModelSerializer):
     formatted_address = serializers.SerializerMethodField()
     sitio_name = serializers.CharField(source='sitio.sitio_name', allow_null=True)
     
     class Meta:
-        model = Address
+        model = 'profiling.Address'
         fields = [
             'add_province',
             'add_city',
@@ -157,76 +157,6 @@ class ComplainantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complainant
         fields = ['cpnt_id', 'cpnt_name', 'address']
-
-
-# class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-#     complainant = ComplainantSerializer(source='comp.cpnt')
-#     complaint = serializers.SerializerMethodField()
-#     case_activities = serializers.SerializerMethodField()
-    
-#     class Meta:
-#         model = ServiceChargeRequest
-#         fields = [
-#             'sr_id',
-#             'sr_code',
-#             'sr_status',
-#             'sr_decision_date',
-#             'complainant',
-#             'complaint',
-#             'case_activities'
-#         ]
-    
-#     def get_complaint(self, obj):
-#         return {
-#             'comp_id': obj.comp.comp_id,
-#             'comp_incident_type': obj.comp.comp_incident_type,
-#             'comp_allegation': obj.comp.comp_allegation,
-#             'comp_datetime': obj.comp.comp_datetime,
-#             'accused': AccusedDetailsSerializer(
-#                 [ca.acsd for ca in obj.comp.complaintaccused_set.all()],
-#                 many=True
-#             ).data
-#         }
-    
-#     def get_case_activities(self, obj):
-#         case_activities = CaseActivity.objects.filter(sr=obj)
-#         serializer = CaseActivitySerializer(case_activities, many=True)
-#         return serializer.data
-
-
-# class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-#     complainant = ComplainantSerializer(source='comp.cpnt')
-#     complaint = serializers.SerializerMethodField()
-#     case_activities = serializers.SerializerMethodField()
-    
-#     class Meta:
-#         model = ServiceChargeRequest
-#         fields = [
-#             'sr_id',
-#             'sr_code',
-#             'sr_status',
-#             'sr_decision_date',
-#             'complainant',
-#             'complaint',
-#             'case_activities'
-#         ]
-    
-#     def get_complaint(self, obj):
-#         return {
-#             'comp_id': obj.comp.comp_id,
-#             'comp_incident_type': obj.comp.comp_incident_type,
-#             'comp_allegation': obj.comp.comp_allegation,
-#             'comp_datetime': obj.comp.comp_datetime,
-#             'accused': AccusedDetailsSerializer(
-#                 [ca.acsd for ca in obj.comp.complaintaccused_set.all()],
-#                 many=True
-#             ).data
-#         }
-    
-#     def get_case_activities(self, obj):
-#         case_activities = CaseActivity.objects.filter(sr=obj)
-#         serializer = CaseActivitySerializer(case_activities, many=True)
-#         return serializer.data
 
 class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
     complainant = serializers.SerializerMethodField()
