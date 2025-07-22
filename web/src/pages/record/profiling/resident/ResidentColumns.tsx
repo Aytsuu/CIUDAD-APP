@@ -7,6 +7,7 @@ import { getPersonalInfo } from "../restful-api/profilingGetAPI";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
+import React from "react";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -281,21 +282,23 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
 
       return (
         <div className="flex items-center justify-between px-5">
-          {profiles.map((profile: any) => (
-            completed.includes(profile.id) ? (
-              <TooltipLayout
-              trigger={
-                <profile.icon size={20} 
-                  className="text-blue-600"
-                />
-              }
-              content={profile.tooltip}
-            />
-            ) : (
-              <profile.icon size={20} 
-                className="text-gray-300"
+          {profiles.map((profile: any, idx: number) => (
+            <React.Fragment key={idx}>
+              {completed.includes(profile.id) ? (
+                <TooltipLayout
+                trigger={
+                  <profile.icon size={20} 
+                    className="text-blue-600"
+                  />
+                }
+                content={profile.tooltip}
               />
-            )
+              ) : (
+                <profile.icon size={20} 
+                  className="text-gray-300"
+                />
+              )}
+            </React.Fragment>
           ))}
         </div>
       )

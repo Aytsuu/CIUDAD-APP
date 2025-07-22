@@ -37,6 +37,26 @@ export const usePersonalInfo = (residentId: string) => {
   })
 }
 
+export const usePersonalHistory = (per_id: string) => {
+  return useQuery({
+    queryKey: ['personalHistory', per_id],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/personal/history/', {
+          params: {
+            per_id
+          }
+        });
+
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 export const useResidentsList = (
   is_staff: boolean = false,
   exclude_independent: boolean = false,

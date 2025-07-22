@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from datetime import date
+from simple_history.models import HistoricalRecords
 
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
@@ -43,6 +44,13 @@ class Personal(models.Model):
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
 
+    history = HistoricalRecords(
+        table_name='personal_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
+
     class Meta:
         db_table = 'personal'
         indexes = [
@@ -57,20 +65,6 @@ class Personal(models.Model):
         if self.per_suffix:
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
-
-class PersonalHistory(models.Model):
-    ph_id = models.BigAutoField(primary_key=True)
-    per_lname = models.CharField(max_length=100)
-    per_fname = models.CharField(max_length=100)
-    per_mname = models.CharField(max_length=100, null=True)
-    per_suffix = models.CharField(max_length=100, null=True)
-    per_dob = models.DateField()
-    per_sex = models.CharField(max_length=100)
-    per_status = models.CharField(max_length=100)
-    per_edAttainment = models.CharField(max_length=100, null=True)
-    per_religion = models.CharField(max_length=100)
-    per_contact = models.CharField(max_length=20)  
-    
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
