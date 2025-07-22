@@ -8,7 +8,7 @@ from rest_framework import status, filters
 from .models import WasteTruck
 from apps.profiling.models import Sitio
 from rest_framework import generics
-# from .signals import archive_completed_hotspots
+from .signals import archive_completed_hotspots
 
 # Create your views here.
 #KANI 3RD
@@ -136,38 +136,15 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
         return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
 
 
-# class WasteHotspotView(generics.ListCreateAPIView):
-#     serializer_class = WasteHotspotSerializer
-
-    # def get_queryset(self):
-    #     archive_completed_hotspots()
-    #     return WasteHotspot.objects.select_related(
-    #     'wstp_id',
-    #     'wstp_id__staff',
-    #     'wstp_id__staff__rp',
-    #     'wstp_id__staff__rp__per',
-    #     'wstp_id__staff__pos',
-    #     'sitio_id'
-    # ).all()
-
 class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
-    queryset = WasteHotspot.objects.all()
 
     def get_queryset(self):
-        # Archive completed hotspots first
-        # archive_completed_hotspots()
-        
-        # Optimized query with select_related and prefetch_related
+        archive_completed_hotspots()
         return WasteHotspot.objects.select_related(
-            'wstp_id',
-            'wstp_id__staff',
-            'sitio_id'
-        ).order_by('-wh_date', '-wh_start_time')
-
-    def perform_create(self, serializer):
-        # Add any custom create logic here
-        serializer.save()
+            'wstp_id__staff__rp__per', 
+            'sitio_id'                   
+        ).all()
 
 class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
     serializer_class = WasteHotspotSerializer

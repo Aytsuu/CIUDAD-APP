@@ -267,31 +267,26 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
     watchman = serializers.SerializerMethodField()
     sitio = serializers.SerializerMethodField()
     sitio_id = serializers.PrimaryKeyRelatedField(
-        queryset=Sitio.objects.all(),
-        required=False,
-        allow_null=True
+        queryset=Sitio.objects.all(),  
     )
     wstp_id = serializers.PrimaryKeyRelatedField(
-        queryset=WastePersonnel.objects.all()
+        queryset=WastePersonnel.objects.all(),  
     )
 
     class Meta:
         model = WasteHotspot
         fields = '__all__'
-        extra_kwargs = {
-            'wh_num': {'read_only': True}
-        }
 
     def get_watchman(self, obj):
         try:
-            return obj.wstp_id.get_staff_name() if obj.wstp_id else None
-        except Exception as e:
-            print(f"Error getting staff name: {e}")
-            return None
+            return str(obj.wstp_id.staff.rp.per)
+        except AttributeError:
+            return ""
+        except WastePersonnel.DoesNotExist:
+            return ""
 
     def get_sitio(self, obj):
-        return obj.sitio_id.sitio_name if obj.sitio_id else None
-
+        return str(obj.sitio_id.sitio_name) if obj.sitio_id else ""
 
 class WasteReportFileSerializer(serializers.ModelSerializer):
     class Meta:
