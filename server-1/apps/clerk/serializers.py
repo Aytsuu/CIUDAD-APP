@@ -1,9 +1,5 @@
 from rest_framework import serializers
 from .models import *
-
-class AddressDetailsSerializer(serializers.ModelSerializer):
-    formatted_address = serializers.SerializerMethodField()
-    sitio_name = serializers.CharField(source='sitio.sitio_name', allow_null=True)
     
 class AddressDetailsSerializer(serializers.ModelSerializer):
     formatted_address = serializers.SerializerMethodField()
@@ -32,27 +28,6 @@ class AddressDetailsSerializer(serializers.ModelSerializer):
         ]
         return ', '.join(filter(None, parts))
         
-        model = Address
-        fields = [
-            'add_province',
-            'add_city',
-            'add_barangay',
-            'add_street',
-            'sitio_name',
-            'add_external_sitio',
-            'formatted_address'  # Add this new field
-        ]
-    
-    def get_formatted_address(self, obj):
-        sitio = obj.sitio.sitio_name if obj.sitio else obj.add_external_sitio
-        parts = [
-            sitio,
-            obj.add_street,
-            f"Barangay {obj.add_barangay}",
-            obj.add_city,
-            obj.add_province
-        ]
-        return ', '.join(filter(None, parts))
         
 class ServiceChargeRequestSerializer(serializers.ModelSerializer):
     complainant_name = serializers.SerializerMethodField()
@@ -64,7 +39,6 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceChargeRequest
-        fields = [
         fields = [
                 'sr_id', 
                 'sr_code',
@@ -84,21 +58,8 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
         complainant_names = obj.comp.complainant.values_list('cpnt_name', flat=True)
         return ", ".join(complainant_names)
     
-        if not obj.comp:
-            return ""
-
-        complainant_names = obj.comp.complainant.values_list('cpnt_name', flat=True)
-        return ", ".join(complainant_names)
-    
     def get_accused_names(self, obj):
         if not hasattr(obj, 'comp'):
-        if not hasattr(obj, 'comp'):
-            return []
-        
-        try:
-            accused_links = obj.comp.complaintaccused_set.all()
-            return [link.acsd.acsd_name for link in accused_links if link.acsd]
-        except AttributeError:
             return []
         
         try:
@@ -181,13 +142,7 @@ class CaseActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = CaseActivity
         fields = '__all__'
-        fields = '__all__'
 
-
-
-class AccusedDetailsSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
-    
 
 
 class AccusedDetailsSerializer(serializers.ModelSerializer):
@@ -269,7 +224,6 @@ class ComplainantSerializer(serializers.ModelSerializer):
 #         case_activities = CaseActivity.objects.filter(sr=obj)
 #         serializer = CaseActivitySerializer(case_activities, many=True)
 #         return serializer.data
-        fields = ['cpnt_id', 'cpnt_name', 'address']
 
 
 # class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
@@ -363,19 +317,6 @@ class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
                     'address': AddressDetailsSerializer(complaint_accused.acsd.add).data
                 })
         return accused
-        if not obj.comp:
-            print("No Complaint linked to ServiceChargeRequest ID:", obj.sr_id)
-            return []
-
-        complainants = obj.comp.complainant.all().select_related('add')
-        return [
-            {
-                'cpnt_id': cpnt.cpnt_id,
-                'cpnt_name': cpnt.cpnt_name,
-                'address': AddressDetailsSerializer(cpnt.add).data
-            }
-            for cpnt in complainants
-        ]
 
     
     def get_complaint(self, obj):
@@ -402,7 +343,6 @@ class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
         return accused
     
     def get_case_activities(self, obj):
-        return CaseActivitySerializer(obj.case.all(), many=True).data
         return CaseActivitySerializer(obj.case.all(), many=True).data
     
 class FileActionRequestSerializer(serializers.ModelSerializer):

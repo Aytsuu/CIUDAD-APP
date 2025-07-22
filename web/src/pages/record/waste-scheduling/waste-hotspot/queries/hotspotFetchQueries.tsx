@@ -64,6 +64,7 @@ export const useGetHotspotRecords = () => {
         queryKey: ['hotspots'],
         queryFn: getHotspotRecords,
         staleTime: 1000 * 60 * 30, 
+        
     })
 }
 

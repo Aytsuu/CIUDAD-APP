@@ -10,7 +10,8 @@ import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staf
 import WasteCollectionMain from "@/screens/waste/waste-collection/waste-collection-main";
 import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
 import Request from "../(request)";
+import SummonAndCaseMain from "@/screens/summon/summon-and-case-main";
 
 export default () => {
-    return <LoginScreen/>
+    return <SummonAndCaseMain/>
 }

@@ -171,7 +171,6 @@ class ComplaintAccused(models.Model):
         unique_together = ('comp', 'acsd')
 
 class ServiceChargeRequest(models.Model):
-class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
     sr_code = models.CharField(max_length=10, blank=True, null=True) 

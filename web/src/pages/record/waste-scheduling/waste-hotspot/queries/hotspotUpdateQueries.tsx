@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import z from "zod"
-import { editHotspot } from "../restful-API/hotspotPutAPI";
+import { editHotspot, archiveHotspot } from "../restful-API/hotspotPutAPI";
 import { CircleCheck } from "lucide-react";
 import { toast } from "sonner";
 import { WasteHotspotEditSchema } from "@/form-schema/waste-hots-form-schema";
@@ -40,3 +40,38 @@ export const useEditHotspot = (onSuccess?: () => void) => {
             }
         })
 }
+
+export const useArchiveHotspot = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (wh_num: number) => archiveHotspot(wh_num),
+    onMutate: async (wh_num) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['hotspots'] });
+      
+      // Show loading toast
+      toast.loading("archiving schedule...", { id: "updateHotspot" });
+      
+      return { wh_num };
+    },
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['hotspots'] });
+      
+      // Show success toast
+    //   toast.success("Successfully archived schedule", {
+    //     id: "updateHotspot",
+    //     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+    //     duration: 6000
+    //   });
+    },
+    onError: (err) => {
+      toast.error("Failed to archived schedule", {
+        id: "updateHotspot",
+        duration: 6000
+      });
+      console.error("Failed to archived schedule:", err);
+    }
+  });
+};

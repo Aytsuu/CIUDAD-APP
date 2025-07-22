@@ -24,6 +24,7 @@ export const getHotspotRecords = async () => {
         const res = await api.get('waste/waste-hotspot/');
         return res.data
     } catch (err){
-        console.error(err)
+        console.error(err);
+        throw err;
     }
 }

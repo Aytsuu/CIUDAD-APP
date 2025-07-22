@@ -243,30 +243,54 @@ class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
         return obj.sitio.sitio_name if obj.sitio else None
     
 
+# class WasteHotspotSerializer(serializers.ModelSerializer):
+#     watchman = serializers.SerializerMethodField()
+#     sitio = serializers.SerializerMethodField()
+#     sitio_id = serializers.PrimaryKeyRelatedField(
+#         queryset=Sitio.objects.all(),  
+#     )
+#     # wstp_id = serializers.PrimaryKeyRelatedField(
+#     #     queryset=WastePersonnel.objects.all(),  
+#     # )
+
+#     class Meta:
+#         model = WasteHotspot
+#         fields = '__all__'
+
+#     def get_watchman(self, obj):
+#         return obj.wstp.get_staff_name() if obj.wstp else None
+
+#     def get_sitio(self, obj):
+#         return str(obj.sitio_id.sitio_name) if obj.sitio_id else ""
+
 class WasteHotspotSerializer(serializers.ModelSerializer):
     watchman = serializers.SerializerMethodField()
     sitio = serializers.SerializerMethodField()
     sitio_id = serializers.PrimaryKeyRelatedField(
-        queryset=Sitio.objects.all(),  
+        queryset=Sitio.objects.all(),
+        required=False,
+        allow_null=True
     )
     wstp_id = serializers.PrimaryKeyRelatedField(
-        queryset=WastePersonnel.objects.all(),  
+        queryset=WastePersonnel.objects.all()
     )
 
     class Meta:
         model = WasteHotspot
         fields = '__all__'
+        extra_kwargs = {
+            'wh_num': {'read_only': True}
+        }
 
     def get_watchman(self, obj):
         try:
-            return str(obj.wstp_id.staff.rp.per)
-        except AttributeError:
-            return ""
-        except WastePersonnel.DoesNotExist:
-            return ""
+            return obj.wstp_id.get_staff_name() if obj.wstp_id else None
+        except Exception as e:
+            print(f"Error getting staff name: {e}")
+            return None
 
     def get_sitio(self, obj):
-        return str(obj.sitio_id.sitio_name) if obj.sitio_id else ""
+        return obj.sitio_id.sitio_name if obj.sitio_id else None
 
 
 class WasteReportFileSerializer(serializers.ModelSerializer):

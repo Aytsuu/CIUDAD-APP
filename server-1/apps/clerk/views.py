@@ -16,11 +16,6 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
         ).prefetch_related(
             'comp__complaintaccused_set__acsd'  
         )
-        return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon").select_related(
-            'comp'  
-        ).prefetch_related(
-            'comp__complaintaccused_set__acsd'  
-        )
 
 class FileActionrequestView(generics.ListCreateAPIView):
     serializer_class = FileActionRequestSerializer
@@ -65,15 +60,6 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         return ServiceChargeRequest.objects.filter(
             sr_payment_status="Paid",
-            sr_type="Summon"
-        ).select_related(
-            'comp'
-        ).prefetch_related(
-            'comp__complainant', 
-            'comp__complaintaccused_set__acsd',
-            Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
-        )
-            
             sr_type="Summon"
         ).select_related(
             'comp'

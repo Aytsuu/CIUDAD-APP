@@ -26,7 +26,7 @@ import {
   useRestoreDisbursementFolder,
   useRestoreIncomeFolder
 } from "./queries";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelpers";
 import PageLayout from "@/screens/_PageLayout";
 import { SearchInput } from "@/components/ui/search-input";
 

@@ -1,6 +1,5 @@
 import { api } from "@/api/api";
-import { formatDate } from "@/helpers/dateFormatter";
-
+import { formatDate } from "@/helpers/dateHelpers";
 
 export const updateWasteColData = async (wc_num: number, collectionInfo: Record<string, any>) => {
     try {

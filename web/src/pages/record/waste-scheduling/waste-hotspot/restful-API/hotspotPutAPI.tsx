@@ -15,3 +15,15 @@ export const editHotspot = async (wh_num: string, hotspotUpdate: Record<string,a
         console.error(err)
     }
 }
+
+export const archiveHotspot = async (wh_num: number) => {
+    try {
+        const res = await api.put(`waste/update-waste-hotspot/${wh_num}/`, {
+            wh_is_archive: true
+        });
+        return res.data;
+    } catch (err) {
+        console.error("Error archiving waste hotspot:", err);
+        throw err;
+    }
+};

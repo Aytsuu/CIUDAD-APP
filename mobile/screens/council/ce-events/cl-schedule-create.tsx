@@ -19,7 +19,7 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
-import { formatDate } from '@/helpers/dateFormatter';
+import { formatDate } from '@/helpers/dateHelpers';
 import type { Staff } from './queries';
 import { useQueryClient } from '@tanstack/react-query';
 import PageLayout from '@/screens/_PageLayout';

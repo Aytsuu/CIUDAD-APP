@@ -1,7 +1,6 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { ColumnDef } from "@tanstack/react-table";
-
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { FileInput, Search, Plus, Trash, Pen, History} from "lucide-react";
 import { Button } from "@/components/ui/button/button";
@@ -121,6 +120,16 @@ function WasteHotspotMain() {
             </div>
         );
     }
+
+    // if (!isLoading && fetchedData.length === 0) {
+    //     console.log('fetchedData',fetchedData)
+    //     return (
+    //         <div className="flex flex-col items-center justify-center mt-20 space-y-2 text-center">
+    //             <p className="text-lg font-medium text-gray-700">No records found.</p>
+    //             <p className="text-sm text-gray-500">Try creating a new assignment or check back later.</p>
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className='w-full h-full'>
