@@ -44,7 +44,6 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
         fields = [
                 'sr_id', 
                 'sr_code',
-                'sr_code',
                 'complainant_name', 
                 'accused_names', 
                 'incident_type', 
