@@ -14,12 +14,13 @@ import {
 import { useGetCouncilEvents } from "../council/Calendar/queries/fetchqueries";
 
 const WasteMainScheduling = () => {
-  const { data: hotspotData = [], isLoading } = useGetHotspotRecords();
+  const { data: hotspotData = [], isLoading: isHotspotLoading } = useGetHotspotRecords();
   const { data: wasteCollectionData = [], isLoading: isWasteColLoading } =
     useGetWasteCollectionSchedFull();
   const [activeTab, setActiveTab] = useState("calendar");
   const { data: councilEvents = [] } = useGetCouncilEvents();
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
+  console.log('Hotspots:', hotspotData)
 
   const calendarSources = [
     {
@@ -52,7 +53,7 @@ const WasteMainScheduling = () => {
     },
   ];
 
-  if (isLoading || isWasteColLoading) {
+  if (isHotspotLoading || isWasteColLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
