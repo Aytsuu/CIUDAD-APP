@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import *
+from profiling.models import *
+from complaint.models import *
     
 class AddressDetailsSerializer(serializers.ModelSerializer):
     formatted_address = serializers.SerializerMethodField()
@@ -73,40 +75,11 @@ class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
         model = ServiceChargeRequestFile
         fields = '__all__'
 
-class CaseSuppDocSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CaseSuppDoc
-        fields = '__all__'
-
-# class CaseActivitySerializer(serializers.ModelSerializer):
-#     srf = ServiceChargeRequestFileSerializer(required=False, allow_null=True)
-#     supporting_documents = CaseSuppDocSerializer(
-#         source='supporting_docs',  # Default related name
-#         many=True,
-#         read_only=True
-#     )
-    
-#     class Meta:
-#         model = CaseActivity
-#         fields = '__all__'
-        fields = '__all__'
 
 class CaseSuppDocSerializer(serializers.ModelSerializer):
     class Meta:
         model = CaseSuppDoc
         fields = '__all__'
-
-# class CaseActivitySerializer(serializers.ModelSerializer):
-#     srf = ServiceChargeRequestFileSerializer(required=False, allow_null=True)
-#     supporting_documents = CaseSuppDocSerializer(
-#         source='supporting_docs',  # Default related name
-#         many=True,
-#         read_only=True
-#     )
-    
-#     class Meta:
-#         model = CaseActivity
-#         fields = '__all__'
 
 class CaseActivitySerializer(serializers.ModelSerializer):
     srf = serializers.PrimaryKeyRelatedField(
@@ -152,11 +125,9 @@ class AccusedDetailsSerializer(serializers.ModelSerializer):
         model = Accused
         fields = ['acsd_id', 'acsd_name', 'address']
 
-        fields = ['acsd_id', 'acsd_name', 'address']
 
 
 class ComplaintAccusedSerializer(serializers.ModelSerializer):
-    acsd = AccusedDetailsSerializer()
     acsd = AccusedDetailsSerializer()
     
     class Meta:
@@ -182,10 +153,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
         return [item['acsd'] for item in serializer.data]
 
 class ComplainantSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
-    
-    address = AddressDetailsSerializer(source='add')
-    
+    address = AddressDetailsSerializer(source='add')    
     class Meta:
         model = Complainant
         fields = ['cpnt_id', 'cpnt_name', 'address']

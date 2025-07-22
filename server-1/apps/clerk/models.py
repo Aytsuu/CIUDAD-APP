@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
-from django.utils import timezone
+from datetime import datetime
+
 
 # Create your models here.
 # create models para as documets later
@@ -41,7 +42,6 @@ class DocumentsPDF(models.Model):
 
     class Meta:
         db_table = 'clerk_pdf_documents'
-from datetime import datetime
 # Create your models here.
 
 # class Sitio(models.Model):
@@ -209,19 +209,6 @@ class CaseActivity(models.Model):
 
     class Meta:
         db_table = 'case_activity'
-
-class CaseSuppDoc(models.Model):
-    csd_id = models.BigAutoField(primary_key=True)
-    csd_name = models.CharField(max_length=255)
-    csd_type = models.CharField(max_length=100)
-    csd_path = models.CharField(max_length=500)
-    csd_url = models.CharField(max_length=500)
-    csd_description = models.TextField(null=False)
-    csd_upload_date = models.DateTimeField(default=datetime.now)
-    ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
-
-    class Meta:
-        db_table = 'case_activity_supp_doc'
 
 class CaseSuppDoc(models.Model):
     csd_id = models.BigAutoField(primary_key=True)
