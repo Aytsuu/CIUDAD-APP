@@ -14,23 +14,23 @@ import {
 import { useGetCouncilEvents } from "../council/Calendar/queries/fetchqueries";
 
 const WasteMainScheduling = () => {
-  // const { data: hotspotData = [], isLoading } = useGetHotspotRecords();
+  const { data: hotspotData = [], isLoading: isHotspotLoading } = useGetHotspotRecords();
   const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
   const [activeTab, setActiveTab] = useState("calendar");
   const { data: councilEvents = [] } = useGetCouncilEvents();
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
 
   const calendarSources = [
-    // {
-    //   name: "Hotspot Assignment",
-    //   data: hotspotData,
-    //   columns: hotspotColumns,
-    //   titleAccessor: "watchman",
-    //   dateAccessor: "wh_date",
-    //   timeAccessor: "wh_start_time",
-    //   endTimeAccessor: "wh_end_time",
-    //   defaultColor: "#3b82f6", // blue
-    // },
+    {
+      name: "Hotspot Assignment",
+      data: hotspotData,
+      columns: hotspotColumns,
+      titleAccessor: "watchman",
+      dateAccessor: "wh_date",
+      timeAccessor: "wh_start_time",
+      endTimeAccessor: "wh_end_time",
+      defaultColor: "#3b82f6", // blue
+    },
     {
       name: "Waste Collection",
       data: wasteCollectionData,
@@ -51,7 +51,7 @@ const WasteMainScheduling = () => {
     },
   ];
 
-  if (isWasteColLoading) {
+  if (isHotspotLoading || isWasteColLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
