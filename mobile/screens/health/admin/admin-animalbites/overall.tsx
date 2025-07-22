@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react"
 import { View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, FlatList } from "react-native"
-import { Search, ChevronLeft, AlertCircle, Package, User, Calendar, FileText, Users, TrendingUp, Filter } from "lucide-react-native"
+import { Search, ChevronLeft, AlertCircle, Package, User, Calendar, FileText, Users, TrendingUp, Filter, ArrowLeft } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
-import { Link } from "expo-router"
+import { Link, router } from "expo-router"
 import { format } from "date-fns"
 import { useAnimalBitePatientSummary } from "../restful-api/animalbites/db-request/get-query"
 
@@ -133,11 +133,9 @@ export default function AnimalBiteOverallScreen() {
       {/* Header */}
       <View className="bg-white shadow-sm">
         <View className="flex-row items-center p-4 pt-12">
-          <Link href="/admin" asChild>
-            <TouchableOpacity className="p-2 mr-3 bg-gray-100 rounded-full">
-              <ChevronLeft size={24} color="#374151" />
-            </TouchableOpacity>
-          </Link>
+         <TouchableOpacity onPress={() => router.back()} className="p-2">
+                     <ArrowLeft size={24} color="#333" />
+                   </TouchableOpacity>
           <View className="flex-1">
             <Text className="text-2xl font-bold text-gray-800">Animal Bite Records</Text>
           </View>

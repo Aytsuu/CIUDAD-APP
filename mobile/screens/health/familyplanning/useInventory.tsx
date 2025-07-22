@@ -20,7 +20,7 @@ export const useCommodities = () => {
     setError(null)
 
     try {
-      const response = await api2.get("/inventory/commoditylist/")
+      const response = await api2.get("/inventory/commodityinventorylist/")
 
       // Filter only available commodities (stock > 0) and map to simplified structure
       const availableCommodities: CommodityItem[] = response.data

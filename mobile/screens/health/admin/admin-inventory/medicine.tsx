@@ -37,9 +37,9 @@ export default function InventoryScreen() {
 
     try {
       const endpoints = [
-        { name: 'medicines', url: '/inventory/medicinelist/' },
-        { name: 'commodities', url: '/inventory/commoditylist/' },
-        { name: 'firstaid', url: '/inventory/firstaidlist/' },
+        { name: 'medicines', url: '/inventory/medicineinventorylist/' },
+        { name: 'commodities', url: '/inventory/commodityinventorylist/' },
+        { name: 'firstaid', url: '/inventory/firstaidinventorylist/' },
         { name: 'vaccines', url: '/inventory/vaccine_stocks/' },
         { name: 'immunization', url: '/inventory/immunization_stock/' },
       ]
@@ -96,7 +96,8 @@ export default function InventoryScreen() {
 
         return {
           id: item.cinv_id,
-          name: item.com_name || 'Unknown Commodity',
+          name: item.com_detail?.com_name || item.com_id?.com_name || 'Unknown Commodity',
+          
           category: 'commodity',
           description: `For ${userTypeDisplay}`,
           stock: item.cinv_qty_avail || 0,
@@ -363,9 +364,9 @@ export default function InventoryScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Stats Cards */}
-        <View className="p-4">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="space-x-4">
-            <View className="bg-white   p-4 rounded-xl shadow-sm min-w-[160px] ">
+        <View className="p-4 ">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-4">
+            <View className="bg-white p-4 rounded-xl shadow-sm min-w-[160px] ">
               <View className="flex-row items-center mb-2">
                 <Package size={18} color="#3B82F6" />
                 <Text className="ml-2 text-gray-600 text-sm">Total Items</Text>
