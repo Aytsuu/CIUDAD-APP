@@ -16,18 +16,21 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import React from "react"
 
-function RatesPage5({ onPrevious4 }: { onPrevious4: () => void }) {
+
+function RatesPage5() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
 
     const [searchQueryActive, setSearchQueryActive] = useState("")
-    const [pageSizeActive, setPageSizeActive] = useState(10)
+    const [pageSizeActive, setPageSizeActive] = React.useState<number>(10)
     const [currentPageActive, setCurrentPageActive] = useState(1)
 
     const [searchQueryHistory, setSearchQueryHistory] = useState("")
-    const [pageSizeHistory, setPageSizeHistory] = useState(10)
+    const [pageSizeHistory, setPageSizeHistory] = React.useState<number>(10)
     const [currentPageHistory, setCurrentPageHistory] = useState(1)
 
     const { data: fetchedData = [], isLoading } = useGetPurposeAndRate()
@@ -79,28 +82,39 @@ function RatesPage5({ onPrevious4 }: { onPrevious4: () => void }) {
                 return (
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
-                            trigger={<DialogLayout
-                                trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16} /></div>}
-                                title="Edit Purpose And Rate"
-                                description="Update purpose and rates to keep records accurate."
-                                mainContent={<RatesEditFormPage5
-                                    pr_id={row.original.pr_id}
-                                    pr_purpose={row.original.pr_purpose}
-                                    pr_rate={row.original.pr_rate}
-                                    onSuccess={() => setEditingRowId(null)}
-                                />}
-                                isOpen={editingRowId === Number(prId)}
-                                onOpenChange={(open) => setEditingRowId(open ? Number(prId) : null)}
-                            />}
+                            trigger={
+                                <div>
+                                    <DialogLayout
+                                        trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16} /></div>}
+                                        title="Edit Purpose And Rate"
+                                        description="Update purpose and rates to keep records accurate."
+                                        mainContent={<RatesEditFormPage5
+                                            pr_id={row.original.pr_id}
+                                            pr_purpose={row.original.pr_purpose}
+                                            pr_rate={row.original.pr_rate}
+                                            onSuccess={() => setEditingRowId(null)}
+                                        />}
+                                        isOpen={editingRowId === Number(prId)}
+                                        onOpenChange={(open) => setEditingRowId(open ? Number(prId) : null)}
+                                    />
+                                </div>
+                            }
                             content="Edit"
                         />
-                        <ConfirmationModal
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16} /></div>}
-                            title="Confirm Delete"
-                            description="Are you sure you want to delete this record?"
-                            actionLabel="Confirm"
-                            onClick={() => handleDelete(Number(prId))}
-                        />
+                        {/* <TooltipLayout
+                            trigger={
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16} /></div>}
+                                        title="Confirm Delete"
+                                        description="Are you sure you want to delete this record?"
+                                        actionLabel="Confirm"
+                                        onClick={() => handleDelete(Number(prId))}
+                                    />
+                                </div>
+                            }
+                            content="Delete"
+                        /> */}
                     </div>
                 )
             }
@@ -147,11 +161,11 @@ function RatesPage5({ onPrevious4 }: { onPrevious4: () => void }) {
 
     return (
         <div className='bg-snow w-full h-full'>
-            <div className='bg-white p-4 drop-shadow rounded-lg'>
+            <div className='bg-white drop-shadow rounded-lg'>
                 <div className='p-7 flex flex-col justify-end gap-7'>
                     <div className="flex flex-row items-center">
                         <h2 className='font-bold w-3/4'>BARANGAY FEES AND CHARGES:</h2>
-                        <div className='flex justify-end w-[32rem]'>
+                        {/* <div className='flex justify-end w-[32rem]'>
                             <DialogLayout
                                 trigger={<Button>+ Add</Button>}
                                 title='Add New Purpose and Fee for Barangay Fees and Charges'
@@ -160,7 +174,7 @@ function RatesPage5({ onPrevious4 }: { onPrevious4: () => void }) {
                                 isOpen={isDialogOpen}
                                 onOpenChange={setIsDialogOpen}
                             />
-                        </div>
+                        </div> */}
                     </div>
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -190,17 +204,21 @@ function RatesPage5({ onPrevious4 }: { onPrevious4: () => void }) {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeActive}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeActive(value >= 1 ? value : 1)
+                                            <Select value={pageSizeActive.toString()} onValueChange={(value) => {
+                                                setPageSizeActive(Number.parseInt(value))
                                                 setCurrentPageActive(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
@@ -240,17 +258,21 @@ function RatesPage5({ onPrevious4 }: { onPrevious4: () => void }) {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeHistory}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeHistory(value >= 1 ? value : 1)
+                                            <Select value={pageSizeHistory.toString()} onValueChange={(value) => {
+                                                setPageSizeHistory(Number.parseInt(value))
                                                 setCurrentPageHistory(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
@@ -274,12 +296,6 @@ function RatesPage5({ onPrevious4 }: { onPrevious4: () => void }) {
                         </TabsContent>
                     </Tabs>
                 </div>
-            </div>
-
-            <div className="flex justify-start mt-5">
-                <Button type="button" onClick={onPrevious4} className="w-[100px]">
-                    Previous
-                </Button>
             </div>
         </div>
     )

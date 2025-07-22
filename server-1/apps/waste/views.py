@@ -8,6 +8,7 @@ from rest_framework import status, filters
 from .models import WasteTruck
 from apps.profiling.models import Sitio
 from rest_framework import generics
+from .signals import archive_completed_hotspots
 
 # Create your views here.
 #KANI 3RD
@@ -20,7 +21,6 @@ class WasteCollectionStaffView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionStaffSerializer
     queryset = WasteCollectionStaff.objects.all()
 
-# WASTE COLLECTION RETRIEVE / VIEW
 # WASTE COLLECTION RETRIEVE / VIEW
 class WasteCollectionSchedView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionSchedSerializer
@@ -140,8 +140,9 @@ class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
+        archive_completed_hotspots()
         return WasteHotspot.objects.select_related(
-            'wstp_id__staff_id__rp__per', 
+            'wstp_id__staff__rp__per', 
             'sitio_id'                   
         ).all()
 
@@ -169,6 +170,17 @@ class DeleteHotspotView(generics.DestroyAPIView):
 class WasteReportFileView(generics.ListCreateAPIView):
     serializer_class = WasteReportFileSerializer
     queryset = WasteReport_File.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        rep_num = self.request.query_params.get('rep_num')
+        if rep_num:
+            queryset = queryset.filter(rep_num=rep_num)
+        return queryset
+
+class WasteReportResolveFileView(generics.ListCreateAPIView):
+    serializer_class = WasteReportResolveFileSerializer
+    queryset = WasteReportResolve_File.objects.all()
 
     def get_queryset(self):
         queryset = super().get_queryset()

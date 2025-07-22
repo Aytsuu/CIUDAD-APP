@@ -128,13 +128,13 @@ const FormComboCheckbox = ({
                         <TouchableOpacity onPress={() => setIsOpen(false)}>
                           <Text className="text-blue-500 text-base font-medium">Done</Text>
                         </TouchableOpacity>
-                        <Text className="text-lg font-bold">Select Attendees</Text>
+                        <Text className="text-lg font-bold">{label}</Text>
                         <TouchableOpacity onPress={() => setIsOpen(false)}>
                           <MaterialIcons name="close" size={24} color="black" />
                         </TouchableOpacity>
                       </View>
                       <TextInput
-                        placeholder="Search attendees..."
+                        placeholder="Search"
                         value={search}
                         onChangeText={setSearch}
                         className="border border-gray-300 rounded-md px-3 py-2 mb-4"

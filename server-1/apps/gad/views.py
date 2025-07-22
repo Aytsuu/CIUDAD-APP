@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
 
@@ -195,8 +195,10 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
             ProjectProposalLog.objects.create(
                 gpr=instance,
                 gprl_status=new_status,
-                staff=instance.staff,
-                gprl_reason=reason
+                gprl_reason=reason,
+                gprl_date_approved_rejected=date_approved_rejected,
+                gprl_date_submitted=timezone.now(),
+                staff=instance.staff
             )
         return Response(serializer.data)
     
@@ -233,8 +235,8 @@ class UpdateProposalStatusView(generics.GenericAPIView):
             if status not in dict(ProjectProposal.STATUS_CHOICES):
                 return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Only set gprl_date_approved_rejected for Approved or Rejected statuses
-            date_approved_rejected = timezone.now() if status in ["Pending","Viewed","Approved", "Rejected"] else None
+            # Always set gprl_date_approved_rejected for any status change
+            date_approved_rejected = timezone.now()
 
             # Create a new log entry
             ProjectProposalLog.objects.create(
@@ -280,10 +282,15 @@ class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'psd_id'
     
     def perform_destroy(self, instance):
-        """Soft delete implementation"""
-        instance.psd_is_archive = True
-        instance.save()
+        if not instance.psd_is_archive:
+            # First deletion - archive it
+            instance.psd_is_archive = True
+            instance.save()
+        else:
+            # Already archived - permanent delete
+            instance.delete()
 
+            
 Staff = apps.get_model('administration', 'Staff')
 
 class StaffListView(generics.ListAPIView):
@@ -310,3 +317,37 @@ class ProjectProposalRestoreView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=False)
+
+class ProjectProposalStatusCountView(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        # Base queryset for ProjectProposal
+        queryset = ProjectProposal.objects.filter(gpr_is_archive=False)
+
+        # Get the latest log status for each proposal
+        latest_logs = ProjectProposalLog.objects.filter(
+            gpr_id=OuterRef('gpr_id')
+        ).order_by('-gprl_id')
+        
+        # Annotate queryset with latest_status
+        queryset = queryset.annotate(
+            latest_status=Subquery(latest_logs.values('gprl_status')[:1])
+        )
+        
+
+        # Aggregate counts for each status
+        status_counts = queryset.aggregate(
+            pending=Count('pk', filter=Q(latest_status='Pending')),
+            viewed=Count('pk', filter=Q(latest_status='Viewed')),
+            amend=Count('pk', filter=Q(latest_status='Amend')),
+            approved=Count('pk', filter=Q(latest_status='Approved')),
+            rejected=Count('pk', filter=Q(latest_status='Rejected'))
+        )
+        print("Status Counts:", status_counts)
+        # Return JSON response with counts
+        return Response({
+            'pending': status_counts['pending'] or 0,
+            'viewed': status_counts['viewed'] or 0,
+            'amend': status_counts['amend'] or 0,
+            'approved': status_counts['approved'] or 0,
+            'rejected': status_counts['rejected'] or 0
+        })

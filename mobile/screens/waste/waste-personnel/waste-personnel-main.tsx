@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  RefreshControl
 } from "react-native";
 import {
   Shield,
@@ -37,6 +38,8 @@ import {
 import type { PersonnelItem, TruckData } from "./requests";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import PageLayout from "@/screens/_PageLayout";
+import { SearchInput } from "@/components/ui/search-input";
 
 const SearchFormSchema = z.object({
   searchQuery: z.string(),
@@ -68,12 +71,17 @@ export default function WastePersonnelMain() {
 
   const searchQuery = watchSearch("searchQuery");
 
-  const { data: trucks = [], isLoading: isTrucksLoading } = useTrucks();
-  const { data: personnel = [], isLoading: isPersonnelLoading } =
-    usePersonnel();
-
+  const { data: trucks = [], isLoading: isTrucksLoading, refetch } = useTrucks();
+  const { data: personnel = [], isLoading: isPersonnelLoading } = usePersonnel();
   const deleteTruckMutation = useDeleteTruck();
   const restoreTruckMutation = useRestoreTruck();
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   const personnelData = {
     Watchman: personnel.filter((p) => p.position === "Watchman"),
@@ -104,12 +112,12 @@ export default function WastePersonnelMain() {
   );
 
   const handleAddTruck = () => {
-    router.push("/waste/waste-personnel/waste-truck-create");
+    router.push("/(waste)/waste-personnel/waste-truck-create");
   };
 
   const handleEditTruck = (truck: TruckData) => {
     router.push({
-      pathname: "/waste/waste-personnel/waste-truck-edit",
+      pathname: "/(waste)/waste-personnel/waste-truck-edit",
       params: { id: truck.truck_id },
     });
   };
@@ -147,27 +155,21 @@ export default function WastePersonnelMain() {
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={<Text className="text-[13px]">Waste Personnel and Collection Vehicle Management</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage='Loading...'
-    >
-        <View className="bg-white px-4 py-3">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-xs text-white">← BACK</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View className="bg-white border-b border-gray-300 px-4 py-6">
+    <PageLayout
+          leftAction={
+            <TouchableOpacity onPress={() => router.back()}>
+              <ChevronLeft size={30} color="black" className="text-black" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text>Waste Personnel and Collection Vehicle Management</Text>}
+          rightAction={
+            <TouchableOpacity>
+              <ChevronLeft size={30} color="black" className="text-white" />
+            </TouchableOpacity>
+          }
+        >
+    <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        <View className="bg-white border-b border-gray-300 px-4">
           <View className="flex-row justify-between items-center gap-x-2">
             {buttonData.map((item, index) => (
               <View key={index} className="flex-1">
@@ -221,9 +223,6 @@ export default function WastePersonnelMain() {
             )}
             <View className="flex-row items-center gap-x-2 mb-4">
               <View className="relative flex-1 h-12">
-                <View className="absolute left-3 top-0 bottom-0 z-10 flex items-center justify-center">
-                  <Search size={16} color="#9CA3AF" />
-                </View>
                 {searchQuery.length > 0 && (
                   <TouchableOpacity
                     className="absolute right-3 top-0 bottom-0 z-10 flex items-center justify-center"
@@ -232,33 +231,23 @@ export default function WastePersonnelMain() {
                       searchInputRef.current?.focus();
                     }}
                   >
-                    <XCircle size={16} color="#9CA3AF" />
+                    {/* <XCircle size={16} color="#9CA3AF" /> */}
                   </TouchableOpacity>
                 )}
-                <TextInput
-                  ref={searchInputRef}
+                 <SearchInput
                   value={searchQuery}
-                  onChangeText={(text) => setSearchValue("searchQuery", text)}
-                  placeholder="Search..."
-                  returnKeyType="search"
-                  className="h-full pl-9 pr-4 border border-gray-300 rounded-lg bg-white text-base text-black"
-                  style={{
-                    paddingRight: searchQuery.length > 0 ? 40 : 16,
+                  onChange={(text) => setSearchValue("searchQuery", text)}
+                  onSubmit={() => {
+                    // Optional submit logic
                   }}
-                  autoCorrect={false}
-                  autoCapitalize="none"
-                  keyboardType="default"
                 />
               </View>
               {selectedRole === "Trucks" && truckViewMode === "active" && (
                 <TouchableOpacity
-                  className="h-12 px-4 bg-blue-500 rounded-lg flex-row items-center justify-center"
+                  className="bg-blue-600 p-2 rounded-full"
                   onPress={handleAddTruck}
                 >
-                  <Plus size={16} color="white" className="mr-1" />
-                  <Text className="text-sm font-semibold text-white">
-                    Add Truck
-                  </Text>
+                  <Plus size={20} color="white" />
                 </TouchableOpacity>
               )}
             </View>
@@ -409,6 +398,7 @@ export default function WastePersonnelMain() {
             </View>
           )}
         </ScrollView>
-    </ScreenLayout>
+      </ScrollView>
+    </PageLayout>
   );
 }

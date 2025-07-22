@@ -1,989 +1,5 @@
-// import { useState, MouseEvent } from "react";
-// import {
-//   Box,
-//   Button,
-//   Card,
-//   CardContent,
-//   CardHeader,
-//   Container,
-// } from "@mui/material";
-
-// import { Calendar, type Event, dateFnsLocalizer } from "react-big-calendar";
-
-// import format from "date-fns/format";
-// import parse from "date-fns/parse";
-// import startOfWeek from "date-fns/startOfWeek";
-// import getDay from "date-fns/getDay";
-// import enUS from "date-fns/locale/en-US";
-
-// import "react-big-calendar/lib/css/react-big-calendar.css";
-
-// import EventInfo from "./EventInfo";
-// import AddEventModal from "./AddEventModal";
-// import EventInfoModal from "./EventInfoModal";
-// import { AddTodoModal } from "./AddTodoModal";
-// import AddDatePickerEventModal from "./AddDatePickerEventModal";
-
-// const locales = {
-//   "en-US": enUS,
-// };
-
-// const localizer = dateFnsLocalizer({
-//   format,
-//   parse,
-//   startOfWeek,
-//   getDay,
-//   locales,
-// });
-
-// export interface ITodo {
-//   _id: string;
-//   title: string;
-//   color?: string;
-// }
-
-// export interface IEventInfo extends Event {
-//   _id: string;
-//   description: string;
-//   todoId?: string;
-// }
-
-// export interface EventFormData {
-//   description: string;
-//   todoId?: string;
-// }
-
-// export interface DatePickerEventFormData {
-//   description: string;
-//   todoId?: string;
-//   allDay: boolean;
-//   start?: Date;
-//   end?: Date;
-// }
-
-// export const generateId = () =>
-//   (Math.floor(Math.random() * 10000) + 1).toString();
-
-// const initialEventFormState: EventFormData = {
-//   description: "",
-//   todoId: undefined,
-// };
-
-// const initialDatePickerEventFormData: DatePickerEventFormData = {
-//   description: "",
-//   todoId: undefined,
-//   allDay: false,
-//   start: undefined,
-//   end: undefined,
-// };
-
-// const EventCalendar = () => {
-//   const [openSlot, setOpenSlot] = useState(false);
-//   const [openDatepickerModal, setOpenDatepickerModal] = useState(false);
-//   const [openTodoModal, setOpenTodoModal] = useState(false);
-//   const [currentEvent, setCurrentEvent] = useState<Event | IEventInfo | null>(
-//     null
-//   );
-
-//   const [eventInfoModal, setEventInfoModal] = useState(false);
-
-//   const [events, setEvents] = useState<IEventInfo[]>([]);
-//   const [todos, setTodos] = useState<ITodo[]>([]);
-
-//   const [eventFormData, setEventFormData] = useState<EventFormData>(
-//     initialEventFormState
-//   );
-
-//   const [datePickerEventFormData, setDatePickerEventFormData] =
-//     useState<DatePickerEventFormData>(initialDatePickerEventFormData);
-
-//   const handleSelectSlot = (event: Event) => {
-//     setOpenSlot(true);
-//     setCurrentEvent(event);
-//   };
-
-//   const handleSelectEvent = (event: IEventInfo) => {
-//     setCurrentEvent(event);
-//     setEventInfoModal(true);
-//   };
-
-//   const handleClose = () => {
-//     setEventFormData(initialEventFormState);
-//     setOpenSlot(false);
-//   };
-
-//   const handleDatePickerClose = () => {
-//     setDatePickerEventFormData(initialDatePickerEventFormData);
-//     setOpenDatepickerModal(false);
-//   };
-
-//   const onAddEvent = (e: MouseEvent<HTMLButtonElement>) => {
-//     e.preventDefault();
-
-//     const data: IEventInfo = {
-//       ...eventFormData,
-//       _id: generateId(),
-//       start: currentEvent?.start,
-//       end: currentEvent?.end,
-//     };
-
-//     const newEvents = [...events, data];
-
-//     setEvents(newEvents);
-//     handleClose();
-//   };
-
-//   const onAddEventFromDatePicker = (e: MouseEvent<HTMLButtonElement>) => {
-//     e.preventDefault();
-
-//     const addHours = (date: Date | undefined, hours: number) => {
-//       return date ? date.setHours(date.getHours() + hours) : undefined;
-//     };
-
-//     const setMinToZero = (date: any) => {
-//       date.setSeconds(0);
-
-//       return date;
-//     };
-
-//     const data: IEventInfo = {
-//       ...datePickerEventFormData,
-//       _id: generateId(),
-//       start: setMinToZero(datePickerEventFormData.start),
-//       end: datePickerEventFormData.allDay
-//         ? addHours(datePickerEventFormData.start, 12)
-//         : setMinToZero(datePickerEventFormData.end),
-//     };
-
-//     const newEvents = [...events, data];
-
-//     setEvents(newEvents);
-//     setDatePickerEventFormData(initialDatePickerEventFormData);
-//   };
-
-//   const onDeleteEvent = () => {
-//     setEvents(() =>
-//       [...events].filter((e) => e._id !== (currentEvent as IEventInfo)._id!)
-//     );
-//     setEventInfoModal(false);
-//   };
-
-//   return (
-//     <Box
-//       mb={2}
-//       component="main"
-//       sx={{
-//         flexGrow: 1,
-//         py: 1,
-//       }}
-//     >
-//       <Container>
-//       <Card >
-//           <CardHeader
-//             title=""
-//             subheader=""
-//           />
-//           <CardContent>
-//             {/* Updated Button Layout */}
-//             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-//               <Button
-//                 onClick={() => setOpenTodoModal(true)}
-//                 size="small"
-//                 variant="contained"
-//               >
-//                 Add Category
-//               </Button>
-//             </Box>
-//             <br/>
-//             <AddEventModal
-//               open={openSlot}
-//               handleClose={handleClose}
-//               eventFormData={eventFormData}
-//               setEventFormData={setEventFormData}
-//               onAddEvent={onAddEvent}
-//               todos={todos}
-//             />
-//             <AddDatePickerEventModal
-//               open={openDatepickerModal}
-//               handleClose={handleDatePickerClose}
-//               datePickerEventFormData={datePickerEventFormData}
-//               setDatePickerEventFormData={setDatePickerEventFormData}
-//               onAddEvent={onAddEventFromDatePicker}
-//               todos={todos}
-//             />
-//             <EventInfoModal
-//               open={eventInfoModal}
-//               handleClose={() => setEventInfoModal(false)}
-//               onDeleteEvent={onDeleteEvent}
-//               currentEvent={currentEvent as IEventInfo}
-//             />
-//             <AddTodoModal
-//               open={openTodoModal}
-//               handleClose={() => setOpenTodoModal(false)}
-//               todos={todos}
-//               setTodos={setTodos}
-//             />
-//             <Calendar
-//               localizer={localizer}
-//               events={events}
-//               onSelectEvent={handleSelectEvent}
-//               onSelectSlot={handleSelectSlot}
-//               selectable
-//               startAccessor="start"
-//               components={{ event: EventInfo }}
-//               endAccessor="end"
-//               defaultView="month"
-//               eventPropGetter={(event) => {
-//                 const hasTodo = todos.find((todo) => todo._id === event.todoId);
-//                 return {
-//                   style: {
-//                     backgroundColor: hasTodo ? hasTodo.color : "#b64fc8",
-//                     borderColor: hasTodo ? hasTodo.color : "#b64fc8",
-//                   },
-//                 };
-//               }}
-//               style={{
-//                 height: 900,
-//                 width: "100%",
-//               }}
-//             />
-//           </CardContent>
-//         </Card>
-//       </Container>
-//     </Box>
-//   );
-// };
-
-// export default EventCalendar;
-
-// import { useState, MouseEvent } from "react";
-// import {
-//   Box,
-//   Button,
-//   Card,
-//   CardContent,
-//   CardHeader,
-//   Container,
-// } from "@mui/material";
-// import { Calendar, type Event, dateFnsLocalizer } from "react-big-calendar";
-// import format from "date-fns/format";
-// import parse from "date-fns/parse";
-// import startOfWeek from "date-fns/startOfWeek";
-// import getDay from "date-fns/getDay";
-// import enUS from "date-fns/locale/en-US";
-// import "react-big-calendar/lib/css/react-big-calendar.css";
-
-// import EventInfo from "./EventInfo";
-// import AddEventModal from "./AddEventModal";
-// import EventInfoModal from "./EventInfoModal";
-// import { AddTodoModal } from "./AddTodoModal";
-// import AddDatePickerEventModal from "./AddDatePickerEventModal";
-// import Legend from "./Legend"; // Import the Legend component
-
-// const locales = {
-//   "en-US": enUS,
-// };
-
-// const localizer = dateFnsLocalizer({
-//   format,
-//   parse,
-//   startOfWeek,
-//   getDay,
-//   locales,
-// });
-
-// export interface ITodo {
-//   _id: string;
-//   title: string;
-//   color?: string;
-// }
-
-// export interface IEventInfo extends Event {
-//   _id: string;
-//   description: string;
-//   color: string; // Ensure color is part of the event info
-// }
-
-// export interface EventFormData {
-//   description: string;
-//   color: string; // Include color in the event form data
-// }
-
-// export interface DatePickerEventFormData {
-//   description: string;
-//   color: string; // Include color in the date picker event form data
-//   allDay: boolean;
-//   start?: Date;
-//   end?: Date;
-// }
-
-// export const generateId = () =>
-//   (Math.floor(Math.random() * 10000) + 1).toString();
-
-// const initialEventFormState: EventFormData = {
-//   description: "",
-//   color: "#b32aa9", // Default color
-// };
-
-// const initialDatePickerEventFormData: DatePickerEventFormData = {
-//   description: "",
-//   color: "#b32aa9", // Default color
-//   allDay: false,
-//   start: undefined,
-//   end: undefined,
-// };
-
-// const EventCalendar = () => {
-//   const [openSlot, setOpenSlot] = useState(false);
-//   const [openDatepickerModal, setOpenDatepickerModal] = useState(false);
-//   const [openTodoModal, setOpenTodoModal] = useState(false);
-//   const [currentEvent, setCurrentEvent] = useState<Event | IEventInfo | null>(
-//     null
-//   );
-
-//   const [eventInfoModal, setEventInfoModal] = useState(false);
-
-//   const [events, setEvents] = useState<IEventInfo[]>([]);
-//   const [todos, setTodos] = useState<ITodo[]>([]);
-
-//   const [eventFormData, setEventFormData] = useState<EventFormData>(
-//     initialEventFormState
-//   );
-
-//   const [datePickerEventFormData, setDatePickerEventFormData] =
-//     useState<DatePickerEventFormData>(initialDatePickerEventFormData);
-
-//   // State for legend items
-//   const [legendItems, setLegendItems] = useState([
-//     { label: "Waste Management Council", color: "#b32aa9" },
-//     { label: "Donation", color: "#32a852" },
-//     { label: "Council", color: "#3264a8" },
-//   ]);
-
-//   // Handle color change for legend items
-//   const handleLegendColorChange = (label: string, color: string) => {
-//     setLegendItems((prevItems) =>
-//       prevItems.map((item) =>
-//         item.label === label ? { ...item, color } : item
-//       )
-//     );
-//   };
-
-//   const handleSelectSlot = (event: Event) => {
-//     setOpenSlot(true);
-//     setCurrentEvent(event);
-//   };
-
-//   const handleSelectEvent = (event: IEventInfo) => {
-//     setCurrentEvent(event);
-//     setEventInfoModal(true) };
-
-//   const handleClose = () => {
-//     setEventFormData(initialEventFormState);
-//     setOpenSlot(false);
-//   };
-
-//   const handleDatePickerClose = () => {
-//     setDatePickerEventFormData(initialDatePickerEventFormData);
-//     setOpenDatepickerModal(false);
-//   };
-
-//   const onAddEvent = (e: MouseEvent<HTMLButtonElement>) => {
-//     e.preventDefault();
-
-//     const data: IEventInfo = {
-//       ...eventFormData,
-//       _id: generateId(),
-//       start: currentEvent?.start,
-//       end: currentEvent?.end,
-//     };
-
-//     const newEvents = [...events, data];
-
-//     setEvents(newEvents);
-//     handleClose();
-//   };
-
-//   const onAddEventFromDatePicker = (e: MouseEvent<HTMLButtonElement>) => {
-//     e.preventDefault();
-
-//     const addHours = (date: Date | undefined, hours: number) => {
-//       return date ? date.setHours(date.getHours() + hours) : undefined;
-//     };
-
-//     const setMinToZero = (date: any) => {
-//       date.setSeconds(0);
-//       return date;
-//     };
-
-//     const data: IEventInfo = {
-//       ...datePickerEventFormData,
-//       _id: generateId(),
-//       start: setMinToZero(datePickerEventFormData.start),
-//       end: datePickerEventFormData.allDay
-//         ? addHours(datePickerEventFormData.start, 12)
-//         : setMinToZero(datePickerEventFormData.end),
-//     };
-
-//     const newEvents = [...events, data];
-
-//     setEvents(newEvents);
-//     setDatePickerEventFormData(initialDatePickerEventFormData);
-//   };
-
-//   const onDeleteEvent = () => {
-//     setEvents(() =>
-//       [...events].filter((e) => e._id !== (currentEvent as IEventInfo)._id!)
-//     );
-//     setEventInfoModal(false);
-//   };
-
-//   return (
-//     <Box
-//       mb={2}
-//       component="main"
-//       sx={{
-//         flexGrow: 1,
-//         py: 1,
-//       }}
-//     >
-//       <Container>
-//         <Card>
-//           <CardHeader title="" subheader="" />
-//           <CardContent>
-//             {/* Add the Legend component */}
-//             <Legend
-//               legendItems={legendItems}
-//               onColorChange={handleLegendColorChange}
-//             />
-
-//             {/* Updated Button Layout */}
-//             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-//               <Button
-//                 onClick={() => setOpenTodoModal(true)}
-//                 size="small"
-//                 variant="contained"
-//               >
-//                 Add Category
-//               </Button>
-//             </Box>
-//             <br />
-//             <AddEventModal
-//               open={openSlot}
-//               handleClose={handleClose}
-//               eventFormData={eventFormData}
-//               setEventFormData={setEventFormData}
-//               onAddEvent={onAddEvent}
-//             />
-//             <AddDatePickerEventModal
-//               open={openDatepickerModal}
-//               handleClose={handleDatePickerClose}
-//               datePickerEventFormData={datePickerEventFormData}
-//               setDatePickerEventFormData={setDatePickerEventFormData}
-//               onAddEvent={onAddEventFromDatePicker}
-//             />
-//             <EventInfoModal
-//               open={eventInfoModal}
-//               handleClose={() => setEventInfoModal(false)}
-//               onDeleteEvent={onDeleteEvent}
-//               currentEvent={currentEvent as IEventInfo}
-//             />
-//             <AddTodoModal
-//               open={openTodoModal}
-//               handleClose={() => setOpenTodoModal(false)}
-//               todos={todos}
-//               setTodos={setTodos}
-//             />
-//             <Calendar
-//               localizer={localizer}
-//               events={events}
-//               onSelectEvent={handleSelectEvent}
-//               onSelectSlot={handleSelectSlot}
-//               selectable
-//               startAccessor="start"
-//               components={{ event: EventInfo }}
-//               endAccessor="end"
-//               defaultView="month"
-//               eventPropGetter={(event) => {
-//                 return {
-//                   style: {
-//                     backgroundColor: event.color,
-//                     borderColor: event.color,
-//                   },
-//                 };
-//               }}
-//               style={{
-//                 height: 900,
-//                 width: "100%",
-//               }}
-//             />
-//           </CardContent>
-//         </Card>
-//       </Container>
-//     </Box>
-//   );
-// };
-
-// export default EventCalendar;
-
-
-// import { useState, MouseEvent, useEffect } from "react";
-// import {
-//   Box,
-//   Button,
-//   Card,
-//   CardContent,
-//   CardHeader,
-//   Container,
-// } from "@mui/material";
-// import { Calendar, type Event, dateFnsLocalizer } from "react-big-calendar";
-// import format from "date-fns/format";
-// import parse from "date-fns/parse";
-// import startOfWeek from "date-fns/startOfWeek";
-// import getDay from "date-fns/getDay";
-// import enUS from "date-fns/locale/en-US";
-// import "react-big-calendar/lib/css/react-big-calendar.css";
-
-// import EventInfo from "./EventInfo";
-// import AddEventModal from "./AddEventModal";
-// import EventInfoModal from "./EventInfoModal";
-// // import { AddTodoModal } from "./AddTodoModal";
-// import AddDatePickerEventModal from "./AddDatePickerEventModal";
-// import Legend from "./Legend";
-
-// // npm install date-fns@2.30.0 react-big-calendar@1.8.2 react-colorful@5.6.1 @mui/x-date-pickers@5.0.12 @types/react-big-calendar
-// // npm install @mui/material@5.14.6 @mui/icons-material@5.14.6 @emotion/react@11.11.1 @emotion/styled@11.11.0
-
-// const locales = {
-//   "en-US": enUS,
-// };
-
-// const localizer = dateFnsLocalizer({
-//   format,
-//   parse,
-//   startOfWeek,
-//   getDay,
-//   locales,
-// });
-
-// export interface ITodo {
-//   _id: string;
-//   title: string;
-//   color?: string;
-// }
-
-// export interface IEventInfo extends Event {
-//   _id: string;
-//   description: string;
-//   color: string; // Ensure color is part of the event info
-// }
-
-// export interface EventFormData {
-//   description: string;
-//   color: string; // Include color in the event form data
-// }
-
-// export interface DatePickerEventFormData {
-//   description: string;
-//   color: string; // Include color in the date picker event form data
-//   allDay: boolean;
-//   start?: Date;
-//   end?: Date;
-// }
-
-// export const generateId = () =>
-//   (Math.floor(Math.random() * 10000) + 1).toString();
-
-// const initialEventFormState: EventFormData = {
-//   description: "",
-//   color: "#b32aa9", // Default color
-// };
-
-// const initialDatePickerEventFormData: DatePickerEventFormData = {
-//   description: "",
-//   color: "#b32aa9", // Default color
-//   allDay: false,
-//   start: undefined,
-//   end: undefined,
-// };
-
-// const EventCalendar = () => {
-//   const [openSlot, setOpenSlot] = useState(false);
-//   const [openDatepickerModal, setOpenDatepickerModal] = useState(false);
-//   // const [openTodoModal, setOpenTodoModal] = useState(false);
-//   const [currentEvent, setCurrentEvent] = useState<Event | IEventInfo | null>(
-//     null
-//   );
-
-//   const [eventInfoModal, setEventInfoModal] = useState(false);
-
-//   const [events, setEvents] = useState<IEventInfo[]>([]);
-//   // const [todos, setTodos] = useState<ITodo[]>([]);
-
-//   const [eventFormData, setEventFormData] = useState<EventFormData>(
-//     initialEventFormState
-//   );
-
-//   const [datePickerEventFormData, setDatePickerEventFormData] =
-//     useState<DatePickerEventFormData>(initialDatePickerEventFormData);
-
-//   // State for legend items
-//   const [legendItems, setLegendItems] = useState([
-//     { label: "Council", color: "#b32aa9" },
-//     { label: "GAD", color: "#32a852" },
-//     { label: "DRR", color: "#3264a8" },
-//     { label: "Waste Management Council", color: "#3264a8" },
-//   ]);
-
-//   useEffect(() => {
-//     console.log("Legend Colors:", legendItems.map(i => `${i.label}: ${i.color}`));
-//   }, [legendItems]);
-
-//   useEffect(() => {
-//     console.log("Legend Items Updated:", legendItems);
-//   }, [legendItems]);
-  
-
-//   const handleLegendColorChange = (label: string, newColor: string) => {
-//     setLegendItems((prevItems) =>
-//       prevItems.map((item) =>
-//         item.label === label ? { ...item, color: newColor } : item
-//       )
-//     );
-//   };  
-
-//   const handleSelectSlot = (event: Event) => {
-//     setOpenSlot(true);
-//     setCurrentEvent(event);
-//   };
-
-//   const handleSelectEvent = (event: IEventInfo) => {
-//     setCurrentEvent(event);
-//     setEventInfoModal(true);
-//   };
-
-//   const handleClose = () => {
-//     setEventFormData(initialEventFormState);
-//     setOpenSlot(false);
-//   };
-
-//   const handleDatePickerClose = () => {
-//     setDatePickerEventFormData(initialDatePickerEventFormData);
-//     setOpenDatepickerModal(false);
-//   };
-
-//   const onAddEvent = (e: MouseEvent<HTMLButtonElement>) => {
-//     e.preventDefault();
-
-//     const data: IEventInfo = {
-//       ...eventFormData,
-//       _id: generateId(),
-//       start: currentEvent?.start,
-//       end: currentEvent?.end,
-//     };
-
-//     const newEvents = [...events, data];
-
-//     setEvents(newEvents);
-//     handleClose();
-//   };
-
-//   const onAddEventFromDatePicker = (e: MouseEvent<HTMLButtonElement>) => {
-//     e.preventDefault();
-
-//     const addHours = (date: Date | undefined, hours: number) => {
-//       return date ? date.setHours(date.getHours() + hours) : undefined;
-//     };
-
-//     const setMinToZero = (date: any) => {
-//       date.setSeconds(0);
-//       return date;
-//     };
-
-//     const data: IEventInfo = {
-//       ...datePickerEventFormData,
-//       _id: generateId(),
-//       start: setMinToZero(datePickerEventFormData.start),
-//       end: datePickerEventFormData.allDay
-//         ? addHours(datePickerEventFormData.start, 12)
-//         : setMinToZero(datePickerEventFormData.end),
-//     };
-
-//     const newEvents = [...events, data];
-
-//     setEvents(newEvents);
-//     setDatePickerEventFormData(initialDatePickerEventFormData);
-//   };
-
-//   const onDeleteEvent = () => {
-//     setEvents(() =>
-//       [...events].filter((e) => e._id !== (currentEvent as IEventInfo)._id!)
-//     );
-//     setEventInfoModal(false);
-//   };
-
-//   return (
-//     <Box
-//       mb={2}
-//       component="main"
-//       sx={{
-//         flexGrow: 1,
-//         py: 1,
-//       }}
-//     >
-//       <Container>
-//         <Card>
-//           <CardHeader title="" subheader="" />
-//           <CardContent>
-//             {/* Add the Legend component */}
-//             <Legend
-//               legendItems={ legendItems}
-//               onColorChange={handleLegendColorChange}
-//             />
-
-//             {/* Updated Button Layout */}
-//             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-//               {/* <Button
-//                 // onClick={() => setOpenTodoModal(true)}
-//                 size="small"
-//                 variant="contained"
-//               >
-//                 Add Category
-//               </Button> */}
-//             </Box>
-//             <br />
-//             <AddEventModal
-//               open={openSlot}
-//               handleClose={handleClose}
-//               eventFormData={eventFormData}
-//               setEventFormData={setEventFormData}
-//               onAddEvent={onAddEvent}
-//             />
-//             <AddDatePickerEventModal
-//               open={openDatepickerModal}
-//               handleClose={handleDatePickerClose}
-//               datePickerEventFormData={datePickerEventFormData}
-//               setDatePickerEventFormData={setDatePickerEventFormData}
-//               onAddEvent={onAddEventFromDatePicker}
-//             />
-//             <EventInfoModal
-//               open={eventInfoModal}
-//               handleClose={() => setEventInfoModal(false)}
-//               onDeleteEvent={onDeleteEvent}
-//               currentEvent={currentEvent as IEventInfo}
-//             />
-//             {/* <AddTodoModal
-//               open={openTodoModal}
-//               handleClose={() => setOpenTodoModal(false)}
-//               todos={todos}
-//               setTodos={setTodos}
-//             /> */}
-//             <Calendar
-//               localizer={localizer}
-//               events={events}
-//               onSelectEvent={handleSelectEvent}
-//               onSelectSlot={handleSelectSlot}
-//               selectable
-//               startAccessor="start"
-//               components={{ event: EventInfo }}
-//               endAccessor="end"
-//               defaultView="month"
-//               eventPropGetter={(event) => {
-//                 return {
-//                   style: {
-//                     backgroundColor: event.color,
-//                     borderColor: event.color,
-//                   },
-//                 };
-//               }}
-//               style={{
-//                 height: 900,
-//                 width: "100%",
-//               }}
-//             />
-//           </CardContent>
-//         </Card>
-//       </Container>
-//     </Box>
-//   );
-// };
-
-// export default EventCalendar; 
-
-// import { useEffect, useState } from "react";
-// import { Box, Card, CardContent, CardHeader, Container } from "@mui/material";
-// import { Calendar, type Event, dateFnsLocalizer } from "react-big-calendar";
-// import format from "date-fns/format";
-// import parse from "date-fns/parse";
-// import startOfWeek from "date-fns/startOfWeek";
-// import getDay from "date-fns/getDay";
-// import enUS from "date-fns/locale/en-US";
-// import "react-big-calendar/lib/css/react-big-calendar.css";
-// import Legend from "./Legend";
-// import EventInfoModal from "./EventInfoModal";
-
-// // Types
-// export interface EventDetailColumn<T> {
-//   accessorKey: keyof T;
-//   header: string;
-//   cell?: (props: { row: { original: T } }) => React.ReactNode;
-// }
-
-// export interface EventCalendarProps<T extends Record<string, any>> {
-//   name: string;
-//   columns: EventDetailColumn<T>[];
-//   data: T[];
-//   titleAccessor: keyof T;
-//   colorAccessor?: keyof T;
-//   defaultColor?: string;
-//   legendItems?: Array<{ label: string; color: string }>;
-// }
-
-// export interface IEventInfo<T = any> extends Event {
-//   _id: string;
-//   description: string;
-//   color: string;
-//   originalData: T;
-//   title: string;
-//   start: Date;
-//   end: Date;
-// }
-
-// export const generateId = () => (Math.floor(Math.random() * 10000) + 1).toString();
-
-// const locales = { "en-US": enUS };
-// const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
-
-// const EventCalendar = <T extends Record<string, any>>({
-//   name,
-//   columns,
-//   data,
-//   titleAccessor,
-//   colorAccessor,
-//   defaultColor = "#b32aa9",
-//   legendItems: initialLegendItems = [],
-// }: EventCalendarProps<T>) => {
-//   const [events, setEvents] = useState<IEventInfo<T>[]>([]);
-//   const [selectedEvent, setSelectedEvent] = useState<IEventInfo<T> | null>(null);
-//   const [legendItems, setLegendItems] = useState(initialLegendItems);
-
-
-//   // Auto-detect date/time fields from columns
-//   const dateAccessor = columns.find(col => 
-//     col.header.toLowerCase().includes('date') || 
-//     col.accessorKey.toString().toLowerCase().includes('date')
-//   )?.accessorKey;
-
-//   const timeAccessor = columns.find(col => 
-//     col.header.toLowerCase().includes('time') || 
-//     col.accessorKey.toString().toLowerCase().includes('time')
-//   )?.accessorKey;
-
-  
-//   useEffect(() => {
-//     if (!dateAccessor || !timeAccessor) {
-//       console.error('Could not automatically detect date/time fields from columns');
-//       return;
-//     }
-
-//     const convertedEvents = data.map((item) => {
-//       const dateStr = String(item[dateAccessor]);
-//       const timeStr = String(item[timeAccessor]);
-      
-//       if (!dateStr || !timeStr) {
-//         console.warn("Invalid date/time format", item);
-//         return null;
-//       }
-
-//       try {
-//         const start = new Date(`${dateStr}T${timeStr}`);
-//         if (isNaN(start.getTime())) throw new Error("Invalid date");
-        
-//         return {
-//           _id: generateId(),
-//           title: String(item[titleAccessor]),
-//           start,
-//           end: new Date(start.getTime() + 60 * 60 * 1000), // 1 hour duration
-//           color: colorAccessor ? String(item[colorAccessor]) : defaultColor,
-//           description: JSON.stringify(item),
-//           originalData: item,
-//         };
-//       } catch (error) {
-//         console.error("Error processing event:", error, item);
-//         return null;
-//       }
-//     }).filter(Boolean) as IEventInfo<T>[];
-
-//     setEvents(convertedEvents);
-//   }, [data, titleAccessor, dateAccessor, timeAccessor, colorAccessor, defaultColor]);
-
-
-//   const handleLegendColorChange = (label: string, newColor: string) => {
-//     setLegendItems((prevItems) =>
-//       prevItems.map((item) => (item.label === label ? { ...item, color: newColor } : item))
-//     );
-//   };
-
-//   return (
-//     <Box mb={2} component="main" sx={{ flexGrow: 1, py: 1 }}>
-//       <Container>
-//         <Card>
-//           <CardHeader title={name} />
-//           <CardContent>
-//             <Legend legendItems={legendItems} onColorChange={handleLegendColorChange} />
-//             <br />
-//             <Calendar
-//               localizer={localizer}
-//               events={events}
-//               startAccessor="start"
-//               endAccessor="end"
-//               defaultView="month"
-//               components={{
-//                 event: ({ event }) => (
-//                   <div
-//                     className="text-white text-sm font-semibold rounded px-1.5 py-0.5"
-//                     style={{ backgroundColor: event.color }}
-//                   >
-//                     {event.title}
-//                   </div>
-//                 )
-//               }}
-
-//               eventPropGetter={(event) => ({
-//                 className: "border text-white text-sm font-semibold rounded px-1.5 py-0.5",
-//                 style: {
-//                   backgroundColor: event.color,
-//                   borderColor: event.color,
-//                 },
-//               })}
-//               onSelectEvent={(event) => {
-//                 console.log("Event clicked:", event); // Debugging
-//                 setSelectedEvent(event as IEventInfo<T>);
-//               }}
-//               style={{ height: 900, width: "100%" }}
-//               selectable={false}
-//             />
-//           </CardContent>
-//         </Card>
-//       </Container>
-
-//       {selectedEvent && (
-//         <EventInfoModal<T>
-//           open={!!selectedEvent}
-//           handleClose={() => setSelectedEvent(null)}
-//           currentEvent={selectedEvent}
-//           columns={columns}
-//           title={name}
-//         />
-//       )}
-//     </Box>
-//   );
-// };
-
-// export default EventCalendar;
-
 import { useEffect, useState } from "react";
-import { Box, Card, CardHeader, CardContent, Container } from "@mui/material";
+import { Box, Card, CardContent, CardHeader, Container } from "@mui/material";
 import { Calendar, type Event, dateFnsLocalizer } from "react-big-calendar";
 import format from "date-fns/format";
 import parse from "date-fns/parse";
@@ -993,6 +9,7 @@ import enUS from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import Legend from "./Legend";
 import EventInfoModal from "./EventInfoModal";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import DialogLayout from "../dialog/dialog-layout";
 
 // Types
@@ -1002,14 +19,16 @@ export interface EventDetailColumn<T> {
   cell?: (props: { row: { original: T } }) => React.ReactNode;
 }
 
-export interface EventCalendarProps<T extends Record<string, any>> {
-  name: string;
-  columns: EventDetailColumn<T>[];
+export interface EventSource<T extends Record<string, any>> {
+  name?: string; 
   data: T[];
+  columns: EventDetailColumn<T>[];
   titleAccessor: keyof T;
+  dateAccessor: keyof T;
+  timeAccessor: keyof T;
+  endTimeAccessor?: keyof T;
   colorAccessor?: keyof T;
   defaultColor?: string;
-  legendItems?: Array<{ label: string; color: string }>;
   viewEditComponent?: React.ComponentType<{
     initialValues: T;
     onClose: () => void;
@@ -1021,6 +40,7 @@ export interface IEventInfo<T = any> extends Event {
   description: string;
   color: string;
   originalData: T;
+  sourceName: string; 
   title: string;
   start: Date;
   end: Date;
@@ -1032,66 +52,76 @@ const locales = { "en-US": enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
 const EventCalendar = <T extends Record<string, any>>({
-  name,
-  columns,
-  data,
-  titleAccessor,
-  colorAccessor,
-  defaultColor = "#4052D6",
+  sources,
   legendItems: initialLegendItems = [],
-  viewEditComponent: ViewEditComponent,
-}: EventCalendarProps<T>) => {
-  const [events, setEvents] = useState<IEventInfo<T>[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<IEventInfo<T> | null>(null);
+  viewEditComponentSources = [],
+}: {
+  sources: EventSource<any>[];
+  legendItems?: Array<{ label: string; color: string }>;
+  viewEditComponentSources?: string[];
+}) => {
+  const [events, setEvents] = useState<IEventInfo<any>[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<IEventInfo<any> | null>(null);
   const [legendItems, setLegendItems] = useState(initialLegendItems);
-
-  // Auto-detect date/time fields from columns
-  const dateAccessor = columns.find(col =>
-    col.header.toLowerCase().includes('date') ||
-    col.accessorKey.toString().toLowerCase().includes('date')
-  )?.accessorKey;
-
-  const timeAccessor = columns.find(col =>
-    col.header.toLowerCase().includes('time') ||
-    col.accessorKey.toString().toLowerCase().includes('time')
-  )?.accessorKey;
+  const [activeSource, setActiveSource] = useState<string | 'all'>('all');
 
   useEffect(() => {
-    if (!dateAccessor || !timeAccessor) {
-      console.error('Could not automatically detect date/time fields from columns');
-      return;
-    }
+    const allEvents: IEventInfo<any>[] = [];
 
-    const convertedEvents = data.map((item) => {
-      const dateStr = String(item[dateAccessor]);
-      const timeStr = String(item[timeAccessor]);
+    sources.forEach((source, index) => {
+      const {
+        data,
+        titleAccessor,
+        dateAccessor,
+        timeAccessor,
+        endTimeAccessor,
+        colorAccessor,
+        defaultColor = "#b32aa9",
+        name: sourceName = `Source ${index + 1}`,
+      } = source;
 
-      if (!dateStr || !timeStr) {
-        console.warn("Invalid date/time format", item);
-        return null;
-      }
+      const convertedEvents = data.map((item) => {
+        const dateStr = String(item[dateAccessor]);
+        const timeStr = String(item[timeAccessor]);
+        
+        if (!dateStr || !timeStr) {
+          console.warn("Invalid date/time format", item);
+          return null;
+        }
 
-      try {
-        const start = new Date(`${dateStr}T${timeStr}`);
-        if (isNaN(start.getTime())) throw new Error("Invalid date");
+        try {
+          const start = new Date(`${dateStr}T${timeStr}`);
+          if (isNaN(start.getTime())) throw new Error("Invalid date");
+          
+          let end: Date;
+          if (endTimeAccessor) {
+            const endTimeStr = String(item[endTimeAccessor]);
+            end = new Date(`${dateStr}T${endTimeStr}`);
+          } else {
+            end = new Date(start.getTime() + 60 * 60 * 1000);
+          }
 
-        return {
-          _id: generateId(),
-          title: String(item[titleAccessor]),
-          start,
-          end: new Date(start.getTime() + 60 * 60 * 1000), // 1 hour duration
-          color: colorAccessor ? String(item[colorAccessor]) : defaultColor,
-          description: JSON.stringify(item),
-          originalData: item,
-        };
-      } catch (error) {
-        console.error("Error processing event:", error, item);
-        return null;
-      }
-    }).filter(Boolean) as IEventInfo<T>[];
+          return {
+            _id: generateId(),
+            title: String(item[titleAccessor]),
+            start,
+            end,
+            color: colorAccessor ? String(item[colorAccessor]) : defaultColor,
+            description: JSON.stringify(item),
+            originalData: item,
+            sourceName,
+          };
+        } catch (error) {
+          console.error("Error processing event:", error, item);
+          return null;
+        }
+      }).filter(Boolean) as IEventInfo<any>[];
 
-    setEvents(convertedEvents);
-  }, [data, titleAccessor, dateAccessor, timeAccessor, colorAccessor, defaultColor]);
+      allEvents.push(...convertedEvents);
+    });
+
+    setEvents(allEvents);
+  }, [sources]);
 
   const handleLegendColorChange = (label: string, newColor: string) => {
     setLegendItems((prevItems) =>
@@ -1099,17 +129,60 @@ const EventCalendar = <T extends Record<string, any>>({
     );
   };
 
+  const filteredEvents = activeSource === 'all' 
+    ? events 
+    : events.filter(event => event.sourceName === activeSource);
+
+  const sourceOptions = [
+    { id: 'all', name: 'All Sources' },
+    ...sources.map((source, index) => ({
+      id: source.name || `source-${index}`,
+      name: source.name || `Source ${index + 1}`
+    }))
+  ];
+
+  const handleSourceChange = (value: string) => {
+    setActiveSource(value);
+  };
+
   return (
     <Box mb={2} component="main" sx={{ flexGrow: 1, py: 1 }}>
       <Container>
         <Card>
-          <CardHeader title={name} />
+          <CardHeader 
+            title="Calendar"
+            action={
+              sourceOptions.length > 1 && (
+                <div className="w-64">
+                  <SelectLayout
+                    className="w-full"
+                    label=""
+                    placeholder="Filter by Source"
+                    options={sourceOptions}
+                    value={activeSource}
+                    onChange={handleSourceChange}
+                  />
+                </div>
+              )
+            }
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 24px'
+            }}
+          />
           <CardContent>
-            <Legend legendItems={legendItems} onColorChange={handleLegendColorChange} />
-            <br />
+            {legendItems.length > 0 && (
+              <>
+                <Legend legendItems={legendItems} onColorChange={handleLegendColorChange} />
+                <br />
+              </>
+            )}
+            
             <Calendar
               localizer={localizer}
-              events={events}
+              events={filteredEvents}
               startAccessor="start"
               endAccessor="end"
               defaultView="month"
@@ -1121,7 +194,7 @@ const EventCalendar = <T extends Record<string, any>>({
                   >
                     {event.title}
                   </div>
-                ),
+                )
               }}
               eventPropGetter={(event) => ({
                 className: "border text-white text-sm font-semibold rounded px-1.5 py-0.5",
@@ -1131,8 +204,8 @@ const EventCalendar = <T extends Record<string, any>>({
                 },
               })}
               onSelectEvent={(event) => {
-                console.log("Event clicked:", event);
-                setSelectedEvent(event as IEventInfo<T>);
+                console.log("Selected event sourceName:", event.sourceName);
+                setSelectedEvent(event as IEventInfo<any>);
               }}
               style={{ height: 900, width: "100%" }}
               selectable={false}
@@ -1142,29 +215,35 @@ const EventCalendar = <T extends Record<string, any>>({
       </Container>
 
       {selectedEvent && (
-        ViewEditComponent ? (
-          <DialogLayout
-            isOpen={!!selectedEvent}
-            onOpenChange={(open) => !open && setSelectedEvent(null)}
-            title="Event Details"
-            description="View or edit event details"
-            mainContent={
-              <ViewEditComponent
-                initialValues={selectedEvent.originalData}
-                onClose={() => setSelectedEvent(null)}
+        (() => {
+          const source = sources.find(s => (s.name || `Source ${sources.indexOf(s) + 1}`) === selectedEvent.sourceName);
+          if (source && viewEditComponentSources.includes(selectedEvent.sourceName) && source.viewEditComponent) {
+            return (
+              <DialogLayout
+                isOpen={!!selectedEvent}
+                onOpenChange={(open) => !open && setSelectedEvent(null)}
+                title="Event Details"
+                description="View or edit event details"
+                mainContent={
+                  <source.viewEditComponent
+                    initialValues={selectedEvent.originalData}
+                    onClose={() => setSelectedEvent(null)}
+                  />
+                }
+                className="max-w-[90%] sm:max-w-[55%] h-[300px] sm:h-[540px] flex flex-col overflow-auto scrollbar-custom"
               />
-            }
-            className="max-w-[90%] sm:max-w-[55%] h-[300px] sm:h-[540px] flex flex-col overflow-auto scrollbar-custom"
-          />
-        ) : (
-          <EventInfoModal
-            open={!!selectedEvent}
-            handleClose={() => setSelectedEvent(null)}
-            currentEvent={selectedEvent}
-            columns={columns}
-            title={name}
-          />
-        )
+            );
+          }
+          return (
+            <EventInfoModal<any>
+              open={!!selectedEvent}
+              handleClose={() => setSelectedEvent(null)}
+              currentEvent={selectedEvent}
+              columns={source?.columns || []}
+              title={selectedEvent.sourceName}
+            />
+          );
+        })()
       )}
     </Box>
   );

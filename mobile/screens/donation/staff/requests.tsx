@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelpers";
 
 export const getdonationreq = async () => {
     try {
@@ -54,7 +54,7 @@ export const postdonationreq= async (donationInfo: Record<string, any>) => {
     }
 };
 
-export const putdonationreq = async (don_num: number, donationInfo: Record<string, any>) => {
+export const putdonationreq = async (don_num: string, donationInfo: Record<string, any>) => {
     try{
         const res = await api.put(`donation/donation-record/${don_num}/`, {
             don_num: donationInfo.don_num,

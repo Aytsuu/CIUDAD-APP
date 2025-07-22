@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Dimensions
+  Dimensions,
+  RefreshControl
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Trash, Archive, ArchiveRestore, Edit, X, Loader2, ChevronLeft } from "lucide-react-native";
@@ -35,6 +36,7 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { Button } from "@/components/ui/button";
 import MultiImageUploader, { MediaFileType } from "@/components/ui/multi-media-upload";
 import { useRouter } from "expo-router";
+import PageLayout from "@/screens/_PageLayout";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const MarkAttendeesSchema = z.object({
@@ -43,11 +45,17 @@ const MarkAttendeesSchema = z.object({
 
 
 const MarkAttendance = ({ ceId }: { ceId: number }) => {
-  const { data: allAttendees = [], isLoading, error } = useGetAttendees(ceId);
+  const { data: allAttendees = [], isLoading, error, refetch } = useGetAttendees(ceId);
   const addAttendee = useAddAttendee();
   const updateAttendee = useUpdateAttendee();
   const { toast } = useToastContext();
+const [refreshing, setRefreshing] = useState(false)
 
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
   const eventAttendees = useMemo(() => {
     return allAttendees.filter(attendee => attendee.ce_id === ceId);
   }, [allAttendees, ceId]);
@@ -155,7 +163,7 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
               />
               <Text className="ml-3 text-base font-medium text-gray-900">Select All</Text>
             </View>
-            <ScrollView style={{ maxHeight: 500, minHeight: 500 }} showsVerticalScrollIndicator={true}>
+            <ScrollView style={{ maxHeight: 500, minHeight: 500 }} showsVerticalScrollIndicator={true} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
               <View className="space-y-3">
                 {eventAttendees.map((attendee: Attendee, index) => {
                   const isSelected = selectedAttendees.includes(attendee.atn_name);
@@ -236,7 +244,7 @@ const AttendanceSheets = () => {
   const parsedCeId = Number(ceId) || 0;
   
   // Get all sheets and filter based on view mode
-  const { data: allSheets = [] } = useGetAttendanceSheets();
+  const { data: allSheets = [], refetch } = useGetAttendanceSheets();
   const filteredSheets = allSheets.filter(sheet => 
     sheet.ce_id === parsedCeId && 
     sheet.att_is_archive === (viewMode === "archive")
@@ -247,6 +255,13 @@ const AttendanceSheets = () => {
   const deleteSheet = useDeleteAttendanceSheet();
   const addAttendanceSheet = useAddAttendanceSheet();
   const { toast } = useToastContext();
+  const [refreshing, setRefreshing] = useState(false)
+  
+    const onRefresh = async () => {
+      setRefreshing(true)
+      await refetch()
+      setRefreshing(false)
+    }
 
   const handleAddAttendanceSheet = async () => {
     if (mediaFiles.length === 0) {
@@ -288,7 +303,7 @@ const AttendanceSheets = () => {
             <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Attendance Sheets and Records</Text>}
+        headerBetweenAction={<Text>Attendance Sheets and Records</Text>}
         showExitButton={false}
         headerAlign="left"
         scrollable={true}
@@ -350,7 +365,7 @@ const AttendanceSheets = () => {
                 </Text>
               </View>
             ) : (
-              <ScrollView className="px-4">
+              <ScrollView className="px-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
                 {filteredSheets.map((sheet) => (
                   <Card key={sheet.att_id} className="mb-4">
                     <CardContent>

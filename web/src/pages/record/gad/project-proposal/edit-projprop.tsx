@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Wallet } from "lucide-react";
 import { useUpdateProjectProposal } from "./queries/updatequeries";
 import { useAddSupportDocument } from "./queries/addqueries";
 import { useDeleteSupportDocument } from "./queries/delqueries";
@@ -29,8 +29,13 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { ProjectProposal, ProjectProposalInput, SupportDoc } from "./queries/fetchqueries";
+import {
+  ProjectProposal,
+  ProjectProposalInput,
+  SupportDoc,
+} from "./queries/fetchqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 
 export interface EditProjectProposalFormProps {
   onSuccess: (data: ProjectProposal) => void;
@@ -57,8 +62,14 @@ export const EditProjectProposalForm: React.FC<
   const updateMutation = useUpdateProjectProposal();
   const addSupportDocMutation = useAddSupportDocument();
   const deleteSupportDocMutation = useDeleteSupportDocument();
-
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
+
+  // Display remaining balance from budget tracker
+  const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
+  const latestExpenseWithBalance = budgetEntries
+    .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
+  const availableBudget = latestExpenseWithBalance ? Number(latestExpenseWithBalance.gbud_remaining_bal) : null;
 
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     resolver: zodResolver(ProjectProposalSchema),
@@ -249,10 +260,13 @@ export const EditProjectProposalForm: React.FC<
 
     try {
       setErrorMessage(null);
-      const headerImage = mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+      const headerImage =
+        mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
 
-      const validSupportDocs = supportingDocs
-        .filter((doc): doc is {
+      const validSupportDocs = supportingDocs.filter(
+        (
+          doc
+        ): doc is {
           id: string;
           type: "image" | "video" | "document";
           file: File;
@@ -260,18 +274,20 @@ export const EditProjectProposalForm: React.FC<
           storagePath: string;
           status: "uploaded";
           previewUrl?: string;
-        } => (
-          doc.status === 'uploaded' && 
-          !!doc.publicUrl && 
+        } =>
+          doc.status === "uploaded" &&
+          !!doc.publicUrl &&
           !!doc.storagePath &&
           !!doc.file?.name &&
           !!doc.file?.type
-        ));
+      );
 
       // Preserve all existing supportDocs and include new ones, default to empty array if undefined
       const existingSupportDocs = initialValues.supportDocs || [];
       const updatedSupportDocs = validSupportDocs.map((doc) => {
-        const existingDoc = existingSupportDocs.find(d => d.psd_url === doc.publicUrl);
+        const existingDoc = existingSupportDocs.find(
+          (d) => d.psd_url === doc.publicUrl
+        );
         return {
           psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
           psd_url: doc.publicUrl,
@@ -283,8 +299,11 @@ export const EditProjectProposalForm: React.FC<
       });
 
       // Identify new documents to add via mutation
-      const newDocs = updatedSupportDocs.filter(doc =>
-        !existingSupportDocs.some(existing => existing.psd_id === doc.psd_id)
+      const newDocs = updatedSupportDocs.filter(
+        (doc) =>
+          !existingSupportDocs.some(
+            (existing) => existing.psd_id === doc.psd_id
+          )
       );
 
       // Update existing supportDocs for PUT
@@ -312,13 +331,14 @@ export const EditProjectProposalForm: React.FC<
         gpr_header_img: headerImage,
         staffId: initialValues.staffId || null,
         gprIsArchive: initialValues.gprIsArchive || false,
-        supportDocs: existingSupportDocs.map(doc => ({
-          psd_id: doc.psd_id,
-          psd_url: doc.psd_url,
-          psd_name: doc.psd_name,
-          psd_type: doc.psd_type,
-          psd_is_archive: doc.psd_is_archive,
-        })) || [], // Only existing docs with valid psdId for PUT
+        supportDocs:
+          existingSupportDocs.map((doc) => ({
+            psd_id: doc.psd_id,
+            psd_url: doc.psd_url,
+            psd_name: doc.psd_name,
+            psd_type: doc.psd_type,
+            psd_is_archive: doc.psd_is_archive,
+          })) || [], // Only existing docs with valid psdId for PUT
       };
 
       const fullProposal: ProjectProposal = {
@@ -341,7 +361,7 @@ export const EditProjectProposalForm: React.FC<
       // Add new documents via mutation before updating the proposal
       if (newDocs.length > 0) {
         await Promise.all(
-          newDocs.map(doc =>
+          newDocs.map((doc) =>
             addSupportDocMutation.mutateAsync({
               gprId,
               fileData: {
@@ -362,13 +382,12 @@ export const EditProjectProposalForm: React.FC<
       });
 
       onSuccess(fullProposal);
-
     } catch (error: any) {
       console.error("Error in handleSave:", error);
       setErrorMessage(
         error.response?.data?.detail ||
-        error.message ||
-        "Failed to save proposal. Please check the form data and try again."
+          error.message ||
+          "Failed to save proposal. Please check the form data and try again."
       );
     }
   };
@@ -452,7 +471,7 @@ export const EditProjectProposalForm: React.FC<
                 }}
                 setActiveVideoId={setActiveVideoId}
               />
-              {headerImageUrl && (
+              {/* {headerImageUrl && (
                 <div className="mt-2 flex flex-col sm:flex-row gap-2 items-center">
                   <img
                     src={headerImageUrl}
@@ -472,7 +491,7 @@ export const EditProjectProposalForm: React.FC<
                     Remove Image
                   </Button>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div>
@@ -621,9 +640,25 @@ export const EditProjectProposalForm: React.FC<
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Budgetary Requirements
-              </label>
+             <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium">Budgetary Requirements</label>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Wallet className="h-4 w-4 text-blue-600" />
+                  <span>Available Funds:</span>
+                  {isBudgetLoading ? (
+                    <span className="text-gray-500">Loading...</span>
+                  ) : availableBudget != null ? (
+                    <span className="font-mono text-red-500">
+                      ₱{availableBudget.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">No expense records</span>
+                  )}
+                </div>
+              </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 font-medium text-sm">
                   <span>Name</span>
@@ -750,7 +785,25 @@ export const EditProjectProposalForm: React.FC<
                                       }
                                     }}
                                   />
-                                  <CommandList>
+                                  <CommandList
+                                    className="max-h-64 overflow-auto"
+                                    onWheel={(e) => {
+                                      e.stopPropagation();
+                                      const el = e.currentTarget;
+                                      if (
+                                        e.deltaY > 0 &&
+                                        el.scrollTop >=
+                                          el.scrollHeight - el.clientHeight
+                                      ) {
+                                        return;
+                                      }
+                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
+                                        return;
+                                      }
+                                      e.preventDefault();
+                                      el.scrollTop += e.deltaY;
+                                    }}
+                                  >
                                     <CommandEmpty>
                                       No staff found. Enter name manually.
                                     </CommandEmpty>
@@ -878,7 +931,25 @@ export const EditProjectProposalForm: React.FC<
                                       }
                                     }}
                                   />
-                                  <CommandList>
+                                  <CommandList
+                                    className="max-h-64 overflow-auto"
+                                    onWheel={(e) => {
+                                      e.stopPropagation();
+                                      const el = e.currentTarget;
+                                      if (
+                                        e.deltaY > 0 &&
+                                        el.scrollTop >=
+                                          el.scrollHeight - el.clientHeight
+                                      ) {
+                                        return;
+                                      }
+                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
+                                        return;
+                                      }
+                                      e.preventDefault();
+                                      el.scrollTop += e.deltaY;
+                                    }}
+                                  >
                                     <CommandEmpty>
                                       No staff found. Enter name manually.
                                     </CommandEmpty>

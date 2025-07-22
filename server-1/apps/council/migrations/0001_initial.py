@@ -71,15 +71,36 @@ class Migration(migrations.Migration):
             fields=[
                 ('att_id', models.BigAutoField(primary_key=True, serialize=False)),
                 ('att_is_archive', models.BooleanField(default=False)),
-                # ('att_file_name', models.CharField(max_length=255, null=True)),
-                # ('att_file_path', models.CharField(max_length=512, null=True)),
-                # ('att_file_url', models.URLField(max_length=1024, null=True)),
-                # ('att_file_type', models.CharField(max_length=100, null=True)),
                 ('staff', models.ForeignKey(blank=True, db_column='staff_id', null=True, on_delete=django.db.models.deletion.SET_NULL, to='administration.staff')),
                 ('ce_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='council.councilscheduling')),
             ],
             options={
                 'db_table': 'attendance_sheet',
+            },
+        ),
+        migrations.CreateModel(
+            name='MinutesOfMeeting',
+            fields=[
+                ('mom_num', models.BigAutoField(primary_key=True, serialize=False)),
+                ('mom_date', models.DateField(default=datetime.date.today)),
+                ('mom_title', models.TextField()),
+                ('mom_agenda', models.TextField()),
+                ('mom_is_archive', models.BooleanField(default=False)),
+                ('file', models.ForeignKey(blank=True, db_column='file_id', null=True, on_delete=django.db.models.deletion.SET_NULL, to='file.file')),
+            ],
+            options={
+                'db_table': 'minutes_of_meeting',
+            },
+        ),
+        migrations.CreateModel(
+            name='MOMAreaOfFocus',
+            fields=[
+                ('mof_id', models.BigAutoField(primary_key=True, serialize=False)),
+                ('mof_area', models.CharField()),
+                ('mom', models.ForeignKey(blank=True, db_column='mom_num', null=True, on_delete=django.db.models.deletion.SET_NULL, to='council.minutesofmeeting')),
+            ],
+            options={
+                'db_table': 'mom_area_of_focus',
             },
         ),
     ]

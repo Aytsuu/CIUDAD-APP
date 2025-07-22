@@ -23,7 +23,7 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             iet_receipt_image: 'nothing',
             inv_num: "None",
-            dtl_id:  parseInt(incomeExpenseInfo.iet_particulars)
+            exp_id:  parseInt(incomeExpenseInfo.iet_particulars)
 
         })
 
