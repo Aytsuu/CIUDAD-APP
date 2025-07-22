@@ -76,4 +76,8 @@ export const treasurer_router = [
         path: 'treasurer-receipts',
         element: <ReceiptPage/>
     },
+    {
+        path: 'treasurer-receipts',
+        element: <ReceiptPage/>
+    },
 ]

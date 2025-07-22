@@ -35,8 +35,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       Animated.spring(scaleValue, {
         toValue: 1,
         useNativeDriver: true,
-        tension: 100,
-        friction: 8,
+        tension: 50,
+        friction: 200,
       }),
       Animated.timing(opacityValue, {
         toValue: 1,
@@ -47,21 +47,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   }
 
   const closeModal = () => {
-    Animated.parallel([
-      Animated.spring(scaleValue, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.timing(opacityValue, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setIsVisible(false)
-    })
+    setIsVisible(false)
+    scaleValue.setValue(0);
+    opacityValue.setValue(0);
   }
 
   const handleConfirm = () => {

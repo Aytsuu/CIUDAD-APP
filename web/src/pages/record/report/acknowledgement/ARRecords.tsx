@@ -20,6 +20,7 @@ import { getSitioList } from "../../profiling/restful-api/profilingGetAPI"
 import { useLoading } from "@/context/LoadingContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { useDebounce } from "@/hooks/use-debounce"
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 
 export default function ARRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -103,7 +104,7 @@ export default function ARRecords() {
 
     // Proceed to creation
     try {
-      addWAR(user?.staff?.staff_id as string, {
+      addWAR({staff: user?.staff?.staff_id}, {
         onSuccess: (data) => {
           const compositions = selectedRows.map((row) => ({
             ar: row.id,
@@ -163,194 +164,158 @@ export default function ARRecords() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-darkBlue2">Acknowledgement Reports</h1>
-            <p className="text-xs sm:text-sm text-darkGray">Manage and view all acknowledgement reports in your system</p>
-          </div>  
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">
-              {totalCount} Total Reports
-            </Badge>
-            {!isLoadingWeeklyAR && !isLoadingArReports && ARList.length > 0 &&  (isCreatable ? (
-              isCreatingWeeklyAR ? (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    {selectedRows.length} Reports Selected
-                  </Badge>
-                  {isSubmitting ? (
-                    <LoadButton>Creating...</LoadButton>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button variant="outline" onClick={() => setIsCreatingWeeklyAR(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleCreateWAR} className="gap-2">
-                        <Check className="h-4 w-4" />
-                        Create Weekly AR
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Button onClick={() => setIsCreatingWeeklyAR(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create Week {getWeekNumber(formatDate(now) as string)} AR
-                </Button>
-              )
-            ) : (
-              <Badge variant={'secondary'} className="gap-1">
-                <Check size={14}/> 
-                Weekly AR Created
-              </Badge>
-            ))}
-            {!isCreatingWeeklyAR && <Button onClick={handleCreateAR}>
-              Create AR
-            </Button>}
-          </div>
-        </div>
-
-        {/* Selection Mode Banner */}
-        {isCreatingWeeklyAR && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <Check className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-medium text-blue-800">Selection Mode Active</h3>
-                <p className="text-sm text-blue-600">Select the reports you want to include in your Weekly AR</p>
-              </div>
+    <MainLayoutComponent
+      title="Acknowledgement Report"
+      description="Manage and view all acknowledgement reports in your system"
+    >
+      {/* Selection Mode Banner */}
+      {isCreatingWeeklyAR && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 p-2 rounded-full">
+              <Check className="h-5 w-5 text-blue-600" />
             </div>
-            <Badge variant="outline" className="bg-white text-blue-700 border-blue-200">
-              {selectedRows.length} Selected
-            </Badge>
+            <div>
+              <h3 className="font-medium text-blue-800">Selection Mode Active</h3>
+              <p className="text-sm text-blue-600">Select the reports you want to include in your Weekly AR</p>
+            </div>
           </div>
-        )}
+          <Badge variant="outline" className="bg-white text-blue-700 border-blue-200">
+            {selectedRows.length} Selected
+          </Badge>
+        </div>
+      )}
 
-        {/* Filters and Search Section */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search reports..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1">
-
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="shadow-none">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
+      {/* Data Table Section */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search reports..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
             </div>
-          </CardHeader>
-        </Card>
 
-        {/* Data Table Section */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-sm font-medium text-gray-700">Show</span>
-                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
-                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-gray-600">entries</span>
-              </div>
-
-              <div className="text-sm text-gray-600">
-                {isLoadingArReports || isLoadingWeeklyAR ? (
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="text-xs">
+                {totalCount} Total Reports
+              </Badge>
+              {!isLoadingWeeklyAR && !isLoadingArReports && ARList.length > 0 &&  (isCreatable ? (
+                isCreatingWeeklyAR ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
-                    Loading...
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      {selectedRows.length} Reports Selected
+                    </Badge>
+                    {isSubmitting ? (
+                      <LoadButton>Creating...</LoadButton>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setIsCreatingWeeklyAR(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleCreateWAR} className="gap-2">
+                          <Check className="h-4 w-4" />
+                          Create Weekly AR
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  `Showing ${totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}-${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} entries`
-                )}  
+                  <Button onClick={() => setIsCreatingWeeklyAR(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Week {getWeekNumber(formatDate(now) as string)} AR
+                  </Button>
+                )
+              ) : (
+                <Badge variant={'secondary'} className="gap-1">
+                  <Check size={14}/> 
+                  Weekly AR Created
+                </Badge>
+              ))}
+              {!isCreatingWeeklyAR && <Button onClick={handleCreateAR}>
+                Create AR
+              </Button>}
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="text-sm font-medium text-gray-700">Show</span>
+              <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+                <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-600">entries</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <DropdownLayout
+                trigger={
+                  <Button variant="outline" className="shadow-none">
+                    <FileDown className="h-4 w-4" />
+                    Export
+                  </Button>
+                }
+                options={[
+                  { id: "csv", name: "Export as CSV" },
+                  { id: "excel", name: "Export as Excel" },
+                  { id: "pdf", name: "Export as PDF" },
+                ]}
+              />
+            </div>
+          </div>
+          <div className="border-t overflow-hidden">
+            <div className="overflow-x-auto">
+              <DataTable
+                columns={ARColumns(isCreatingWeeklyAR, compositions)}
+                data={ARList}
+                onSelectedRowsChange={onSelectedRowsChange}
+                isLoading={isLoadingArReports || isLoadingWeeklyAR}
+                reset={reset} 
+                setReset={setReset}
+              />
+            </div>
+          </div>
+        </CardContent>
+
+        {/* Pagination Section */}
+        {totalPages > 0 && (
+          <>
+            <Separator />
+            <div className="p-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-gray-600">
+                  {isLoadingArReports || isLoadingWeeklyAR ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+                      Loading...
+                    </div>
+                  ) : (
+                    `Showing ${totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0} -
+                    ${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} entries`
+                  )}  
+                </div>
+                <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
               </div>
             </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <div className="border-t overflow-hidden">
-              <div className="overflow-x-auto">
-                <DataTable
-                  columns={ARColumns(isCreatingWeeklyAR, compositions)}
-                  data={ARList}
-                  onSelectedRowsChange={onSelectedRowsChange}
-                  isLoading={isLoadingArReports || isLoadingWeeklyAR}
-                  reset={reset} 
-                  setReset={setReset}
-                />
-              </div>
-            </div>
-          </CardContent>
-
-          {/* Pagination Section */}
-          {totalPages > 0 && (
-            <>
-              <Separator />
-              <div className="p-4">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </div>
-                  <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-                </div>
-              </div>
-            </>
-          )}
-        </Card>
-
-        {/* Empty State */}
-        {!isLoadingArReports && totalCount === 0 && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <div className="mx-auto h-12 w-12 text-gray-400">
-                  <Search className="h-full w-full" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900">No reports found</h3>
-                <p className="text-sm text-gray-600 max-w-sm">
-                  {searchQuery
-                    ? `No acknowledgement reports match your search for "${searchQuery}"`
-                    : "No acknowledgement reports are available at this time"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          </>
         )}
-      </div>
-    </div>
+      </Card>
+    </MainLayoutComponent>
   )
 }

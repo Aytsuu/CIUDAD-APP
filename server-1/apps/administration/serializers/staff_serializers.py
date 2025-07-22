@@ -3,23 +3,12 @@ from ..models import *
 from ..serializers.position_serializers import PositionBaseSerializer
 from ..serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
+from apps.account.models import Account
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = Staff
     fields = '__all__'
-
-class StaffMinimalSerializer(serializers.ModelSerializer):
-    rp = serializers.SerializerMethodField()
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
-
-    class Meta:
-        model = Staff
-        fields = '__all__'
-
-    def get_rp(self, obj):
-        from apps.profiling.serializers.minimal import ResidentProfileMinimalSerializer 
-        return ResidentProfileMinimalSerializer(obj.rp).data
 
 class StaffTableSerializer(serializers.ModelSerializer):
   lname = serializers.CharField(source='rp.per.per_lname')
@@ -54,8 +43,8 @@ class StaffFullSerializer(serializers.ModelSerializer):
       fields = '__all__'
 
   def get_rp(self, obj):
-      from apps.profiling.serializers.minimal import ResidentProfileMinimalSerializer  # Lazy import inside the method
-      return ResidentProfileMinimalSerializer(obj.rp).data
+      from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
+      return ResidentPersonalInfoSerializer(obj.rp).data
   
 
 class StaffCreateSerializer(serializers.ModelSerializer):
@@ -72,6 +61,25 @@ class StaffCreateSerializer(serializers.ModelSerializer):
       register = Staff(**validated_data)
       register.save()
       return register
-    
-    return None
 
+    return None
+  
+class StaffLandingPageSerializer(serializers.ModelSerializer):
+  name = serializers.SerializerMethodField()
+  position = serializers.CharField(source='pos.pos_title')
+  assignments = AssignmentMinimalSerializer(many=True, read_only=True)
+  photo_url = serializers.SerializerMethodField()
+
+  class Meta:
+    model = Staff
+    fields = ['photo_url', 'name', 'position', 'assignments']
+
+  def get_name(self, obj):
+    info = obj.rp.per
+    return f'{info.per_lname.upper()}, {info.per_fname.upper()}' \
+            f' {info.per_mname.upper() if info.per_mname else ''}'
+
+  def get_photo_url(self, obj):
+    rp = obj.rp
+    account = Account.objects.filter(rp=rp).first()
+    return account.profile_image if account and account.profile_image else None

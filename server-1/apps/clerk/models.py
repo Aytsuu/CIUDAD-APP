@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.utils import timezone
 
 # Create your models here.
 # create models para as documets later
@@ -77,10 +78,16 @@ class Complainant(models.Model):
     cpnt_age = models.CharField(max_length=2)
     cpnt_number = models.CharField(max_length=11)
     cpnt_relation_to_respondent = models.CharField(max_length=20)
+    cpnt_gender = models.CharField(max_length=20)
+    cpnt_age = models.CharField(max_length=2)
+    cpnt_number = models.CharField(max_length=11)
+    cpnt_relation_to_respondent = models.CharField(max_length=20)
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='complainant')
+
 
     class Meta:
         db_table = 'complainant'
+
 
 
 class Accused(models.Model):
@@ -89,7 +96,11 @@ class Accused(models.Model):
     acsd_age = models.CharField(max_length=2)
     acsd_gender = models.CharField(max_length=20)
     acsd_description = models.TextField()
+    acsd_age = models.CharField(max_length=2)
+    acsd_gender = models.CharField(max_length=20)
+    acsd_description = models.TextField()
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='accused')
+
 
     class Meta:
         db_table = 'accused'
@@ -97,11 +108,24 @@ class Accused(models.Model):
 class Complaint(models.Model):
     comp_id = models.BigAutoField(primary_key=True)
     comp_location = models.CharField(max_length=255)
+    comp_location = models.CharField(max_length=255)
     comp_incident_type = models.CharField(max_length=100)
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_is_archive = models.BooleanField(default=False)
+
+    complainant = models.ManyToManyField(
+        Complainant,
+        through='ComplaintComplainant',
+        related_name='complaint'
+    )
+    accused = models.ManyToManyField(
+        Accused,
+        through='ComplaintAccused',
+        related_name='complaint'
+    )
+
 
     complainant = models.ManyToManyField(
         Complainant,
@@ -126,22 +150,36 @@ class ComplaintComplainant(models.Model):
         db_table = 'complaint_complainant'
         unique_together = ('comp', 'cpnt')  
 
+class ComplaintComplainant(models.Model):
+    cc_id = models.BigAutoField(primary_key=True)
+    comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
+    cpnt = models.ForeignKey(Complainant, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'complaint_complainant'
+        unique_together = ('comp', 'cpnt')  
+
 class ComplaintAccused(models.Model):
     ca_id = models.BigAutoField(primary_key=True)
     comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
     acsd = models.ForeignKey(Accused, on_delete=models.CASCADE)
 
+
     class Meta:
         db_table = 'complaint_accused'
         unique_together = ('comp', 'acsd')
+        unique_together = ('comp', 'acsd')
 
 class ServiceChargeRequest(models.Model):
+class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
+    sr_code = models.CharField(max_length=10, blank=True, null=True) 
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
     sr_req_date = models.DateTimeField(default=datetime.now)
     sr_status = models.CharField(null=True, blank=True)
     sr_payment_status = models.CharField(null=True, blank=True)
     sr_type = models.CharField(null=True, blank=True)
+    sr_decision_date = models.DateTimeField(null=True, blank=True)
     sr_decision_date = models.DateTimeField(null=True, blank=True)
     comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
     parent_summon = models.ForeignKey(
@@ -165,6 +203,7 @@ class CaseActivity(models.Model):
     ca_hearing_date = models.DateField(null=False)
     ca_hearing_time = models.TimeField(null=False)
     ca_mediation = models.CharField()
+    ca_mediation = models.CharField()
     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
     srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
@@ -185,10 +224,25 @@ class CaseSuppDoc(models.Model):
     class Meta:
         db_table = 'case_activity_supp_doc'
 
+class CaseSuppDoc(models.Model):
+    csd_id = models.BigAutoField(primary_key=True)
+    csd_name = models.CharField(max_length=255)
+    csd_type = models.CharField(max_length=100)
+    csd_path = models.CharField(max_length=500)
+    csd_url = models.CharField(max_length=500)
+    csd_description = models.TextField(null=False)
+    csd_upload_date = models.DateTimeField(default=datetime.now)
+    ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
+
+    class Meta:
+        db_table = 'case_activity_supp_doc'
+
 
 class ServiceChargeRequestFile(models.Model):
     srf_id = models.BigAutoField(primary_key=True)
     srf_name = models.CharField(max_length=255)
+    srf_type = models.CharField(max_length=100, null=True, blank=True)
+    srf_path = models.CharField(max_length=500, null=True, blank=True)
     srf_type = models.CharField(max_length=100, null=True, blank=True)
     srf_path = models.CharField(max_length=500, null=True, blank=True)
     srf_url = models.CharField(max_length=500)

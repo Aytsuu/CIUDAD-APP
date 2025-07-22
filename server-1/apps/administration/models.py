@@ -7,6 +7,8 @@ class Position(models.Model):
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
     pos_group = models.CharField(max_length=100, null=True, default="NON-GROUPED")
+    pos_category = models.CharField(max_length=100, null=True, default="BARANGAY POSITION")
+    pos_is_predefined = models.BooleanField(default=False)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions', null=True)
 
     class Meta:

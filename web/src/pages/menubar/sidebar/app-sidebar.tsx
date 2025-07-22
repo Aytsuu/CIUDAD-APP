@@ -270,16 +270,23 @@ const items: MenuItem[] = [
     ],
   },
   {
+    title: "Report",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Incident", url: "/report/incident"},
+      { title: "Acknowledgement", url: "/report/acknowledgement"},
+      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
+      { title: "Securado", url: "/report/securado"}  
+    ],
+  },
+  {
     title: "Blotter",
     url: "/blotter-record",
   },
   {
     title: "Team",
-    url: "/report",
-  },
-  {
-    title: "Report",
-    url: "/report",
+    url: "/team",
   },
   {
     title: "Summon & Case Tracker",

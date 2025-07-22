@@ -8,53 +8,59 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { Link } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { FormInput } from "@/components/ui/form/form-input";
+import { Plus } from "lucide-react";
 
 export default function LivingSoloForm({
+  isRegistrationTab = false,
   residents,
   households,
   isSubmitting,
   invalidResident,
   invalidHousehold,
+  buildingReadOnly,
   form,
   onSubmit
 }: {
+  isRegistrationTab: boolean;
   residents: any[];
   households: any[];
   isSubmitting: boolean;
   invalidResident: boolean;
   invalidHousehold: boolean;
+  buildingReadOnly: boolean;
   form: UseFormReturn<z.infer<typeof demographicInfoSchema>>;
   onSubmit: () => void;
 }) {
   return (
     <>
       <div className="grid gap-3">
-        <div className="grid gap-2">
-          <div className="flex justify-between items-center">
-            <Label className="text-black/70">Resident</Label>
+        {!isRegistrationTab && (
+          <div className="grid gap-2">
+            <div className="flex justify-between items-center">
+              <Label className="text-black/70">Resident</Label>
+            </div>
+            <Combobox
+              options={residents}
+              value={form.watch("id") as string}
+              onChange={(value) => form.setValue("id", value)}
+              placeholder="Select a resident"
+              triggerClassName="font-normal"
+              emptyMessage={
+                <div className="flex gap-2 justify-center items-center">
+                  <Label className="font-normal text-[13px]">No resident found.</Label>
+                  <Link to="/resident/form">
+                    <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                      Register
+                    </Label>
+                  </Link>
+                </div>
+              }
+            />
+            <Label className="text-[13px] text-red-500">
+              {invalidResident ? `Resident is required` : ""}
+            </Label>
           </div>
-          <Combobox
-            options={residents}
-            value={form.watch("id") as string}
-            onChange={(value) => form.setValue("id", value)}
-            placeholder="Select a resident"
-            triggerClassName="font-normal"
-            emptyMessage={
-              <div className="flex gap-2 justify-center items-center">
-                <Label className="font-normal text-[13px]">No resident found.</Label>
-                <Link to="/resident/form">
-                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                    Register
-                  </Label>
-                </Link>
-              </div>
-            }
-          />
-          <Label className="text-[13px] text-red-500">
-            {invalidResident ? `Resident is required` : ""}
-          </Label>
-        </div>
+        )}
         <div className="grid gap-2">
           <div className="flex justify-between items-center">
             <Label className="text-black/70">Household</Label>
@@ -89,7 +95,7 @@ export default function LivingSoloForm({
             { id: "renter", name: "Renter" },
             { id: "other", name: "Other" },
           ]}
-          readOnly={form.watch("building") === "owner" ? true : false}
+          readOnly={buildingReadOnly}
         />
         <FormSelect
           control={form.control}
@@ -106,7 +112,12 @@ export default function LivingSoloForm({
       <div className="flex justify-end">
         {!isSubmitting ? (
           <ConfirmationModal 
-            trigger={<Button>Register</Button>}
+            trigger={
+              <Button className="min-w-32">
+                <Plus className="w-4 h-4 mr-2" />
+                Register
+              </Button>
+            }
             title="Confirm Register"
             description="Are you sure you want to register a family?"
             actionLabel="Confirm"

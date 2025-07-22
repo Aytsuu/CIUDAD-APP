@@ -29,8 +29,10 @@ export const FormDateInput = ({ control, name, label, editable = true }: DatePic
           
           <View className="flex relative">
             <Button
-              onPress={editable ? () => setShowPicker(true) : undefined}
-              className="bg-white border border-gray-300 native:h-[45px] items-start"
+              onPress={() => setShowPicker(true)}
+              className={`h-[45px] rounded-md font-PoppinsRegular border bg-white items-start ${
+              error ? 'border-red-500' : 'border-gray-300'
+            }`}
             >
               <Text className="text-[12px]">
                 {value ? new Date(value).toLocaleDateString() : "Select Date"}

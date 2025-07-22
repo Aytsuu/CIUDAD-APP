@@ -17,7 +17,7 @@ export default function RecentWeeklyAR({
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="h-4 w-4" />
+          <Clock className="h-4 w-4 text-green-500" />
           Recent Reports
         </CardTitle>
       </CardHeader>
@@ -30,15 +30,19 @@ export default function RecentWeeklyAR({
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">
-                  Week {getWeekNumber(report.date)}
+                  Week {getWeekNumber(report.created_for)}
                 </span>
                 <Badge variant="outline" className="text-xs">
                   {report.war_composition.length}
                 </Badge>
               </div>
               <div className="text-xs text-muted-foreground mb-2">
-                {getMonthName(report.date)} •{" "}
-                {new Date(report.date).toLocaleDateString()}
+                report for: {getMonthName(report.created_for)} •{" "}
+                {new Date(report.created_for).toLocaleDateString()}
+              </div>
+              <div className="text-xs text-muted-foreground mb-2">
+                created: {getMonthName(report.created_at)} •{" "}
+                {new Date(report.created_at).toLocaleDateString()}
               </div>
               <div className="space-y-1">
                 {report.war_composition

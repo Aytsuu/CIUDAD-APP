@@ -1,3 +1,9 @@
+import { AdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
+import { ProfilingSectionCards } from "@/components/analytics/profiling/profiling-section-cards";
+import { ProfilingSidebar } from "@/components/analytics/profiling/profiling-sidebar";
+import { ReportSectionCards } from "@/components/analytics/report/report-section-cards";
+import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
+import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { GADExpenseSidebar, GADIncomeSidebar } from "@/components/analytics/gad/btracker-sidebar";
@@ -18,25 +24,31 @@ export default function Dashboard() {
       <div className="w-full flex gap-2">
         <div className="w-full grid gap-2">
           <div className="grid grid-cols-5">
-            <DonationSectionCards/>
-            <ProjPropPendingSectionCards/>
-            <WastePersonnelCards/>
+            <AdminSectionCards />
+            <ProfilingSectionCards />
+            <ReportSectionCards />
+            <DonationSectionCards />
+            <ProjPropPendingSectionCards />
+            <WastePersonnelCards />
           </div>
           <div className="grid">
-            <StaffAttendanceRankingChart/>
-            <GADQuarterlyBudgetChart/>
+            <ReportSectionCharts />
+            <StaffAttendanceRankingChart />
+            <GADQuarterlyBudgetChart />
           </div>
           <div className="grid">
-            <IncomeExpenseQuarterlyChart/>
+            <IncomeExpenseQuarterlyChart />
           </div>
           <div className="grid">
-            <IncomeQuarterlyChart/>
+            <IncomeQuarterlyChart />
           </div>
         </div>
         <div className="grid gap-2">
-          <GADExpenseSidebar/>
-          <GADIncomeSidebar/>
-          <CouncilEventsSidebar/>
+          <ProfilingSidebar />
+          <ReportSidebar />
+          <GADExpenseSidebar />
+          <GADIncomeSidebar />
+          <CouncilEventsSidebar />
         </div>
       </div>
     </MainLayoutComponent>

@@ -39,8 +39,6 @@ class Migration(migrations.Migration):
             options={
                 'db_table': 'account',
             },
-            managers=[
-                ('objects', django.contrib.auth.models.UserManager()),
-            ],
         ),
     ]
+

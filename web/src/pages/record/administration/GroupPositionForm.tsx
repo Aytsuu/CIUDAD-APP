@@ -1,5 +1,3 @@
-"use client"
-
 import { Form } from "@/components/ui/form/form"
 import React from "react"
 import { toast } from "sonner"
@@ -122,6 +120,7 @@ export default function GroupPositionForm() {
     }))
 
     try {
+
       await addPositionBulk(data)
       await addPositionBulkHealth(data)
       

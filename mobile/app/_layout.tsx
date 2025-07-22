@@ -21,13 +21,20 @@ const LIGHT_THEME: Theme = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    
+  });
 
   const [loaded] = useFonts({
     PoppinsRegular: require('../assets/fonts/Poppins-Regular.ttf'),
     PoppinsMedium: require('../assets/fonts/Poppins-Medium.ttf'),
     PoppinsSemiBold: require('../assets/fonts/Poppins-SemiBold.ttf'),
   });
+
+  useEffect(() => {
+    NavigationBar.setBackgroundColorAsync('#ffffff');
+    NavigationBar.setButtonStyleAsync('dark');
+  }, []);
 
   useEffect(() => {
     if (loaded) {
@@ -41,24 +48,26 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={LIGHT_THEME}>
-      <StatusBar backgroundColor="transparent" style="dark" />
-      <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <StatusBar backgroundColor="transparent" style="dark" />
         <ToastProvider>
           <Stack initialRouteName='(auth)'>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
+            <Stack.Screen name="(profiling)" options={{ headerShown: false }} />
+            <Stack.Screen name="(report)" options={{ headerShown: false }} />
             <Stack.Screen name="(health)" options={{ headerShown: false }} />
             <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
             <Stack.Screen name="donation" options = {{headerShown: false}}/>
             <Stack.Screen name="council" options={{ headerShown: false }} />
-            <Stack.Screen name="(treasurer)" options = {{headerShown: false}}/>
-            <Stack.Screen name="(waste)" options = {{headerShown: false}}/>
-            <Stack.Screen name="(request)" options = {{headerShown: false}}/>
+            <Stack.Screen name="treasurer" options = {{headerShown: false}}/>
+            <Stack.Screen name="waste" options = {{headerShown: false}}/>
             <Stack.Screen name="gad" options = {{headerShown: false}}/>
             <Stack.Screen name="+not-found" />
           </Stack>
         </ToastProvider>
-      </QueryClientProvider>
+      </AuthProvider>
       <PortalHost />
     </ThemeProvider>
   );

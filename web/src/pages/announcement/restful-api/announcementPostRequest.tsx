@@ -11,16 +11,16 @@ export const postAnnouncement = async (announcement: Record<string, any>) => {
   }
 };
 
-export const postAnnouncementRecipient = async (recipient: Record<string, any>) => {
+// Updated to accept bulk payload
+export const postAnnouncementRecipient = async (payload: { recipients: Record<string, any>[] }) => {
   try {
-    const res = await api.post("announcement/create-recipient/", recipient);
+    const res = await api.post("announcement/create-recipient/", payload);
     return res.data;
   } catch (error) {
     console.error(error);
     throw error;
   }
 };
-
 
 export const postAnnouncementFile = () => {
   return useMutation({
