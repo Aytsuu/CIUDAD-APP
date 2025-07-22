@@ -1,6 +1,5 @@
 import { api } from "../../../api/api";
 import { formatDate } from "@/helpers/dateHelpers";
-import { AttendanceSheetInput } from "./queries";
 
 export type Staff = {
   staff_id: string;
