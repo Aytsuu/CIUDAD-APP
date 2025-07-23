@@ -36,6 +36,7 @@ import {
 } from "./queries/fetchqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
+import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 
 export interface EditProjectProposalFormProps {
   onSuccess: (data: ProjectProposal) => void;
@@ -63,13 +64,28 @@ export const EditProjectProposalForm: React.FC<
   const addSupportDocMutation = useAddSupportDocument();
   const deleteSupportDocMutation = useDeleteSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-
+  
   // Display remaining balance from budget tracker
   const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
-  const latestExpenseWithBalance = budgetEntries
-    .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
-    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
-  const availableBudget = latestExpenseWithBalance ? Number(latestExpenseWithBalance.gbud_remaining_bal) : null;
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const currentYear = new Date().getFullYear().toString();
+  const currentYearBudget = yearBudgets?.find(
+    (budget) => budget.gbudy_year === currentYear
+  )?.gbudy_budget;
+
+const latestExpenseWithBalance = budgetEntries
+  .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+  .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
+
+const availableBudget = latestExpenseWithBalance
+  ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
+    ? currentYearBudget 
+      ? Number(currentYearBudget)
+      : 0
+    : Number(latestExpenseWithBalance.gbud_remaining_bal)
+  : currentYearBudget
+    ? Number(currentYearBudget)
+    : 0;
 
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     resolver: zodResolver(ProjectProposalSchema),
