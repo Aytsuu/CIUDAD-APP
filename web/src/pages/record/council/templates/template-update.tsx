@@ -25,6 +25,7 @@ import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
 import TemplatePreview from "./template-preview";
 import { useUpdateTemplate } from "./queries/template-UpdateQueries";
+import { useGetPurposeRates } from "./queries/template-FetchQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 
@@ -41,6 +42,7 @@ interface TemplateUpdateFormProps{
     temp_w_seal: boolean;
     temp_w_summon: boolean;
     temp_body: string;
+    pr_id: number;
     onSuccess?: () => void;
     onClose?: () => void; 
 }
@@ -60,6 +62,7 @@ function TemplateUpdateForm({
     temp_w_seal,
     temp_w_summon,
     temp_body,
+    pr_id,
     onSuccess,
     onClose 
   } : TemplateUpdateFormProps) {
@@ -99,6 +102,7 @@ function TemplateUpdateForm({
       temp_w_seal: temp_w_seal,
       temp_w_summon: temp_w_summon,
       temp_body: temp_body,
+      selectedPurposeRates: [String(pr_id)]
     },
   });
 
@@ -116,13 +120,46 @@ function TemplateUpdateForm({
 
   // const { mutate: updateTemplateRecord } = useUpdateTemplate(temp_id, onSuccess);
 
+  //Update mutation
   const { mutate: updateTemplateRecord } = useUpdateTemplate(temp_id, () => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
   });
 
+  //Fetch mutation
+  const { data: purposeRatesList = [] } = useGetPurposeRates();
+
+  const purposeRatesOptions = purposeRatesList.filter(purpose => purpose.pr_is_archive == false).map(purpose => ({
+      id: String(purpose.pr_id),  
+      name: purpose.pr_purpose 
+  }));
+
+
   function onSubmit(values: z.infer<typeof documentTemplateFormSchema>) {
-    updateTemplateRecord(values);
+    form.clearErrors("selectedPurposeRates");
+
+    console.log("LENGTH: ", values.selectedPurposeRates.length)
+    if (values.selectedPurposeRates.length !== 1) {
+      setTimeout(() => {
+        form.setError("selectedPurposeRates", {
+          type: "manual",
+          message: "Please select exactly one purpose",
+        });
+      }, 0);
+      return;
+    }
+
+    const selectedId = values.selectedPurposeRates[0];
+    const selectedPurpose = purposeRatesOptions.find(p => p.id === selectedId);
+
+    const updatedValues = {
+      ...values,
+      temp_filename: selectedPurpose?.name || values.temp_filename,
+      pr_id: Number(selectedId),
+    };
+
+    updateTemplateRecord(updatedValues);
+    console.log("VALUESSSS UPDATED: ", updatedValues)
   }
 
 
@@ -136,20 +173,30 @@ function TemplateUpdateForm({
       form.handleSubmit(onSubmit)(); // Call the submit function
   };
 
+
   return (
     <>
         <div className="flex flex-col p-2 min-h-0 h-auto rounded-lg overflow-auto">
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
 
+              {/*Purpose and Rates field*/}
+                  <FormComboCheckbox
+                    control={form.control}
+                    name="selectedPurposeRates"
+                    label="Select Purpose"
+                    options={purposeRatesOptions}
+                  />
+
                  {/* Filename field*/}               
-                <FormInput
+                {/* <FormInput
+                  className="hidden"
                   control={form.control}
                   name="temp_filename"
                   label="Filename"
                   placeholder="Enter Filename"
                   readOnly={false}
-                />                
+                />                 */}
                             
                 {/* Header + Footer Container */}
                 <div className="flex flex-row gap-10 items-stretch">

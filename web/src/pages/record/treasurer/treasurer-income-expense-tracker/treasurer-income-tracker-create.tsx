@@ -192,49 +192,91 @@ import IncomeFormSchema from "@/form-schema/treasurer/income-tracker-schema";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { useAddParticular } from "./request/particularsPostRequest";
 import { useDeleteParticular } from "./request/particularsDeleteRequest";
+import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+
 
 interface IncomeCreateFormProps {
     onSuccess?: () => void;
+    year: number;
+    totInc: number;
 }
 
-function IncomeCreateForm({ onSuccess }: IncomeCreateFormProps) {
+function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
-
+    const inputCss = "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
+    
     const { handleAddParticular } = useAddParticular();
     const { handleDeleteConfirmation, ConfirmationDialogs } = useDeleteParticular();
+
+    console.log("INCOMMMME YEEAAARRRRRRR: ", year)
+    console.log("INCOMMMME  TYPEE  YEEAAARRRRRRR: ", typeof year)
 
     const form = useForm<z.infer<typeof IncomeFormSchema>>({
         resolver: zodResolver(IncomeFormSchema),
         defaultValues: {
+            inc_datetime: "",
             inc_entryType: "",
             inc_particulars: "",
             inc_amount: "",
             inc_additional_notes: "",
-            inc_receipt_image: "",
+            // inc_receipt_image: "",
         },
     });
 
-    //query file
+    //Fetch mutation
+    const { data: IncomeParticularItems = [] } = useIncomeParticular();
+    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+
+    //Post mutation
     const { mutate: createIncome } = useCreateIncome(onSuccess);
 
+    const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
+    const totInc = matchedYearData?.ie_main_inc ?? 0;
+
+    
     const onSubmit = async (values: z.infer<typeof IncomeFormSchema>) => {
+        const inputDate = new Date(values.inc_datetime);
+        const inputYear = inputDate.getFullYear();
+        const yearIncome = Number(year)
+        let totalIncome = 0.0
+
+        console.log("YEAR NUMBERRRR: ", typeof inputYear)
+
+        let totIncome = Number(totInc);
+        let inc_amount = Number(values.inc_amount)
+
+        totalIncome = totIncome + inc_amount;
+
+        if (inputYear !== yearIncome) {
+            form.setError('inc_datetime', {
+                type: 'manual',
+                message: `Date must be in the year ${year}`
+            });
+            return; 
+        }
         
-        createIncome(values)
+        const AllValues = {
+            ...values,
+            totalIncome,
+            year
+        }
+
+        createIncome(AllValues)
     };
 
     //setting url to the inc_receipt_image
-    useEffect(() => {
-        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-            form.setValue('inc_receipt_image', mediaFiles[0].publicUrl);
-        } else {
-            form.setValue('inc_receipt_image', 'no-image-url-fetched');
-        }
-    }, [mediaFiles, form]);
+    // useEffect(() => {
+    //     if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+    //         form.setValue('inc_receipt_image', mediaFiles[0].publicUrl);
+    //     } else {
+    //         form.setValue('inc_receipt_image', 'no-image-url-fetched');
+    //     }
+    // }, [mediaFiles, form]);
 
     //fetching Income Particulars
-    const { data: IncomeParticularItems = [] } = useIncomeParticular();
+
     const IncomeParticulars = IncomeParticularItems
         .filter(item => item.id && item.name)
         .map(item => ({
@@ -245,6 +287,27 @@ function IncomeCreateForm({ onSuccess }: IncomeCreateFormProps) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
+
+
+                <div className="pb-5">
+                    <FormField
+                        control={form.control}
+                        name="inc_datetime"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Date</FormLabel>
+                                <FormControl>
+                                    <input 
+                                        type="datetime-local" {...field} 
+                                        placeholder={`Date (${year} only)`} 
+                                        className={inputCss}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                        
                 <div className="pb-5">
                     <FormField
@@ -309,7 +372,7 @@ function IncomeCreateForm({ onSuccess }: IncomeCreateFormProps) {
                     />
                 </div>
 
-                <div className="pb-5">
+                {/* <div className="pb-5">
                     <FormField
                         control={form.control}
                         name="inc_receipt_image"
@@ -330,7 +393,7 @@ function IncomeCreateForm({ onSuccess }: IncomeCreateFormProps) {
                             </FormItem>
                         )}
                     />
-                </div>
+                </div> */}
 
                 <div className="flex justify-end mt-[20px] space-x-2">
                     <Button type="submit">Save Entry</Button>
@@ -342,7 +405,6 @@ function IncomeCreateForm({ onSuccess }: IncomeCreateFormProps) {
 }
 
 export default IncomeCreateForm;
-
 
 
 

@@ -16,6 +16,7 @@ import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamil
 import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
 import { Navigate } from "react-router";
 import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
+import UpdateComparisonView from "@/pages/record/profiling/resident/form/UpdateComparisonView";
 
 export const profiling_router = [
   // Account
@@ -40,6 +41,10 @@ export const profiling_router = [
   {
     path: "resident/view",
     element: <ResidentFormLayout />,
+  },
+  {
+    path: "resident/update/view",
+    element: <UpdateComparisonView />,
   },
   {
     path: "request/pending",

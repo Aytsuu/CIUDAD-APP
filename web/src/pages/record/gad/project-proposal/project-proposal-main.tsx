@@ -29,6 +29,8 @@ import {
   useDeleteSupportDocument,
   useArchiveProjectProposal,
   useRestoreProjectProposal,
+  useArchiveSupportDocument,
+  useRestoreSupportDocument,
 } from "./queries/delqueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -39,7 +41,138 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "./view-projprop";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+function DocumentCard({
+  doc,
+  showActions,
+  onDelete,
+  onArchive,
+  onRestore,
+  isDeleting,
+  isArchived = false,
+}: {
+  doc: SupportDoc;
+  showActions: boolean;
+  onDelete?: () => void;
+  onArchive?: () => void;
+  onRestore?: () => void;
+  isDeleting: boolean;
+  isArchived?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center p-4 rounded-lg">
+      <div className="relative w-full h-64 flex justify-center items-center">
+        {showActions && (
+          <div className="absolute right-2 top-2 z-10 flex gap-2">
+            {isArchived ? (
+              <>
+                {onRestore && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button
+                        size="icon"
+                        className="h-8 w-8 bg-green-600"
+                        disabled={isDeleting}
+                      >
+                        <ArchiveRestore size={16} />
+                      </Button>
+                    }
+                    title="Restore Supporting Document"
+                    description="Are you sure you want to restore this document?"
+                    actionLabel={isDeleting ? "Restoring..." : "Restore"}
+                    onClick={onRestore}
+                    type="success"
+                  />
+                )}
+                {onDelete && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={isDeleting}
+                      >
+                        <Trash size={16} />
+                      </Button>
+                    }
+                    title="Delete Supporting Document"
+                    description="Are you sure you want to permanently delete this document?"
+                    actionLabel={isDeleting ? "Deleting..." : "Delete"}
+                    onClick={onDelete}
+                    type="destructive"
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                {onArchive && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={isDeleting}
+                      >
+                        <Archive size={16} />
+                      </Button>
+                    }
+                    title="Archive Supporting Document"
+                    description="Are you sure you want to archive this document?"
+                    actionLabel={isDeleting ? "Archiving..." : "Archive"}
+                    onClick={onArchive}
+                    type="warning"
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {doc.psd_type?.startsWith("image/") && doc.psd_url ? (
+          <a
+            href={doc.psd_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full h-full flex justify-center items-center"
+          >
+            <img
+              src={doc.psd_url}
+              alt={`Supporting Document ${doc.psd_name || "Unknown"}`}
+              className="w-full h-full object-contain rounded-md cursor-pointer"
+              onError={(e) => {
+                console.error(`Failed to load image: ${doc.psd_url}`);
+                (e.target as HTMLImageElement).src = "/placeholder-image.png";
+              }}
+            />
+          </a>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-md">
+            <p className="mt-2 text-sm text-gray-600">
+              {doc.psd_name || "No file name"}
+            </p>
+            {doc.psd_url ? (
+              <a
+                href={doc.psd_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 text-blue-600 hover:underline"
+              >
+                View Document
+              </a>
+            ) : (
+              <p className="mt-2 text-sm text-red-500">No file available</p>
+            )}
+          </div>
+        )}
+      </div>
+      <p className="mt-2 text-sm text-gray-500 text-center">
+        {doc.psd_name || "Unknown"} {isArchived && "(Archived)"}
+      </p>
+    </div>
+  );
+}
 
 function GADProjectProposal() {
   const style = {
@@ -70,6 +203,9 @@ function GADProjectProposal() {
   const { mutate: deleteSupportDoc } = useDeleteSupportDocument();
   const { mutate: archiveProject } = useArchiveProjectProposal();
   const { mutate: restoreProject } = useRestoreProjectProposal();
+  const { mutate: archiveSupportDoc } = useArchiveSupportDocument();
+  const { mutate: restoreSupportDoc } = useRestoreSupportDocument();
+
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -86,6 +222,7 @@ function GADProjectProposal() {
   const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
   const [isDeletingDoc, setIsDeletingDoc] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
+  const [suppDocTab, setSuppDocTab] = useState<"active" | "archived">("active");
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -181,21 +318,58 @@ function GADProjectProposal() {
   };
 
   const handleDeleteDoc = async (psdId: number) => {
+    if (!selectedProject) return;
+
     setIsDeletingDoc(true);
-    deleteSupportDoc(psdId, {
-      onSuccess: () => {
-        console.log(`Successfully deleted document with psdId: ${psdId}`);
-        setSelectedSuppDocs((prev) =>
-          prev.filter((doc) => doc.psdId !== psdId)
-        );
-      },
-      onError: (err) => {
-        console.error(`Error deleting document with psdId: ${psdId}`, err);
-      },
-      onSettled: () => {
-        setIsDeletingDoc(false);
-      },
-    });
+    deleteSupportDoc(
+      { gprId: selectedProject.gprId, psdId },
+      {
+        onSuccess: () => {
+          setSelectedSuppDocs((prev) =>
+            prev.filter((doc) => doc.psd_id !== psdId)
+          );
+        },
+        onSettled: () => setIsDeletingDoc(false),
+      }
+    );
+  };
+
+  const handleArchiveDoc = async (psdId: number) => {
+    if (!selectedProject) return;
+
+    setIsDeletingDoc(true);
+    archiveSupportDoc(
+      { gprId: selectedProject.gprId, psdId },
+      {
+        onSuccess: () => {
+          setSelectedSuppDocs((prev) =>
+            prev.map((doc) =>
+              doc.psd_id === psdId ? { ...doc, psd_is_archive: true } : doc
+            )
+          );
+        },
+        onSettled: () => setIsDeletingDoc(false),
+      }
+    );
+  };
+
+  const handleRestoreDoc = async (psdId: number) => {
+    if (!selectedProject) return;
+
+    setIsDeletingDoc(true);
+    restoreSupportDoc(
+      { gprId: selectedProject.gprId, psdId },
+      {
+        onSuccess: () => {
+          setSelectedSuppDocs((prev) =>
+            prev.map((doc) =>
+              doc.psd_id === psdId ? { ...doc, psd_is_archive: false } : doc
+            )
+          );
+        },
+        onSettled: () => setIsDeletingDoc(false),
+      }
+    );
   };
 
   if (isLoading) {
@@ -340,7 +514,7 @@ function GADProjectProposal() {
                         <ConfirmationModal
                           trigger={
                             <Archive
-                              className="text-gray-500 hover:text-yellow-600 cursor-pointer"
+                              className="text-gray-500 hover:text-red-600 cursor-pointer"
                               size={20}
                             />
                           }
@@ -441,7 +615,7 @@ function GADProjectProposal() {
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
                   disabled={
-                    !selectedProject || selectedProject.status !== "Pending"
+                    !selectedProject || selectedProject.status !== "Pending" || selectedProject.gprIsArchive === true
                   }
                 >
                   <Edit size={16} /> Edit
@@ -468,94 +642,91 @@ function GADProjectProposal() {
       </Dialog>
 
       <Dialog open={isSuppDocDialogOpen} onOpenChange={setIsSuppDocDialogOpen}>
-        <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] p-4 flex flex-col">
-          <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+        <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
+          <DialogHeader className="sticky top-0 z-10 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle>Supporting Documents</DialogTitle>
-              <Button
-                variant="ghost"
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => setIsSuppDocDialogOpen(false)}
-              >
-                <X size={20} />
-              </Button>
             </div>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto mt-4 space-y-6">
-            {isSupportDocsLoading ? (
-              <p className="text-gray-500 text-center py-8">
-                Loading documents...
-              </p>
-            ) : selectedSuppDocs.length > 0 ? (
-              selectedSuppDocs.map((doc) => (
-                <div
-                  key={doc.psdId || Math.random()}
-                  className="flex flex-col items-center"
-                >
-                  <div className="relative w-full max-w-4xl">
-                    <div className="absolute right-4 top-4 z-10">
-                      <ConfirmationModal
-                        trigger={
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            disabled={!doc.psdId || isDeletingDoc}
-                          >
-                            <Trash size={16} />
-                          </Button>
-                        }
-                        title="Delete Supporting Document"
-                        description="Are you sure you want to delete this document?"
-                        actionLabel={isDeletingDoc ? "Deleting..." : "Delete"}
-                        onClick={() => handleDeleteDoc(doc.psdId)}
-                        type="destructive"
-                      />
-                    </div>
-                    {doc.fileType?.startsWith("image/") && doc.fileUrl ? (
-                      <img
-                        src={doc.fileUrl}
-                        alt={`Supporting Document ${doc.fileName || "Unknown"}`}
-                        className="w-full max-h-[70vh] object-contain"
-                        onError={(e) => {
-                          console.error(`Failed to load image: ${doc.fileUrl}`);
-                          (e.target as HTMLImageElement).src =
-                            "/placeholder-image.png";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg">
-                        <p className="mt-2 text-sm text-gray-600">
-                          {doc.fileName || "No file name"}
-                        </p>
-                        {doc.fileUrl ? (
-                          <a
-                            href={doc.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 text-blue-600 hover:underline"
-                          >
-                            View Document
-                          </a>
-                        ) : (
-                          <p className="mt-2 text-sm text-red-500">
-                            No file available
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">
-                    {doc.fileName || "Unknown"}
+
+          <Tabs
+            value={suppDocTab}
+            onValueChange={(value) =>
+              setSuppDocTab(value as "active" | "archived")
+            }
+            className="w-full flex-1 flex flex-col"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="archived">Archived</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {isSupportDocsLoading ? (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    Loading documents...
                   </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-8">
-                No supporting documents available.
-              </p>
-            )}
-          </div>
+                ) : selectedSuppDocs.filter((doc) => !doc.psd_is_archive)
+                    .length > 0 ? (
+                  selectedSuppDocs
+                    .filter((doc) => !doc.psd_is_archive)
+                    .map((doc) => (
+                      <DocumentCard
+                        key={doc.psd_id}
+                        doc={doc}
+                        showActions={
+                          selectedProject?.gprIsArchive === false &&
+                          selectedProject?.status === "Pending"
+                        }
+                        onDelete={() => handleDeleteDoc(doc.psd_id)}
+                        onArchive={() => handleArchiveDoc(doc.psd_id)}
+                        isDeleting={isDeletingDoc}
+                      />
+                    ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    No active supporting documents available.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="archived"
+              className="flex-1 overflow-y-auto p-4"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {isSupportDocsLoading ? (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    Loading documents...
+                  </p>
+                ) : selectedSuppDocs.filter((doc) => doc.psd_is_archive)
+                    .length > 0 ? (
+                  selectedSuppDocs
+                    .filter((doc) => doc.psd_is_archive)
+                    .map((doc) => (
+                      <DocumentCard
+                        key={doc.psd_id}
+                        doc={doc}
+                        showActions={
+                          selectedProject?.gprIsArchive === false &&
+                          selectedProject?.status === "Pending"
+                        }
+                        onDelete={() => handleDeleteDoc(doc.psd_id)}
+                        onRestore={() => handleRestoreDoc(doc.psd_id)}
+                        isDeleting={isDeletingDoc}
+                        isArchived
+                      />
+                    ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    No archived supporting documents available.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 

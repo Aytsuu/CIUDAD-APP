@@ -521,10 +521,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       await Promise.all(
         validSupportDocs.map(doc => {
           const fileData = {
-            file_url: doc.publicUrl!,
-            file_path: doc.storagePath!,
-            file_name: doc.file.name,
-            file_type: doc.file.type
+            psd_url: doc.publicUrl!,
+            psd_path: doc.storagePath!,
+            psd_name: doc.file.name,
+            psd_type: doc.file.type
           };
           return addSupportDocMutation.mutateAsync({
             gprId: proposalResponse.gprId,

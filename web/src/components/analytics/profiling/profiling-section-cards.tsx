@@ -30,7 +30,7 @@ export const ProfilingSectionCards = () => {
             <CardHeader>
               <CardDescription>{sec.title}</CardDescription>
               <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                {!isLoading ? profilingCardAnalytics[idx] : "..."}
+                {!isLoading && profilingCardAnalytics && profilingCardAnalytics.length > 0 ? profilingCardAnalytics[idx] : "..."}
               </CardTitle>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1.5 text-sm">

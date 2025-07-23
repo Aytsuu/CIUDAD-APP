@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from datetime import date
+from simple_history.models import HistoricalRecords
 
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
@@ -42,6 +43,13 @@ class Personal(models.Model):
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
+
+    history = HistoricalRecords(
+        table_name='personal_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
 
     class Meta:
         db_table = 'personal'

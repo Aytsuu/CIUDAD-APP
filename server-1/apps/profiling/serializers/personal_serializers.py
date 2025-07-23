@@ -1,6 +1,20 @@
 from rest_framework import serializers
 from ..models import *
 from ..serializers.address_serializers import AddressBaseSerializer
+from apps.administration.models import Staff
+
+class PersonalHistoryBaseSerializer(serializers.ModelSerializer):
+    history_user_name = serializers.SerializerMethodField()
+    history_date = serializers.DateTimeField(format='%Y-%m-%d %I:%M:%S %p')
+
+    class Meta:
+        model = Personal.history.model
+        fields = '__all__'
+    
+    def get_history_user_name(self, obj):
+        info = obj.history_user.rp.per
+        return f'{info.per_lname}, {info.per_fname}' \
+                f' {info.per_mname}' if info.per_mname else ''
 
 class PersonalBaseSerializer(serializers.ModelSerializer):
     addresses = serializers.SerializerMethodField()
@@ -30,6 +44,8 @@ class PersonalBaseSerializer(serializers.ModelSerializer):
 
 class PersonalUpdateSerializer(serializers.ModelSerializer):
     per_addresses = serializers.ListField(child=AddressBaseSerializer(), required=False)
+    staff_id = serializers.CharField(write_only=True, required=True)
+
     class Meta:
         model = Personal
         fields = '__all__'
@@ -40,7 +56,15 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
         }
 
     def update(self, instance, validated_data): 
-        # Handle address data if provided
+        staff_id = validated_data.pop('staff_id', None)
+        
+        try:
+            staff = Staff.objects.get(staff_id=staff_id)
+        except Staff.DoesNotExist:
+            raise serializers.ValidationError({"staff_id" : "Invalid staff ID"})
+
+        instance._history_user = staff
+        instance._history_change_reason = f"Updated by staff {staff_id}"
         addresses_data = validated_data.pop('per_addresses', None)
 
         if addresses_data is not None:
@@ -113,5 +137,8 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
-        instance.save()
+        instance.save(
+            update_fields=list(validated_data.keys()) if validated_data else None
+        )
         return instance
+    

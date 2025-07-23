@@ -2,6 +2,7 @@
 from rest_framework import serializers
 from .models import *
 from django.apps import apps
+from apps.treasurer.models import Purpose_And_Rates
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,7 +37,11 @@ class TemplateSerializer(serializers.ModelSerializer):
         model = Template
         fields = '__all__'
 
+        
+
 Staff = apps.get_model('administration', 'Staff')
+
+
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)  # Add position title
@@ -51,7 +56,14 @@ class StaffSerializer(serializers.ModelSerializer):
         except AttributeError:
             return "Unknown"
 
+class StaffAttendanceRankingSerializer(serializers.Serializer):
+    atn_name = serializers.CharField()
+    atn_designation = serializers.CharField()
+    attendance_count = serializers.IntegerField()
 
+    class Meta:
+        fields = ['atn_name', 'atn_designation', 'attendance_count']
+        
 # ==================================  RESOLUTION =================================
 
 class ResolutionFileSerializer(serializers.ModelSerializer):
@@ -72,29 +84,56 @@ class ResolutionSerializer(serializers.ModelSerializer):
         model = Resolution
         fields = '__all__'
 
-# class ResolutionSerializer(serializers.ModelSerializer):
-#     rf_id = serializers.SerializerMethodField()
-#     rf_url = serializers.SerializerMethodField()
 
-#     class Meta:
-#         model = Resolution
-#         fields = [
-#             'res_num',
-#             'res_title',
-#             'res_date_approved',
-#             'res_area_of_focus',
-#             'res_is_archive',
-#             'staff',
-#             'rf_id',
-#             'rf_url'
-#         ]
+class PurposeRatesListViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Purpose_And_Rates
+        fields = ['pr_id', 'pr_purpose', 'pr_is_archive']
 
-#     def get_rf_id(self, obj):
-#         if obj.resolution_files.exists():
-#             return obj.resolution_files.first().rf_id
-#         return None
 
-#     def get_rf_url(self, obj):
-#         if obj.resolution_files.exists():
-#             return obj.resolution_files.first().rf_url
-#         return None
+class MOMSuppDocSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = MOMSuppDoc
+        fields = '__all__'
+        
+class MinutesOfMeetingSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    file_id = serializers.SerializerMethodField()
+    areas_of_focus = serializers.SerializerMethodField()
+    supporting_docs = MOMSuppDocSerializer(source='momsuppdoc_set', many=True, read_only=True)
+
+    class Meta:
+        model = MinutesOfMeeting
+        fields = '__all__'
+        extra_fields = [
+            'file_url',
+            'file_id',
+            'areas_of_focus',
+            'supporting_docs'
+        ]
+
+    def get_file_url(self, obj):
+        file = obj.momfile_set.first()
+        return file.momf_url if file else None
+
+    def get_file_id(self, obj):
+        file = obj.momfile_set.first()
+        return file.momf_id if file else None
+
+    def get_areas_of_focus(self, obj):
+        return [
+            area.mof_area
+            for area in obj.momareaoffocus_set.all()
+            if area.mof_area
+        ]
+
+
+class MOMAreaOfFocusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MOMAreaOfFocus
+        fields = '__all__'
+
+class MOMFileSerialzer(serializers.ModelSerializer):
+    class Meta: 
+        model = MOMFile
+        fields = '__all__'
