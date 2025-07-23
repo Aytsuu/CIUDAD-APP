@@ -39,6 +39,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { Wallet } from "lucide-react";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
+import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 
 export interface ProjectProposalFormProps {
   onSuccess: () => void;
@@ -69,10 +70,25 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
   // Display remaining balance from budget tracker
   const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
-  const latestExpenseWithBalance = budgetEntries
-    .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
-    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
-  const availableBudget = latestExpenseWithBalance ? Number(latestExpenseWithBalance.gbud_remaining_bal) : null;
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const currentYear = new Date().getFullYear().toString();
+  const currentYearBudget = yearBudgets?.find(
+    (budget) => budget.gbudy_year === currentYear
+  )?.gbudy_budget;
+
+const latestExpenseWithBalance = budgetEntries
+  .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+  .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
+
+const availableBudget = latestExpenseWithBalance
+  ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
+    ? currentYearBudget 
+      ? Number(currentYearBudget)
+      : 0
+    : Number(latestExpenseWithBalance.gbud_remaining_bal)
+  : currentYearBudget
+    ? Number(currentYearBudget)
+    : 0;
   
 
   // Initialize react-hook-form
