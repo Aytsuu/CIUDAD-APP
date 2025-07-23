@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getIncomeImages } from "../api/getreq";
 import { getDisbursementImages } from "../api/getreq";
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export type Album = {
   id: number;

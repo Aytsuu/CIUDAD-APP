@@ -359,7 +359,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
               <>
                 <Button
                   type="button"
-                  className="bg-gray-500 text-black hover:bg-gray-600"
+                  className="bg-white text-black hover:bg-gray-200"
                   onClick={handleCancelClick}
                 >
                   Cancel
@@ -393,7 +393,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                     trigger={
                       <Button
                         type="button"
-                        className="bg-white text-red-500 hover:bg-gray-600"
+                        className="bg-white text-red-500 hover:bg-gray-100"
                         disabled={isArchiving}
                       >
                         {isArchiving ? (
@@ -416,7 +416,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                     trigger={
                       <Button
                         type="button"
-                        className="bg-gray-500 text-black hover:bg-gray-600"
+                        className="bg-white text-black hover:bg-gray-100"
                         onClick={handleNextClick}
                       >
                         Preview
