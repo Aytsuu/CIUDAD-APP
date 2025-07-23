@@ -1,11 +1,16 @@
 // pages/PrenatalIndivHistory.tsx
+import { useNavigate } from "react-router";
 import { Card, CardContent } from "@/components/ui/card/card";
 import { Button } from "@/components/ui/button/button";
-import { BsChevronLeft } from "react-icons/bs";
-import { useNavigate } from "react-router";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useState } from "react";
+
+
 import { FileText } from "lucide-react";
 import { MdOutlinePregnantWoman } from "react-icons/md";
-import { PrenatalHistoryTable } from "../maternal-components/prenatal-history";
+import { PrenatalHistoryTable } from "../../maternal-components/prenatal-history";
+import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";
+import PrenatalFormHistory from "./prenatal-form-history";
 
 interface PrenatalVisit {
   date: string;
@@ -88,44 +93,59 @@ const prenatalData: PrenatalVisit[] = [
 
 export default function PrenatalIndivHistory() {
   const hasData = prenatalData && prenatalData.length > 0;
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("prenatalcare");
+
+ const getTabStyle = (tab: string) => {
+		const baseClasses = "flex justify-center items-center cursor-pointer text-black/70 transition-colors duration-200 ease-in-out rounded-md p-2";
+		
+		if (activeTab === tab) {
+			// Active tab styles
+			return `${baseClasses} bg-white shadow-md border text-blue-500`;
+		} else {
+			// Inactive tab styles
+			return `${baseClasses} bg-blue-50 text-gray-100 hover:bg-white/`;
+		}
+	}
 
   return (
-	<div className="space-y-4">
-		{/* Back Button */}
-		<div className="flex items-center mb-2">
-			<Button className="text-black p-2" variant={"outline"} onClick={() => navigate(-1)}>
-				<BsChevronLeft />
-			</Button>
-		</div>
+    <LayoutWithBack 
+      title="Prenatal Visit Records"
+      description="Complete record of prenatal visits and clinical notes"
+    >
+      <div className="bg-blue-50/50 p-3 space-y-2">
+        <div className="bg-white/70 p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={getTabStyle("prenatalcare")} onClick={() => setActiveTab("prenatalcare")}>
+              <h2 className="font-semibold">Prenatal Care History</h2>
+            </div>
 
-		{/* Clinical Header */}
-		<div className="flex flex-col items-center gap-4 bg-slate-50 border border-slate-200 rounded-lg p-3">
-			<div className="flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2">
-          <MdOutlinePregnantWoman className="h-6 w-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-black">Prenatal Visit Records</h2>
+            <div className={getTabStyle("prenatalform")} onClick={() => setActiveTab("prenatalform")}>
+              <h2 className="font-semibold">Prenatal Form History</h2>
+            </div>
+          </div>
         </div>
-			  <p className="text-slate-600 text-sm font-medium">Complete record of prenatal visits and clinical notes</p>
-			</div>
-		</div>
 
-		{/* Prenatal History Table */}
-		{hasData ? (
-			<PrenatalHistoryTable data={prenatalData} />
-		) : (
-			<Card className="text-center py-16 border-slate-200">
-			<CardContent>
-				<FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-				<h3 className="text-lg font-medium text-slate-700 mb-2">
-					No Clinical Records Available
-				</h3>
-				<p className="text-slate-500">
-					No prenatal examination records have been documented.
-				</p>
-			</CardContent>
-			</Card>
-		)}
-	</div>
+        {/* Prenatal History Table */}
+        {hasData && activeTab === "prenatalcare" && (
+          <PrenatalHistoryTable data={prenatalData} />
+        // ) : (
+        //   <Card className="text-center py-16 border-slate-200">
+        //   <CardContent>
+        //     <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+        //     <h3 className="text-lg font-medium text-slate-700 mb-2">
+        //       No Clinical Records Available
+        //     </h3>
+        //     <p className="text-slate-500">
+        //       No prenatal examination records have been documented.
+        //     </p>
+        //   </CardContent>
+        //   </Card>
+        )}
+
+        {activeTab === "prenatalform" && (
+          <PrenatalFormHistory/>
+        )}
+      </div>
+    </LayoutWithBack>
   );
 }

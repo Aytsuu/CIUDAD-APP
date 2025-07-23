@@ -8,6 +8,7 @@ import { getPatients,
 			getPrenatalPatientMedHistory,
 			getPrenatalPatientObsHistory,
 			getPrenatalPatientBodyMeasurement,
+			getPatientPrenatalCount,
 } from "../restful-api/maternalGetAPI";
 
 // for getPatients
@@ -40,6 +41,18 @@ export const usePatientPostpartumCount = (patientId: string) => {
 	 retry: 1, 
 	 refetchOnWindowFocus: true,
   })
+}
+
+// for getPatientPrenatalCount
+export const usePatientPrenatalCount = (patientId: string) => {
+	return useQuery({
+		queryKey: ["patientPrenatalCount", patientId],
+		queryFn: () => getPatientPrenatalCount(patientId),
+		enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+		staleTime: 60 * 1,
+		retry: 1,
+		refetchOnWindowFocus: true,
+	})
 }
 
 // for getPregnancyDetails

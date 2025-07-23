@@ -26,9 +26,9 @@ import { FaRegHospital } from "react-icons/fa"
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 // queries
-import { usePrenatalPatientMedHistory } from "../queries/maternalFetchQueries"
-import { usePrenatalPatientObsHistory } from "../queries/maternalFetchQueries"
-import { usePrenatalPatientBodyMeasurement } from "../queries/maternalFetchQueries"
+import { usePrenatalPatientMedHistory } from "../../queries/maternalFetchQueries"
+import { usePrenatalPatientObsHistory } from "../../queries/maternalFetchQueries"
+import { usePrenatalPatientBodyMeasurement } from "../../queries/maternalFetchQueries"
 
 
 // age calculation for dob
@@ -94,14 +94,232 @@ export default function PrenatalFormFirstPg({
       }
     }
   }
+  
+  type previousIllness = {
+    prevIllness: string
+    prevIllnessYr?: number
+  }
 
-  // patient data fetching
+  type previousHospitalization = {
+    prevHospitalization: string
+    prevHospitalizationYr?: number
+  }
+
+  const [prevIllnessData, setPrevIllnessData] = useState<previousIllness[]>([])
+  const [prevHospitalizationData, setPrevHospitalizationData] = useState<previousHospitalization[]>([])
+  const [openRowId, setOpenRowId] = useState<string | null>(null) // open row id
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+
+   // patient data fetching
   const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId)
   const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId)
   const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId)
 
+
+
+  const handlePatientSelection = (patient: Patient | null, patientId: string) => {
+    setSelectedPatientId(patientId)
+    setSelectedPatient(patient)
+    console.log(selectedPatient)
+
+    if (!patient) {
+      setSelectedPatientId("")
+      setSelectedPatient(null)
+
+      setValue("pat_id", "")
+      setValue("motherPersonalInfo.familyNo", "N/A")
+
+      form.reset({
+        pat_id: "",
+        motherPersonalInfo:{
+          familyNo: "",
+          motherLName: "",
+          motherFName: "",
+          motherMName: "",
+          motherAge: undefined,
+          motherDOB: "",
+          husbandLName: "",
+          husbandFName: "",
+          husbandMName: "",
+          husbandDob: "",
+          occupation: "",
+          address: {
+            street: "",
+            sitio: "",
+            barangay: "",
+            city: "",
+            province: "",
+          },
+          motherWt: undefined,
+          motherHt: undefined,
+          motherBMI: undefined,
+          motherBMICategory: undefined,
+        },
+        obstetricHistory: {
+          noOfChBornAlive: 0,
+          noOfLivingCh: 0,
+          noOfAbortion: 0,
+          noOfStillBirths: 0,
+          historyOfLBabies: 0,
+          historyOfDiabetes: "",
+        },
+        medicalHistory: {
+          prevIllness: "",
+          prevIllnessYr: undefined,
+          prevIllnessData: [],
+          prevHospitalization: "",
+          prevHospitalizationYr: undefined,
+          prevHospitalizationData: [],
+        },
+        previousPregnancy: {
+          dateOfDelivery: "",
+          outcome: "",
+          typeOfDelivery: "",
+          babysWt: undefined,
+          gender: "",
+          ballardScore: undefined,
+          apgarScore: undefined,
+        },
+        prenatalVaccineInfo: {
+          vaccineType: "",
+          ttStatus: "",
+          ttDateGiven: "",
+          isTDAPAdministered: "",
+        }, 
+        presentPregnancy: {
+          gravida: undefined,
+          para: undefined,
+          fullterm: undefined,
+          preterm: undefined,
+          pf_lmp: "",
+          pf_edc: "",
+        },
+        labResults:{
+          lab_type: undefined,
+          resultDate: "",
+          toBeFollowed: false,
+          documentPath: "",
+          labRemarks: "",
+          labResultsData: []
+        },
+        followUpSchedule: {
+          followUpDate: "",
+          aogWeeks: undefined,
+          aogDays: undefined,
+        },
+        ancVisits: {
+          firstTri: "",
+          secondTri: "",
+          thirdTriOne: "",
+          thirdTriTwo: ""
+        },
+        assessmentChecklist: {
+          increasedBP: undefined,
+          epigastricPain: undefined,
+          nausea: undefined,
+          blurringOfVision: undefined,
+          edema: undefined,
+          severeHeadache: undefined,
+          abnormalVaginalDischarges: undefined,
+          vaginalBleeding: undefined,
+          chillsFever: undefined,
+          diffInBreathing: undefined,
+          varicosities: undefined,
+          abdominalPain: undefined,
+        },
+        pregnancyPlan: {
+          planPlaceOfDel: undefined,
+          planNewbornScreening: undefined,
+        },
+        riskCodes: {
+          hasOneOrMoreOfTheFF:{
+            prevCaesarian: undefined,
+            miscarriages: undefined,
+            postpartumHemorrhage: undefined,
+          },
+          hasOneOrMoreOneConditions: {
+            tuberculosis: undefined,
+            heartDisease: undefined,
+            diabetes: undefined,
+            bronchialAsthma: undefined,
+            goiter: undefined
+          }
+        },
+        assessedBy: { assessedby: "" },
+        prenatalCare: [],
+      })
+
+      return
+    }
+
+
+    if (patient && patient.personal_info) {
+      setSelectedPatientId(patient.pat_id.toString())
+
+      const patientRole = patient.family?.fc_role
+      const personalInfo = patient?.personal_info
+      const address = patient.address
+      const father = patient.family_head_info?.family_heads?.father?.personal_info
+      const spouse = patient.spouse_info?.spouse_info
+
+      setValue("pat_id", patient.pat_id.toString())
+      setValue("motherPersonalInfo.familyNo", patient.family?.fam_id || "")
+      setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname || "")
+      setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname || "")
+      setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname || "")
+      setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob || ""))
+      setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob || "")
+
+      if (address) {
+        setValue("motherPersonalInfo.address.street", address.add_street || "")
+        setValue("motherPersonalInfo.address.sitio", address.add_sitio || "")
+        setValue("motherPersonalInfo.address.barangay", address.add_barangay || "")
+        setValue("motherPersonalInfo.address.city", address.add_city || "")
+        setValue("motherPersonalInfo.address.province", address.add_province || "")
+      } else {
+        setValue("motherPersonalInfo.address.street", "")
+        setValue("motherPersonalInfo.address.sitio", "")
+        setValue("motherPersonalInfo.address.barangay", "")
+        setValue("motherPersonalInfo.address.city", "")
+        setValue("motherPersonalInfo.address.province", "")
+      }
+
+      if (patientRole === "Mother") {
+        if (father) {
+          setValue("motherPersonalInfo.husbandLName", father.per_lname || "")
+          setValue("motherPersonalInfo.husbandFName", father.per_fname || "")
+          setValue("motherPersonalInfo.husbandMName", father.per_mname || "")
+          setValue("motherPersonalInfo.husbandDob", father.per_dob || "")
+        } else if (spouse) {
+          setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
+          setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
+          setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
+          setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
+          setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
+        } else {
+          setValue("motherPersonalInfo.husbandLName", "")
+          setValue("motherPersonalInfo.husbandFName", "")
+          setValue("motherPersonalInfo.husbandMName", "")
+          setValue("motherPersonalInfo.husbandDob", "")
+        }
+      } else {
+        if (spouse) {
+          setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
+          setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
+          setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
+          setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
+          setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
+        } else {
+          setValue("motherPersonalInfo.husbandLName", "")
+          setValue("motherPersonalInfo.husbandFName", "")
+          setValue("motherPersonalInfo.husbandMName", "")
+          setValue("motherPersonalInfo.husbandDob", "")
+          setValue("motherPersonalInfo.occupation", "")
+        }
+      }
+    }
+  }
 
   // body measurement fetching
   useEffect(() => {
@@ -196,224 +414,8 @@ export default function PrenatalFormFirstPg({
     console.log("Mapped medical history data:", mappedData)
     return mappedData
   }
-
-  const handlePatientSelection = (patient: Patient | null, patientId: string) => {
-    setSelectedPatientId(patientId)
-    console.log(selectedPatient)
-
-    if (!patient) {
-      setSelectedPatientId("")
-      setSelectedPatient(null)
-
-      setValue("pat_id", "")
-      setValue("motherPersonalInfo.familyNo", "N/A")
-
-      form.reset({
-        pat_id: "",
-        motherPersonalInfo:{
-          familyNo: "",
-          motherLName: "",
-          motherFName: "",
-          motherMName: "",
-          motherAge: undefined,
-          motherDOB: "",
-          husbandLName: "",
-          husbandFName: "",
-          husbandMName: "",
-          husbandDob: "",
-          occupation: "",
-          address: {
-            street: "",
-            sitio: "",
-            barangay: "",
-            city: "",
-            province: "",
-          },
-          motherWt: undefined,
-          motherHt: undefined,
-          motherBMI: undefined,
-          motherBMICategory: undefined,
-        },
-        obstetricHistory: {
-          noOfChBornAlive: 0,
-          noOfLivingCh: 0,
-          noOfAbortion: 0,
-          noOfStillBirths: 0,
-          historyOfLBabies: 0,
-          historyOfDiabetes: "",
-        },
-        medicalHistory: {
-          prevIllness: "",
-          prevIllnessYr: undefined,
-          prevIllnessData: [],
-          prevHospitalization: "",
-          prevHospitalizationYr: undefined,
-          prevHospitalizationData: [],
-        },
-        previousPregnancy: {
-          dateOfDelivery: "",
-          outcome: "",
-          typeOfDelivery: "",
-          babysWt: undefined,
-          gender: "",
-          ballardScore: undefined,
-          apgarScore: undefined,
-        },
-        prenatalVaccineInfo: {
-          vaccineType: "",
-          ttStatus: "",
-          ttDateGiven: "",
-          isTDAPAdministered: "",
-        }, 
-        presentPregnancy: {
-          gravida: "",
-          para: "",
-          fullterm: "",
-          preterm: "",
-          pf_lmp: "",
-          pf_edc: "",
-        },
-        labResults:{
-          lab_type: undefined,
-          resultDate: "",
-          toBeFollowed: false,
-          documentPath: "",
-          labRemarks: "",
-          labResultsData: []
-        },
-        followUpSchedule: {
-          followUpDate: "",
-          aogWeeks: undefined,
-          aogDays: undefined,
-        },
-        ancVisits: {
-          firstTri: "",
-          secondTri: "",
-          thirdTriOne: "",
-          thirdTriTwo: ""
-        },
-        assessmentChecklist: {
-          increasedBP: undefined,
-          epigastricPain: undefined,
-          nausea: undefined,
-          blurringOfVision: undefined,
-          edema: undefined,
-          severeHeadache: undefined,
-          abnormalVaginalDischarges: undefined,
-          vaginalBleeding: undefined,
-          chillsFever: undefined,
-          diffInBreathing: undefined,
-          varicosities: undefined,
-          abdominalPain: undefined,
-        },
-        pregnancyPlan: {
-          planPlaceOfDel: undefined,
-          planNewbornScreening: undefined,
-        },
-        riskCodes: {
-          hasOneOrMoreOfTheFF:{
-            prevCaesarian: undefined,
-            miscarriages: undefined,
-            postpartumHemorrhage: undefined,
-          },
-          hasOneOrMoreOneConditions: {
-            tuberculosis: undefined,
-            heartDisease: undefined,
-            diabetes: undefined,
-            bronchialAsthma: undefined,
-            goiter: undefined
-          }
-        },
-        assessedBy: { assessedby: "" },
-        prenatalCare: [],
-      })
-
-      return
-    }
-
-    if (patient && patient.personal_info) {
-      console.log("Selected Patient:", patient)
-      setSelectedPatientId(patient.pat_id.toString())
-
-      const patientRole = patient.family?.fc_role
-      const personalInfo = patient?.personal_info
-      const address = patient.address
-      const father = patient.family_head_info?.family_heads?.father?.personal_info
-      const spouse = patient.spouse_info?.spouse_info
-
-      setValue("pat_id", patient.pat_id.toString())
-      setValue("motherPersonalInfo.familyNo", patient.family?.fam_id || "")
-      setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname || "")
-      setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname || "")
-      setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname || "")
-      setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob || ""))
-      setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob || "")
-
-      if (address) {
-        setValue("motherPersonalInfo.address.street", address.add_street || "")
-        setValue("motherPersonalInfo.address.sitio", address.add_sitio || "")
-        setValue("motherPersonalInfo.address.barangay", address.add_barangay || "")
-        setValue("motherPersonalInfo.address.city", address.add_city || "")
-        setValue("motherPersonalInfo.address.province", address.add_province || "")
-      } else {
-        setValue("motherPersonalInfo.address.street", "")
-        setValue("motherPersonalInfo.address.sitio", "")
-        setValue("motherPersonalInfo.address.barangay", "")
-        setValue("motherPersonalInfo.address.city", "")
-        setValue("motherPersonalInfo.address.province", "")
-      }
-
-      if (patientRole === "Mother") {
-        if (father) {
-          setValue("motherPersonalInfo.husbandLName", father.per_lname || "")
-          setValue("motherPersonalInfo.husbandFName", father.per_fname || "")
-          setValue("motherPersonalInfo.husbandMName", father.per_mname || "")
-          setValue("motherPersonalInfo.husbandDob", father.per_dob || "")
-        } else if (spouse) {
-          setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
-          setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
-          setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
-          setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
-          setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
-        } else {
-          setValue("motherPersonalInfo.husbandLName", "")
-          setValue("motherPersonalInfo.husbandFName", "")
-          setValue("motherPersonalInfo.husbandMName", "")
-          setValue("motherPersonalInfo.husbandDob", "")
-        }
-      } else {
-        if (spouse) {
-          setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
-          setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
-          setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
-          setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
-          setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
-        } else {
-          setValue("motherPersonalInfo.husbandLName", "")
-          setValue("motherPersonalInfo.husbandFName", "")
-          setValue("motherPersonalInfo.husbandMName", "")
-          setValue("motherPersonalInfo.husbandDob", "")
-        }
-      }
-    }
-  }
-
   // previous illness and previous hospitalization data
-  type previousIllness = {
-    prevIllness: string
-    prevIllnessYr?: number
-  }
-
-  type previousHospitalization = {
-    prevHospitalization: string
-    prevHospitalizationYr?: number
-  }
-
-  const [prevIllnessData, setPrevIllnessData] = useState<previousIllness[]>([])
-  const [prevHospitalizationData, setPrevHospitalizationData] = useState<previousHospitalization[]>([])
-
-  // open row id
-  const [openRowId, setOpenRowId] = useState<string | null>(null)
+  
 
   const illnessColumn: ColumnDef<previousIllness>[] = [
     {
@@ -585,7 +587,7 @@ export default function PrenatalFormFirstPg({
     }
   }
 
-  // functionality to handle adding of previous hopsitalization
+  // functionality to handle adding of previous hopsitalization to table
   const addPrevHospitalization = () => {
     const hospitalization = getValues("medicalHistory.prevHospitalization")
     const hospitalizationYr = getValues("medicalHistory.prevHospitalizationYr")
@@ -635,7 +637,7 @@ export default function PrenatalFormFirstPg({
     setValue("motherPersonalInfo.motherBMICategory", bmiCategory)
   }, [bmi, setValue])
 
-  useEffect(()=>{window.scrollTo(0, 0) })
+
 
   return (
     <>
@@ -644,7 +646,7 @@ export default function PrenatalFormFirstPg({
         description="Fill out the prenatal record with the mother's personal information."
       >
         <div>
-          <PatientSearch onPatientSelect={handlePatientSelection} />
+          <PatientSearch value={selectedPatientId} onChange={setSelectedPatientId} onPatientSelect={handlePatientSelection} />
         </div>
 
         <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">

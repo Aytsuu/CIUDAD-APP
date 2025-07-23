@@ -14,7 +14,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 
-import ScheduleTab from "./schedule-tab"
+import ScheduleTab from "./appointments-tab"
 
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
 
@@ -385,7 +385,7 @@ export default function ScheduleRecords() {
 
   // Export to CSV
   const exportToCSV = () => {
-    const headers = ["ID", "Patient Name", "Date", "Time", "Purpose", "Status", "Sitio", "Type"]
+    const headers = ["ID", "Patient Name", "Date", "Purpose", "Status", "Sitio", "Type"]
     const csvData = sortedData.map((record) => {
       const fullName = `${record.patient.lastName}, ${record.patient.firstName} ${record.patient.middleName}`
       const actualStatus = getAppointmentStatus(record.scheduledDate, record.status)
@@ -441,7 +441,7 @@ export default function ScheduleRecords() {
 
   return (
     <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full bg-white/40 p-2 flex flex-col">
         <div className="mb-4 w-full">
           <ScheduleTab onTimeFrameChange={setTimeFrame} />
         </div> 
@@ -474,8 +474,8 @@ export default function ScheduleRecords() {
           </div>
         </div>
 
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+        <div className="h-full w-full rounded-md bg-white">
+          <div className="w-full h-auto sm:h-16 bg- flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
@@ -503,7 +503,7 @@ export default function ScheduleRecords() {
             </div>
           </div>
 
-          <div className="bg-white w-full overflow-x-auto">
+          <div className="w-full h-[30rem] overflow-x-auto">
             {paginatedData.length > 0 ? (
               <DataTable columns={columns} data={paginatedData} />
             ) : (

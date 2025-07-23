@@ -25,7 +25,7 @@ import LaboratoryResults, {
 } from "@/pages/healthServices/maternal/maternal-components/lab-result"
 import { Combobox } from "@/components/ui/combobox"
 
-import { fetchVaccinesWithStock } from "../../vaccination/restful-api/fetch"
+import { fetchVaccinesWithStock } from "../../../vaccination/restful-api/fetch"
 
 export default function PrenatalFormSecPg({
   form,

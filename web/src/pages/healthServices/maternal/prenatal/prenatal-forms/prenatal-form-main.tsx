@@ -13,8 +13,8 @@ import PrenatalFormThirdPg from "./prenatal-form-page3"
 import PrenatalFormFourthPq from "./prenatal-form-page4"
 
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { useAddPrenatalRecord } from "../queries/maternalAddQueries" // Corrected import path for useAddPrenatalRecord
-import type { PrenatalRecord } from "../restful-api/maternalPOST" // Import the type
+import { useAddPrenatalRecord } from "../../queries/maternalAddQueries" // Corrected import path for useAddPrenatalRecord
+import type { PrenatalRecord } from "../../restful-api/maternalPOST" // Import the type
 
 export default function PrenatalForm() {
   const defaultValues = generateDefaultValues(PrenatalFormSchema)
@@ -71,7 +71,7 @@ export default function PrenatalForm() {
           babys_wt: data.previousPregnancy.babysWt ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
           gender: data.previousPregnancy.gender || null, // Ensure null if empty
           ballard_score: data.previousPregnancy.ballardScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
-          apgar_score: data.previousPregnancy.apgarScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
+          apgar_score: data.previousPregnancy.apgarScore ? parseFloat(data.previousPregnancy.apgarScore.toString()) : null,
         }
       : undefined
 
@@ -248,6 +248,8 @@ export default function PrenatalForm() {
       if(isValid){
         const formData = form.getValues()
         await handleFinalSubmit(formData)
+        console.log("Page 4 validation passed - letting page 4 handle submission")
+        return;
       }
     }
 

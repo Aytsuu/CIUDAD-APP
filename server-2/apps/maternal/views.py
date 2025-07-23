@@ -200,51 +200,77 @@ def get_maternal_patients(request):
         }, status=500)
 
 
-@api_view(['GET'])
-def get_postpartum_records(request):
-    """Get all postpartum records with related data"""
-    try:
-        records = PostpartumRecord.objects.select_related(
-            'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'pregnancy_id'
-        ).prefetch_related(
-            'postpartum_delivery_record', 'postpartum_assessment'
-        ).all()
+# @api_view(['GET'])
+# def get_postpartum_records(request):
+#     """Get all postpartum records with related data"""
+#     try:
+#         records = PostpartumRecord.objects.select_related(
+#             'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'pregnancy_id'
+#         ).prefetch_related(
+#             'postpartum_delivery_record', 'postpartum_assessment'
+#         ).all()
         
-        serializer = PostpartumCompleteSerializer(records, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#         serializer = PostpartumCompleteSerializer(records, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
         
-    except Exception as e:
-        logger.error(f"Error fetching postpartum records: {str(e)}")
-        return Response(
-            {'error': f'Failed to fetch postpartum records: {str(e)}'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+#     except Exception as e:
+#         logger.error(f"Error fetching postpartum records: {str(e)}")
+#         return Response(
+#             {'error': f'Failed to fetch postpartum records: {str(e)}'},
+#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        # )
+
+
+# @api_view(['GET'])
+# def get_postpartum_record_detail(request, ppr_id):
+#     """Get specific postpartum record with all related data"""
+#     try:
+#         record = PostpartumRecord.objects.select_related(
+#             'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
+#         ).prefetch_related(
+#             'postpartum_delivery_record', 'postpartum_assessment'
+#         ).get(ppr_id=ppr_id)
+        
+#         serializer = PostpartumCompleteSerializer(record)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+        
+#     except PostpartumRecord.DoesNotExist:
+#         return Response(
+#             {'error': f'Postpartum record with ID {ppr_id} does not exist'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+#     except Exception as e:
+#         logger.error(f"Error fetching postpartum record: {str(e)}")
+#         return Response(
+#             {'error': f'Failed to fetch postpartum record: {str(e)}'},
+#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#         )
 
 
 @api_view(['GET'])
-def get_postpartum_record_detail(request, ppr_id):
-    """Get specific postpartum record with all related data"""
+def get_patient_prenatal_count(request, pat_id):
+    """"Get count of prenatal records for a specific patient"""
     try:
-        record = PostpartumRecord.objects.select_related(
-            'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
-        ).prefetch_related(
-            'postpartum_delivery_record', 'postpartum_assessment'
-        ).get(ppr_id=ppr_id)
-        
-        serializer = PostpartumCompleteSerializer(record)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-        
-    except PostpartumRecord.DoesNotExist:
-        return Response(
-            {'error': f'Postpartum record with ID {ppr_id} does not exist'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        patient = Patient.objects.get(pat_id=pat_id)
+
+        pf_count = Prenatal_Form.objects.filter(patrec_id__pat_id=patient).count()
+
+        return Response({
+            'pat_id': pat_id,
+            'prenatal_count': pf_count,
+            'patient_name' : f"{patient.personal_info.per_fname} {patient.personal_info.per_lname}" if hasattr(patient, 'personal_info') else "Unknown"
+        }, status=status.HTTP_200_OK) 
+    
+    except Patient.DoesNotExist:
+        return Response({
+            'error': f'Patient with ID {pat_id} does not exist'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
     except Exception as e:
-        logger.error(f"Error fetching postpartum record: {str(e)}")
-        return Response(
-            {'error': f'Failed to fetch postpartum record: {str(e)}'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        logger.error(f'Error fetching prenatal count for {pat_id}')
+        return Response({
+            'error' : f'Failed to fetch prenatal count'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -255,9 +281,7 @@ def get_patient_postpartum_count(request, pat_id):
         patient = Patient.objects.get(pat_id=pat_id)
         
         # count postpartum records for this patient
-        count = PostpartumRecord.objects.filter(
-            patrec_id__pat_id=patient
-        ).count()
+        count = PostpartumRecord.objects.filter(patrec_id__pat_id=patient).count()
         
         return Response({
             'pat_id': pat_id,

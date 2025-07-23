@@ -64,8 +64,8 @@ export default function SchedulerMain() {
     }
   }
 
-  const currentWeekStart = weekDays.length > 0 ? format(weekDays[0], "MMM d") : ""
-  const currentWeekEnd = weekDays.length > 0 ? format(weekDays[4], "MMM d, yyyy") : ""
+  // const currentWeekStart = weekDays.length > 0 ? format(weekDays[0], "MMM d") : ""
+  // const currentWeekEnd = weekDays.length > 0 ? format(weekDays[4], "MMM d, yyyy") : ""
 
   return (
 	<LayoutWithBack

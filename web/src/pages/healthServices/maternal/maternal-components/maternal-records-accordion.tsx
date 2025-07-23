@@ -140,6 +140,7 @@ export function PregnancyAccordion({
     return false
   }
 
+  
   return (
     <TooltipProvider>
       <Accordion type="single" collapsible className="w-full p-4">
@@ -281,7 +282,7 @@ export function PregnancyAccordion({
                               )}
                               {record.notes && (
                                 <p className="text-gray-600">
-                                  <strong>Notes:</strong> {record.notes}
+                                  <strong>Visit:</strong> {record.notes}
                                 </p>
                               )}
                             </div>

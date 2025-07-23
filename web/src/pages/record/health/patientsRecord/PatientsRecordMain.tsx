@@ -14,7 +14,7 @@ import {
   UserCog,
   ArrowUp,
   ArrowDown,
-  Loader2,
+  // Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,6 +33,9 @@ import { Button } from "@/components/ui/button/button";
 import { usePatients } from "./queries/fetch";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
+
+import PatientRecordCount from "./PatientRecordCounts";
+
 type Report = {
   id: string;
   sitio: string;
@@ -40,6 +43,7 @@ type Report = {
   firstName: string;
   mi: string;
   type: string;
+  noOfRecords?: number; 
 };
 
 interface Patients {
@@ -146,7 +150,7 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "noOfRecords",
     header: "No. of Records",
-    cell: ({ row }) => <div className="hidden xl:block">{row.getValue("type")}</div>,
+    cell: ({ row }) => <PatientRecordCount patientId={row.getValue("id")} />,
   },
   {
     accessorKey: "action",
@@ -299,6 +303,23 @@ export default function PatientsRecord() {
 
   const { data: patientData, isLoading } = usePatients();
 
+  // record counts
+  // const { data: medicineCountData } = useMedicineCount(patientId ?? "")
+  //   const medicineCount = medicineCountData?.medicinerecord_count
+  //   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
+  //   const vaccinationCount = vaccinationCountData?.vaccination_count
+  //   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "")
+  //   const firstAidCount = firstAidCountData?.firstaidrecord_count
+  //   const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "")
+  //   const childHealthCountData = childHealthCount?.childhealthrecord_count
+  //   const { data: medconCountData } = useMedConCount(patientId ?? "")
+  //   const medconCount = medconCountData?.medcon_count
+  //   const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
+  //   const postpartumCount = postpartumCountData
+  //   const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
+  //   const prenatalCount = prenatalCountData
+    
+
   const transformedPatients = useMemo(() => {
     if (!patientData) return [];
     return transformPatientsToReports(patientData);
@@ -356,15 +377,6 @@ export default function PatientsRecord() {
     setCurrentData(filteredData.slice(startIndex, endIndex));
   }, [currentPage, pageSize, filteredData]);
 
- 
-  // Show empty state if no data
-  // if (!patientData || patientData.length === 0) {
-  //   return (
-  //     <div className="w-full flex justify-center items-center h-64">
-  //       <div className="text-lg text-gray-500">No patients found</div>
-  //     </div>
-  //   );
-  // }
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
