@@ -877,7 +877,7 @@ const ExpenseTracking = () => {
         <View className="flex-1">
 
           {/* Search and Filters */}
-          <View className="px-4 mb-4">
+          <View className="px-4 pb-4">
             <View className="flex-row items-center gap-2">
               <View className="relative flex-1">
                 <Search className="absolute left-3 top-3 text-gray-500" size={17} />
@@ -889,7 +889,7 @@ const ExpenseTracking = () => {
                 />
               </View>
               
-              <View className="w-[120px]">
+              <View className="w-[120px] pb-5">
                 <SelectLayout
                   options={trackingOptions}
                   className="h-8"

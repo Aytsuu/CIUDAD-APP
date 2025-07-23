@@ -100,7 +100,7 @@ export default function IllegalDumpCreateForm() {
       stickyFooter={true}      
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mb-8">
+        <View className="mb-8 p-5">
           <View className="space-y-4">
             <FormSelect
               control={control}

@@ -1652,7 +1652,7 @@ export default function WasteIllegalDumping() {
               data={filteredData}
               renderItem={({ item }) => renderReportCard(item)}
               keyExtractor={(item) => item.rep_id.toString()}
-              contentContainerStyle={{ paddingBottom: 500 }}
+              contentContainerStyle={{ paddingBottom: 20 }}
               ListEmptyComponent={
                 <View className="py-8 items-center">
                   <Text className="text-gray-500 text-center">No reports found</Text>

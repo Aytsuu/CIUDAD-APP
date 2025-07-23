@@ -6,7 +6,7 @@ export default () => {
         <ToastProvider>
             <Stack>
                 <Stack.Screen name="index" options={{headerShown: false}}/>
-                {/* <Stack.Screen name="budget-tracker/budget-income-expense-main" options={{ headerShown: false }} /> */}
+                <Stack.Screen name="summon-view-details" options={{ headerShown: false }} />
                 
             </Stack>
         </ToastProvider>

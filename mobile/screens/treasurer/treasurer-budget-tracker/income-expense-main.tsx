@@ -509,7 +509,7 @@ const IncomeExpenseMain = () => {
 
           {/* Budget Cards */}
           <View className="px-4 space-y-4 pb-4">
-            {[...fetchedData]
+            {[...filteredData]
               .sort((a, b) => Number(b.ie_main_year) - Number(a.ie_main_year))
               .map((tracker: any, index: any) => {
 
