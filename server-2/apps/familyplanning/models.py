@@ -119,20 +119,19 @@ class FP_Pelvic_Exam(models.Model):
     pelvic_id = models.AutoField(primary_key=True)
     PELVIC_EXAM_CHOICES = [("normal", "Normal"),("mass", "Mass"),("abnormal_discharge", "Abnormal Discharge"),("cervical_abnormalities", "Cervical Abnormalities"),("warts", "Warts"),("polyp_or_cyst", "Polyp or Cyst"),("inflammation_or_erosion", "Inflammation or Erosion"),("bloody_discharge", "Bloody Discharge")]
     CERVICAL_CONSISTENCY_CHOICES = [("firm", "Firm"),("soft", "Soft")]
-    UTERINE_POSITION_CHOICES = [
-        ('midline', 'Midline'),
-        ('anteflexed', 'Anteflexed'), # Add this
-        ('retroflexed', 'Retroflexed'), # Add this
-        # Add any other valid choices you expect
-    ]
+    # UTERINE_POSITION_CHOICES = [
+    #     ('middle', 'Middle'),
+    #     ('anteflexed', 'Anteflexed'), # Add this
+    #     ('retroflexed', 'Retroflexed'), # Add this
+    # ]
     pelvicExamination = models.CharField(max_length=30, null=True, blank=True)
     
     cervicalConsistency = models.CharField(max_length=20, null=True, blank=True)
     cervicalTenderness = models.BooleanField(default=False, null=True, blank=True)
     cervicalAdnexal = models.BooleanField(default=False, null=True, blank=True)
 
-    UTERINE_POSITION_CHOICES = [("Middle", "Mid"),("Anteflexed", "Anteflexed"),("Retroflexed", "Retroflexed")]
-    uterinePosition = models.CharField(max_length=20, choices=UTERINE_POSITION_CHOICES, null=True, blank=True)
+    # UTERINE_POSITION_CHOICES = [("Middle", "Mid"),("Anteflexed", "Anteflexed"),("Retroflexed", "Retroflexed")]
+    uterinePosition = models.CharField(max_length=20, null=True, blank=True)
     uterineDepth = models.CharField(max_length=10, null=True, blank=True)
 
     fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)

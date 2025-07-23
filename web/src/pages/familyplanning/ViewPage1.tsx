@@ -10,6 +10,7 @@ import { useParams, useNavigate } from "react-router-dom" // Use react-router-do
 import { useQuery } from "@tanstack/react-query"
 import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest" // Adjust path if needed
 import type { FormData } from "@/form-schema/FamilyPlanningSchema" // Import your FormData type
+import { ChevronLeft } from "lucide-react"
 
 interface InputLineProps {
   className?: string
@@ -60,7 +61,7 @@ const FamilyPlanningView: React.FC = () => {
   } = useQuery<FormData, Error>({
     queryKey: ["fpCompleteRecordView", fprecordId],
     queryFn: () => getFPCompleteRecord(Number(fprecordId)),
-    enabled: !!fprecordId, 
+    enabled: !!fprecordId,
   })
 
   if (isLoading) {
@@ -82,6 +83,14 @@ const FamilyPlanningView: React.FC = () => {
 
   return (
     <div className="mx-auto p-4 bg-white">
+      <Button
+        className="text-black p-2 self-start mg-5 bg-transparent"
+        variant="outline"
+        onClick={() => navigate(-1)}
+        type="button"
+      >
+        <ChevronLeft />
+      </Button>
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm font-bold">SIDE A</div>
         <div className="text-center font-bold text-base md:text-lg">FAMILY PLANNING (FP) FORM 1</div>
@@ -262,13 +271,13 @@ const FamilyPlanningView: React.FC = () => {
             <Label className="font-bold mt-4">Reason for FP:</Label>
             <InputLine value={recordData.reasonForFP} />
             {(recordData.reasonForFP === "fp_others" || recordData.reasonForFP === "sideeffects") && (
-                <>
-                  <Label className="font-bold mt-2">
-                    {recordData.reasonForFP === "fp_others" ? "Other Reason for FP:" : "Side Effects Detail:"}
-                  </Label>
-                  <InputLine value={recordData.otherReasonForFP} />
-                </>
-              )}
+              <>
+                <Label className="font-bold mt-2">
+                  {recordData.reasonForFP === "fp_others" ? "Other Reason for FP:" : "Side Effects Detail:"}
+                </Label>
+                <InputLine value={recordData.otherReasonForFP} />
+              </>
+            )}
             <Label className="font-bold mt-4">Method Currently Used:</Label>
             <InputLine value={recordData.methodCurrentlyUsed} />
             {recordData.methodCurrentlyUsed === "Others" && (
@@ -294,7 +303,7 @@ const FamilyPlanningView: React.FC = () => {
               { label: "jaundice", key: "jaundice" },
               { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
               { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
-              { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",key: "phenobarbitalOrRifampicin" },
+              { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
               { label: "Is this client a SMOKER?", key: "smoker" },
               { label: "With Disability/Others?", key: "disability" },
             ].map((item, index) => (

@@ -25,6 +25,41 @@ from apps.maternal.serializer import PreviousPregnancySerializer
 from apps.patientrecords.serializers.spouse_serializers import *
 from apps.inventory.models import CommodityList, CommodityInventory # Import CommodityList and CommodityInventory
 
+
+@api_view(['GET'])
+def get_fp_patient_counts(request):
+    """
+    API view to get counts of total, resident, and transient Family Planning patients.
+    """
+    try:
+        # Get all unique patients who have at least one FP record
+        # We use distinct() on pat_id to count unique patients, not unique records
+        all_fp_patients = FP_Record.objects.select_related('pat').values('pat__pat_id', 'pat__pat_type').distinct()
+        
+        total_fp_patients = all_fp_patients.count()
+        
+        # Count residents among FP patients
+        resident_fp_patients = all_fp_patients.filter(pat__pat_type='Resident').count()
+        
+        # Count transients among FP patients
+        transient_fp_patients = all_fp_patients.filter(pat__pat_type='Transient').count()
+
+        response_data = {
+            "total_fp_patients": total_fp_patients,
+            "resident_fp_patients": resident_fp_patients,
+            "transient_fp_patients": transient_fp_patients,
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response(
+            {"detail": f"Error fetching FP patient counts: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
 @api_view(['GET'])
 def get_illness_list(request):
     """
@@ -791,12 +826,12 @@ class PatientListForOverallTable(generics.ListAPIView):
                     ),
                     "fprecord": record.fprecord_id,
                     "record_count": 0,
+                    "patient_type": "",
                     "has_multiple_records": False,
                 }
 
             patient_data_map[patient_id]["record_count"] += 1
 
-            # FIXED: Handle Resident Patient
             if (
                 record.pat.pat_type == "Resident"
                 and record.pat.rp_id
@@ -812,6 +847,8 @@ class PatientListForOverallTable(generics.ListAPIView):
                     else None
                 )
                 patient_data_map[patient_id]["sex"] = personal.per_sex
+                # ADDED: Assign patient_type for Resident
+                patient_data_map[patient_id]["patient_type"] = "Resident" 
 
             # FIXED: Handle Transient Patient
             elif record.pat.pat_type == "Transient" and record.pat.trans_id:
@@ -825,6 +862,7 @@ class PatientListForOverallTable(generics.ListAPIView):
                     else None
                 )
                 patient_data_map[patient_id]["sex"] = transient.tran_sex
+                patient_data_map[patient_id]["patient_type"] = "Transient" 
 
             # Access FP_type via the reverse relationship
             fp_type_instance = record.fp_type_set.first()
@@ -3126,12 +3164,12 @@ def submit_full_family_planning_form(request):
                 
                 # Map frontend values to backend expected values
                 uterine_position = data.get("uterinePosition", "")
-                if uterine_position == "mid":
+                if uterine_position == "middle":
                     uterine_position = "Middle"
                 elif uterine_position == "anteflexed":
-                    uterine_position = "anteflexed"
+                    uterine_position = "Anteflexed"
                 elif uterine_position == "retroflexed":
-                    uterine_position = "retroflexed"
+                    uterine_position = "Retroflexed"
                 
                 pelvic_exam_data = {
                     "pelvicExamination": data.get("pelvicExamination") or "normal",

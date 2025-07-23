@@ -360,7 +360,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                           >
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem
-                                value="Middle"
+                                value="middle"
                                 id="uterinePositionMid"
                                 disabled={!isIUDSelected || isReadOnly}
                               />

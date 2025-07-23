@@ -54,6 +54,19 @@ class AnimalBitePatientDetailsSerializer(serializers.ModelSerializer):
     record_created_at = serializers.DateTimeField(source='created_at', read_only=True) 
     patrec_id = serializers.IntegerField(source='referral.patrec.patrec_id', read_only=True)
 
+
+    def get_patientType(self, obj):
+        # 'obj' here would be an instance of PatientRecord or Patient.
+        # You need to access the Patient instance associated with this record.
+        # Assuming PatientRecord has a foreign key to Patient named 'pat_id'.
+        patient = obj.pat_id if hasattr(obj, 'pat_id') else obj # Adjust this line based on your actual model structure and relationship
+
+        if patient and hasattr(patient, 'rp_id') and patient.rp_id:
+            return "Resident"
+        elif patient and hasattr(patient, 'trans_id') and patient.trans_id:
+            return "Transient"
+        return "Unknown" # Default for cases where neither is present or patient is None
+    
     def _get_patient_instance(self, obj):
         try:
             return obj.referral.patrec.pat_id

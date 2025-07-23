@@ -23,7 +23,7 @@ urlpatterns = [
     # Endpoints for overall table and individual patient FP records
     path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'), # Overall table with counts
     path('fp-records-by-patient/<str:patient_id>/', get_fp_records_for_patient, name='get_fp_records_by_patient'), # All records for one patient
-
+    path('patient-counts/', get_fp_patient_counts, name='fp-patient-counts'),
     # Individual FP Record CRUD (if needed separately from composite)
     path('fp_record/', FP_RecordListCreateView.as_view(), name='fp_record_list_create'),
     # path('fp_record/<int:fprecord_id>/', FP_RecordDetailView.as_view(), name='fp_record_detail'),

@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button/button"
 import ReferralFormModal from "./referralform"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { ArrowDown, ArrowUp, Home, Search, UserCog, Users } from "lucide-react"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Link } from "react-router-dom"
 import { getAnimalBitePatientDetails } from "./api/get-api" 
 import { toast } from "sonner"
+import CardLayout from "@/components/ui/card/card-layout"
 
 
 // Type definition for table display
@@ -29,6 +30,14 @@ type UniquePatientDisplay = {
   actions_taken: string
   referredby: string
   recordCount: number
+}
+
+type PatientCountStats = {
+  total: number
+  residents: number
+  transients: number
+  residentPercentage: number
+  transientPercentage: number
 }
 
 const Overall: React.FC = () => {
@@ -102,6 +111,23 @@ const Overall: React.FC = () => {
     setSearchQuery(e.target.value)
   }
 
+  const calculatePatientStats = (): PatientCountStats => {
+  const total = patients.length
+  const residents = patients.filter(p => p.patientType === "Resident").length
+  const transients = patients.filter(p => p.patientType === "Transient").length
+  const residentPercentage = total > 0 ? Math.round((residents / total) * 100) : 0
+  const transientPercentage = total > 0 ? Math.round((transients / total) * 100) : 0
+
+  return {
+    total,
+    residents,
+    transients,
+    residentPercentage,
+    transientPercentage
+  }
+}
+
+const stats = calculatePatientStats()
   const handleReferralFormClose = () => {
     setIsReferralFormOpen(false)
     // Refresh data after form closes
@@ -183,6 +209,80 @@ const Overall: React.FC = () => {
         </div>
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <CardLayout
+    title='Total Animal Bite Cases'
+    description="All recorded animal bite cases"
+    content={
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <span className="text-2xl font-bold">{stats.total}</span>
+          <span className="text-xs text-muted-foreground">Total records</span>
+        </div>
+        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+          <Users className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </div>
+    }
+    cardClassName="border shadow-sm rounded-lg"
+    headerClassName="pb-2"
+    contentClassName="pt-0"
+  />
+
+  <CardLayout
+    title="Resident Cases"
+    description="Permanent residents with animal bites"
+    content={
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <span className="text-2xl font-bold">{stats.residents}</span>
+          <div className="flex items-center text-xs text-muted-foreground">
+            {stats.residentPercentage > stats.transientPercentage ? (
+              <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+            ) : (
+              <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+            )}
+            <span>{stats.residentPercentage}% of total</span>
+          </div>
+        </div>
+        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+          <Home className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </div>
+    }
+    cardClassName="border shadow-sm rounded-lg"
+    headerClassName="pb-2"
+    contentClassName="pt-0"
+  />
+
+  <CardLayout
+    title="Transient Cases"
+    description="Temporary patients with animal bites"
+    content={
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <span className="text-2xl font-bold">{stats.transients}</span>
+          <div className="flex items-center text-xs text-muted-foreground">
+            {stats.transientPercentage > stats.residentPercentage ? (
+              <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+            ) : (
+              <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+            )}
+            <span>{stats.transientPercentage}% of total</span>
+          </div>
+        </div>
+        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+          <UserCog className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </div>
+    }
+    cardClassName="border shadow-sm rounded-lg"
+    headerClassName="pb-2"
+    contentClassName="pt-0"
+  />
+</div>
+
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <div className="flex gap-x-2">
           <div className="relative">

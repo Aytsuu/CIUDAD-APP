@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { RefreshCw, Search } from "lucide-react"
+import { ArrowDown, ArrowUp, Home, Loader2, RefreshCw, Search, UserCog, Users } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
+import { FPPatientsCount, getFPPatientsCounts, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
+import CardLayout from "@/components/ui/card/card-layout"
 
 interface FPRecord {
   fprecord_id: number
@@ -18,6 +19,7 @@ interface FPRecord {
   patient_name: string
   patient_age: number
   client_type: string
+  patient_type: string
   method_used: string
   created_at: string
   updated_at: string
@@ -25,7 +27,7 @@ interface FPRecord {
   record_count?: number
 }
 
-export default function FamPlanningTable() {
+ export default function FamPlanningTable() {
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const [searchQuery, setSearchQuery] = useState("")
@@ -43,6 +45,17 @@ export default function FamPlanningTable() {
     queryKey: ["fpRecordsList"],
     queryFn: getFPRecordsList,
   })
+
+  // NEW: Fetch FP Patient Counts
+  const { 
+    data: fpCounts, 
+    isLoading: isLoadingCounts, 
+    isError: isErrorCounts, 
+    error: errorCounts 
+  } = useQuery<FPPatientsCount, Error>({
+    queryKey: ["fpPatientCounts"],
+    queryFn: getFPPatientsCounts,
+  });
 
   const filteredRecords = useMemo(() => {
     let filtered = fpRecords
@@ -87,42 +100,58 @@ export default function FamPlanningTable() {
   }
 
   const handleRefresh = () => {
-    refetch()
+    refetch() // Refetch FP records
+    queryClient.invalidateQueries({ queryKey: ["fpPatientCounts"] }); // Refetch counts
   }
 
-  const columns = useMemo<ColumnDef<FPRecord>[]>(
+   const columns = useMemo<ColumnDef<FPRecord>[]>(
     () => [
-      { 
-        accessorKey: "fprecord_id", 
+      {
+        accessorKey: "fprecord_id",
         header: "Record ID",
-        cell: ({ row }) => `${row.original.fprecord_id}`
+        cell: ({ row }) => `${row.original.fprecord_id}`,
       },
       {
         accessorKey: "patient_info",
         header: "Patient",
         cell: ({ row }) => {
-          const record = row.original;
+          const record = row.original
           return (
             <div className="flex flex-col min-w-[200px]">
               <div className="font-medium">
-                <Link to={`/familyplanning/patient/${record.patient_id}`} className="text-blue-600 hover:underline">
-                  {record.patient_name || 'No name available'}
+                <Link
+                  to={`/familyplanning/patient/${record.patient_id}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {record.patient_name || "No name available"}
                 </Link>
               </div>
               <div className="text-sm text-gray-600">
-                {record.patient_age ? `${record.patient_age} years` : 'Age not available'}• 
-                {record.sex || 'Gender not available'}
+                {record.patient_age ? `${record.patient_age} years` : "Age not available"}•
+                {record.sex || "Gender not available"}
               </div>
             </div>
-          );
+          )
         },
+      },
+      {
+        accessorKey: "patient_type", // NEW: Column for Patient Type
+        header: "Patient Type",
+        cell: ({ row }) => (
+          <span
+            className={`px-2 py-1 rounded-full text-sm font-medium 
+                        ${row.original.patient_type === 'Resident' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}`}
+          >
+            {row.original.patient_type || 'N/A'}
+          </span>
+        ),
       },
       {
         accessorKey: "method_used",
         header: "Method",
         cell: ({ row }) => (
           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            {row.original.method_used || 'Not specified'}
+            {row.original.method_used || "Not specified"}
           </span>
         ),
       },
@@ -133,13 +162,13 @@ export default function FamPlanningTable() {
       {
         accessorKey: "created_at",
         header: "Date Created",
-        cell: ({ row }) => (
-          new Date(row.original.created_at).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          })
-        )},
+        cell: ({ row }) =>
+          new Date(row.original.created_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+      },
       {
         accessorKey: "record_count",
         header: "Records",
@@ -154,7 +183,6 @@ export default function FamPlanningTable() {
         header: "Actions",
         cell: ({ row }) => (
           <div className="flex gap-2">
-            {/* <Link to={`/familyplanning/patient/${row.original.patient_id}`}> */}
             <Link to={`/familyplanning/patient/${row.original.patient_id}`}>
               <Button variant="outline" size="sm">
                 View
@@ -166,24 +194,28 @@ export default function FamPlanningTable() {
     ],
     []
   )
-
-  if (isLoading) {
-    return <div className="p-8 text-center">Loading family planning records...</div>;
+  // Use a combined loading state for both data fetches
+  if (isLoading || isLoadingCounts) {
+    return <div className="p-8 text-center flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading records...</div>;
   }
 
-  if (isError) {
-    return <div className="p-8 text-center text-red-600">Error loading records: {error?.message}</div>;
+  if (isError || isErrorCounts) {
+    return <div className="p-8 text-center text-red-600">Error loading data: {error?.message || errorCounts?.message}</div>;
   }
 
   const clientTypeOptions = [
     { id: "all", name: "All Types" },
     { id: "New Acceptor", name: "New Acceptor" },
     { id: "Current User", name: "Current User" },
-    // { id: "Changing Method", name: "Changing Method" },
-    // { id: "Changing Clinic", name: "Changing Clinic" },
-    // { id: "Dropout/Resumed", name: "Dropout/Resumed" },
-    // { id: "Medical Conditions", name: "Medical Conditions" },
   ]
+
+  const totalFPPatients = fpCounts?.total_fp_patients || 0;
+  const residentFPPatients = fpCounts?.resident_fp_patients || 0;
+  const transientFPPatients = fpCounts?.transient_fp_patients || 0;
+
+  const residentFPPercentage = totalFPPatients > 0 ? Math.round((residentFPPatients / totalFPPatients) * 100) : 0;
+  const transientFPPercentage = totalFPPatients > 0 ? Math.round((transientFPPatients / totalFPPatients) * 100) : 0;
+
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -199,6 +231,80 @@ export default function FamPlanningTable() {
         </div>
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
+
+      {/* NEW: Stats Cards for Family Planning Patients */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <CardLayout
+          title='Total Patients'
+          description="All patients who availed Family Planning"
+          content={
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{totalFPPatients}</span>
+                <span className="text-xs text-muted-foreground">Total records</span>
+              </div>
+              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                <Users className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
+          }
+          cardClassName="border shadow-sm rounded-lg"
+          headerClassName="pb-2"
+          contentClassName="pt-0"
+        />
+
+        <CardLayout
+          title="Resident Patients"
+          description="Permanent residents who availed FP"
+          content={
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{residentFPPatients}</span>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  {residentFPPercentage > transientFPPercentage ? (
+                    <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                  )}
+                  <span>{residentFPPercentage}% of total</span>
+                </div>
+              </div>
+              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                <Home className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
+          }
+          cardClassName="border shadow-sm rounded-lg"
+          headerClassName="pb-2"
+          contentClassName="pt-0"
+        />
+
+        <CardLayout
+          title="Transient Patients"
+          description="Temporary residents who availed FP"
+          content={
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{transientFPPatients}</span>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  {transientFPPercentage > residentFPPercentage ? (
+                    <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                  )}
+                  <span>{transientFPPercentage}% of total</span>
+                </div>
+              </div>
+              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                <UserCog className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
+          }
+          cardClassName="border shadow-sm rounded-lg"
+          headerClassName="pb-2"
+          contentClassName="pt-0"
+        />
+      </div>
 
       {/* Search & New Record Button */}
       <div className="relative w-full flex justify-between items-center mb-4">

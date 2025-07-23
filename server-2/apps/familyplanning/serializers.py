@@ -48,9 +48,9 @@ class FPAssessmentSerializer(serializers.ModelSerializer):
 
 
 class PelvicExamSerializer(serializers.ModelSerializer):
-    uterinePosition = serializers.ChoiceField(
-        choices=['midline', 'anteflexed', 'retroflexed']
-      )
+    # uterinePosition = serializers.ChoiceField(
+    #     choices=['midline', 'anteflexed', 'retroflexed']
+    #   )
     class Meta:
         model = FP_Pelvic_Exam
         fields = '__all__'
@@ -759,14 +759,6 @@ class FamilyPlanningRecordCompositeSerializer(serializers.ModelSerializer):
             # if dispensed_medicine_item_id:
             #     dispensed_medicine = Medicinelist.objects.get(med_id=dispensed_medicine_item_id)
             dispensed_vaccine = None
-            # if dispensed_vaccine_item_id:
-            #     dispensed_vaccine = VaccineList.objects.get(vac_id=dispensed_vaccine_item_id)
-
-            # FP_Assessment_Record (Service Provision)
-            # This part needs adjustment if you have multiple serviceProvisionRecords from frontend
-            # The current frontend sends an array of serviceProvisionRecords, but this serializer only creates one.
-            # You might need to loop through serviceProvisionRecords from validated_data
-            # For simplicity, let's assume for now it's handling the first/main one or a single record
             FP_Assessment_Record.objects.create(
                 fprecord=fp_record,
                 fpt=FP_type.objects.get(fprecord_id=fp_record), # Corrected to fprecord_id

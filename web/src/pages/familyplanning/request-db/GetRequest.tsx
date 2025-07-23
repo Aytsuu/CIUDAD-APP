@@ -14,6 +14,22 @@ interface IndividualFPRecordDetail {
   created_at: string
 }
 
+export interface FPPatientsCount {
+  total_fp_patients: number;
+  resident_fp_patients: number;
+  transient_fp_patients: number;
+}
+
+export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
+  try {
+    const response = await api2.get("/familyplanning/patient-counts/"); // Adjust this URL if your Django URL pattern is different
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching FP patient counts:", error);
+    throw error;
+  }
+};
+
 // Updated getFPRecordsList to match the new backend structure for the overall table
 export const getFPRecordsList = async () => {
   try {

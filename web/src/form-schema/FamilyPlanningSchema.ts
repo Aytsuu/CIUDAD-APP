@@ -158,12 +158,7 @@ const FamilyPlanningBaseSchema = z.object({
 
   cervicalAdnexal: z.boolean().optional(),
 
-  uterinePosition: z.enum([
-    "mid",
-    "anteflexed",
-    "retroflexed",
-    "not_applicable",
-  ]).optional(),
+  uterinePosition: z.string().optional(),
 
   uterineDepth: z.string().optional(),
 }),

@@ -248,7 +248,7 @@ const IndividualFamPlanningTable: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Family Planning History</h1>
             <p className="text-gray-600">
-              {displayPatientName} (ID: {patientId})
+              {displayPatientName} (ID: {patientId}) 
             </p>
           </div>
         </div>
