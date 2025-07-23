@@ -520,10 +520,6 @@ const IncomeTracking = () => {
       </CardHeader>
       <CardContent className="space-y-2">
         <View className="flex-row justify-between">
-          <Text className="text-gray-600">Number:</Text>
-          <Text>{item.inc_num}</Text>
-        </View>
-        <View className="flex-row justify-between">
           <Text className="text-gray-600">Particulars:</Text>
           <Text>{item.incp_item}</Text>
         </View>
@@ -624,7 +620,7 @@ const IncomeTracking = () => {
                 />
               </View>
               
-              <View className="w-[120px]">
+              <View className="w-[120px] pb-5">
                 <SelectLayout
                   options={trackingOptions}
                   className="h-8"

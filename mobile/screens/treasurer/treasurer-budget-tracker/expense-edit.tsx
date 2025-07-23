@@ -679,7 +679,7 @@ function ExpenseEdit() {
 
   return (
     <_ScreenLayout
-      header="Edit Expense Entry"
+      headerBetweenAction={<Text>Edit Expense Entry</Text>}
       headerAlign="left"
       showBackButton={false}
       showExitButton={false}
@@ -741,8 +741,9 @@ function ExpenseEdit() {
       }
       stickyFooter={true}
     >
+      <View className="px-4">
         {selectedParticular && (
-            <View className="bg-primaryBlue p-3 rounded-md mb-4 items-center">
+            <View className="bg-primaryBlue p-3 rounded-md mb-6 mt-5 items-center">
                 <Text className="text-white text-base font-semibold">
                     Accumulated Budget: P{selectedParticular.proposedBudget.toFixed(2)}
                 </Text>
@@ -868,7 +869,9 @@ function ExpenseEdit() {
                 style={{ backgroundColor: 'transparent', zIndex: 10 }}
                 />
             )}
-        </View>
+        </View>        
+
+      </View>
 
     </_ScreenLayout>
   );

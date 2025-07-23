@@ -116,7 +116,7 @@ const DonationAdd = () => {
       keyboardAvoiding={true}
       contentPadding="medium"
     >
-      <View className="space-y-4">
+      <View className="space-y-4 p-5">
         <View className="mb-4">
           <DonorSelect
             placeholder="Select donor or enter name"
@@ -156,7 +156,7 @@ const DonationAdd = () => {
             options={[
               { label: 'Cash', value: 'Cash' },
               { label: 'Cheque', value: 'Cheque' },
-              { label: 'E-Money', value: 'E-Money' },
+              { label: 'E-money', value: 'E-money' },
             ]}
           />
         ) : (

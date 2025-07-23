@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export const archiveIncomeImage = async (infi_num: number) => {
   const res = await api.patch(`treasurer/income-tab/images/${infi_num}/`, { infi_is_archive: true });
