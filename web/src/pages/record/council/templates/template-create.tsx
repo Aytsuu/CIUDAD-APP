@@ -1854,7 +1854,7 @@ function TemplateCreateForm({ onSuccess }: { onSuccess?: () => void }) {
                       Preview
                     </Button>
                   }
-                  className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
+                  className="max-w-full h-full pt-11 flex flex-col overflow-auto scrollbar-custom"
                   title=""
                   description=""
                   mainContent={
