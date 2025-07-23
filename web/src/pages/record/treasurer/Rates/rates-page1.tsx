@@ -5,7 +5,7 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { Pen, Trash, History, Search } from 'lucide-react'
+import { Pen, Trash, History, Search, ArrowUpDown } from 'lucide-react'
 import { useState } from "react"
 import { useGetAnnualGrossSales, type AnnualGrossSales } from "./queries/RatesFetchQueries"
 import { useDeleteAnnualGrossSales } from "./queries/RatesDeleteQueries"
@@ -87,8 +87,18 @@ function RatesPage1() {
         },
         {
             accessorKey: "ags_date",
-            header: "Date Added/Updated",
-            cell: ({ row }) => formatTimestamp(row.original.ags_date)
+            header: ({ column }) => (
+                <div
+                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Date Updated
+                    <ArrowUpDown size={14} />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatTimestamp(row.getValue("ags_date"))} </div>            
+            )
         }
     ]
 
