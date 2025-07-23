@@ -110,7 +110,7 @@ function WasteColCreate() {
 
   return (
     <_ScreenLayout
-      header="Schedule Waste Collection"
+      headerBetweenAction={<Text className="text-[13px]">Schedule Waste Collection</Text>}
       headerAlign="left"
 
       showBackButton={true}

@@ -127,7 +127,7 @@ function WasteColEdit() {
 
   return (
     <_ScreenLayout
-      header="Edit Waste Collection Schedule"
+      headerBetweenAction={<Text className="text-[13px]">Edit Waste Collection Schedule</Text>}
       headerAlign="left"
       showBackButton={true}
       showExitButton={false}

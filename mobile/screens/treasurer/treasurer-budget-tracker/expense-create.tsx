@@ -470,7 +470,7 @@ function ExpenseCreateForm() {
   return (
     <_ScreenLayout
       // Header Configuration
-      header={`${currentStep === 1 ? 'Step 1: Budget Details' : 'Step 2: Transaction Details'}`}
+      headerBetweenAction={currentStep === 1 ? <Text>Step 1: Budget Details</Text> : <Text>Step 2: Transaction Details</Text>}
       headerAlign="left"
       
       // Navigation Configuration
