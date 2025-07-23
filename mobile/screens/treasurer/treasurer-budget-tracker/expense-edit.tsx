@@ -741,6 +741,7 @@ function ExpenseEdit() {
       }
       stickyFooter={true}
     >
+      <View className="px-4">
         {selectedParticular && (
             <View className="bg-primaryBlue p-3 rounded-md mb-4 items-center">
                 <Text className="text-white text-base font-semibold">
@@ -868,7 +869,9 @@ function ExpenseEdit() {
                 style={{ backgroundColor: 'transparent', zIndex: 10 }}
                 />
             )}
-        </View>
+        </View>        
+
+      </View>
 
     </_ScreenLayout>
   );

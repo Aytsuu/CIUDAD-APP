@@ -139,7 +139,7 @@ function WasteColCreate() {
       }
       stickyFooter={true}
     >
-        <View className="w-full">
+        <View className="w-full px-4">
 
             <FormDateTimeInput
               control={form.control}

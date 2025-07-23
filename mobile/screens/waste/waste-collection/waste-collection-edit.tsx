@@ -189,7 +189,7 @@ function WasteColEdit() {
       }
       stickyFooter={true}
     >
-      <View className="w-full">
+      <View className="w-full px-4">
         {/* Date Input */}
         <View className="relative">
           <FormDateTimeInput
