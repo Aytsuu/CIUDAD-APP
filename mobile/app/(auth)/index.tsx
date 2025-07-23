@@ -13,5 +13,5 @@ import Request from "../(request)";
 import SummonAndCaseMain from "@/screens/summon/summon-and-case-main";
 
 export default () => {
-    return <WasteIllegalDumping/>
+    return <SummonAndCaseMain/>
 }

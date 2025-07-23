@@ -21,10 +21,8 @@ class Complaint(models.Model):
     comp_incident_type = models.CharField(max_length=100)
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
-    # comp_category = models.CharField(max_length=100, default='Low')
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_is_archive = models.BooleanField(default=False)
-    cpnt = models.ForeignKey(Complainant, related_name='complaints', on_delete=models.CASCADE)
     
     class Meta:
         db_table = 'complaint'
