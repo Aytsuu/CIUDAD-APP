@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import {
@@ -11,7 +11,7 @@ import { AccusedInfo } from "./accused";
 import { IncidentInfo } from "./incident";
 import { DocumentUploaded } from "./document";
 import { toast } from "sonner";
-import { submitComplaint } from "../restful-api/complaint-api";
+import { api } from "@/api/api";
 import { Button } from "@/components/ui/button/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
 import {
@@ -20,11 +20,11 @@ import {
   Send,
   FileText,
   AlertTriangle,
+  Search,
 } from "lucide-react";
-import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { BsChevronLeft } from "react-icons/bs";
-import { Link, useNavigate } from "react-router-dom"; // Add useNavigate import
+import { Link, useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -35,38 +35,143 @@ import {
 } from "@/components/ui/dialog/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
+import { useDebounce } from "@/hooks/use-debounce";
+import { searchComplainants, searchAccused } from "../restful-api/complaint-api";
 
 export const ComplaintForm = () => {
   const [step, setStep] = useState(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
   const { user } = useAuth();
   const { send } = useNotifications();
-  const navigate = useNavigate(); // Add navigate hook
+  const navigate = useNavigate();
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const methods = useForm<ComplaintFormData>({
     resolver: zodResolver(complaintFormSchema),
-    defaultValues: {},
+    defaultValues: {
+      complainant: [],
+      accused: [],
+      incident: {
+        location: "",
+        type: "Other",
+        description: "",
+        date: "",
+        time: "",
+      },
+      documents: [],
+    },
   });
+
+  // Search effect
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!debouncedSearchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        let results;
+        if (step === 1) {
+          results = await searchComplainants(debouncedSearchQuery);
+        } else if (step === 2) {
+          results = await searchAccused(debouncedSearchQuery);
+        }
+        setSearchResults(results || []);
+      } catch (error) {
+        console.error("Search error:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    performSearch();
+  }, [debouncedSearchQuery, step]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setShowSearchResults(true);
+  };
+
+  const handleResultClick = (result: any) => {
+    if (step === 1) {
+      // Auto-fill complainant fields
+      methods.setValue(`complainant.0.fullName`, result.cpnt_name || "");
+      methods.setValue(`complainant.0.gender`, result.cpnt_gender || "");
+      methods.setValue(`complainant.0.age`, result.cpnt_age || "");
+      methods.setValue(`complainant.0.contactNumber`, result.cpnt_number || "");
+      methods.setValue(
+        `complainant.0.relation_to_respondent`,
+        result.cpnt_relation_to_respondent || ""
+      );
+      // Address fields
+      methods.setValue(
+        `complainant.0.address.province`,
+        result.add?.add_province || ""
+      );
+      methods.setValue(
+        `complainant.0.address.city`,
+        result.add?.add_city || ""
+      );
+      methods.setValue(
+        `complainant.0.address.barangay`,
+        result.add?.add_barangay || ""
+      );
+      methods.setValue(
+        `complainant.0.address.street`,
+        result.add?.add_street || ""
+      );
+      methods.setValue(
+        `complainant.0.address.sitio`,
+        result.add?.sitio?.sitio_name || result.add?.add_external_sitio || ""
+      );
+    } else if (step === 2) {
+      // Auto-fill accused fields
+      methods.setValue(`accused.0.alias`, result.acsd_name || "");
+      methods.setValue(`accused.0.age`, result.acsd_age || "");
+      methods.setValue(`accused.0.gender`, result.acsd_gender || "");
+      methods.setValue(`accused.0.description`, result.acsd_description || "");
+      // Address fields
+      methods.setValue(
+        `accused.0.address.province`,
+        result.add?.add_province || ""
+      );
+      methods.setValue(`accused.0.address.city`, result.add?.add_city || "");
+      methods.setValue(
+        `accused.0.address.barangay`,
+        result.add?.add_barangay || ""
+      );
+      methods.setValue(
+        `accused.0.address.street`,
+        result.add?.add_street || ""
+      );
+      methods.setValue(
+        `accused.0.address.sitio`,
+        result.add?.sitio?.sitio_name || result.add?.add_external_sitio || ""
+      );
+    }
+
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
 
   const nextStep = async () => {
     const fields = stepFields[step];
-
-    console.log("Current form values:", methods.getValues());
-    console.log("Current form errors:", methods.formState.errors);
-
     const isValid = await methods.trigger(fields as any);
-    console.log("Step validation result:", isValid);
 
     if (isValid) {
       setStep((prev) => Math.min(prev + 1, 5));
     } else {
-      // Show specific validation errors
-      const errors = methods.formState.errors;
-      console.log("Validation errors:", errors);
-
-      // Show toast with validation errors
-      if (step === 4 && errors.documents) {
+      if (step === 4 && methods.formState.errors) {
         toast.error("Please check your uploaded files for errors");
       }
     }
@@ -78,10 +183,6 @@ export const ComplaintForm = () => {
 
   const handleSubmitClick = async () => {
     const isValid = await methods.trigger();
-    console.log("Final validation result:", isValid);
-    console.log("Final form values:", methods.getValues());
-    console.log("Final form errors:", methods.formState.errors);
-
     if (isValid) {
       setShowConfirmModal(true);
     } else {
@@ -95,65 +196,39 @@ export const ComplaintForm = () => {
 
       const formData = new FormData();
 
-      const complainantData = {
-        name: `${data.complainant.firstName} ${data.complainant.middleName} ${data.complainant.lastName} ${data.complainant.suffix}`,
+      const complainantData = data.complainant.map((comp) => ({
+        name: comp.fullName,
+        gender: comp.gender,
+        contactNumber: comp.contactNumber,
+        age: comp.age,
+        relation_to_respondent: comp.relation_to_respondent,
         address: {
-          province: data.complainant.address.province,
-          city: data.complainant.address.city,
-          barangay: data.complainant.address.barangay,
-          street: data.complainant.address.street,
-          sitio: data.complainant.address.sitio || "",
-        },
-      };
-
-      if (
-        !complainantData.name ||
-        !complainantData.address.province ||
-        !complainantData.address.city ||
-        !complainantData.address.barangay ||
-        !complainantData.address.street
-      ) {
-        throw new Error("Missing required complainant information");
-      }
-
-      formData.append("complainant", JSON.stringify(complainantData));
-
-      const accusedData = data.accused.map((acc) => ({
-        name: `${acc.firstName} ${acc.middleName} ${acc.lastName} ${acc.suffix}`,
-        address: {
-          province: acc.address.province,
-          city: acc.address.city,
-          barangay: acc.address.barangay,
-          street: acc.address.street,
-          sitio: acc.address.sitio || "",
+          province: comp.address.province,
+          city: comp.address.city,
+          barangay: comp.address.barangay,
+          street: comp.address.street,
+          sitio: comp.address.sitio || "",
         },
       }));
+      formData.append("complainant", JSON.stringify(complainantData));
 
-      for (const acc of accusedData) {
-        if (
-          !acc.name ||
-          !acc.address.province ||
-          !acc.address.city ||
-          !acc.address.barangay ||
-          !acc.address.street
-        ) {
-          throw new Error("Missing required accused information");
-        }
-      }
-
+      const accusedData = data.accused.map((data) => ({
+        alias: `${data.alias} `,
+        age: data.age,
+        gender: data.gender,
+        description: data.description,
+        address: {
+          province: data.address.province,
+          city: data.address.city,
+          barangay: data.address.barangay,
+          street: data.address.street,
+          sitio: data.address.sitio || "",
+        },
+      }));
       formData.append("accused", JSON.stringify(accusedData));
-
-      if (
-        !data.incident.type ||
-        !data.incident.description ||
-        !data.incident.date ||
-        !data.incident.time
-      ) {
-        throw new Error("Missing required incident information");
-      }
-
       formData.append("incident_type", data.incident.type);
       formData.append("allegation", data.incident.description);
+      formData.append("location", data?.incident?.location ?? "");
 
       const dateTimeString = `${data.incident.date}T${data.incident.time}`;
       const dateTime = new Date(dateTimeString);
@@ -162,13 +237,9 @@ export const ComplaintForm = () => {
       }
 
       formData.append("datetime", dateTimeString);
-      formData.append("category", "Normal");
 
-      // Handle uploaded files - send the Supabase URLs instead of files
+      // Handle uploaded files
       if (data.documents && data.documents.length > 0) {
-        console.log(`Processing ${data.documents.length} uploaded files`);
-
-        // Filter only successfully uploaded files
         const uploadedFiles = data.documents.filter(
           (fileData: any) =>
             fileData.status === "uploaded" && fileData.publicUrl
@@ -183,44 +254,21 @@ export const ComplaintForm = () => {
             storagePath: fileData.storagePath,
           }));
 
-          // Send file metadata as JSON instead of actual files
           formData.append("uploaded_files", JSON.stringify(fileDataForBackend));
         }
-
-        console.log(
-          `Sending ${uploadedFiles.length} uploaded file URLs to backend`
-        );
       }
 
-      // Debug: Log what we're sending
-      console.log("Sending form data:");
-      console.log(
-        "complainant:",
-        JSON.parse(formData.get("complainant") as string)
-      );
-      console.log("accused:", JSON.parse(formData.get("accused") as string));
-      console.log("incident_type:", formData.get("incident_type"));
-      console.log("allegation:", formData.get("allegation"));
-      console.log("datetime:", formData.get("datetime"));
-      console.log("category:", formData.get("category"));
-
-      const uploadedFilesData = formData.get("uploaded_files");
-      if (uploadedFilesData) {
-        console.log("uploaded_files:", JSON.parse(uploadedFilesData as string));
-      }
-
-      await submitComplaint(formData);
+      await api.post("complaint/create/", formData);
       await handleSendAlert();
 
       toast.success("Complaint submitted successfully");
-      methods.reset();
+      // methods.reset();
       setTimeout(() => {
-        navigate("/blotter-record");
+        navigate("/complaint");
       }, 1000);
       setStep(1);
       setShowConfirmModal(false);
     } catch (error) {
-      console.error("Submission error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to submit complaint";
       toast.error(errorMessage);
@@ -315,11 +363,58 @@ export const ComplaintForm = () => {
                 <Input
                   placeholder={
                     step === 1
-                      ? "Search registered resident"
-                      : "Search respondent details"
+                      ? "Search..."
+                      : "Search..."
                   }
                   className="pl-10 pr-4 h-10 border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white transition-all duration-200 rounded-lg w-full"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() => setShowSearchResults(true)}
                 />
+
+                {showSearchResults &&
+                  (searchResults.length > 0 || isSearching) && (
+                    <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 max-h-60 overflow-auto">
+                      {isSearching ? (
+                        <div className="px-4 py-2 text-sm text-gray-500">
+                          Searching...
+                        </div>
+                      ) : searchResults.length === 0 ? (
+                        <div className="px-4 py-2 text-sm text-gray-500">
+                          No results found
+                        </div>
+                      ) : (
+                        searchResults.map((result) => (
+                          <div
+                            key={result.id}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                            onClick={() => handleResultClick(result)}
+                          >
+                            {step === 1 ? (
+                              <>
+                                <div className="font-medium">
+                                  {result.cpnt_name}
+                                </div>
+                                <div className="text-gray-500">
+                                  {result.add?.add_barangay},{" "}
+                                  {result.add?.add_city}
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="font-medium">
+                                  {result.acsd_name}
+                                </div>
+                                <div className="text-gray-500">
+                                  {result.acsd_description}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
               </div>
             )}
           </CardHeader>
@@ -388,6 +483,20 @@ export const ComplaintForm = () => {
             </FormProvider>
           </CardContent>
         </Card>
+
+        <div className="mt-8 p-4 rounded-md border border-blue-200 bg-blue-50 text-blue-900 flex items-start gap-3">
+          <FileText className="w-5 h-5 mt-1 text-blue-600 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-sm">
+              Confidentiality Acknowledgment
+            </p>
+            <p className="text-sm mt-1">
+              All information provided in this report will be treated with the
+              utmost confidentiality and will only be used for official and
+              lawful purposes.
+            </p>
+          </div>
+        </div>
 
         {/* Confirmation Modal */}
         <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>

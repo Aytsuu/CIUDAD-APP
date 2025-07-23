@@ -15,14 +15,16 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { 
-  getArchivedComplaints, 
-  restoreComplaint, 
-  deleteComplaint 
+import {
+  getArchivedComplaints,
+  restoreComplaint,
+  deleteComplaint,
+  getComplaintById,
 } from "./restful-api/complaint-api";
 import { Button } from "@/components/ui/button/button";
 import { Link, useNavigate } from "react-router-dom";
 import { BsChevronLeft } from "react-icons/bs";
+import { Badge } from "@/components/ui/badge";
 
 type Complaint = {
   id: string;
@@ -62,8 +64,8 @@ const ArchiveComplaints = () => {
 
       // Transform the API response to match our Complaint type
       const formattedComplaints = response.data.map((complaint: any) => ({
-        id: complaint.comp_id.toString(),
-        complainant: complaint.cpnt?.cpnt_name || "Anonymous",
+        id: complaint.comp_id,
+        complainant: complaint.complainant?.[0]?.cpnt_name || "Anonymous",
         category: complaint.comp_incident_type || "Uncategorized",
         description: complaint.comp_allegation || "",
         dateCreated: complaint.comp_created_at,
@@ -164,16 +166,14 @@ const ArchiveComplaints = () => {
   const handleRestore = async (complaintId: string) => {
     try {
       await restoreComplaint(complaintId);
-      
+
       // Remove the complaint from the archived list
       setComplaints((prev) =>
         prev.filter((complaint) => complaint.id !== complaintId)
       );
-      
+
       // Also remove from selected complaints if it was selected
-      setSelectedComplaints((prev) =>
-        prev.filter((id) => id !== complaintId)
-      );
+      setSelectedComplaints((prev) => prev.filter((id) => id !== complaintId));
 
       toast.success("Complaint restored successfully");
     } catch (error: any) {
@@ -193,8 +193,12 @@ const ArchiveComplaints = () => {
         selectedComplaints.map((id) => restoreComplaint(id))
       );
 
-      const successCount = results.filter(result => result.status === 'fulfilled').length;
-      const failureCount = results.filter(result => result.status === 'rejected').length;
+      const successCount = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
+      const failureCount = results.filter(
+        (result) => result.status === "rejected"
+      ).length;
 
       // Remove successfully restored complaints from the list
       if (successCount > 0) {
@@ -235,11 +239,9 @@ const ArchiveComplaints = () => {
       setComplaints((prev) =>
         prev.filter((complaint) => complaint.id !== complaintId)
       );
-      
+
       // Also remove from selected complaints if it was selected
-      setSelectedComplaints((prev) =>
-        prev.filter((id) => id !== complaintId)
-      );
+      setSelectedComplaints((prev) => prev.filter((id) => id !== complaintId));
 
       toast.success("Complaint deleted permanently", {
         description: `Complaint ${complaintId} has been deleted.`,
@@ -268,8 +270,12 @@ const ArchiveComplaints = () => {
         selectedComplaints.map((id) => deleteComplaint(id))
       );
 
-      const successCount = results.filter(result => result.status === 'fulfilled').length;
-      const failureCount = results.filter(result => result.status === 'rejected').length;
+      const successCount = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
+      const failureCount = results.filter(
+        (result) => result.status === "rejected"
+      ).length;
 
       // Remove successfully deleted complaints from the list
       if (successCount > 0) {
@@ -296,39 +302,44 @@ const ArchiveComplaints = () => {
     }
   };
 
-  const handleViewDetails = (complaintId: string) => {
-    // Navigate to complaint details page
-    navigate(`/complaint/${complaintId}`);
+  const handleViewDetails = async (complaintId: string) => {
+    try {
+      const response = await getComplaintById(complaintId);
+      // Navigate to complaint details page
+      // navigate(`/complaint/${complaintId}`);
+      return response
+    } catch (error) {
+      console.error("Failed to fetch complaint details:", error);
+      toast.error("Failed to load complaint details");
+    }
   };
 
   const handleExport = async () => {
-    // try {
-    //   // const token = getAccessToken() ?? "";
-    //   // const response = await api.get("/complaint/archived/export/", {
-    //   //   headers: {
-    //   //     Authorization: `Bearer ${token}`,
-    //   //   },
-    //   //   responseType: "blob",
-    //   // });
-
-    //   // Create download link
-    //   const url = window.URL.createObjectURL(new Blob([response.data]));
-    //   const link = document.createElement("a");
-    //   link.href = url;
-    //   link.setAttribute("download", "archived_complaints_export.xlsx");
-    //   document.body.appendChild(link);
-    //   link.click();
-    //   link.remove();
-
-    //   toast.success("Export successful", {
-    //     description: "Your archived complaints have been exported.",
-    //   });
-    // } catch (error: any) {
-    //   console.error("Export failed:", error);
-    //   toast.error("Export failed", {
-    //     description: error.response?.data?.message || error.message,
-    //   });
-    // }
+    try {
+      // const token = getAccessToken() ?? "";
+      // const response = await api.get("/complaint/archived/export/", {
+      //   headers: {
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      //   responseType: "blob",
+      // });
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "archived_complaints_export.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Export successful", {
+        description: "Your archived complaints have been exported.",
+      });
+    } catch (error: any) {
+      console.error("Export failed:", error);
+      toast.error("Export failed", {
+        description: error.response?.data?.message || error.message,
+      });
+    }
   };
 
   if (loading) {
@@ -534,9 +545,9 @@ const ArchiveComplaints = () => {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        <Badge className="bg-emerald-600">
                           {complaint.category}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
 
@@ -547,20 +558,20 @@ const ArchiveComplaints = () => {
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-gray-600">
                         <span className="font-medium">Accused:</span>{" "}
-                        {complaint.accusedPersons.length > 0 
-                          ? complaint.accusedPersons.join(", ") 
+                        {complaint.accusedPersons.length > 0
+                          ? complaint.accusedPersons.join(", ")
                           : "Not specified"}
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <button 
+                          <button 
                           onClick={() => handleViewDetails(complaint.id)}
-                          className="flex items-center gap-1 px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-md transition-colors text-sm"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Details
-                        </button>
-                        <button
+                          className="flex items-center gap-1 px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-md transition-colors text-sm">
+                            <Eye className="w-4 h-4" />
+                            View Details
+                          </button>
+
+                        {/* <button
                           onClick={() => handleRestore(complaint.id)}
                           className="flex items-center gap-1 px-3 py-1 text-green-600 hover:bg-green-50 rounded-md transition-colors text-sm"
                         >
@@ -573,7 +584,7 @@ const ArchiveComplaints = () => {
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                   </div>

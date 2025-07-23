@@ -13,6 +13,9 @@ export const api2 = axios.create({
   baseURL: "http://localhost:8001",
 });
 
+
+// Interceptors act like middleware for api calls 
+
 // Request interceptor to add auth token
 api.interceptors.request.use(async (config) => {
   // Skip auth for login and signup endpoints

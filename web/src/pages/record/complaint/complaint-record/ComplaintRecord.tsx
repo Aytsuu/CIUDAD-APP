@@ -7,8 +7,6 @@ import { filterComplaints } from "./FilterComplaint";
 import ComplaintFilterBar from "./ComplaintFilterBar";
 import ComplaintTable from "./ComplaintTable";
 import ComplaintPagination from "./ComplaintPagination";
-import { useAuth } from "@/context/AuthContext";
-
 
 export default function ComplaintRecord() {
   const DEFAULT_PAGE_SIZE = 10;
@@ -60,7 +58,7 @@ export default function ComplaintRecord() {
         setPageSize={setPageSize}
       />
 
-      <ComplaintTable data={paginatedData} columns={columns} />
+      <ComplaintTable data={paginatedData} columns={columns} isLoading={isLoading} />
 
       <ComplaintPagination
         currentPage={currentPage}

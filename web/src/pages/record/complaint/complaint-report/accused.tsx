@@ -1,6 +1,6 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Plus, X } from "lucide-react";
 import {
   FormControl,
   FormField,
@@ -9,25 +9,34 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, X, User, Users, UserX, HelpCircle } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
 
 export const AccusedInfo = () => {
-  const { control, getValues } = useFormContext();
+  const { control, watch, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "accused",
   });
 
   const [activeTab, setActiveTab] = useState(0);
+  const selectedGender = watch(`accused.${activeTab}.gender`);
 
-  // Initialize with first accused if none exist
   useEffect(() => {
     if (fields.length === 0) {
       append({
-        firstName: "",
-        middleName: "",
-        lastName: "",
-        suffix: "",
+        alias: "",
+        age: "",
+        gender: "",
+        genderInput: "",
+        description: "",
         address: {
           street: "",
           barangay: "",
@@ -43,12 +52,11 @@ export const AccusedInfo = () => {
   const addAccused = () => {
     const newIndex = fields.length;
     append({
-      firstName: "",
-      middleName: "",
-      lastName: "",
-      suffix: "",
       alias: "",
-      
+      age: "",
+      gender: "",
+      genderInput: "",
+      description: "",
       address: {
         street: "",
         barangay: "",
@@ -57,44 +65,28 @@ export const AccusedInfo = () => {
         sitio: "",
       },
     });
-    // Set the new tab as active
     setActiveTab(newIndex);
   };
 
   const removeAccused = (index: number) => {
-    if (fields.length === 1) {
-      // Don't allow removing the last accused
-      return;
-    }
-
+    if (fields.length === 1) return;
     remove(index);
-
-    // Adjust active tab if necessary
     if (activeTab === index) {
-      // If removing the active tab, switch to the previous tab or first tab
       setActiveTab(index > 0 ? index - 1 : 0);
     } else if (activeTab > index) {
-      // If removing a tab before the active tab, adjust the active tab index
       setActiveTab(activeTab - 1);
     }
   };
 
-  // Ensure activeTab is within bounds
   useEffect(() => {
     if (activeTab >= fields.length && fields.length > 0) {
       setActiveTab(fields.length - 1);
     }
   }, [fields.length, activeTab]);
 
-  // Keep tab names static as "Resp. X"
-  const getTabDisplayName = (index: number) => {
-    return `Resp. ${index + 1}`;
-  };
+  const getTabDisplayName = (index: number) => `Resp. ${index + 1}`;
 
-  // Don't render anything if there are no fields yet
-  if (fields.length === 0) {
-    return null;
-  }
+  if (fields.length === 0) return null;
 
   return (
     <div className="space-y-4">
@@ -134,8 +126,6 @@ export const AccusedInfo = () => {
               </div>
             ))}
           </div>
-
-          {/* Add New Tab Button */}
           <Button
             type="button"
             onClick={addAccused}
@@ -149,7 +139,7 @@ export const AccusedInfo = () => {
         </div>
       </div>
 
-      {/* Tab Content - Force re-render when activeTab changes */}
+      {/* Tab Content */}
       <div
         key={`tab-${activeTab}`}
         className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-6 shadow-sm"
@@ -159,214 +149,235 @@ export const AccusedInfo = () => {
             <h3 className="text-base font-semibold text-black/70">
               Respondent {activeTab + 1} Information
             </h3>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <span>
-                Tab {activeTab + 1} of {fields.length}
-              </span>
-            </div>
+            <span className="text-sm text-gray-500">
+              Tab {activeTab + 1} of {fields.length}
+            </span>
           </div>
 
-          {/* Personal Information */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          {/* Name */}
+          <FormField
+            control={control}
+            name={`accused.${activeTab}.alias`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold text-black/50">
+                  Full Name (If known)/Alias *
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter name or alias" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Age and Gender */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormField
               control={control}
-              name={`accused.${activeTab}.firstName`}
-              render={({ field }) => (
-                <FormItem className="col-span-4">
-                  <FormLabel className="font-semibold text-black/50">
-                    First Name *
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="First name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
-              name={`accused.${activeTab}.middleName`}
-              render={({ field }) => (
-                <FormItem className="col-span-4">
-                  <FormLabel className="font-semibold text-black/50">
-                    Middle Name
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Middle name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
-              name={`accused.${activeTab}.lastName`}
-              render={({ field }) => (
-                <FormItem className="col-span-3">
-                  <FormLabel className="font-semibold text-black/50">
-                    Last Name *
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Last name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
-              name={`accused.${activeTab}.suffix`}
-              render={({ field }) => (
-                <FormItem className="col-span-1">
-                  <FormLabel className="font-semibold text-black/50">
-                    Suffix
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Jr." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* <FormField
-              control={control}
-              name={`accused.${activeTab}.contactNumber`}
+              name={`accused.${activeTab}.age`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-semibold text-black/50">
-                    Contact Number *
+                    Age *
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="09123456789" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="Age"
+                      {...field}
+                      onChange={(e) => {
+                        // Only allow numbers
+                        const value = e.target.value.replace(/\D/g, "");
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
-            /> */}
-          </div>
+            />
 
-          {/* Address Information */}
-          <div className="space-y-4">
-            <h4 className="text-base font-semibold text-black/70">
-              Address Information
-            </h4>
-
-            <div className="space-y-2">
+            <div className="md:col-span-3">
               <FormLabel className="font-semibold text-black/50">
-                Sitio / Barangay / Municipality / Province * 
+                Gender *
               </FormLabel>
-              <div className="flex items-center border-2 border-gray-300 rounded-lg p-1 bg-white">
+              <div className="flex mt-2">
                 <FormField
                   control={control}
-                  name={`accused.${activeTab}.address.street`}
+                  name={`accused.${activeTab}.gender`}
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem className="flex-shrink-0">
                       <FormControl>
-                        <Input 
-                          placeholder="123 Main St" 
-                          {...field} 
-                          className="border-none shadow-none p-0 h-8"
-                        />
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Clear genderInput when changing selection
+                            setValue(`accused.${activeTab}.genderInput`, "");
+                          }}
+                          value={field.value}
+                        >
+                          <SelectTrigger className="w-20 h-9 rounded-r-none border-r-0 px-2">
+                            <SelectValue>
+                              {field.value === "Male" && (
+                                <User className="h-4 w-4 text-blue-600" />
+                              )}
+                              {field.value === "Female" && (
+                                <Users className="h-4 w-4 text-pink-600" />
+                              )}
+                              {field.value === "Other" && (
+                                <HelpCircle className="h-4 w-4 text-purple-600" />
+                              )}
+                              {field.value === "Prefer not to say" && (
+                                <UserX className="h-4 w-4 text-gray-600" />
+                              )}
+                              {!field.value && (
+                                <span className="text-gray-400 text-xs">
+                                  Select
+                                </span>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Male">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-blue-600" />
+                                <span>Male</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Female">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-pink-600" />
+                                <span>Female</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Other">
+                              <div className="flex items-center gap-2">
+                                <HelpCircle className="h-4 w-4 text-purple-600" />
+                                <span>Other</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Prefer not to say">
+                              <div className="flex items-center gap-2">
+                                <UserX className="h-4 w-4 text-gray-600" />
+                                <span>Prefer not to say</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-                <span className="mx-2 text-gray-400 font-medium">/</span>
+
                 <FormField
                   control={control}
-                  name={`accused.${activeTab}.address.barangay`}
+                  name={`accused.${activeTab}.genderInput`}
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Input 
-                          placeholder="Barangay 1" 
-                          {...field} 
-                          className="border-none shadow-none p-0 h-8"
+                        <Input
+                          placeholder={
+                            selectedGender === "Other"
+                              ? "Enter gender"
+                              : "Auto-filled from selection"
+                          }
+                          disabled={selectedGender !== "Other"}
+                          value={
+                            selectedGender === "Other"
+                              ? field.value
+                              : selectedGender || ""
+                          }
+                          onChange={
+                            selectedGender === "Other"
+                              ? field.onChange
+                              : undefined
+                          }
+                          className={`h-10 rounded-l-none ${
+                            selectedGender !== "Other"
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
+                          }`}
                         />
                       </FormControl>
+                      {selectedGender === "Other" && <FormMessage />}
                     </FormItem>
                   )}
-                />
-                <span className="mx-2 text-gray-400 font-medium">/</span>
-                <FormField
-                  control={control}
-                  name={`accused.${activeTab}.address.city`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input 
-                          placeholder="Cebu" 
-                          {...field} 
-                          className="border-none shadow-none p-0 h-8"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <span className="mx-2 text-gray-400 font-medium">/</span>
-                <FormField
-                  control={control}
-                  name={`accused.${activeTab}.address.province`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input 
-                          placeholder="Province" 
-                          {...field} 
-                          className="p-0 h-8"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              {/* Show validation messages for address fields */}
-              <div className="space-y-1">
-                <FormField
-                  control={control}
-                  name={`accused.${activeTab}.address.street`}
-                  render={() => <FormMessage />}
-                />
-                <FormField
-                  control={control}
-                  name={`accused.${activeTab}.address.barangay`}
-                  render={() => <FormMessage />}
-                />
-                <FormField
-                  control={control}
-                  name={`accused.${activeTab}.address.city`}
-                  render={() => <FormMessage />}
-                />
-                <FormField
-                  control={control}
-                  name={`accused.${activeTab}.address.province`}
-                  render={() => <FormMessage />}
                 />
               </div>
             </div>
+          </div>
 
-            {/* Sitio field on its own line */}
-            {/* <div>
-              <FormField
-                control={control}
-                name={`accused.${activeTab}.address.sitio`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-black/50">
-                      Sitio/Purok
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Sitio 1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div> */}
+          {/* Description */}
+          <FormField
+            control={control}
+            name={`accused.${activeTab}.description`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold text-black/50">
+                  Description *
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Provide detailed description (e.g. physical appearance)..."
+                    className="min-h-[120px]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Address */}
+          <div className="space-y-3">
+            <FormLabel className="font-semibold text-black/50">
+              Complete Address (Street / Barangay / Municipality / Province) *
+            </FormLabel>
+            <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
+              {[
+                { key: "street", placeholder: "Street/Sitio" },
+                { key: "barangay", placeholder: "Barangay" },
+                { key: "city", placeholder: "Municipality/City" },
+                { key: "province", placeholder: "Province" },
+              ].map(({ key, placeholder }, i) => (
+                <div key={key} className="flex-1 flex items-center">
+                  <FormField
+                    control={control}
+                    name={`accused.${activeTab}.address.${key}`}
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder={placeholder}
+                            className="border-none shadow-none px-2 h-10 md:h-8"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  {i < 3 && (
+                    <span className="hidden md:inline mx-2 text-gray-400 font-medium">
+                      /
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Address Validation Messages */}
+            <div className="space-y-1">
+              {["street", "barangay", "city", "province"].map((fieldKey) => (
+                <FormField
+                  key={fieldKey}
+                  control={control}
+                  name={`accused.${activeTab}.address.${fieldKey}`}
+                  render={() => <FormMessage />}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>

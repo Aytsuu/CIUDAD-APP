@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime
+from django.utils import timezone
 # Create your models here.
 
 class Sitio(models.Model):
@@ -80,14 +81,14 @@ class Complaint_File(models.Model):
         db_table = 'complaint_file'
         managed = False
 
-class ServiceChargeRequest(models.Model): 
+class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
-    sr_req_date = models.DateTimeField(default=datetime.now)
+    sr_code = models.CharField(max_length=10, blank=True, null=True) 
+    sr_req_date = models.DateTimeField(default=timezone.now)
     sr_status = models.CharField(null=True, blank=True)
     sr_payment_status = models.CharField(null=True, blank=True)
     sr_type = models.CharField(null=True, blank=True)
-    sr_decision_date    = models.DateTimeField(null=True, blank=True)
-    # staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, db_column='staff_id', null=True)
+    sr_decision_date = models.DateTimeField(null=True, blank=True)
     comp = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
 
     parent_summon = models.ForeignKey(
@@ -104,7 +105,6 @@ class ServiceChargeRequest(models.Model):
 
     class Meta:
         db_table = 'service_charge_request'
-
 
 class CaseActivity(models.Model):
     ca_id = models.BigAutoField(primary_key=True)

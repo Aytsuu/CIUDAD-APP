@@ -2,13 +2,10 @@ import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import Loading from "@/components/ui/loading";
 
-
-export default function ComplaintTable({ data, columns }: any) {
+export default function ComplaintTable({ data, columns, isLoading }: any) {
   const [pageSizeInput, setPageSizeInput] = useState("10");
   const [pageSize, setPageSize] = useState(10);
-  const { user } = useAuth();
 
   useEffect(() => {
     setPageSizeInput(pageSize.toString());
@@ -17,13 +14,13 @@ export default function ComplaintTable({ data, columns }: any) {
   const applyPageSize = () => {
     const newSize = parseInt(pageSizeInput, 10);
     if (!isNaN(newSize) && newSize > 0) {
-      setPageSize(Math.min(newSize, 100)); 
+      setPageSize(Math.min(newSize, 100));
     } else {
-      setPageSizeInput(pageSize.toString()); 
+      setPageSizeInput(pageSize.toString());
     }
   };
 
-  const paginatedData = data.slice(0, pageSize);
+  const paginatedData = data?.slice(0, pageSize) || [];
 
   return (
     <div className="w-full flex flex-col">
@@ -45,12 +42,10 @@ export default function ComplaintTable({ data, columns }: any) {
           />
           <p className="text-xs sm:text-sm">Entries</p>
         </div>
-
-        
       </div>
 
       <div className="bg-white">
-        <DataTable columns={columns} data={paginatedData} />
+        <DataTable columns={columns} data={paginatedData} isLoading={isLoading} />
       </div>
     </div>
   );

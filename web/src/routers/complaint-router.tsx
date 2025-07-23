@@ -5,24 +5,19 @@ import ArchiveComplaints from "@/pages/record/complaint/ComplaintArchive";
 
 export const complaint_router = [
   {
-    path: "/complaint",
-    children:[
-      {
-        index: true,
-        element: <ComplaintRecord/>
-      },
-      {
-        path: ":id",
-        element: <ComplaintViewRecord/>
-      },
-      {
-        path: "report",
-        element: <ComplaintReport/>
-      },
-      {
-        path: "archive",
-        element: <ArchiveComplaints/>
-      }
-    ]
+    path: "complaint/",
+    element: <ComplaintRecord />,
+  },
+  {
+    path: "complaint/:id",
+    element: <ComplaintViewRecord />,
+  },
+  {
+    path: "complaint/report",
+    element: <ComplaintReport />,
+  },
+  {
+    path: "complaint/archive",
+    element: <ArchiveComplaints />,
   },
 ];
