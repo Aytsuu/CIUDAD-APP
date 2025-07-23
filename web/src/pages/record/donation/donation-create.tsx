@@ -221,7 +221,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
                 options={[
                   { id: "Cash", name: "Cash" },
                   { id: "Cheque", name: "Cheque" },
-                  { id: "E-Money", name: "E-Money" },
+                  { id: "E-money", name: "E-money" },
                 ]}
                 readOnly={false}
               />
