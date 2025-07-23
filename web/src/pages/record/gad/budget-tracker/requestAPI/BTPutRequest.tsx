@@ -1,6 +1,5 @@
-import api from '@/pages/api/api';
+import { api } from "@/api/api";
 import { MediaUploadType } from '@/components/ui/media-upload';
-import { GADBudgetFile } from './BTPostRequest';
 
 export type GADBudgetUpdatePayload = {
   gbud_type: 'Income' | 'Expense';

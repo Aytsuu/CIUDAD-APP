@@ -510,8 +510,8 @@ function GADProjectProposal() {
 
       {/* Dynamic Total Budget Display */}
       <div className="flex justify-end mt-2 mb-2">
-        <div className="bg-blue-50 px-4 py-2 rounded-lg">
-          <span className="font-medium text-blue-800">
+        <div className="bg-gray-200 px-4 py-2 rounded-lg">
+          <span className="font-medium text-black">
             Grand Total:{" "}
             <span className="font-bold text-green-700">
               ₱{new Intl.NumberFormat('en-US', { 

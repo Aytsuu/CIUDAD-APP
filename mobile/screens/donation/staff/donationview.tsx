@@ -113,7 +113,7 @@ const DonationView = () => {
             : donation.don_item_name === "cheque"
             ? "Cheque"
             : donation.don_item_name === "e-money"
-            ? "E-Money"
+            ? "E-money"
             : donation.don_item_name;
       }
 
@@ -129,6 +129,8 @@ const DonationView = () => {
     }
     setIsEditing(false);
   };
+
+  const moneyType = watch("don_item_name");
 
   if (!donation) {
     return (
@@ -165,7 +167,7 @@ const DonationView = () => {
       showBackButton
       onBackPress={() => router.back()}
     >
-      <View className="space-y-4">
+      <View className="space-y-4 p-5">
         <View className="relative">
           <Text className="text-sm font-medium mb-1">Donor Name</Text>
           <DonorSelect
@@ -248,7 +250,7 @@ const DonationView = () => {
                   options={[
                     { label: "Cash", value: "Cash" },
                     { label: "Cheque", value: "Cheque" },
-                    { label: "E-Money", value: "E-Money" },
+                    { label: "E-money", value: "E-money" },
                   ]}
                 />
               ) : (
@@ -350,12 +352,14 @@ const DonationView = () => {
               />
             </>
           ) : (
+             moneyType !== "E-money" && (
             <TouchableOpacity
               className="px-6 py-3 bg-blue-500 rounded-lg flex-row items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-lg font-medium">Edit</Text>
             </TouchableOpacity>
+             )
           )}
         </View>
       </View>

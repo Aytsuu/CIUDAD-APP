@@ -11,7 +11,52 @@ import { useState, useMemo } from "react"
 
 export default function SummonAndCaseMain() {
   const router = useRouter();
-  const { data: fetchedData = [], isLoading } = useGetServiceChargeRequest();
+  // const { data: fetchedData = [], isLoading } = useGetServiceChargeRequest();
+  const isLoading = false; // Mock loading state
+
+  // Mock data - this would be replaced by the actual fetchedData
+  const fetchedData = [
+    {
+      sr_id: "1",
+      sr_code: "001-25",
+      complainant_name: "John Doe",
+      incident_type: "Noise Complaint",
+      accused_names: ["Jane Smith", "Mike Johnson"],
+      decision_date: "2023-05-15",
+      allegation: "Excessive noise during quiet hours disturbing the peace",
+      status: "Ongoing"
+    },
+    {
+      sr_id: "2",
+      sr_code: "002-25",
+      complainant_name: "Sarah Williams",
+      incident_type: "Property Damage",
+      accused_names: ["Robert Brown"],
+      decision_date: "2023-04-22",
+      allegation: "Intentional damage to common area property",
+      status: "Resolved"
+    },
+    {
+      sr_id: "3",
+      sr_code: "003*25",
+      complainant_name: "Community Board",
+      incident_type: "Rule Violation",
+      accused_names: ["David Wilson"],
+      decision_date: "2023-06-10",
+      allegation: "Repeated violation of community guidelines",
+      status: "Escalated"
+    },
+    {
+      sr_id: "4",
+      sr_code: "004-25",
+      complainant_name: "Emma Davis",
+      incident_type: "Parking Dispute",
+      accused_names: ["Thomas Miller"],
+      decision_date: null,
+      allegation: "Unauthorized use of assigned parking space",
+      status: "Ongoing"
+    }
+  ];
 
   const filterOptions = [
     { id: "all", name: "All" },
@@ -40,6 +85,15 @@ export default function SummonAndCaseMain() {
       default:
         return "text-gray-600 bg-gray-50"
     }
+  }
+
+  const handleCaseOpen = (sr_id: string) => {
+      router.push({
+        pathname: '/(summon)/summon-view-details',
+        params: {
+          sr_id: sr_id
+        }
+      })
   }
 
   return (
@@ -96,6 +150,8 @@ export default function SummonAndCaseMain() {
                     key={request.sr_id}
                     activeOpacity={0.8}
                     className="mb-3"
+                    onPress={() => handleCaseOpen(request.sr_id)}
+
                   >
                     <Card className="border border-gray-200 rounded-lg bg-white">
                       <CardHeader className="border-b border-gray-200 p-4">

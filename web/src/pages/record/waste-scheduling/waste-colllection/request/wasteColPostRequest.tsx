@@ -1,4 +1,4 @@
-import api from '@/pages/api/api';
+import { api } from '@/api/api';
 import { formatDate } from '@/helpers/dateFormatter';
 
 // export const wasteColData = async (collectionInfo: Record<string, any>) => {
@@ -35,7 +35,7 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions,
             wc_is_archive: false,
-            staff: collectionInfo.staff_id,
+            staff: '00005250722',
             sitio: collectionInfo.selectedSitios,
             truck: collectionInfo.collectionTruck,
             wstp: collectionInfo.driver  // Store driver directly here
@@ -46,7 +46,7 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions || "None",
             wc_is_archive: false,
-            staff: collectionInfo.staff_id,
+            staff: '00005250722',
             sitio: collectionInfo.selectedSitios,
             truck: collectionInfo.collectionTruck,
             wstp: collectionInfo.driver  // Store driver directly here
@@ -68,7 +68,7 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
             sitio_id: assInfo.sitio_id,
             wstp_id: assInfo.wstp_id,
             truck_id: parseInt(assInfo.truck_id),
-            staff_id: assInfo.staff_id
+            staff_id: '00005250722'
         });
 
         const res = await api.post('waste/waste-collection-assignment/', {
@@ -76,7 +76,7 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
             sitio: assInfo.sitio_id,
             wstp: assInfo.wstp_id,
             truck: parseInt(assInfo.truck_id),
-            staff_id: assInfo.staff_id
+            staff_id: '00005250722'
         });
 
         return res.data.was_id;

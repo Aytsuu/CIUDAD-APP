@@ -7,7 +7,6 @@ export type SupportingDoc = {
   momsp_type: string;
   momsp_path: string;
   momsp_url: string;
-  momsp_is_archive: boolean;
   mom_id: string | null;
 };
 
