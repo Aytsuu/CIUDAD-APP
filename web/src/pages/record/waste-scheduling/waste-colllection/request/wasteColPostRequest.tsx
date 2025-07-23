@@ -36,7 +36,6 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
             wc_add_info: collectionInfo.additionalInstructions,
             wc_is_archive: false,
             staff: '00005250722',
-            staff: '00005250722',
             sitio: collectionInfo.selectedSitios,
             truck: collectionInfo.collectionTruck,
             wstp: collectionInfo.driver  // Store driver directly here
@@ -47,7 +46,6 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions || "None",
             wc_is_archive: false,
-            staff: '00005250722',
             staff: '00005250722',
             sitio: collectionInfo.selectedSitios,
             truck: collectionInfo.collectionTruck,
