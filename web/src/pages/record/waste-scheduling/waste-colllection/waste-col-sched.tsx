@@ -232,7 +232,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
+                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
                         Schedule
                     </Button>
                 </div>
