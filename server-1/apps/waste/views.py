@@ -426,6 +426,20 @@ class WatchmanView(generics.GenericAPIView):
 
         data = [watchman.to_dict() for watchman in watchmen]
         return Response(data)
+    
+
+class GarbagePickupRequestAnalyticsView(APIView):
+    def get(self, request, format=None):
+        counts = {
+            'pending': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='pending').count(),
+            'accepted': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='accepted').count(),
+            'rejected': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='rejected').count(),
+            'completed': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='completed').count(),
+            'total': Garbage_Pickup_Request.objects.count()
+        }
+        
+        return Response(counts, status=status.HTTP_200_OK)
+
      
 class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer

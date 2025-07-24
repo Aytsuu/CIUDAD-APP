@@ -24,7 +24,6 @@ function BudgetPlan() {
     const [deletedPlanYear, setDeletedPlanYear] = useState<string | null>(null);
     const currentYear = new Date().getFullYear().toString();
     const navigate = useNavigate();
-    let shouldClone = false;
 
     const { data: fetchedData = [], isLoading } = usegetBudgetPlan();
 

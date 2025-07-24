@@ -14,6 +14,7 @@ import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-quartertly-report";
+import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-pcukup-section-cards";
 
 export default function Dashboard() {
   return (
@@ -30,6 +31,7 @@ export default function Dashboard() {
             <DonationSectionCards />
             <ProjPropPendingSectionCards />
             <WastePersonnelCards />
+            <GargbagePickupSectionCards/>
           </div>
           <div className="grid">
             <ReportSectionCharts />

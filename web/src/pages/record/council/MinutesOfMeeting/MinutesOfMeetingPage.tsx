@@ -37,7 +37,7 @@ function MinutesOfMeetingPage() {
       case "council":
         return "Council"
       case "waste":
-        return "Waste Committee"
+        return "Waste"
       default:
         return focus
     }
