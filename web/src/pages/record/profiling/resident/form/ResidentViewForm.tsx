@@ -92,7 +92,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
       ),
     [addresses],
   )
-  console.log(personalHistory);
+
+  console.log(personalHistory)
+  
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
     if (isLoadingFam || isLoadingPersonalInfo || isLoadingBusinesses || isLoadingPersonalHistory) showLoading()
@@ -106,7 +108,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
       setAddresses(personalInfo?.per_addresses)
     }
     formType === Type.Editing && setIsReadOnly(false)
-  }, [formType])
+  }, [formType, personalInfo])
 
   React.useEffect(() => {
     setAddresses(personalInfo?.per_addresses)
@@ -132,12 +134,13 @@ export default function ResidentViewForm({ params }: { params: any }) {
       return
     }
     try {
-      const isAddressAdded = personalInfo?.per_addresses?.length !== addresses.length
+      const isAddressAdded = personalInfo?.per_addresses?.length < addresses.length
       const values = form.getValues()
+      const {per_age, ...personalInfoRest } = personalInfo 
       if (
         checkDefaultValues(
           { ...values, per_addresses: addresses },
-          { ...params.data.personalInfo, per_addresses: personalInfo?.per_addresses },
+          personalInfoRest,
         )
       ) {
         setIsSubmitting(false)
@@ -145,21 +148,47 @@ export default function ResidentViewForm({ params }: { params: any }) {
         handleSubmitError("No changes made")
         return
       }
+      
+      const initialiAddresses = addresses.slice(0, personalInfo?.per_addresses?.length);
+      const addedAddress = addresses.slice(personalInfo?.per_addresses?.length, addresses.length);
+
       // Add new address to the database
       if (isAddressAdded) {
-        addAddress(addresses.slice(personalInfo?.per_addresses?.length, addresses.length), {
+        await addAddress(addedAddress, {
           onSuccess: (new_addresses) => {
             // Format the addresses to match the expected format
             const per_addresses = new_addresses.map((address: any) => {
               return {
                 add: address.add_id,
-                per: params.data.personalInfo?.per_id,
+                per: personalInfo?.per_id,
               }
             })
+
+            const initial_per_addresses = initialiAddresses.map((address: any) => ({
+              add: address.add_id,
+              per: personalInfo?.per_id,
+              initial: true
+            }));
+
             // Link personal address
-            addPersonalAddress(per_addresses)
+            addPersonalAddress({
+              data: [...per_addresses, ...initial_per_addresses], 
+              staff_id: user?.staff?.staff_id
+            })
           },
         })
+
+        if (
+          checkDefaultValues(
+            { ...values, per_addresses: initialiAddresses },
+            personalInfoRest,
+          )
+        ) {
+          setIsSubmitting(false)
+          setFormType(Type.Viewing)
+          handleSubmitSuccess("Profile updated successfully");
+          return
+        }
       }
       // Update the profile and address if any changes were made
       updateProfile(
@@ -167,7 +196,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
           personalId: personalInfo?.per_id,
           values: {
             ...capitalizeAllFields(values),
-            per_addresses: isAddressAdded ? addresses.slice(0, personalInfo?.per_addresses?.length) : addresses,
+            per_addresses: isAddressAdded ? initialiAddresses : addresses,
             staff_id: user?.staff?.staff_id,
           },
         },
@@ -180,6 +209,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
         },
       )
     } catch (err) {
+      setIsSubmitting(false);
       throw err
     }
   }
@@ -220,12 +250,11 @@ export default function ResidentViewForm({ params }: { params: any }) {
           {personalHistory.map((historyItem: any, index: number) => (
             <div
               key={historyItem.history_id}
-              className={`border rounded-md p-3 hover:bg-gray-50 transition-all duration-300 cursor-pointer`}
+              className={`border rounded-md p-3 hover:bg-gray-50 transition-all duration-300`}
               style={{
                 opacity: 0,
                 animation: `fadeInUp 0.4s ease-out ${index * 0.1}s forwards`,
               }}
-              onClick={() => handleHistoryItemClick(historyItem)}
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -259,20 +288,20 @@ export default function ResidentViewForm({ params }: { params: any }) {
           ))}
         </div>
 
-      <style>
-        {`
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(10px);
+        <style>
+          {`
+            @keyframes fadeInUp {
+              from {
+                opacity: 0;
+                transform: translateY(10px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
             }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}
-      </style>
+          `}
+        </style>
       </div>
     )
   }

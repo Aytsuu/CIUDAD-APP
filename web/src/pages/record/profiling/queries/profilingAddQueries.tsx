@@ -20,8 +20,16 @@ export const useAddAddress = () => {
 }
 
 export const useAddPerAddress = () => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, any>[]) => addPersonalAddress(data)
+    mutationFn: ({data, staff_id} : {
+      data: Record<string, any>[], 
+      staff_id: string
+    }) => addPersonalAddress(data, staff_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['personalInfo']})
+      queryClient.invalidateQueries({queryKey: ['personalHistory']});
+    }
   })
 }
 
