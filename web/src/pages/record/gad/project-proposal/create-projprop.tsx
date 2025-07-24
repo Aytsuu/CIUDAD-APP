@@ -46,7 +46,7 @@ export interface ProjectProposalFormProps {
   existingProposal?: any;
 }
 
-interface Signatory {
+export interface Signatory {
   name: string;
   position: string;
   type: "prepared" | "approved";

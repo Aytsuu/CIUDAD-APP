@@ -124,7 +124,7 @@ const CouncilCalendarPage = () => {
         key={date}
         className={`items-center justify-center rounded-full m-1 ${
           isSelected 
-            ? 'bg-blue-600' 
+            ? 'bg-primaryBlue' 
             : hasEvent 
               ? 'bg-blue-100' 
               : isToday
@@ -138,13 +138,13 @@ const CouncilCalendarPage = () => {
           isSelected 
             ? 'text-white font-bold' 
             : isToday
-              ? 'text-blue-600 font-bold'
+              ? 'text-primaryBlue font-bold'
               : 'text-gray-800'
         }`}>
           {date}
         </Text>
         {hasEvent && !isSelected && (
-          <View className="w-1 h-1 rounded-full bg-blue-500 mt-1" />
+          <View className="w-1 h-1 rounded-full bg-primaryBlue mt-1" />
         )}
       </TouchableOpacity>
     );
@@ -161,9 +161,9 @@ const CouncilCalendarPage = () => {
     >
       <View className={`bg-white shadow-sm rounded-lg p-4 mx-2 ${item.is_archive ? 'bg-gray-50' : ''}`}>
         <View className="flex-row justify-between items-start">
-          <Text className="text-blue-800 text-lg font-semibold flex-1">{item.title}</Text>
+          <Text className="text-primaryBlue text-lg font-semibold flex-1">{item.title}</Text>
           <View className="bg-blue-100 px-2 py-1 rounded">
-            <Text className="text-blue-600 text-xs font-medium">{item.type}</Text>
+            <Text className="text-primaryBlue text-xs font-medium">{item.type}</Text>
           </View>
         </View>
         <Text className="text-gray-600 mt-2">{item.description}</Text>
@@ -343,11 +343,11 @@ const CouncilCalendarPage = () => {
             {format(selectedDate, 'EEEE, MMMM d')}
           </Text>
           <View className="flex-row items-center gap-5 space-x-2">
-            <Text className="text-blue-600">
+            <Text className="text-primaryBlue">
               {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
             </Text>
             <TouchableOpacity
-              className="bg-blue-600 p-2 rounded-full"
+              className="bg-primaryBlue p-2 rounded-full"
               onPress={() => router.push('/council/council-events/schedule?isAdding=true')}
             >
               <Plus size={20} color="#ffffff" />

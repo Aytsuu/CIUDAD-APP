@@ -308,19 +308,22 @@ const IncomeandDisbursementMain = () => {
             {album.type === "income" ? album.inf_name || "Unnamed Income" : album.dis_name || "Unnamed Disbursement"}
           </Text>
           <Text className="text-xs text-gray-500">
-            Date Uploaded: {album.images[0]?.type === "income" 
+            Uploaded: {album.images[0]?.type === "income" 
             ? formatDate((album.images[0] as IncomeImage).infi_upload_date) || "N/A" 
             : formatDate((album.images[0] as DisbursementImage).disf_upload_date) || "N/A"}
           </Text>
           <Text className="text-xs text-gray-500">
             For Year: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).inf_year || "N/A" : (album.images[0] as DisbursementImage).dis_year || "N/A"}
           </Text>
+          <Text className="text-xs text-gray-500">
+            Description: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).inf_desc || "N/A" : (album.images[0] as DisbursementImage).dis_desc || "N/A"}
+          </Text>
         </View>
         <View className="mt-2 flex-row justify-end gap-1">
           {viewMode === "active" && (
             <>
               <TouchableOpacity
-                className="bg-blue-600 p-1 rounded-md"
+                className="bg-primaryBlue p-1 rounded-md"
                 onPress={(e) => {
                   e.stopPropagation();
                   router.push({
@@ -447,7 +450,7 @@ const IncomeandDisbursementMain = () => {
             </TouchableOpacity>
           }
     >
-      <View className="flex-1 p-4">
+      <View className="flex-1 p-5">
         <View className="flex flex-col gap-4 mb-4">
           <View className="flex-row justify-between items-center">
             <View className="flex-row gap-4 flex-1">
@@ -494,7 +497,7 @@ const IncomeandDisbursementMain = () => {
           <View className="flex-row justify-between items-center">
             <View className="flex-row space-x-2 gap-1">
               <TouchableOpacity
-                className={`px-4 py-2 rounded-md ${viewMode === "active" ? "bg-blue-600" : "bg-gray-200"}`}
+                className={`px-4 py-2 rounded-md ${viewMode === "active" ? "bg-primaryBlue" : "bg-gray-200"}`}
                 onPress={() => {
                   setViewMode("active");
                   setCurrentPage(1);
@@ -503,7 +506,7 @@ const IncomeandDisbursementMain = () => {
                 <Text className={`${viewMode === "active" ? "text-white" : "text-gray-600"}`}>Active</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className={`px-4 py-2 rounded-md ${viewMode === "archived" ? "bg-blue-600" : "bg-gray-200"}`}
+                className={`px-4 py-2 rounded-md ${viewMode === "archived" ? "bg-primaryBlue" : "bg-gray-200"}`}
                 onPress={() => {
                   setViewMode("archived");
                   setCurrentPage(1);
@@ -513,10 +516,10 @@ const IncomeandDisbursementMain = () => {
               </TouchableOpacity>
             </View>
             <TouchableOpacity
-              className="bg-blue-600 px-4 py-2 rounded-md"
+              className="bg-primaryBlue px-4 py-2 rounded-md"
               onPress={() => router.push("/(treasurer)/inc-disbursement/inc-disb-create")}
             >
-              <Text className="text-white text-base font-semibold">Create New</Text>
+              <Text className="text-white text-base font-semibold">Create</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -548,7 +551,7 @@ const IncomeandDisbursementMain = () => {
           )}
         </View>
 
-        <View className="flex-row justify-between items-center mt-4">
+        {/* <View className="flex-row justify-between items-center mt-4">
           <View className="flex-row items-center gap-2">
             <Text className="text-sm text-gray-600">Show</Text>
             <TextInput
@@ -586,7 +589,7 @@ const IncomeandDisbursementMain = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </View> */}
 
         <Modal visible={zoomVisible} transparent={true} onRequestClose={() => setZoomVisible(false)}>
           <View className="flex-1 bg-black/80 justify-center items-center">

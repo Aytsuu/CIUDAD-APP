@@ -77,13 +77,6 @@ const BudgetTrackerRecords = () => {
     budget => budget.gbudy_year === year
   )?.gbudy_budget || 0;
 
-  // Calculate remaining balance
-  const latestEntry = entries
-    .filter(entry => !entry.gbud_is_archive)
-    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
-
-  const remainingBalance = (currentYearBudget - (yearBudgets.find(b => b.gbudy_year === year)?.gbudy_expenses || 0));
-
   const filteredData = entries.filter((entry: GADBudgetEntryUI) => {
     if (activeTab === 'active' && entry.gbud_is_archive) return false;
     if (activeTab === 'archive' && !entry.gbud_is_archive) return false;
@@ -176,13 +169,65 @@ const BudgetTrackerRecords = () => {
     }
   };
 
-const totalProposedBudget = entries
-  .filter(entry => 
-    !entry.gbud_is_archive && 
-    entry.gbud_type === 'Expense' &&
-    (!entry.gbud_actual_expense || entry.gbud_actual_expense === '0') 
-  )
-  .reduce((sum, entry) => sum + Number(entry.gbud_proposed_budget || 0), 0);
+  const getLatestRemainingBalance = (): number => {
+  // If no entries, return the initial budget
+  if (!entries || entries.length === 0) {
+    return currentYearBudget ? Number(currentYearBudget) : 0;
+  }
+
+  // Filter active (unarchived) entries
+  const activeEntries = entries.filter((entry) => !entry.gbud_is_archive);
+
+  // If no active entries, return initial budget
+  if (activeEntries.length === 0) {
+    return currentYearBudget ? Number(currentYearBudget) : 0;
+  }
+
+  // Calculate balance from scratch using only gbud_actual_expense
+  let balance = currentYearBudget ? Number(currentYearBudget) : 0;
+
+  activeEntries.forEach((entry) => {
+    if (entry.gbud_type === "Expense" && entry.gbud_actual_expense !== null) {
+      const amount = Number(entry.gbud_actual_expense) || 0;
+      balance -= amount;
+    }
+  });
+
+  return balance;
+};
+
+  const calculateTotalProposedWithoutActual = () => {
+    if (!entries || entries.length === 0) return 0;
+
+    return entries.reduce((total, entry) => {
+      // Skip archived or non-expense entries
+      if (entry.gbud_is_archive || entry.gbud_type !== "Expense") return total;
+
+      // Convert all values to numbers safely (handles strings like "0.00")
+      const toNum = (val: any) => {
+        if (val === undefined || val === null) return undefined;
+        const num = +val; // Convert to number
+        return isNaN(num) ? undefined : num;
+      };
+
+      const actual = toNum(entry.gbud_actual_expense);
+      const proposed = toNum(entry.gbud_proposed_budget);
+
+      // Include if:
+      // 1. Actual is either undefined/null OR equals 0 (as number)
+      // 2. Proposed exists and is not 0
+      const shouldInclude =
+        (actual === undefined || actual === null || actual === 0) &&
+        proposed !== undefined &&
+        proposed !== null &&
+        proposed !== 0;
+
+      if (shouldInclude) {
+        return total + proposed;
+      }
+      return total;
+    }, 0);
+  };
 
   const renderItem = ({ item }: { item: GADBudgetEntryUI }) => (
     <TouchableOpacity onPress={() => handleEdit(item)}>
@@ -303,13 +348,13 @@ const totalProposedBudget = entries
           <View className="flex-row items-center mt-1">
             <Text className="text-gray-600">Remaining Balance:</Text>
             <Text className="text-green-600 font-bold ml-2">
-              ₱{Number(remainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₱{getLatestRemainingBalance().toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
           </View>
           <View className="flex-row items-center mt-1">
             <Text className="text-gray-600">Pending Expenses:</Text>
             <Text className="text-blue-600 font-bold ml-2">
-              ₱{Number(totalProposedBudget).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₱{calculateTotalProposedWithoutActual().toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
           </View>
         </View>

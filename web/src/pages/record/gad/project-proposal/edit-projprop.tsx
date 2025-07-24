@@ -37,18 +37,13 @@ import {
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
+import { Signatory } from "./create-projprop";
 
 export interface EditProjectProposalFormProps {
   onSuccess: (data: ProjectProposal) => void;
   initialValues?: ProjectProposal;
   isEditMode?: boolean;
   isSubmitting?: boolean;
-}
-
-interface Signatory {
-  name: string;
-  position: string;
-  type: "prepared" | "approved";
 }
 
 export const EditProjectProposalForm: React.FC<
@@ -64,7 +59,7 @@ export const EditProjectProposalForm: React.FC<
   const addSupportDocMutation = useAddSupportDocument();
   const deleteSupportDocMutation = useDeleteSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-  
+
   // Display remaining balance from budget tracker
   const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
