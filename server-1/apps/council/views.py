@@ -355,9 +355,15 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     serializer_class = PurposeRatesListViewSerializer
     
 
+# ==================== MINUTES OF MEETING=======================
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
+
+class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
+    queryset = MinutesOfMeeting.objects.all()
+    serializer_class = MinutesOfMeetingSerializer
+    lookup_field = 'mom_id'
 
 class MOMAreaOfFocusView(generics.ListCreateAPIView):
     serializer_class = MOMAreaOfFocusSerializer
@@ -366,7 +372,6 @@ class MOMAreaOfFocusView(generics.ListCreateAPIView):
 class MOMFileView(generics.ListCreateAPIView):
     serializer_class = MOMFileSerialzer
     queryset = MOMFile.objects.all()
-
 
 class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
     serializer_class = MinutesOfMeetingSerializer
@@ -418,3 +423,15 @@ class DeleteMOMAreaOfFocusView(APIView):
 class MOMSuppDocView(generics.ListCreateAPIView):
     serializer_class = MOMSuppDocSerializer
     query_set = MOMSuppDoc.objects.all()
+
+class MeetingSuppDocsView(generics.ListAPIView):
+    serializer_class = MOMSuppDocSerializer
+    
+    def get_queryset(self):
+        mom_id = self.kwargs['mom_id']
+        return MOMSuppDoc.objects.filter(mom_id=mom_id)
+
+class DeleteMOMSuppDocView(generics.DestroyAPIView):
+    queryset = MOMSuppDoc.objects.all()
+    serializer_class = MOMSuppDocSerializer
+    lookup_field = 'momsp_id' 
