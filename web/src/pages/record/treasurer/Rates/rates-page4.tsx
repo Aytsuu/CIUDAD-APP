@@ -4,7 +4,7 @@ import RatesFormPage4 from "./forms/rates-form-page4"
 import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { Pen, Trash, History, Search } from 'lucide-react'
+import { Pen, Trash, History, Search, ArrowUpDown } from 'lucide-react'
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -70,8 +70,18 @@ function RatesPage4() {
         },
         {
             accessorKey: "pr_date",
-            header: "Date Added/Updated",
-            cell: ({ row }) => formatTimestamp(row.original.pr_date)
+            header: ({ column }) => (
+                <div
+                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Date Updated
+                    <ArrowUpDown size={14} />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatTimestamp(row.getValue("pr_date"))} </div>            
+            )
         },
         {
             accessorKey: "action",

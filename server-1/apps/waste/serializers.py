@@ -339,13 +339,17 @@ class SitioSerializer(serializers.ModelSerializer):
         model = Sitio
         fields = ['sitio_id', 'sitio_name']
 
+# class AllGarbagePickupSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Garbage_Pickup_Request
+#         fields = '__all__'
+
 class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     sitio_name = serializers.SerializerMethodField()
     garb_additional_notes = serializers.CharField(required=False, allow_blank=True)
     sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all())
-    # file = serializers.PrimaryKeyRelatedField(queryset=File.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Garbage_Pickup_Request

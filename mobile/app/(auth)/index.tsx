@@ -6,6 +6,7 @@ import BudgetPlanMain from "@/screens/treasurer/budget-plan/budget-plan-main";
 import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
 import ReceiptPage from "@/screens/treasurer/receipt/receipt-main";
 import TemplateMainPage from "@/screens/council/doc-template/template-main";
+import ResolutionPage from "@/screens/council/resolution/resolution-main";
 import WasteHotspotMain from "@/screens/waste/waste-hotspot/waste-hotspot-main";
 // import GarbagePickupForm from "@/screens/waste/waste-garbage-pickup-request/resident/garbage-pickup-form";
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
@@ -15,5 +16,5 @@ import Request from "../(request)";
 import SummonAndCaseMain from "@/screens/summon/summon-and-case-main";
 
 export default () => {
-    return <SummonAndCaseMain/>
+    return <ResolutionPage/>
 }
