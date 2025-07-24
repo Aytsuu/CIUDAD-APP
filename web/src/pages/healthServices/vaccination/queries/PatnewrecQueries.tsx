@@ -13,17 +13,17 @@ import {
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
-} from "../restful-api/PostAPI";
+} from "../restful-api/post";
 import { api2 } from "@/api/api";
 import {useNavigation} from "react-router"
 import {
   getVaccinationHistory,
   getVaccinationRecords,
-} from "../restful-api/GetVaccination";
+} from "../restful-api/get";
 import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "../Calculatenextvisit";
-import {checkVaccineStatus} from "../restful-api/FetchVaccination";
+import {checkVaccineStatus} from "../restful-api/fetch";
 
 // Mutation for Step 1 submission
 export const useSubmitStep1 = () => {

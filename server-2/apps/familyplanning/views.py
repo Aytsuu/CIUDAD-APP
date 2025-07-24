@@ -21,7 +21,7 @@ from apps.patientrecords.serializers.bodymesurement_serializers import *
 from apps.patientrecords.serializers.vitalsigns_serializers import *
 from apps.patientrecords.serializers.followvisits_serializers import *
 from apps.patientrecords.serializers.obstetrical_serializers import *
-from apps.maternal.serializer import PreviousPregnancySerializer
+from apps.maternal.serializer import PreviousPregnancyCreateSerializer
 from apps.patientrecords.serializers.spouse_serializers import *
 from apps.inventory.models import CommodityList, CommodityInventory # Import CommodityList and CommodityInventory
 
@@ -236,7 +236,6 @@ def get_or_create_illness(illname, ill_description, ill_code_prefix="FP"):
         return illness
     
 def calculate_age_from_dob(dob_string):
-    """Helper function to calculate age from date of birth string"""
     if not dob_string:
         return 0
     try:
@@ -443,6 +442,41 @@ def get_last_previous_pregnancy(request, patient_id):
         traceback.print_exc()
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+@api_view(['GET'])
+def get_patient_health_and_nhts_data(request, patient_id):
+    try:
+        patient = get_object_or_404(Patient, pat_id=patient_id)
+        
+        philhealth_id = ""
+        nhts_status = ""
+
+        if patient.pat_type == "Resident" and patient.rp_id:
+            # Fetch PhilHealth ID from HealthRelatedDetails
+            # Ensure your HealthRelatedDetails model has a ForeignKey to ResidentProfile named 'rp'
+            hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
+            if hrd:
+                philhealth_id = hrd.hrd_philhealth_id or ""
+            
+            # Fetch NHTS status from Household
+            # Ensure your Household model has a ForeignKey to ResidentProfile named 'rp'
+            household = Household.objects.filter(rp=patient.rp_id).first()
+            if household:
+                nhts_status = household.hh_nhts or "" # Assuming hh_nhts is the field name
+        
+        response_data = {
+            "philhealthNo": philhealth_id,
+            "nhts_status": nhts_status
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Patient.DoesNotExist:
+        return Response({"detail": f"Patient with ID {patient_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response({"detail": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @api_view(["GET"])
 def get_patient_spouse(request, patient_id):
     try:
@@ -534,268 +568,7 @@ def get_patient_spouse(request, patient_id):
             {"error": str(e)}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-        
-# @api_view(["GET"])
-# def get_patient_details(request, patient_id):
-#     try:
-#         patient = get_object_or_404(Patient, pat_id=patient_id)
-#         serializer = PatientSerializer(patient)
-#         patient_data = serializer.data
-#         personal_info = patient_data.get("personal_info")
-        
-#         philhealth_id = ""
-        
-#         try:
-#             if patient.pat_type == "Resident" and patient.rp_id:
-#                 personal = patient.rp_id.per 
-#                 # 8
-#                 hrd = HealthRelatedDetails.objects.filter(per=personal.per_id).first()
-#                 if hrd:
-#                     philhealth_id = hrd.hrd_philhealth_id or ""
-#                     print(f"✓ PhilHealth ID: {philhealth_id}")
-#         except Exception as e:
-#             print(f"Error fetching health details 1: {e}")
 
-
-#         fp_form_data = {
-#             "pat_id": patient_data.get("pat_id", ""),
-#             "clientID": patient_data.get("clientID", ""),
-#             "philhealthNo": philhealth_id,
-#             "nhts_status": False,
-#             "pantawid_4ps": False,
-#             "lastName": "",
-#             "givenName": "",
-#             "middleInitial": "",
-#             "dateOfBirth": "",
-#             "age": 0,
-#             'educationalAttainment': personal_info.get('per_edAttainment', ''),
-#             "occupation": patient_data.get("occupation",""),
-#             "address": {
-#                 "houseNumber": "",
-#                 "street": "",
-#                 "barangay": "",
-#                 "municipality": "",
-#                 "province": "",
-#             },
-#             "spouse": {
-#                 "s_lastName": "",
-#                 "s_givenName": "",
-#                 "s_middleInitial": "",
-#                 "s_dateOfBirth": "",
-#                 "s_age": 0,
-#                 "s_occupation": "",
-#             },
-#             "numOfLivingChildren": 0,
-#             "planToHaveMoreChildren": plan_more_children,
-#             "averageMonthlyIncome": "",
-#             "weight": 0,  # Default to 0, will try to fetch
-#             "height": 0,  # Default to 0, will try to fetch
-#             "bodyMeasurementRecordedAt": None,
-#             "obstetricalHistory": {  # Default obstetrical history values
-#                 "g_pregnancies": 0,
-#                 "p_pregnancies": 0,
-#                 "fullTerm": 0,
-#                 "premature": 0,
-#                 "abortion": 0,
-#                 "livingChildren": 0,
-#                 "lastDeliveryDate": "",
-#                 "typeOfLastDelivery": "",
-#                 "lastMenstrualPeriod": "",
-#                 "previousMenstrualPeriod": "",
-#                 "menstrualFlow": "Scanty",
-#                 "dysmenorrhea": False,
-#                 "hydatidiformMole": False,
-#                 "ectopicPregnancyHistory": False,
-#             },
-#         }
-
-#         personal_info = patient_data.get("personal_info")
-#         if personal_info:
-#             fp_form_data.update(
-#                 {
-#                     "lastName": personal_info.get("per_lname", ""),
-#                     "givenName": personal_info.get("per_fname", ""),
-#                     "middleInitial": (
-#                         personal_info.get("per_mname", "")[:1]
-#                         if personal_info.get("per_mname")
-#                         else ""
-#                     ),
-#                     "dateOfBirth": personal_info.get("per_dob", ""),
-#                     "age": (
-#                         calculate_age_from_dob(personal_info.get("per_dob"))
-#                         if personal_info.get("per_dob")
-#                         else 0
-#                     ),
-#                     'educationalAttainment': personal_info.get('per_edAttainment', ''),
-#                     "occupation": personal_info.get("per_occupation", ""),
-#                 }
-#             )
-
-#         address_info = patient_data.get("address")
-#         if address_info:
-#             fp_form_data["address"] = {
-#                 "houseNumber": address_info.get("add_houseno", "")
-#                 or "",  # Assuming add_houseno exists
-#                 "street": address_info.get("add_street", ""),
-#                 "barangay": address_info.get("add_barangay", ""),
-#                 "municipality": address_info.get("add_city", ""),
-#                 "province": address_info.get("add_province", ""),
-#             }
-        
-#         try:
-#             body_measurement = (
-#                 BodyMeasurement.objects.filter(pat=patient)
-#                 .order_by("-created_at")
-#                 .first()
-#             )
-#             if body_measurement:
-#                 fp_form_data.update(
-#                     {
-#                         "weight": (
-#                             (body_measurement.weight)
-#                             if body_measurement.weight
-#                             else 0
-#                         ),
-#                         "height": (
-#                             (body_measurement.height)
-#                             if body_measurement.height
-#                             else 0
-#                         ),
-#                         "bodyMeasurementRecordedAt": ( # Add this line
-#                             body_measurement.created_at.isoformat()
-#                             if body_measurement.created_at
-#                             else None
-#                         ),
-#                     }
-#                 )
-#         except Exception as e:
-#             print(f"Error fetching body measurements: {e}")
-
-#         try:
-#             obstetrical_history = Obstetrical_History.objects.filter(
-#             patrec_id__in=patient_records).order_by('-patrec_id__created_at').first()
-
-#             if obstetrical_history:
-#                 fp_form_data["obstetricalHistory"] = {
-#                     "g_pregnancies": obstetrical_history.obs_gravida or 0,
-#                     "p_pregnancies": obstetrical_history.obs_para or 0,
-#                     "fullTerm": obstetrical_history.obs_fullterm or 0,
-#                     "premature": obstetrical_history.obs_preterm or 0,
-#                     "abortion": obstetrical_history.obs_abortion or 0,
-#                     "numOfLivingChildren": obstetrical_history.obs_living_ch or 0,
-#                     "lastDeliveryDate": (
-#                         obstetrical_history.obs_last_delivery.isoformat()
-#                         if obstetrical_history.obs_last_delivery
-#                         else None
-#                     ),
-#                     "typeOfLastDelivery": obstetrical_history.obs_type_last_delivery or "",
-#                     "lastMenstrualPeriod": (
-#                         obstetrical_history.obs_last_period.isoformat()
-#                         if obstetrical_history.obs_last_period
-#                         else ""
-#                     ),
-#                     "previousMenstrualPeriod": (
-#                         obstetrical_history.obs_previous_period.isoformat()
-#                         if obstetrical_history.obs_previous_period
-#                         else ""
-#                     ),
-#                     "menstrualFlow": obstetrical_history.obs_mens_flow or "Scanty",
-#                     "dysmenorrhea": obstetrical_history.obs_dysme or False,
-#                     "hydatidiformMole": obstetrical_history.obs_hydatidiform or False,
-#                     "ectopicPregnancyHistory": obstetrical_history.obs_ectopic_pregnancy or False,
-#                 }
-#                 print("Complete obstetrical history:", fp_form_data["obstetricalHistory"])
-                
-#                 # Also try to get FP-specific obstetrical history if it exists
-#                 try:
-#                     fp_record = FP_Record.objects.filter(pat=patient).order_by('-created_at').first()
-#                     if fp_record:
-#                         fp_obs_history = FP_Obstetrical_History.objects.filter(fprecord=latest_fp_record).select_related('obs_record').first()
-                        
-#                         if fp_obs_history:
-#                             fp_form_data["obstetricalHistory"].update({
-#                                 "lastDeliveryDate": (
-#                                     fp_obs_history.fpob_last_delivery.isoformat()
-#                                     if fp_obs_history.fpob_last_delivery
-#                                     else fp_form_data["obstetricalHistory"]["lastDeliveryDate"]
-#                                 ),
-#                                 "typeOfLastDelivery": fp_obs_history.fpob_type_last_delivery or fp_form_data["obstetricalHistory"]["typeOfLastDelivery"],
-#                                 "lastMenstrualPeriod": (
-#                                     fp_obs_history.fpob_last_period.isoformat()
-#                                     if fp_obs_history.fpob_last_period
-#                                     else fp_form_data["obstetricalHistory"]["lastMenstrualPeriod"]
-#                                 ),
-#                                 "previousMenstrualPeriod": (
-#                                     fp_obs_history.fpob_previous_period.isoformat()
-#                                     if fp_obs_history.fpob_previous_period
-#                                     else fp_form_data["obstetricalHistory"]["previousMenstrualPeriod"]
-#                                 ),
-#                                 "menstrualFlow": fp_obs_history.fpob_mens_flow or fp_form_data["obstetricalHistory"]["menstrualFlow"],
-#                                 "dysmenorrhea": fp_obs_history.fpob_dysme or fp_form_data["obstetricalHistory"]["dysmenorrhea"],
-#                                 "hydatidiformMole": fp_obs_history.fpob_hydatidiform or fp_form_data["obstetricalHistory"]["hydatidiformMole"],
-#                                 "ectopicPregnancyHistory": fp_obs_history.fpob_ectopic_pregnancy or fp_form_data["obstetricalHistory"]["ectopicPregnancyHistory"],
-#                             })
-#                 except Exception as e:
-#                     print(f"Error fetching FP-specific obstetrical history: {e}")
-                
-#         except Exception as e:
-#             print(f"Error fetching obstetrical history: {e}")
-
-#         try:
-#             if patient.pat_type == "Resident" and patient.rp_id:
-#                 print("🔍 Patient RP ID:", patient.rp_id.pk)
-#                 hrd = HealthRelatedDetails.objects.filter(rp_id=patient.rp_id.pk).first()
-#                 if hrd:
-#                     fp_form_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
-#         except Exception as e:
-#             print(f"Error fetching health details: {e}")
-
-#         try:
-#             if patient.pat_type == "Resident" and patient.rp_id:
-#                 household = Household.objects.filter(rp=patient.rp_id).first()
-#                 if household:
-#                     fp_form_data["nhts_status"] = household.hh_nhts == "Yes"
-#         except Exception as e:
-#             print(f"Error fetching household: {e}")
-
-#         # try:
-#         #     if patient.pat_type == "Resident" and patient.rp_id:
-#         #         spouse = Spouse.objects.filter(rp_id=patient.rp_id).first()
-#         #         if spouse:
-#         #             fp_form_data["spouse"] = {
-#         #                 "s_lastName": spouse.spouse_lname or "",
-#         #                 "s_givenName": spouse.spouse_fname or "",
-#         #                 "s_middleInitial": (
-#         #                     spouse.spouse_mname[:1] if spouse.spouse_mname else ""
-#         #                 ),
-#         #                 "s_dateOfBirth": (
-#         #                     spouse.spouse_dob.isoformat() if spouse.spouse_dob else ""
-#         #                 ),
-#         #                 "s_age": (
-#         #                     calculate_age_from_dob(
-#         #                         spouse.spouse_dob.isoformat())
-#         #                     if spouse.spouse_dob
-#         #                     else 0
-#         #                 ),
-#         #                 "s_occupation": spouse.spouse_occupation or "",
-#         #             }
-#         # except Exception as e:
-#         #     print(f"Error fetching spouse information: {e}")
-
-#         return Response(fp_form_data, status=status.HTTP_200_OK)
-
-#     except Patient.DoesNotExist:
-#         return Response(
-#             {"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND
-#         )
-#     except Exception as e:
-#         import traceback
-
-#         traceback.print_exc()
-#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-# --- NEW: Endpoint for the Overall Table to get patient list with FP record counts ---
 class PatientListForOverallTable(generics.ListAPIView):
     serializer_class = FPRecordSerializer
 
@@ -1005,233 +778,6 @@ def get_fp_records_for_patient(request, patient_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-# def get_patient_details_data(patient_id):
-#     """
-#     Utility function to get patient details without requiring a request object.
-#     This is used internally by other functions.
-#     """
-#     try:
-#         patient = get_object_or_404(Patient, pat_id=patient_id)
-#         serializer = PatientSerializer(patient)
-#         patient_data = serializer.data
-#         personal_info = patient_data.get("personal_info")
-        
-#         philhealth_id = ""
-        
-#         try:
-#             if patient.pat_type == "Resident" and patient.rp_id:
-#                 personal = patient.rp_id.per 
-#                 hrd = HealthRelatedDetails.objects.filter(per=personal.per_id).first()
-#                 if hrd:
-#                     philhealth_id = hrd.hrd_philhealth_id or ""
-#                     print(f"✓ PhilHealth ID: {philhealth_id}")
-#         except Exception as e:
-#             print(f"Error fetching health details 1: {e}")
-
-#         fp_form_data = {
-#             "pat_id": patient_data.get("pat_id", ""),
-#             "clientID": patient_data.get("clientID", ""),
-#             "philhealthNo": philhealth_id,
-#             "nhts_status": False,
-#             "pantawid_4ps": False,
-#             "lastName": "",
-#             "givenName": "",
-#             "middleInitial": "",
-#             "dateOfBirth": "",
-#             "age": 0,
-#             'educationalAttainment': personal_info.get('per_edAttainment', ''),
-#             "occupation": patient_data.get("occupation",""),
-#             "address": {
-#                 "houseNumber": "",
-#                 "street": "",
-#                 "barangay": "",
-#                 "municipality": "",
-#                 "province": "",
-#             },
-#             "spouse": {
-#                 "s_lastName": "",
-#                 "s_givenName": "",
-#                 "s_middleInitial": "",
-#                 "s_dateOfBirth": "",
-#                 "s_age": 0,
-#                 "s_occupation": "",
-#             },
-#             "numOfLivingChildren": 0,
-#             "planToHaveMoreChildren": False,
-#             "averageMonthlyIncome": "",
-#             "weight": 0,
-#             "height": 0,
-#             "bodyMeasurementRecordedAt": None,
-#             "obstetricalHistory": {
-#                 "g_pregnancies": 0,
-#                 "p_pregnancies": 0,
-#                 "fullTerm": 0,
-#                 "premature": 0,
-#                 "abortion": 0,
-#                 "livingChildren": 0,
-#                 "lastDeliveryDate": "",
-#                 "typeOfLastDelivery": "",
-#                 "lastMenstrualPeriod": "",
-#                 "previousMenstrualPeriod": "",
-#                 "menstrualFlow": "Scanty",
-#                 "dysmenorrhea": False,
-#                 "hydatidiformMole": False,
-#                 "ectopicPregnancyHistory": False,
-#             },
-#         }
-
-#         personal_info = patient_data.get("personal_info")
-#         if personal_info:
-#             fp_form_data.update(
-#                 {
-#                     "lastName": personal_info.get("per_lname", ""),
-#                     "givenName": personal_info.get("per_fname", ""),
-#                     "middleInitial": (
-#                         personal_info.get("per_mname", "")[:1]
-#                         if personal_info.get("per_mname")
-#                         else ""
-#                     ),
-#                     "dateOfBirth": personal_info.get("per_dob", ""),
-#                     "age": (
-#                         calculate_age_from_dob(personal_info.get("per_dob"))
-#                         if personal_info.get("per_dob")
-#                         else 0
-#                     ),
-#                     'educationalAttainment': personal_info.get('per_edAttainment', ''),
-#                     "occupation": personal_info.get("per_occupation", ""),
-#                 }
-#             )
-
-#         address_info = patient_data.get("address")
-#         if address_info:
-#             fp_form_data["address"] = {
-#                 "houseNumber": address_info.get("add_houseno", "") or "",
-#                 "street": address_info.get("add_street", ""),
-#                 "barangay": address_info.get("add_barangay", ""),
-#                 "municipality": address_info.get("add_city", ""),
-#                 "province": address_info.get("add_province", ""),
-#             }
-        
-#         try:
-#             body_measurement = (
-#                 BodyMeasurement.objects.filter(pat=patient)
-#                 .order_by("-created_at")
-#                 .first()
-#             )
-#             if body_measurement:
-#                 fp_form_data.update(
-#                     {
-#                         "weight": (
-#                             (body_measurement.weight)
-#                             if body_measurement.weight
-#                             else 0
-#                         ),
-#                         "height": (
-#                             (body_measurement.height)
-#                             if body_measurement.height
-#                             else 0
-#                         ),
-#                         "bodyMeasurementRecordedAt": (
-#                             body_measurement.created_at.isoformat()
-#                             if body_measurement.created_at
-#                             else None
-#                         ),
-#                     }
-#                 )
-#         except Exception as e:
-#             print(f"Error fetching body measurements: {e}")
-
-#         try:
-#             patient_records = PatientRecord.objects.filter(pat_id=patient)
-#             obstetrical_history = Obstetrical_History.objects.filter(
-#             patrec_id__in=patient_records).order_by('-patrec_id__created_at').first()
-
-#             if obstetrical_history:
-#                 fp_form_data["obstetricalHistory"] = {
-#                     "g_pregnancies": obstetrical_history.obs_gravida or 0,
-#                     "p_pregnancies": obstetrical_history.obs_para or 0,
-#                     "fullTerm": obstetrical_history.obs_fullterm or 0,
-#                     "premature": obstetrical_history.obs_preterm or 0,
-#                     "abortion": obstetrical_history.obs_abortion or 0,
-#                     "numOfLivingChildren": obstetrical_history.obs_living_ch or 0,
-#                     "lastDeliveryDate": (
-#                         obstetrical_history.obs_last_delivery.isoformat()
-#                         if obstetrical_history.obs_last_delivery
-#                         else None
-#                     ),
-#                     "typeOfLastDelivery": obstetrical_history.obs_type_last_delivery or "",
-#                     "lastMenstrualPeriod": (
-#                         obstetrical_history.obs_last_period.isoformat()
-#                         if obstetrical_history.obs_last_period
-#                         else ""
-#                     ),
-#                     "previousMenstrualPeriod": (
-#                         obstetrical_history.obs_previous_period.isoformat()
-#                         if obstetrical_history.obs_previous_period
-#                         else ""
-#                     ),
-#                     "menstrualFlow": obstetrical_history.obs_mens_flow or "Scanty",
-#                     "dysmenorrhea": obstetrical_history.obs_dysme or False,
-#                     "hydatidiformMole": obstetrical_history.obs_hydatidiform or False,
-#                     "ectopicPregnancyHistory": obstetrical_history.obs_ectopic_pregnancy or False,
-#                 }
-                
-#                 try:
-#                     fp_record = FP_Record.objects.filter(pat=patient).order_by('-created_at').first()
-#                     if fp_record:
-#                         fp_obs_history = FP_Obstetrical_History.objects.filter(fprecord=fp_record).select_related('obs_record').first()
-                        
-#                         if fp_obs_history:
-#                             fp_form_data["obstetricalHistory"].update({
-#                                 "lastDeliveryDate": (
-#                                     fp_obs_history.fpob_last_delivery.isoformat()
-#                                     if fp_obs_history.fpob_last_delivery
-#                                     else fp_form_data["obstetricalHistory"]["lastDeliveryDate"]
-#                                 ),
-#                                 "typeOfLastDelivery": fp_obs_history.fpob_type_last_delivery or fp_form_data["obstetricalHistory"]["typeOfLastDelivery"],
-#                                 "lastMenstrualPeriod": (
-#                                     fp_obs_history.fpob_last_period.isoformat()
-#                                     if fp_obs_history.fpob_last_period
-#                                     else fp_form_data["obstetricalHistory"]["lastMenstrualPeriod"]
-#                                 ),
-#                                 "previousMenstrualPeriod": (
-#                                     fp_obs_history.fpob_previous_period.isoformat()
-#                                     if fp_obs_history.fpob_previous_period
-#                                     else fp_form_data["obstetricalHistory"]["previousMenstrualPeriod"]
-#                                 ),
-#                                 "menstrualFlow": fp_obs_history.fpob_mens_flow or fp_form_data["obstetricalHistory"]["menstrualFlow"],
-#                                 "dysmenorrhea": fp_obs_history.fpob_dysme or fp_form_data["obstetricalHistory"]["dysmenorrhea"],
-#                                 "hydatidiformMole": fp_obs_history.fpob_hydatidiform or fp_form_data["obstetricalHistory"]["hydatidiformMole"],
-#                                 "ectopicPregnancyHistory": fp_obs_history.fpob_ectopic_pregnancy or fp_form_data["obstetricalHistory"]["ectopicPregnancyHistory"],
-#                             })
-#                 except Exception as e:
-#                     print(f"Error fetching FP-specific obstetrical history: {e}")
-                
-#         except Exception as e:
-#             print(f"Error fetching obstetrical history: {e}")
-
-#         try:
-#             if patient.pat_type == "Resident" and patient.rp_id:
-#                 hrd = HealthRelatedDetails.objects.filter(rp_id=patient.rp_id.pk).first()
-#                 if hrd:
-#                     fp_form_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
-#         except Exception as e:
-#             print(f"Error fetching health details: {e}")
-
-#         try:
-#             if patient.pat_type == "Resident" and patient.rp_id:
-#                 household = Household.objects.filter(rp=patient.rp_id).first()
-#                 if household:
-#                     fp_form_data["nhts_status"] = household.hh_nhts == "Yes"
-#         except Exception as e:
-#             print(f"Error fetching household: {e}")
-
-#         return fp_form_data
-
-#     except Exception as e:
-#         print(f"Error in get_patient_details_data: {e}")
-#         raise e
-
 @api_view(["GET"])
 def get_obstetrical_history(request, pat_id):
     try:
@@ -1291,33 +837,23 @@ def get_patient_details_data(request, patient_id):
         patient = get_object_or_404(Patient, pat_id=patient_id)
         serializer = PatientSerializer(patient)
         patient_data = serializer.data
-        personal_info = patient_data.get("personal_info")
+        personal_info = patient_data.get("personal_info", {})
         
-        philhealth_id = ""
-        
-        try:
-            if patient.pat_type == "Resident" and patient.rp_id:
 
-                hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
-                if hrd:
-                    philhealth_id = hrd.hrd_philhealth_id or ""
-                    print(f"✓ PhilHealth ID: {philhealth_id}")
-        except Exception as e:
-            print(f"Error fetching health details 1: {e}")
-
+        # Initialize default form data
         fp_form_data = {
             "pat_id": patient_data.get("pat_id", ""),
             "clientID": patient_data.get("clientID", ""),
-            "philhealthNo": philhealth_id,
-            "nhts_status": False,
-            "pantawid_4ps": False,
-            "lastName": "",
-            "givenName": "",
-            "middleInitial": "",
-            "dateOfBirth": "",
-            "age": 0,
-            'educationalAttainment': personal_info.get('per_edAttainment', ''),
-            "occupation": patient_data.get("occupation",""),
+            "philhealthNo": "",
+            "nhts_status": "",
+            "pantawid_4ps": "",
+            "lastName": personal_info.get("per_lname", ""),
+            "givenName": personal_info.get("per_fname", ""),
+            "middleInitial": personal_info.get("per_mname", "")[:1] if personal_info.get("per_mname") else "",
+            "dateOfBirth": personal_info.get("per_dob", ""),
+            "age": calculate_age_from_dob(personal_info.get("per_dob")) if personal_info.get("per_dob") else 0,
+            "educationalAttainment": personal_info.get("per_edAttainment", ""),
+            "occupation": patient_data.get("occupation", ""),
             "address": {
                 "houseNumber": "",
                 "street": "",
@@ -1335,11 +871,11 @@ def get_patient_details_data(request, patient_id):
             },
             "numOfLivingChildren": 0,
             "planToHaveMoreChildren": False,
-            "averageMonthlyIncome": latest_fp_record.avg_monthly_income if latest_fp_record else "",
-            "weight": 0,  # Default to 0, will try to fetch
-            "height": 0,  # Default to 0, will try to fetch
+            "averageMonthlyIncome": patient_data.get("avgmonthlyincome", ""),
+            "weight": 0,
+            "height": 0,
             "bodyMeasurementRecordedAt": None,
-            "obstetricalHistory": {  # Default obstetrical history values
+            "obstetricalHistory": {
                 "g_pregnancies": 0,
                 "p_pregnancies": 0,
                 "fullTerm": 0,
@@ -1357,27 +893,34 @@ def get_patient_details_data(request, patient_id):
             },
         }
 
-        personal_info = patient_data.get("personal_info")
-        if personal_info:
-            fp_form_data.update(
-                {
-                    "lastName": personal_info.get("per_lname", ""),
-                    "givenName": personal_info.get("per_fname", ""),
-                    "middleInitial": (
-                        personal_info.get("per_mname", "")[:1]
-                        if personal_info.get("per_mname")
-                        else ""
-                    ),
-                    "dateOfBirth": personal_info.get("per_dob", ""),
-                    "age": (
-                        calculate_age_from_dob(personal_info.get("per_dob"))
-                        if personal_info.get("per_dob")
-                        else 0
-                    ),
-                    'educationalAttainment': personal_info.get('per_edAttainment', ''),
-                    "occupation": personal_info.get("per_occupation", ""),
-                }
-            )
+        # try:
+        #     body_measurement = (
+        #         BodyMeasurement.objects.filter(patrec=patient.patrec_id)
+        #         .order_by("-created_at")
+        #         .first()
+        #     )
+        #     if body_measurement:
+        #         fp_form_data.update(
+        #             {
+        #                 "weight": (
+        #                     (body_measurement.weight)
+        #                     if body_measurement.weight
+        #                     else 0
+        #                 ),
+        #                 "height": (
+        #                     (body_measurement.height)
+        #                     if body_measurement.height
+        #                     else 0
+        #                 ),
+        #                 "bodyMeasurementRecordedAt": ( # Add this line
+        #                     body_measurement.created_at.isoformat()
+        #                     if body_measurement.created_at
+        #                     else None
+        #                 ),
+        #             }
+        #         )
+        # except Exception as e:
+        #     print(f"Error fetching body measurements: {e}")
 
         address_info = patient_data.get("address")
         if address_info:
@@ -1390,41 +933,60 @@ def get_patient_details_data(request, patient_id):
                 "province": address_info.get("add_province", ""),
             }
         
+
+        # Fetch PhilHealth ID and NHTS status for Resident patients
+        if patient.pat_type == "Resident" and patient.rp_id:
+            try:
+                hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
+                if hrd:
+                    fp_form_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
+                    print(f"✓ PhilHealth ID: {fp_form_data['philhealthNo']}")
+            except Exception as e:
+                print(f"Error fetching HealthRelatedDetails: {e}")
+
+            try:
+                household = Household.objects.filter(rp=patient.rp_id).first()
+                if household:
+                    fp_form_data["nhts_status"] = household.hh_nhts == "Yes"
+                    print(f"✓ NHTS Status: {fp_form_data['nhts_status']}")
+            except Exception as e:
+                print(f"Error fetching Household: {e}")
+
+        # Fetch spouse information
         try:
-            body_measurement = (
-                BodyMeasurement.objects.filter(pat=patient)
-                .order_by("-created_at")
-                .first()
-            )
-            if body_measurement:
-                fp_form_data.update(
-                    {
-                        "weight": (
-                            (body_measurement.weight)
-                            if body_measurement.weight
-                            else 0
-                        ),
-                        "height": (
-                            (body_measurement.height)
-                            if body_measurement.height
-                            else 0
-                        ),
-                         "bodyMeasurementRecordedAt": (
-                            body_measurement.created_at.isoformat()
-                            if body_measurement.created_at
-                            else None
-                        ),
+            if patient.pat_type == "Resident" and patient.rp_id:
+                spouse = Spouse.objects.filter(rp_id=patient.rp_id).first()
+                if spouse:
+                    fp_form_data["spouse"] = {
+                        "s_lastName": spouse.spouse_lname or "",
+                        "s_givenName": spouse.spouse_fname or "",
+                        "s_middleInitial": spouse.spouse_mname[:1] if spouse.spouse_mname else "",
+                        "s_dateOfBirth": spouse.spouse_dob.isoformat() if spouse.spouse_dob else "",
+                        "s_age": calculate_age_from_dob(spouse.spouse_dob) if spouse.spouse_dob else 0,
+                        "s_occupation": spouse.spouse_occupation or "",
                     }
-                )
-            print("Sending bodyMeasurementRecordedAt:", body_measurement.created_at.strftime("%Y/%m/%d"))
+                    print(f"✓ Spouse: {fp_form_data['spouse']['s_lastName']}")
+            else:
+                print("No spouse data fetched: Patient is not a Resident or no rp_id")
+        except Exception as e:
+            print(f"Error fetching spouse information: {e}")
+
+        # Fetch body measurements
+        try:
+            body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by("-created_at").first()
+            if body_measurement:
+                fp_form_data.update({
+                    "weight": body_measurement.weight or 0,
+                    "height": body_measurement.height or 0,
+                    "bodyMeasurementRecordedAt": body_measurement.created_at.isoformat() if body_measurement.created_at else None,
+                })
+                print(f"✓ Body Measurement: Weight={fp_form_data['weight']}, Height={fp_form_data['height']}")
         except Exception as e:
             print(f"Error fetching body measurements: {e}")
 
+        # Fetch obstetrical history
         try:
-            obstetrical_history = Obstetrical_History.objects.filter(
-            patrec_id__in=patient_records).order_by('-patrec_id__created_at').first()
-
-
+            obstetrical_history = Obstetrical_History.objects.filter(pat=patient).order_by('-patrec_id__created_at').first()
             if obstetrical_history:
                 fp_form_data["obstetricalHistory"] = {
                     "g_pregnancies": obstetrical_history.obs_gravida or 0,
@@ -1432,128 +994,60 @@ def get_patient_details_data(request, patient_id):
                     "fullTerm": obstetrical_history.obs_fullterm or 0,
                     "premature": obstetrical_history.obs_preterm or 0,
                     "abortion": obstetrical_history.obs_abortion or 0,
-                    "numOfLivingChildren": obstetrical_history.obs_living_ch or 0,
-                    "lastDeliveryDate": (
-                        obstetrical_history.obs_last_delivery.isoformat()
-                        if obstetrical_history.obs_last_delivery
-                        else None
-                    ),
+                    "livingChildren": obstetrical_history.obs_living_ch or 0,
+                    "lastDeliveryDate": obstetrical_history.obs_last_delivery.isoformat() if obstetrical_history.obs_last_delivery else "",
                     "typeOfLastDelivery": obstetrical_history.obs_type_last_delivery or "",
-                    "lastMenstrualPeriod": (
-                        obstetrical_history.obs_last_period.isoformat()
-                        if obstetrical_history.obs_last_period
-                        else ""
-                    ),
-                    "previousMenstrualPeriod": (
-                        obstetrical_history.obs_previous_period.isoformat()
-                        if obstetrical_history.obs_previous_period
-                        else ""
-                    ),
+                    "lastMenstrualPeriod": obstetrical_history.obs_last_period.isoformat() if obstetrical_history.obs_last_period else "",
+                    "previousMenstrualPeriod": obstetrical_history.obs_previous_period.isoformat() if obstetrical_history.obs_previous_period else "",
                     "menstrualFlow": obstetrical_history.obs_mens_flow or "Scanty",
                     "dysmenorrhea": obstetrical_history.obs_dysme or False,
                     "hydatidiformMole": obstetrical_history.obs_hydatidiform or False,
                     "ectopicPregnancyHistory": obstetrical_history.obs_ectopic_pregnancy or False,
                 }
-                print("Complete obstetrical history:", fp_form_data["obstetricalHistory"])
-                
-                # Also try to get FP-specific obstetrical history if it exists
+                print("✓ Complete obstetrical history:", fp_form_data["obstetricalHistory"])
+
+                # Fetch FP-specific obstetrical history
                 try:
                     fp_record = FP_Record.objects.filter(pat=patient).order_by('-created_at').first()
                     if fp_record:
-                        fp_obs_history = FP_Obstetrical_History.objects.filter(fprecord=latest_fp_record).select_related('obs_record').first()
-                        
+                        fp_obs_history = FP_Obstetrical_History.objects.filter(fprecord=fp_record).select_related('obs_record').first()
                         if fp_obs_history:
                             fp_form_data["obstetricalHistory"].update({
-                                "lastDeliveryDate": (
-                                    fp_obs_history.fpob_last_delivery.isoformat()
-                                    if fp_obs_history.fpob_last_delivery
-                                    else fp_form_data["obstetricalHistory"]["lastDeliveryDate"]
-                                ),
+                                "lastDeliveryDate": fp_obs_history.fpob_last_delivery.isoformat() if fp_obs_history.fpob_last_delivery else fp_form_data["obstetricalHistory"]["lastDeliveryDate"],
                                 "typeOfLastDelivery": fp_obs_history.fpob_type_last_delivery or fp_form_data["obstetricalHistory"]["typeOfLastDelivery"],
-                                "lastMenstrualPeriod": (
-                                    fp_obs_history.fpob_last_period.isoformat()
-                                    if fp_obs_history.fpob_last_period
-                                    else fp_form_data["obstetricalHistory"]["lastMenstrualPeriod"]
-                                ),
-                                "previousMenstrualPeriod": (
-                                    fp_obs_history.fpob_previous_period.isoformat()
-                                    if fp_obs_history.fpob_previous_period
-                                    else fp_form_data["obstetricalHistory"]["previousMenstrualPeriod"]
-                                ),
+                                "lastMenstrualPeriod": fp_obs_history.fpob_last_period.isoformat() if fp_obs_history.fpob_last_period else fp_form_data["obstetricalHistory"]["lastMenstrualPeriod"],
+                                "previousMenstrualPeriod": fp_obs_history.fpob_previous_period.isoformat() if fp_obs_history.fpob_previous_period else fp_form_data["obstetricalHistory"]["previousMenstrualPeriod"],
                                 "menstrualFlow": fp_obs_history.fpob_mens_flow or fp_form_data["obstetricalHistory"]["menstrualFlow"],
                                 "dysmenorrhea": fp_obs_history.fpob_dysme or fp_form_data["obstetricalHistory"]["dysmenorrhea"],
                                 "hydatidiformMole": fp_obs_history.fpob_hydatidiform or fp_form_data["obstetricalHistory"]["hydatidiformMole"],
                                 "ectopicPregnancyHistory": fp_obs_history.fpob_ectopic_pregnancy or fp_form_data["obstetricalHistory"]["ectopicPregnancyHistory"],
                             })
+                            print("✓ Updated with FP-specific obstetrical history")
                 except Exception as e:
                     print(f"Error fetching FP-specific obstetrical history: {e}")
-                
         except Exception as e:
             print(f"Error fetching obstetrical history: {e}")
 
-        try:
-            if patient.pat_type == "Resident" and patient.rp_id:
-                print("🔍 Patient RP ID:", patient.rp_id.pk)
-                hrd = HealthRelatedDetails.objects.filter(rp_id=patient.rp_id.pk).first()
-                if hrd:
-                    fp_form_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
-        except Exception as e:
-            print(f"Error fetching health details: {e}")
-
-        try:
-            if patient.pat_type == "Resident" and patient.rp_id:
-                household = Household.objects.filter(rp=patient.rp_id).first()
-                if household:
-                    fp_form_data["nhts_status"] = household.hh_nhts == "Yes"
-        except Exception as e:
-            print(f"Error fetching household: {e}")
-
-        # try:
-        #     if patient.pat_type == "Resident" and patient.rp_id:
-        #         spouse = Spouse.objects.filter(rp_id=patient.rp_id).first()
-        #         if spouse:
-        #             fp_form_data["spouse"] = {
-        #                 "s_lastName": spouse.spouse_lname or "",
-        #                 "s_givenName": spouse.spouse_fname or "",
-        #                 "s_middleInitial": (
-        #                     spouse.spouse_mname[:1] if spouse.spouse_mname else ""
-        #                 ),
-        #                 "s_dateOfBirth": (
-        #                     spouse.spouse_dob.isoformat() if spouse.spouse_dob else ""
-        #                 ),
-        #                 "s_age": (
-        #                     calculate_age_from_dob(
-        #                         spouse.spouse_dob.isoformat())
-        #                     if spouse.spouse_dob
-        #                     else 0
-        #                 ),
-        #                 "s_occupation": spouse.spouse_occupation or "",
-        #             }
-        # except Exception as e:
-        #     print(f"Error fetching spouse information: {e}")
-
         return Response(fp_form_data, status=status.HTTP_200_OK)
 
-    
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-@api_view(["GET"])
-def get_patient_details(patient_id):
-    try:
-        fp_form_data = get_patient_details_data(patient_id)
-        return Response(fp_form_data, status=status.HTTP_200_OK)
-    except Patient.DoesNotExist:
-        return Response(
-            {"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND
-        )
     except Exception as e:
         import traceback
         traceback.print_exc()
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+# @api_view(["GET"])
+# def get_patient_details(patient_id):
+#     try:
+#         fp_form_data = get_patient_details_data(patient_id)
+#         return Response(fp_form_data, status=status.HTTP_200_OK)
+#     except Patient.DoesNotExist:
+#         return Response(
+#             {"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND
+#         )
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()
+#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(["GET"])
 def get_latest_fp_record_for_patient(request, patient_id):
@@ -1609,6 +1103,7 @@ def get_complete_fp_record(request, fprecord_id):
         complete_data["planToHaveMoreChildren"] = fp_record.plan_more_children
         complete_data["occupation"] = fp_record.occupation or "N/A"  # Set once
         complete_data["averageMonthlyIncome"] = fp_record.avg_monthly_income or "N/A"
+        
         print("Initial occupation set:", complete_data["occupation"])  # Debug
         
         try:
@@ -1645,12 +1140,13 @@ def get_complete_fp_record(request, fprecord_id):
             if not patient:
                 raise Exception("No patient associated with this FP record")
 
+            
             complete_data["pat_id"] = patient.pat_id
             complete_data["client_id"] = fp_record.client_id
             # Initialize default values (exclude occupation to preserve earlier value)
             complete_data.update({
                 "lastName": "", "givenName": "", "middleInitial": "",
-                "dateOfBirth": "", "age": 0, "educationalAttainment": "",
+                "dateOfBirth": "", "age": "", "educationalAttainment": "",
                 "philhealthNo": "", "nhts_status": False,
                 "address": {
                     "houseNumber": "", "street": "", "barangay": "",
@@ -1758,7 +1254,7 @@ def get_complete_fp_record(request, fprecord_id):
             print(f"Error fetching Patient/Personal Info for fprecord_id {fprecord_id}: {e}")
             complete_data.update({
                 "patient_info": None, "lastName": "", "givenName": "", "middleInitial": "",
-                "dateOfBirth": "", "age": 0, "educationalAttainment": "",
+                "dateOfBirth": "", "age": "", "educationalAttainment": "", "address":"",
                 "philhealthNo": "", "nhts_status": False, "spouse": {}
                 # Do NOT set occupation here to preserve earlier value
             })
@@ -1871,7 +1367,7 @@ def get_complete_fp_record(request, fprecord_id):
                 complete_data["height"] = 0
             if fp_physical_exam.vital:
                 vital_signs_data = VitalSignsSerializer(fp_physical_exam.vital).data
-                complete_data["pulseRate"] = vital_signs_data.get("pulse_rate", 0)
+                complete_data["pulseRate"] = vital_signs_data.get("vital_pulse", 0)
                 systolic = vital_signs_data.get("vital_bp_systolic", "N/A")
                 diastolic = vital_signs_data.get("vital_bp_diastolic", "N/A")
                 complete_data["bloodPressure"] = (
@@ -2086,15 +1582,11 @@ def get_complete_fp_record(request, fprecord_id):
                         if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.vital_bp_diastolic and fp_physical_exam.vital.vital_bp_diastolic != "N/A"
                         else 0
                     ),
-                    "pulse_rate": (
-                        int(fp_physical_exam.vital.pulse_rate)
-                        if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.pulse_rate and fp_physical_exam.vital.pulse_rate != "N/A"
+                    "vital_pulse": (
+                        int(fp_physical_exam.vital.vital_pulse)
+                        if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.vital_pulse and fp_physical_exam.vital.vital_pulse != "N/A"
                         else 0
                     ),
-                    "dispensedCommodityItemId": assessment_serialized_data.get("dispensed_commodity_item_id"),
-                    "dispensedMedicineItemId": assessment_serialized_data.get("dispensed_medicine_item_id"),
-                    "dispensedVaccineItemId": assessment_serialized_data.get("dispensed_vaccine_item_id"),
-                    "dispensedItemNameForReport": assessment_serialized_data.get("dispensed_item_name_for_report"),
                 }
             ]
             complete_data["follow_up_visit"] = FollowUpVisitSerializer(fp_assessment.followv).data if fp_assessment.followv else None
@@ -2172,7 +1664,7 @@ def get_complete_fp_record_data(request, fprecord_id):
             # Initialize default values (exclude occupation)
             complete_data.update({
                 "lastName": "", "givenName": "", "middleInitial": "",
-                "dateOfBirth": "", "age": 0, "educationalAttainment": "",
+                "dateOfBirth": "", "age": "", "educationalAttainment": "",
                 "philhealthNo": "", "nhts_status": False,
                 "address": {
                     "houseNumber": "", "street": "", "barangay": "",
@@ -2277,7 +1769,7 @@ def get_complete_fp_record_data(request, fprecord_id):
             print(f"Error fetching Patient/Personal Info for fprecord_id {fprecord_id}: {e}")
             complete_data.update({
                 "patient_info": None, "lastName": "", "givenName": "", "middleInitial": "",
-                "dateOfBirth": "", "age": 0, "educationalAttainment": "",
+                "dateOfBirth": "", "age": "", "educationalAttainment": "",
                 "philhealthNo": "", "nhts_status": False, "spouse": {}
                 # Do NOT set occupation here
             })
@@ -2389,7 +1881,7 @@ def get_complete_fp_record_data(request, fprecord_id):
                 complete_data["height"] = 0
             if fp_physical_exam.vital:
                 vital_signs_data = VitalSignsSerializer(fp_physical_exam.vital).data
-                complete_data["pulseRate"] = vital_signs_data.get("pulse_rate", 0)
+                complete_data["pulseRate"] = vital_signs_data.get("vital_pulse", 0)
                 systolic = vital_signs_data.get("vital_bp_systolic", "N/A")
                 diastolic = vital_signs_data.get("vital_bp_diastolic", "N/A")
                 complete_data["bloodPressure"] = (
@@ -2603,15 +2095,11 @@ def get_complete_fp_record_data(request, fprecord_id):
                         if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.vital_bp_diastolic and fp_physical_exam.vital.vital_bp_diastolic != "N/A"
                         else 0
                     ),
-                    "pulse_rate": (
-                        int(fp_physical_exam.vital.pulse_rate)
-                        if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.pulse_rate and fp_physical_exam.vital.pulse_rate != "N/A"
+                    "vital_pulse": (
+                        int(fp_physical_exam.vital.vital_pulse)
+                        if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.vital_pulse and fp_physical_exam.vital.vital_pulse != "N/A"
                         else 0
                     ),
-                    # "dispensedCommodityItemId": assessment_serialized_data.get("dispensed_commodity_item_id"),
-                    # "dispensedMedicineItemId": assessment_serialized_data.get("dispensed_medicine_item_id"),
-                    # "dispensedVaccineItemId": assessment_serialized_data.get("dispensed_vaccine_item_id"),
-                    # "dispensedItemNameForReport": assessment_serialized_data.get("dispensed_item_name_for_report"),
                 }
             ]
             complete_data["follow_up_visit"] = FollowUpVisitSerializer(fp_assessment.followv).data if fp_assessment.followv else None
@@ -2679,13 +2167,13 @@ class FamilyPlanningCreateUpdateView(generics.ListCreateAPIView):
                         commodity_inventory_item.cinv_qty_avail -= method_quantity
                         commodity_inventory_item.save()
                         
-                        staff_id_from_request = request.user.id if request.user.is_authenticated else 0 # Example
+                        staff_id_from_request = request.user.id if request.user.is_authenticated else None # Example
                         
                         CommodityTransaction.objects.create(
                             cinv_id=commodity_inventory_item,
                             comt_qty=str(method_quantity), # Store quantity as string, as per your model
                             comt_action="Deducted for Family Planning Service",
-                            staff_id=staff_id_from_request or None # Use the staff ID
+                            staff = staff_id_from_request or None
                         )
                         
                         print(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
@@ -3010,7 +2498,7 @@ def submit_full_family_planning_form(request):
                             "patrec_id": patient_record_instance.patrec_id, # <--- LINKED HERE
                                 
                        }
-                        prev_pregnancy_serializer = PreviousPregnancySerializer(data=prev_pregnancy_data)
+                        prev_pregnancy_serializer = PreviousPregnancyCreateSerializer(data=prev_pregnancy_data)
                         if prev_pregnancy_serializer.is_valid():
                             prev_pregnancy_instance = prev_pregnancy_serializer.save()
                             logger.info(f"Created new Previous_Pregnancy record for last delivery: {prev_pregnancy_instance.pfpp_id}")
@@ -3119,13 +2607,12 @@ def submit_full_family_planning_form(request):
             vital_signs_data = {
                 "vital_bp_systolic": vital_bp_systolic,
                 "vital_bp_diastolic": vital_bp_diastolic,
-                "vital_pulse": "N/A",
                 "vital_temp": data.get("temperature") or "N/A",
                 "vital_RR": data.get("respiratoryRate") or "N/A",
                 "vital_o2": data.get("oxygenSaturation") or "N/A",
-                "pulse_rate": data.get("pulseRate") or "N/A",
+                "vital_pulse": data.get("pulseRate") or "N/A",
                 "patrec": patrec_id,
-                "staff": staff_id_from_request,
+                # "staff": staff_id_from_request or None,
             }
             vital_signs_serializer = VitalSignsSerializer(data=vital_signs_data)
             print("DEBUG: Validating VitalSignsSerializer...") # Debugging line
@@ -3294,7 +2781,7 @@ def submit_full_family_planning_form(request):
                             cinv_id=commodity_inventory_item,
                             comt_qty=str(method_quantity),
                             comt_action="Deducted for FP Service",
-                            staff_id=staff_id_from_request,
+                            staff = staff_id_from_request or None
                         )
                         logger.info(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
                         print(f"DEBUG: Stock deducted successfully for {method_accepted}.") # Debugging line
@@ -3321,10 +2808,7 @@ def submit_full_family_planning_form(request):
                     "fprecord": fprecord_id,
                     "fpt": fpt_id,
                     "bm": bm_id,
-                    "dispensed_commodity_item": latest_record.get("dispensedCommodityItemId") or None,
-                    "dispensed_medicine_item": latest_record.get("dispensedMedicineItemId") or None,
-                    "dispensed_vaccine_item": latest_record.get("dispensedVaccineItemId") or None,
-                    "dispensed_item_name_for_report": latest_record.get("dispensedItemNameForReport") or None,
+                   
                 }
                 assessment_serializer = FPAssessmentSerializer(data=assessment_data)
                 print("DEBUG: Validating FPAssessmentSerializer...") # Debugging line

@@ -3,33 +3,86 @@ import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { familyFormSchema } from "@/form-schema/family-form-schema";
-
+import { useAddResidentAndPersonalHealth } from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
+import { useResidentsListHealth } from "../../family-profling/queries/profilingFetchQueries";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { formatResidents } from "../../profilingFormats";
 import { Combobox } from "@/components/ui/combobox";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function RespondentsForm({ residents, form, selectedResidentId, prefix, title }: {
-  residents: any;
+  residents: {
+    default: any[];
+    formatted: any[];
+  };
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   selectedResidentId: string;
   onSelect: React.Dispatch<React.SetStateAction<string>>;
   prefix: 'respondentInfo';
   title: string;
 }) {
+  const { showLoading, hideLoading } = useLoading();
+  
+  // Fetch health residents data
+  const { data: residentsListHealth, isLoading: isLoadingResidentsHealth } = useResidentsListHealth();
+  
+  // Format health residents data
+  const formattedResidentsHealth = React.useMemo(
+    () => formatResidents(residentsListHealth),
+    [residentsListHealth]
+  );
+
+  // Handle loading state
+  React.useEffect(() => {
+    if (isLoadingResidentsHealth) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoadingResidentsHealth, showLoading, hideLoading]);
+
+  // Combine regular residents with health residents
+  const combinedResidents = React.useMemo(() => {
+    const defaultCombined = [
+      ...(residents.default || []),
+      ...(residentsListHealth || [])
+    ];
+    
+    const formattedCombined = [
+      ...(residents.formatted || []),
+      ...(formattedResidentsHealth || [])
+    ];
+
+    // Remove duplicates based on rp_id
+    const uniqueDefault = defaultCombined.filter((resident, index, self) => 
+      index === self.findIndex(r => r.rp_id === resident.rp_id)
+    );
+    
+    const uniqueFormatted = formattedCombined.filter((resident, index, self) => 
+      index === self.findIndex(r => r.id.split(" ")[0] === resident.id.split(" ")[0])
+    );
+
+    return {
+      default: uniqueDefault,
+      formatted: uniqueFormatted
+    };
+  }, [residents, residentsListHealth, formattedResidentsHealth]);
+
   const filteredResidents = React.useMemo(() => {
-    return residents.formatted.filter((resident: any) => {
+    return combinedResidents.formatted.filter((resident: any) => {
       const residentId = resident.id.split(" ")[0];
       return residentId !== selectedResidentId;
     });
-  }, [residents.formatted, selectedResidentId]);
+  }, [combinedResidents.formatted, selectedResidentId]);
 
   React.useEffect(() => {
     const searchedResidentId = form.watch(`${prefix}.id`);
     const residentIdPart = searchedResidentId?.split(" ")[0];
     
-    const searchResident = residents.default?.find((value: any) => 
+    const searchResident = combinedResidents.default?.find((value: any) => 
       value.rp_id === residentIdPart
-    ) || residents.formatted?.find((resident: any) =>
+    ) || combinedResidents.formatted?.find((resident: any) =>
       resident.id.split(" ")[0] === residentIdPart
     );
 
@@ -46,7 +99,7 @@ export default function RespondentsForm({ residents, form, selectedResidentId, p
         contact: residentData.per_contact || residentData.contact || '',
       });
     }
-  }, [form.watch(`${prefix}.id`), residents, prefix]);
+  }, [form.watch(`${prefix}.id`), combinedResidents, prefix]);
 
   return (
     <div className="bg-white rounded-lg">

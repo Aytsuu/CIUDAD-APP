@@ -3,7 +3,7 @@ import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
 import {
   ImmunizationStockType,
@@ -38,8 +38,8 @@ export default function EditImzSupplyStock() {
             ? Number(supply.qty)
             : 0
           : 0,
-      pcsCount:0,
-       
+      pcsCount: 0,
+
       pcsPerBox: supply.imzStck_pcs ? Number(supply.imzStck_pcs) : 0,
       imzStck_unit:
         supply.imzStck_unit === "pcs" || supply.imzStck_unit === "boxes"
@@ -84,20 +84,7 @@ export default function EditImzSupplyStock() {
   const handleConfirm = async () => {
     if (!formData || !supply) return;
     setIsConfirmationOpen(false);
-
-    try {
-      await submit({ supply, formData, originalUnit: supply.imzStck_unit });
-      navigate("/mainInventoryStocks");
-      toast.success("Medicine stock updated successfully!", {
-        icon: <CircleCheck size={20} className="text-green-500" />,
-        duration: 2000,
-      });
-    } catch (error: any) {
-      console.error("Error updating medicine stock:", error);
-      toast.error(error.message || "Failed to update medicine stock", {
-        duration: 5000,
-      });
-    }
+    await submit({ supply, formData, originalUnit: supply.imzStck_unit });
   };
 
   return (
@@ -151,7 +138,6 @@ export default function EditImzSupplyStock() {
               <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
               Add Stocks
             </Label>
-            
 
             {currentUnit === "boxes" ? (
               <>
@@ -194,14 +180,16 @@ export default function EditImzSupplyStock() {
                   type="number"
                   placeholder="Total Pieces"
                 />
-
-               
               </>
             )}
 
             <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-              <Button variant="outline" className="w-full">
-                <Link to="/mainInventoryStocks">Cancel</Link>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
               </Button>
               <Button
                 type="submit"

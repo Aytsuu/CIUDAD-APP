@@ -31,6 +31,7 @@ export default function MedicineList() {
     setMedToDelete,
     setIsDeleteConfirmationOpen
   );
+  // 
   const { data: medicines, isLoading: isLoadingMedicines } = useMedicines();
 
   const formatMedicineData = useCallback((): MedicineRecords[] => {

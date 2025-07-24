@@ -1,7 +1,10 @@
-from supabase import create_client
-from decouple import config
+from supabase import create_client, Client
+from django.conf import settings
 
-supabase = create_client(
-    config('VITE_SUPABASE_URL'),
-    config('VITE_SUPABASE_ANON_KEY'),
+supabase: Client = create_client(
+    settings.SUPABASE_URL, 
+    settings.SUPABASE_ANON_KEY
 )
+
+def get_realtime_channel():
+    return supabase.realtime.channel('notification')

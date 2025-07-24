@@ -1,98 +1,138 @@
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { VitalSignSchema, VitalSignType } from "@/form-schema/chr-schema";
-import { Textarea } from "@/components/ui/textarea";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { FormTextArea } from "@/components/ui/form/form-text-area";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card/card";
+
 interface UpdateVitalSignsProps {
-  initialData: VitalSignType; // Add initialData prop
+  initialData: VitalSignType;
   onSubmit: (values: VitalSignType) => void;
   onCancel: () => void;
 }
 
-export function UpdateVitalSigns({ initialData, onSubmit, onCancel }: UpdateVitalSignsProps) {
+export function UpdateVitalSigns({
+  initialData,
+  onSubmit,
+  onCancel,
+}: UpdateVitalSignsProps) {
   const form = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
-    defaultValues: initialData, // Populate form with initialData
+    defaultValues: initialData,
   });
-
-  const formFields = [
-    { name: "age", label: "Age", type: "text" },
-    { name: "wt", label: "Weight (kg)", type: "number" },
-    { name: "ht", label: "Height (cm)", type: "number" },
-    { name: "temp", label: "Temperature (°C)", type: "number" },
-    { name: "date", label: "Date", type: "date" },
-    { name: "followUpVisit", label: "Follow Up Visit", type: "date" },
-    { name: "findings", label: "Findings", type: "text" },
-    { name: "notes", label: "Notes", type: "text" },
-  ];
 
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
+        className="space-y-6"
         onSubmit={form.handleSubmit((data) => {
-          console.log("Form data submitted:", data); // Debugging
           onSubmit(data);
-        }, (errors) => {
-          console.error("Form validation errors:", errors); // Debugging
         })}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {formFields.map(({ name, label, type }) => (
-            <FormField
-              key={name}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Basic Information Section */}
+          <div className="space-y-4">
+            <FormInput
               control={form.control}
-              name={name as keyof VitalSignType}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{label}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type={type}
-                      step={type === "number" ? "0.01" : undefined}
-                      onChange={
-                        type === "number"
-                          ? (e) => field.onChange(Number(e.target.value))
-                          : field.onChange
-                      }
-                      value={field.value as string | number | readonly string[] | undefined}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              name="age"
+              label="Age"
+              type="text"
+              placeholder="Enter age"
+              className="bg-gray-50"
             />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {formFields.slice(7,3).map(({ name, label, type }) => (
-            <FormField
-              key={name}
+
+            <FormInput
               control={form.control}
-              name={name as keyof VitalSignType}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{label}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              name="wt"
+              label="Weight (kg)"
+              type="number"
+              placeholder="Enter weight"
+              className="bg-gray-50"
             />
-          ))}
+
+            <FormInput
+              control={form.control}
+              name="ht"
+              label="Height (cm)"
+              type="number"
+              placeholder="Enter height"
+              className="bg-gray-50"
+            />
+          </div>
+
+          {/* Measurements Section */}
+          <div className="space-y-4">
+            <FormInput
+              control={form.control}
+              name="temp"
+              label="Temperature (°C)"
+              type="number"
+              placeholder="Enter temperature"
+              className="bg-gray-50"
+            />
+          </div>
+
+          {/* Follow Up Section - Full width */}
+          <div className="col-span-1 md:col-span-2 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormInput
+                control={form.control}
+                name="follov_description"
+                label="Follow Up Description"
+                type="text"
+                placeholder="Enter follow up description"
+                className="bg-gray-50"
+              />
+
+              <FormDateTimeInput
+                control={form.control}
+                name="followUpVisit"
+                label="Follow Up Visit Date"
+                type="date"
+              />
+            </div>
+          </div>
+
+          {/* Notes Section - Full width */}
+          <div className="col-span-1 md:col-span-2">
+            <FormTextArea
+              control={form.control}
+              name="notes"
+              label="Additional Notes"
+              placeholder="Enter any additional notes here..."
+              className="min-h-[120px] bg-gray-50"
+            />
+          </div>
         </div>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4 pt-2 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="px-6 py-2"
+          >
             Cancel
           </Button>
-          <Button type="submit">Save</Button>
+          <Button type="submit" className="px-6 py-2">
+            Save Changes
+          </Button>
         </div>
       </form>
     </Form>

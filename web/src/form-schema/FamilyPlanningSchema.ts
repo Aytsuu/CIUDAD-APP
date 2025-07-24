@@ -27,8 +27,8 @@ const FamilyPlanningBaseSchema = z.object({
   fpt_id: z.string().optional(),
   clientID: z.string().optional(),
   philhealthNo: z.string().optional(),
-  nhts_status: z.boolean({ required_error: "You must choose Yes or No" }),
-  pantawid_4ps: z.boolean(),
+  nhts_status: z.boolean().optional(),
+  pantawid_4ps: z.boolean().optional(),
 
   lastName: z.string().nonempty("Last name is required"),
   givenName: z.string().nonempty("Given name is required"),

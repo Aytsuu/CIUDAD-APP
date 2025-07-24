@@ -20,7 +20,7 @@ export default function FamilyProfileForm() {
   const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList();
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(); 
   const [currentStep, setCurrentStep] = React.useState<number>(1);
-  const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
+  const defaultValues = generateDefaultValues(familyFormSchema);
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
   const [selectedGuardianId, setSelectedGuardianId] =
@@ -30,10 +30,11 @@ export default function FamilyProfileForm() {
   );
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
-    defaultValues: defaultValues.current,
+    defaultValues
   });
   const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList]);
+  
 
   React.useEffect(() => {
       if(isLoadingHouseholds || isLoadingResidents) {

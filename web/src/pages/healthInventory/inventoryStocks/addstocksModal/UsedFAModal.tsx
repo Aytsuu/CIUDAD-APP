@@ -21,12 +21,8 @@ export default function UsedFirstAidStock() {
 
   // Properly call the mutation hook at the top level
   const { mutateAsync: deductFirstAidStock } = useDeductFirstAidStock();
-
   // Determine the display unit (convert boxes to pcs)
-  const displayUnit =
-    initialData.finv_qty_unit?.toLowerCase() === "boxes"
-      ? "pcs"
-      : initialData.finv_qty_unit;
+  const displayUnit = initialData.finv_qty_unit?.toLowerCase() === "boxes" ? "pcs" : initialData.finv_qty_unit;
 
   const form = useForm({
     resolver: zodResolver(usedFaSchema),

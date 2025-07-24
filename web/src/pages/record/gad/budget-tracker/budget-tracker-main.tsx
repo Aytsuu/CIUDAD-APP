@@ -1,6 +1,7 @@
+import { useState } from "react"; 
 import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
-import { Search, Calendar, X } from "lucide-react"; 
+import { Search, Calendar} from "lucide-react"; 
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import CardLayout from "@/components/ui/card/card-layout";
@@ -8,6 +9,7 @@ import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function GADBudgetTrackerMain() {
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { 
     data: years = [], 
@@ -16,6 +18,11 @@ function GADBudgetTrackerMain() {
     refetch 
   } = useGetGADYearBudgets();
   
+  // Filter years based on search query
+  const filteredYears = years.filter((tracker) =>
+    tracker.gbudy_year.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+  .sort((a, b) => Number(b.gbudy_year) - Number(a.gbudy_year));
 
   const handleCardClick = (gbudy_year: string) => {
     navigate(`/gad/gad-budget-tracker-table/${gbudy_year}/`);
@@ -68,16 +75,17 @@ function GADBudgetTrackerMain() {
               size={17}
             />
             <Input 
-              placeholder="Search budgets..." 
+              placeholder="Search by year" 
               className="pl-10 w-full bg-white text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)} 
             />
           </div>
         </div>
-        
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {years.map((tracker) => {
+        {filteredYears.map((tracker) => { 
           const budget = tracker.gbudy_budget || 0;
           const expenses = tracker.gbudy_expenses || 0;
           const income = tracker.gbudy_income || 0;
@@ -103,7 +111,6 @@ function GADBudgetTrackerMain() {
                                 <div>{tracker.gbudy_year} Budget Overview</div>
                             </h1>
                         </div>
-                        <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
                     </div>
                 }
                 description=""
@@ -123,7 +130,7 @@ function GADBudgetTrackerMain() {
                     </div>
                     <div className="flex flex-col sm:flex-row">
                       <Label className="w-[12rem]">Remaining Balance:</Label>
-                      <Label className="text-yellow-600">Php {remainingBal}</Label>
+                      <Label className="text-yellow-600">Php {remainingBal}.00</Label>
                     </div>
                     
                     <div className="mt-4">

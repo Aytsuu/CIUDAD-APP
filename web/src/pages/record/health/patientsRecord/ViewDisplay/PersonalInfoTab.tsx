@@ -129,7 +129,7 @@ export default function PersonalInfoTab({
                               <FormLabel className="text-sm font-medium">
                                 Sex
                               </FormLabel>
-                              <Select disabled={!isEditable} defaultValue={field.value} onValueChange={field.onChange}>
+                              <Select disabled={!isEditable} value={field.value} onValueChange={field.onChange}>
                                 <FormControl>
                                   <SelectTrigger className={!isEditable ? "bg-muted/30" : ""}>
                                     <SelectValue />
@@ -188,7 +188,7 @@ export default function PersonalInfoTab({
                               <FormLabel className="text-sm font-medium">
                                 Patient Type
                               </FormLabel>
-                              <Select disabled defaultValue={field.value}>
+                              <Select disabled value={field.value}>
                                 <FormControl>
                                   <SelectTrigger className="bg-muted/30">
                                     <SelectValue />
@@ -212,24 +212,6 @@ export default function PersonalInfoTab({
                         Address Information
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* <FormField
-                          control={form.control}
-                          name="houseNo"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                House Number
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditable}
-                                  className={!isEditable ? "bg-muted/30" : ""}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        /> */}
                         <FormField
                           control={form.control}
                           name="address.street"

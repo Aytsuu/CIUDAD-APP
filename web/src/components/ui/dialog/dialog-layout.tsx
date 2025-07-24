@@ -1,18 +1,18 @@
 import {
     Dialog,
-    DialogHeader,
+    DialogHeader, 
     DialogTitle,
     DialogDescription,
     DialogContent,
     DialogTrigger,
 } from "@/components/ui/dialog/dialog";
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface DialogProps {
     trigger?: React.ReactNode;
     className?: string;
     title?: string;
-    description?: string;
+    description?: React.ReactNode;
     mainContent: React.ReactNode;
     isOpen?: boolean; // Make optional
     onOpenChange?: (open: boolean) => void; // Make optional
@@ -49,3 +49,4 @@ export default function DialogLayout({
         </Dialog>
     );
 }
+

@@ -19,7 +19,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert, ChevronLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { fetchVaccinesWithStockVacID } from "./restful-api/FetchVaccination";
+import { fetchVaccinesWithStockVacID } from "./restful-api/fetch";
 import { format } from "date-fns";
 import { calculateNextVisitDate } from "./Calculatenextvisit";
 import {
@@ -27,7 +27,7 @@ import {
   useSubmitStep2,
 } from "./queries/UpdateVaccinationQueries";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 export default function UpdateVaccinationForm() {
   const navigate = useNavigate();

@@ -14,12 +14,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { capitalize } from "@/helpers/capitalize";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Link } from "react-router";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
-  formattedSitio: any;
+  formattedSitio?: any;
   formattedResidents?: any;
-  addresses: any[];
+  addresses?: any[];
   validAddresses?: boolean[];
   form: UseFormReturn<z.infer<typeof personalInfoSchema>>;
   formType: Type;
@@ -28,7 +29,7 @@ type PersonalInfoFormProps = {
   isSubmitting: boolean;
   isReadOnly: boolean;
   isAllowSubmit?: boolean;
-  setAddresses: React.Dispatch<React.SetStateAction<any[]>>;
+  setAddresses?: React.Dispatch<React.SetStateAction<any[]>>;
   setValidAddresses?: React.Dispatch<React.SetStateAction<boolean[]>>;
   setIsAssignmentOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
@@ -75,7 +76,7 @@ const PersonalInfoForm = ({
   const { control, setValue, watch } = form;
 
   const handleSetAddress = (idx: number, field: string, value: string) => {
-    setAddresses(prev => 
+    setAddresses && setAddresses(prev => 
       prev.map((address, prevIdx) => {
         return (prevIdx === idx ? 
           {...address, [field]: field !== "sitio" ? capitalize(value) : value} 
@@ -86,7 +87,7 @@ const PersonalInfoForm = ({
 
   const handleRemoveAddress = (idx: number) => {
     setValidAddresses && setValidAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
-    setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
+    setAddresses&& setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
   }
 
   // ==================== RENDER ====================
@@ -95,13 +96,30 @@ const PersonalInfoForm = ({
       {origin === Origin.Administration && (
         <Combobox
           options={formattedResidents}
-          value={watch("per_id")}
+          value={watch("per_id") as string}
           onChange={(value) => {
             setValue("per_id", value);
             onComboboxChange && onComboboxChange();
           }}
           placeholder="Select a resident"
-          emptyMessage="No resident found"
+          emptyMessage={
+            <div className="flex gap-2 justify-center items-center">
+              <Label className="font-normal text-[13px]">No resident found.</Label>
+              <Link to="/resident/form"
+                state={{
+                  params: {
+                    origin: "create",
+                    title: "Resident Registration",
+                    description: "Provide the necessary details, and complete the registration.",
+                  },
+                }}
+              >
+                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                  Register
+                </Label>
+              </Link>
+            </div>
+          }
         />
       )}
       {/* Name Fields */}
@@ -127,7 +145,7 @@ const PersonalInfoForm = ({
       </div>
       <div className="grid grid-cols-1 gap-4">
         {
-          addresses.map((address, idx) => (
+          addresses?.map((address, idx) => (
             <div className="grid gap-3" key={idx}>
               <Label className="text-black/70">Address {idx + 1}</Label>
               <div className="flex items-center gap-3">
@@ -215,7 +233,7 @@ const PersonalInfoForm = ({
             variant={"outline"} 
             type="button"
             className="border-none shadow-none text-black/50 hover:text-black/60"
-            onClick={() => setAddresses((prev) => [
+            onClick={() => setAddresses && setAddresses((prev) => [
               ...prev, {
                 add_province: '',
                 add_city: '',

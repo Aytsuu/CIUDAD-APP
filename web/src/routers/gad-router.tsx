@@ -4,6 +4,7 @@ import GADEditEntryForm from "@/pages/record/gad/budget-tracker/budget-tracker-e
 import GADProjectProposal from "@/pages/record/gad/project-proposal/project-proposal-main";
 import AnnualDevelopmentPlan from "@/pages/record/gad/annual_development_plan/annual_development_plan_main";
 import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_plan/annual_development_table";
+import AdminGADProjectProposal from "@/pages/record/gad/project-proposal/admin-update-status";
 
 
 export const gad_router = [
@@ -24,6 +25,10 @@ export const gad_router = [
     {
         path: '/gad-project-proposal',
         element: <GADProjectProposal/>
+    },
+    {
+        path: '/gad-review-project-proposal',
+        element: <AdminGADProjectProposal/>
     },
     {
         path: '/gad-annual-development-plan',

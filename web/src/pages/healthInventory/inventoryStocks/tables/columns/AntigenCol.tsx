@@ -5,7 +5,7 @@ import WastedDoseForm from "../../addstocksModal/WastedDoseModal";
 import { Button } from "@/components/ui/button/button";
 import { Archive } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { isNearExpiry, isExpired, isLowStock } from "./Alert"; // Import the alert functions
+import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert"; // Import the alert functions
 
 export const getStockColumns = (
   handleArchiveInventory: (inv_id: string) => void

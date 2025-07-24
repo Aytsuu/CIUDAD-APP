@@ -30,7 +30,7 @@ urlpatterns = [
     # path('patientrecords/', include('apps.patientrecords.urls')),
     path('vaccination/', include("apps.vaccination.urls")),
     path('administration/', include("apps.administration.urls")),
-    path('user/', include('apps.account.urls')),
+    # path('user/', include('apps.account.urls')),
     path('familyplanning/', include("apps.familyplanning.urls")),
     path('patientrecords/', include("apps.patientrecords.urls")),
     path('medical-consultation/', include("apps.medicalConsultation.urls")),
@@ -46,6 +46,5 @@ urlpatterns = [
     # path('donation/', include('apps.donation.urls')),
     # path('gad/', include('apps.gad.urls')),   
 ]
-
 
 

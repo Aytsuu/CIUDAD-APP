@@ -7,7 +7,7 @@ import {
   ImmunizationSchema,
   ImmunizationType,
 } from "@/form-schema/inventory/lists/inventoryListSchema";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useAddImzSupplies } from "../queries/Antigen/ImzPostQueries";
 import { getImzSup } from "../restful-api/Antigen/ImzFetchAPI";
 import { FormInput } from "@/components/ui/form/form-input";

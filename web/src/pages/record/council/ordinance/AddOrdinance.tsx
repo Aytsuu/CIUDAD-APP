@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {Input} from '../../../../components/ui/input.tsx';
 import {Label} from '../../../../components/ui/label.tsx';
 import {DatePicker} from '../../../../components/ui/datepicker.tsx';
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";
@@ -32,9 +33,11 @@ function AddOrdinancePage() {
         resolver: zodResolver(ordinanceFormSchema),
         mode: 'onChange',
         defaultValues: {
-            ordTitle: "",        
+            ordTitle: "",       
+            ordTag: "",
+            ordDesc: "", 
             ordDate: "",
-            ordDescription: "",
+            ordDetails: "",
             ordAreaOfFocus: [],
         },
     });
@@ -68,7 +71,7 @@ function AddOrdinancePage() {
                     {/* Ordinance Description Field */}
                     <FormField
                         control={form.control}
-                        name="ordDescription"
+                        name="ordDetails"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel></FormLabel>
@@ -116,9 +119,49 @@ function AddOrdinancePage() {
                                                 )}
                                             />
 
-                                            {/* Date Approved Field */}
+                                            <FormField
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                    <FormLabel>Amend</FormLabel>
+                                                    <FormControl>
+                                                        <SelectLayout
+                                                            className="w-full"
+                                                            label="Ordinances"
+                                                            placeholder="Select Ammended Ordinance"
+                                                            options={[
+                                                                {id: "001-1", name: "001-1"},
+                                                                {id: "002-2", name: "002-2"}                                                   
+                                                            ]}
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />            
+
                                             <FormField
                                                 control={form.control}
+                                                name="ordDesc"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Ordinance Description</FormLabel>
+                                                        <FormControl>
+                                                            {/* <Input placeholder="Enter Event Title" {...field} /> */}
+                                                            <Textarea
+                                                                className="w-full p-2 shadow-sm h-20 mt-[12px] rounded-[5px] resize-none"
+                                                                placeholder="Description"
+                                                                {...field}>
+                                                            </Textarea>                                                            
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />                                            
+
+                                            {/* Date Approved Field */}
+                                            <FormField
                                                 name="ordDate"
                                                 render={({ field }) => (
                                                     <FormItem>

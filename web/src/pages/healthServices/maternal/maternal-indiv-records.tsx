@@ -1,198 +1,418 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { ColumnDef } from "@tanstack/react-table";
+"use client"
 
-import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
-import { FileInput } from "lucide-react";
+import { useEffect, useMemo, useState } from "react"
+import { Link, useLocation } from "react-router-dom"
+import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw } from "lucide-react"
 
-import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/input";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+import { Button } from "@/components/ui/button/button"
+import { Input } from "@/components/ui/input"
+import { SelectLayout } from "@/components/ui/select/select-layout"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
 
-import MotherInfo from "./maternal-indiv-info";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { PatientInfoCardv2 } from "@/pages/healthServices/maternal/maternal-components/patient-info-card-v2"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import { PregnancyAccordion } from "../maternal/maternal-components/maternal-records-accordion"
+import PregnancyChart from "./maternal-components/pregnancy-chart"
+
+import { usePregnancyDetails } from "./queries/maternalFetchQueries"
+
+
+interface Patient {
+  pat_id: string
+  age: number
+  personal_info: {
+    per_fname: string;
+    per_lname: string;
+    per_mname: string;
+    per_sex: string;
+    per_dob?: string
+    ageTime?: "yrs"
+  }
+  address?: {
+    add_street?: string
+    add_barangay?: string
+    add_city?: string
+    add_province?: string
+    add_external_sitio?: string
+    add_sitio?: string
+  }
+  pat_type: string
+  patrec_type?: string
+}
+
+// accordion data types
+interface MaternalRecord {
+  id: string
+  pregnancyId: string
+  dateCreated: string
+  address: string
+  sitio: string
+  type: "Transient" | "Resident"
+  recordType: "Prenatal" | "Postpartum Care"
+  status: "Active" | "Completed" | "Pregnancy Loss"
+  gestationalWeek?: number
+  gestationalFormatted?: string
+  expectedDueDate?: string
+  deliveryDate?: string
+  prenatal_end_date?: string
+  postpartum_end_date?: string
+  notes?: string
+  postpartum_assessment?: {
+    ppa_id: string;
+    ppa_date: string;
+    ppa_lochial_discharges: string;
+    ppa_blood_pressure: string;
+    ppa_feedings: string;
+    ppa_findings: string;
+    ppa_nurses_notes: string;
+    created_at: string;
+    updated_at: string;
+  }[]
+}
+
+interface PregnancyGroup {
+  pregnancyId: string
+  status: "Active" | "Completed" | "Pregnancy Loss"
+  startDate: string
+  expectedDueDate?: string
+  deliveryDate?: string
+  records: MaternalRecord[]
+  hasPrenatal: boolean
+  hasPostpartum: boolean
+}
+
+// pregnancy details types for fetching
+interface PregnancyDataDetails{
+  pregnancy_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  prenatal_end_date?: string;
+  postpartum_end_date?: string;
+  pat_id: string;
+  prenatal_form?: {
+    pf_id: string;
+    pf_lmp: string;
+    pf_edc: string;
+    created_at: string;
+  }[],
+  prenatal_care?: {
+    pf_id: string;
+    pfpc_aog_wks: number;
+    pfpc_aog_days: number;
+  }[];
+  postpartum_record?: {
+    ppr_id:string;
+    delivery_date: string | "N/A";
+    created_at: string;
+    updated_at: string;
+    postpartum_assessment?: {
+      ppa_id: string;
+      ppa_date: string;
+      ppa_lochial_discharges: string;
+      ppa_blood_pressure: string;
+      ppa_feedings: string;
+      ppa_findings: string;
+      ppa_nurses_notes: string;
+      created_at: string;
+      updated_at: string;
+    }[]
+  }[]
+}
 
 
 export default function MaternalIndivRecords() {
-  type maternalIndivRecords = {
-    id: number;
-    dateCreated: string;
-    address: string;
-    sitio: "Logarta" | "Bolinawan";
-    type: "Transient" | "Resident";
-    recordType: "Prenatal" | "Postpartum";
-  };
-  const columns: ColumnDef<maternalIndivRecords>[] = [
-    {
-      accessorKey: "id",
-      header: "Record ID",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "dateCreated",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[120px]">
-          <div className="w-full truncate">{row.original.dateCreated}</div>
-        </div>
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const location = useLocation()
+  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(selectedPatient?.pat_id || "")
+  const [isRefetching, setIsRefetching] = useState(false)
+
+  useEffect(() => {
+    if (location.state?.params?.patientData) {
+      const patientData = location.state.params.patientData
+      setSelectedPatient(patientData)
+      const ageTimeCheck = patientData.personal_info.ageTime
+      console.log("Age Time: ", ageTimeCheck)
+
+      console.log("Selected patient data:", patientData)
+    }
+  }, [location.state])
+
+
+  const groupPregnancies = (
+    pregnancies: PregnancyDataDetails[],
+    patientType: string,
+    patientAddress: Patient["address"] | undefined,
+  ): PregnancyGroup[] => {
+    const grouped: Record<string, PregnancyGroup> = {}
+
+    if(!pregnancies) return []
+
+    pregnancies.forEach((pregnancy) => {
+      if(!grouped[pregnancy.pregnancy_id]) {
+        grouped[pregnancy.pregnancy_id] = {
+          pregnancyId: pregnancy.pregnancy_id,
+          status: normalizeStatus(pregnancy.status),
+          startDate: pregnancy.created_at.split("T")[0],
+          expectedDueDate: pregnancy.prenatal_form?.[0]?.pf_edc || undefined,
+          deliveryDate: pregnancy.postpartum_record?.[0]?.delivery_date || undefined,
+          records: [],
+          hasPrenatal: false,
+          hasPostpartum: false,
+        }
+      }
+
+      const currPregnancyGroup =  grouped[pregnancy.pregnancy_id]
+
+      // const aogWks = pregnancy.prenatal_care?.[0]?.pfpc_aog_wks
+      // const aogDays = pregnancy.prenatal_care?.[0]?.pfpc_aog_days
+      // const gestationalFormatted = `${aogWks} weeks ${aogDays} days`
+
+
+      pregnancy.prenatal_form?.forEach((pf) => {
+        const addressParts = [
+          patientAddress?.add_street,
+          patientAddress?.add_barangay,
+          patientAddress?.add_city,
+          patientAddress?.add_province
+        ].filter(Boolean);
+
+        
+        const correspondingCare = pregnancy.prenatal_care?.find(care => care.pf_id === pf.pf_id);
+        const aogWks = correspondingCare?.pfpc_aog_wks;
+        const aogDays = correspondingCare?.pfpc_aog_days;
+        const gestationalFormatted = aogWks !== undefined && aogDays !== undefined 
+          ? `${aogWks} weeks ${aogDays} days` 
+          : undefined;
+
+
+        currPregnancyGroup.records.push({
+          id: pf.pf_id,
+          pregnancyId: pregnancy.pregnancy_id,
+          dateCreated: pf.created_at.split("T")[0],
+          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
+          sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "N/A",
+          type: patientType as "Transient" | "Resident",
+          recordType: "Prenatal",
+          status: normalizeStatus(pregnancy.status),
+          gestationalWeek: aogWks,
+          gestationalFormatted: gestationalFormatted,
+          expectedDueDate: pf.pf_edc,
+          prenatal_end_date: pregnancy.prenatal_end_date,
+          notes: `Prenatal visit on ${pf.created_at.split("T")[0]}`,
+        })
+        currPregnancyGroup.hasPrenatal = true
+        if(pf.pf_edc && !currPregnancyGroup.expectedDueDate) {
+          currPregnancyGroup.expectedDueDate = pf.pf_edc
+        }
+      })
+
+      pregnancy.postpartum_record?.forEach((ppr) => {
+        const addressParts = [
+          patientAddress?.add_street,
+          patientAddress?.add_barangay,
+          patientAddress?.add_city,
+          patientAddress?.add_province
+        ].filter(Boolean);
+
+        currPregnancyGroup.records.push({
+          id: ppr.ppr_id,
+          pregnancyId: pregnancy.pregnancy_id,
+          dateCreated: ppr.created_at.split("T")[0],
+          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
+          sitio: patientAddress?.add_sitio || "N/A",
+          type: patientType as "Transient" | "Resident",
+          recordType: "Postpartum Care",
+          status: normalizeStatus(pregnancy.status),
+          deliveryDate: ppr.delivery_date,
+          postpartum_end_date: pregnancy.postpartum_end_date,
+          notes: `Postpartum care on ${ppr.created_at.split("T")[0]}`,
+          postpartum_assessment: ppr.postpartum_assessment || []
+        })
+        currPregnancyGroup.hasPostpartum = true
+        // Update deliveryDate for the pregnancy group from postpartum record if available
+        if (ppr.delivery_date && !currPregnancyGroup.deliveryDate) {
+          currPregnancyGroup.deliveryDate = ppr.delivery_date
+        }
+      })
+
+      currPregnancyGroup.records.sort(
+        (a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
       )
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
-        </div>
-      ),
-    },
+      
+      currPregnancyGroup.records.sort((a, b) => {
+        // First, sort by record type - postpartum records come first
+        if (a.recordType === "Postpartum Care" && b.recordType === "Prenatal") {
+          return -1; // a comes before b
+        }
+        if (a.recordType === "Prenatal" && b.recordType === "Postpartum Care") {
+          return 1; // b comes before a
+        }
+        
+        // If both records are of the same type, sort by date (newest first)
+        return new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime();
+      });
+    })
+    return Object.values(grouped).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+  }
 
-    {
-      accessorKey: "sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "recordType",
-      header: "Record Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.recordType}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.type}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const recordType = row.original.recordType;
-        const viewPath = recordType === "Prenatal" ? "/prenatalindividualhistory" : "/postpartumindividualhistory";
+  // Helper to normalize backend status to UI-expected casing
+  const normalizeStatus = (statusRaw: string): "Active" | "Completed" | "Pregnancy Loss" => {
+    const s = statusRaw.toLowerCase()
+    if (s === "active") return "Active"
+    if (s === "completed") return "Completed"
+    return "Pregnancy Loss" // covers both "pregnancy loss" and any unknown variants
+  }
 
-        return(
-          <div className="flex justify-center gap-2 ">
-            <TooltipLayout
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to={viewPath}>
-                    <Eye size={15} />
-                  </Link>
-                </div>
-              }
-              content="View history"
-            />
-          </div>
-        )
-      },
-    },
-  ];
-
-  const sampleData: maternalIndivRecords[] = [
-    {
-      id: 1,
-      dateCreated: "2025-10-03",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Transient",
-      recordType: "Prenatal",
-    },
-
-    {
-      id: 2,
-      dateCreated: "2024-10-02",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Transient",
-      recordType: "Prenatal",
-    },
-
-    {
-      id: 3,
-      dateCreated: "2023-10-01",
-      address: "Bonsai Bolinawan Carcar City",
-      sitio: "Logarta",
-      type: "Resident",
-      recordType: "Postpartum",
-    },
-  ];
-
-  // const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // const [searchTerm, setSearchTerm] = useState("");
-  const data = sampleData;
+  // using memo for grouped pregnancies
+  const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
+    if (pregnancyData && selectedPatient) {
+      return groupPregnancies(
+        pregnancyData,
+        selectedPatient.pat_type,
+        selectedPatient.address,
+      )
+    }
+    return []
+  }, [pregnancyData, selectedPatient])
 
   const filter = [
     { id: "All", name: "All" },
-    { id: "Resident", name: "Resident" },
-    { id: "Transient", name: "Transient" },
-  ];
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
+    { id: "Active", name: "Active" },
+    { id: "Completed", name: "Completed" },
+    { id: "Pregnancy Loss", name: "Pregnancy Loss" },
+  ]
+  const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter(
-          (item) =>
-            item.type === selectedFilter || item.sitio === selectedFilter
-        );
 
-  // const [value, setValue] = useState("");
-  return (
-    <LayoutWithBack
-      title="Maternal Records"
-      description="Manage mother's individual record"
-    >
-      <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-        <div className="mb-5">
-          <MotherInfo />
+  const filteredGroups = pregnancyGroups.filter((group) => {
+    switch (selectedFilter) {
+      case "All":
+        return true
+      case "Active":
+        return group.status === "Active"
+      case "Completed":
+        return group.status === "Completed"
+      case "Pregnancy Loss":
+        return group.status === "Pregnancy Loss"
+      default:
+        return true
+    }
+  })
+
+
+  const getStatusBadge = (status: "Active" | "Completed" | "Pregnancy Loss") => {
+    if (status === "Active") {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <Clock className="w-3 h-3 mr-1" />
+          Active
+        </Badge>
+      )
+    } else if (status === "Completed") {
+      return (
+        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Completed
+        </Badge>
+      )
+    } else if (status === "Pregnancy Loss") {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          <HeartHandshake className="w-3 h-3 mr-1" />
+          Pregnancy Loss
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+        Unknown
+      </Badge>
+    )
+  }
+
+
+  const getRecordTypeBadge = (recordType: "Prenatal" | "Postpartum Care") => {
+    return recordType === "Prenatal" ? (
+      <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
+        <Heart className="w-3 h-3 mr-1" />
+        Prenatal
+      </Badge>
+    ) : (
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        <Baby className="w-3 h-3 mr-1" />
+        Postpartum
+      </Badge>
+    )
+  }
+
+  
+  const handleCompletePregnancy = (pregnancyId: string) => {
+    console.log(`Pregnancy ${pregnancyId} marked as completed`)
+  }
+
+  const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
+    console.log(`Record ${recordId} of type ${recordType} marked as completed`)
+  }
+
+  const handleRefetching = async () => {
+    try {
+      setIsRefetching(true);
+      await refetch();
+    } catch (error){
+      console.error("Error fetching records")
+    } finally {
+      setIsRefetching(false);
+    }
+  }
+
+  if(pregnancyDataLoading) {
+    return (
+      <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading maternal individual records...</span>
         </div>
+      </LayoutWithBack>
+    )
+  }
+
+  return (
+    <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
+      <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
+        {selectedPatient ? (
+          <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-1">
+            <PatientInfoCardv2 patient={selectedPatient} />
+            <PregnancyChart pregnancies={pregnancyData}/>
+          </div>
+        ) : (
+          <div className="mb-5 rounded">
+            <p className="text-center text-gray-500">No patient selected</p>
+          </div>
+        )}
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}
-          <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex flex-col md:flex-row gap-2 w-full">
+            <div>
+              <Button 
+                className="hover:bg-gray-100 transition-colors duration-200 ease-in-out" 
+                variant="outline" 
+                onClick={handleRefetching} 
+                disabled={isRefetching || pregnancyDataLoading}
+              >
+                <RefreshCw className={`${isRefetching ? 'animate-spin' : ''}`} size={20} />
+              </Button>
+            </div>
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                  size={17}
-                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
                 <Input placeholder="Search..." className="pl-10 w-full bg-white" />
               </div>
               <SelectLayout
@@ -213,59 +433,42 @@ export default function MaternalIndivRecords() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>
-                  <Link to="/prenatalform">Prenatal</Link>
+                  <Link to="/prenatalform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Prenatal</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="/postpartumform">Postpartum</Link>
+                  <Link to="/postpartumform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Postpartum</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {/*  */}
-
-        {/* Table Container */}
+        {/* Accordion Container */}
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-md">
             <div className="flex gap-x-2 items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-8" defaultValue="10" />
-              <p className="text-xs sm:text-sm">Entries</p>
-            </div>
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <p className="text-xs sm:text-sm">Showing {filteredGroups.length === 1 ? filteredGroups.length + " pregnancy" :  filteredGroups.length + " pregnancies"}</p>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
-            {/* Table Placement */}
-            <DataTable columns={columns} data={filteredData} />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            {/* Showing Rows Info */}
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing 1-10 of 150 rows
-            </p>
 
-            {/* Pagination */}
-            <div className="w-full sm:w-auto flex justify-center">
-              {/* <PaginationLayout className="" /> */}
-            </div>
+          <div className="bg-white w-full rounded-b-md">
+            {filteredGroups.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                <p>No pregnancy records found</p>
+              </div>
+            ) : (
+              <PregnancyAccordion
+                pregnancyGroups={filteredGroups}
+                selectedPatient={selectedPatient}
+                getStatusBadge={getStatusBadge}
+                getRecordTypeBadge={getRecordTypeBadge}
+                onCompletePregnancy={handleCompletePregnancy}
+                onCompleteRecord={handleCompleteRecord}
+              />
+            )}
           </div>
         </div>
       </div>
     </LayoutWithBack>
-  );
+  )
 }

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput, CircleCheck, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/confirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getColumns } from "./columns/MedicineCol";
@@ -16,7 +16,7 @@ import { useMedicineStocks } from "../REQUEST/Medicine/queries/MedicineFetchQuer
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { useArchiveInventory } from "../REQUEST/Archive/ArchivePutQueries";
 import { MedicineStocksRecord } from "./type";
-import { isNearExpiry, isExpired, isLowStock } from "./columns/Alert";
+import { isNearExpiry, isExpired, isLowStock } from "../../../../helpers/StocksAlert";
 type StockFilter =
   | "all"
   | "low_stock"

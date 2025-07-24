@@ -4,39 +4,43 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateImmunizationStock } from "../restful-api/ImzSupplyPut.API"; // Adjust the path as needed
 import { api2 } from "@/api/api";
 import { useAddImzTransaction } from "../queries/ImzSupplyPostQueries";
-
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import {CircleCheck} from "lucide-react"
 export const useUpdateImmunizationStock = () => {
-    return useMutation({
-        mutationFn: async ({
-            imzStck_id,
-            inv_id,
-            imzStck_qty,
-            imzStck_pcs,
-            imzStck_avail,
-        }: {
-            imzStck_id: number;
-            inv_id: string;
-            imzStck_qty: number;
-            imzStck_pcs: number;
-            imzStck_avail: number;
-        }) =>
-            updateImmunizationStock(
-                imzStck_id,
-                inv_id,
-                imzStck_qty,
-                imzStck_pcs,
-                imzStck_avail,
-            ),
-        onError: (error: Error) => {
-            console.error("Error updating immunization stock:", error.message);
-        },
-    });
+  return useMutation({
+    mutationFn: async ({
+      imzStck_id,
+      inv_id,
+      imzStck_qty,
+      imzStck_pcs,
+      imzStck_avail,
+    }: {
+      imzStck_id: number;
+      inv_id: string;
+      imzStck_qty: number;
+      imzStck_pcs: number;
+      imzStck_avail: number;
+    }) =>
+      updateImmunizationStock(
+        imzStck_id,
+        inv_id,
+        imzStck_qty,
+        imzStck_pcs,
+        imzStck_avail
+      ),
+    onError: (error: Error) => {
+      console.error("Error updating immunization stock:", error.message);
+    },
+  });
 };
 
 export const useSubmitUpdateImmunizationStock = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate()
   const { mutateAsync: addImzTransactionRecord } = useAddImzTransaction();
-  const { mutateAsync: UpdateImmunizationStockRecord } = useUpdateImmunizationStock();
+  const { mutateAsync: UpdateImmunizationStockRecord } =
+    useUpdateImmunizationStock();
 
   return useMutation({
     mutationFn: async ({
@@ -128,21 +132,28 @@ export const useSubmitUpdateImmunizationStock = () => {
         action: "Added",
       });
 
-        if (!transactionResponse) {
-            throw new Error("Failed to add immunization transaction");
-        }
+      if (!transactionResponse) {
+        throw new Error("Failed to add immunization transaction");
+      }
 
-      return { success: true };
+      queryClient.invalidateQueries({ queryKey: ["immunizationStockList"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+      return;
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["immunizationStockList"] });
-      alert("Successfully updated immunization stock");
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
     },
-
     onError: (error: any) => {
-      console.error("Update immunization stock error:", error.message || error);
-      alert(`Update failed: ${error.message || "Unknown error"}`);
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };

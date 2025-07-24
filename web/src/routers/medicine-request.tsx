@@ -4,8 +4,8 @@ import IndivMedicineRecord from "@/pages/healthServices/medicineservices/tables/
 import PatNewMedRecForm from "@/pages/healthServices/medicineservices/PatnewMedRecord";
 // import PatNewMedRecForm from "@/pages/healthServices/medicineservices/backupPat";
 import IndivPatNewMedRecForm from "@/pages/healthServices/medicineservices/IndivnewMedrecord";
-import MonthlyMedicineRecords from "@/pages/healthServices/Reports/medicine-report/monthly";
-import MonthlyMedicineDetails from "@/pages/healthServices/Reports/medicine-report/records";
+import MedicineRequests from "@/pages/healthServices/medicineservices/Request/request-table";
+import MedicineRequestDetail from "@/pages/healthServices/medicineservices/Request/request-details";
 
 export const medicineRequest = [
   {
@@ -24,10 +24,13 @@ export const medicineRequest = [
   {
     path: "/IndivPatNewMedRecForm",
     element: <IndivPatNewMedRecForm />,
+  },{
+    path: "/medicine-requests",
+    element: <MedicineRequests />,
   },
   {
-    path: "/monthly-medicine-records",
-    element: <MonthlyMedicineRecords />,
-  },
-  { path: "/monthly-medicine-details", element: <MonthlyMedicineDetails /> },
+    path: "/medicine-request-detail",
+    element: <MedicineRequestDetail />,
+  }
+  
 ];

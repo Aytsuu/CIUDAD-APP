@@ -14,6 +14,7 @@ import {
   UserCog,
   ArrowUp,
   ArrowDown,
+  Loader2,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -26,7 +27,6 @@ import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import { Skeleton } from "@/components/ui/skeleton"
 import CardLayout from "@/components/ui/card/card-layout"
 import { Button } from "@/components/ui/button/button"
 
@@ -54,7 +54,7 @@ interface Patients {
   };
 
   address: {
-    sitio?: string;
+    add_sitio?: string;
     
   }
 }
@@ -65,13 +65,20 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "id",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full justify-center items-center gap-2 cursor-pointer "
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Patient No.
         <ArrowUpDown size={14} />
       </div>
     ),
+    cell: ({ row }) => (
+      <div className="flex w-full justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+            {row.original.id}
+          </div>
+        </div>
+    )
   },
   {
     accessorKey: "sitio",
@@ -120,6 +127,11 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "type",
     header: "Type",
+    cell: ({ row }) => <div className="hidden xl:block">{row.getValue("type")}</div>,
+  },
+  {
+    accessorKey: "noOfRecords",
+    header: "No. of Records",
     cell: ({ row }) => <div className="hidden xl:block">{row.getValue("type")}</div>,
   },
   {
@@ -251,10 +263,10 @@ const CustomPagination = ({
 const transformPatientsToReports = (patients: Patients[]): Report[] => {
   return patients.map((patient) => ({
     id: patient.pat_id.toString(),
-    sitio: patient.address?.sitio || "N/A",
+    sitio: patient.address?.add_sitio || "N/A",
     lastName: patient.personal_info?.per_lname || "",
     firstName: patient.personal_info?.per_fname || "",
-    mi: patient.personal_info?.per_mname || "",
+    mi: patient.personal_info?.per_mname || "N/A",
     type: patient.pat_type || "Resident", // assuming pat_type maps to resident/transient
   }));
 };
@@ -320,12 +332,12 @@ export default function PatientsRecord() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
+      <LayoutWithBack title="Patients Records" description="Manage and view patients information">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading patient records...</span>
+        </div>
+      </LayoutWithBack>
     );
   }
 
@@ -440,7 +452,7 @@ export default function PatientsRecord() {
 
         {/* The Header is hidden on small screens */}
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          <div className="flex gap-x-2">
+          <div className="flex w-full gap-x-2">
             <div className="relative flex-1 bg-white">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
               <Input
@@ -450,24 +462,23 @@ export default function PatientsRecord() {
                 onChange={handleSearchChange}
               />
             </div>
-            <div>
+            <div className="w-48">
               <SelectLayout
                 placeholder="Filter by"
                 label=""
                 className="bg-white"
                 options={[
-                  { id: "1", name: "" },
-                  { id: "2", name: "By date" },
-                  { id: "3", name: "By location" },
+                  { id: "all", name: "All" },
+                  { id: "resident", name: "Resident" },
+                  { id: "transient", name: "Transient" },
                 ]}
-                value=""
-                onChange={() => {}}
+                value={filterBy}
+                onChange={setFilterBy}
               />
             </div>
-            
           </div>
           <div>
-            <div className="flex gap-2">
+            <div className="flex ml-2">
               <Link to="/create-patients-record">
                 <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
                   <Plus size={15} /> Create

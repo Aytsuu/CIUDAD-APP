@@ -27,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui//patientInfoCard";
 import { Label } from "@/components/ui/label";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useMedicineCount } from "../queries/MedCountQueries";
@@ -73,13 +73,13 @@ export interface MedicineRecord {
     minv_qty: number;
     minv_qty_unit: string;
     minv_pcs: number;
-    minv_distributed: number;
+    // minv_distributed: number;
     minv_qty_avail: number;
   };
 }
 
 export interface Patient {
-  pat_id: number;
+  pat_id: string;
   name: string;
   pat_type: string;
   [key: string]: any;
@@ -308,31 +308,7 @@ export default function IndivMedicineRecords() {
         );
       },
     },
-    {
-      accessorKey: "action",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          {!row.original.is_archived ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={() => {
-                setRecordToArchive(row.original.medrec_id);
-                setIsArchiveConfirmationOpen(true);
-              }}
-            >
-              Archive
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" className="h-8" disabled>
-              Archived
-            </Button>
-          )}
-        </div>
-      ),
-    },
+   
   ];
 
   if (isLoading) {

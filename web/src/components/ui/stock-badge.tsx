@@ -1,6 +1,10 @@
 interface StockBadgeProps {
     quantity: number;
     unit: string;
+    lowStock?: boolean; // Add the lowStock prop
+  
+    outOfStock?:boolean
+
   }
   
   export const StockBadge = ({ quantity, unit }: StockBadgeProps) => {

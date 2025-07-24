@@ -209,7 +209,7 @@ class CommodityTransaction(models.Model):
     comt_id =models.BigAutoField(primary_key=True)
     comt_qty = models.CharField(max_length=100)
     comt_action = models.CharField(max_length=100)
-    staff = models.PositiveIntegerField(default=0)
+    # staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,related_name='commodity_transaction',  db_column='cinv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='commodity_transaction', null=True, blank=True)  

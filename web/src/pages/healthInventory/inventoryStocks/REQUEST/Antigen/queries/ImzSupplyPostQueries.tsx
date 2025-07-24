@@ -5,6 +5,10 @@ import {
 } from "../restful-api/ImzSupplyPostAPI";
 import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { useAddInventory } from "../../InventoryAPIQueries";
+import { useNavigate } from "react-router";
+import {toast} from "sonner"
+import {CircleCheck} from "lucide-react"
+
 
 export const useAddImzTransaction = () => {
   return useMutation({
@@ -50,6 +54,7 @@ export const useAddImmunizationStock = () => {
 
 export const useSubmitImmunizationStock = () => {
   const queryClient = useQueryClient();
+  const navigate =useNavigate()
   const { mutateAsync: addInventoryRecord } = useAddInventory();
   const { mutateAsync: addImmunizationStockRecord } = useAddImmunizationStock();
   const { mutateAsync: addImzTransactionRecord } = useAddImzTransaction();
@@ -115,16 +120,24 @@ export const useSubmitImmunizationStock = () => {
         throw new Error("Failed to add immunization transaction");
       }
 
-      return { success: true };
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["immunizationStockList"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+      return;
+    },
+   
+    onSuccess: () => {
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
     },
     onError: (error: any) => {
-      console.error(
-        "Error submitting immunization stock:",
-        error.message || error
-      );
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };

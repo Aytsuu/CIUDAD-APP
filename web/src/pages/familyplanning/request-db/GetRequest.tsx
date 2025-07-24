@@ -228,7 +228,6 @@ export const getPatients = async () => {
   }
 }
 
-// Function to get all FP records for a specific patient (for individual view)
 export const getFPRecordsForPatient = async (patientId: string | number): Promise<IndividualFPRecordDetail[]> => {
   try {
     const response = await api2.get(`familyplanning/fp-records-by-patient/${patientId}/`)

@@ -255,7 +255,7 @@ interface FPRecord {
 
         <CardLayout
           title="Resident Patients"
-          description="Permanent residents who availed FP"
+          description="Permanent residents who availed Family Planning"
           content={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
@@ -281,7 +281,7 @@ interface FPRecord {
 
         <CardLayout
           title="Transient Patients"
-          description="Temporary residents who availed FP"
+          description="Temporary residents who availed Family Planning"
           content={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">

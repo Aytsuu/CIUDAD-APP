@@ -21,7 +21,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
+import { fetchVaccinesWithStock } from "./restful-api/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/NewVacRecordQueries";

@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react"; // Add useEffect
+// src/components/unvaccinated-residents/UnvaccinatedResidents.tsx
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, FileInput } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Search, FileInput } from "lucide-react";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,110 +13,59 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api2 } from "@/api/api";
-import { Link } from "react-router";
-
-// Interfaces remain the same
-interface Address {
-  add_street?: string;
-  sitio?: string;
-  add_barangay?: string;
-  add_city?: string;
-  add_province?: string;
-}
-
-interface PersonalInfo {
-  per_lname: string;
-  per_fname: string;
-  per_mname: string | null;
-  per_sex: string;
-  per_dob: string;
-  per_addresses: Address[];
-}
-
-interface Resident {
-  pat_id: string;
-  rp_id: string | null;
-  personal_info: PersonalInfo;
-  vaccine_not_received: string;
-}
+import { Link } from "react-router-dom";
+import { unvaccinatedColumns } from "./columns/unvac-col";
+import { useUnvaccinatedResidents } from "../restful-api/fetch";
+import { Resident, UnvaccinatedResident, VaccineCounts } from "./columns/types";
+import { VaccineCountCards } from "@/components/ui/unvaccinated-count";
 
 
-
-export interface UnvaccinatedResident {
-  vaccine_name: string;
-  pat_id: string;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  dob: string;
-  sitio: string;
-  address: string;
-  pat_type: string;
-}
-
-export const getUnvaccinatedResidents = async () => {
-  try {
-    const response = await api2.get("/vaccination/residents/unvaccinated/");
-    console.log("API response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch unvaccinated residents:", error);
-    throw error;
-  }
-};
-
-export default function AllVaccinationRecords() {
+export default function UnvaccinatedResidents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: unvaccinated, isLoading } = useQuery<any>({
-    queryKey: ["unvaccinatedResidents"],
-    queryFn: getUnvaccinatedResidents,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: unvaccinated, isLoading } = useUnvaccinatedResidents();
+
+  const vaccineCounts: VaccineCounts = React.useMemo(() => {
+    if (!unvaccinated || typeof unvaccinated !== "object") return {};
+    const counts: VaccineCounts = {};
+    Object.entries(unvaccinated).forEach(([vaccine_name, residents]) => {
+      if (Array.isArray(residents)) {
+        counts[vaccine_name] = residents.length;
+      }
+    });
+    return counts;
+  }, [unvaccinated]);
 
   const formattedData: UnvaccinatedResident[] = React.useMemo(() => {
-    if (!unvaccinated || typeof unvaccinated !== "object") {
-      return [];
-    }
-
+    if (!unvaccinated || typeof unvaccinated !== "object") return [];
+    
     return Object.entries(unvaccinated).flatMap(([vaccine_name, residents]) =>
       Array.isArray(residents)
-        ? residents.map((resident: Resident) => {
-            const personalInfo = resident.personal_info || {};
-            const addresses = personalInfo.per_addresses || [];
-            const primaryAddress = addresses[0] || {};
-
-            return {
-              vaccine_name: resident.vaccine_not_received || "Unknown",
-              pat_id: resident.pat_id || "N/A",
-              fname: personalInfo.per_fname || "N/A",
-              lname: personalInfo.per_lname || "N/A",
-              mname: personalInfo.per_mname || "N/A",
-              sex: personalInfo.per_sex || "N/A",
-              dob: personalInfo.per_dob || "N/A",
-              age: personalInfo.per_dob
-                ? calculateAge(personalInfo.per_dob).toString()
-                : "N/A",
-              sitio: primaryAddress.sitio || "N/A",
-              address:
-                [
-                  primaryAddress.add_street,
-                  primaryAddress.sitio,
-                  primaryAddress.add_barangay,
-                  primaryAddress.add_city,
-                  primaryAddress.add_province,
-                ]
-                  .filter(Boolean)
-                  .join(", ") || "N/A",
-              pat_type: "Resident",
-            };
-          })
+        ? residents.map((resident: Resident) => ({
+            vaccine_name: resident.vaccine_not_received || "Unknown",
+            pat_id: resident.pat_id || "N/A",
+            fname: resident.personal_info?.per_fname || "N/A",
+            lname: resident.personal_info?.per_lname || "N/A",
+            mname: resident.personal_info?.per_mname || "N/A",
+            sex: resident.personal_info?.per_sex || "N/A",
+            dob: resident.personal_info?.per_dob || "N/A",
+            age: resident.personal_info?.per_dob
+              ? calculateAge(resident.personal_info.per_dob).toString()
+              : "N/A",
+            sitio: resident.personal_info?.per_addresses?.[0]?.sitio || "N/A",
+            address: [
+              resident.personal_info?.per_addresses?.[0]?.add_street,
+              resident.personal_info?.per_addresses?.[0]?.sitio,
+              resident.personal_info?.per_addresses?.[0]?.add_barangay,
+              resident.personal_info?.per_addresses?.[0]?.add_city,
+              resident.personal_info?.per_addresses?.[0]?.add_province,
+            ]
+              .filter(Boolean)
+              .join(", "),
+            pat_type: "Resident",
+          }))
         : []
     );
   }, [unvaccinated]);
@@ -131,111 +78,15 @@ export default function AllVaccinationRecords() {
     });
   }, [searchQuery, formattedData]);
 
-  // Reset currentPage to 1 when searchQuery changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
-
-  // Optional: Navigate to the page containing the first matching row
-  // useEffect(() => {
-  //   if (searchQuery && filteredData.length > 0) {
-  //     const firstMatchIndex = formattedData.findIndex((record) => {
-  //       const searchText =
-  //         `${record.pat_id} ${record.lname} ${record.fname} ${record.sitio} ${record.vaccine_name}`.toLowerCase();
-  //       return searchText.includes(searchQuery.toLowerCase());
-  //     });
-  //     if (firstMatchIndex !== -1) {
-  //       const targetPage = Math.floor(firstMatchIndex / pageSize) + 1;
-  //       setCurrentPage(targetPage);
-  //     }
-  //   }
-  // }, [searchQuery, formattedData, pageSize]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  const columns: ColumnDef<UnvaccinatedResident>[] = [
-    {
-      accessorKey: "vaccine_name",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Vaccine Not Received <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[160px] px-2">
-          <div className="text-center w-full text-red-600 font-medium">
-            {row.original.vaccine_name}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "patient",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Patient <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName =
-          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age}
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "pat_type",
-      header: "Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
-        </div>
-      ),
-    },
-  ];
 
   if (isLoading) {
     return (
@@ -250,7 +101,9 @@ export default function AllVaccinationRecords() {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="w-full flex gap-2 mr-2 mb-5">
+      <VaccineCountCards vaccineCounts={vaccineCounts} />
+
+      <div className="w-full flex gap-2 mr-2 mb-4 mt-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative flex-1">
             <Search
@@ -273,7 +126,7 @@ export default function AllVaccinationRecords() {
       </div>
 
       <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-white flex  sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+        <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-3 justify-start items-center">
             <p className="text-xs sm:text-sm">Show</p>
             <Input
@@ -309,7 +162,7 @@ export default function AllVaccinationRecords() {
           </div>
         </div>
         <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={paginatedData} />
+          <DataTable columns={unvaccinatedColumns} data={paginatedData} />
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">

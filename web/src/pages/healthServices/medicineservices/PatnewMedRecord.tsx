@@ -28,7 +28,7 @@ import { useMedicineRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
 
 interface Patient {
-  pat_id: number;
+  pat_id: string;
   pat_type: string;
   name?: string;
   personal_info?: {
@@ -44,7 +44,7 @@ interface Patient {
     add_barangay?: string;
     add_city?: string;
     add_province?: string;
-    add_external_sitio?: string;
+    add_sitio?: string;
   };
 }
 
@@ -89,18 +89,6 @@ export default function PatNewMedRecForm() {
     setCurrentPage(page);
   }, []);
 
-  const handlePreview = useCallback(() => {
-    if (
-      !selectedPatientId ||
-      selectedMedicines.length === 0 ||
-      hasInvalidQuantities
-    ) {
-      toast.error("Please complete all required fields");
-      return;
-    }
-    setShowSummary(true);
-  }, [selectedPatientId, selectedMedicines]);
-
   const form = useForm<MedicineRequestArrayType>({
     resolver: zodResolver(MedicineRequestArraySchema),
     defaultValues: {
@@ -142,10 +130,33 @@ export default function PatNewMedRecForm() {
     0
   );
 
-  const hasInvalidQuantities = selectedMedicines.some(
-    (med) => med.medrec_qty < 1
-  );
+  // Check for invalid quantities (less than 1 or exceeds available stock)
+  const hasInvalidQuantities = selectedMedicines.some((med) => {
+    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    return med.medrec_qty < 1 || (medicine && med.medrec_qty > medicine.avail);
+  });
 
+  // Check for medicines that exceed available stock
+  const hasExceededStock = selectedMedicines.some((med) => {
+    const medicine = medicineStocksOptions.find(m => m.id === med.minv_id);
+    return medicine && med.medrec_qty > medicine.avail;
+  });
+
+
+  
+  const handlePreview = useCallback(() => {
+    if (
+      !selectedPatientId ||
+      selectedMedicines.length === 0 ||
+      hasInvalidQuantities
+    ) {
+      toast.error("Please complete all required fields");
+      return;
+    }
+    setShowSummary(true);
+  }, [selectedPatientId, selectedMedicines, hasInvalidQuantities]);
+
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
@@ -201,7 +212,6 @@ export default function PatNewMedRecForm() {
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
                   />
-                
                 </div>
               )}
             </div>
@@ -239,6 +249,8 @@ export default function PatNewMedRecForm() {
                         ? "Patient Required"
                         : selectedMedicines.length === 0
                         ? "Medicines Required"
+                        : hasExceededStock
+                        ? "Stock Limit Exceeded"
                         : "Invalid Quantities"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
@@ -246,6 +258,8 @@ export default function PatNewMedRecForm() {
                         ? "Please select a patient to continue with the medicine request."
                         : selectedMedicines.length === 0
                         ? "Please select at least one medicine to submit the request."
+                        : hasExceededStock
+                        ? "One or more medicines exceed available stock. Please adjust quantities."
                         : "Please ensure all medicine quantities are at least 1."}
                     </p>
                   </div>

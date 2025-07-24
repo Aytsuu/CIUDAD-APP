@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
+import CardLayout from "@/components/ui/card/card-layout";
 import { Shield, UserX } from "lucide-react";
 import AllVaccinationRecords from "./AllVaccinationRecord";
 import UnvaccinatedResident from "./UnvaccineResidents";
 
 export default function VaccinationManagement() {
-  // Initialize state with value from localStorage or default to "vaccinated"
   const [selectedView, setSelectedView] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("selectedVaccinationView") || "vaccinated";
@@ -46,30 +45,26 @@ export default function VaccinationManagement() {
   };
 
   return (
-    <div className="w-full px-3 py-4 sm:px-6 md:px-8 bg-background">
-      {/* Title Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div className="mb-4">
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
+    <>
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <div className="flex-col items-center">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             {getTitle()}
           </h1>
-          <p className="text-xs sm:text-sm text-darkGray mt-1">
-            {getDescription()}
-          </p>
+          <p className="text-xs sm:text-sm text-darkGray">{getDescription()}</p>
         </div>
       </div>
-      <hr className="border-gray mb-4 sm:mb-6 md:mb-8" />
+      <hr className="border-gray mb-5 sm:mb-8" />
 
-      {/* Tabs Navigation */}
-      <Card className="border shadow-sm">
-        <CardHeader className="p-0">
+      <CardLayout
+        content={
           <Tabs
             defaultValue={selectedView}
             value={selectedView}
             onValueChange={handleTabChange}
             className="w-full"
           >
-            <div className="px-4 pt-4">
+            <div className="px-2 pt-4">
               <TabsList className="w-full grid grid-cols-2 gap-2 h-auto p-1">
                 <TabsTrigger
                   value="vaccinated"
@@ -88,17 +83,17 @@ export default function VaccinationManagement() {
               </TabsList>
             </div>
 
-            <CardContent className="p-4 pt-6">
+            <div className="p-2 pt-6">
               <TabsContent value="vaccinated" className="mt-0">
                 <AllVaccinationRecords />
               </TabsContent>
               <TabsContent value="unvaccinated" className="mt-0">
                 <UnvaccinatedResident />
               </TabsContent>
-            </CardContent>
+            </div>
           </Tabs>
-        </CardHeader>
-      </Card>
-    </div>
+        }
+      />
+    </>
   );
 }

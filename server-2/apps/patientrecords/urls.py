@@ -14,7 +14,7 @@ from .views.disability_views import *
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
-    path('patien-record/', PatientRecordView.as_view(), name='patient-record'),
+    path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patient/', PatientView.as_view(), name='patient'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
 	 

@@ -1,9 +1,10 @@
+// FpPage1.tsx
 "use client"
 
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { ChevronLeft } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { z } from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
@@ -71,7 +72,7 @@ export default function FamilyPlanningForm({
 
   interface FormattedPatient {
     id: string
-    name: string
+    name: React.ReactNode // Change name to React.ReactNode to accommodate JSX
   }
 
   interface FormattedCommodity {
@@ -103,7 +104,14 @@ export default function FamilyPlanningForm({
           const response = await api2.get("patientrecords/patient/")
           const formattedPatients = response.data.map((patient: any) => ({
             id: patient.pat_id?.toString() || "",
-            name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim(),
+            name: (
+              <>
+                <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
+                  {patient.pat_id || ""}
+                </span>
+                {`${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim()}
+              </>
+            ),
           }))
           setPatients(formattedPatients)
         } catch (error) {
@@ -118,96 +126,115 @@ export default function FamilyPlanningForm({
     }
   }, [isPatientPreSelected])
 
-const handlePatientSelection = async (id: string) => {
-  setSelectedPatientId(id);
-  try {
-    // 1. Fetch patient details
-    const response = await api2.get(`patientrecords/patient/${id}/`);
-    const patientData = response.data;
 
-    // 2. Initialize spouse info with empty values
-    let spouseInfo = {
-      s_lastName: "",
-      s_givenName: "",
-      s_middleInitial: "",
-      s_dateOfBirth: "",
-      s_age: 0,
-      s_occupation: "",
-    };
 
-    // 3. Determine spouse based on patient gender and family head info
-    const gender = patientData.personal_info?.per_sex?.toLowerCase(); // Using per_sex from your JSON
-    const familyHeads = patientData.family_head_info?.family_heads;
+  const handlePatientSelection = async (id: string) => {
+    setSelectedPatientId(id)
+    try {
+      // 1. Fetch patient details
+      const response = await api2.get(`patientrecords/patient/${id}/`)
+      const patientData = response.data
 
-    if (gender === 'female' && familyHeads?.father) {
-      // For female patients, use father as spouse
-      const father = familyHeads.father.personal_info;
-      spouseInfo = {
-        s_lastName: father.per_lname || "",
-        s_givenName: father.per_fname || "",
-        s_middleInitial: (father.per_mname ? father.per_mname[0] : "") || "",
-        s_dateOfBirth: father.per_dob || "",
-        s_age: father.per_dob ? calculateAge(father.per_dob) : 0,
-        s_occupation: "", // Occupation might not be available
-      };
-    } else if (gender === 'male' && familyHeads?.mother) {
-      // For male patients, use mother as spouse
-      const mother = familyHeads.mother.personal_info;
-      spouseInfo = {
-        s_lastName: mother.per_lname || "",
-        s_givenName: mother.per_fname || "",
-        s_middleInitial: (mother.per_mname ? mother.per_mname[0] : "") || "",
-        s_dateOfBirth: mother.per_dob || "",
-        s_age: mother.per_dob ? calculateAge(mother.per_dob) : 0,
-        s_occupation: "", // Occupation might not be available
-      };
+      // 2. Initialize spouse info with empty values
+      let spouseInfo = {
+        s_lastName: "",
+        s_givenName: "",
+        s_middleInitial: "",
+        s_dateOfBirth: "",
+        s_age: 0,
+        s_occupation: "",
+      }
+
+      // 3. Determine spouse based on patient gender and family head info
+      const gender = patientData.personal_info?.per_sex?.toLowerCase() // Using per_sex from your JSON
+      const familyHeads = patientData.family_head_info?.family_heads
+
+      if (gender === 'female' && familyHeads?.father) {
+        // For female patients, use father as spouse
+        const father = familyHeads.father.personal_info
+        spouseInfo = {
+          s_lastName: father.per_lname || "",
+          s_givenName: father.per_fname || "",
+          s_middleInitial: (father.per_mname ? father.per_mname.length > 0 ? father.per_mname?.[0] : "" : "") || "",
+          s_dateOfBirth: father.per_dob || "",
+          s_age: father.per_dob ? calculateAge(father.per_dob) : 0,
+          s_occupation: "", // Occupation might not be available
+        }
+      } else if (gender === 'male' && familyHeads?.mother) {
+        // For male patients, use mother as spouse
+        const mother = familyHeads.mother.personal_info
+        spouseInfo = {
+          s_lastName: mother.per_lname || "",
+          s_givenName: mother.per_fname || "",
+          s_middleInitial: (mother.per_mname ? mother.per_mname.length > 0 ? mother.per_mname?.[0] : "" : "") || "",
+          s_dateOfBirth: mother.per_dob || "",
+          s_age: mother.per_dob ? calculateAge(mother.per_dob) : 0,
+          s_occupation: "", // Occupation might not be available
+        }
+      }
+
+      // 4. Fetch other required data
+      const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse,personalResponse] = await Promise.all([
+        api2.get(`familyplanning/body-measurements/${id}`),
+        api2.get(`familyplanning/obstetrical-history/${id}/`),
+        api2.get(`familyplanning/last-previous-pregnancy/${id}/`),
+        api2.get(`familyplanning/patient-details/${id}`)
+      ])
+
+      const bodyMeasurementsData = bodyMeasurementsResponse.data || {}
+      const obsHistoryData = obsHistoryResponse.data || {}
+      const lastPrevPregData = lastPrevPregResponse.data || {}
+      const personalResponseData = personalResponse.data || {}
+
+      const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim()
+
+      // 5. Prepare the complete form data
+      const newFormData = {
+        ...formData,
+        ...patientData,
+        pat_id: patientData.pat_id,
+        lastName: patientData.personal_info?.per_lname || "",
+        givenName: patientData.personal_info?.per_fname || "",
+        clientID: patientData.clientID || "",
+        middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname.length > 0 ? patientData.personal_info.per_mname?.[0] : "" : "") || "",
+        dateOfBirth: patientData.personal_info?.per_dob || "",
+        gender: patientData.personal_info?.per_sex || "", // Using per_sex from your JSON
+        obstetricalHistory: obsHistoryData,
+        height: bodyMeasurementsData.height || 0,
+        weight: bodyMeasurementsData.weight || 0,
+        philhealthNo: personalResponseData.philhealthNo || "",
+        nhts_status: personalResponseData.nhts_status || false,
+        pantawid_4ps: personalResponseData.pantawid_4ps || false,
+        educationalAttainment: personalResponseData.educationalAttainment || "",
+        occupation: personalResponseData.ocupation,
+        bodyMeasurementRecordedAt: bodyMeasurementsData.recorded_at || null,
+        acknowledgement: {
+          ...formData.acknowledgement,
+          clientName: fullName,
+        },
+        address:{
+          houseNumber: personalResponseData.address.houseNumber || "",
+          street: personalResponseData.address.street || "",
+          barangay: personalResponseData.address.barangay || "",
+          municipality: personalResponseData.address.municipality || "",
+          province: personalResponseData.address.province || "",
+
+        },
+        spouse: spouseInfo,
+        lastDeliveryDate: lastPrevPregData.last_delivery_date || "",
+        typeOfLastDelivery: lastPrevPregData.last_delivery_type || "",
+      }
+
+      // 6. Update the form with the new data
+      form.reset(newFormData)
+      updateFormData(newFormData)
+      toast.success("Patient data loaded successfully")
+    } catch (error) {
+      console.error("Error fetching patient details:", error)
+      toast.error("Failed to load patient details")
     }
-
-    // 4. Fetch other required data
-    const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse] = await Promise.all([
-      api2.get(`familyplanning/body-measurements/${id}`),
-      api2.get(`familyplanning/obstetrical-history/${id}/`),
-      api2.get(`familyplanning/last-previous-pregnancy/${id}/`)
-    ]);
-
-    const bodyMeasurementsData = bodyMeasurementsResponse.data || {};
-    const obsHistoryData = obsHistoryResponse.data || {};
-    const lastPrevPregData = lastPrevPregResponse.data || {};
-
-    const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
-
-    // 5. Prepare the complete form data
-    const newFormData = {
-      ...formData,
-      ...patientData,
-      pat_id: patientData.pat_id,
-      lastName: patientData.personal_info?.per_lname || "",
-      givenName: patientData.personal_info?.per_fname || "",
-      middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
-      dateOfBirth: patientData.personal_info?.per_dob || "",
-      gender: patientData.personal_info?.per_sex || "", // Using per_sex from your JSON
-      obstetricalHistory: obsHistoryData,
-      height: bodyMeasurementsData.height || 0,
-      weight: bodyMeasurementsData.weight || 0,
-      bodyMeasurementRecordedAt: bodyMeasurementsData.recorded_at || null,
-      acknowledgement: {
-        ...formData.acknowledgement,
-        clientName: fullName,
-      },
-      spouse: spouseInfo,
-      lastDeliveryDate: lastPrevPregData.last_delivery_date || null,
-      typeOfLastDelivery: lastPrevPregData.last_delivery_type || "",
-    };
-
-    // 6. Update the form with the new data
-    form.reset(newFormData);
-    updateFormData(newFormData);
-    toast.success("Patient data loaded successfully");
-  } catch (error) {
-    console.error("Error fetching patient details:", error);
-    toast.error("Failed to load patient details");
   }
-};
+
 
   const dateOfBirth = form.watch("dateOfBirth")
   const spouseDOB = form.watch("spouse.s_dateOfBirth")
@@ -394,6 +421,11 @@ const handlePatientSelection = async (id: string) => {
                         <Label className="font-normal text-[13px]">
                           {loadingPatients ? "Loading..." : "No patient found."}
                         </Label>
+                         <Link to="/create-patients-record">
+                                      <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
+                                        Register New Patient
+                                      </Label>
+                                    </Link>
                       </div>
                     }
                   />

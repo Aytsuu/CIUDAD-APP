@@ -1,8 +1,8 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
-import ParentsFormLayout from "./parent/ParentsFormLayout";
-import DependentsInfoLayout from "./dependent/DependentsInfoLayout";
-import DemographicForm from "./demographic/DemographicForm";
+import ParentsFormLayout from "@/pages/health-profiling/family/parent/ParentsFormLayout";
+// import DependentsInfoLayout from "@/pages/health-profiling/family/dependent/DependentsInfoLayout";
+import DemographicForm from "@/pages/health-profiling/family/demographic/DemographicForm";
 
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
@@ -121,7 +121,7 @@ export default function FamilyProfileForm() {
               back={()=>prevStep()}
             />
           )}
-          {currentStep === 3 && (
+          {/* {currentStep === 3 && (
             <DependentsInfoLayout
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
@@ -131,7 +131,7 @@ export default function FamilyProfileForm() {
               defaultValues={defaultValues}
               back={()=>prevStep()}
             />
-          )} */
+          )} */}
         </Card>
       </div>
     </>

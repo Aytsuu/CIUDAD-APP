@@ -38,7 +38,7 @@ class Personal(models.Model):
     per_status = models.CharField(max_length=100)
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
-    per_contact = models.CharField(max_length=100)  
+    per_contact = models.CharField(max_length=20)  
 
     class Meta:
         db_table = 'personal'
@@ -123,8 +123,9 @@ class FamilyComposition(models.Model):
     
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
-    req_date = models.DateField()
+    req_date = models.DateField(auto_now_add=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE)
 
     class Meta: 
         db_table = 'request_registration'
@@ -137,17 +138,15 @@ class Business(models.Model):
     bus_id = models.BigAutoField(primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
-    bus_province = models.CharField(max_length=50)
-    bus_city = models.CharField(max_length=50)
-    bus_barangay = models.CharField(max_length=50)
-    bus_street = models.CharField(max_length=50)
     bus_respondentLname = models.CharField(max_length=50)
     bus_respondentFname = models.CharField(max_length=50)
     bus_respondentMname = models.CharField(max_length=50)
     bus_respondentSex = models.CharField(max_length=50)
     bus_respondentDob = models.DateField()
+    bus_respondentAddress = models.CharField(max_length=500)
+    bus_respondentContact = models.CharField(max_length=20)
     bus_date_registered = models.DateField(default=date.today)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
 
     class Meta:
@@ -158,17 +157,27 @@ class Business(models.Model):
 
 class BusinessFile(models.Model):
     bf_id = models.BigAutoField(primary_key=True)
+    bf_name = models.CharField(max_length=500)
+    bf_type = models.CharField(max_length=50)
+    bf_path = models.CharField(max_length=500)
+    bf_url = models.URLField()
+    bf_created_at = models.DateTimeField(auto_now_add=True)
     bus = models.ForeignKey(Business, on_delete=models.CASCADE)
-    file = models.ForeignKey('file.File', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'business_file'
 
 class RequestFile(models.Model):
     rf_id = models.BigAutoField(primary_key=True)
-    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name='files')
-    file = models.ForeignKey('file.File', on_delete=models.CASCADE)
-
+    rf_name = models.CharField(max_length=500)
+    rf_type = models.CharField(max_length=50)
+    rf_path = models.CharField(max_length=500)
+    rf_url = models.URLField()
+    rf_is_id = models.BooleanField(default=False)
+    rf_id_type = models.CharField(max_length=50, null=True ,blank=True)
+    rf_created_at = models.DateTimeField(auto_now_add=True)
+    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name='files') 
+ 
     class Meta:
         db_table = 'request_file'
 

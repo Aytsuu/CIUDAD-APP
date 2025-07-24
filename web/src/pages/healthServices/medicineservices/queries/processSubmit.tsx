@@ -21,6 +21,7 @@ export interface MedicineRequestData {
   }[];
 }
 
+
 export const processMedicineRequest = async (data: MedicineRequestData) => {
   const results = [];
 
@@ -85,8 +86,8 @@ export const processMedicineRequest = async (data: MedicineRequestData) => {
         reason: med.reason || null,
         requested_at: new Date().toISOString(),
         fulfilled_at: new Date().toISOString(),
-        req_type: "WALK IN",
-        status: "RECORDED",
+        // req_type: "WALK IN",
+        // status: "RECORDED",
       };
 
       const response = await createMedicineRecord(submissionData);

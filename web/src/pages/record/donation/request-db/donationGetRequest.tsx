@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import {api} from "@/api/api";
 
 export const getdonationreq = async () => {
     try {
@@ -11,6 +11,17 @@ export const getdonationreq = async () => {
         console.error("API Error:", err);
         return [];  // Always return an array
     }
+};
+
+export const getPersonalList = async () => {
+  try {
+    const res = await api.get('donation/personal-list/');
+    const data = res.data?.data ?? res.data ?? [];
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("API Error:", err);
+    return [];
+  }
 };
 
 

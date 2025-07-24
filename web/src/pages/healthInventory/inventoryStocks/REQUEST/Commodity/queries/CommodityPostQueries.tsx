@@ -4,20 +4,18 @@ import {
   addCommodityTransaction,
 } from "../restful-api/CommodityPostAPI";
 import { useAddInventory } from "../../InventoryAPIQueries";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
 
 export const useAddCommodityInventory = () => {
   return useMutation({
-    mutationFn: ({
-      data,
-    }: {
-      data: Record<string, any>;
-      inv_id: string;
-    }) => addCommodityInventory(data),
+    mutationFn: ({ data }: { data: Record<string, any>; inv_id: string }) =>
+      addCommodityInventory(data),
     onError: (error: Error) => {
       console.error(error.message);
     },
   });
-  
 };
 
 export const useAddCommodityTransaction = () => {
@@ -39,9 +37,9 @@ export const useAddCommodityTransaction = () => {
   });
 };
 
-
 export const useSubmitCommodityStock = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { mutateAsync: addInventoryRecord } = useAddCommodityInventory();
   const { mutateAsync: addTransaction } = useAddCommodityTransaction();
   const { mutateAsync: addInventory } = useAddInventory();
@@ -49,7 +47,10 @@ export const useSubmitCommodityStock = () => {
   return useMutation({
     mutationFn: async (data: any) => {
       // Step 1: Create inventory record
-      const inventoryResponse = await addInventory({ data,inv_type: "Commodity" });
+      const inventoryResponse = await addInventory({
+        data,
+        inv_type: "Commodity",
+      });
 
       if (!inventoryResponse?.inv_id) {
         throw new Error("Failed to generate inventory ID.");
@@ -101,24 +102,23 @@ export const useSubmitCommodityStock = () => {
         action,
       });
 
-
-      if (!commodityTransactionResponse || commodityTransactionResponse.error) {
-        throw new Error("Failed to add Commodity transaction.");
-      }
-
-      return { success: true };
+      if (!commodityTransactionResponse || commodityTransactionResponse.error) {throw new Error("Failed to add Commodity transaction."); }
+      queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
+      return;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
-    
-    
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
     },
-    onError: (error: Error) => {
-      console.error(error.message);
+    onError: (error: any) => {
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };
-
-
-
-

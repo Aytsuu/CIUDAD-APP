@@ -7,7 +7,7 @@ import {
   MedicineStocksSchema,
   MedicineStockType,
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { toast } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { fetchMedicines } from "../REQUEST/Medicine/restful-api/MedicineFetchAPI";
@@ -79,20 +79,7 @@ export default function AddMedicineStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit(formData, {
-      onSuccess: () => {
-        navigate("/mainInventoryStocks");
-        toast.success("Medicine item added successfully", {
-          icon: <CircleCheck size={20} className="text-green-500" />,
-          duration: 2000,
-        });
-      },
-      onError: (error: Error) => {
-        toast.error(error.message || "Failed to add medicine item", {
-          duration: 2000,
-        });
-      },
-    });
+    submit(formData);
   };
 
   return (
@@ -194,7 +181,9 @@ export default function AddMedicineStock() {
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
            
-           
+             <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+              Cancel{" "}
+            </Button>
            
             <Button
               className="w-full "

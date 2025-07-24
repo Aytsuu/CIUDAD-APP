@@ -40,7 +40,7 @@ export default function CartScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1 bg-[#ECF8FF]">
       <View className="flex-1 p-4">
         {/* Header */}
         <View className="flex-row items-center mb-6">
@@ -72,7 +72,6 @@ export default function CartScreen() {
                 <View key={item.id} className="bg-white rounded-lg p-4 mb-3 shadow-sm">
                   <View className="flex-row justify-between items-center">
                     <Text className="text-[#263D67] font-medium w-1/3">{item.name}</Text>
-{/* 
                     <View className="flex-row items-center justify-center w-1/3">
                       <TouchableOpacity
                         onPress={() => updateQuantity(item.id, Math.max(1, (item.quantity || 1) - 1))}
@@ -89,7 +88,7 @@ export default function CartScreen() {
                       >
                         <Plus size={16} color="#263D67" />
                       </TouchableOpacity>
-                    </View> */}
+                    </View>
 
                     <Text className="text-[#263D67] w-1/3 text-right">pc/s</Text>
                   </View>

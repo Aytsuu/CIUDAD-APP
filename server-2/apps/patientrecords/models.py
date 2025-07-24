@@ -39,7 +39,6 @@ class Transient(models.Model):
     mother_fname = models.CharField(max_length=100, null=True, blank=True)
     mother_lname = models.CharField(max_length=100, null=True, blank=True)
     mother_mname = models.CharField(max_length=100, null=True, blank=True)
-    # mother_occupation = models.CharField(max_length=100, null=True, blank=True)
     mother_age = models.CharField(max_length=100, null=True, blank=True)
     mother_dob = models.DateField(null=True, blank=True)
 
@@ -47,7 +46,6 @@ class Transient(models.Model):
     father_fname = models.CharField(max_length=100, null=True, blank=True)
     father_lname = models.CharField(max_length=100, null=True, blank=True)
     father_mname = models.CharField(max_length=100, null=True, blank=True)
-    # father_occupation = models.CharField(max_length=100, null=True, blank=True)
     father_age = models.CharField(max_length=100, null=True, blank=True)
     father_dob = models.DateField(null=True, blank=True)
 
@@ -159,7 +157,6 @@ class VitalSigns(models.Model):
     vital_o2 = models.CharField(max_length=100,default="N/A")
     vital_pulse = models.CharField(max_length=100,default="N/A")
     created_at = models.DateTimeField(auto_now_add=True)
-    pulse_rate = models.CharField(max_length=30,blank=True,null=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vital_signs',null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='vital_signs', null=True, blank=True)
     class Meta:
@@ -186,7 +183,7 @@ class Obstetrical_History(models.Model):
         
 class FollowUpVisit(models.Model):
     followv_id = models.BigAutoField(primary_key=True)
-    followv_date = models.DateField(null=True, blank=True)
+    followv_date = models.DateField()
     followv_status = models.CharField(max_length=100)
     followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -198,12 +195,12 @@ class FollowUpVisit(models.Model):
         
 class Spouse(models.Model):
     spouse_id = models.BigAutoField(primary_key=True)
-    spouse_type = models.CharField(max_length=10,default="", blank=True, null=True)
-    spouse_lname = models.CharField(max_length=50,default="", blank=True, null=True)
-    spouse_fname = models.CharField(max_length=50,default="", blank=True, null=True)
-    spouse_mname = models.CharField(max_length=50,default="", blank=True, null=True)
-    spouse_dob = models.DateField(blank=True, null=True)
-    spouse_occupation = models.CharField(max_length=50, blank=True, null=True)
+    spouse_type = models.CharField(max_length=10, default= "")
+    spouse_lname = models.CharField(max_length=50, default="")
+    spouse_fname = models.CharField(max_length=50, default="")
+    spouse_mname = models.CharField(max_length=50, default="")
+    spouse_occupation = models.CharField(max_length=50, default="")
+    spouse_dob = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     # updated_at = models.DateTimeField(auto_now=True)
     class Meta:
@@ -259,7 +256,7 @@ class Finding(models.Model):
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True)
-    # medrec = models.ForeignKey("medicalConsultation.MedicalConsultation_Record", on_delete=models.CASCADE, related_name='medical_history', null=True)
+    year = models.IntegerField(null=True, blank=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:

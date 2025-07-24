@@ -8,7 +8,6 @@ export const transformPostpartumFormData = (
 ) => {
   // Transform the form data to match the API structure
   const transformedData = {
-    // Patient and record type - Keep as string, don't convert to number
     pat_id: selectedPatientId, 
     patrec_type: "Postpartum Care",
 
@@ -53,15 +52,15 @@ export const transformPostpartumFormData = (
     vital_bp_systolic:
       postpartumCareData.length > 0
         ? postpartumCareData[0].bp.split(" / ")[0]
-        : formData.postpartumTable?.bp?.systolic || "120",
+        : formData.postpartumTable?.bp?.systolic || "",
     vital_bp_diastolic:
       postpartumCareData.length > 0
         ? postpartumCareData[0].bp.split(" / ")[1]
-        : formData.postpartumTable?.bp?.diastolic || "80",
+        : formData.postpartumTable?.bp?.diastolic || "",
 
     // Follow-up visit data
     followup_date: formData.postpartumInfo?.nextVisitDate || new Date().toISOString().split("T")[0],
-    followup_description: "Postpartum follow-up visit",
+    followup_description: "Postpartum Follow-up Visit",
   }
 
   return transformedData
@@ -79,7 +78,7 @@ const getOutcomeName = (outcomeId: string): string => {
 }
 
 export const validatePostpartumFormData = (
-  formData: z.infer<typeof PostPartumSchema>,
+  formData: z.infer<typeof PostPartumSchema>, 
   selectedPatientId: string,
   postpartumCareData: any[],
 ): string[] => {

@@ -10,12 +10,21 @@ import {
   useAddMedicineTransaction,
   MedicineTransactionType,
 } from "../queries/MedicinePostQueries"; // Import your mutation hooks
-import { useUpdateMedicineStocks, useUpdateInventoryTimestamp } from "../queries/MedicineUpdateQueries"; 
+import {
+  useUpdateMedicineStocks,
+  useUpdateInventoryTimestamp,
+} from "../queries/MedicineUpdateQueries";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
 
 export const useSubmitMedicineStock = () => {
   const queryClient = useQueryClient();
-  const { mutateAsync: addMedicineInventoryMutation } =useAddMedicineInventory();
-  const { mutateAsync: addMedicineTransactionMutation } =useAddMedicineTransaction();
+  const navigate = useNavigate();
+  const { mutateAsync: addMedicineInventoryMutation } =
+    useAddMedicineInventory();
+  const { mutateAsync: addMedicineTransactionMutation } =
+    useAddMedicineTransaction();
 
   return useMutation({
     mutationFn: async (data: MedicineStockType) => {
@@ -28,13 +37,16 @@ export const useSubmitMedicineStock = () => {
         }
         const inv_id = inventoryResponse.inv_id;
         console.log("Inventory ID:", inv_id);
-        
+
         if (!data.medicineID) {
           throw new Error("Medicine ID is required");
         }
 
         // Use the mutation for adding medicine inventory
-        const medicineInventoryResponse = await addMedicineInventoryMutation({data, inv_id, });
+        const medicineInventoryResponse = await addMedicineInventoryMutation({
+          data,
+          inv_id,
+        });
 
         const quantityString = formatQuantityString(
           Number(data.qty) || 0,
@@ -51,34 +63,46 @@ export const useSubmitMedicineStock = () => {
 
         // Use the mutation for adding transaction
         await addMedicineTransactionMutation(transactionPayload);
+        queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] });
 
-        return { success: true };
+        return;
       } catch (err) {
         console.error(err);
         throw err;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] });
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
     },
-    onError: (error: Error) => {
-      console.error("Error submitting medicine stock:", error.message);
+    onError: (error: any) => {
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };
 
-
-
 export const useUpdateMedicineStock = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { mutateAsync: updateStocksMutation } = useUpdateMedicineStocks();
-  const { mutateAsync: updateTimestampMutation } = useUpdateInventoryTimestamp();
+  const { mutateAsync: updateTimestampMutation } =
+    useUpdateInventoryTimestamp();
   const { mutateAsync: addMedicineTransactionMutation } =
-  useAddMedicineTransaction();
+    useAddMedicineTransaction();
   return useMutation({
-    mutationFn: async ({ initialData, data }: { 
-      initialData: { id: number }, 
-      data: any 
+    mutationFn: async ({
+      initialData,
+      data,
+    }: {
+      initialData: { id: number };
+      data: any;
     }) => {
       try {
         // Fetch existing medicine data
@@ -113,7 +137,7 @@ export const useUpdateMedicineStock = () => {
           data: {
             minv_qty: qty,
             minv_qty_avail: newMinvQtyAvail,
-          }
+          },
         });
 
         // Update inventory timestamp if exists
@@ -128,28 +152,36 @@ export const useUpdateMedicineStock = () => {
           data.minv_pcs
         );
 
-        
         const transactionPayload: MedicineTransactionType = {
           mdt_qty: quantityString,
           mdt_action: "Added",
           mdt_staff: 1, // You might want to get this from auth/session
           minv_id: initialData.id,
-      };
+        };
 
         // Use the mutation for adding transaction
         await addMedicineTransactionMutation(transactionPayload);
+        queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] });
 
-        return { success: true };
+        return;
       } catch (error) {
         console.error("Error updating medicine stock:", error);
         throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] });
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
     },
-    onError: (error: Error) => {
-      console.error("Error in useUpdateMedicineStock:", error.message);
-    }
+    onError: (error: any) => {
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
+    },
   });
 };

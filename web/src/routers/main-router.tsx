@@ -1,12 +1,13 @@
 import MainLayout from '@/layout/MainLayout';
 import Dashboard from '@/pages/dashboard/Dashboard';
 import AnnouncementDashboard from '@/pages/announcement/AnnouncementList';
+
 import { RouteObject } from 'react-router';
 import { Navigate } from 'react-router';
 import { administration_router } from './administration-router';
 import { profiling_router } from './profiling-router';
-import { drr_router } from "./drr-router";
-import { blotter_router } from './blotter-router';
+import { report_router } from './report-router';
+import { complaint_router } from './complaint-router';
 import { ord_router } from './ordinancePage-router';
 import { res_router } from './resolutionPage-router';
 import { attendance_router } from './attendacePage-router';
@@ -30,9 +31,11 @@ import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { health_administration_router } from './administration-health-router';
 import { reports_router } from './reports-router';
-import {medicineRequest} from './medicine-request'
-import {forwardedhealthrecord_router} from './forwardedhealthrecords';
-import {firstaid_router} from './firstaid-router';
+import { medicineRequest } from './medicine-request'
+import { forwardedhealthrecord_router } from './forwardedhealthrecords';
+import { firstaid_router } from './firstaid-router';
+import { health_schedule_routes } from './health-schedules-router';
+import { summon_router } from './summon-router';
 
 
 export const main_router: RouteObject[] = [
@@ -54,8 +57,8 @@ export const main_router: RouteObject[] = [
             },
             ...administration_router,
             ...profiling_router,
-            ...drr_router,
-            ...blotter_router,
+            ...report_router,
+            ...complaint_router,
             ...ord_router,
             ...res_router,
             ...attendance_router,
@@ -69,19 +72,21 @@ export const main_router: RouteObject[] = [
             ...childHealthServices,
             ...gad_router,
             ...bites_route,
+            ...reports_router,
             ...announcement_route,
             ...famplanning_route,
             ...healthinventory,
             ...medicalConsultation,
             ...patientQueue,
             ...doctorRouting,
+            ...summon_router,
             ...familyProfilingRoute,
             ...patientsRecordRouter,
             ...health_administration_router,
             ...medicineRequest,
             ...forwardedhealthrecord_router,
             ...firstaid_router,
-            
+            ...health_schedule_routes,
         ]
     }
 ]

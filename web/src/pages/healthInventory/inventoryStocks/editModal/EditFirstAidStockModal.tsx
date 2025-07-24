@@ -4,7 +4,7 @@ import { Form, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import {
   AddFirstAidSchema,
   AddFirstAidStockType,
@@ -51,19 +51,7 @@ export default function EditFirstAidStock() {
   const confirmAdd = () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({ data: formData, finv_id: initialData.finv_id }, {
-      onSuccess: () => {
-        navigate("/mainInventoryStocks");
-        toast.success("First aid item added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000,
-        });
-      },
-      onError: (error: Error) => {
-        console.error("Error adding first aid item:", error);
-        toast.error("Failed to add first aid item");
-      },
-    });
+    submit({ data: formData, finv_id: initialData.finv_id });
   };
 
   
@@ -154,8 +142,8 @@ export default function EditFirstAidStock() {
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full" onClick={form.handleSubmit(onSubmit)}>
-              <Link to="/mainInventoryStocks">Cancel</Link>
+            <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+              Cancel
             </Button>
             <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? (

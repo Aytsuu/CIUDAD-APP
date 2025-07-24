@@ -65,7 +65,7 @@ export interface FirstAidRecord {
 }
 
 export interface Patient {
-  pat_id: number;
+  pat_id: string;
   name: string;
   pat_type: string;
   [key: string]: any;

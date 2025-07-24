@@ -9,7 +9,7 @@ import {
 } from "@/form-schema/inventory/stocks/EditAntigenSchema";
 import { useEffect, useState } from "react"; // Added useState
 import { api } from "@/api/api";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"; // Added import
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"; // Added import
 import { useLocation } from "react-router-dom";
 import { StockRecords } from "../tables/type";
 import { Label } from "@/components/ui/label";
@@ -46,27 +46,15 @@ export default function EditVaccineStock() {
   //   });
   // }, [vaccine, form, isDiluent]);
 
-
   const onSubmit = (data: VaccineStockType) => {
     setFormData(data); // Store the form data
     setIsConfirmationOpen(true); // Open confirmation dialog
   };
 
   const handleConfirm = async () => {
-    try {
-      submit({ vaccine, formData, isDiluent });
-      navigate("/mainInventoryStocks");
-      toast.success("Medicine stock updated successfully!", {
-        icon: <CircleCheck size={20} className="text-green-500" />,
-        duration: 2000,
-      });
-    } catch (error: any) {
-      console.error("Error updating medicine stock:", error);
-      toast.error(error.message || "Failed to update medicine stock", {
-        duration: 5000,
-      });
-      setIsConfirmationOpen(false);
-    }
+    setIsConfirmationOpen(false);
+
+    await submit({ vaccine, formData, isDiluent });
   };
 
   return (
@@ -174,8 +162,12 @@ export default function EditVaccineStock() {
             )}
 
             <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-              <Button variant="outline" className="w-full ">
-                <Link to="/mainInventoryStocks">Cancel</Link>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
               </Button>
 
               <Button

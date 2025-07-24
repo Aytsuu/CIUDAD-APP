@@ -6,9 +6,9 @@ import { RequestRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 
 // Define the colums for the data table
-export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
+export const requestColumns: ColumnDef<RequestRecord>[] = [
   {
-    accessorKey: "id",
+    accessorKey: "req_id",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -20,7 +20,7 @@ export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
     ),
   },
   {
-    accessorKey: "lname",
+    accessorKey: "per_lname",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -32,12 +32,12 @@ export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("lname")}
+        {row.getValue("per_lname")}
       </div>
     ),
   },
   {
-    accessorKey: "fname",
+    accessorKey: "per_fname",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -49,24 +49,24 @@ export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("fname")}
+        {row.getValue("per_fname")}
       </div>
     ),
   },
   {
-    accessorKey: "mname",
-    header: "Middle Name",
+    accessorKey: "per_mname",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Middle Name
+        <ArrowUpDown size={14} />
+      </div>
+    ),
   },
   {
-    accessorKey: "suffix",
-    header: "Suffix",
-  },
-  {
-    accessorKey: "address",
-    header: "Address",
-  },
-  {
-    accessorKey: "requestDate",
+    accessorKey: "req_date",
     header: "Date Requested",
   },
   {
@@ -81,9 +81,7 @@ export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
             title: "Registration Request",
             description:
               "This is a registration request submitted by the user. Please review the details and approve or reject accordingly.",
-            data: requests.find(
-              (request) => request.req_id === row.original.id
-            ),
+            data: row.original,
           },
         }}
       >

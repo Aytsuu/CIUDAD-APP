@@ -39,7 +39,12 @@ export default function AddCommodityStock() {
     },
   });
 
-  const commodity: Array<{ id: string; name: string; category: string; user_type?: string }> = fetchCommodity();
+  const commodity: Array<{
+    id: string;
+    name: string;
+    category: string;
+    user_type?: string;
+  }> = fetchCommodity();
   const { mutate: submit, isPending } = useSubmitCommodityStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<CommodityStockType | null>(null);
@@ -70,23 +75,7 @@ export default function AddCommodityStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-
-    submit(formData, {
-      onSuccess: () => {
-        toast.success("Added successfully", {
-          icon: (
-            <CircleCheck size={24} className="fill-green-500 stroke-white" />
-          ),
-          duration: 2000,
-        });
-        form.reset();
-        navigate("/mainInventoryStocks");
-      },
-      onError: (error: Error) => {
-        console.error("Error in handleSubmit:", error);
-        toast.error("Failed to Add new Stocks");
-      },
-    });
+    submit(formData);
   };
 
   return (
@@ -178,8 +167,8 @@ export default function AddCommodityStock() {
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full">
-              <Link to="/mainInventoryStocks">Cancel</Link>
+            <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+              Cancel{" "}
             </Button>
 
             <Button

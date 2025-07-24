@@ -1,160 +1,597 @@
 import CardLayout from "@/components/ui/card/card-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { X } from 'lucide-react';
-
-// Define the type for project proposals
-type ProjectProposal = {
-  projectId: string;
-  projectTitle: string;
-  projectDesc: string;
-  projectStat: "Pending" | "Approved" | "Rejected" | "Viewed";
-  dateofApproval: string;
-  dateofRejection: string;
-  dateViewed: string;
-  reason: string;
-};
-
-export const ProjectProposals: ProjectProposal[] = [
-  {
-    projectId: "0001",
-    projectTitle: "Lorem Ipsum Dolor Sit",
-    projectDesc: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est.",
-    projectStat: "Pending",
-    dateofApproval: "None",
-    dateofRejection: "None",
-    dateViewed: "None",
-    reason: "None"
-  },
-  {
-    projectId: "0002",
-    projectTitle: "Lorem Ipsum Dolor Sit",
-    projectDesc: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est.",
-    projectStat: "Approved",
-    dateofApproval: "MM-DD-YYYY",
-    dateofRejection: "None",
-    dateViewed: "None",
-    reason: "None"
-  }
-];
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash,
+  Archive,
+  ArchiveRestore,
+  X,
+} from "lucide-react";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { ProjectProposalForm } from "./create-projprop";
+import { EditProjectProposalForm } from "./edit-projprop";
+import { Button } from "@/components/ui/button/button";
+import {
+  useGetProjectProposals,
+  useGetProjectProposal,
+  ProjectProposal,
+  SupportDoc,
+  useGetSupportDocs,
+} from "./queries/fetchqueries";
+import {
+  usePermanentDeleteProjectProposal,
+  useDeleteSupportDocument,
+  useArchiveProjectProposal,
+  useRestoreProjectProposal,
+} from "./queries/delqueries";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog/dialog";
+import ViewProjectProposal from "./view-projprop";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function GADProjectProposal() {
-      const style = {
-        projStat: {
-          pending: "text-blue",
-          approved: "text-green-500",
-          rejected: "text-red",
-          viewed: "text-darkGray"
-        } 
-      };
+  const style = {
+    projStat: {
+      pending: "text-blue",
+      approved: "text-green-500",
+      rejected: "text-red",
+      viewed: "text-darkGray",
+    },
+  };
 
-      const filter = [
-        { id: "All", name: "All" },
-        { id: "Approved", name: "Approved" },
-        { id: "Pending", name: "Pending" },
-        { id: "Rejected", name: "Rejected" },
-        { id: "Viewed", name: "Viewed" },
-      ];
+  const filter = [
+    { id: "All", name: "All" },
+    { id: "Approved", name: "Approved" },
+    { id: "Pending", name: "Pending" },
+    { id: "Rejected", name: "Rejected" },
+    { id: "Viewed", name: "Viewed" },
+  ];
 
-      const [selectedFilter, setSelectedFilter] = useState("All");
-      const filteredProjects = selectedFilter === "All"
-        ? ProjectProposals
-        : ProjectProposals.filter(project => project.projectStat === selectedFilter);
+  const {
+    data: projects = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetProjectProposals();
+  const { mutate: deleteProject } = usePermanentDeleteProjectProposal();
+  const { mutate: deleteSupportDoc } = useDeleteSupportDocument();
+  const { mutate: archiveProject } = useArchiveProjectProposal();
+  const { mutate: restoreProject } = useRestoreProjectProposal();
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(true);
+  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(
+    null
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedProject, setSelectedProject] =
+    useState<ProjectProposal | null>(null);
+  const [selectedSuppDocs, setSelectedSuppDocs] = useState<SupportDoc[]>([]);
+  const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
+  const [isDeletingDoc, setIsDeletingDoc] = useState(false);
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
 
-      return (
-        <div className="bg-snow w-full h-full">
-              <div className="flex flex-col gap-3 mb-4">
-                  <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                    <div>GAD Project Proposal</div>
-                  </h1>
-                  <p className="text-xs sm:text-sm text-darkGray">
-                    Create, track, and manage project proposals with ease, ensuring clear objectives and streamlined approval processes.
-                  </p>
-              </div>
-              <hr className="border-gray mb-5 sm:mb-4" />
+  const { data: detailedProject } = useGetProjectProposal(
+    selectedProject?.gprId || 0,
+    {
+      enabled: isViewDialogOpen && !!selectedProject?.gprId,
+    }
+  );
 
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                        <div className="relative flex-1">
-                          <Search
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                            size={17}
-                          />
-                          <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" />
-                        </div>
-                        <div className="flex flex-row gap-2 justify-center items-center">
-                          <Label>Filter: </Label>
-                          <SelectLayout
-                            className="bg-white"
-                            options={filter}
-                            placeholder="Filter"
-                            value={selectedFilter}
-                            label=""
-                            onChange={setSelectedFilter}
-                          />
-                        </div>
-                  </div>
-                  <div className="bg-primary text-white rounded-md p-3 text-sm font-semibold drop-shadow-sm">+ New Entry</div>
-              </div>
+  const { data: supportDocs = [], isLoading: isSupportDocsLoading } =
+    useGetSupportDocs(selectedProject?.gprId || 0, {
+      enabled: !!selectedProject?.gprId,
+    });
 
-              <div className="flex flex-col mt-4 gap-4">
-                    {filteredProjects.map(project => {
-                      const status = project.projectStat.toLowerCase() as keyof typeof style.projStat;
-                      return (
-                        <CardLayout
-                          key={project.projectId}
-                          cardTitle={
-                            <div className="flex flex-row">
-                              <div className="w-full">
-                                {project.projectTitle}
-                              </div>
-                              <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
-                            </div>}
-                          cardDescription={project.projectDesc}
-                          cardContent={
-                            <div>
-                                <div className="flex flex-row items-center gap-4">
-                                    <Label>Status: </Label>
-                                    <Label className={style.projStat[status]}>
-                                      {project.projectStat}
-                                    </Label>
-                                </div>
-                                {project.projectStat == "Approved" && (
-                                    <div className="flex flex-row items-center gap-4">
-                                      <Label>Date of Approval: </Label>
-                                      <p>{project.dateofApproval}</p>
-                                    </div>
-                                )}
-                                {project.projectStat == "Rejected" && (
-                                    <div className="flex flex-row items-center gap-4">
-                                      <Label>Date of Rejection: </Label>
-                                      <p>{project.dateofRejection}</p>
-                                    </div>
-                                )}
-                                {project.projectStat == "Viewed" && (
-                                  <div className="flex flex-row items-center gap-4">
-                                    <Label>Date Viewed: </Label>
-                                    <p>{project.dateViewed}</p>
-                                  </div>
-                                )}
-                                {project.reason !== "None" && (
-                                    <div className="flex flex-row items-center gap-4">
-                                      <Label>Reason: </Label>
-                                      <p>{project.reason}</p>
-                                    </div>
-                                )}
-                            </div>
-                          }
-                          cardClassName="w-full h-full"
-                        />
-                      );
-                    })}
-              </div>
+  useEffect(() => {
+    if (isSuppDocDialogOpen && supportDocs.length > 0) {
+      setSelectedSuppDocs(supportDocs);
+    }
+  }, [supportDocs, isSuppDocDialogOpen]);
+
+  useEffect(() => {
+    if (detailedProject && selectedProject?.gprId === detailedProject.gprId) {
+      setEditingProject(detailedProject);
+    }
+  }, [detailedProject, selectedProject]);
+
+  const filteredProjects = (projects as ProjectProposal[])
+    .filter((project: ProjectProposal) => {
+      if (selectedFilter === "All") return true;
+      return project.status === selectedFilter;
+    })
+    .filter((project: ProjectProposal) => {
+      return viewMode === "active"
+        ? project.gprIsArchive === false
+        : project.gprIsArchive === true;
+    })
+    .filter((project: ProjectProposal) => {
+      const title = project.projectTitle?.toLowerCase() || "";
+      const background = project.background?.toLowerCase() || "";
+      const search = searchTerm.toLowerCase();
+      return title.includes(search) || background.includes(search);
+    });
+
+  const handleDelete = (gprId: number) => {
+    setIsDeleting(true);
+    deleteProject(gprId, {
+      onSettled: () => setIsDeleting(false),
+    });
+  };
+
+  const handleArchive = (gprId: number) => {
+    archiveProject(gprId, {
+      onSuccess: () => {
+        refetch();
+      },
+    });
+  };
+
+  const handleRestore = (gprId: number) => {
+    restoreProject(gprId, {
+      onSuccess: () => {
+        refetch();
+      },
+    });
+  };
+
+  const handleViewProject = (project: ProjectProposal) => {
+    if (selectedProject?.gprId === project.gprId && isViewDialogOpen) return;
+
+    setIsViewDialogOpen(false);
+    setSelectedProject(null);
+
+    setTimeout(() => {
+      setSelectedProject(project);
+      setIsViewDialogOpen(true);
+    }, 50);
+  };
+
+  const closePreview = () => {
+    setIsViewDialogOpen(false);
+    setSelectedProject(null);
+  };
+
+  const handleEdit = (project: ProjectProposal) => {
+    setIsViewDialogOpen(false);
+    setSelectedProject(project);
+    setEditingProject(project);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleViewSupportingDocs = (project: ProjectProposal) => {
+    setSelectedProject(project);
+    setIsSuppDocDialogOpen(true);
+  };
+
+  const handleDeleteDoc = async (psdId: number) => {
+    setIsDeletingDoc(true);
+    deleteSupportDoc(psdId, {
+      onSuccess: () => {
+        console.log(`Successfully deleted document with psdId: ${psdId}`);
+        setSelectedSuppDocs((prev) =>
+          prev.filter((doc) => doc.psdId !== psdId)
+        );
+      },
+      onError: (err) => {
+        console.error(`Error deleting document with psdId: ${psdId}`, err);
+      },
+      onSettled: () => {
+        setIsDeletingDoc(false);
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="bg-snow w-full h-full p-4">
+        <div className="flex flex-col gap-3 mb-4">
+          <Skeleton className="h-8 w-1/4 opacity-30" />
+          <Skeleton className="h-5 w-2/3 opacity-30" />
         </div>
-      );
+        <Skeleton className="h-[1px] w-full mb-5 opacity-30" />
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+            <Skeleton className="h-10 w-full sm:w-64 opacity-30" />
+            <div className="flex flex-row gap-2 justify-center items-center">
+              <Skeleton className="h-5 w-12 opacity-30" />
+              <Skeleton className="h-10 w-32 opacity-30" />
+            </div>
+            <Skeleton className="h-10 w-24 opacity-30" />
+          </div>
+          <Skeleton className="h-10 w-48 opacity-30" />
+        </div>
+        <div className="flex flex-col mt-4 gap-4">
+          {[...Array(3)].map((_, index: number) => (
+            <Skeleton
+              key={index}
+              className="h-32 w-full opacity-30 rounded-lg"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-red-500 p-4">
+        Error loading project proposals: {error?.message || "Unknown error"}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-snow w-full h-full p-4">
+      <div className="flex flex-col gap-3 mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
+          <div>GAD Project Proposal</div>
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Create, track, and manage project proposals with ease, ensuring clear
+          objectives and streamlined approval processes.
+        </p>
+      </div>
+      <hr className="border-gray mb-5 sm:mb-4" />
+
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+              size={17}
+            />
+            <Input
+              placeholder="Search..."
+              className="pl-10 w-full bg-white text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-row gap-2 justify-center items-center">
+            <Label>Filter: </Label>
+            <SelectLayout
+              className="bg-white"
+              options={filter}
+              placeholder="Filter"
+              value={selectedFilter}
+              onChange={(value: string) => setSelectedFilter(value)}
+            />
+          </div>
+          {viewMode === "active" && (
+            <DialogLayout
+              trigger={
+                <Button>
+                  <Plus size={15} /> Create
+                </Button>
+              }
+              className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              title="Create Project Proposal"
+              description=""
+              mainContent={
+                <div className="w-full h-full">
+                  <ProjectProposalForm
+                    onSuccess={() => setIsCreateDialogOpen(false)}
+                  />
+                </div>
+              }
+              isOpen={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            />
+          )}
+        </div>
+
+        <Tabs
+          value={viewMode}
+          onValueChange={(value) => setViewMode(value as "active" | "archived")}
+          className="w-auto"
+        >
+          <TabsList>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="archived">Archived</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="flex flex-col mt-4 gap-4">
+        {filteredProjects.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No {viewMode === "active" ? "active" : "archived"} project proposals
+            found.
+          </div>
+        )}
+        {filteredProjects.map((project: ProjectProposal, index: number) => {
+          const status =
+            project.status.toLowerCase() as keyof typeof style.projStat;
+          const reason = project.statusReason || "No reason provided";
+
+          return (
+            <CardLayout
+              key={project.gprId || index}
+              title={
+                <div className="flex flex-row justify-between items-center">
+                  <div className="w-full">
+                    {project.projectTitle || "Untitled"}
+                  </div>
+                  <div className="flex gap-2">
+                    <Eye
+                      className="text-gray-500 hover:text-blue-600 cursor-pointer"
+                      size={20}
+                      onClick={() => handleViewProject(project)}
+                    />
+                    {viewMode === "active" ? (
+                      <>
+                        <ConfirmationModal
+                          trigger={
+                            <Archive
+                              className="text-gray-500 hover:text-yellow-600 cursor-pointer"
+                              size={20}
+                            />
+                          }
+                          title="Archive Project Proposal"
+                          description="Are you sure you want to archive this project proposal?"
+                          actionLabel="Archive"
+                          onClick={() => handleArchive(project.gprId)}
+                          type="warning"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <ConfirmationModal
+                          trigger={
+                            <ArchiveRestore
+                              className="text-gray-500 hover:text-green-600 cursor-pointer"
+                              size={20}
+                            />
+                          }
+                          title="Restore Project Proposal"
+                          description="Are you sure you want to restore this project proposal?"
+                          actionLabel="Restore"
+                          onClick={() => handleRestore(project.gprId)}
+                          type="success"
+                        />
+                        <ConfirmationModal
+                          trigger={
+                            <Trash
+                              className="text-gray-500 hover:text-red-600 cursor-pointer"
+                              size={20}
+                            />
+                          }
+                          title="Permanently Delete Project Proposal"
+                          description="Are you sure you want to permanently delete this project proposal? This action cannot be undone."
+                          actionLabel={isDeleting ? "Deleting..." : "Delete"}
+                          onClick={() => handleDelete(project.gprId)}
+                          type="destructive"
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              }
+              description={
+                <div className="space-y-2">
+                  <div className="line-clamp-2 text-sm text-gray-600">
+                    {project.background || "No background provided"}
+                  </div>
+                  <div className="text-left mt-1">
+                    <span className="text-xs text-gray-500">
+                      Date: {project.date || "No date provided"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`text-xs font-medium ${
+                          style.projStat[status] || "text-gray-500"
+                        }`}
+                      >
+                        {project.status || "Pending"}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        Reason: {reason}
+                      </span>
+                    </div>
+                    <div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewSupportingDocs(project)}
+                        className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
+                      >
+                        View Supporting Docs
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              }
+              content={null}
+              cardClassName="w-full border p-4"
+              titleClassName="text-lg font-semibold text-darkBlue2"
+              contentClassName="text-sm text-darkGray"
+            />
+          );
+        })}
+      </div>
+      <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
+        <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
+          <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
+            <div className="flex items-center justify-between w-full">
+              <DialogTitle className="text-left">
+                {selectedProject?.projectTitle || "Project Proposal"}
+              </DialogTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => selectedProject && handleEdit(selectedProject)}
+                  className="flex items-center gap-2"
+                  disabled={
+                    !selectedProject || selectedProject.status !== "Pending"
+                  }
+                >
+                  <Edit size={16} /> Edit
+                </Button>
+                <X
+                  className="text-gray-500 cursor-pointer hover:text-gray-700"
+                  size={20}
+                  onClick={closePreview}
+                />
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto relative">
+            {selectedProject && (
+              <ViewProjectProposal
+                project={detailedProject || selectedProject}
+                onLoad={() => setIsPdfLoading(false)}
+                onError={() => setIsPdfLoading(false)}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSuppDocDialogOpen} onOpenChange={setIsSuppDocDialogOpen}>
+        <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] p-4 flex flex-col">
+          <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle>Supporting Documents</DialogTitle>
+              <Button
+                variant="ghost"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setIsSuppDocDialogOpen(false)}
+              >
+                <X size={20} />
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto mt-4 space-y-6">
+            {isSupportDocsLoading ? (
+              <p className="text-gray-500 text-center py-8">
+                Loading documents...
+              </p>
+            ) : selectedSuppDocs.length > 0 ? (
+              selectedSuppDocs.map((doc) => (
+                <div
+                  key={doc.psdId || Math.random()}
+                  className="flex flex-col items-center"
+                >
+                  <div className="relative w-full max-w-4xl">
+                    <div className="absolute right-4 top-4 z-10">
+                      <ConfirmationModal
+                        trigger={
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={!doc.psdId || isDeletingDoc}
+                          >
+                            <Trash size={16} />
+                          </Button>
+                        }
+                        title="Delete Supporting Document"
+                        description="Are you sure you want to delete this document?"
+                        actionLabel={isDeletingDoc ? "Deleting..." : "Delete"}
+                        onClick={() => handleDeleteDoc(doc.psdId)}
+                        type="destructive"
+                      />
+                    </div>
+                    {doc.fileType?.startsWith("image/") && doc.fileUrl ? (
+                      <img
+                        src={doc.fileUrl}
+                        alt={`Supporting Document ${doc.fileName || "Unknown"}`}
+                        className="w-full max-h-[70vh] object-contain"
+                        onError={(e) => {
+                          console.error(`Failed to load image: ${doc.fileUrl}`);
+                          (e.target as HTMLImageElement).src =
+                            "/placeholder-image.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg">
+                        <p className="mt-2 text-sm text-gray-600">
+                          {doc.fileName || "No file name"}
+                        </p>
+                        {doc.fileUrl ? (
+                          <a
+                            href={doc.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 text-blue-600 hover:underline"
+                          >
+                            View Document
+                          </a>
+                        ) : (
+                          <p className="mt-2 text-sm text-red-500">
+                            No file available
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    {doc.fileName || "Unknown"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-8">
+                No supporting documents available.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {editingProject && (
+        <DialogLayout
+          trigger={null}
+          className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+          title={`Editing: ${
+            editingProject.projectTitle || "Project Proposal"
+          }`}
+          description=""
+          mainContent={
+            <div className="w-full h-full">
+              <EditProjectProposalForm
+                onSuccess={(updatedData) => {
+                  setIsEditDialogOpen(false);
+                  setSelectedProject(null);
+                  setEditingProject(null);
+                }}
+                initialValues={editingProject}
+                isEditMode={true}
+              />
+            </div>
+          }
+          isOpen={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setSelectedProject(null);
+              setEditingProject(null);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 export default GADProjectProposal;

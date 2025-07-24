@@ -1,5 +1,5 @@
 import MainInventoryList from "@/pages/healthInventory/InventoryList/tables/MainInventoryList";
-import MainInventoryStocks from "@/pages/healthInventory/inventoryStocks/tables/MainInventoryStocks";
+import MainInventoryStocks from "@/pages/healthInventory/inventoryStocks/tables/StocksMain";
 import TransactionMainInventoryList from "@/pages/healthInventory/transaction/tables/TransactionMainInventoryList";
 import MedicineModal from "@/pages/healthInventory/InventoryList/addListModal/MedicineModal";
 import MedicineListEdit from "@/pages/healthInventory/InventoryList/editListModal/EditMedicineModal";

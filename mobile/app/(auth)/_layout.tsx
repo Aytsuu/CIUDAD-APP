@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { FormProvider } from "@/contexts/RegistrationFormContext";
+import { RegistationFormProvider } from "@/contexts/RegistrationFormContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
 const defaultValues = generateDefaultValues(RegistrationFormSchema)
@@ -17,18 +19,20 @@ export default () => {
   })
 
   return (
-    <FormProvider methods={methods}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="verification" options={{ headerShown: false }} />
-        <Stack.Screen name="personal-information" options={{ headerShown: false }} />
-        <Stack.Screen name="upload-id" options={{ headerShown: false }} />
-        <Stack.Screen name="take-a-photo" options={{ headerShown: false }} />
-        <Stack.Screen name="account-details" options={{ headerShown: false }} />
-        <Stack.Screen name="forgetpassword" options={{ headerShown: false }}  />
-        <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
-      </Stack>
-    </FormProvider>
-
+    <AuthProvider>
+      <RegistationFormProvider methods={methods}>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="verify-age" options={{ headerShown: false }} />
+          <Stack.Screen name="validate-resident-id" options={{ headerShown: false }} />
+          <Stack.Screen name="personal-information" options={{ headerShown: false }} />
+          <Stack.Screen name="upload-id" options={{ headerShown: false }} />
+          <Stack.Screen name="take-a-photo" options={{ headerShown: false }} />
+          <Stack.Screen name="account-details" options={{ headerShown: false }} />
+          <Stack.Screen name="forgot-password" options={{ headerShown: false }}  />
+          <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
+        </Stack>
+      </RegistationFormProvider>
+    </AuthProvider>
   );
 };

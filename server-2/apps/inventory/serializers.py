@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import *
 from datetime import date  # Add this import
 from rest_framework import serializers
-from apps.administration.serializers.staff_serializers import StaffFullSerializer
+
 
 
 class PartialUpdateMixin:
@@ -104,7 +104,7 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)
     minv_detail = MedicineInventorySerializer(source='minv_id', read_only=True)
     med_detail = MedicineListSerializers(source='med_id', read_only=True)
-    staff_detail = StaffFullSerializer(source='staff', read_only=True)
+
     med_name = serializers.CharField(source='minv_id.med_id.med_name', read_only=True)
 
     # Write-only fields for creation
@@ -114,7 +114,9 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
     med_id = serializers.PrimaryKeyRelatedField(
         queryset=Medicinelist.objects.all(), write_only=True, required=False
     )
-   
+    # cat_id = serializers.PrimaryKeyRelatedField(
+    #     queryset=Category.objects.all(), write_only=True, required=False
+    # )
 
     class Meta:
         model = MedicineTransactions
@@ -152,7 +154,6 @@ class CommodityTransactionSerializer(serializers.ModelSerializer):
     com_detail = CommodityListSerializers(source='com_id', read_only=True)
     # cat_detail = CategorySerializers(source='cat_id', read_only=True)
 
-    staff_detail = StaffFullSerializer(source='staff', read_only=True)
 
     com_name = serializers.CharField(source='cinv_id.com_id.com_name', read_only=True)
 
@@ -207,7 +208,6 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
     fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)
     # cat_detail = CategorySerializers(source='cat_id', read_only=True)
     fa_name = serializers.CharField(source='finv_id.fa_id.fa_name', read_only=True)
-    staff_detail = StaffFullSerializer(source='staff', read_only=True)
 
     # Write-only fields for creation
     inv_id = serializers.PrimaryKeyRelatedField(
@@ -312,7 +312,6 @@ class ImmunizationSuppliesTransactionSerializer(serializers.ModelSerializer):
 class AntigenTransactionSerializer(serializers.ModelSerializer):
     vac_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
     imz_stock = ImmnunizationStockSuppliesSerializer(source='imzStck_id', read_only=True)
-    staff_detail = StaffFullSerializer(source='staff', read_only=True)
     class Meta:
         model = AntigenTransaction
         fields = '__all__' 

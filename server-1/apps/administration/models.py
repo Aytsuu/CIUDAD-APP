@@ -3,9 +3,12 @@ from datetime import date
 
 # Create your models here.
 class Position(models.Model):
-    pos_id = models.BigAutoField(primary_key=True)
+    pos_id = models.BigAutoField(primary_key=True)    
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
+    pos_group = models.CharField(max_length=100, null=True, default="NON-GROUPED")
+    pos_category = models.CharField(max_length=100, null=True, default="BARANGAY POSITION")
+    pos_is_predefined = models.BooleanField(default=False)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions', null=True)
 
     class Meta:
@@ -45,6 +48,7 @@ class Permission(models.Model):
 class Staff(models.Model):
     staff_id = models.CharField(primary_key=True,max_length=50)
     staff_assign_date = models.DateField(default=date.today)
+    staff_type = models.CharField(max_length=20, default="Barangay Staff")
     rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, related_name="staff_assignments")
     pos = models.ForeignKey(Position, on_delete=models.CASCADE, related_name='staffs')
     manager = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subordinates')

@@ -1,5 +1,4 @@
 import { api2 } from "@/api/api"
-// import { patient } from "@/pages/animalbites/db-request/postrequest";
 
 // fetch residents
 export const getResident = async () => {
@@ -16,17 +15,18 @@ export const getResident = async () => {
 		}
 	 }
 }
-// patientsGetAPI.tsx
+
+
+// fetch patients
 export const getPatients = async () => {
     try {
         const res = await api2.get("patientrecords/patient/");
-        return res.data || []; // Fallback if undefined
+        return res.data || []; 
     } catch (error) {
         console.error("Network Error:", error);
-        return []; // Always return a defined value
+        return []; 
     }
 };
-
 
 
 // fetch patient details
@@ -48,7 +48,7 @@ export const getPatientDetails = async (patientId: string) => {
 }
 
 
-
+// fetch all follow-up visits
 export const getAllFollowUpVisits = async () => {
   try {
     const res = await api2.get("patientrecords/follow-up-visits-all/")
@@ -60,104 +60,13 @@ export const getAllFollowUpVisits = async () => {
 }
 
 
-export const getAnimalBiteCount = async (patientId: string): Promise<number> => {
-  try {
-    console.log("Fetching animalbite count for patient:", patientId)
-    const res = await api2.get(`animalbites/patient/${patientId}/animalbite_count/`)
-
-    console.log("Animal bite count response:", res.data)
-    return res.data.animalbite_count || 0
-  } catch (error) {
-    if (error) {
-      console.error("Error:", (error as any)?.data || (error as any)?.message)
-
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        (error as any).response &&
-        (error as any).response.status === 404
-      ) {
-        return 0
-      }
-    } else {
-      console.error("Unexpected Error:", error)
-    }
-    return 0
-  }
-}
-
-export const getPatientPostpartumCount = async (patientId: string): Promise<number> => {
-  try {
-    console.log("Fetching postpartum count for patient:", patientId)
-    const res = await api2.get(`maternal/patient/${patientId}/postpartum_count/`)
-
-    console.log("Postpartum count response:", res.data)
-    return res.data.postpartum_count || 0
-  } catch (error) {
-    if (error) {
-      console.error("Get Patient Postpartum Count Error:", (error as any)?.data || (error as any)?.message)
-
-      // If patient not found or no records, return 0
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        (error as any).response &&
-        (error as any).response.status === 404
-      ) {
-        return 0
-      }
-    } else {
-      console.error("Unexpected Error:", error)
-    }
-
-    // Return 0 on error to prevent UI issues
-    return 0
-  }
-}
-
-// Get all postpartum records for a specific patient
-export const getPatientPostpartumRecords = async (patientId: string) => {
-  try {
-    console.log("Fetching postpartum records for patient:", patientId)
-    const res = await api2.get(`maternal/patient/${patientId}/postpartum_records/`)
-
-    console.log("Patient postpartum records response:", res.data)
-    return res.data
-  } catch (error) {
-    if (error) {
-      if (typeof error === "object" && error !== null && "response" in error) {
-        const err = error as { response?: { data?: any }; message?: string };
-        console.error("Get Patient Postpartum Records Error:", err.response?.data || err.message);
-      } else {
-        console.error("Get Patient Postpartum Records Error:", (error as any)?.message || error);
-      }
-    } else {
-      console.error("Unexpected Error:", error)
-    }
-    throw error
-  }
-}
-
-export const getPatientAnimalbiteRecords = async (patientId: string) => {
-  try {
-    console.log("Fetching postpartum records for patient:", patientId)
-    const res = await api2.get(`maternal/patient/${patientId}/postpartum_count/`)
-
-    console.log("Patient animal bite records response:", res.data)
-    return res.data
-  } catch (error) {
-    if (error) {
-      if (typeof error === "object" && error !== null && "response" in error) {
-        const err = error as { response?: { data?: any }; message?: string };
-        console.error("Get Patient Animal bite Records Error:", err.response?.data || err.message);
-      } else {
-        console.error("Get Patient Animal bite Records Error:", (error as any)?.message || error);
-      }
-    } else {
-      console.error("Unexpected Error:", error)
-    }
-    throw error
-  }
+// fetch all transient addresses
+export const getAllTransientAddresses = async () => {
+	try {
+		const res = await api2.get("patientrecords/transient/address/")
+		return res.data || {}
+	} catch (error) {
+		console.error("Error fetching transient address: ", error)
+		return []
+	}
 }

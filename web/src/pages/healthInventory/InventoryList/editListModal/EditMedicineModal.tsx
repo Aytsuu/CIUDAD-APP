@@ -22,7 +22,7 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { toast } from "sonner";
 import { useUpdateMedicine } from "../queries/medicine/MedicinePutQueries";
 import { CircleCheck } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";

@@ -1,24 +1,33 @@
-import { z } from 'zod';
-
+import { z } from "zod";
 const DataRequirement = z.union([
   z.string()
-      .default("")
-      .refine((val) => val.trim() !== "", { message: "This field is required" }) 
-      .transform((val) => parseFloat(val))
-      .refine((val) => val > -1, { message: "Value must be a positive number" }), 
+    .default("")
+    .refine((val) => val.trim() !== "", { message: "This field is required" })
+    .transform((val) => parseFloat(val))
+    .refine((val) => !isNaN(val), { message: "Value must be a valid number" })
+    .refine((val) => val >= 0, { message: "Value must be non-negative" })
+    .refine((val) => val.toString().replace('.', '').length <= 8, { message: "Value must not exceed 8 digits before decimal" })
+    .refine((val) => /^\d+(\.\d{1,2})?$/.test(val.toString()), { message: "Value must have up to 2 decimal places" }),
   z.number()
-      .refine((val) => val > -1, { message: "Value must be a positive number" }) 
-]).transform((val) => String(val));
+    .refine((val) => !isNaN(val), { message: "Value must be a valid number" })
+    .refine((val) => val >= 0, { message: "Value must be non-negative" })
+    .refine((val) => val.toString().replace('.', '').length <= 8, { message: "Value must not exceed 8 digits before decimal" })
+    .refine((val) => /^\d+(\.\d{1,2})?$/.test(val.toString()), { message: "Value must have up to 2 decimal places" })
+]);
 
-const GADAddEntrySchema = z.object({
-gbud_type: z.string().min(1, "Entry type is required"),
-gbud_amount: DataRequirement,
-gbud_particulars: z.string().min(1, "Particulars are required"),
-gbud_add_notes: z.string().optional(),
-gbud_receipt: z.string().optional(),
-gbud_remaining_bal: DataRequirement.optional(), // Made optional here
-gbudy_num: z.number().min(1, "Budget year reference is required"),
+export const GADEditEntrySchema = z.object({
+  gbud_type: z.enum(["Income", "Expense"]),
+  gbud_datetime: z.string().nonempty("Date is required"),
+  gbud_add_notes: z.string().nullable(),
+  gbud_inc_particulars: z.string().nullable(),
+  gbud_inc_amt: DataRequirement.optional().nullable(),
+  gbud_exp_particulars: z.string().nullable(),
+  gbud_proposed_budget: DataRequirement.optional().nullable(),
+  gbud_actual_expense: DataRequirement.optional().nullable(),
+  gbud_reference_num: z.string().nullable(),
+  gbud_remaining_bal: DataRequirement.optional().nullable(),
+  gbudy: z.number().min(1, "Budget year is required"),
+  gdb_id: z.number().nullable(),
 });
 
-// Export the schema
-export default GADAddEntrySchema;
+export type FormValues = z.infer<typeof GADEditEntrySchema>;

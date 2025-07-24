@@ -11,35 +11,25 @@ import {
   VitalSignsSchema,
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api2 } from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { calculateAge } from "@/helpers/ageCalculator";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
 import { createVitalSigns, updateVacRecord } from "./restful-api/vitalsignsAPI";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getVaccineStock,
-  getVaccinationHistory,
-  createPatientRecord,
-  createVaccinationRecord,
-  createVaccinationHistory,
   createFollowUpVisit,
-  deleteVaccinationRecord,
-  deletePatientRecord,
   deleteVitalSigns,
-  deleteVaccinationHistory,
   updateFollowUpVisit,
-} from "@/pages/healthServices/vaccination/restful-api/PostAPI";
+} from "@/pages/healthServices/vaccination/restful-api/post";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 export interface Patient {
-  pat_id: number;
+  pat_id: string;
   name: string;
   pat_type: string;
   [key: string]: any;
@@ -74,8 +64,10 @@ export default function ForwardedVaccinationForm() {
     },
   });
 
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
-  const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false);
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
+  const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -132,7 +124,8 @@ export default function ForwardedVaccinationForm() {
 
         // Handle routine vaccination
         if (vaccineType === "routine") {
-          const { interval, time_unit } = vaccineData.vaccinelist.routine_frequency;
+          const { interval, time_unit } =
+            vaccineData.vaccinelist.routine_frequency;
           const nextVisitDateRoutine = calculateNextVisitDate(
             interval,
             time_unit,
@@ -153,7 +146,9 @@ export default function ForwardedVaccinationForm() {
             console.log("Created follow-up visit with ID:", followv_id);
 
             if (!followv_id) {
-              throw new Error("Failed to retrieve follow-up visit ID from response");
+              throw new Error(
+                "Failed to retrieve follow-up visit ID from response"
+              );
             }
 
             const updateData = {
@@ -185,7 +180,7 @@ export default function ForwardedVaccinationForm() {
               updateData
             );
           }
-        } 
+        }
         // Handle multi-dose vaccination
         else if (vaccineData.vaccinelist.no_of_doses >= 2) {
           console.log("Processing multi-dose vaccination");
@@ -212,9 +207,8 @@ export default function ForwardedVaccinationForm() {
               followv_id = followUpVisit.followv_id;
               console.log("Created follow-up visit with ID:", followv_id);
 
-              const status = maxDoses != vaccineDose 
-                ? "partially vaccinated" 
-                : "completed";
+              const status =
+                maxDoses != vaccineDose ? "partially vaccinated" : "completed";
 
               const updateData = {
                 vachist_status: status,
@@ -256,17 +250,20 @@ export default function ForwardedVaccinationForm() {
         navigate(-1);
       } catch (error) {
         console.error("Error during submission:", error);
-        
+
         // Rollback operations
         if (vital_id) {
           console.log("Attempting to rollback vital signs with ID:", vital_id);
           await deleteVitalSigns(String(vital_id));
         }
         if (followv_id) {
-          console.log("Attempting to rollback follow-up visit with ID:", followv_id);
+          console.log(
+            "Attempting to rollback follow-up visit with ID:",
+            followv_id
+          );
           // Note: You'll need to implement deleteFollowUpVisit if it doesn't exist
         }
-        
+
         throw error;
       }
     } catch (error) {
@@ -289,7 +286,7 @@ export default function ForwardedVaccinationForm() {
     const isValid = await form.trigger();
     if (isValid) {
       setIsSubmitConfirmationOpen(true);
-    } 
+    }
   };
 
   return (

@@ -4,7 +4,7 @@ import { Archive  } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
 import { CommodityStocksRecord } from "../../tables/type";
-import { isNearExpiry, isExpired, isLowStock } from "./Alert";
+import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";
 import { Plus } from "lucide-react";
 
 export const CommodityStocksColumns = (
