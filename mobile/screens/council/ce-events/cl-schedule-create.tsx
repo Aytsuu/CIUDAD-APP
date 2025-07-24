@@ -170,8 +170,7 @@ const CLCreateEvent = () => {
           </TouchableOpacity>
         }
     >
-        <View className="flex-1 px-4 py-4">
-          <View className="space-y-4">
+        <View className="flex-1 p-4">
             <FormInput
               control={control}
               name="eventTitle"
@@ -234,7 +233,7 @@ const CLCreateEvent = () => {
                   />
                 )}
                 
-                <View className="mt-4">
+                {/* <View className="mt-4">
                   <Text className="text-sm font-medium text-gray-700 mb-2">Selected Attendees</Text>
                   <View className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
                     {selectedAttendeeDetails.length > 0 ? (
@@ -250,24 +249,23 @@ const CLCreateEvent = () => {
                       <Text className="text-sm text-gray-500">No attendees selected</Text>
                     )}
                   </View>
-                </View>
+                </View> */}
               </View>
             )}
 
-            <View className="flex-row justify-end mt-6">
+            <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
               <TouchableOpacity
-                className="px-6 py-3 bg-blue-500 rounded-lg flex-row items-center"
+                className="bg-primaryBlue py-3 rounded-lg"
                 onPress={handleSubmit(onSubmit)}
                 disabled={isSubmitting}
               >
-                <Text className="text-white text-lg font-medium">
+                <Text className="text-white text-base font-semibold text-center">
                   {isSubmitting ? 'Creating...' : 'Create'}
                 </Text>
                 {isSubmitting && <Loader2 size={20} color="white" className="ml-2 animate-spin" />}
               </TouchableOpacity>
             </View>
           </View>
-        </View>
     </PageLayout>
   );
 };

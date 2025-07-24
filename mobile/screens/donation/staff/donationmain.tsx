@@ -1,7 +1,6 @@
 "use client"
-
 import { useState, useMemo } from "react"
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, ScrollView, RefreshControl  } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, ScrollView, RefreshControl, SafeAreaView, StatusBar, ActivityIndicator  } from "react-native"
 import { Search, Plus, Eye, ArrowLeft, ChevronLeft } from "lucide-react-native"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetDonations, type Donation } from "./queries"
@@ -60,7 +59,17 @@ const DonationTracker = () => {
   }
 
   
-    
+      if (isLoading) {
+        return (
+          <SafeAreaView className="flex-1 bg-white">
+            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+            <View className="flex-1 justify-center items-center">
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text className="mt-4 text-gray-600">Loading donations...</Text>
+            </View>
+          </SafeAreaView>
+        );
+      }
 
   return (
     <PageLayout
@@ -89,7 +98,7 @@ const DonationTracker = () => {
               />
             </View>
             <TouchableOpacity 
-              className="bg-blue-500 rounded-full p-3 flex mr-5" 
+              className="bg-primaryBlue rounded-full p-3 flex mr-5" 
               onPress={handleAddDonation}
             >
               <Plus size={20} color="white" />

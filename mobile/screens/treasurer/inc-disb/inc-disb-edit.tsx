@@ -30,6 +30,7 @@ import {
   DisbursementImage,
   CreateFolderFormValues,
 } from "./queries";
+import PageLayout from "@/screens/_PageLayout";
 
 const EditFolderForm = () => {
   const { id: folderId, type: folderType } = useLocalSearchParams<{
@@ -245,107 +246,95 @@ const EditFolderForm = () => {
   };
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={
-        <Text className="text-[13px]">Edit Folder and Manage Images</Text>
-      }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={
-        isSubmitting || isIncomeFolderLoading || isDisbursementFolderLoading
-      }
-      loadingMessage="Loading folder data or updating..."
-      error={
-        errors.root?.message
-          ? { message: errors.root.message, onDismiss: () => {} }
-          : undefined
+      headerTitle={<Text>Edit Folder and Manage Images</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
       }
     >
-      <FormSelect
-        control={control}
-        name="type"
-        label="Folder Type"
-        options={[
-          { label: "Income", value: "income" },
-          { label: "Disbursement", value: "disbursement" },
-        ]}
-        disabled={!!folderId}
-      />
-      <FormInput
-        control={control}
-        name="name"
-        label="Folder Name"
-        placeholder="Enter folder name"
-      />
-      <FormInput
-        control={control}
-        name="year"
-        label="Year"
-        placeholder="Enter year (e.g., 2025)"
-        keyboardType="numeric"
-        maxInput={4}
-      />
-      <FormInput
-        control={control}
-        name="desc"
-        label="Description"
-        placeholder="Enter description"
-      />
-      <View className="mb-4">
-        <Text className="text-lg font-bold text-gray-800 mb-2">
-          Manage Images
-        </Text>
-        <MultiImageUploader
-          mediaFiles={mediaFiles}
-          setMediaFiles={setMediaFiles}
-          maxFiles={5}
-          hideRemoveButton={true}
+      <View className="flex-1 p-5">
+        <FormSelect
+          control={control}
+          name="type"
+          label="Folder Type"
+          options={[
+            { label: "Income", value: "income" },
+            { label: "Disbursement", value: "disbursement" },
+          ]}
+          disabled={!!folderId}
         />
-      </View>
-      <View className="flex-row justify-end mt-6">
-        <ConfirmationModal
-          trigger={
-            <TouchableOpacity
-              className={`bg-blue-500 rounded-lg flex-row items-center px-6 py-3 ${
-                isSubmitting || mediaFiles.some((f) => f.status === "uploading")
-                  ? "opacity-70"
-                  : ""
-              }`}
-              disabled={
-                isSubmitting || mediaFiles.some((f) => f.status === "uploading")
-              }
-            >
-              <Text className="text-white text-lg font-medium">
-                {isSubmitting ? "Submitting..." : "Update"}
-              </Text>
-              {isSubmitting && (
-                <Loader2
-                  size={20}
-                  color="white"
-                  className="ml-2 animate-spin"
-                />
-              )}
-            </TouchableOpacity>
-          }
-          title="Confirm Changes"
-          description="Are you sure you want to save these changes to the folder and images?"
-          actionLabel="Save Changes"
-          onPress={handleSubmit(onSubmit)}
-          loading={
-            isSubmitting || mediaFiles.some((f) => f.status === "uploading")
-          }
-          loadingMessage="Saving changes..."
+
+        <FormInput
+          control={control}
+          name="name"
+          label="Folder Name"
+          placeholder="Enter folder name"
         />
+        <FormInput
+          control={control}
+          name="year"
+          label="Year"
+          placeholder="Enter year (e.g., 2025)"
+          keyboardType="numeric"
+          maxInput={4}
+        />
+        <FormInput
+          control={control}
+          name="desc"
+          label="Description"
+          placeholder="Enter description"
+        />
+        <View className="mb-4">
+          <Text className="text-lg font-bold text-gray-800 mb-2">
+            Manage Images
+          </Text>
+          <MultiImageUploader
+            mediaFiles={mediaFiles}
+            setMediaFiles={setMediaFiles}
+            maxFiles={5}
+            hideRemoveButton={true}
+          />
+        </View>
+
+        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
+          <ConfirmationModal
+            trigger={
+              <TouchableOpacity
+                className={`bg-primaryBlue py-3 rounded-lg ${
+                  isSubmitting ||
+                  mediaFiles.some((f) => f.status === "uploading")
+                    ? "opacity-70"
+                    : ""
+                }`}
+                disabled={
+                  isSubmitting ||
+                  mediaFiles.some((f) => f.status === "uploading")
+                }
+              >
+                <Text className="text-white text-base font-semibold text-center">
+                  {isSubmitting ? "Submitting..." : "Update"}
+                </Text>
+              </TouchableOpacity>
+            }
+            title="Confirm Changes"
+            description="Are you sure you want to save these changes to the folder and images?"
+            actionLabel="Save Changes"
+            onPress={handleSubmit(onSubmit)}
+            loading={
+              isSubmitting || mediaFiles.some((f) => f.status === "uploading")
+            }
+            loadingMessage="Saving changes..."
+          />
       </View>
-    </ScreenLayout>
+      </View>
+    </PageLayout>
   );
 };
 
