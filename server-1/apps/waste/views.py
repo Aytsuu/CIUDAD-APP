@@ -9,6 +9,7 @@ from .models import WasteTruck
 from apps.profiling.models import Sitio
 from rest_framework import generics
 from .signals import archive_completed_hotspots
+from datetime import date, timedelta
 
 # Create your views here.
 #KANI 3RD
@@ -145,6 +146,29 @@ class WasteHotspotView(generics.ListCreateAPIView):
             'wstp_id__staff__rp__per', 
             'sitio_id'                   
         ).all()
+    
+class UpcomingHotspotView(generics.ListAPIView):
+    serializer_class = WasteHotspotSerializer
+
+    def get_queryset(self):
+        today = date.today()
+        time_range = self.request.query_params.get('range', 'week')  # default to week
+        
+        queryset = WasteHotspot.objects.select_related(
+            'wstp_id__staff__rp__per', 
+            'sitio_id'
+        ).filter(
+            wh_is_archive=False,
+            wh_date__gte=today
+        )
+        
+        if time_range == 'today':
+            queryset = queryset.filter(wh_date=today)
+        else:  # week
+            end_of_week = today + timedelta(days=7)
+            queryset = queryset.filter(wh_date__lte=end_of_week)
+            
+        return queryset.order_by('wh_date', 'wh_start_time')
 
 class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
     serializer_class = WasteHotspotSerializer
