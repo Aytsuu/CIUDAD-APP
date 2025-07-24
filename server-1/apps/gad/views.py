@@ -314,7 +314,7 @@ class ProjectProposalRestoreView(generics.UpdateAPIView):
     queryset = ProjectProposal.objects.filter(gpr_is_archive=True)
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
-
+ 
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=False)
 
