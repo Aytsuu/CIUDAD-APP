@@ -194,7 +194,7 @@ const [refreshing, setRefreshing] = useState(false)
                 })}
               </View>
             </ScrollView>
-            <View className="flex-row justify-end">
+            <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
               <ConfirmationModal
                 trigger={
                   // <TouchableOpacity
@@ -208,7 +208,7 @@ const [refreshing, setRefreshing] = useState(false)
                   //     <Loader2 size={16} color="white" className="ml-2 animate-spin" />
                   //   )}
                   // </TouchableOpacity>
-                  <Button className='bg-blue-600'><Text className="text-white font-medium">Save</Text></Button>
+                  <Button className='bg-primaryBlue'><Text className="text-white text-base font-semibold text-center">Save</Text></Button>
                 }
                 title="Confirm Save Attendance"
                 description="Are you sure you want to save these attendance changes?"
@@ -303,19 +303,18 @@ const AttendanceSheets = () => {
             <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text>Attendance Sheets and Records</Text>}
         showExitButton={false}
         headerAlign="left"
         scrollable={true}
         keyboardAvoiding={true}
         contentPadding="medium"
     >
-      <View className="flex-1">
+      <View className="flex-1 p-2">
         <Tabs value={modalTab} onValueChange={handleTabChange}>
           <TabsList className="flex-row bg-white px-4 pb-4">
             <TabsTrigger
               value="view"
-              className={`flex-1 h-10 rounded-l-lg ${modalTab === "view" ? "bg-blue-600" : "bg-gray-200"} mr-1`}
+              className={`flex-1 h-10 rounded-l-lg ${modalTab === "view" ? "bg-primaryBlue" : "bg-gray-200"} mr-1`}
             >
               <Text className={`text-sm font-medium ${modalTab === "view" ? "text-white" : "text-gray-700"}`}>
                 View Sheets
@@ -323,7 +322,7 @@ const AttendanceSheets = () => {
             </TabsTrigger>
             <TabsTrigger
               value="mark"
-              className={`flex-1 h-10 rounded-r-lg ${modalTab === "mark" ? "bg-blue-600" : "bg-gray-200"}`}
+              className={`flex-1 h-10 rounded-r-lg ${modalTab === "mark" ? "bg-primaryBlue" : "bg-gray-200"}`}
             >
               <Text className={`text-sm font-medium ${modalTab === "mark" ? "text-white" : "text-gray-700"}`}>
                 Mark Attendance
@@ -334,7 +333,7 @@ const AttendanceSheets = () => {
           <TabsContent value="view" className="flex-1">
             <View className="px-4 pt-4 flex-row justify-between items-center">
               <Button 
-                className="bg-blue-600 mb-4"
+                className="bg-primaryBlue mb-4"
                 onPress={() => setUploadModalVisible(true)}
               >
                 <Text className="text-white">Upload</Text>
@@ -457,7 +456,7 @@ const AttendanceSheets = () => {
                 <Text className="text-gray-800">Cancel</Text>
               </Button>
               <Button
-                className="flex-1 bg-blue-600"
+                className="flex-1 bg-primaryBlue"
                 onPress={handleAddAttendanceSheet}
                 disabled={mediaFiles.length === 0}
               >

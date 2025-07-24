@@ -244,7 +244,7 @@ export default function WastePersonnelMain() {
               </View>
               {selectedRole === "Trucks" && truckViewMode === "active" && (
                 <TouchableOpacity
-                  className="bg-blue-600 p-2 rounded-full"
+                  className="bg-primaryBlue p-2 rounded-full"
                   onPress={handleAddTruck}
                 >
                   <Plus size={20} color="white" />
