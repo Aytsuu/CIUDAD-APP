@@ -510,7 +510,7 @@ function GADProjectProposal() {
 
       {/* Dynamic Total Budget Display */}
       <div className="flex justify-end mt-2 mb-2">
-        <div className="bg-gray-200 px-4 py-2 rounded-lg">
+        <div className="bg-white border px-4 py-2 rounded-lg">
           <span className="font-medium text-black">
             Grand Total:{" "}
             <span className="font-bold text-green-700">
