@@ -119,7 +119,7 @@ const StatusUpdateModal: React.FC<{
                     <Text
                       className={`text-center ${
                         status === selectedStatus
-                          ? "text-blue-600 font-medium"
+                          ? "text-primaryBlue font-medium"
                           : "text-gray-700"
                       }`}
                     >
@@ -164,7 +164,7 @@ const StatusUpdateModal: React.FC<{
             <TouchableOpacity
               onPress={handleUpdate}
               className={`py-2 px-4 rounded ${
-                isUpdateDisabled || isLoading ? "bg-gray-300" : "bg-blue-500"
+                isUpdateDisabled || isLoading ? "bg-gray-300" : "bg-primaryBlue"
               }`}
               disabled={isUpdateDisabled || isLoading}
             >
@@ -324,7 +324,7 @@ const AdminUpdateStatusContent: React.FC = () => {
           onBack={handleBackPress}
           customHeaderActions={
             <TouchableOpacity
-              className="ml-2 bg-blue-500 px-4 py-2 rounded-lg"
+              className="ml-2 bg-primaryBlue px-4 py-2 rounded-lg"
               onPress={handleUpdateStatusPress}
             >
               <Text className="text-white font-medium text-sm">
@@ -370,7 +370,7 @@ const AdminUpdateStatusContent: React.FC = () => {
           </Text>
           <TouchableOpacity
             onPress={() => refetch()}
-            className="bg-blue-500 px-6 py-3 rounded-lg"
+            className="bg-primaryBlue px-6 py-3 rounded-lg"
           >
             <Text className="text-white font-medium">Retry</Text>
           </TouchableOpacity>

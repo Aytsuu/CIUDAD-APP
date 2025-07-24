@@ -15,6 +15,7 @@ import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-qua
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-quartertly-report";
 import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-pcukup-section-cards";
+import { WasteActivitySidebar } from "@/components/analytics/waste/waste-activities-sidebar";
 
 export default function Dashboard() {
   return (
@@ -51,6 +52,7 @@ export default function Dashboard() {
           <GADExpenseSidebar />
           <GADIncomeSidebar />
           <CouncilEventsSidebar />
+          <WasteActivitySidebar/>
         </div>
       </div>
     </MainLayoutComponent>

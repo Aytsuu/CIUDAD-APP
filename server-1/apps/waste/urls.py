@@ -25,6 +25,7 @@ urlpatterns = [
 
     # Waste Hotspot URLs
     path("waste-hotspot/", WasteHotspotView.as_view(), name="waste-hotspot-list"),
+    path('upcoming-hotspots/', UpcomingHotspotView.as_view(), name='upcoming-hotspots'),
     path("waste-watchman/", WatchmanView.as_view(), name="waste-watchman"),
     path('update-waste-hotspot/<int:wh_num>/', UpdateHotspotView.as_view(), name='update-waste-hotspot'),
     path('delete-waste-hotspot/<int:wh_num>/', DeleteHotspotView.as_view(), name='delete-waste-hotpot'),
