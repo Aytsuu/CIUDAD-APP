@@ -1,13 +1,16 @@
 import React from "react";
-import { useGetUpcomingHotspots } from "./waste-sidebar-analytics-query";
+import { useGetUpcomingHotspots, type UpcomingHotspots } from "./waste-sidebar-analytics-query";
 import { Card } from "@/components/ui/card/card";
-import { Clock, ChevronRight, Calendar } from "lucide-react";
+import { Clock, ChevronRight, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { format } from "date-fns";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Label } from "@/components/ui/label";
 
 export const WasteActivitySidebar = () => {
   const [period, setPeriod] = React.useState<string>("today");
+  const [selectedHotspot, setSelectedHotspot] = React.useState<UpcomingHotspots | null>(null);
   const { data: upcomingHotspots, isLoading } = useGetUpcomingHotspots();
   const navigate = useNavigate();
 
@@ -83,39 +86,76 @@ export const WasteActivitySidebar = () => {
         ) : filteredHotspots.length > 0 ? (
           <div className="p-4 space-y-3">
             {filteredHotspots.map((hotspot) => (
-              <Card 
+              <DialogLayout
                 key={hotspot.wh_num}
-                className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
-                onClick={() => navigate(`/waste-hotspots/${hotspot.wh_num}`)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                        Scheduled
-                      </span>
+                trigger={
+                  <Card 
+                    className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
+                    onClick={() => setSelectedHotspot(hotspot)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate mb-1">
+                          Hotspot Assignment
+                        </h3>
+                        <div className="flex flex-col gap-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{new Date(hotspot.wh_date).toLocaleDateString()}</span>
+                          </div>
+                          <div>
+                            {format(new Date(`2000-01-01T${hotspot.wh_start_time}`), "h:mm a")} - 
+                            {format(new Date(`2000-01-01T${hotspot.wh_end_time}`), "h:mm a")}
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
                     </div>
-                    
-                    <h3 className="font-medium text-gray-900 truncate mb-1">
-                      {hotspot.sitio || "Unspecified Location"}
-                    </h3>
-                    
-                    <div className="flex flex-col gap-1 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{new Date(hotspot.wh_date).toLocaleDateString()}</span>
+                  </Card>
+                }
+                title="Hotspot Assignment Details"
+                description=""
+                mainContent={
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Date</Label>
+                        <p>{new Date(hotspot.wh_date).toLocaleDateString()}</p>
                       </div>
                       <div>
-                        {format(new Date(`2000-01-01T${hotspot.wh_start_time}`), "h:mm a")} - 
-                        {format(new Date(`2000-01-01T${hotspot.wh_end_time}`), "h:mm a")}
+                        <Label>Time</Label>
+                        <p>
+                          {format(new Date(`2000-01-01T${hotspot.wh_start_time}`), "h:mm a")} - 
+                          {format(new Date(`2000-01-01T${hotspot.wh_end_time}`), "h:mm a")}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="flex items-center gap-1">
+                          Watchman
+                        </Label>
+                        <p>{hotspot.watchman || "Not assigned"}</p>
+                      </div>
+                      <div>
+                        <Label className="flex items-center gap-1">
+                          Sitio
+                        </Label>
+                        <p>{hotspot.sitio || "Not specified"}</p>
                       </div>
                     </div>
+                    {hotspot.wh_add_info && (
+                      <div>
+                        <Label className="flex items-center gap-1">
+                          <Info className="w-4 h-4" />
+                          Additional Information
+                        </Label>
+                        <p className="whitespace-pre-wrap mt-1 p-2 bg-gray-50 rounded-md">
+                          {hotspot.wh_add_info}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  
-                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-                </div>
-              </Card>
+                }
+              />
             ))}
           </div>
         ) : (
@@ -138,7 +178,7 @@ export const WasteActivitySidebar = () => {
       {/* Footer */}
       {filteredHotspots.length > 0 && (
         <div className="p-4 border-t border-gray-100">
-          <Button onClick={() => '/waste-calendar-scheduling'}>
+          <Button onClick={() => navigate("/waste-calendar-scheduling")}>
             View Calendar
           </Button>
         </div>
