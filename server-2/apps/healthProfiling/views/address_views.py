@@ -85,5 +85,3 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
 class PerAddressListView(generics.ListAPIView):
   serializer_class = PerAddressListSerializer
   queryset = PersonalAddress.objects.all()
-
-

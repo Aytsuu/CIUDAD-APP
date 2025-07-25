@@ -1,20 +1,29 @@
 from django.urls import path
-from .views import *
-from . import views
-
+from .views.patient_views import *
+from .views.vitalsigns_views import *
+from .views.obstetrical_views import *
+from .views.spouse_views import *
+from .views.followvisits_views import *
+from .views.bodymeasurement_views import *
+from .views.findings_views import *
+from .views.physicalexam_views import *
+from .views.medicalhistory_views import *
+from .views.patient_views import *
+from .views.illness_views import *
+from .views.disability_views import *
 urlpatterns = [
-    path('residents-available/', views.get_resident_profile_list, name='residents-available-list'),
+    path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patient/', PatientView.as_view(), name='patient'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+	 
+    path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
-# # UPDATE DELETE
-    path('patient-record/<int:patrec_id>/', DeleteUpdatePatientRecordView.as_view(), name='patient-record-detail'),
+    path('update-transient/<str:trans_id>/', UpdateTransientView.as_view(), name='update-transient-patient'),
 
 
     path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
-    path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
 
     path("obstetrical_history/", ObstetricalHistoryView.as_view(), name="obstetricalhistory"),
     
@@ -23,23 +32,40 @@ urlpatterns = [
     path("spouse/<int:spouse_id>/", SpouseDetailView.as_view(), name='spouse-detail'),
 
     path('follow-up-visit/', FollowUpVisitView.as_view(), name='follow-up-visit'),
-    path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
-	path('follow-up-visits-all/', AllFollowUpVisitsView.as_view(), name='follow-up-visits-all'),
+    path('follow-up-visits-all/', AllFollowUpVisitsView.as_view(), name='follow-up-visits-all'),
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
-    path('body-measurements/<int:bm_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
+   
     path("findings/", FindingView.as_view(), name="findings"),
-    path('findings/<int:find_id>/', DeleteUpdateFindingView.as_view(), name='findings-detail'),
-    path("physial-examination/", PhysicalExaminationView.as_view(), name="physical-examination"),
-    path('physial-examination/<int:pe_id>/', DeleteUpdatePhysicalExaminationView.as_view(), name='physical-examination-detail'),
-    path("physical-exam-list/", PhysicalExamListView.as_view(), name="physical-examination-list"),
-    path('physical-exam-list/<int:pel_id>/', DeleteUpdatePhysicalExamListView.as_view(), name='physical-examination-list-detail'),
-    
+
     path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
     path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
+    path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
+   
+    path('illness/', IllnessView.as_view(), name="illness"),
+   
+    path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
+    path('pe-section/', PESectionView.as_view(), name='pe_section'),
+    path('pe-option/', PEOptionView.as_view(), name='pe_option'),
+   
+    path('medical-history/', MedicalHistoryView.as_view(), name='medical-history'),
+   
+    # UPDATE/ DELETE
+    path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
+    path('patient-record/<int:patrec_id>/', DeleteUpdatePatientRecordView.as_view(), name='patient-record-detail'),
+    path('update-pe-option/<int:pe_option_id>/',DeleteUpdatePEOptionView.as_view(), name='update_pe_option'),
+    path('findings/<int:find_id>/', DeleteUpdateFindingView.as_view(), name='findings-detail'),
+    path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
+    path('body-measurements/<int:body_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
+   
+    path('medical-history/<int:medrec_id>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
-    #For fam planning
-    path("obstetrical_history/by_patient/<str:pat_id>/", ObstetricalHistoryByPatientView.as_view(), name="obstetrical-history-by-patient"),
-    path('body-measurements/latest/<str:pat_id>/', LatestBodyMeasurementView.as_view(), name='latest-body-measurement'),
+    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
 
+    #DISABLITY
+    
+    path('disability/', ListDisabilityView.as_view(), name='list-disability'),
+    path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
+    
 ]
+

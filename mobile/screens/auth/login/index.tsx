@@ -83,7 +83,7 @@ export default function SignInScreen() {
       showExitButton={false}
       showBackButton={false}
     >
-      <View className="flex-1">
+      <View className="flex-1 px-5">
         <View className="items-center mt-7">
           <Image source={require("@/assets/images/Logo.png")} className="w-24 h-24" />
         </View>

@@ -84,12 +84,6 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
     med_id = serializers.PrimaryKeyRelatedField(queryset=Medicinelist.objects.all())
     # cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
-    # medicine_name = serializers.CharField(source='med_id.med_name', read_only=True)
-    
-    # medicine_type = serializers.CharField(source='med_id.med_type', read_only=True)
-
-    # category_name = serializers.CharField(source='med_id.cat.cat_name', read_only=True)
-    # quantity_on_hand = serializers.IntegerField(source='inv.quantity_on_hand', read_only=True)
 
     class Meta:
         model = MedicineInventory
@@ -321,13 +315,3 @@ class AntigenTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AntigenTransaction
         fields = '__all__' 
-        
-class MedicineInventorySerializer(serializers.ModelSerializer):
-    medicine_name = serializers.CharField(source='med_id.med_name', read_only=True)
-    medicine_type = serializers.CharField(source='med_id.med_type', read_only=True)
-    category_name = serializers.CharField(source='med_id.cat.cat_name', read_only=True)
-    quantity_on_hand = serializers.IntegerField(source='inv.quantity_on_hand', read_only=True)
-
-    class Meta:    
-        model = MedicineInventory
-        fields = '__all__' #

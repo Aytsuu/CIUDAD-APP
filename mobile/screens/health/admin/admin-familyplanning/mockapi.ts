@@ -1,0 +1,1161 @@
+// mockApi.ts
+// This file simulates API responses for React Native development.
+
+import { FamilyPlanningRecordDetail } from './familyplanningtypes'; // Import your type definition
+
+// Helper to generate a random date within the last year
+const getRandomDate = (): string => {
+  const now = new Date();
+  const past = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  return new Date(past.getTime() + Math.random() * (now.getTime() - past.getTime())).toISOString().split('T')[0];
+};
+
+// Helper to generate a random boolean
+const getRandomBoolean = (): boolean => Math.random() > 0.5;
+
+// Mock data for individual FP records (detailed)
+const mockDetailedFPRecords: FamilyPlanningRecordDetail[] = [
+  {
+    fprecord_id: 101,
+    client_id: "PAT-001",
+    fourps: true,
+    plan_more_children: false,
+    avg_monthly_income: "25,000",
+    occupation: "Teacher",
+    created_at: "2024-01-15T10:00:00Z",
+    updated_at: "2024-01-15T10:00:00Z",
+    patient_info: {
+      pat_id: "PAT-001",
+      fname: "Maria",
+      lname: "Santos",
+      mname: "Cruz",
+      sex: "Female",
+      dob: "1990-05-20",
+      address: "123 Main St, Minglanilla",
+      age: 34,
+    },
+    service_provision: {
+      dateOfVisit: "2024-01-15",
+      methodAccepted: "IUD",
+      nameOfServiceProvider: "Dr. Elena Reyes",
+      dateOfFollowUp: "2024-07-15",
+      methodQuantity: "1",
+      serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=Signature1",
+      medicalFindings: "Client in good health, no complications.",
+    },
+    physical_exam: {
+      weight: 60,
+      bp_systolic: 120,
+      bp_diastolic: 80,
+      temperature: 36.8,
+      heent: true,
+      chest: true,
+      abdomen: false,
+      extremities: true,
+      skin: true,
+    },
+    pregnancy_check: {
+      breastfeeding: false,
+      abstained: true,
+      recent_baby: false,
+      recent_period: true,
+      recent_abortion: false,
+      using_contraceptive: true,
+    },
+    risk_sti: {
+      multiplePartners: false,
+      riskySexualBehavior: false,
+    },
+    violence_against_women: {
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    obstetrical_history: {
+      g_pregnancies: 2,
+      p_pregnancies: 2,
+      fullTerm: 2,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 2,
+    },
+    // Additional fields for comparison page
+    typeOfClient: "New Acceptor",
+    subTypeOfClient: null,
+    reasonForFP: "Spacing",
+    otherReasonForFP: null,
+    methodCurrentlyUsed: "IUD",
+    otherMethod: null,
+    lastName: "Santos",
+    givenName: "Maria",
+    middleInitial: "C",
+    dateOfBirth: "1990-05-20",
+    age: 34,
+    educationalAttainment: "College Graduate",
+    philhealthNo: "PH123456789",
+    nhts_status: true,
+    address: {
+      houseNumber: "123",
+      street: "Main St",
+      barangay: "Poblacion",
+      municipality: "Minglanilla",
+      province: "Cebu",
+    },
+    spouse: {
+      s_lastName: "Reyes",
+      s_givenName: "Juan",
+      s_middleInitial: "P",
+      s_dateOfBirth: "1988-11-10",
+      s_age: 36,
+      s_occupation: "Engineer",
+    },
+    fp_obstetrical_history: { // This is likely from your backend's FP_Obstetrical_History model
+      fpob_id: 1,
+      fpob_last_delivery: "2020-03-01",
+      fpob_type_last_delivery: "Vaginal",
+      fpob_last_period: "2024-01-01",
+      fpob_previous_period: "2023-12-01",
+      fpob_mens_flow: "Moderate",
+      fpob_dysme: false,
+      fpob_hydatidiform: false,
+      fpob_ectopic_pregnancy: false,
+      fprecord_id: 101, // Link to FP_Record
+      obs_id: 1, // Link to main Obstetrical_History
+    },
+    obstetricalHistory: { // This is likely from your main Obstetrical_History model
+      obs_id: 1,
+      g_pregnancies: 2,
+      p_pregnancies: 2,
+      fullTerm: 2,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 2,
+      lastDeliveryDate: "2020-03-01",
+      typeOfLastDelivery: "Vaginal",
+      lastMenstrualPeriod: "2024-01-01",
+      previousMenstrualPeriod: "2023-12-01",
+      menstrualFlow: "Moderate",
+      dysmenorrhea: false,
+      hydatidiformMole: false,
+      ectopicPregnancyHistory: false,
+    },
+    risk_sti: { // This is likely from your backend's FP_RiskSti model
+      sti_id: 1,
+      abnormalDischarge: false, // Assuming this maps to sti_ab_discharge
+      dischargeFrom: null, // Not directly mapped in your serializer, adding for mock completeness
+      sores: false, // Assuming this maps to sti_sores
+      pain: false, // Not directly mapped, adding for mock completeness
+      history: false, // Not directly mapped, adding for mock completeness
+      hiv: false, // Not directly mapped, adding for mock completeness
+      multiplePartners: false, // Maps to sti_risk_factors or similar
+      riskySexualBehavior: false, // Maps to sti_risk_factors or similar
+    },
+    sexuallyTransmittedInfections: { // This is likely the frontend representation
+      abnormalDischarge: false,
+      dischargeFrom: null,
+      sores: false,
+      pain: false,
+      history: false,
+      hiv: false,
+    },
+    risk_vaw: { // This is likely from your backend's FP_RiskVaw model
+      vaw_id: 1,
+      unpleasantRelationship: false, // Maps to vaw_physical, vaw_sexual, vaw_emotional
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    violenceAgainstWomen: { // This is likely the frontend representation
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    fp_physical_exam: { // This is likely from your backend's FP_Physical_Exam model
+      fp_pe_id: 1,
+      skinExamination: "normal", // Maps to fppe_skin
+      conjunctivaExamination: "normal", // Maps to fppe_conjunctiva
+      neckExamination: "normal", // Maps to fppe_neck
+      breastExamination: "normal", // Maps to fppe_breast
+      abdomenExamination: "normal", // Maps to fppe_abdomen
+      extremitiesExamination: "normal", // Maps to fppe_extremities
+      fppe_thyroid_enlargement: false,
+      fppe_mass: false,
+      fppe_nipple_discharge: false,
+      fppe_pelvic_exam: null,
+      fppe_cervical_consistency: null,
+      fppe_cervical_tenderness: null,
+      fppe_cervical_adnexal_mass_tenderness: null,
+      fppe_uterine_position: null,
+      fppe_uterine_depth: null,
+      fprecord_id: 101,
+      bm: 1, // Link to BodyMeasurement
+      vital: 1, // Link to VitalSigns
+    },
+    skinExamination: "normal", // Frontend representation
+    conjunctivaExamination: "normal",
+    neckExamination: "normal",
+    breastExamination: "normal",
+    abdomenExamination: "normal",
+    extremitiesExamination: "normal",
+    body_measurement: { // From BodyMeasurement model
+      bm_id: 1,
+      age: "34",
+      height: "160",
+      weight: "60",
+      created_at: "2024-01-15",
+      patrec: 1,
+      staff: null,
+      bmi: 23.4,
+      bmi_category: "Normal",
+    },
+    weight: 60, // Flattened for comparison
+    height: 160, // Flattened for comparison
+    pulseRate: 72, // From VitalSigns
+    bloodPressure: "120/80", // From VitalSigns
+    fp_pelvic_exam: { // From FP_Pelvic_Exam model
+      pelvic_id: 1,
+      pelvic_exam: "Normal",
+      cervical_consistency: "Firm",
+      cervical_tenderness: false,
+      cervical_adnexal_mass_tenderness: false,
+      uterine_position: "Anteverted",
+      uterine_depth: 7.5,
+      fprecord_id: 101,
+    },
+    pelvicExamination: "Normal", // Flattened for comparison
+    cervicalConsistency: "Firm", // Flattened for comparison
+    cervicalTenderness: false, // Flattened for comparison
+    cervicalAdnexalMassTenderness: false, // Flattened for comparison
+    uterinePosition: "Anteverted", // Flattened for comparison
+    uterineDepth: 7.5, // Flattened for comparison
+    fp_acknowledgement: { // From FP_Acknowledgement model
+      ack_id: 1,
+      fpa_client_sig: "https://placehold.co/100x40/000/fff?text=ClientSig1",
+      fpa_client_sig_date: "2024-01-15",
+      fpa_guardian_name: null,
+      fpa_guardian_sig: null,
+      fpa_guardian_sig_date: null,
+      fprecord_id: 101,
+      type: 1, // Assuming a type field
+    },
+    acknowledgement: { // Frontend representation
+      selectedMethod: "IUD",
+      clientSignature: "https://placehold.co/100x40/000/fff?text=ClientSig1",
+      clientSignatureDate: "2024-01-15",
+      clientName: "Maria C. Santos",
+      guardianName: null,
+      guardianSignature: null,
+    },
+    serviceProvisionRecords: [ // From FP_Assessment_Record model
+      {
+        fpassessment_id: 1,
+        dateOfVisit: "2024-01-15", // Maps to fpa_date_of_visit
+        methodAccepted: "IUD", // Maps to fpa_method_accepted
+        methodQuantity: ["1"], // Maps to fpa_method_quantity
+        nameOfServiceProvider: "Dr. Elena Reyes", // Maps to fpa_service_provider
+        dateOfFollowUp: "2024-07-15", // Maps to fpa_date_of_followup
+        serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=ServiceProviderSig1", // Maps to fpa_service_provider_sig
+        medicalFindings: "Client in good health, no complications.", // Maps to fpa_medical_findings
+      },
+    ],
+    medicalHistory: { // From MedicalHistory model
+      medhistory_id: 1,
+      severeHeadaches: false,
+      strokeHeartAttackHypertension: false,
+      hematomaBruisingBleeding: false,
+      breastCancerHistory: false,
+      severeChestPain: false,
+      cough: false,
+      jaundice: false,
+      unexplainedVaginalBleeding: false,
+      abnormalVaginalDischarge: false,
+      phenobarbitalOrRifampicin: false,
+      smoker: false,
+      disability: false,
+      disabilityDetails: null,
+    },
+  },
+  {
+    fprecord_id: 102,
+    client_id: "PAT-001",
+    fourps: false,
+    plan_more_children: true,
+    avg_monthly_income: "30,000",
+    occupation: "Engineer",
+    created_at: "2023-05-10T10:00:00Z",
+    updated_at: "2023-05-10T10:00:00Z",
+    patient_info: {
+      pat_id: "PAT-001",
+      fname: "Maria",
+      lname: "Santos",
+      mname: "Cruz",
+      sex: "Female",
+      dob: "1990-05-20",
+      address: "123 Main St, Minglanilla",
+      age: 34,
+    },
+    service_provision: {
+      dateOfVisit: "2023-05-10",
+      methodAccepted: "COC",
+      nameOfServiceProvider: "Dr. Sofia Lim",
+      dateOfFollowUp: "2023-11-10",
+      methodQuantity: "3 months supply",
+      serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=Signature2",
+      medicalFindings: "Client requested change of method due to side effects.",
+    },
+    physical_exam: {
+      weight: 62,
+      bp_systolic: 125,
+      bp_diastolic: 82,
+      temperature: 37.0,
+      heent: true,
+      chest: true,
+      abdomen: true,
+      extremities: true,
+      skin: true,
+    },
+    pregnancy_check: {
+      breastfeeding: false,
+      abstained: false,
+      recent_baby: false,
+      recent_period: true,
+      recent_abortion: false,
+      using_contraceptive: true,
+    },
+    risk_sti: {
+      multiplePartners: false,
+      riskySexualBehavior: false,
+    },
+    violence_against_women: {
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    obstetrical_history: {
+      g_pregnancies: 2,
+      p_pregnancies: 2,
+      fullTerm: 2,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 2,
+    },
+    // Additional fields for comparison page (differences from 101)
+    typeOfClient: "Current User",
+    subTypeOfClient: "Changing Method",
+    reasonForFP: "Limiting",
+    otherReasonForFP: null,
+    methodCurrentlyUsed: "COC",
+    otherMethod: null,
+    lastName: "Santos",
+    givenName: "Maria",
+    middleInitial: "C",
+    dateOfBirth: "1990-05-20",
+    age: 34,
+    educationalAttainment: "College Graduate",
+    philhealthNo: "PH123456789",
+    nhts_status: true,
+    address: {
+      houseNumber: "123",
+      street: "Main St",
+      barangay: "Poblacion",
+      municipality: "Minglanilla",
+      province: "Cebu",
+    },
+    spouse: {
+      s_lastName: "Reyes",
+      s_givenName: "Juan",
+      s_middleInitial: "P",
+      s_dateOfBirth: "1988-11-10",
+      s_age: 36,
+      s_occupation: "Engineer",
+    },
+    fp_obstetrical_history: {
+      fpob_id: 2,
+      fpob_last_delivery: "2020-03-01",
+      fpob_type_last_delivery: "Vaginal",
+      fpob_last_period: "2023-04-01",
+      fpob_previous_period: "2023-03-01",
+      fpob_mens_flow: "Heavy", // Difference
+      fpob_dysme: true, // Difference
+      fpob_hydatidiform: false,
+      fpob_ectopic_pregnancy: false,
+      fprecord_id: 102,
+      obs_id: 2,
+    },
+    obstetricalHistory: {
+      obs_id: 2,
+      g_pregnancies: 2,
+      p_pregnancies: 2,
+      fullTerm: 2,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 2,
+      lastDeliveryDate: "2020-03-01",
+      typeOfLastDelivery: "Vaginal",
+      lastMenstrualPeriod: "2023-04-01",
+      previousMenstrualPeriod: "2023-03-01",
+      menstrualFlow: "Heavy", // Difference
+      dysmenorrhea: true, // Difference
+      hydatidiformMole: false,
+      ectopicPregnancyHistory: false,
+    },
+    risk_sti: {
+      sti_id: 2,
+      abnormalDischarge: false,
+      dischargeFrom: null,
+      sores: false,
+      pain: false,
+      history: false,
+      hiv: false,
+      multiplePartners: false,
+      riskySexualBehavior: false,
+    },
+    sexuallyTransmittedInfections: {
+      abnormalDischarge: false,
+      dischargeFrom: null,
+      sores: false,
+      pain: false,
+      history: false,
+      hiv: false,
+    },
+    risk_vaw: {
+      vaw_id: 2,
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    violenceAgainstWomen: {
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    fp_physical_exam: {
+      fp_pe_id: 2,
+      skinExamination: "normal",
+      conjunctivaExamination: "normal",
+      neckExamination: "normal",
+      breastExamination: "normal",
+      abdomenExamination: "normal",
+      extremitiesExamination: "normal",
+      fppe_thyroid_enlargement: false,
+      fppe_mass: false,
+      fppe_nipple_discharge: false,
+      fppe_pelvic_exam: null,
+      fppe_cervical_consistency: null,
+      fppe_cervical_tenderness: null,
+      fppe_cervical_adnexal_mass_tenderness: null,
+      fppe_uterine_position: null,
+      fppe_uterine_depth: null,
+      fprecord_id: 102,
+      bm: 2,
+      vital: 2,
+    },
+    skinExamination: "normal",
+    conjunctivaExamination: "normal",
+    neckExamination: "normal",
+    breastExamination: "normal",
+    abdomenExamination: "normal",
+    extremitiesExamination: "normal",
+    body_measurement: {
+      bm_id: 2,
+      age: "34",
+      height: "160",
+      weight: "62",
+      created_at: "2023-05-10",
+      patrec: 2,
+      staff: null,
+      bmi: 24.2,
+      bmi_category: "Normal",
+    },
+    weight: 62, // Difference
+    height: 160,
+    pulseRate: 78, // Difference
+    bloodPressure: "125/82", // Difference
+    fp_pelvic_exam: {
+      pelvic_id: 2,
+      pelvic_exam: "Normal",
+      cervical_consistency: "Soft", // Difference
+      cervical_tenderness: true, // Difference
+      cervical_adnexal_mass_tenderness: false,
+      uterine_position: "Retroverted", // Difference
+      uterine_depth: 8.0, // Difference
+      fprecord_id: 102,
+    },
+    pelvicExamination: "Normal",
+    cervicalConsistency: "Soft",
+    cervicalTenderness: true,
+    cervicalAdnexalMassTenderness: false,
+    uterinePosition: "Retroverted",
+    uterineDepth: 8.0,
+    fp_acknowledgement: {
+      ack_id: 2,
+      fpa_client_sig: "https://placehold.co/100x40/000/fff?text=ClientSig2",
+      fpa_client_sig_date: "2023-05-10",
+      fpa_guardian_name: null,
+      fpa_guardian_sig: null,
+      fpa_guardian_sig_date: null,
+      fprecord_id: 102,
+      type: 2,
+    },
+    acknowledgement: {
+      selectedMethod: "COC",
+      clientSignature: "https://placehold.co/100x40/000/fff?text=ClientSig2",
+      clientSignatureDate: "2023-05-10",
+      clientName: "Maria C. Santos",
+      guardianName: null,
+      guardianSignature: null,
+    },
+    serviceProvisionRecords: [
+      {
+        fpassessment_id: 2,
+        dateOfVisit: "2023-05-10",
+        methodAccepted: "COC",
+        methodQuantity: ["3 months supply"],
+        nameOfServiceProvider: "Dr. Sofia Lim",
+        dateOfFollowUp: "2023-11-10",
+        serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=ServiceProviderSig2",
+        medicalFindings: "Client requested change of method due to side effects.",
+      },
+    ],
+    medicalHistory: {
+      medhistory_id: 2,
+      severeHeadaches: true, // Difference
+      strokeHeartAttackHypertension: false,
+      hematomaBruisingBleeding: false,
+      breastCancerHistory: false,
+      severeChestPain: false,
+      cough: false,
+      jaundice: false,
+      unexplainedVaginalBleeding: false,
+      abnormalVaginalDischarge: false,
+      phenobarbitalOrRifampicin: false,
+      smoker: false,
+      disability: false,
+      disabilityDetails: null,
+    },
+  },
+  {
+    fprecord_id: 103,
+    client_id: "PAT-002",
+    fourps: false,
+    plan_more_children: false,
+    avg_monthly_income: "18,000",
+    occupation: "Housewife",
+    created_at: "2024-03-20T10:00:00Z",
+    updated_at: "2024-03-20T10:00:00Z",
+    patient_info: {
+      pat_id: "PAT-002",
+      fname: "Anna",
+      lname: "Dela Cruz",
+      mname: "S",
+      sex: "Female",
+      dob: "1995-11-01",
+      address: "456 Elm St, Minglanilla",
+      age: 29,
+    },
+    service_provision: {
+      dateOfVisit: "2024-03-20",
+      methodAccepted: "Injectable",
+      nameOfServiceProvider: "Nurse Jane Doe",
+      dateOfFollowUp: "2024-06-20",
+      methodQuantity: "1 dose",
+      serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=Signature3",
+      medicalFindings: "First time injectable user.",
+    },
+    physical_exam: {
+      weight: 55,
+      bp_systolic: 110,
+      bp_diastolic: 70,
+      temperature: 36.5,
+      heent: true,
+      chest: true,
+      abdomen: true,
+      extremities: true,
+      skin: true,
+    },
+    pregnancy_check: {
+      breastfeeding: false,
+      abstained: true,
+      recent_baby: false,
+      recent_period: true,
+      recent_abortion: false,
+      using_contraceptive: false,
+    },
+    risk_sti: {
+      multiplePartners: false,
+      riskySexualBehavior: false,
+    },
+    violence_against_women: {
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    obstetrical_history: {
+      g_pregnancies: 1,
+      p_pregnancies: 1,
+      fullTerm: 1,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 1,
+    },
+    typeOfClient: "New Acceptor",
+    subTypeOfClient: null,
+    reasonForFP: "Spacing",
+    otherReasonForFP: null,
+    methodCurrentlyUsed: "Injectable",
+    otherMethod: null,
+    lastName: "Dela Cruz",
+    givenName: "Anna",
+    middleInitial: "S",
+    dateOfBirth: "1995-11-01",
+    age: 29,
+    educationalAttainment: "High School Graduate",
+    philhealthNo: "PH987654321",
+    nhts_status: false,
+    address: {
+      houseNumber: "456",
+      street: "Elm St",
+      barangay: "Calajo-an",
+      municipality: "Minglanilla",
+      province: "Cebu",
+    },
+    spouse: {
+      s_lastName: "Cruz",
+      s_givenName: "Peter",
+      s_middleInitial: "M",
+      s_dateOfBirth: "1993-02-15",
+      s_age: 32,
+      s_occupation: "Construction Worker",
+    },
+    fp_obstetrical_history: {
+      fpob_id: 3,
+      fpob_last_delivery: "2022-08-01",
+      fpob_type_last_delivery: "Vaginal",
+      fpob_last_period: "2024-03-10",
+      fpob_previous_period: "2024-02-10",
+      fpob_mens_flow: "Scanty",
+      fpob_dysme: false,
+      fpob_hydatidiform: false,
+      fpob_ectopic_pregnancy: false,
+      fprecord_id: 103,
+      obs_id: 3,
+    },
+    obstetricalHistory: {
+      obs_id: 3,
+      g_pregnancies: 1,
+      p_pregnancies: 1,
+      fullTerm: 1,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 1,
+      lastDeliveryDate: "2022-08-01",
+      typeOfLastDelivery: "Vaginal",
+      lastMenstrualPeriod: "2024-03-10",
+      previousMenstrualPeriod: "2024-02-10",
+      menstrualFlow: "Scanty",
+      dysmenorrhea: false,
+      hydatidiformMole: false,
+      ectopicPregnancyHistory: false,
+    },
+    risk_sti: {
+      sti_id: 3,
+      abnormalDischarge: false,
+      dischargeFrom: null,
+      sores: false,
+      pain: false,
+      history: false,
+      hiv: false,
+      multiplePartners: false,
+      riskySexualBehavior: false,
+    },
+    sexuallyTransmittedInfections: {
+      abnormalDischarge: false,
+      dischargeFrom: null,
+      sores: false,
+      pain: false,
+      history: false,
+      hiv: false,
+    },
+    risk_vaw: {
+      vaw_id: 3,
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    violenceAgainstWomen: {
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    fp_physical_exam: {
+      fp_pe_id: 3,
+      skinExamination: "normal",
+      conjunctivaExamination: "normal",
+      neckExamination: "normal",
+      breastExamination: "normal",
+      abdomenExamination: "normal",
+      extremitiesExamination: "normal",
+      fppe_thyroid_enlargement: false,
+      fppe_mass: false,
+      fppe_nipple_discharge: false,
+      fppe_pelvic_exam: null,
+      fppe_cervical_consistency: null,
+      fppe_cervical_tenderness: null,
+      fppe_cervical_adnexal_mass_tenderness: null,
+      fppe_uterine_position: null,
+      fppe_uterine_depth: null,
+      fprecord_id: 103,
+      bm: 3,
+      vital: 3,
+    },
+    skinExamination: "normal",
+    conjunctivaExamination: "normal",
+    neckExamination: "normal",
+    breastExamination: "normal",
+    abdomenExamination: "normal",
+    extremitiesExamination: "normal",
+    body_measurement: {
+      bm_id: 3,
+      age: "29",
+      height: "155",
+      weight: "55",
+      created_at: "2024-03-20",
+      patrec: 3,
+      staff: null,
+      bmi: 22.9,
+      bmi_category: "Normal",
+    },
+    weight: 55,
+    height: 155,
+    pulseRate: 68,
+    bloodPressure: "110/70",
+    fp_pelvic_exam: null, // No pelvic exam for this record
+    pelvicExamination: null,
+    cervicalConsistency: null,
+    cervicalTenderness: false,
+    cervicalAdnexalMassTenderness: false,
+    uterinePosition: null,
+    uterineDepth: null,
+    fp_acknowledgement: {
+      ack_id: 3,
+      fpa_client_sig: "https://placehold.co/100x40/000/fff?text=ClientSig3",
+      fpa_client_sig_date: "2024-03-20",
+      fpa_guardian_name: null,
+      fpa_guardian_sig: null,
+      fpa_guardian_sig_date: null,
+      fprecord_id: 103,
+      type: 3,
+    },
+    acknowledgement: {
+      selectedMethod: "Injectable",
+      clientSignature: "https://placehold.co/100x40/000/fff?text=ClientSig3",
+      clientSignatureDate: "2024-03-20",
+      clientName: "Anna S. Dela Cruz",
+      guardianName: null,
+      guardianSignature: null,
+    },
+    serviceProvisionRecords: [
+      {
+        fpassessment_id: 3,
+        dateOfVisit: "2024-03-20",
+        methodAccepted: "Injectable",
+        methodQuantity: ["1 dose"],
+        nameOfServiceProvider: "Nurse Jane Doe",
+        dateOfFollowUp: "2024-06-20",
+        serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=ServiceProviderSig3",
+        medicalFindings: "First time injectable user.",
+      },
+    ],
+    medicalHistory: {
+      medhistory_id: 3,
+      severeHeadaches: false,
+      strokeHeartAttackHypertension: false,
+      hematomaBruisingBleeding: false,
+      breastCancerHistory: false,
+      severeChestPain: false,
+      cough: false,
+      jaundice: false,
+      unexplainedVaginalBleeding: false,
+      abnormalVaginalDischarge: false,
+      phenobarbitalOrRifampicin: false,
+      smoker: false,
+      disability: false,
+      disabilityDetails: null,
+    },
+  },
+  {
+    fprecord_id: 104,
+    client_id: "PAT-003",
+    fourps: true,
+    plan_more_children: false,
+    avg_monthly_income: "20,000",
+    occupation: "Vendor",
+    created_at: "2024-02-01T10:00:00Z",
+    updated_at: "2024-02-01T10:00:00Z",
+    patient_info: {
+      pat_id: "PAT-003",
+      fname: "John",
+      lname: "Doe",
+      mname: "A",
+      sex: "Male",
+      dob: "1985-01-01",
+      address: "789 Pine St, Minglanilla",
+      age: 40,
+    },
+    service_provision: {
+      dateOfVisit: "2024-02-01",
+      methodAccepted: "Condom",
+      nameOfServiceProvider: "Nurse Jane Doe",
+      dateOfFollowUp: "2024-05-01",
+      methodQuantity: "1 box",
+      serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=Signature4",
+      medicalFindings: "Client counselled on proper condom use.",
+    },
+    physical_exam: {
+      weight: 70,
+      bp_systolic: 130,
+      bp_diastolic: 85,
+      temperature: 36.9,
+      heent: true,
+      chest: true,
+      abdomen: true,
+      extremities: true,
+      skin: true,
+    },
+    pregnancy_check: {
+      breastfeeding: false,
+      abstained: false,
+      recent_baby: false,
+      recent_period: false,
+      recent_abortion: false,
+      using_contraceptive: true,
+    },
+    risk_sti: {
+      multiplePartners: true,
+      riskySexualBehavior: true,
+    },
+    violence_against_women: {
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    obstetrical_history: {
+      g_pregnancies: 0,
+      p_pregnancies: 0,
+      fullTerm: 0,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 0,
+    },
+    typeOfClient: "New Acceptor",
+    subTypeOfClient: null,
+    reasonForFP: "Spacing",
+    otherReasonForFP: null,
+    methodCurrentlyUsed: "Condom",
+    otherMethod: null,
+    lastName: "Doe",
+    givenName: "John",
+    middleInitial: "A",
+    dateOfBirth: "1985-01-01",
+    age: 40,
+    educationalAttainment: "Elementary Graduate",
+    philhealthNo: "PH112233445",
+    nhts_status: true,
+    address: {
+      houseNumber: "789",
+      street: "Pine St",
+      barangay: "Tulay",
+      municipality: "Minglanilla",
+      province: "Cebu",
+    },
+    spouse: {
+      s_lastName: "Doe",
+      s_givenName: "Jane",
+      s_middleInitial: "B",
+      s_dateOfBirth: "1987-03-20",
+      s_age: 38,
+      s_occupation: "Housewife",
+    },
+    fp_obstetrical_history: {
+      fpob_id: 4,
+      fpob_last_delivery: "2010-01-01",
+      fpob_type_last_delivery: "Vaginal",
+      fpob_last_period: "2024-01-20",
+      fpob_previous_period: "2023-12-20",
+      fpob_mens_flow: "Moderate",
+      fpob_dysme: false,
+      fpob_hydatidiform: false,
+      fpob_ectopic_pregnancy: false,
+      fprecord_id: 104,
+      obs_id: 4,
+    },
+    obstetricalHistory: {
+      obs_id: 4,
+      g_pregnancies: 0,
+      p_pregnancies: 0,
+      fullTerm: 0,
+      premature: 0,
+      abortion: 0,
+      livingChildren: 0,
+      lastDeliveryDate: "2010-01-01",
+      typeOfLastDelivery: "Vaginal",
+      lastMenstrualPeriod: "2024-01-20",
+      previousMenstrualPeriod: "2023-12-20",
+      menstrualFlow: "Moderate",
+      dysmenorrhea: false,
+      hydatidiformMole: false,
+      ectopicPregnancyHistory: false,
+    },
+    risk_sti: {
+      sti_id: 4,
+      abnormalDischarge: true, // Difference
+      dischargeFrom: "Penis", // Difference
+      sores: true, // Difference
+      pain: true, // Difference
+      history: true, // Difference
+      hiv: false,
+      multiplePartners: true,
+      riskySexualBehavior: true,
+    },
+    sexuallyTransmittedInfections: {
+      abnormalDischarge: true,
+      dischargeFrom: "Penis",
+      sores: true,
+      pain: true,
+      history: true,
+      hiv: false,
+    },
+    risk_vaw: {
+      vaw_id: 4,
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    violenceAgainstWomen: {
+      unpleasantRelationship: false,
+      partnerDisapproval: false,
+      domesticViolence: false,
+      referredTo: null,
+    },
+    fp_physical_exam: {
+      fp_pe_id: 4,
+      skinExamination: "normal",
+      conjunctivaExamination: "normal",
+      neckExamination: "normal",
+      breastExamination: "normal",
+      abdomenExamination: "normal",
+      extremitiesExamination: "normal",
+      fppe_thyroid_enlargement: false,
+      fppe_mass: false,
+      fppe_nipple_discharge: false,
+      fppe_pelvic_exam: null,
+      fppe_cervical_consistency: null,
+      fppe_cervical_tenderness: null,
+      fppe_cervical_adnexal_mass_tenderness: null,
+      fppe_uterine_position: null,
+      fppe_uterine_depth: null,
+      fprecord_id: 104,
+      bm: 4,
+      vital: 4,
+    },
+    skinExamination: "normal",
+    conjunctivaExamination: "normal",
+    neckExamination: "normal",
+    breastExamination: "normal",
+    abdomenExamination: "normal",
+    extremitiesExamination: "normal",
+    body_measurement: {
+      bm_id: 4,
+      age: "40",
+      height: "175",
+      weight: "70",
+      created_at: "2024-02-01",
+      patrec: 4,
+      staff: null,
+      bmi: 22.9,
+      bmi_category: "Normal",
+    },
+    weight: 70,
+    height: 175,
+    pulseRate: 70,
+    bloodPressure: "130/85",
+    fp_pelvic_exam: null,
+    pelvicExamination: null,
+    cervicalConsistency: null,
+    cervicalTenderness: false,
+    cervicalAdnexalMassTenderness: false,
+    uterinePosition: null,
+    uterineDepth: null,
+    fp_acknowledgement: {
+      ack_id: 4,
+      fpa_client_sig: "https://placehold.co/100x40/000/fff?text=ClientSig4",
+      fpa_client_sig_date: "2024-02-01",
+      fpa_guardian_name: null,
+      fpa_guardian_sig: null,
+      fpa_guardian_sig_date: null,
+      fprecord_id: 104,
+      type: 4,
+    },
+    acknowledgement: {
+      selectedMethod: "Condom",
+      clientSignature: "https://placehold.co/100x40/000/fff?text=ClientSig4",
+      clientSignatureDate: "2024-02-01",
+      clientName: "John A. Doe",
+      guardianName: null,
+      guardianSignature: null,
+    },
+    serviceProvisionRecords: [
+      {
+        fpassessment_id: 4,
+        dateOfVisit: "2024-02-01",
+        methodAccepted: "Condom",
+        methodQuantity: ["1 box"],
+        nameOfServiceProvider: "Nurse Jane Doe",
+        dateOfFollowUp: "2024-05-01",
+        serviceProviderSignature: "https://placehold.co/100x40/000/fff?text=ServiceProviderSig4",
+        medicalFindings: "Client counselled on proper condom use.",
+      },
+    ],
+    medicalHistory: {
+      medhistory_id: 4,
+      severeHeadaches: false,
+      strokeHeartAttackHypertension: false,
+      hematomaBruisingBleeding: false,
+      breastCancerHistory: false,
+      severeChestPain: false,
+      cough: false,
+      jaundice: false,
+      unexplainedVaginalBleeding: false,
+      abnormalVaginalDischarge: false,
+      phenobarbitalOrRifampicin: false,
+      smoker: false,
+      disability: false,
+      disabilityDetails: null,
+    },
+  },
+];
+
+// Mock data for overall table (summarized)
+const mockOverallFPRecords = [
+  {
+    fprecord_id: 101, // Latest record ID for PAT-001
+    client_id: "PAT-001",
+    patient_name: "Maria Santos",
+    patient_age: 34,
+    client_type: "New Acceptor",
+    method_used: "IUD",
+    created_at: "2024-01-15T10:00:00Z",
+    updated_at: "2024-01-15T10:00:00Z",
+    sex: "Female",
+    record_count: 2, // Maria has 2 records
+  },
+  {
+    fprecord_id: 103,
+    client_id: "PAT-002",
+    patient_name: "Anna Dela Cruz",
+    patient_age: 29,
+    client_type: "New Acceptor",
+    method_used: "Injectable",
+    created_at: "2024-03-20T10:00:00Z",
+    updated_at: "2024-03-20T10:00:00Z",
+    sex: "Female",
+    record_count: 1,
+  },
+  {
+    fprecord_id: 104,
+    client_id: "PAT-003",
+    patient_name: "John Doe",
+    patient_age: 40,
+    client_type: "New Acceptor",
+    method_used: "Condom",
+    created_at: "2024-02-01T10:00:00Z",
+    updated_at: "2024-02-01T10:00:00Z",
+    sex: "Male",
+    record_count: 1,
+  },
+];
+
+// Mock data for patient history (list of records for a specific patient)
+// This is adjusted to return a list of simplified records, not just the latest
+const mockPatientHistoryRecords: { [key: string]: { fprecord_id: number; patient_name: string; date_of_visit: string; method_used?: string; }[] } = {
+  "PAT-001": [
+    {
+      fprecord_id: 101,
+      patient_name: "Maria Santos",
+      date_of_visit: "2024-01-15",
+      method_used: "IUD",
+    },
+    {
+      fprecord_id: 102,
+      patient_name: "Maria Santos",
+      date_of_visit: "2023-05-10",
+      method_used: "COC",
+    },
+  ],
+  "PAT-002": [
+    {
+      fprecord_id: 103,
+      patient_name: "Anna Dela Cruz",
+      date_of_visit: "2024-03-20",
+      method_used: "Injectable",
+    },
+  ],
+  "PAT-003": [
+    {
+      fprecord_id: 104,
+      patient_name: "John Doe",
+      date_of_visit: "2024-02-01",
+      method_used: "Condom",
+    },
+  ],
+};
+
+export const getFPRecordsList = async () => {
+  console.log("Mock API: Fetching overall FP records...");
+  return new Promise<typeof mockOverallFPRecords>((resolve) => {
+    setTimeout(() => {
+      resolve(mockOverallFPRecords);
+    }, 500);
+  });
+};
+
+export const getFPRecordsForPatient = async (patientId: string): Promise<typeof mockPatientHistoryRecords[string]> => {
+  console.log(`Mock API: Fetching FP records for patient ${patientId}...`);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const records = mockPatientHistoryRecords[patientId];
+      if (records) {
+        resolve(records);
+      } else {
+        reject(new Error("Patient records not found."));
+      }
+    }, 500);
+  });
+};
+
+export const getFPCompleteRecord = async (fprecord_id: number): Promise<FamilyPlanningRecordDetail> => {
+  console.log(`Mock API: Fetching complete FP record for ID ${fprecord_id}...`);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const record = mockDetailedFPRecords.find(
+        (rec) => rec.fprecord_id === fprecord_id
+      );
+      if (record) {
+        resolve(record);
+      } else {
+        reject(new Error("Complete record not found."));
+      }
+    }, 500);
+  });
+};
+

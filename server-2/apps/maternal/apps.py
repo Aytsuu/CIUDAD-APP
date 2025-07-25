@@ -4,3 +4,7 @@ from django.apps import AppConfig
 class MaternalConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.maternal'
+
+    def ready(self):
+        # import apps.maternal.signals
+        pass

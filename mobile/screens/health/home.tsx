@@ -10,7 +10,7 @@ import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Use
 const Homepage = () => {
   const modules = [
     { name: 'Child Health Records', route: '/child-health-records', icon: Baby },
-    { name: 'Family Planning', route: '/family-planning/famplanning', icon: Heart },
+    { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
     { name: 'Animal Bites', route: '/admin/animalbites/overall', icon: Dog },
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
     { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },

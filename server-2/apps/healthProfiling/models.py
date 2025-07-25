@@ -1,3 +1,8 @@
+# from django.db import models
+
+# # Create your models here.
+# from django.db import models
+
 from django.db import models
 from django.conf import settings
 from datetime import date
@@ -39,6 +44,7 @@ class Personal(models.Model):
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=100)  
+
     class Meta:
         db_table = 'personal'
 
@@ -70,6 +76,16 @@ class ResidentProfile(models.Model):
 
     def __str__(self):
         return f"{self.per} (ID: {self.rp_id})"
+    
+class RespondentsInfo(models.Model):
+    ri_id = models.BigAutoField(primary_key=True)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='respondents_info')
+ 
+    class Meta:
+        db_table = 'respondents_info'
+
+    def __str__(self):
+        return f"{self.rp} (Respondent ID: {self.ri_id})"
 
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
@@ -125,18 +141,19 @@ class RequestRegistration(models.Model):
 
 class HealthRelatedDetails(models.Model):
     hrd_id = models.BigAutoField(primary_key=True)
-    hrd_blood_type = models.CharField(max_length=5)
-    hrd_philhealth_id = models.CharField(max_length=50)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    hrd_bloodType = models.CharField(max_length=5, null=True, blank=True)
+    hrd_philhealth_id = models.CharField(max_length=50, null=True, blank=True)
+    hrd_covid_vax_status = models.CharField(max_length=50, null=True, blank=True)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, blank=True)
     
     class Meta:
-        db_table = 'health_related_details'
+        db_table = 'per_additional_details'
 
 class Dependents_Over_Five(models.Model):
     dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
     # dep = models.ForeignKey(Dependent, on_delete=models.CASCADE)
     fc = models.ForeignKey(FamilyComposition, on_delete=models.CASCADE)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'dep_over_five'
@@ -159,13 +176,6 @@ class WaterSupply(models.Model):
 
     class Meta:
         db_table = 'water_supply'
-#     class Meta:
-#         db_table = 'water_supply'
-
-# class SanitaryFacility(models.Model):
-#     sf_id = models.CharField(max_length=50, primary_key=True)
-#     sf_type = models.CharField(max_length=50)
-#     sf_toilet_type = models.CharField(max_length=50)
 
 class SanitaryFacility(models.Model):
     sf_id = models.CharField(max_length=50, primary_key=True)
@@ -221,6 +231,8 @@ class NonCommunicableDisease(models.Model):
 class RequestFile(models.Model):
     rf_id = models.BigAutoField(primary_key=True)
     rf_name = models.CharField(max_length=500)
+    rf_type = models.CharField(max_length=50)
+    rf_path = models.CharField(max_length=500)
     rf_url = models.URLField()
     rf_is_id = models.BooleanField(default=False)
     rf_id_type = models.CharField(max_length=50, null=True ,blank=True)
@@ -230,19 +242,23 @@ class RequestFile(models.Model):
     class Meta:
         db_table = 'request_file'
 
+class MotherHealthInfo(models.Model):
+    mhi_id = models.BigAutoField(primary_key=True)
+    mhi_healthRisk_class = models.CharField(max_length=50, null=True, blank=True)
+    mhi_immun_status = models.CharField(max_length=50, null=True, blank=True)
+    mhi_famPlan_method = models.CharField(max_length=100, null=True, blank=True)
+    mhi_famPlan_source = models.CharField(max_length=100, null=True, blank=True)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='mother_health_infos')
+    fam = models.ForeignKey('Family', on_delete=models.CASCADE, related_name='mother_health_infos', null=True, blank=True)
 
-# class Patient(models.Model):
-#     pat_id = models.CharField(max_length=50, primary_key=True)
-    # per = models.ForeignKey(Personal, on_depete=models.CASCADE)
-#     class Meta:
-#         db_table = 'patient'
+    # Add other fields as needed
 
-# class PatientRecords(models.Model):
-#     pat_rec_id = models.CharField(max_length=50, primary_key=True)
-#     pat = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    class Meta:
+        db_table = 'mother_health_info'
+        unique_together = ('rp', 'fam')
+        
 
-#     class Meta:
-#         db_table = 'patient_records'
+
 
 
 # class RiskClassGroups(models.Model):
@@ -265,5 +281,3 @@ class RequestFile(models.Model):
 
 #     class Meta:
 #         db_table = 'illness'
-
-

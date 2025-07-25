@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native';
 import { Input } from '../input';
-import { Controller, Control, FieldError } from 'react-hook-form';
+import { Controller, Control } from 'react-hook-form';
+import { capitalize } from '@/helpers/capitalize';
 
 interface FormInputProps {
   control: Control<any>;
@@ -11,6 +12,7 @@ interface FormInputProps {
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
   submitBehavior?: 'submit' | 'newline' | 'blurAndSubmit';
+  editable?: boolean;
 }
 
 export const FormInput = ({
@@ -19,19 +21,20 @@ export const FormInput = ({
   label,
   placeholder,
   secureTextEntry,
-  keyboardType='default',
-  returnKeyType='next',
-  submitBehavior='newline',
+  keyboardType = 'default',
+  returnKeyType = 'next',
+  submitBehavior = 'newline',
+  editable = true,
 }: FormInputProps) => {
   return (
     <Controller
       control={control}
       name={name}
-      render={({ field: { onChange, onBlur, value } ,  fieldState: { error } }) => (
+      render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View className="mb-4">
-          <Text className="text-[16px] font-PoppinsRegular">{label}</Text>
+          {label && <Text className="text-[12px] font-PoppinsRegular">{label}</Text>}
           <Input
-            className={`h-[45px] font-PoppinsRegular bg-white border ${
+            className={`h-[45px] font-PoppinsRegular bg-white border text-black ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}
@@ -45,7 +48,7 @@ export const FormInput = ({
             autoCapitalize='none'
           />
           {error && (
-            <Text className="text-red-500 text-sm mt-1">{error.message}</Text>
+            <Text className="text-red-500 text-xs mt-1">{error.message}</Text>
           )}
         </View>
       )}

@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('familyplanning', '0007_alter_fp_record_hrd_alter_fp_record_pat_and_more'),
-        ('patientrecords', '0003_transient_transientaddress_and_more'),
+        # ('patientrecords', '0003_transient_transientaddress_and_more'),
     ]
 
     operations = [

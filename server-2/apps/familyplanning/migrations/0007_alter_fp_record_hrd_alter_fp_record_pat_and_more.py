@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('familyplanning', '0006_rename_subtype_of_client_fp_type_fpt_subtype'),
         ('healthProfiling', '0002_solid_waste_mgmt_remove_household_hh_barangay_and_more'),
-        ('patientrecords', '0003_transient_transientaddress_and_more'),
+        # ('patientrecords', '0003_transient_transientaddress_and_more'),
     ]
 
     operations = [

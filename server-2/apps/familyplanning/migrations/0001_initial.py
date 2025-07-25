@@ -9,9 +9,9 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('administration', '0004_staff_rp'),
-        ('healthProfiling', '0002_solid_waste_mgmt_remove_household_hh_barangay_and_more'),
-        ('inventory', '0001_initial'),
+        # ('administration', '0004_staff_rp'),
+        # ('healthProfiling', '0002_solid_waste_mgmt_remove_household_hh_barangay_and_more'),
+        # ('inventory', '0001_initial'),
         # ('patientrecords', '0003_transient_transientaddress_and_more'),
     ]
 

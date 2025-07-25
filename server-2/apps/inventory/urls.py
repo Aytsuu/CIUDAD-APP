@@ -26,7 +26,6 @@ urlpatterns = [
     
      
     # INVENTORY  
-    path("medicine_inventory/", MedicineInventoryView.as_view(), name="medicine_inventory"), # Added this line
     path("inventorylist/", InventoryView.as_view(), name="inventorylist"),
     path("update_inventorylist/<str:inv_id>/",InventoryUpdateView.as_view(), name="update_inventorylist"),
 

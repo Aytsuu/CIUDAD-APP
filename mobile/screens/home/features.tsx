@@ -1,3 +1,4 @@
+import { Book } from "@/lib/icons/Book";
 import { ClipboardPlus } from "@/lib/icons/ClipboardPlus";
 import { HeartPulse } from "@/lib/icons/HeartPulse";
 import { MessageCircleWarning } from "@/lib/icons/MessageCircleWarning";
@@ -13,7 +14,7 @@ export const features: FeatureType[] = [
   {
     name: "Request",
     icon: <ClipboardPlus className="text-white"/>,
-    route: "(health)/admin/requestspage"
+    route: ""
   },
   {
     name: "Report",
@@ -26,8 +27,13 @@ export const features: FeatureType[] = [
     route: "/(complaint)"
   },
   {
+    name: "Profiling",
+    icon: <Book className="text-white"/>,
+    route: "/(profiling)"
+  },
+  {
     name: "Health",
     icon: <HeartPulse className="text-white"/>,
-    route: "/(health)/home"
+    route: "/(health)"
   },
 ]

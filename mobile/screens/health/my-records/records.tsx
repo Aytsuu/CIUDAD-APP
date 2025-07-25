@@ -3,7 +3,7 @@ import { View, TouchableOpacity,ScrollView,StatusBar,SafeAreaView} from 'react-n
 import { ChevronLeft, Calendar, FileText, ChevronRight } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
-import SelectLayout from '@/components/ui/select/select-layout';
+import SelectLayout from '@/components/ui/select-layout';
 import { router } from 'expo-router';
 
 export default function Records() {

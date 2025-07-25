@@ -26,12 +26,14 @@ const LIGHT_THEME: Theme = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    
+  });
 
   const [loaded] = useFonts({
-    PoppinsRegular: require("../assets/fonts/Poppins-Regular.ttf"),
-    PoppinsMedium: require("../assets/fonts/Poppins-Medium.ttf"),
-    PoppinsSemiBold: require("../assets/fonts/Poppins-SemiBold.ttf"),
+    PoppinsRegular: require('../assets/fonts/Poppins-Regular.ttf'),
+    PoppinsMedium: require('../assets/fonts/Poppins-Medium.ttf'),
+    PoppinsSemiBold: require('../assets/fonts/Poppins-SemiBold.ttf'),
   });
 
   useEffect(() => {
@@ -55,18 +57,19 @@ export default function RootLayout() {
         <StatusBar backgroundColor="transparent" style="dark" />
         <ToastProvider>
           <QueryClientProvider client={queryClient}>
-            <Stack initialRouteName="(health)">
+            <Stack initialRouteName="(auth)">
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
+              <Stack.Screen name="(profiling)" options={{ headerShown: false }} />
               <Stack.Screen name="(report)" options={{ headerShown: false }} />
               <Stack.Screen name="(health)" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" />
             </Stack>
           </QueryClientProvider>
         </ToastProvider>
-        <PortalHost />
       </AuthProvider>
+      <PortalHost />
     </ThemeProvider>
   );
 }

@@ -157,7 +157,7 @@ const handleApiError = (err: any, operation: string) => {
 export const getAnimalBitePatientSummary = async () => {
   try {
     console.log("🔍 Fetching unique animal bite patient summary from /animalbites/patient-summary/...")
-    const res = await api2.get("animalbites/patient-summary/")
+    const res = await api2.get("animalbites/patient-details/")
     const uniquePatients = res.data
 
     console.log(`✅ Found ${uniquePatients.length} unique animal bite patients.`)
