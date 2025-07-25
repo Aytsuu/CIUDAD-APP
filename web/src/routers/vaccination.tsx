@@ -3,13 +3,13 @@ import IndivVaccinationRecords from "@/pages/healthServices/vaccination/tables/i
 import AllVaccinationRecords from "@/pages/healthServices/vaccination/tables/all/AllVaccinationRecord";
 import PatNewVacRecForm from "@/pages/healthServices/vaccination/forms/NewVaccinationForm";
 import VaccinationView from "@/pages/healthServices/vaccination/viewhistory/ViewVaccineHistory";
-import UpdateVaccinationForm from "@/pages/healthServices/vaccination/forms/UpdateVaccinationForm";
 import UnvaccinaResident from "@/pages/healthServices/vaccination/tables/all/UnvaccineResidents";
 import VaccinationManagement from "@/pages/healthServices/vaccination/tables/all/MainTable";
 import AgeGroupForm from "@/pages/healthServices/agegroup/AgeGroup";
 import { AddAgeGroupForm } from "@/pages/healthServices/agegroup/AddAgeGroupForm";
 import ScheduledVaccine from "@/pages/healthServices/vaccination/viewhistory/ScheduledVaccine";
-
+import ForwardedVaccinationRecords from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedVaccination";
+import ForwardedVaccinationForm from "@/pages/healthServices/vaccination/forms/Step2Vaccination";
 export const vaccination = [
   {
     path: "invVaccinationRecord",
@@ -28,10 +28,8 @@ export const vaccination = [
     path:"vaccinationView",
     element:<VaccinationView/>
   },
-  {
-    path:"updateVaccinationForm",
-    element:<UpdateVaccinationForm/>
-  },
+
+
   {
     path:"UnvaccinaResident",
     element:<UnvaccinaResident/>
@@ -52,6 +50,15 @@ export const vaccination = [
   {
     path: "scheduled-vaccine",
     element: <ScheduledVaccine />
+  },
+  {
+    path: "forwarded-vaccination-records",
+    element: <ForwardedVaccinationRecords />
+  },
+  {
+    path: "forwarded-vaccination-form", 
+    element: <ForwardedVaccinationForm />
   }
+
 
 ];

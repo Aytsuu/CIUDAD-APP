@@ -180,7 +180,9 @@ class Obstetrical_History(models.Model):
     class Meta:
         db_table = 'obstetrical_history'
         
-        
+  
+  
+
 class FollowUpVisit(models.Model):
     followv_id = models.BigAutoField(primary_key=True)
     followv_date = models.DateField()
@@ -189,10 +191,16 @@ class FollowUpVisit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
+    missedfollowv = models.ForeignKey(
+       'self',  # 👈 this is the "self" we're talking about
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='follow_up_visits')
     class Meta:
         db_table = 'follow_up_visit'
-         
         
+
 class Spouse(models.Model):
     spouse_id = models.BigAutoField(primary_key=True)
     spouse_type = models.CharField(max_length=10)

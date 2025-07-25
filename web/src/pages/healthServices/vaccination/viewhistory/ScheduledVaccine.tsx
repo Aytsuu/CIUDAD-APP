@@ -1,6 +1,6 @@
-import { ChevronLeft, Loader2 } from "lucide-react"; // Added Loader2
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react"; // Added useState
+import { useMemo, useState } from "react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Button } from "@/components/ui/button/button";
 import { CurrentVaccination } from "../../../../components/ui/current-vaccination";
@@ -16,19 +16,23 @@ import {
 import { VaccinationStatusCards } from "../tables/individual/vaccinationstatus";
 import { updateVaccinationHistory } from "../restful-api/update";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { api2 } from "@/api/api";
+import { createFollowUpVisit } from "../restful-api/post";
+import { updateFollowUpVisit } from "../restful-api/update";
 
 export default function ScheduledVaccine() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added loading state
-  // Access the state passed through the Link
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { Vaccination, patientData } = location.state || {};
+  const queryClient = useQueryClient();
 
-  // Get patient ID from the state
   const patientId = patientData?.pat_id;
   console.log("Patient ID:", patientId);
   console.log("Vaccination Data:", Vaccination);
   console.log("Patient Data:", patientData);
+  console.log("Vaccine Type:", Vaccination?.vaccination_type);
 
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
     useUnvaccinatedVaccines(patientId, patientData.personal_info.per_dob);
@@ -48,6 +52,32 @@ export default function ScheduledVaccine() {
     );
   }, [vaccinationHistory, Vaccination]);
 
+  const previousVaccination = useMemo(() => {
+    if (!vaccinationHistory.length || !Vaccination?.created_at) return null;
+  
+    // For routine vaccinations, just get the most recent vaccination
+    if (Vaccination.vaccination_type?.toLowerCase() === 'routine') {
+      const sortedHistory = [...vaccinationHistory].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      // Return the most recent one that's not the current vaccination
+      return sortedHistory.find(history => history.vachist_id !== Vaccination.vachist_id) || null;
+    }
+  
+    // Original logic for non-routine vaccinations
+    const sortedHistory = [...vaccinationHistory].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  
+    const currentIndex = sortedHistory.findIndex(
+      (history) => history.vachist_id === Vaccination.vachist_id
+    );
+  
+    return currentIndex > 0 ? sortedHistory[currentIndex - 1] : null;
+  }, [vaccinationHistory, Vaccination]);
+
+  console.log("Previous Vaccination Data:", previousVaccination);
+
   const relevantHistory = useMemo(() => {
     if (!Vaccination?.created_at) return [];
     return vaccinationHistory.filter(
@@ -56,6 +86,7 @@ export default function ScheduledVaccine() {
     );
   }, [vaccinationHistory, Vaccination]);
 
+  // 
   if (!patientData || !Vaccination) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -65,15 +96,52 @@ export default function ScheduledVaccine() {
   }
 
   const submit = async () => {
-    setIsSubmitting(true); // Start loading
+    setIsSubmitting(true);
     try {
+      
+      console.log("Previous Vaccination Data:", previousVaccination);
+      if (previousVaccination?.follow_up_visit) {
+        if (
+          previousVaccination.follow_up_visit.followv_status?.toLowerCase() ===
+          "missed"
+        ) {
+          createFollowUpVisit(
+            String(previousVaccination.patrec_id ?? ""),
+            new Date().toISOString(),
+            `Vaccination for: ${previousVaccination.vaccine_name}`,
+            "completed",
+            String(previousVaccination.follow_up_visit.followv_id)
+          );
+          console.log(
+            "Created new follow-up visit for previous vaccination",
+            previousVaccination.follow_up_visit.followv_id
+          );
+        } else {
+          updateFollowUpVisit(
+            String(previousVaccination.follow_up_visit.followv_id),
+            "completed"
+          );
+
+          console.log(
+            "Updated follow-up visit status to completed for previous vaccination",
+            previousVaccination.follow_up_visit.followv_id
+          );
+        }
+      }
+
       await updateVaccinationHistory(Vaccination.vachist_id, "completed");
+
+      queryClient.invalidateQueries({
+        queryKey: ["patientVaccinationRecords", patientId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+
       toast.success("Vaccination marked as completed successfully.");
-      navigate(-1)
+      navigate(-1);
     } catch (error) {
       toast.error("Failed to update vaccination status.");
     } finally {
-      setIsSubmitting(false); // Stop loading regardless of outcome
+      setIsSubmitting(false);
     }
   };
 
@@ -98,7 +166,6 @@ export default function ScheduledVaccine() {
       </div>
       <hr className="border-gray mb-4 sm:mb-6" />
 
-      {/* Patient Information Card */}
       <div className="mb-4">
         <PatientInfoCard patient={patientData} />
       </div>
@@ -116,12 +183,10 @@ export default function ScheduledVaccine() {
         content={
           <>
             <div>
-              {/* Current Vaccination */}
               {currentVaccination && (
                 <CurrentVaccination currentVaccination={currentVaccination} />
               )}
 
-              {/* Vaccination History */}
               <VaccinationHistoryRecord
                 relevantHistory={relevantHistory}
                 currentVaccinationId={Vaccination?.vachist_id}
@@ -131,11 +196,7 @@ export default function ScheduledVaccine() {
             </div>
 
             <div className="flex justify-end mt-6">
-              <Button 
-                type="submit" 
-                onClick={submit}
-                disabled={isSubmitting} // Disable button when loading
-              >
+              <Button type="submit" onClick={submit} disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

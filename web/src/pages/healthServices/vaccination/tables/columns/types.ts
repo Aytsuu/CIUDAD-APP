@@ -75,44 +75,52 @@ export interface VaccinationRecord {
     followv_id?: number;
     followv_date?: string;
     followv_status?: string;
+    patrec?: string;
   };
+  vacrec_details?: {
+    vacrec_id?: string,
+    vacrec_totaldose?: string,
+    created_at?: string,
+    updated_at?: string,
+    patrec_id?: string
+  },
 }
 
 
 
 
-  export type BasicInfoVaccinationRecord = {
+export type BasicInfoVaccinationRecord = {
 
-    pat_id: string;
-    fname: string;
-    lname: string;
-    mname: string;
-    sex: string;
-    age: string;
-    householdno: string;
-    street: string;
-    sitio: string;
-    barangay: string;
-    city: string;
-    province: string;
-    pat_type: string;
-    address: string;
-    vaccination_count: number;
-    dob: string;
-  }
-  export  type filter = "all" | "partially_vaccinated" | "completed";
+  pat_id: string;
+  fname: string;
+  lname: string;
+  mname: string;
+  sex: string;
+  age: string;
+  householdno: string;
+  street: string;
+  sitio: string;
+  barangay: string;
+  city: string;
+  province: string;
+  pat_type: string;
+  address: string;
+  vaccination_count: number;
+  dob: string;
+}
+export type filter = "all" | "partially_vaccinated" | "completed";
 
 //   export interface VaccinationCountsCardProps {
 //     residentCount: number;
 //     transientCount: number;
 //     totalCount: number;
 //   }
-  
-  export interface VaccinationCounts {
-    residentCount: number;
-    transientCount: number;
-    totalCount: number;
-  }
+
+export interface VaccinationCounts {
+  residentCount: number;
+  transientCount: number;
+  totalCount: number;
+}
 
 
 
@@ -124,7 +132,7 @@ export interface VaccinationRecord {
 //     add_city?: string;
 //     add_province?: string;
 //   }
-  
+
 //   interface PersonalInfo {
 //     per_lname: string;
 //     per_fname: string;
@@ -133,14 +141,14 @@ export interface VaccinationRecord {
 //     per_dob: string;
 //     per_addresses: Address[];
 //   }
-  
+
 //   export interface Resident {
 //     pat_id: string;
 //     rp_id: string | null;
 //     personal_info: PersonalInfo;
 //     vaccine_not_received: string;
 //   }
-  
+
 //   export interface UnvaccinatedResident {
 //     vaccine_name: string;
 //     pat_id: string;

@@ -44,14 +44,14 @@ class TobeAdministeredVaccinationView(generics.ListAPIView):
     serializer_class = VaccinationHistorySerializer
     def get_queryset(self):
         return VaccinationHistory.objects.filter(
-            vachist_status='scheduled',
+            vachist_status='in queue',
         ).order_by('-created_at')
         
 class CountScheduledVaccinationView(APIView):
     def get(self, request):
         try:
             count = VaccinationHistory.objects.filter(
-                vachist_status='scheduled'
+                vachist_status='in queue'
             ).count()
             return Response({"count": count}, status=status.HTTP_200_OK)
         except Exception as e:

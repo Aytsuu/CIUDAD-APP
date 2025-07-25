@@ -1,8 +1,6 @@
 "use client";
 
-import type React from "react";
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
@@ -24,23 +22,26 @@ import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "../restful-api/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useSubmitStep1, useSubmitStep2 } from "../queries/AddVacrecord"; // Assuming this path is correct for both
+import {  useSubmitStep2 } from "../queries/AddVacrecord";
 import { ValidationAlert } from "../../../../components/ui/vac-required-alert";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { PatientSearch, type Patient } from "@/components/ui/patientSearch";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useAuth } from "@/context/AuthContext";
 import CardLayout from "@/components/ui/card/card-layout";
+import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
+import { useUnvaccinatedVaccines, useFollowupVaccines } from "../queries/fetch";
+import { VaccinationStatusCards } from "../tables/individual/vaccinationstatus";
+import { useIndivPatientVaccinationRecords } from "../queries/fetch";
+import { VaccinationRecord } from "../tables/columns/types";
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, params } = location.state || {};
-  const patientDataFromLocation = params?.patientData; // Patient data if coming from an existing patient context
+  const patientDataFromLocation = params?.patientData;
 
-  // Determine if we are in "new vaccination record" mode, which requires patient search
   const shouldShowPatientSearch = mode === "newvaccination_record";
-
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
     "self"
   );
@@ -50,14 +51,34 @@ export default function VaccinationRecordForm() {
   const [submitting, setSubmitting] = useState(false);
   const [isStep1ConfirmOpen, setIsStep1ConfirmOpen] = useState(false);
   const [isStep2ConfirmOpen, setIsStep2ConfirmOpen] = useState(false);
+  const [nextVisitDate, setNextVisitDate] = useState<string | null>(null);
+  const [nextVisitDescription, setNextVisitDescription] = useState<
+    string | null
+  >(null);
+  const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(
+    null
+  );
+  const [vaccineHistory, setVaccineHistory] = useState<VaccinationRecord[]>([]);
+  const [isVaccineCompleted, setIsVaccineCompleted] = useState(false);
 
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
 
-  // Determine which patient data to use for the forms and PatientInfoCard
   const patientToUse = shouldShowPatientSearch
     ? selectedPatientData
     : patientDataFromLocation;
+
+  const { data: patientVaccinationRecords } = useIndivPatientVaccinationRecords(
+    patientToUse?.pat_id
+  );
+  const { data: unvaccinatedVaccines = [] } = useUnvaccinatedVaccines(
+    patientToUse?.pat_id,
+    patientToUse?.personal_info?.per_dob
+  );
+  const { data: followupVaccines = [] } = useFollowupVaccines(
+    patientToUse?.pat_id
+  );
+  const { data: vaccinesData, isLoading } = fetchVaccinesWithStock();
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
@@ -66,7 +87,10 @@ export default function VaccinationRecordForm() {
       vaccinetype: "",
       datevaccinated: new Date().toISOString().split("T")[0],
       assignto: "",
-      age: patientToUse?.age || "", // Assuming patientToUse might have an 'age' property
+      age: patientToUse?.age || "",
+      followv_date: "",
+      vachist_doseNo: 1,
+      vacrec_totaldose: "",
     },
   });
 
@@ -81,16 +105,13 @@ export default function VaccinationRecordForm() {
     },
   });
 
-  // Effect to set initial date and age based on patientToUse
   useEffect(() => {
     form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
     if (patientToUse?.personal_info?.per_dob) {
       form.setValue("age", calculateAge(patientToUse.personal_info.per_dob));
     } else if (patientToUse?.age) {
-      // Fallback if age is directly available
       form.setValue("age", patientToUse.age);
     }
-    // If in new record mode and a patient is selected, update pat_id
     if (shouldShowPatientSearch && selectedPatientData) {
       form.setValue("pat_id", selectedPatientData.pat_id.toString());
     } else if (!shouldShowPatientSearch && patientDataFromLocation) {
@@ -112,68 +133,220 @@ export default function VaccinationRecordForm() {
       const age = calculateAge(patient.personal_info?.per_dob || "");
       form.setValue("age", age);
       form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
+      form.setValue("vachist_doseNo", 1);
     } else {
       form.setValue("pat_id", "");
       form.setValue("age", "");
+      form.setValue("vachist_doseNo", 1);
     }
   };
 
-  const submitStep1 = useSubmitStep1();
+  const handleVaccineChange = (value: string) => {
+    form.setValue("vaccinetype", value);
+    setNextVisitDate(null);
+    setNextVisitDescription(null);
+    form.setValue("followv_date", "");
+    form.setValue("vacrec_totaldose", "");
+    setIsVaccineCompleted(false);
+
+    if (value) {
+      const [vacStck_id, vac_id, vac_name] = value.split(",");
+      const selectedVaccine = vaccinesData?.default?.find(
+        (v: any) => v.vacStck_id === parseInt(vacStck_id, 10)
+      );
+
+      if (selectedVaccine) {
+        const { vaccinelist } = selectedVaccine;
+        setSelectedVaccineType(vaccinelist.vac_type_choices);
+
+        const currentVaccineHistory =
+          patientVaccinationRecords?.filter(
+            (record) =>
+              record.vaccine_stock?.vaccinelist?.vac_id === Number(vac_id)
+          ) || [];
+        setVaccineHistory(currentVaccineHistory);
+
+        let doseNumber = 1;
+
+        if (
+          vaccinelist.vac_type_choices !== "routine"
+        ) {
+          const latestDose =
+            currentVaccineHistory.length > 0
+              ? Math.max(
+                  ...currentVaccineHistory.map(
+                    (r) => Number(r.vachist_doseNo) || 0
+                  )
+                )
+              : 0;
+          doseNumber = latestDose + 1;
+        }
+
+        form.setValue("vachist_doseNo", doseNumber);
+
+        // Set vacrec_totaldose for all vaccines
+        if (vaccinelist.no_of_doses) {
+          form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
+        }
+
+        // Check if vaccine is already completed
+        const isCompleted = currentVaccineHistory.some((record) => {
+          const recordTotalDose = record.vacrec_details?.vacrec_totaldose
+            ? Number(record.vacrec_details.vacrec_totaldose)
+            : 0;
+          const currentDose = Number(doseNumber);
+
+          // Check if current dose is equal to or exceeds total doses
+          return currentDose > recordTotalDose && recordTotalDose > 0;
+        }) && vaccinelist.vac_type_choices !== "routine";
+
+        setIsVaccineCompleted(isCompleted);
+
+        if (isCompleted &&  vaccinelist.vac_type_choices !== "routine") {
+          toast.warning(
+            `${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`
+          );
+        }
+
+        // Rest of your existing logic for routine and primary vaccines...
+        if (vaccinelist.vac_type_choices === "routine") {
+          const { interval, time_unit } = vaccinelist.routine_frequency;
+          const nextDate = calculateNextVisitDate(
+            interval,
+            time_unit,
+            new Date().toISOString()
+          );
+          setNextVisitDate(nextDate.toISOString().split("T")[0]);
+          setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+          form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+        } else if (vaccinelist.vac_type_choices === "primary") {
+          if (vaccinelist.no_of_doses >= 2) {
+            const dose2Interval = vaccinelist.intervals.find(
+              (interval: any) => interval.dose_number === 2
+            );
+            if (dose2Interval) {
+              const nextDate = calculateNextVisitDate(
+                dose2Interval.interval,
+                dose2Interval.time_unit,
+                new Date().toISOString()
+              );
+              setNextVisitDate(nextDate.toISOString().split("T")[0]);
+              setNextVisitDescription(
+                `Vaccination for ${vaccinelist.vac_name}`
+              );
+              form.setValue(
+                "followv_date",
+                nextDate.toISOString().split("T")[0]
+              );
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // const submitStep1 = useSubmitStep1();
+  // const onSubmitStep1 = async (data: VaccineSchemaType) => {
+  //   if (assignmentOption === "other" && !data.assignto) {
+  //     form.setError("assignto", { message: "Please select an assignee" });
+  //     toast.error("Please select an assignee");
+  //     return;
+  //   }
+  //   setSubmitting(true);
+  //   try {
+  //     if (!data.vaccinetype) {
+  //       form.setError("vaccinetype", { message: "Please select a vaccine" });
+  //       toast.error("Vaccine type is required");
+  //       return;
+  //     }
+  //     const vaccineParts = data.vaccinetype.split(",");
+  //     if (vaccineParts.length !== 4) {
+  //       form.setError("vaccinetype", {
+  //         message: "Invalid vaccine data format",
+  //       });
+  //       toast.error("Invalid vaccine data format");
+  //       return;
+  //     }
+  //     const [vacStck_id, vac_id, vac_name, expiry_date] = vaccineParts;
+
+  //     const followUpData = data.followv_date
+  //       ? {
+  //           followv_date: data.followv_date,
+  //           followv_status: "pending",
+  //           followv_description:
+  //             selectedVaccineType === "conditional"
+  //               ? `Vaccination follow-up for ${vac_name}`
+  //               : nextVisitDescription || `Follow-up for ${vac_name}`,
+  //         }
+  //       : undefined;
+
+  //     await submitStep1.mutateAsync({
+  //       data: {
+  //         ...data,
+  //       },
+  //       assignmentOption,
+  //       pat_id: data.pat_id || null,
+  //       vacStck_id: vacStck_id.trim(),
+  //       vac_id: vac_id.trim(),
+  //       vac_name: vac_name.trim(),
+  //       expiry_date: expiry_date.trim(),
+  //       staff_id: staff_id,
+  //       form: {
+  //         setError: form.setError,
+  //         getValues: form.getValues,
+  //         reset: form.reset,
+  //       },
+  //       followUpData,
+  //       vaccinationHistory: vaccineHistory,
+  //     });
+  //   } catch (error) {
+  //     toast.error(
+  //       "Failed to submit Step 1: " +
+  //         (error instanceof Error ? error.message : "Unknown error")
+  //     );
+  //   } finally {
+  //     setSubmitting(false);
+  //     setIsStep1ConfirmOpen(false);
+  //   }
+  // };
+
+
+
+
+
+
+
+
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
+    setSubmitting(true);
     if (assignmentOption === "other" && !data.assignto) {
       form.setError("assignto", { message: "Please select an assignee" });
+      toast.error("Please select an assignee");
       return;
     }
-    setSubmitting(true);
-    try {
-      if (!data.vaccinetype) {
-        form.setError("vaccinetype", { message: "Please select a vaccine" });
-        toast.error("Vaccine type is required");
-        return;
-      }
-      const vaccineParts = data.vaccinetype.split(",");
-      if (vaccineParts.length !== 4) {
-        form.setError("vaccinetype", {
-          message: "Invalid vaccine data format",
-        });
-        toast.error("Invalid vaccine data format");
-        return;
-      }
-      const [vacStck_id, vac_id, vac_name, expiry_date] = vaccineParts;
-      await submitStep1.mutateAsync({
-        data,
-        assignmentOption,
-        pat_id: data.pat_id || null,
-        vacStck_id: vacStck_id.trim(),
-        vac_id: vac_id.trim(),
-        vac_name: vac_name.trim(),
-        expiry_date: expiry_date.trim(),
-        staff_id: staff_id,
-      });
-    } catch (error) {
-      toast.error(
-        "Failed to submit Step 1: " +
-          (error instanceof Error ? error.message : "Unknown error")
-      );
-    } finally {
-      setSubmitting(false);
-      setIsStep1ConfirmOpen(false); // Close confirmation dialog
-    }
-  };
-
-  const submitStep2 = useSubmitStep2();
-  const onSubmitStep2 = async (data: VitalSignsType) => {
-    setSubmitting(true);
     try {
       const formData = form.getValues();
       const [vacStck_id, vac_id, vac_name, expiry_date] =
         formData.vaccinetype.split(",");
+
+      const followUpData = formData.followv_date
+        ? {
+            followv_date: formData.followv_date,
+            followv_status: "pending",
+            followv_description:
+              selectedVaccineType === "conditional"
+                ? `Conditional vaccination follow-up for ${vac_name}`
+                : nextVisitDescription || `Follow-up for ${vac_name}`,
+          }
+        : undefined;
+
       await submitStep2.mutateAsync({
+        assignmentOption,
         data,
         vacStck_id: vacStck_id.trim(),
         vac_id: vac_id.trim(),
         vac_name: vac_name.trim(),
-        expiry_date: expiry_date.trim(), // Ensure expiry_date is passed
+        expiry_date: expiry_date.trim(),
         pat_id: form.getValues("pat_id"),
         form: {
           setError: form.setError,
@@ -182,10 +355,57 @@ export default function VaccinationRecordForm() {
         },
         form2: { reset: form2.reset, getValues: form2.getValues },
         staff_id: staff_id,
+        followUpData,
+        vaccinationHistory: vaccineHistory,
       });
     } finally {
       setSubmitting(false);
-      setIsStep2ConfirmOpen(false); // Close confirmation dialog
+      setIsStep2ConfirmOpen(false);
+    }
+  };
+
+
+
+  const submitStep2 = useSubmitStep2();
+  const onSubmitStep2 = async (data: VitalSignsType) => {
+    setSubmitting(true);
+    try {
+      const formData = form.getValues();
+      const [vacStck_id, vac_id, vac_name, expiry_date] =
+        formData.vaccinetype.split(",");
+
+      const followUpData = formData.followv_date
+        ? {
+            followv_date: formData.followv_date,
+            followv_status: "pending",
+            followv_description:
+              selectedVaccineType === "conditional"
+                ? `Conditional vaccination follow-up for ${vac_name}`
+                : nextVisitDescription || `Follow-up for ${vac_name}`,
+          }
+        : undefined;
+
+      await submitStep2.mutateAsync({
+        assignmentOption,
+        data,
+        vacStck_id: vacStck_id.trim(),
+        vac_id: vac_id.trim(),
+        vac_name: vac_name.trim(),
+        expiry_date: expiry_date.trim(),
+        pat_id: form.getValues("pat_id"),
+        form: {
+          setError: form.setError,
+          getValues: form.getValues,
+          reset: form.reset,
+        },
+        form2: { reset: form2.reset, getValues: form2.getValues },
+        staff_id: staff_id,
+        followUpData,
+        vaccinationHistory: vaccineHistory,
+      });
+    } finally {
+      setSubmitting(false);
+      setIsStep2ConfirmOpen(false);
     }
   };
 
@@ -221,21 +441,12 @@ export default function VaccinationRecordForm() {
     form2.handleSubmit(onSubmitStep2)();
   };
 
-  const {
-    data: vaccinesData,
-    isLoading,
-    isError,
-    error,
-  }  = fetchVaccinesWithStock();
-  const handleVaccineChange = (value: string) => {
-    form.setValue("vaccinetype", value);
-    console.log("Selected vaccine value:", value);
-  };
-
   const hasInvalidStep1Fields =
-    (shouldShowPatientSearch && !selectedPatientId) || // Check selectedPatientId only if in new record mode
+    (shouldShowPatientSearch && !selectedPatientId) ||
     !form.watch("vaccinetype") ||
-    (assignmentOption === "other" && !form.watch("assignto"));
+    (assignmentOption === "other" && !form.watch("assignto")) ||
+    !form.watch("vachist_doseNo") ||
+    (selectedVaccineType === "conditional" && !form.watch("vacrec_totaldose"));
 
   const hasInvalidStep2Fields =
     assignmentOption === "self" &&
@@ -243,7 +454,8 @@ export default function VaccinationRecordForm() {
       !form2.watch("temp") ||
       !form2.watch("o2") ||
       !form2.watch("bpsystolic") ||
-      !form2.watch("bpdiastolic"));
+      !form2.watch("bpdiastolic") ||
+      (selectedVaccineType === "conditional" && !form.watch("followv_date")));
 
   return (
     <>
@@ -269,7 +481,6 @@ export default function VaccinationRecordForm() {
       <CardLayout
         content={
           <>
-            {/* Patient Selection Section - Conditionally rendered */}
             {shouldShowPatientSearch && (
               <PatientSearch
                 value={selectedPatientId}
@@ -279,12 +490,20 @@ export default function VaccinationRecordForm() {
               />
             )}
 
-            {/* Patient Information Card */}
             <div className="mb-4 bg-white">
               <PatientInfoCard patient={patientToUse} />
             </div>
 
-            {/* Vaccination Form Section */}
+            <CardLayout
+              cardClassName="mb-6"
+              content={
+                <VaccinationStatusCards
+                  unvaccinatedVaccines={unvaccinatedVaccines}
+                  followupVaccines={followupVaccines}
+                />
+              }
+            />
+
             <div className="bg-white p-6 sm:p-8 rounded-sm shadow-sm border-gray-100">
               <Form {...form}>
                 <form onSubmit={handleStep1Submit} className="space-y-6">
@@ -320,15 +539,64 @@ export default function VaccinationRecordForm() {
                           </div>
                         }
                       />
+                      {form.watch("vaccinetype") && (
+                        <>
+                          <div className="mt-4 space-y-4">
+                            <FormInput
+                              control={form.control}
+                              name="vacrec_totaldose"
+                              label="Total Doses Required"
+                              placeholder="Enter total doses"
+                              type="number"
+                              readOnly={selectedVaccineType !== "conditional"}
+                            />
+                            <FormDateTimeInput
+                              control={form.control}
+                              name="followv_date"
+                              label="Next Follow-up Visit Date"
+                              type="date"
+                            />
+                          </div>
 
+                          {selectedVaccineType !== "conditional" &&
+                            nextVisitDate && (
+                              <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
+                                <h3 className="font-medium text-blue-800">
+                                  Next Follow-up Visit
+                                </h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-sm text-blue-700">
+                                    {nextVisitDescription}
+                                  </span>
+                                  <span className="font-semibold text-blue-900">
+                                    {format(
+                                      new Date(nextVisitDate),
+                                      "MMMM d, yyyy"
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                        </>
+                      )}
                     </div>
-                    <FormDateTimeInput
-                      control={form.control}
-                      name="datevaccinated"
-                      label="Date Vaccinated"
-                      type="date"
-                      readOnly
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormDateTimeInput
+                        control={form.control}
+                        name="datevaccinated"
+                        label="Date Vaccinated"
+                        type="date"
+                        readOnly
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="vachist_doseNo"
+                        label="Dose Number"
+                        placeholder="Enter dose number"
+                        type="number"
+                        readOnly={mode !== "newvaccination_record"}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">
                     <h2 className="font-bold text-darkBlue1 mb-3">
@@ -380,12 +648,11 @@ export default function VaccinationRecordForm() {
                       </div>
                     )}
                   </div>
-                  {/* Validation Alert for Step 1 */}
                   {assignmentOption === "other" && (
                     <ValidationAlert
                       patientError={
                         shouldShowPatientSearch && !selectedPatientId
-                      } // Conditional patient error
+                      }
                       vaccineError={!form.watch("vaccinetype")}
                       assigneeError={
                         !!form.watch("vaccinetype") &&
@@ -478,8 +745,7 @@ export default function VaccinationRecordForm() {
                     <ValidationAlert
                       patientError={
                         shouldShowPatientSearch && !selectedPatientId
-                      } // Conditional patient error
-                      vaccineError={!form.watch("vaccinetype")}
+                      }
                     />
                     <div className="flex justify-end gap-3 pt-6 ">
                       <Button
@@ -493,7 +759,11 @@ export default function VaccinationRecordForm() {
                       <Button
                         type="submit"
                         className="w-[120px]"
-                        disabled={hasInvalidStep1Fields || submitting}
+                        disabled={
+                          hasInvalidStep1Fields ||
+                          submitting ||
+                          isVaccineCompleted
+                        }
                       >
                         {submitting ? (
                           <>

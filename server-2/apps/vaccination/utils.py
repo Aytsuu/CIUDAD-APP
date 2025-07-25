@@ -41,8 +41,7 @@ def has_existing_vaccine_history(pat_id, vac_id):
     
 def get_patient_vaccines_with_followups(pat_id):
     history_records = VaccinationHistory.objects.filter(
-        vacrec__patrec_id__pat_id=pat_id,
-        followv__followv_status="pending"  # ✅ only pending follow-up visits
+        vacrec__patrec_id__pat_id=pat_id
     ).select_related('vacStck_id__vac_id', 'followv')
 
     if not history_records.exists():

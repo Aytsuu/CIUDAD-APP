@@ -1,12 +1,6 @@
 import { api2 } from "@/api/api";
 import axios, { AxiosError } from 'axios';
 
-// Helper function to get vaccine stock info
-export const getVaccineStock = async (vaccineTypeId: string) => {
-  const vacStck_id = parseInt(vaccineTypeId, 10);
-  const response = await api2.get(`inventory/vaccine_stocks/${vacStck_id}/`);
-  return response.data;
-};
 
 
 
@@ -35,7 +29,7 @@ export const createVaccinationHistory = async (
   data: Record<string, any>,
   vacStck_id: string,
   doseNo: number,
-  status: "forwarded" | "completed" | "partially vaccinated" | "scheduled",
+  status: "forwarded" | "completed" | "partially vaccinated" | "in queue",
   age:string,
   staff_id: string | null,
   vital_id?: string | null,
@@ -103,15 +97,19 @@ export const createVitalSigns = async (data: Record<string, any>) => {
 export const createFollowUpVisit = async (
   patrec_id: string,
   followv_date: string,
-  followv_description: string 
+  followv_description: string ,
+  followv_status: "pending" | "completed" | "missed",
+  missedfollowv_id ?: string | null, // Optional parameter for missed follow-up visit
 ) => {
   try {
     const response = await api2.post("patientrecords/follow-up-visit/", {
       followv_date,
       patrec: parseInt(patrec_id, 10),
-      followv_status: "pending",
+      followv_status:  followv_status || "pending",
       followv_description,
+      missedfollowv: missedfollowv_id ? parseInt(missedfollowv_id, 10) : null, // Handle optional parameter
       created_at: new Date().toISOString(),
+
     });
     console.log("Parsed patrec_id:", parseInt(patrec_id, 10)); // Logs parsed value for debugging
     return response.data;
@@ -145,43 +143,6 @@ export const createFollowUpVisit = async (
 };
 
 
-// New API function for fetching previous vaccination history
-export const getVaccinationHistory = async (vachist_id: string) => {
-    const response = await api2.get(`vaccination/vaccination-history/${vachist_id}/`);
-    return response.data;
-  };
-  
-  // New API function for updating follow-up visit
-  export const updateFollowUpVisit = async (followv_id: string, status: string) => {
-    await api2.patch(`patientrecords/follow-up-visit/${parseInt(followv_id, 10)}/`, {
-      followv_status: status,
-    });
-  };
-  
-
-  
-export const deleteVaccinationRecord = async (vacrec_id: string) => {
-  await api2.delete(`vaccination/vaccination-record/${vacrec_id}/`);
-};
-
-export const deletePatientRecord = async (patrec_id: string) => {
-  const parsedPatrecId = parseInt(patrec_id, 10);
-  await api2.delete(`patientrecords/patient-record/${parsedPatrecId}/`);
-};
-
-export const deleteVitalSigns = async (vital_id: string) => {
-  await api2.delete(`patientrecords/vital-signs/${vital_id}/`);
-};
-
-export const deleteFollowUpVisit = async (followv_id: string) => {
-  await api2.delete(`patientrecords/follow-up-visit/${followv_id}/`);
-};
-
-export const deleteVaccinationHistory = async (vachist_id: string) => {
-  await api2.delete(`vaccination/vaccination-history/${vachist_id}/`);
-
-};
-
 
 export const createAntigenStockTransaction = async (
   vacStck_id: number,
@@ -196,5 +157,10 @@ export const createAntigenStockTransaction = async (
     vacStck_id: vacStck_id,
   };
 
-  await api2.post("inventory/antigens_stocks/transaction/", transactionPayload);
+  try {
+    await api2.post("inventory/antigens_stocks/transaction/", transactionPayload);
+  } catch (error) {
+    console.error("Error occurred while creating antigen stock transaction:", error);
+    throw error;
+  }
 };

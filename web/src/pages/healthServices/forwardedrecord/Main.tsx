@@ -139,7 +139,7 @@ export default function MainForwardedRecord() {
                       </div>
                     </div>
                   </div>
-                  <Link to="/main-forwarded-records/forwarded-vaccination-form">
+                  <Link to="/forwarded-vaccination-records">
                     <Button
                       variant="outline"
                       size="sm"

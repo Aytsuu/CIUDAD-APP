@@ -46,6 +46,9 @@ export const VaccineSchema = z
     assignto: z.string().optional(),
     age: z.string().optional(),
     followv_date: z.string().optional(),
+    vachist_doseNo: z.number().optional(),
+    vacrec_totaldose: z.string().optional(),
+
   })
   
 

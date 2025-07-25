@@ -1,6 +1,6 @@
 // Create a new file: soap-mutations.ts
 import { useMutation } from "@tanstack/react-query";
-import { deleteFollowUpVisit } from "@/pages/healthServices/vaccination/restful-api/post";
+import { deleteFollowUpVisit } from "@/pages/healthServices/vaccination/restful-api/delete";
 import {
   createMedicalHistory,
   createFollowUpVisit,

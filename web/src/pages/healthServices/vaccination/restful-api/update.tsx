@@ -6,7 +6,8 @@ export const updateVaccinationHistory = async (
     | "forwarded"
     | "completed"
     | "partially vaccinated"
-    | "scheduled"
+    | "scheduled",
+  vital_id?: number | null,
 ) => {
   try {
     const response = await api2.put(
@@ -14,6 +15,7 @@ export const updateVaccinationHistory = async (
       {
         vachist_status,
         updated_at: new Date().toISOString(),
+        vital: vital_id , // Ensure vital_id is parsed as an integer
       }
     );
     return response.data;
@@ -23,3 +25,14 @@ export const updateVaccinationHistory = async (
     throw error;
   }
 };
+
+
+
+  
+  // New API function for updating follow-up visit
+  export const updateFollowUpVisit = async (followv_id: string, status: string) => {
+    await api2.patch(`patientrecords/follow-up-visit/${parseInt(followv_id, 10)}/`, {
+      followv_status: status,
+    });
+  };
+  

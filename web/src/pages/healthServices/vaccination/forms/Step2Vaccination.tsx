@@ -1,13 +1,9 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  VaccineSchema,
-  type VaccineSchemaType,
   VitalSignsSchema,
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
@@ -20,40 +16,27 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
 import {
   createVitalSigns,
-  updateVacRecord,
-} from "../restful-api/vitalsignsAPI";
-import {
-  getVaccineStock,
-  createFollowUpVisit,
-  deleteVitalSigns,
-  updateFollowUpVisit,
-} from "@/pages/healthServices/vaccination/restful-api/post";
-import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
+} from "../../forwardedrecord/restful-api/vitalsignsAPI";
+import { updateVaccinationHistory } from "../restful-api/update";
+import { deleteVitalSigns } from "@/pages/healthServices/vaccination/restful-api/delete";
+import { getVaccineStock } from "@/pages/healthServices/vaccination/restful-api/get";
+import { format } from "date-fns";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import CardLayout from "@/components/ui/card/card-layout";
+import { useStep2VaccinationMutation } from "../queries/Step2Vaccination";
+import { Patient } from "../../restful-api-patient/type";
 
-export interface Patient {
-  pat_id: string;
-  name: string;
-  pat_type: string;
-  [key: string]: any;
-}
 
 export default function ForwardedVaccinationForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { params } = location.state || {};
   const {
-    patientData,
     vaccineName,
     vaccineType,
     vaccineDose,
-    vachist_id,
-    vacStck_id,
-    patrec_id,
-    vacStck_qty_avail,
-    vacrec_id,
     maxDoses,
-    existing_followv_id,
+    follow_up_visit,
   } = params || {};
 
   const form = useForm<VitalSignsType>({
@@ -67,6 +50,7 @@ export default function ForwardedVaccinationForm() {
     },
   });
 
+  const mutation = useStep2VaccinationMutation();
   const [selectedPatientData, setSelectedPatientData] =
     useState<Patient | null>(null);
   const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] =
@@ -82,97 +66,25 @@ export default function ForwardedVaccinationForm() {
 
   const submit = async (data: VitalSignsType) => {
     setIsSubmitting(true);
-    console.log("Submitting form with data:", data);
-    console.log("Current params:", params);
-
     try {
-      if (!vachist_id) {
-        throw new Error("No vaccination record ID provided");
-      }
-
-      // Declare variables at the top level of the try block
-      let vital_id: number | null = null;
-      let followv_id: number | null = null;
-
-      try {
-        // Create vital signs
-        const vitalSigns = await createVitalSigns({
-          vital_bp_systolic: data.bpsystolic,
-          vital_bp_diastolic: data.bpdiastolic,
-          vital_temp: data.temp,
-          vital_o2: data.o2,
-          vital_pulse: data.pr,
-        });
-
-        vital_id = vitalSigns?.vital_id;
-        console.log("Created vital signs with ID:", vital_id);
-        if (!vital_id) {
-          throw new Error("Failed to retrieve vital signs ID from response");
-        }
-
-        // Get vaccine data
-        const vaccineData = await getVaccineStock(vacStck_id);
-
-        if (!vacStck_id) {
-          throw new Error(
-            "Vaccine ID is missing. Please select a valid vaccine type."
-          );
-        }
-        // Update vaccine stock
-        await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck_id)}/`, {
-          vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
-        });
-
-        // Handle routine vaccination
-         const updateData = {
-          vachist_status: "scheduled",
-          vital: vital_id,
-          followv: followv_id,
-        };
-
-        const updatedVacHistory = await api2.patch(
-          `/vaccination/vaccination-history/${vachist_id}/`,
-          updateData
-        );
-        console.log("Updated vaccination history:", updatedVacHistory);
-
-        toast.success("Vaccination record updated successfully");
-        navigate(-1);
-      } catch (error) {
-        console.error("Error during submission:", error);
-
-        // Rollback operations
-        if (vital_id) {
-          console.log("Attempting to rollback vital signs with ID:", vital_id);
-          await deleteVitalSigns(String(vital_id));
-        }
-        if (followv_id) {
-          console.log(
-            "Attempting to rollback follow-up visit with ID:",
-            followv_id
-          );
-          // Note: You'll need to implement deleteFollowUpVisit if it doesn't exist
-        }
-
-        throw error;
-      }
+      await mutation.mutateAsync({ data, params });
+      navigate(-1);
     } catch (error) {
-      console.error("Failed to save vital signs:", error);
-      toast.error("Failed to save vaccination record");
+      console.error("Error during submission:", error);
     } finally {
       setIsSubmitting(false);
       setIsSubmitConfirmationOpen(false);
     }
   };
 
+
   const handleConfirmSubmit = () => {
-    setIsSubmitConfirmationOpen(false); // Close the modal immediately
-    form.handleSubmit(submit)(); // Trigger the form submission
+    setIsSubmitConfirmationOpen(false);
+    form.handleSubmit(submit)();
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Trigger validation and check if form is valid
     const isValid = await form.trigger();
     if (isValid) {
       setIsSubmitConfirmationOpen(true);
@@ -181,7 +93,7 @@ export default function ForwardedVaccinationForm() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 ">
         <Button
           className="text-black p-2 mb-2 self-start"
           variant={"outline"}
@@ -214,39 +126,6 @@ export default function ForwardedVaccinationForm() {
           {selectedPatientData ? (
             <div className="mb-4">
               <PatientInfoCard patient={selectedPatientData} />
-              <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
-                <h3 className="font-semibold text-blue-800 mb-3">
-                  Vaccine Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <p className="text-sm text-gray-500 font-medium">
-                      Vaccine Name
-                    </p>
-                    <p className="font-semibold text-gray-800">
-                      {vaccineName || "-"}
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <p className="text-sm text-gray-500 font-medium">
-                      Vaccine Type
-                    </p>
-                    <p className="font-semibold text-gray-800">
-                      {vaccineType || "-"}
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <p className="text-sm text-gray-500 font-medium">Dose</p>
-                    <p className="font-semibold text-gray-800">
-                      {vaccineDose
-                        ? `${vaccineDose}${
-                            ["st", "nd", "rd"][(vaccineDose % 10) - 1] || "th"
-                          } Dose`
-                        : "-"}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -262,6 +141,84 @@ export default function ForwardedVaccinationForm() {
             </div>
           )}
         </div>
+
+        <CardLayout
+          content={
+            <>
+              <h3 className="font-semibold text-lg text-blue-800 mb-4">
+                Vaccination Details
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Vaccine Information */}
+                <div className="">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-500">Vaccine Name</p>
+                      <p className="font-medium text-gray-800">
+                        {vaccineName || "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Vaccine Type</p>
+                      <p className="font-medium text-gray-800">
+                        {vaccineType || "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Dose</p>
+                      <p className="font-medium text-gray-800">
+                        {vaccineDose
+                          ? `${vaccineDose}${
+                              ["st", "nd", "rd"][(vaccineDose % 10) - 1] || "th"
+                            } Dose`
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Total Doses Required
+                    </p>
+                    <p className="font-medium text-gray-800">
+                      {maxDoses || "-"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Next Follow-up Visit
+                    </p>
+                    <p className="font-medium text-gray-800">
+                      {follow_up_visit?.followv_date
+                        ? format(
+                            new Date(follow_up_visit.followv_date),
+                            "MMM dd, yyyy"
+                          )
+                        : "No follow-up scheduled"}
+                    </p>
+                  </div>
+                  {/* <div>
+                    <p className="text-xs text-gray-500">Follow-up Status</p>
+                    <p className="font-medium text-gray-800">
+                      {follow_up_visit?.followv_status
+                        ? follow_up_visit.followv_status
+                            .charAt(0)
+                            .toUpperCase() +
+                          follow_up_visit.followv_status.slice(1)
+                        : "N/A"}
+                    </p>
+                  </div> */}
+                </div>
+              </div>
+            </>
+          }
+        />
+
+        {/* Combined Vaccination Details Section */}
 
         <div className="border-t border-gray-200 my-8"></div>
 
@@ -299,7 +256,7 @@ export default function ForwardedVaccinationForm() {
                 type="number"
               />
             </div>
-            <h2 className="font-semibold text-blue bg-blue-50 rounded-md py-2 px-3">
+            <h2 className="font-semibold text-blue  rounded-md py-2 px-3">
               Blood Pressure
             </h2>
             <div className="flex gap-2">

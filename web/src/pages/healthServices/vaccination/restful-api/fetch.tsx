@@ -92,10 +92,7 @@ export const fetchVaccinesWithStock = () => {
 };
 
 
-
-
-
-// In your fetchVaccinesWithStockVacID function
+// In fetchVaccinesWithStockVacID function
 export const fetchVaccinesWithStockVacID = (vacId: number) => {
   const [vaccines, setVaccines] = useState<{
     default: any[];
@@ -105,6 +102,7 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
       vac_id: string;
       expiry: string | null;
       available: number;
+      expiryDate: Date | null;
     }[];
   }>({ default: [], formatted: [] });
   const [isLoading, setIsLoading] = useState(true);
@@ -120,16 +118,26 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
           return;
         }
 
-        const availableStocks = stocks.filter((stock) => {
+        // Filter by vac_id first
+        const filteredByVacId = stocks.filter(stock => stock.vac_id === vacId);
+
+        const availableStocks = filteredByVacId.filter((stock) => {
           const isExpired =
             stock.inv_details?.expiry_date &&
             new Date(stock.inv_details.expiry_date) < new Date();
           return stock.vacStck_qty_avail > 0 && !isExpired;
         });
 
+        // Sort by expiry date (nearest first)
+        const sortedStocks = [...availableStocks].sort((a, b) => {
+          const aDate = a.inv_details?.expiry_date ? new Date(a.inv_details.expiry_date) : new Date(9999, 11, 31);
+          const bDate = b.inv_details?.expiry_date ? new Date(b.inv_details.expiry_date) : new Date(9999, 11, 31);
+          return aDate.getTime() - bDate.getTime();
+        });
+
         const transformedData = {
-          default: availableStocks,
-          formatted: availableStocks.map((stock: any) => ({
+          default: sortedStocks,
+          formatted: sortedStocks.map((stock: any) => ({
             id: `${stock.vacStck_id},${stock.vac_id},${
               stock.vaccinelist?.vac_name || "Unknown Vaccine"
             },${stock.inv_details?.expiry_date || "No Expiry"}`,
@@ -149,6 +157,7 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
             vac_id: String(stock.vac_id),
             expiry: stock.inv_details?.expiry_date || null,
             available: stock.vacStck_qty_avail,
+            expiryDate: stock.inv_details?.expiry_date ? new Date(stock.inv_details.expiry_date) : null
           })),
         };
 
@@ -170,7 +179,6 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
     isLoading,
   };
 };
-
 
 export const checkVaccineStatus = async (pat_id: string, vac_id: number) => {
   try {

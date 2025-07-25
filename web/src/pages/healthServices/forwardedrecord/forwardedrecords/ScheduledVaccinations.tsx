@@ -44,6 +44,7 @@ export interface VaccinationRecord {
   dose_number: number;
   total_doses: number;
   status: string;
+  vaccination_type: string;
   batch_number: string;
   expiry_date: string;
   created_at: string;
@@ -118,6 +119,7 @@ export default function ScheduledVaccinations() {
         vaccine_name:
           record.vaccine_stock?.vaccinelist?.vac_name || "Unknown Vaccine",
         dose_number: record.vachist_doseNo,
+        vaccination_type: record.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
         total_doses: record.vacrec_details?.vacrec_totaldose || 1,
         status: record.vachist_status,
         batch_number: record.vaccine_stock?.batch_number || "N/A",
@@ -190,7 +192,6 @@ export default function ScheduledVaccinations() {
       cell: ({ row }) => (
         <div className="flex flex-col min-w-[150px]">
           <div className="font-medium">{row.original.vaccine_name}</div>
-         
         </div>
       ),
     },
@@ -257,37 +258,38 @@ export default function ScheduledVaccinations() {
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-        <Link
-  to="/scheduled-vaccine"
-  state={{
-    Vaccination: row.original,
-    patientData: {
-      pat_id: row.original.patient.pat_id,
-      pat_type: row.original.patient.pat_type,
-      age: row.original.patient.age,
-      addressFull: row.original.patient.address || "No address provided",
-      address: {
-        add_street: row.original.patient.street,
-        add_barangay: row.original.patient.barangay,
-        add_city: row.original.patient.city,
-        add_province: row.original.patient.province,
-        add_sitio: row.original.patient.sitio,
-      },
-      households: [{ hh_id: row.original.patient.householdno }],
-      personal_info: {
-        per_fname: row.original.patient.fname,
-        per_mname: row.original.patient.mname,
-        per_lname: row.original.patient.lname,
-        per_dob: row.original.patient.dob,
-        per_sex: row.original.patient.sex,
-      }
-    }
-  }}
->
-  <Button variant="outline" size="sm">
-    View
-  </Button>
-</Link>
+          <Link
+            to="/scheduled-vaccine"
+            state={{
+              Vaccination: row.original,
+              patientData: {
+                pat_id: row.original.patient.pat_id,
+                pat_type: row.original.patient.pat_type,
+                age: row.original.patient.age,
+                addressFull:
+                  row.original.patient.address || "No address provided",
+                address: {
+                  add_street: row.original.patient.street,
+                  add_barangay: row.original.patient.barangay,
+                  add_city: row.original.patient.city,
+                  add_province: row.original.patient.province,
+                  add_sitio: row.original.patient.sitio,
+                },
+                households: [{ hh_id: row.original.patient.householdno }],
+                personal_info: {
+                  per_fname: row.original.patient.fname,
+                  per_mname: row.original.patient.mname,
+                  per_lname: row.original.patient.lname,
+                  per_dob: row.original.patient.dob,
+                  per_sex: row.original.patient.sex,
+                },
+              },
+            }}
+          >
+            <Button variant="outline" size="sm">
+              View
+            </Button>
+          </Link>
         </div>
       ),
     },

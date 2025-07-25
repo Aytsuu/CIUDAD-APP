@@ -104,7 +104,7 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
             staff_id: record.staff_id,
             vital: record.vital,
             vacrec: record.vacrec,
-            vacStck: record.vacStck,
+            vacStck: record.vacStck_id,
             vacrec_totaldose: record.vacrec_totaldose,
             vacrec_status: record.vacrec_details?.vacrec_status,
             vaccination_count: record.vaccination_count || 0,
@@ -129,6 +129,14 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
               followv_id: record.follow_up_visit?.followv_id,
               followv_date: record.follow_up_visit?.followv_date || "No Schedule",
               followv_status: record.follow_up_visit?.followv_status || "N/A",
+            },
+            vacrec_details: record.vacrec_details || {
+              vacrec_id: record.vacrec_details?.vacrec_id || 0,
+              vacrec_status: record.vacrec_details?.vacrec_status || "N/A",
+              vacrec_totaldose: record.vacrec_details?.vacrec_totaldose || 0,
+              patrec_id: record.vacrec_details?.patrec_id || 0,
+              vacrec_created_at: record.vacrec_details?.created_at || "N/A",
+              vacrec_updated_at: record.vacrec_details?.updated_at || "N/A",
             },
           };
         }).sort(

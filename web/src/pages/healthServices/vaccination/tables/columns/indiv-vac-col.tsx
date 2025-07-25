@@ -104,10 +104,7 @@ export const IndivVaccineColumns = (
     accessorKey: "vachist_status",
     header: "Status",
     cell: ({ row }) => {
-      const displayStatus =
-        row.original.vachist_status?.toLowerCase() === "scheduled"
-          ? "in queue"
-          : row.original.vachist_status;
+      const displayStatus = row.original.vachist_status;
 
       const statusColors = {
         completed: "bg-green-100 text-green-800",
@@ -198,7 +195,7 @@ export const IndivVaccineColumns = (
               View
             </Button>
           </Link>
-          {shouldShowButton && (
+          {/* {shouldShowButton && (
             <Link
               to="/updateVaccinationForm"
               state={{ params: { Vaccination: currentRecord, patientData } }}
@@ -211,7 +208,7 @@ export const IndivVaccineColumns = (
                 Process Next Dose
               </Button>
             </Link>
-          )}
+          )} */}
         </div>
       );
     },

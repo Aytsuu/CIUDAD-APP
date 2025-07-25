@@ -2,18 +2,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import {
-  getVaccineStock,
   createAntigenStockTransaction,
-  
   createVaccinationRecord,
   createVaccinationHistory,
   createVitalSigns,
   createFollowUpVisit,
-  deleteVaccinationRecord,
+} from "../restful-api/post";
+import { deleteVaccinationRecord,
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
-} from "../restful-api/post";
+  deleteVaccinationHistory,
+} from "../restful-api/delete";
+
+import   {getVaccineStock} from "../restful-api/get";
 import { api2 } from "@/api/api";
 import {useNavigation} from "react-router"
 import {
@@ -186,7 +188,9 @@ export const useSubmitStep2 = () => {
           const followUpVisit = await createFollowUpVisit(
             patrec_id,
             nextVisitDate.toISOString().split("T")[0],
-            `Routine vaccination for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}` // Added description
+            `Routine vaccination for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}` ,
+            "pending"
+
           );
           followv_id = followUpVisit.followv_id;
         } else if (vaccineData.vaccinelist.no_of_doses >= 2) {
@@ -208,7 +212,8 @@ export const useSubmitStep2 = () => {
             const followUpVisit = await createFollowUpVisit(
               patrec_id,
               nextVisitDate.toISOString().split("T")[0],
-              `Follow-up visit for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}` // Added description
+              `Follow-up visit for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}`,
+              "pending"
             );
             followv_id = followUpVisit.followv_id;
           }
