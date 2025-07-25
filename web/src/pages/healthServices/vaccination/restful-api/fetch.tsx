@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
 import { api2 } from "@/api/api";
-import { getVaccintStocks, getUnvaccinatedResidents,getVaccinationRecords ,getVaccinationRecordById} from "./get";
+import {
+  getVaccintStocks,
+  getUnvaccinatedResidents,
+  getVaccinationRecords,
+  getVaccinationRecordById,
+} from "./get";
 import { useQuery } from "@tanstack/react-query";
 import { VaccinationRecord } from "../tables/columns/types";
+import { toast
 
-
-
+ } from "sonner";
 export const usePatientVaccinationDetails = (patientId: string) => {
   return useQuery({
     queryKey: ["patientVaccinationDetails", patientId],
@@ -22,7 +27,7 @@ export const useVaccinationRecords = () => {
     queryKey: ["vaccinationRecords"],
     queryFn: getVaccinationRecords,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 };
 
@@ -31,36 +36,25 @@ export const useUnvaccinatedResidents = () => {
     queryKey: ["unvaccinatedResidents"],
     queryFn: getUnvaccinatedResidents,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 };
 
 
 export const fetchVaccinesWithStock = () => {
-  const [vaccines, setVaccines] = useState<
-    {
-      id: string;
-      name: string;
-      vac_id: string;
-      expiry: string | null;
-    }[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
+  return useQuery({
+    queryKey: ["vaccineStocks"],
+    queryFn: async () => {
       try {
         const stocks = await getVaccintStocks();
-
-        // Skip if no stocks or empty array
-        if (!stocks || !Array.isArray(stocks) || stocks.length === 0) {
-          console.log("No vaccine stocks available.");
-          setVaccines([]);
-          return; // Exit early
+        
+        if (!stocks || !Array.isArray(stocks)) {
+          return {
+            default: [],
+            formatted: []
+          };
         }
 
-        // Filter out vaccines with zero available stock or expired
         const availableStocks = stocks.filter((stock) => {
           const isExpired =
             stock.inv_details?.expiry_date &&
@@ -68,110 +62,115 @@ export const fetchVaccinesWithStock = () => {
           return stock.vacStck_qty_avail > 0 && !isExpired;
         });
 
-        // Transform data only if stocks exist
-        const transformedData = availableStocks.map((stock: any) => ({
-          id: `${stock.vacStck_id},${stock.vac_id},${stock.vaccinelist?.vac_name || "Unknown Vaccine"},${stock.inv_details?.expiry_date || "No Expiry"}`,
-          name: stock.vaccinelist?.vac_name || "Unknown Vaccine",
-          vac_id: String(stock.vac_id),
-          expiry: stock.inv_details?.expiry_date || null,
-        }));
-
-        setVaccines(transformedData);
+        return {
+          default: availableStocks,
+          formatted: availableStocks.map((stock: any) => ({
+            id: `${stock.vacStck_id},${stock.vac_id},${
+              stock.vaccinelist?.vac_name || "Unknown Vaccine"
+            },${stock.inv_details?.expiry_date || "No Expiry"}`,
+            name: (
+              <div className="flex  gap-3">
+                <span className="bg-blue-500 rounded text-white p-1 text-xs">
+                  {stock.inv_details?.inv_id}
+                </span>
+                {`${stock.vaccinelist?.vac_name || "Unknown Vaccine"} 
+                (Avail: ${stock.vacStck_qty_avail}) ${
+                  stock.inv_details?.expiry_date 
+                    ? `[Exp: ${new Date(stock.inv_details.expiry_date).toLocaleDateString()}]` 
+                    : ''
+                }`}
+              </div>
+            ),
+          })),
+        };
       } catch (error) {
-        console.error("Error fetching vaccine stocks:", error);
-        setVaccines([]);
-      } finally {
-        setIsLoading(false);
+        toast.error("Failed to fetch vaccine stocks");
+        throw error;
       }
-    };
-
-    fetchData();
-  }, []);
-
-  return {
-    vaccineStocksOptions: vaccines,
-    isLoading,
-  };
+    },
+  });
 };
 
 
-export const fetchVaccinesWithStockVacID = (vac_id: number) => {
-  const [vaccines, setVaccines] = useState<
-    {
+
+
+
+// In your fetchVaccinesWithStockVacID function
+export const fetchVaccinesWithStockVacID = (vacId: number) => {
+  const [vaccines, setVaccines] = useState<{
+    default: any[];
+    formatted: {
       id: string;
-      name: string;
+      name: string | JSX.Element;
       vac_id: string;
-      expiryDate: string | null;
-      available: boolean;
-    }[]
-  >([]);
+      expiry: string | null;
+      available: number;
+    }[];
+  }>({ default: [], formatted: [] });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        console.log("Fetching vaccine stock for vac_id:", vac_id); // Debugging line
         const stocks = await getVaccintStocks();
 
-        // Skip if no stocks or empty array
-        if (!stocks || !Array.isArray(stocks) || stocks.length === 0) {
-          console.log("No vaccine stocks available.");
-          setVaccines([]);
+        if (!stocks || !Array.isArray(stocks)) {
+          setVaccines({ default: [], formatted: [] });
           return;
         }
 
-        // Transform and filter data for the specific vac_id
-        const transformedData = stocks
-          .filter(
-            (stock: any) =>
-              stock.vac_id === vac_id && // Match exact vac_id
-              !stock.inv_isArchive && // Filter out archived vaccines
-              !(stock.inv_details?.expiry_date && new Date(stock.inv_details.expiry_date) < new Date()) // Filter out expired vaccines
-          )
-          .map((stock: any) => {
-            const isAvailable = stock.vacStck_qty_avail > 0;
+        const availableStocks = stocks.filter((stock) => {
+          const isExpired =
+            stock.inv_details?.expiry_date &&
+            new Date(stock.inv_details.expiry_date) < new Date();
+          return stock.vacStck_qty_avail > 0 && !isExpired;
+        });
 
-            return {
-              id: String(stock.vacStck_id),
-              name: stock.vaccinelist?.vac_name || "Unknown Vaccine",
-              vac_id: String(stock.vac_id),
-              expiryDate: stock.inv_details?.expiry_date || null,
-              available: isAvailable,
-            };
-          })
-          .filter((vaccine) => vaccine.available); // Filter out unavailable vaccines
-
-        // Validate if the provided vac_id exists
-        if (transformedData.length === 0) {
-          console.warn(
-            `Vaccine with vac_id ${vac_id} not found, archived, or unavailable.`
-          );
-        }
+        const transformedData = {
+          default: availableStocks,
+          formatted: availableStocks.map((stock: any) => ({
+            id: `${stock.vacStck_id},${stock.vac_id},${
+              stock.vaccinelist?.vac_name || "Unknown Vaccine"
+            },${stock.inv_details?.expiry_date || "No Expiry"}`,
+            name: (
+              <div className="flex items-center gap-3">
+                <span className="bg-blue-500 rounded text-white p-1 text-xs">
+                  {stock.vac_id}
+                </span>
+                {`${stock.vaccinelist?.vac_name || "Unknown Vaccine"} 
+                (Available: ${stock.vacStck_qty_avail}) ${
+                  stock.inv_details?.expiry_date 
+                    ? `[Exp: ${new Date(stock.inv_details.expiry_date).toLocaleDateString()}]` 
+                    : ''
+                }`}
+              </div>
+            ),
+            vac_id: String(stock.vac_id),
+            expiry: stock.inv_details?.expiry_date || null,
+            available: stock.vacStck_qty_avail,
+          })),
+        };
 
         setVaccines(transformedData);
       } catch (error) {
         console.error("Error fetching vaccine stocks:", error);
-        setVaccines([]);
+        setVaccines({ default: [], formatted: [] });
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (vac_id) {
-      fetchData();
-    } else {
-      console.warn("No vac_id provided.");
-      setVaccines([]);
-      setIsLoading(false);
-    }
-  }, [vac_id]); // Re-fetch if vac_id changes
+    fetchData();
+  }, [vacId]);
 
   return {
-    vaccineStocksOptions: vaccines,
+    vaccineStocksOptions: vaccines.formatted,
+    defaultVaccineStocks: vaccines.default,
     isLoading,
   };
 };
+
 
 export const checkVaccineStatus = async (pat_id: string, vac_id: number) => {
   try {

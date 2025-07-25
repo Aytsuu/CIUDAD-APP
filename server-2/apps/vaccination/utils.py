@@ -86,7 +86,6 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
     
 
 def get_vaccination_record_count(pat_id):
-   
     return VaccinationRecord.objects.filter(patrec_id__pat_id=pat_id).count()
 
 

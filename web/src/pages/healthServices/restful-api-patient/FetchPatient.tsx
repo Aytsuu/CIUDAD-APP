@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
 import { toast } from "sonner";
-import {calculateAge} from "@/helpers/ageCalculator"
+import {calculateCurrentAge} from "@/helpers/ageCalculator"
 interface PatientInfo {
   pat_id: string;
   pat_type: string;
@@ -105,8 +105,11 @@ export const fetchPatient5yearsbelow = async () => {
                 patient.pat_type
               }]`}
               <span className="ml-2 text-sm text-blue-600">
-                ({calculateAge(patient.personal_info?.per_dob || '')})
+                ({calculateCurrentAge(patient.personal_info?.per_dob || '')} old)
               </span>
+
+
+
             </span>
           </div>
         ),

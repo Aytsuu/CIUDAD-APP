@@ -26,10 +26,10 @@ export const calculateNextVisitDate = (
       date.setFullYear(date.getFullYear() + interval);
       break;
     default:
-      console.warn("⚠️ Unknown time unit:", timeUnit);
+      console.warn(" Unknown time unit:", timeUnit);
       break;
   }
 
-  console.log("🗓️ Next visit date calculated:", date.toISOString());
+  console.log(" Next visit date calculated:", date.toISOString());
   return date;
 };

@@ -37,7 +37,7 @@ export function ValidationAlert({
   }
 
   return (
-    <div className="mx-3 mb-4">
+    <div className="mb-4">
       <div
         role="alert"
         className="bg-amber-50 border border-amber-200 rounded-lg p-3"

@@ -20,9 +20,6 @@ class VaccineRecordView(generics.ListCreateAPIView):
     queryset  =VaccinationRecord.objects.all()
     
    
-    
-   
-   
 class VitalSignsView(generics.ListCreateAPIView):
     serializer_class = VitalSignsSerializer
     queryset  =VitalSigns.objects.all()
@@ -43,6 +40,22 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
         ).distinct()
 
 
+class TobeAdministeredVaccinationView(generics.ListAPIView):
+    serializer_class = VaccinationHistorySerializer
+    def get_queryset(self):
+        return VaccinationHistory.objects.filter(
+            vachist_status='scheduled',
+        ).order_by('-created_at')
+        
+class CountScheduledVaccinationView(APIView):
+    def get(self, request):
+        try:
+            count = VaccinationHistory.objects.filter(
+                vachist_status='scheduled'
+            ).count()
+            return Response({"count": count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # INDIVIDUAL RECORDS VIEW
 class VaccinationHistorRecordView(generics.ListAPIView):

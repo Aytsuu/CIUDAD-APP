@@ -51,8 +51,7 @@ class ChildHealthVitalSignsSerializer(serializers.ModelSerializer):
     # vital_details = VitalSignsSerializer(source='vital', read_only=True)
     find_details = FindingSerializer(source='find', read_only=True)
     bm_details = BodyMeasurementSerializer(source='bm', read_only=True)
-    # chhist_details = ChildHealthHistorySerializerBase(source='chhist', read_only=True)
-
+    temp = serializers.CharField(source='vital.temp', read_only=True)  # Assuming temp is a field in VitalSigns
     
     class Meta:
         model = ChildHealthVitalSigns

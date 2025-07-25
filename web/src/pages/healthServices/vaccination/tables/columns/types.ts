@@ -1,17 +1,16 @@
-
 export interface VaccinationRecord {
-  patrec_id: number;
-  vachist_id: number;
-  vachist_doseNo: string;
-  vachist_status: string;
-  vachist_age: number;
-  assigned_to: number | null;
-  staff_id: number;
-  vital: number;
-  vacrec: number;
-  vacStck: number;
-  vacrec_status: string;
-  vacrec_totaldose: number;
+  patrec_id?: number;
+  vachist_id?: number;
+  vachist_doseNo?: string;
+  vachist_status?: string;
+  vachist_age?: number;
+  assigned_to?: number | null;
+  staff_id?: number;
+  vital?: number;
+  vacrec?: number;
+  vacStck?: number;
+  vacrec_status?: string;
+  vacrec_totaldose?: number;
 
   vital_signs: {
     vital_bp_systolic: string;
@@ -20,63 +19,67 @@ export interface VaccinationRecord {
     vital_RR: string;
     vital_o2: string;
     created_at: string;
+    vital_pulse: string;
   };
 
-  vaccine_stock: {
-    vaccinelist: {
-      vac_id: number;
-      vaccat_details: {
-        category: string;
-        vaccat_type: string;
+  vaccine_stock?: {
+    vaccinelist?: {
+      vac_id?: number;
+      vaccat_details?: {
+        category?: string;
+        vaccat_type?: string;
       };
-      intervals: {
-        vacInt_id: number;
-        interval: number;
-        dose_number: number;
-        time_unit: string;
-        vac_id: number;
+      intervals?: {
+        vacInt_id?: number;
+        interval?: number;
+        dose_number?: number;
+        time_unit?: string;
+        vac_id?: number;
       }[];
-      routine_frequency: string | null;
-      vac_type_choices: string;
-      vac_name: string;
-      no_of_doses: number;
-      age_group: string;
-      specify_age: string;
-      created_at: string;
-      updated_at: string;
-      category: string;
+      routine_frequency?: string | null;
+      vac_type_choices?: string;
+      vac_name?: string;
+      no_of_doses?: number;
+      age_group?: string;
+      specify_age?: string;
+      created_at?: string;
+      updated_at?: string;
+      category?: string;
     };
-    inv_id: number;
-    vac_id: number;
-    solvent: string;
-    batch_number: string;
-    volume: number;
-    qty: number;
-    dose_ml: number;
-    vacStck_used: number;
-    vacStck_qty_avail: number;
-    wasted_dose: number;
-    created_at: string;
-    updated_at: string;
+    inv_id?: number;
+    vac_id?: number;
+    solvent?: string;
+    batch_number?: string;
+    volume?: number;
+    qty?: number;
+    dose_ml?: number;
+    vacStck_used?: number;
+    vacStck_qty_avail?: number;
+    wasted_dose?: number;
+    created_at?: string;
+    updated_at?: string;
   };
 
-  vaccine_name: string;
-  batch_number: string;
-  updated_at: string;
+  vaccine_name?: string;
+  batch_number?: string;
+  updated_at?: string;
   created_at: string;
 
-  vaccine_details: {
-    no_of_doses: number;
-    age_group: string;
-    vac_type: string;
+  vaccine_details?: {
+    no_of_doses?: number;
+    age_group?: string;
+    vac_type?: string;
   };
 
-  follow_up_visit: {
-    followv_id: number;
-    followv_date: string;
-    followv_status: string;
+  follow_up_visit?: {
+    followv_id?: number;
+    followv_date?: string;
+    followv_status?: string;
   };
 }
+
+
+
 
   export type BasicInfoVaccinationRecord = {
 

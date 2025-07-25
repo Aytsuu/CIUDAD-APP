@@ -14,11 +14,12 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useVaccinationRecords } from "../restful-api/fetch";
+import { useVaccinationRecords } from "../../restful-api/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
 import CardLayout from "@/components/ui/card/card-layout";
-import { vaccinationColumns } from "./columns/all-vac-col";
-import { BasicInfoVaccinationRecord, VaccinationCounts } from "./columns/types";
+import { vaccinationColumns } from "../columns/all-vac-col";
+import { BasicInfoVaccinationRecord, VaccinationCounts } from "../columns/types";
+import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
 
 export default function AllVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,16 +108,6 @@ export default function AllVaccinationRecords() {
     currentPage * pageSize
   );
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
 
   return (
     <>
@@ -193,7 +184,7 @@ export default function AllVaccinationRecords() {
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
               <Link
-                to="/patNewVacRecForm"
+                to="/vaccination-record-form"
                 state={{ mode: "newvaccination_record" }}
               >
                 New Record
@@ -240,9 +231,13 @@ export default function AllVaccinationRecords() {
             </div>
           </div>
 
-          <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={vaccinationColumns} data={paginatedData} />
-          </div>
+             <div className="bg-white w-full overflow-x-auto">
+                     {isLoading ? (
+                       <TableSkeleton columns={vaccinationColumns} rowCount={5} />
+                     ) : (
+                       <DataTable columns={vaccinationColumns} data={paginatedData} />
+                     )}
+                   </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}

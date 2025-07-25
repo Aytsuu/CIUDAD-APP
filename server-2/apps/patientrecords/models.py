@@ -150,12 +150,12 @@ class PatientRecord(models.Model):
         
 class VitalSigns(models.Model):
     vital_id = models.BigAutoField(primary_key=True)
-    vital_bp_systolic = models.CharField(max_length=100)
-    vital_bp_diastolic = models.CharField(max_length=100,default="N/A")
-    vital_temp = models.CharField(max_length=100,default="N/A")
-    vital_RR = models.CharField(max_length=100,default="N/A")
-    vital_o2 = models.CharField(max_length=100,default="N/A")
-    vital_pulse = models.CharField(max_length=100,default="N/A")
+    vital_bp_systolic = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_bp_diastolic = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_temp = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_RR = models.CharField(max_length=100,default="" , null=True, blank=True)
+    vital_o2 = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_pulse = models.CharField(max_length=100,default="", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vital_signs',null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='vital_signs', null=True, blank=True)

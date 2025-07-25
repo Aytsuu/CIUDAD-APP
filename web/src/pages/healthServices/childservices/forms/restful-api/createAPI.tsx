@@ -32,7 +32,7 @@ export async function createNutritionalStatus(payload: {
 // --- Child Vital Signs Operations ---
 
 export async function createChildVitalSign(payload: {
-    temp: number | null
+    vital:string
     bm: string
     chhist: string
     created_at: string

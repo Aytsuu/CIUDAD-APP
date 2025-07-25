@@ -18,14 +18,17 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
-import { createVitalSigns, updateVacRecord } from "../restful-api/vitalsignsAPI";
+import {
+  createVitalSigns,
+  updateVacRecord,
+} from "../restful-api/vitalsignsAPI";
 import {
   getVaccineStock,
   createFollowUpVisit,
   deleteVitalSigns,
   updateFollowUpVisit,
 } from "@/pages/healthServices/vaccination/restful-api/post";
-import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
+import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 export interface Patient {
@@ -109,142 +112,29 @@ export default function ForwardedVaccinationForm() {
 
         // Get vaccine data
         const vaccineData = await getVaccineStock(vacStck_id);
-        const maxDoses = vaccineData.vaccinelist.no_of_doses;
 
         if (!vacStck_id) {
           throw new Error(
             "Vaccine ID is missing. Please select a valid vaccine type."
           );
         }
-
         // Update vaccine stock
         await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck_id)}/`, {
           vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
         });
 
         // Handle routine vaccination
-        if (vaccineType === "routine") {
-          const { interval, time_unit } =
-            vaccineData.vaccinelist.routine_frequency;
-          const nextVisitDateRoutine = calculateNextVisitDate(
-            interval,
-            time_unit,
-            new Date().toISOString()
-          );
-          console.log("Processing routine vaccination");
-          console.log("Existing follow-up ID:", existing_followv_id);
+         const updateData = {
+          vachist_status: "scheduled",
+          vital: vital_id,
+          followv: followv_id,
+        };
 
-          if (!existing_followv_id) {
-            console.log("Creating new follow-up visit");
-            const followUpVisit = await createFollowUpVisit(
-              patrec_id,
-              nextVisitDateRoutine.toISOString().split("T")[0],
-              "Routine Vaccination Follow-up"
-            );
-
-            followv_id = followUpVisit?.followv_id;
-            console.log("Created follow-up visit with ID:", followv_id);
-
-            if (!followv_id) {
-              throw new Error(
-                "Failed to retrieve follow-up visit ID from response"
-              );
-            }
-
-            const updateData = {
-              vachist_status: "completed",
-              vital: vital_id,
-              followv: followv_id,
-            };
-            console.log("Updating vaccination history with:", updateData);
-            const updatedVacHistory = await api2.patch(
-              `/vaccination/vaccination-history/${vachist_id}/`,
-              updateData
-            );
-
-            if (updatedVacHistory.status !== 200) {
-              throw new Error("Failed to update vaccination history");
-            }
-          } else {
-            console.log("Updating existing follow-up visit");
-            await updateFollowUpVisit(existing_followv_id, "completed");
-
-            const updateData = {
-              vachist_status: "completed",
-              vital: vital_id,
-            };
-            console.log("Updating vaccination history with:", updateData);
-
-            const updatedVacHistory = await api2.patch(
-              `/vaccination/vaccination-history/${vachist_id}/`,
-              updateData
-            );
-          }
-        }
-        // Handle multi-dose vaccination
-        else if (vaccineData.vaccinelist.no_of_doses >= 2) {
-          console.log("Processing multi-dose vaccination");
-          const dose2Interval = vaccineData.vaccinelist.intervals.find(
-            (interval: { dose_number: number }) => interval.dose_number === 2
-          );
-
-          if (!existing_followv_id) {
-            if (dose2Interval) {
-              const nextVisitDate = calculateNextVisitDate(
-                dose2Interval.interval,
-                dose2Interval.time_unit,
-                new Date().toISOString()
-              );
-
-              const followUpVisit = await createFollowUpVisit(
-                patrec_id,
-                nextVisitDate.toISOString().split("T")[0],
-                `Follow-up visit for ${vaccineName} scheduled on ${
-                  nextVisitDate.toISOString().split("T")[0]
-                }`
-              );
-
-              followv_id = followUpVisit.followv_id;
-              console.log("Created follow-up visit with ID:", followv_id);
-
-              const status =
-                maxDoses != vaccineDose ? "partially vaccinated" : "completed";
-
-              const updateData = {
-                vachist_status: status,
-                vital: vital_id,
-                followv: followv_id,
-              };
-              console.log("Updating vaccination history with:", updateData);
-
-              const updatedVacHistory = await api2.patch(
-                `/vaccination/vaccination-history/${vachist_id}/`,
-                updateData
-              );
-
-              if (updatedVacHistory.status !== 200) {
-                throw new Error("Failed to update vaccination history");
-              }
-            }
-          } else {
-            const updateData = {
-              vachist_status: "completed",
-              vital: vital_id,
-            };
-            console.log("Updating vaccination history with:", updateData);
-
-            const updatedVacHistory = await api2.patch(
-              `/vaccination/vaccination-history/${vachist_id}/`,
-              updateData
-            );
-
-            if (updatedVacHistory.status !== 200) {
-              throw new Error("Failed to update vaccination history");
-            }
-
-            await updateFollowUpVisit(existing_followv_id, "completed");
-          }
-        }
+        const updatedVacHistory = await api2.patch(
+          `/vaccination/vaccination-history/${vachist_id}/`,
+          updateData
+        );
+        console.log("Updated vaccination history:", updatedVacHistory);
 
         toast.success("Vaccination record updated successfully");
         navigate(-1);

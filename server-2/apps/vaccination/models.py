@@ -19,7 +19,7 @@ class VaccinationHistory(models.Model):
     vachist_id = models.BigAutoField(primary_key=True)
     vachist_doseNo = models.PositiveIntegerField(default="0")
     vachist_age = models.CharField(default="", max_length=100)
-    vachist_status = models.CharField(max_length=100, default="Pending")
+    vachist_status = models.CharField(max_length=100, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     assigned_to = models.PositiveIntegerField(null=True, blank=True)
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)  

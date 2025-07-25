@@ -44,7 +44,8 @@ export const VaccineSchema = z
     vaccinetype: z.string().min(1, "Vaccine type is required"),
     datevaccinated: z.string().min(1, "Date vaccinated is required"),
     assignto: z.string().optional(),
-    age: z.string().optional()
+    age: z.string().optional(),
+    followv_date: z.string().optional(),
   })
   
 

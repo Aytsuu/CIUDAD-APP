@@ -1,14 +1,15 @@
 import path from "path";
-import IndivVaccinationRecords from "@/pages/healthServices/vaccination/tables/IndivVaccinationRecords";
-import AllVaccinationRecords from "@/pages/healthServices/vaccination/tables/AllVaccinationRecord";
-import VaccinationForm from "@/pages/healthServices/vaccination/NewVacRecForm";
-import PatNewVacRecForm from "@/pages/healthServices/vaccination/PatNewVacRecForm";
-import VaccinationView from "@/pages/healthServices/vaccination/DisplayVaccineInfo";
-import UpdateVaccinationForm from "@/pages/healthServices/vaccination/UpdateVaccinationForm";
-import UnvaccinaResident from "@/pages/healthServices/vaccination/tables/UnvaccineResidents";
-import VaccinationManagement from "@/pages/healthServices/vaccination/tables/MainTable";
+import IndivVaccinationRecords from "@/pages/healthServices/vaccination/tables/individual/IndivVaccinationRecords";
+import AllVaccinationRecords from "@/pages/healthServices/vaccination/tables/all/AllVaccinationRecord";
+import PatNewVacRecForm from "@/pages/healthServices/vaccination/forms/NewVaccinationForm";
+import VaccinationView from "@/pages/healthServices/vaccination/viewhistory/ViewVaccineHistory";
+import UpdateVaccinationForm from "@/pages/healthServices/vaccination/forms/UpdateVaccinationForm";
+import UnvaccinaResident from "@/pages/healthServices/vaccination/tables/all/UnvaccineResidents";
+import VaccinationManagement from "@/pages/healthServices/vaccination/tables/all/MainTable";
 import AgeGroupForm from "@/pages/healthServices/agegroup/AgeGroup";
 import { AddAgeGroupForm } from "@/pages/healthServices/agegroup/AddAgeGroupForm";
+import ScheduledVaccine from "@/pages/healthServices/vaccination/viewhistory/ScheduledVaccine";
+
 export const vaccination = [
   {
     path: "invVaccinationRecord",
@@ -20,11 +21,7 @@ export const vaccination = [
   },
 
   {
-    path:"vaccinationForm",
-    element:<VaccinationForm/>
-  },
-  {
-    path:"patNewVacRecForm",
+    path:"vaccination-record-form",
     element:<PatNewVacRecForm/>
   },
   {
@@ -51,6 +48,10 @@ export const vaccination = [
   {
     path:"age-group-management",
     element:<AddAgeGroupForm/>
+  },
+  {
+    path: "scheduled-vaccine",
+    element: <ScheduledVaccine />
   }
 
 ];

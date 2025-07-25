@@ -1,10 +1,30 @@
+// columns.ts
 import { ColumnDef } from "@tanstack/react-table";
-import { VaccinationRecord } from "./types";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { Syringe, Calendar } from "lucide-react";
+import { VaccinationRecord } from "./types";
+import { Patient } from "@/pages/healthServices/restful-api-patient/type";
 
-export const vaccinationColumns: ColumnDef<VaccinationRecord>[] = [
+// Enhanced ordinal suffix function
+const getOrdinalSuffix = (num: number | undefined): string => {
+  if (num === undefined || isNaN(num)) return "N/A";
+
+  switch (num) {
+    case 1:
+      return `${num}st`;
+    case 2:
+      return `${num}nd`;
+    case 3:
+      return `${num}rd`;
+    default:
+      return `${num}th`;
+  }
+};
+
+export const IndivVaccineColumns = (
+  patientData: Patient,
+  allVaccinationRecords: VaccinationRecord[]
+): ColumnDef<VaccinationRecord>[] => [
   {
     accessorKey: "vaccine_name",
     header: "Vaccine",
@@ -16,7 +36,7 @@ export const vaccinationColumns: ColumnDef<VaccinationRecord>[] = [
             Batch: {row.original.batch_number}
           </div>
           <div className="text-xs text-gray-500">
-            Type: {row.original.vaccine_details?.vac_type}
+            Type: {row.original.vaccine_details?.vac_type ?? "Unknown"}
           </div>
         </div>
       </div>
@@ -34,17 +54,23 @@ export const vaccinationColumns: ColumnDef<VaccinationRecord>[] = [
               <div className="flex items-center">
                 <span className="font-medium mr-1">BP:</span>
                 <span>
-                  {vital?.vital_bp_systolic}/{vital?.vital_bp_diastolic} mmHg
+                  {vital?.vital_bp_systolic ?? "N/A"}/
+                  {vital?.vital_bp_diastolic ?? "N/A"} mmHg
                 </span>
               </div>
+
               <div className="flex items-center">
                 <span className="font-medium mr-1">Temp:</span>
-                <span>{vital?.vital_temp}°C</span>
+                <span>{vital?.vital_temp ?? "N/A"}°C</span>
               </div>
-              <div className="flex items-center"></div>
+              <div className="flex items-center">
+
+                <span className="font-medium mr-1">PR:</span>
+                <span>{vital?.vital_pulse ?? "N/A"}</span>
+              </div>
               <div className="flex items-center">
                 <span className="font-medium mr-1">O2:</span>
-                <span>{vital?.vital_o2}%</span>
+                <span>{vital?.vital_o2 ?? "N/A"}%</span>
               </div>
             </div>
           </div>
@@ -55,54 +81,70 @@ export const vaccinationColumns: ColumnDef<VaccinationRecord>[] = [
   {
     accessorKey: "vachist_doseNo",
     header: "Dose",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-          {row.original.vachist_doseNo}
-          <div className="text-xs text-gray-500 mt-1">
-            Required Doses {row.original.vaccine_details?.no_of_doses} dose/s
+    cell: ({ row }) => {
+      const formattedDose = getOrdinalSuffix(
+        row.original.vachist_doseNo
+          ? parseInt(row.original.vachist_doseNo, 10)
+          : undefined
+      );
+      return (
+        <div className="flex justify-center">
+          <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+            {formattedDose} Dose
+            <div className="text-xs text-gray-500 mt-1">
+              Required Doses{" "}
+              {row.original.vaccine_details?.no_of_doses ?? "N/A"} dose/s
+            </div>
           </div>
         </div>
-      </div>
-    ),
+      );
+    },
   },
   {
     accessorKey: "vachist_status",
     header: "Status",
     cell: ({ row }) => {
+      const displayStatus =
+        row.original.vachist_status?.toLowerCase() === "scheduled"
+          ? "in queue"
+          : row.original.vachist_status;
+
       const statusColors = {
         completed: "bg-green-100 text-green-800",
-        "partially vaccinated": "text-red-500",
+        "partially vaccinated": "bg-red-100 text-red-800",
+        "in queue": "bg-yellow-100 text-yellow-800",
       };
+
       return (
         <div className="flex flex-col justify-center">
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
-              statusColors[
-                row.original.vachist_status as keyof typeof statusColors
-              ] || "bg-gray-100 text-gray-800"
+              statusColors[displayStatus as keyof typeof statusColors] ||
+              "bg-gray-100 text-gray-800"
             }`}
           >
-            {row.original.vachist_status}
+            {displayStatus}
           </span>
           <div>
             <div className="text-xs mt-1">
-              {row.original.follow_up_visit?.followv_status?.toLowerCase() ===
-              "completed" ? (
+              {(row.original.follow_up_visit?.followv_status?.toLowerCase() ??
+                "") === "completed" ? (
                 "Next Dose: completed"
               ) : (
                 <>
                   Next Dose:{" "}
                   {isNaN(
                     new Date(
-                      row.original.follow_up_visit?.followv_date || ""
+                      row.original.follow_up_visit?.followv_date ??
+                        "Invalid Date"
                     ).getTime()
                   ) ? (
                     "No Schedule"
                   ) : (
                     <span className="text-red-500">
                       {new Date(
-                        row.original.follow_up_visit?.followv_date || ""
+                        row.original.follow_up_visit?.followv_date ??
+                          "Invalid Date"
                       ).toLocaleDateString()}
                     </span>
                   )}
@@ -132,28 +174,46 @@ export const vaccinationColumns: ColumnDef<VaccinationRecord>[] = [
   {
     accessorKey: "action",
     header: "Actions",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
-        <Link
-          to="/vaccinationView"
-          state={{ params: { Vaccination: row.original } }}
-        >
-          <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
-            View
-          </Button>
-        </Link>
-        {row.original.follow_up_visit?.followv_status?.toLowerCase() ===
-          "pending" && (
+    cell: ({ row }) => {
+      const currentRecord = row.original;
+      const followUpStatus = currentRecord.follow_up_visit?.followv_status?.toLowerCase();
+  
+      const sameVacRecRecords = allVaccinationRecords.filter(
+        (record) => record.vacrec === currentRecord.vacrec
+      );
+  
+      const hasScheduledInSameVacRec = sameVacRecRecords.some(
+        (record) => record.vachist_status?.toLowerCase() === "scheduled"
+      );
+  
+      const shouldShowButton = followUpStatus === "pending" && !hasScheduledInSameVacRec;
+  
+      return (
+        <div className="flex justify-center gap-2">
           <Link
-            to="/updateVaccinationForm"
-            state={{ params: { Vaccination: row.original } }}
+            to="/vaccinationView"
+            state={{ params: { Vaccination: currentRecord, patientData } }}
           >
-            <Button variant="destructive" size="sm" className="h-8 p-2">
-              update
+            <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
+              View
             </Button>
           </Link>
-        )}
-      </div>
-    ),
-  },
+          {shouldShowButton && (
+            <Link
+              to="/updateVaccinationForm"
+              state={{ params: { Vaccination: currentRecord, patientData } }}
+            >
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 p-2"
+              >
+                Process Next Dose
+              </Button>
+            </Link>
+          )}
+        </div>
+      );
+    },
+  }
 ];

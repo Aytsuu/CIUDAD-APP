@@ -17,6 +17,7 @@ urlpatterns = [
     
     
     
+    
     # path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
     path('vaccination-history/<int:vachist_id>/', DeleteUpdateVaccinationHistoryView.as_view(), name='vaccination-history-detail'),
     path('unvaccinated-vaccines/<str:pat_id>/', UnvaccinatedVaccinesView.as_view(), name='unvaccinated-vaccines'),
@@ -29,8 +30,9 @@ urlpatterns = [
     path('forwarded-vaccination-records/', ForwardedVaccinationHistoryView.as_view(), name='forwarded-vaccination-records'),
     path('forwarded-vaccination-count/', ForwardedVaccinationCountView.as_view(), name='pat_vaccination_records'),
     
+    path('to-be-administered/', TobeAdministeredVaccinationView.as_view(), name='administered_vaccination'),
     
-    
+    path('count-scheduled-vaccinations/', CountScheduledVaccinationView.as_view(), name='count_scheduled_vaccinations'),
     path('vaccination-records/monthly/', MonthlyVaccinationRecordsAPIView.as_view(), name='monthly_vaccination_records'),
 
 

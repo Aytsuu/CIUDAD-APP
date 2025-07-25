@@ -14,6 +14,7 @@ import {
   createChildHealthRecord,
   createChildHealthHistory,
 } from "./chrecord";
+import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
@@ -36,7 +37,6 @@ export async function addChildHealthRecord({
   submittedData,
   staff,
 }: AddRecordArgs): Promise<AddRecordResult> {
-
   // Validate required fields
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -154,12 +154,20 @@ export async function addChildHealthRecord({
   });
   const bmi_id = newBMI.bm_id;
 
+  const vitalsigns = await createVitalSigns({
+    vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
+  });
+  const vital_id = vitalsigns.vital_id;
+
+  console.log("Vital signs created:", vitalsigns);
   // Create vital signs
   const newVitalSign = await createChildVitalSign({
-    temp: submittedData.vitalSigns?.[0]?.temp || null,
+    // temp: submittedData.vitalSigns?.[0]?.temp || null,
+    vital: vital_id,
     bm: bmi_id,
     chhist: current_chhist_id,
     created_at: new Date().toISOString(),
+
   });
   const chvital_id = newVitalSign.chvital_id;
 

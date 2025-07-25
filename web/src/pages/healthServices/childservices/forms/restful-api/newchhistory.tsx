@@ -16,9 +16,10 @@ import {
 import { deleteFollowUpVisit } from "./deleteAPI";
 import { updateSupplementStatus } from "./updateAPI";
 import { processMedicineRequest } from "./createAPI";
-import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { AddRecordArgs, AddRecordResult } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
+
 
 export async function updateChildHealthRecord({
   submittedData,
@@ -277,9 +278,16 @@ export async function updateChildHealthRecord({
     });
     const bmi_id = newBMI.bm_id;
 
+
+     const vitalsigns = await createVitalSigns({
+        vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
+      });
+      const vital_id = vitalsigns.vital_id;
+    
+      console.log("Vital signs created:", vitalsigns);
     // Create vital signs
     const newVitalSign = await createChildVitalSign({
-      temp: submittedData.vitalSigns?.[0]?.temp || null,
+      vital:vital_id,
       bm: bmi_id,
       chhist: current_chhist_id,
       created_at: new Date().toISOString(),

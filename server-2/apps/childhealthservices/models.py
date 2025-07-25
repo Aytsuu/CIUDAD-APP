@@ -75,9 +75,9 @@ class ChildHealthNotes(models.Model):
 
 class ChildHealthVitalSigns(models.Model):
     chvital_id = models.BigAutoField(primary_key=True)
-    # vital =models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
+    vital =models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
-    temp = models.CharField(max_length=100, blank=True, null=True)  # Temperature
+    # temp = models.CharField(max_length=100, blank=True, null=True)  # Temperature
     find =models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_vital_signs')
     # chnotes = models.ForeignKey(ChildHealthNotes, on_delete=models.CASCADE, related_name='child_health_vital_signs', null=True, blank=True)

@@ -7,39 +7,25 @@ import { Search } from "lucide-react"
 import { calculateAge, getAgeInUnit } from "@/helpers/ageCalculator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Link } from "react-router-dom"
-import { useUnvaccinatedResidents } from "../restful-api/fetch"
-import type { Resident, UnvaccinatedResident, VaccineCounts, GroupedResidents } from "./columns/types"
-import { Dialog, DialogTrigger } from "@/components/ui/dialog/dialog"
-import ResidentListDialog from "./ResidentListDialog"
+import { useUnvaccinatedResidents } from "../../restful-api/fetch"
+import type { Resident, UnvaccinatedResident, VaccineCounts, GroupedResidents } from "../columns/types"
+import { ResidentListPanel } from "./ResidentListDialog"
 
 export default function UnvaccinatedResidents() {
   const [searchQuery, setSearchQuery] = useState("")
   const { data: unvaccinated, isLoading } = useUnvaccinatedResidents()
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [currentDialogTitle, setCurrentDialogTitle] = useState("")
-  const [currentDialogResidents, setCurrentDialogResidents] = useState<UnvaccinatedResident[]>([])
+  const [panelOpen, setPanelOpen] = useState(false)
+  const [currentPanelTitle, setCurrentPanelTitle] = useState("")
+  const [currentPanelResidents, setCurrentPanelResidents] = useState<UnvaccinatedResident[]>([])
 
-  // Get all vaccine names from the API response, including those with no residents
+  // Get all vaccine names from the API response
   const allVaccineNames = React.useMemo(() => {
     if (!unvaccinated || typeof unvaccinated !== "object") return []
     return Object.keys(unvaccinated)
   }, [unvaccinated])
 
-  const vaccineCounts: VaccineCounts = React.useMemo(() => {
-    if (!unvaccinated || typeof unvaccinated !== "object") return {}
-    const counts: VaccineCounts = {}
-    Object.entries(unvaccinated).forEach(([vaccine_name, residents]) => {
-      if (Array.isArray(residents)) {
-        counts[vaccine_name] = residents.length
-      } else {
-        counts[vaccine_name] = 0 // Handle cases where there are no residents
-      }
-    })
-    return counts
-  }, [unvaccinated])
-
-  // Flatten and format all residents, adding age_group_name, min_age, max_age, time_unit for later grouping
+  // Flatten and format all residents
   const allResidents: UnvaccinatedResident[] = React.useMemo(() => {
     if (!unvaccinated || typeof unvaccinated !== "object") return []
     return Object.entries(unvaccinated).flatMap(([vaccine_name, residents]) =>
@@ -73,26 +59,15 @@ export default function UnvaccinatedResidents() {
     )
   }, [unvaccinated])
 
-  // Filter residents based on search query
-  const filteredResidents = React.useMemo(() => {
-    return allResidents.filter((record) => {
-      const searchText =
-        `${record.pat_id} ${record.lname} ${record.fname} ${record.sitio} ${record.vaccine_name} ${record.age_group_name}`.toLowerCase()
-      return searchText.includes(searchQuery.toLowerCase())
-    })
-  }, [searchQuery, allResidents])
-
-  // Group filtered residents by vaccine name and then by age group name,
-  // applying age range filtering at this stage.
+  // Group residents by vaccine and age group
   const groupedData: GroupedResidents = React.useMemo(() => {
     const groups: GroupedResidents = {}
     
-    // Initialize all vaccines, even those with no residents
     allVaccineNames.forEach(vaccineName => {
       groups[vaccineName] = {}
     })
     
-    filteredResidents.forEach((resident) => {
+    allResidents.forEach((resident) => {
       const vaccineName = resident.vaccine_name
       const ageGroupName = resident.age_group_name
       const groupMinAge = resident.min_age
@@ -101,7 +76,6 @@ export default function UnvaccinatedResidents() {
 
       let shouldIncludeResidentInGroup = true
 
-      // Only apply age filtering if time_unit is not "NA" and DOB is available
       if (resident.dob && groupTimeUnit !== "NA") {
         const residentAgeInUnit = getAgeInUnit(resident.dob, groupTimeUnit as "years" | "months" | "weeks" | "days")
         if (residentAgeInUnit < groupMinAge || residentAgeInUnit > groupMaxAge) {
@@ -118,23 +92,81 @@ export default function UnvaccinatedResidents() {
       }
     })
 
-    // Don't remove empty age groups or vaccines - keep them for display
     return groups
-  }, [filteredResidents, allVaccineNames])
+  }, [allResidents, allVaccineNames])
 
-  const handleOpenDialog = (vaccineName: string, ageGroupName: string, residents: UnvaccinatedResident[]) => {
-    setCurrentDialogTitle(`${vaccineName} - ${ageGroupName}`)
-    setCurrentDialogResidents(residents)
-    setDialogOpen(true)
+  // Filter vaccine cards based on search query
+  const filteredVaccineNames = React.useMemo(() => {
+    if (!searchQuery.trim()) return allVaccineNames
+
+    const query = searchQuery.toLowerCase()
+    
+    return allVaccineNames.filter(vaccineName => {
+      // Check vaccine name match
+      if (vaccineName.toLowerCase().includes(query)) return true
+
+      // Check age groups in this vaccine
+      const ageGroups = groupedData[vaccineName] || {}
+      return Object.entries(ageGroups).some(([ageGroupName, residents]) => {
+        if (!residents || residents.length === 0) return false
+        
+        const firstResident = residents[0]
+        const ageRange = firstResident && firstResident.min_age !== undefined && firstResident.max_age !== undefined
+          ? `${firstResident.min_age}-${firstResident.max_age}`
+          : ""
+
+        // Check age group name or age range match
+        return (
+          ageGroupName.toLowerCase().includes(query) ||
+          ageRange.includes(searchQuery) // exact match for numbers
+        )
+      })
+    })
+  }, [searchQuery, allVaccineNames, groupedData])
+
+  const handleOpenPanel = (vaccineName: string, ageGroupName: string, residents: UnvaccinatedResident[]) => {
+    setCurrentPanelTitle(`${vaccineName} - ${ageGroupName}`)
+    setCurrentPanelResidents(residents)
+    setPanelOpen(true)
+  }
+
+  const handleClosePanel = () => {
+    setPanelOpen(false)
   }
 
   if (isLoading) {
     return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
+      <div className="w-full h-full space-y-6 p-4">
+        {/* Header section skeleton */}
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-1/4 max-w-[200px]" />
+          <Skeleton className="h-5 w-1/3 max-w-[300px]" />
+        </div>
+  
+        {/* Search and button area */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 w-[150px]" />
+        </div>
+  
+        {/* Vaccine cards grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="border rounded-lg p-6 space-y-4">
+              {/* Vaccine name */}
+              <Skeleton className="h-7 w-3/4" />
+              
+              {/* Age group buttons */}
+              <div className="space-y-3">
+                {[...Array(3)].map((_, j) => (
+                  <div key={j} className="flex justify-between items-center">
+                    <Skeleton className="h-12 w-full rounded-md" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -146,7 +178,7 @@ export default function UnvaccinatedResidents() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
-              placeholder="Search..."
+              placeholder="Search vaccine name or age group..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -163,7 +195,7 @@ export default function UnvaccinatedResidents() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {allVaccineNames.map((vaccineName) => {
+        {filteredVaccineNames.map((vaccineName) => {
           const ageGroups = groupedData[vaccineName] || {}
           const hasResidents = Object.values(ageGroups).some(residents => residents && residents.length > 0)
           
@@ -189,20 +221,18 @@ export default function UnvaccinatedResidents() {
                         : ""
 
                     return (
-                      <Dialog key={`${vaccineName}-${ageGroupName}`}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-between p-4 h-auto text-left flex items-center bg-gray-50 hover:bg-gray-100"
-                            onClick={() => handleOpenDialog(vaccineName, ageGroupName, residents)}
-                          >
-                            <span className="font-medium text-darkBlue1">
-                              {ageGroupName} {ageRange ? `(${ageRange})` : ""}
-                            </span>
-                            <span className="text-sm text-gray-600">{residents.length} Residents</span>
-                          </Button>
-                        </DialogTrigger>
-                      </Dialog>
+                      <div key={`${vaccineName}-${ageGroupName}`}>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between p-4 h-auto text-left flex items-center bg-gray-50 hover:bg-gray-100"
+                          onClick={() => handleOpenPanel(vaccineName, ageGroupName, residents)}
+                        >
+                          <span className="font-medium text-darkBlue1">
+                            {ageGroupName} {ageRange ? `(${ageRange})` : ""}
+                          </span>
+                          <span className="text-sm text-gray-600">{residents.length} Residents</span>
+                        </Button>
+                      </div>
                     )
                   })}
                 </div>
@@ -212,15 +242,17 @@ export default function UnvaccinatedResidents() {
         })}
       </div>
 
-      {allVaccineNames.length === 0 && !isLoading && (
-        <div className="text-center text-gray-500 py-10">No vaccine data available.</div>
+      {filteredVaccineNames.length === 0 && !isLoading && (
+        <div className="text-center text-gray-500 py-10">
+          {searchQuery.trim() ? "No matching vaccines or age groups found" : "No vaccine data available"}
+        </div>
       )}
 
-      <ResidentListDialog
-        isOpen={dialogOpen}
-        onOpenChange={setDialogOpen}
-        title={currentDialogTitle}
-        residents={currentDialogResidents}
+      <ResidentListPanel
+        isOpen={panelOpen}
+        onClose={handleClosePanel}
+        title={currentPanelTitle}
+        residents={currentPanelResidents}
       />
     </div>
   )
