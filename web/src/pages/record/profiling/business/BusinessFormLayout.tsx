@@ -26,12 +26,15 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button/button"
+import { formatDate } from "@/helpers/dateHelper"
+import { useSafeNavigate } from "@/hooks/use-safe-navigate"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
   const location = useLocation()
   const params = React.useMemo(() => location.state?.params || {}, [location.state])
   const { user } = useAuth()
+  const { safeNavigate } = useSafeNavigate();
   const { showLoading, hideLoading } = useLoading()
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([])
   const { deleteFile } = useInstantFileUpload({ mediaFiles })
@@ -55,7 +58,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const formattedResidents = React.useMemo(() => formatResidents(residentsList) || [], [residentsList])
 
   // Check if we need business info and if it's still loading
-  const needsBusinessInfo = formType === Type.Viewing || formType === Type.Editing
+  const needsBusinessInfo = formType !== Type.Create
   const isBusinessInfoLoading = needsBusinessInfo && isLoadingBusInfo && !businessInfo
   const isFormDataLoading = isLoadingSitio || isLoadingResidents || isLoadingBusInfo
 
@@ -69,8 +72,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   }, [isFormDataLoading, showLoading, hideLoading])
 
   React.useEffect(() => {
-    if (formType === Type.Viewing || formType === Type.Editing) {
-      setIsReadOnly(formType === Type.Viewing)
+    if (formType !== Type.Create) {
+      setIsReadOnly(true)
 
       // Only populate fields if business info is available
       if (businessInfo && !isLoadingBusInfo) {
@@ -149,12 +152,68 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     setMediaFiles((prev) => [...prev])
   }, [businessInfo, form])
 
+  // Function to add business to db
+  const create = async (
+    respondentData: Record<string, any>, 
+    rp_id: string,
+    files: Record<string, any>
+  ) => {
+    await addBusiness({
+      ...businessInfo,
+      ...(!rp_id && { respondent: respondentData }),
+      ...((rp_id || tab_params?.residentId) && {
+        rp: tab_params?.residentId || rp_id?.split(" ")[0],
+      }),
+      staff: user?.staff?.staff_id,
+      files: files,
+    })
+    showSuccessToast("Business registered successfully!")
+    setMediaFiles([])
+    form.reset()
+    if (tab_params?.isRegistrationTab) {
+      tab_params?.next?.()
+    }
+  } 
+
+  // Function to update business data
+  const update = async (
+    businessInfo: Record<string, any>,
+    files: Record<string, any>
+  ) => {
+    await updateBusiness({
+      data: {
+        ...businessInfo,
+        // Include if viewing pending 
+        ...(formType === Type.Request && {
+          bus_date_verified: formatDate(new Date()),
+          bus_status: 'Active'
+        }),
+        // Exclude if viewing pending 
+        ...(formType !== Type.Request && {
+          files: files
+        }),
+        sitio: businessInfo.sitio.toLowerCase(),
+        staff: user?.staff?.staff_id || "",
+      },
+      businessId: params?.busId,
+    })
+    showSuccessToast("Business record updated successfully!")
+    if(formType === Type.Request) safeNavigate.back();
+    setFormType(Type.Viewing)
+  }
+
   // Function to handle form submission
   const submit = async () => {
     setIsSubmitting(true)
     try {
-      const validateRespondent = form.watch("respondent.rp_id") ? "respondent.rp_id" : "respondent"
-      const formIsValid = await form.trigger(["bus_name", "bus_gross_sales", "bus_street", "sitio", validateRespondent])
+      const validateRespondent = form.watch("respondent.rp_id") ? "respondent.rp_id" : "respondent";
+      const formIsValid = await form.trigger([
+        ...(formType !== Type.Request ? [validateRespondent] : []) as any,
+        "bus_name", 
+        "bus_gross_sales", 
+        "bus_street", 
+        "sitio"
+      ])
 
       // Validate form
       if (!formIsValid) {
@@ -179,35 +238,18 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         }
       })
 
-      if (formType === Type.Editing) {
-        await updateBusiness({
-          data: {
-            ...businessInfo,
-            sitio: businessInfo.sitio.toLowerCase(),
-            files: files,
-            staff: user?.staff?.staff_id || "",
-          },
-          businessId: params?.busId,
-        })
-        showSuccessToast("Business record updated successfully!")
-        setFormType(Type.Viewing)
-      } else {
-        await addBusiness({
-          ...businessInfo,
-          ...(!rp_id && { respondent: respondentData }),
-          ...((rp_id || tab_params?.residentId) && {
-            rp: tab_params?.residentId || rp_id?.split(" ")[0],
-          }),
-          staff: user?.staff?.staff_id,
-          files: files,
-        })
-        showSuccessToast("Business registered successfully!")
-        setMediaFiles([])
-        form.reset()
-        if (tab_params?.isRegistrationTab) {
-          tab_params?.next?.()
-        }
+      switch(formType) {
+        case Type.Create:
+          create(respondentData, rp_id as string, files);
+          break;
+        case Type.Editing:
+          update(businessInfo, files);
+          break;
+        case Type.Request:
+          update(businessInfo, files);
+          break;
       }
+
     } catch (error) {
       console.error("Error with business operation:", error)
       showErrorToast("Failed to process business information. Please try again.")
@@ -248,7 +290,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
 
     return (
       <>
-        {formType === Type.Viewing && respondentView()}
+        {formType !== Type.Create && respondentView()}
         <Card className="w-full rounded-t-none border-t-0">
           <Form {...form}>
             <form
@@ -303,14 +345,14 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
           </div>
           <Label className="flex text-xl text-gray-100 items-center gap-4">
             {businessInfo.br ? 
-              fullName(businessInfo.br.br_lname, businessInfo.br.br_fname, businessInfo.br.br_mname) : 
+              fullName(businessInfo.br.per_lname, businessInfo.br.per_fname, businessInfo.br.per_mname) : 
               fullName(businessInfo.rp.per_lname, businessInfo.rp.per_fname, businessInfo.rp.per_mname)
             }
-            <div>
+            {formType == Type.Editing && <div>
               <Button className="shadow-none bg-green-500 hover:bg-green-500 h-5 px-2">
                 Change
               </Button>
-            </div>
+            </div>}
           </Label>
         </div>
       </CardContent>

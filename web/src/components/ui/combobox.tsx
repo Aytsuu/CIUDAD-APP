@@ -49,6 +49,7 @@ export const Combobox = React.memo(
       const updateWidth = () => {
         if (triggerRef.current) {
           setWidth(triggerRef.current.getBoundingClientRect().width)
+          if (size) setWidth(size)
         }
       }
 

@@ -266,7 +266,7 @@ const items: MenuItem[] = [
       { title: "Resident", url: "/resident"},
       { title: "Family", url: "/family" },
       { title: "Household", url: "/household" },
-      { title: "Business", url: "/business" },
+      { title: "Business", url: "/business/record/active" },
     ],
   },
   {

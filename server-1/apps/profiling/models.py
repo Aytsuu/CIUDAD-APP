@@ -162,13 +162,8 @@ class RequestRegistrationComposition(models.Model):
 
 class BusinessRespondent(models.Model):
     br_id = models.BigAutoField(primary_key=True)
-    br_lname = models.CharField(max_length=50)
-    br_fname = models.CharField(max_length=50)
-    br_mname = models.CharField(max_length=50, null=True, blank=True)
-    br_sex = models.CharField(max_length=50)
-    br_dob = models.DateField()
-    br_contact = models.CharField(max_length=20)
-    br_address = models.TextField()
+    br_date_registered = models.DateField(default=date.today)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'business_respondent'
@@ -177,11 +172,13 @@ class Business(models.Model):
     bus_id = models.BigAutoField(primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
-    bus_date_registered = models.DateField(default=date.today)
+    bus_status = models.CharField(max_length=20, default='Pending')
+    bus_date_of_registration = models.DateField(default=date.today)
+    bus_date_verified = models.DateField(null=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, related_name="owned_business")
     br = models.ForeignKey(BusinessRespondent, on_delete=models.CASCADE, null=True)
     add = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
+    staff = models.ForeignKey('administration.Staff', null=True, on_delete=models.CASCADE, related_name='businesses')
 
     class Meta:
         db_table = 'business'

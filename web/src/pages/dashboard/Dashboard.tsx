@@ -13,8 +13,8 @@ export default function Dashboard() {
       title="Dashboard"
       description="Overview of key metrics, data, and insights"
     >
-      <div className="w-full flex gap-2">
-        <div className="w-full grid gap-2">
+      <div className="w-full flex gap-4">
+        <div className="w-full grid gap-4">
           <div className="grid grid-cols-5">
             <AdminSectionCards/>
             <ProfilingSectionCards/>
@@ -24,7 +24,7 @@ export default function Dashboard() {
             <ReportSectionCharts/>
           </div>
         </div>
-        <div className="grid gap-2">
+        <div className="grid gap-4">
           <ProfilingSidebar/>
           <ReportSidebar/>
         </div>

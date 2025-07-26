@@ -27,7 +27,9 @@ export type ResidentBusinessRecord = {
   bus_id: string;
   bus_name: string;
   bus_gross_sales: string;
-  bus_date_registered: string;
+  bus_date_verified: string;
+  sitio: string;
+  bus_street: string;
 }
 
 export type DependentRecord = {
@@ -106,7 +108,17 @@ export type BusinessRecord = {
   bus_gross_sales: string;
   sitio: string;
   bus_street: string;
-  bus_date_registered: string;
+  bus_date_of_registration: string;
+  bus_date_verified: string;
   rp: string;
+}
+
+export type BusinessRespondent = {
+  br_id: string;
+  lname: string;
+  fname: string;
+  mname: string;
+  br_date_registered: string;
+  businesses: Record<string, any>[];
 }
 

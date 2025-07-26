@@ -64,6 +64,19 @@ export const useAddAccount = () => {
   })
 }
 
+export const useAddBusinessRespondent = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post('profiling/business/create-respondent/', data);
+        return res.data;
+      } catch (err ) {
+        throw err;
+      }
+    }
+  })
+}
+
 export const useVerifyBusinessRespondent = () => {
   const { toast } = useToastContext();
   return useMutation({

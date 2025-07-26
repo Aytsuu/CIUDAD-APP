@@ -17,6 +17,10 @@ import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLa
 import { Navigate } from "react-router";
 import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
 import UpdateComparisonView from "@/pages/record/profiling/resident/form/UpdateComparisonView";
+import ActiveRecords from "@/pages/record/profiling/business/ActiveRecords";
+import PendingRecords from "@/pages/record/profiling/business/PendingRecords";
+import RespondentRecords from "@/pages/record/profiling/business/RespondentRecords";
+import RespondentDetails from "@/pages/record/profiling/business/RespondentDetails";
 
 export const profiling_router = [
   // Account
@@ -111,8 +115,26 @@ export const profiling_router = [
 
   // Business
   {
-    path: "business",
+    path: "business/record",
     element: <BusinessRecords />,
+    children: [
+      {
+        path: "active",
+        element: <ActiveRecords />,
+      },
+      {
+        path: "pending",
+        element: <PendingRecords />,
+      },
+      {
+        path: "respondent",
+        element: <RespondentRecords />,
+      },
+      {
+        path: "respondent/details",
+        element: <RespondentDetails />,
+      },
+    ]
   },
   {
     path: "business/form",

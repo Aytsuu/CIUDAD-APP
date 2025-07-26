@@ -60,6 +60,7 @@ export default function RootLayout() {
             <Stack initialRouteName="(auth)">
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(business)" options={{ headerShown: false }} />
               <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
               <Stack.Screen name="(profiling)" options={{ headerShown: false }} />
               <Stack.Screen name="(report)" options={{ headerShown: false }} />
