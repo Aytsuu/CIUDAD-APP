@@ -16,5 +16,5 @@ import Request from "../(request)";
 import SummonAndCaseMain from "@/screens/summon/summon-and-case-main";
 
 export default () => {
-    return <ResolutionPage/>
+    return <TemplateMainPage/>
 }
