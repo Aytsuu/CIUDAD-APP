@@ -3,7 +3,6 @@ import { Stack } from "expo-router";
 export default () => {
     return (
         <Stack>
-            <Stack.Screen name="admin/patientsrecord/patientsrecord" options={{ headerShown: false }} />
             <Stack.Screen name="medconsultation/med-landing" options={{ headerShown: false }} />
             <Stack.Screen name="medconsultation/consultationpage" options={{ headerShown: false }} />
             <Stack.Screen name="medconsultation/setschedule" options={{ headerShown: false}} />
@@ -21,13 +20,18 @@ export default () => {
             <Stack.Screen name="animalbite/animalbite" options={{ headerShown: false }} />
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="home" options={{ headerShown: false }} />
-            <Stack.Screen name="inventory/medicine" options={{ headerShown: false }} />
+
+
+
+            <Stack.Screen name="admin/patientsrecord/patientsrecord" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/inventory/medicine" options={{ headerShown: false }} />
             <Stack.Screen name="admin/medicinerequest/medicinerequest" options={{ headerShown: false }} />
             <Stack.Screen name="admin/animalbites/individual" options={{ headerShown: false }} />
             <Stack.Screen name="admin/animalbites/overall" options={{ headerShown: false }} />
             <Stack.Screen name="admin/requestspage" options={{ headerShown: false }} />
 
-
+            <Stack.Screen name="admin/inventory/transaction" options={{headerShown:false}} />
+            <Stack.Screen name="admin/familyplanning/comparison" options={{headerShown:false}} />
             <Stack.Screen name="admin/familyplanning/individual" options={{headerShown:false}} />
             <Stack.Screen name="admin/familyplanning/viewpage1" options={{headerShown:false}} />
             <Stack.Screen name="admin/familyplanning/overall" options={{headerShown:false}} />

@@ -2,7 +2,7 @@ import { View, ScrollView, TouchableOpacity, TextInput, RefreshControl, Activity
 import { Search, Package, ChevronLeft, AlertTriangle, Filter } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import * as React from "react"
-import { Link } from "expo-router"
+import { Link, router } from "expo-router"
 import { api2 } from "@/api/api"
 
 interface InventoryItem {
@@ -51,11 +51,11 @@ export default function InventoryScreen() {
             return { name: endpoint.name, data: response.data, success: true }
           } catch (error) {
             console.error(`Error fetching ${endpoint.name}:`, error)
-            return { 
-              name: endpoint.name, 
-              data: [], 
-              success: false, 
-              error: error instanceof Error ? error.message : 'Unknown error' 
+            return {
+              name: endpoint.name,
+              data: [],
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error'
             }
           }
         })
@@ -68,48 +68,48 @@ export default function InventoryScreen() {
       if (medicinesResult?.success && medicinesResult.data) {
         const standardizedMedicines: InventoryItem[] = medicinesResult.data.map((item: any) => ({
           id: item.minv_id,
-          name: item.med_name,
+          name: item.med_detail?.med_name,
           category: 'medicine',
-          description: item.med_type,
+          description: item.med_detail?.med_type,
           stock: item.minv_qty_avail || 0,
           minStock: 20,
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
           batchNumber: 'N/A',
-          lastUpdated: item.inv_detail?.updated_at ? 
+          lastUpdated: item.inv_detail?.updated_at ?
             new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }))
         allInventory.push(...standardizedMedicines)
       }
 
-    const commoditiesResult = results.find(r => r.name === 'commodities')
-    if (commoditiesResult?.success && commoditiesResult.data) {
-      const standardizedCommodities: InventoryItem[] = commoditiesResult.data.map((item: any) => {
+      const commoditiesResult = results.find(r => r.name === 'commodities')
+      if (commoditiesResult?.success && commoditiesResult.data) {
+        const standardizedCommodities: InventoryItem[] = commoditiesResult.data.map((item: any) => {
 
-        let userTypeDisplay = item.user_type;
-        if (item.user_type === 'Both') {
-          userTypeDisplay = 'Current user & New Acceptor';
-        } else if (item.user_type) {
-          userTypeDisplay = `${item.user_type}s`;
-        } else {
-          userTypeDisplay = 'all users';
-        }
+          let userTypeDisplay = item.user_type;
+          if (item.user_type === 'Both') {
+            userTypeDisplay = 'Current user & New Acceptor';
+          } else if (item.user_type) {
+            userTypeDisplay = `${item.user_type}s`;
+          } else {
+            userTypeDisplay = 'all users';
+          }
 
-        return {
-          id: item.cinv_id,
-          name: item.com_detail?.com_name || item.com_id?.com_name || 'Unknown Commodity',
-          
-          category: 'commodity',
-          description: `For ${userTypeDisplay}`,
-          stock: item.cinv_qty_avail || 0,
-          minStock: 50,
-          expiryDate: item.inv_detail?.expiry_date || 'N/A',
-          batchNumber: item.batch_number || 'N/A',
-          lastUpdated: item.inv_detail?.updated_at ? 
-            new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
-        }
-      })
-      allInventory.push(...standardizedCommodities)
-    }
+          return {
+            id: item.cinv_id,
+            name: item.com_detail?.com_name || item.com_id?.com_name || 'Unknown Commodity',
+
+            category: 'commodity',
+            description: `For ${userTypeDisplay}`,
+            stock: item.cinv_qty_avail || 0,
+            minStock: 50,
+            expiryDate: item.inv_detail?.expiry_date || 'N/A',
+            batchNumber: item.batch_number || 'N/A',
+            lastUpdated: item.inv_detail?.updated_at ?
+              new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
+          }
+        })
+        allInventory.push(...standardizedCommodities)
+      }
 
       // Process first aid items
       const firstaidResult = results.find(r => r.name === 'firstaid')
@@ -123,7 +123,7 @@ export default function InventoryScreen() {
           minStock: 10,
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
           batchNumber: 'N/A',
-          lastUpdated: item.inv_detail?.updated_at ? 
+          lastUpdated: item.inv_detail?.updated_at ?
             new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }))
         allInventory.push(...standardizedFirstAids)
@@ -141,7 +141,7 @@ export default function InventoryScreen() {
           minStock: 5,
           expiryDate: item.inv_details?.expiry_date || item.inv_id?.expiry_date || 'N/A',
           batchNumber: item.batch_number || 'N/A',
-          lastUpdated: item.inv_details?.updated_at || item.updated_at ? 
+          lastUpdated: item.inv_details?.updated_at || item.updated_at ?
             new Date(item.inv_details?.updated_at || item.updated_at).toLocaleDateString() : 'N/A',
         }))
         allInventory.push(...standardizedVaccines)
@@ -159,7 +159,7 @@ export default function InventoryScreen() {
           minStock: 15,
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
           batchNumber: item.batch_number || 'N/A',
-          lastUpdated: item.inv_detail?.updated_at ? 
+          lastUpdated: item.inv_detail?.updated_at ?
             new Date(item.inv_detail.updated_at).toLocaleDateString() : 'N/A',
         }))
         allInventory.push(...standardizedImmunization)
@@ -250,8 +250,8 @@ export default function InventoryScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-blue-50">
-        <View className="bg-white p-8 rounded-2xl items-center shadow-sm">
+      <View className="flex-1 justify-center items-center">
+        <View className="bg-white p-8 rounded-2xl items-center ">
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading inventory...</Text>
         </View>
@@ -268,8 +268,8 @@ export default function InventoryScreen() {
           <Text className="text-gray-700 text-center leading-6">
             {errorMessage || "Failed to load inventory data."}
           </Text>
-          <TouchableOpacity 
-            onPress={fetchInventoryData} 
+          <TouchableOpacity
+            onPress={fetchInventoryData}
             className="mt-6 px-6 py-3 bg-red-500 rounded-xl"
           >
             <Text className="text-white font-semibold">Retry</Text>
@@ -365,37 +365,41 @@ export default function InventoryScreen() {
       >
         {/* Stats Cards */}
         <View className="p-4 ">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-4">
-            <View className="bg-white p-4 rounded-xl shadow-sm min-w-[160px] ">
-              <View className="flex-row items-center mb-2">
-                <Package size={18} color="#3B82F6" />
-                <Text className="ml-2 text-gray-600 text-sm">Total Items</Text>
-              </View>
-              <Text className="text-2xl font-bold text-gray-800">{stats.totalItems}</Text>
-            </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row ">
+            <View className="gap-3 flex-row">
 
-            <View className="bg-white p-4 rounded-xl shadow-sm min-w-[160px]">
-              <View className="flex-row items-center mb-2">
-                <AlertTriangle size={18} color="#F59E0B" />
-                <Text className="ml-2 text-gray-600 text-sm">Low Stock</Text>
-              </View>
-              <Text className="text-2xl font-bold text-gray-800">{stats.lowStock}</Text>
-            </View>
 
-            <View className="bg-white p-4 rounded-xl shadow-sm min-w-[160px]">
-              <View className="flex-row items-center mb-2">
-                <AlertTriangle size={18} color="#EF4444" />
-                <Text className="ml-2 text-gray-600 text-sm">Out of Stock</Text>
+              <View className="bg-white p-4 rounded-xl shadow-sm min-w-[110px]">
+                <View className="flex-row items-center mb-2">
+                  <Package size={18} color="#3B82F6" />
+                  <Text className="ml-2 text-gray-600 text-sm">Total Items</Text>
+                </View>
+                <Text className="text-2xl font-bold text-gray-800">{stats.totalItems}</Text>
               </View>
-              <Text className="text-2xl font-bold text-gray-800">{stats.outOfStock}</Text>
-            </View>
 
-            <View className="bg-white p-4 rounded-xl shadow-sm min-w-[160px]">
-              <View className="flex-row items-center mb-2">
-                <Package size={18} color="#10B981" />
-                <Text className="ml-2 text-gray-600 text-sm">In Stock</Text>
+              <View className="bg-white p-4 rounded-xl shadow-sm min-w-[110px]">
+                <View className="flex-row items-center mb-2">
+                  <AlertTriangle size={18} color="#F59E0B" />
+                  <Text className="ml-2 text-gray-600 text-sm">Low Stock</Text>
+                </View>
+                <Text className="text-2xl font-bold text-gray-800">{stats.lowStock}</Text>
               </View>
-              <Text className="text-2xl font-bold text-gray-800">{stats.inStock}</Text>
+
+              <View className="bg-white p-4 rounded-xl shadow-sm min-w-[110px]">
+                <View className="flex-row items-center mb-2">
+                  <AlertTriangle size={18} color="#EF4444" />
+                  <Text className="ml-2 text-gray-600 text-sm">Out of Stock</Text>
+                </View>
+                <Text className="text-2xl font-bold text-gray-800">{stats.outOfStock}</Text>
+              </View>
+
+              <View className="bg-white p-4 rounded-xl shadow-sm min-w-[110px]">
+                <View className="flex-row items-center mb-2">
+                  <Package size={18} color="#10B981" />
+                  <Text className="ml-2 text-gray-600 text-sm">In Stock</Text>
+                </View>
+                <Text className="text-2xl font-bold text-gray-800">{stats.inStock}</Text>
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -406,9 +410,15 @@ export default function InventoryScreen() {
             <Text className="text-lg font-bold text-gray-800">
               Inventory ({filteredInventory.length})
             </Text>
-            <Text className="text-gray-500 text-sm">
+
+            <TouchableOpacity onPress={() => router.push("/(health)/admin/inventory/transaction")}
+              className="bg-blue-500 px-4 py-2 rounded-md"
+            >
+              <Text className="text-white text-sm font-medium">Transactions</Text>
+            </TouchableOpacity>
+            {/* <Text className="text-gray-500 text-sm">
               Showing {stats.showingItems}
-            </Text>
+            </Text> */}
           </View>
 
           {filteredInventory.length === 0 ? (

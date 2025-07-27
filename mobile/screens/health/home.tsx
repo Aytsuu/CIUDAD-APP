@@ -1,11 +1,13 @@
 import React from "react";
-import { View, Image, ScrollView, StatusBar, TouchableOpacity } from "react-native";
+import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Card } from "@/components/ui/card";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search } from "lucide-react-native";
+
+const { width } = Dimensions.get('window');
 
 const Homepage = () => {
   const modules = [
@@ -20,14 +22,40 @@ const Homepage = () => {
     { name: 'Inventory', route: '/inventory/medicine', icon: Archive },
   ];
 
-  return (
-    <SafeAreaView className="flex-1 bg-gray-100">
-      <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
+  const quickActions = [
+    { title: 'Request Medicine', route: '/medicine-request/med-request', icon: Pill, color: '#1E40AF', bgColor: '#1e40af' },
+    { title: 'My Records', route: '/my-records/all-records', icon: UserCircle, color: '#15803d', bgColor: '#15803d' },
+  ];
 
-      {/* Welcome Section */}
-      <View className="flex-row items-center justify-between bg-blue-900 px-5 pr-0">
-        <View className="flex-1 pr-4">
-          <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome!</Text>
+  const featuredServices = [
+    {
+      title: 'Family Planning',
+      subtitle: 'Your Family, Your Future. Plan it right.',
+      route: '/family-planning/famplanning',
+      icon: Heart,
+      color: '#059669',
+      bgColor: '#ECFDF5',
+      image: require('@/assets/images/Health/Home/Famplanning.jpg')
+    },
+    {
+      title: 'Animal Bites',
+      subtitle: 'First aid & Prevention.',
+      route: '/animalbite/animalbite',
+      icon: Dog,
+      color: '#1E40AF',
+      bgColor: '#EFF6FF',
+      image: require('@/assets/images/Health/Home/animalbites.jpg')
+    },
+  ];
+
+  return (
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <StatusBar barStyle="light-content" backgroundColor="#1e40af" />
+
+      {/* Original Header */}
+      <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
+        <View className="flex-1 pr-4 ml-2">
+          <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
           <Text className="text-white text-base mt-1">How can we help you today?</Text>
         </View>
         <Image
@@ -38,132 +66,171 @@ const Homepage = () => {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mt-6 h-44">
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={{ paddingHorizontal: 16 }}
+        <View className="mt-5">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 15 }}
           >
-            <View className="flex-row gap-4">
-              {/* Family Planning Card */}
-              <Card className="w-80 h-40 rounded-lg shadow-lg overflow-hidden relative">
-                <Image 
-                  source={require('@/assets/images/Health/Home/Famplanning.jpg')} 
-                  className="w-full h-full absolute" 
-                  resizeMode="cover" 
-                />
-                <View className="absolute inset-0 bg-black/50" />
-                <View className="absolute inset-0 p-4 justify-between">
-                  <View>
-                    <Text className="text-white text-3xl mt-2 font-PoppinsSemiBold">Family Planning</Text>
-                    <Text className="text-white text-sm font-PoppinsRegular italic mt-1">Your Family, Your Future. Plan it right.</Text>
+            <View className="px-2 mb-4">
+              
+              <View className="flex-row gap-4">
+                <TouchableOpacity
+                  onPress={() => router.push("/family-planning/famplanning")}
+                  className="w-64 transform transition-transform duration-200 active:scale-95"
+                >
+                  <View className="bg-white rounded-2xl shadow-md overflow-hidden">
+                    <View className="h-36 relative">
+                      <Image
+                        source={require('@/assets/images/Health/Home/Famplanning.jpg')}
+                        className="w-full h-full"
+                        resizeMode="cover"
+                      />
+                      <View className="absolute inset-0 bg-black/50" />
+                      <View className="absolute bottom-4 left-4 right-4">
+                        <Text className="text-white text-lg font-PoppinsSemiBold">{featuredServices[0].title}</Text>
+                        <Text className="text-white/90 text-xs font-PoppinsRegular mt-1">{featuredServices[0].subtitle}</Text>
+                      </View>
+                    </View>
+                    <View className="p-4 flex-row items-center justify-between">
+                      <Heart size={20} color="#059669" />
+                      <TouchableOpacity className="bg-green-700 px-4 py-1.5 rounded-full">
+                        <Text className="text-white text-xs font-PoppinsSemiBold">Learn More</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <TouchableOpacity 
-                    onPress={() => router.push("/family-planning/famplanning")} 
-                    className="bg-green-600 rounded-full px-4 py-2 self-start"
-                  >
-                    <Text className="text-white text-sm font-semibold">Learn more</Text>
-                  </TouchableOpacity>
-                </View>
-              </Card>
+                </TouchableOpacity>
 
-              {/* Animal Bites Card */}
-              <Card className="w-80 h-40 rounded-lg shadow-lg overflow-hidden relative">
-                <Image 
-                  source={require('@/assets/images/Health/Home/animalbites.jpg')} 
-                  className="w-full h-full absolute" 
-                  resizeMode="cover" 
-                />
-                <View className="absolute inset-0 bg-black/50" />
-                <View className="absolute inset-0 p-4 justify-between">
-                  <View>
-                    <Text className="text-white text-3xl mt-2 font-PoppinsSemiBold">Animal Bites</Text>
-                    <Text className="text-white text-sm font-PoppinsRegular italic mt-1">First aid & Prevention.</Text>
+                <TouchableOpacity
+                  onPress={() => router.push('/animalbite/animalbite')}
+                  className="w-64 transform transition-transform duration-200 active:scale-95"
+                >
+                  <View className="bg-white rounded-2xl shadow-md overflow-hidden">
+                    <View className="h-36 relative">
+                      <Image
+                        source={require('@/assets/images/Health/Home/animalbites.jpg')}
+                        className="w-full h-full"
+                        resizeMode="cover"
+                      />
+                      <View className="absolute inset-0 bg-black/50" />
+                      <View className="absolute bottom-4 left-4 right-4">
+                        <Text className="text-white text-lg font-PoppinsSemiBold">{featuredServices[1].title}</Text>
+                        <Text className="text-white/90 text-xs font-PoppinsRegular mt-1">{featuredServices[1].subtitle}</Text>
+                      </View>
+                    </View>
+                    <View className="p-4 flex-row items-center justify-between">
+                      <Dog size={20} color="#1E40AF" />
+                      <TouchableOpacity className="bg-green-700 px-4 py-1.5 rounded-full">
+                        <Text className="text-white text-xs font-PoppinsSemiBold">Learn More</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <TouchableOpacity 
-                    onPress={() => router.push('/animalbite/animalbite')} 
-                    className="bg-green-600 rounded-full px-4 py-2 self-start"
-                  >
-                    <Text className="text-white text-sm font-semibold">Learn more</Text>
-                  </TouchableOpacity>
-                </View>
-              </Card>
+                </TouchableOpacity>
+              </View>
             </View>
           </ScrollView>
         </View>
 
-        {/* Medicine Request and My Records Section */}
-        <View className="flex-row px-4 mt-6 gap-4">
-          <TouchableOpacity 
-            onPress={() => router.push("/medicine-request/med-request")} 
-            className="flex-1 bg-blue-100 p-4 rounded-lg items-center"
-          >
-            <Image
-              source={require('@/assets/images/Health/Home/Capsule.png')}
-              className="w-20 h-20"
-            />
-            <Text className="text-blue-900 font-bold text-lg mt-2 text-center">Medicine Request</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={() => router.push("/my-records/all-records")} 
-            className="flex-1 bg-blue-100 p-4 rounded-lg items-center"
-          >
-            <Image
-              source={require('@/assets/images/Health/Home/myrecords.png')}
-              className="w-20 h-20"
-            />
-            <Text className="text-blue-900 font-bold text-lg mt-2 text-center">My Records</Text>
-          </TouchableOpacity>
+        <View className="px-6 mb-8">
+          <Text className="text-gray-800 text-xl mt-4 font-PoppinsSemiBold mb-4">Quick Actions</Text>
+          <View className="flex-row gap-4">
+            {quickActions.map((action, index) => {
+              const Icon = action.icon;
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => router.push(action.route as any)}
+                  className="flex-1"
+                >
+                  <View
+                    className="p-4 rounded-2xl shadow-lg relative"
+                    style={{ backgroundColor: action.color }}
+                  >
+                    <Icon size={32} color="white" />
+                    <Text className="text-white font-PoppinsSemiBold text-md mt-3">
+                      {action.title}
+                    </Text>
+                    <View className="absolute top-4 right-4">
+                      <ChevronRight size={20} color="white" />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
-        {/* Book Appointment Header */}
-        <View className="flex-row justify-between items-center px-4 mt-8">
-          <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book Appointment</Text>
-          <TouchableOpacity onPress={() => router.push("/appointments/schedules")}>
-            <Text className="text-blue-800 text-lg italic font-PoppinsSemiBold">My Appointments</Text>
-          </TouchableOpacity>
+        <View className="px-6 mb-8">
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book appointment</Text>
+            <TouchableOpacity onPress={() => router.push("/appointments/schedules")}>
+              <Text className="text-blue-800 text-lg italic font-PoppinsSemiBold">My appointments</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row mt-3 gap-4">
+            <TouchableOpacity
+              onPress={() => router.push("/maternal/maternal-landing")}
+              className="flex-1"
+            >
+              <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <View className="h-32 relative">
+                  <Image
+                    source={require('@/assets/images/Health/Home/Maternal.jpg')}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                  <View className="absolute inset-0 bg-black/40" />
+
+                  <View className="absolute inset-0 bg-emerald-600/70" />
+                  <View className="absolute top-3 left-3">
+                    <BookHeart size={32} color="white" />
+                  </View>
+                </View>
+                <View className="p-3">
+                  <Text className="text-gray-900 text-md font-PoppinsSemiBold mb-1">Maternal Services</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/medconsultation/med-landing")}
+              className="flex-1"
+            >
+              <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <View className="h-32 relative">
+                  <Image
+                    source={require('@/assets/images/Health/Home/medicalconsultation.jpg')}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                   <View className="absolute inset-0 bg-black/40" />
+                  <View className="absolute inset-0 bg-pink-500/70" />
+                  <View className="absolute top-3 left-3">
+                    <ShieldPlus size={32} color="white" />
+                  </View>
+                </View>
+                <View className="p-3">
+                  <Text className="text-gray-900 text-md font-PoppinsSemiBold mb-1">Medical Consultation</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Maternal Services and Medical Consultation Section */}
-        <View className="flex-row px-4 mt-6 gap-4">
-          <TouchableOpacity 
-            onPress={() => router.push("/maternal/maternal-landing")} 
-            className="flex-1"
-          >
-            <View className="bg-[#8EADA0] p-4 shadow-md rounded-lg items-center h-48 justify-center">
-              <BookHeart size={70} color="#2E4139" />
-              <Text className="text-[#2E4139] text-lg font-PoppinsSemiBold mt-2 text-center">Maternal</Text>
-              <Text className="text-[#2E4139] text-lg font-PoppinsSemiBold text-center">Services</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={() => router.push("/medconsultation/med-landing")} 
-            className="flex-1"
-          >
-            <View className="bg-pink-200 p-4 shadow-md rounded-lg items-center h-48 justify-center">
-              <ShieldPlus size={70} color="#47333A" />
-              <Text className="text-[#47333A] text-lg font-PoppinsSemiBold mt-2 text-center">Medical</Text>
-              <Text className="text-[#47333A] text-lg font-PoppinsSemiBold text-center">Consultation</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Manage Section */}
-        <View className="px-4 mt-8 mb-6">
+        <View className="px-5 mt-4 mb-6">
           <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Manage</Text>
           <View className="flex-row flex-wrap justify-between">
             {modules.map((module, index) => {
-              const Icon = module.icon; 
+              const Icon = module.icon;
               return (
                 <TouchableOpacity
                   key={index}
                   onPress={() => router.push(module.route as any)}
-                  className="w-[30%] bg-blue-900 p-3 rounded-lg mb-4 items-center"
+                  className="w-[30%] bg-blue-900 p-3 rounded-2xl mb-4 items-center"
                 >
-                  <Icon size={48} color="white" />
-                  <Text className="text-white font-PoppinsRegular text-center mt-2 text-sm leading-4">
+                  <Icon size={43} color="white" />
+                  <Text className="text-white font-PoppinsRegular text-center mt-3 text-sm leading-4">
                     {module.name}
                   </Text>
                 </TouchableOpacity>

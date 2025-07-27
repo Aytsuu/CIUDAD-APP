@@ -73,7 +73,7 @@ const Section: React.FC<SectionProps> = ({ title, children }) => (
 const RecordComparisonScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  // const { records } = route.params as { records: FamilyPlanningRecordDetail[] };
+  const { records } = route.params as { records: FamilyPlanningRecordDetail[] };
 
   const record1 = route.params?.record1 ? JSON.parse(route.params.record1) : null;
   const record2 = route.params?.record2 ? JSON.parse(route.params.record2) : null;

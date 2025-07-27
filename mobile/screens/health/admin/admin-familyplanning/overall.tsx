@@ -302,7 +302,7 @@ export default function OverallFpRecordsScreen() {
           icon={Calendar} 
           label="Date Created" 
           value={new Date(item.created_at).toLocaleDateString()} 
-          iconColor="#06B6D4"
+          iconColor="#3B82F6"
         />
       </CardContent>
     </Card>
@@ -346,7 +346,7 @@ export default function OverallFpRecordsScreen() {
         {/* Search and Filter Card */}
         <Card className="mb-4">
           <CardContent>
-            <View className="flex-row items-center space-x-3">
+            <View className="flex-row items-center gap-2">
               {/* Search Input */}
               <View className="flex-1 relative">
                 <View className="absolute left-3 top-3 z-10">
@@ -359,14 +359,7 @@ export default function OverallFpRecordsScreen() {
                   onChangeText={setSearchQuery}
                 />
               </View>
-              
-              {/* Filter Button */}
-              <TouchableOpacity 
-                onPress={() => {/* You can implement a modal here */}} 
-                className="w-12 h-12 bg-gray-100 rounded-lg items-center justify-center"
-              >
-                <Filter size={18} color="#6B7280" />
-              </TouchableOpacity>
+            
               
               {/* Refresh Button */}
               <TouchableOpacity 
