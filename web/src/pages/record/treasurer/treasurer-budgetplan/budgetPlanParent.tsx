@@ -1076,10 +1076,12 @@ export default function BudgetPlanParent() {
       <StepIndicator currentStep={currentStep} />
 
       {currentStep === "header" && (
-        <BudgetHeaderForm 
-          form={headerForm} 
-          onSubmit={handleHeaderSubmit}
-        />
+        <div className="pb-5">
+          <BudgetHeaderForm 
+            form={headerForm} 
+            onSubmit={handleHeaderSubmit}
+          />
+        </div>
       )}
 
       {currentStep === "allocation" && (

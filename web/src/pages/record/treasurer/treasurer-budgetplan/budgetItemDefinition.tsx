@@ -50,15 +50,15 @@ export const budgetItemsPage4 = [
 ];
 
 export const budgetWithLimits = [
-    { name: "honorariaOfficials", label: "Honoraria for Officials", category: "Personal Services" },
-    { name: "cashOfficials", label: "Cash Gift for Officials", category: "Personal Services" },
-    { name: "midBonusOfficials", label: "Mid-Year Bonus for Officials", category: "Personal Services" },
-    { name: "endBonusOfficials", label: "Year-End Bonus for Officials", category: "Personal Services" },
-    { name: "honorariaTanods", label: "Honoraria for Tanods", category: "Personal Services" },
-    { name: "honorariaLupon", label: "Honoraria for Lupon Members", category: "Personal Services" },
-    { name: "honorariaBarangay", label: "Honoraria for Barangay Workers", category: "Personal Services" },
-    { name: "prodEnhancement", label: "Productivity Enhancement Incentive", category: "Personal Services" },
-    { name: "leaveCredits", label: "Commutation of Leave Credits", category: "Personal Services" },
+    { name: "honorariaOfficials", label: "Honoraria for Officials", category: "Personal Service" },
+    { name: "cashOfficials", label: "Cash Gift for Officials", category: "Personal Service" },
+    { name: "midBonusOfficials", label: "Mid-Year Bonus for Officials", category: "Personal Service" },
+    { name: "endBonusOfficials", label: "Year-End Bonus for Officials", category: "Personal Service" },
+    { name: "honorariaTanods", label: "Honoraria for Tanods", category: "Personal Service" },
+    { name: "honorariaLupon", label: "Honoraria for Lupon Members", category: "Personal Service" },
+    { name: "honorariaBarangay", label: "Honoraria for Barangay Workers", category: "Personal Service" },
+    { name: "prodEnhancement", label: "Productivity Enhancement Incentive", category: "Personal Service" },
+    { name: "leaveCredits", label: "Commutation of Leave Credits", category: "Personal Service" },
 
     { name: "memDues", label: "Membership Dues/ Contribution to Organization", category: "Other Expense" },
     { name: "miscExpense", label: "Extraordinary & Miscellaneous Expense", category: "Other Expense" },
