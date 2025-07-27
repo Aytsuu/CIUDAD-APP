@@ -175,10 +175,10 @@ export const PrenatalFormSchema = z.object({
 
     // present pregnancy
     presentPregnancy: z.object({
-        gravida: z.number().optional(),
-        para: z.number().optional(),
-        fullterm: z.number().optional(),
-        preterm: z.number().optional(),
+        gravida: positiveNumberSchema.optional(),
+        para: positiveNumberSchema.optional(),
+        fullterm: positiveNumberSchema.optional(),
+        preterm: positiveNumberSchema.optional(),
         pf_lmp: dateSchema.optional(),
         pf_edc: dateSchema.optional(),
     }),

@@ -4,10 +4,10 @@ import { useState, useEffect } from "react"
 import { format, startOfWeek, addDays, isSameDay } from "date-fns"
 import { enUS } from "date-fns/locale"
 
-import ScheduleCard from "../schedules/schedule-card"
-import ScheduleDialog from "../schedules/schedule-dialog"
+import ScheduleCard from "../scheduler/schedule-card"
+import ScheduleDialog from "../scheduler/schedule-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
-import type { WeeklySchedule, DailySchedule } from "../schedules/schedule-types"
+import type { WeeklySchedule, DailySchedule } from "../scheduler/schedule-types"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 
 export default function SchedulerMain() {

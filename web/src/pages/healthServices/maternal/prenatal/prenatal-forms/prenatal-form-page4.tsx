@@ -429,7 +429,7 @@ export default function PrenatalFormFourthPq({
               <DataTable columns={prenatalCareColumn} data={prenatalCareData} />
             </div>
             <div className="mt-8 sm:mt-10 flex justify-end">
-              <Button variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
+              <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
                 Prev
               </Button>
               <Button 

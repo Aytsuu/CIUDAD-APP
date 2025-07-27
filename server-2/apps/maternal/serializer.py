@@ -18,35 +18,42 @@ from apps.patientrecords.serializers.patients_serializers import PatientSerializ
 
 # serializer for models not in maternal
 class MedicalHistorySerializer(serializers.ModelSerializer):
-    illness_name = serializers.CharField(source='ill_id.illname', read_only=True)
+    illness_name = serializers.CharField(source='ill.illname', read_only=True)
     class Meta:
         model = MedicalHistory
-        fields = ['medhist_id', 'year', 'ill_id', 'illness_name'] 
+        fields = ['medhist_id', 'year', 'ill', 'illness_name'] 
 
 
-class PrenatalPatientMedHistorySerializer(serializers.ModelSerializer):
-    med_history = serializers.SerializerMethodField()
+# class PrenatalPatientMedHistorySerializer(serializers.ModelSerializer):
+#     med_history = serializers.SerializerMethodField()
     
-    class Meta:
-        model = Patient
-        fields = ['pat_id', 'med_history']
+#     class Meta:
+#         model = Patient
+#         fields = ['pat_id', 'med_history']
 
-    def get_med_history(self, obj):
-        med_history = []
+#     def get_med_history(self, obj):
+#         med_history = []
 
-        try:
-            patient_records = PatientRecord.objects.filter(pat_id=obj)
-            for record in patient_records:          
-                prenatal_forms = Prenatal_Form.objects.filter(patrec_id=record).select_related('medhist_id__ill_id')    
-                for pf in prenatal_forms:
-                    if pf.medhist_id:
-                        med_history.append(pf.medhist_id)
+#         try:
+#             patient_records = PatientRecord.objects.filter(pat_id=obj)
+#             for record in patient_records:          
+#                 # prenatal forms checking
+#                 prenatal_forms = Prenatal_Form.objects.filter(patrec=record).select_related('medhist_id__ill')    
+#                 for pf in prenatal_forms:
+#                     if pf.medhist_id:
+#                         med_history.append(pf.medhist_id)
                 
-            return MedicalHistorySerializer(med_history, many=True).data
+#                 # family planning forms checking
+#                 # family_planning_forms = FP_Record.objects.filter(patrec=record).select_related('medhist_id__ill')
+#                 # for fp in family_planning_forms:
+#                 #     if fp.medhist_id:
+#                 #         med_history.append(fp.medhist_id)
+                
+#             return MedicalHistorySerializer(med_history, many=True).data
 
-        except Exception as e:
-            print(f"Error fetching medical history: {e}")
-            return []
+#         except Exception as e:
+#             print(f"Error fetching medical history: {e}")
+#             return []
 
 class ObstetricalHistorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -71,12 +78,18 @@ class SpouseCreateSerializer(serializers.ModelSerializer):
 class VitalSignsCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = VitalSigns
-        fields = ['vital_bp_systolic', 'vital_bp_diastolic'] # Only these fields are relevant for prenatalCare.bp
+        fields = ['vital_bp_systolic', 'vital_bp_diastolic'] 
 
 class BodyMeasurementCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = BodyMeasurement
-        fields = ['weight', 'height'] # Assuming bm_bmi_category exists or is handled
+        fields = ['weight', 'height'] 
+
+class ObstetricalHistoryCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Obstetrical_History
+        fields = ['obs_ch_born_alive', 'obs_living_ch', 'obs_abortion', 'obs_still_birth',
+                  'obs_lg_babies', 'obs_gravida', 'obs_para', 'obs_fullterm', 'obs_preterm', 'obs_record_from']
 
 class PreviousHospitalizationCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -174,7 +187,9 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     # Fields from motherPersonalInfo
     pat_id = serializers.CharField(write_only=True, required=True)
     patrec_type = serializers.CharField(default="Prenatal", write_only=True) 
-    
+
+    obstetrical_history = ObstetricalHistoryCreateSerializer(required=False, write_only=True)
+
     # Nested serializers for related models
     spouse_data = SpouseCreateSerializer(required=False, write_only=True)
     body_measurement = BodyMeasurementCreateSerializer(required=False, write_only=True)
@@ -208,7 +223,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         model = Prenatal_Form
         fields = [
             'pat_id', 'patrec_type', 'pf_lmp', 'pf_edc', 'pf_occupation',
-            'spouse_data', 'body_measurement', 'previous_hospitalizations',
+            'spouse_data', 'body_measurement', 'obstetrical_history', 'previous_hospitalizations',
             'previous_pregnancy_data', 'tt_statuses', 'lab_results_data', 
             'anc_visit_data', 'checklist_data', 'birth_plan_data',
             'obstetric_risk_code_data', 'prenatal_care_data', 'vital_bp_systolic', 
@@ -299,9 +314,10 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         
         # Pop nested data
         pat_id = validated_data.pop('pat_id')
-        patrec_type = validated_data.pop('patrec_type', 'Prenatal')  # Remove this as it's not a Prenatal_Form field
+        patrec_type = validated_data.pop('patrec_type', 'Prenatal')  
         spouse_data = validated_data.pop('spouse_data', None)
         body_measurement_data = validated_data.pop('body_measurement', None)
+        obstetrical_history_data = validated_data.pop('obstetrical_history', None)
         previous_hospitalizations_data = validated_data.pop('previous_hospitalizations', [])
         previous_pregnancy_data = validated_data.pop('previous_pregnancy_data', None)
         tt_statuses_data = validated_data.pop('tt_statuses', [])
@@ -310,8 +326,8 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         anc_visit_data = validated_data.pop('anc_visit_data', None)
         checklist_data = validated_data.pop('checklist_data', None)
         birth_plan_data = validated_data.pop('birth_plan_data', None)
-        obstetric_risk_code_data = validated_data.pop('obstetric_risk_code_data', None) # New
-        prenatal_care_data = validated_data.pop('prenatal_care_data', []) # New
+        obstetric_risk_code_data = validated_data.pop('obstetric_risk_code_data', None) 
+        prenatal_care_data = validated_data.pop('prenatal_care_data', []) 
         vital_bp_systolic = validated_data.pop('vital_bp_systolic', None)
         vital_bp_diastolic = validated_data.pop('vital_bp_diastolic', None)
         followup_date = validated_data.pop('followup_date', None)
@@ -371,6 +387,13 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     pat_id=patient
                 )
                 print(f"Created patient record: {patient_record.patrec_id}")
+
+                # create ObstetricalHistory
+                obstetrical_history = Obstetrical_History.objects.create(
+                    patrec_id=patient_record,
+                    **obstetrical_history_data
+                )
+                print(f"Created obstetrical history: {obstetrical_history.obs_id}")
 
                 # create VitalSigns (always create, even with default values)
                 vital_signs = VitalSigns.objects.create(

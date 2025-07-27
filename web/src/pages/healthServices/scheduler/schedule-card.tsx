@@ -3,7 +3,7 @@
 import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
-import type { ScheduleCardProps, ServiceTimeSlots } from "../schedules/schedule-types"
+import type { ScheduleCardProps, ServiceTimeSlots } from "../scheduler/schedule-types"
 
 export default function ScheduleCard({ day, dailySchedule, services }: ScheduleCardProps) {
   const displayDate = format(day, "EEEE")

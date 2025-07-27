@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
-import type { ServiceScheduleFormProps, WeeklySchedule, DailySchedule, ServiceTimeSlots } from "../schedules/schedule-types"
+import type { ServiceScheduleFormProps, WeeklySchedule, DailySchedule, ServiceTimeSlots } from "../scheduler/schedule-types"
 
 export default function ServiceScheduleForm({
   initialSchedule,

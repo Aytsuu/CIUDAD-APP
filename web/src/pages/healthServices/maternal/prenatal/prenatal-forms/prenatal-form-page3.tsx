@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
 
-import { useState, useCallback, useEffect } from "react" // Added useEffect
+import { useState, useCallback } from "react" // Added useEffect
 import type { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 
@@ -20,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/c
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
 import { MedicineDisplay } from "@/components/ui/medicine-display"
+import { usePrenatalPatientFollowUpVisits } from "../../queries/maternalFetchQueries"
 
 export default function PrenatalFormThirdPg({
   form,
@@ -31,20 +31,16 @@ export default function PrenatalFormThirdPg({
   back: () => void
 }) {
   // Renamed to submitLocal for clarity
-  const submit = async (e: React.FormEvent) => {
-    // Optionally, you can still trigger validation if needed, but react-hook-form already validates before calling this
-    // If you want to do extra validation, you can do it here
-    e.preventDefault()
-    window.scrollTo(0, 0) 
+  const handleNext = async () => {
+    window.scrollTo(0, 0)
 
-    // Example: If you want to scroll to first error, you can check form.formState.errors
     if (Object.keys(form.formState.errors).length === 0) {
       console.log("Form is valid, proceeding to next page")
       onSubmit() // This calls handlePatientSubmit(3) from prenatal-form-main.tsx
     } else {
       console.log("Form validation failed for RHF fields.")
-      console.log("Validation errors:", form.formState.errors) // Log specific errors
-      // Scroll to first error
+      console.log("Validation errors:", form.formState.errors) 
+      
       const firstErrorElement = document.querySelector('[data-error="true"]')
       if (firstErrorElement) {
         firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -53,13 +49,14 @@ export default function PrenatalFormThirdPg({
     window.scrollTo(0, 0)
   }
 
-  const [selectedOption, setSelectedOption] = useState("")
-  const { medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
-  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>(
-    [],
-  )
+  // const [selectedOption, setSelectedOption] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
+
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
+  const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
+  
 
   const handleSelectedMedicinesChange = useCallback(
     (
@@ -195,6 +192,34 @@ export default function PrenatalFormThirdPg({
     })
   }
 
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return { variant: "outline" as const, className: "bg-green-50 text-green-700 border-green-200" }
+      case 'pending':
+        return { variant: "outline" as const, className: "bg-yellow-50 text-yellow-700 border-yellow-200" }
+      case 'scheduled':
+        return { variant: "outline" as const, className: "bg-blue-50 text-blue-700 border-blue-200" }
+      case 'missed':
+        return { variant: "outline" as const, className: "bg-red-50 text-red-700 border-red-200" }
+      default:
+        return { variant: "outline" as const, className: "bg-gray-50 text-gray-700 border-gray-200" }
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    } catch {
+      return dateString
+    }
+  }
+
+
   // Set initial values for micronutrientSupp from form if they exist
   // useEffect(() => {
   //   const ironFolicStarted = form.getValues("micronutrientSupp.ironFolicStarted")
@@ -210,7 +235,7 @@ export default function PrenatalFormThirdPg({
       <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
         <Label className="text-black text-opacity-50 italic mb-10">Page 3 of 4</Label>
         <Form {...form}>
-          <form onSubmit={submit}>
+          <form>
             <div className="border rounded-lg shadow-md p-4 grid mb-8">
               {/* schedule for follow-up */}
               <div className="">
@@ -334,24 +359,41 @@ export default function PrenatalFormThirdPg({
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2 max-h-32 overflow-y-auto">
-                          <div className="flex justify-between items-center text-sm">
-                            <span>March 11, 2025</span>
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
-                              Completed
-                            </Badge>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span>March 04, 2025</span>
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
-                              Completed
-                            </Badge>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span>February 25, 2025</span>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                              Scheduled
-                            </Badge>
-                          </div>
+                          {isFUVLoading ? (
+                            <div className="flex justify-center items-center py-4">
+                              <span className="text-sm text-gray-500">Loading follow-up visits...</span>
+                            </div>
+                          ) : followUpVisitsError ? (
+                            <div className="flex justify-center items-center py-4">
+                              <span className="text-sm text-red-500">Error loading follow-up visits</span>
+                            </div>
+                          ) : followUpVisitsData?. prenatal_records && followUpVisitsData.prenatal_records.length > 0 ? (
+                            followUpVisitsData.prenatal_records
+                              .filter((record:any) => record.followup_visits)
+                              .sort((a : any, b : any) => new Date(b.followup_visits.followup_date).getTime() - new Date(a.followup_visits.followup_date).getTime())
+                              .map((record: any) => {
+                                const followUp = record.followup_visits
+                                const statusBadge = getStatusBadge(followUp.followv_status)
+
+                                return (
+                                  <div key={`${record.prenatal_id}-${followUp.followv_id}`}
+                                    className="flex justify-between items-center text-sm py-1"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span>{formatDate(followUp.followv_date)}</span>
+                                      <span className="text-xs text-gray-500">ID: {record.prenatal_id}</span>
+                                    </div>
+                                    <Badge variant={statusBadge.variant} className={statusBadge.className}>
+                                      {followUp.followv_status.charAt(0).toUpperCase() + followUp.followv_status.slice(1)}
+                                    </Badge>
+                                  </div>
+                                )
+                              })
+                          ) : (
+                            <div className="flex justify-center items-center py-4">
+                              <span className="text-sm text-gray-500">No follow-up visits found</span>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -365,43 +407,6 @@ export default function PrenatalFormThirdPg({
                   <CardHeader>
                     <div className="flex justify-between items-center p-5">
                       <CardTitle className="text-md font-semibold">GUIDE FOR 4ANC VISITS</CardTitle>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const weeks = Number(form.getValues("followUpSchedule.aogWeeks")) || 0
-                          const days = Number(form.getValues("followUpSchedule.aogDays")) || 0
-
-                          if (weeks === 0) {
-                            alert("Please enter AOG weeks first")
-                            return
-                          }
-
-                          const today = new Date()
-                          const firstTriEnd = new Date(today)
-                          firstTriEnd.setDate(today.getDate() + (13 * 7 - (weeks * 7 + days)))
-
-                          const secondTriStart = new Date(firstTriEnd)
-                          secondTriStart.setDate(firstTriEnd.getDate() + 1)
-
-                          const secondTriEnd = new Date(secondTriStart)
-                          secondTriEnd.setDate(secondTriStart.getDate() + (27 * 7 - 13 * 7))
-
-                          const thirdTriStart = new Date(secondTriEnd)
-                          thirdTriStart.setDate(secondTriEnd.getDate() + 1)
-
-                          const thirdTriMid = new Date(thirdTriStart)
-                          thirdTriMid.setDate(thirdTriStart.getDate() + 14)
-
-                          // Set the calculated dates to form
-                          form.setValue("ancVisits.firstTri", firstTriEnd.toISOString().split("T")[0])
-                          form.setValue("ancVisits.secondTri", secondTriEnd.toISOString().split("T")[0])
-                          form.setValue("ancVisits.thirdTriOne", thirdTriStart.toISOString().split("T")[0])
-                          form.setValue("ancVisits.thirdTriTwo", thirdTriMid.toISOString().split("T")[0])
-                        }}
-                      >
-                        Auto-calculate ANC Visits
-                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -509,7 +514,7 @@ export default function PrenatalFormThirdPg({
                             <RadioGroup
                               onValueChange={(value) => {
                                 field.onChange(value === "yes") // Convert "yes"/"no" to boolean
-                                setSelectedOption(value)
+                                // setSelectedOption(value)
                               }}
                               value={field.value ? "yes" : "no"} // Convert boolean to "yes"/"no" for RadioGroup
                               className="ml-3"
@@ -553,7 +558,7 @@ export default function PrenatalFormThirdPg({
                     </div>
                   ) : (
                     <MedicineDisplay
-                      medicines={medicineStocksOptions}
+                      medicines={medicineStocksOptions ?? []}
                       initialSelectedMedicines={selectedMedicines}
                       onSelectedMedicinesChange={handleSelectedMedicinesChange}
                       itemsPerPage={itemsPerPage}
@@ -651,10 +656,10 @@ export default function PrenatalFormThirdPg({
               />
             </div>
             <div className="mt-8 sm:mt-12 flex justify-end">
-              <Button variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
+              <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
                 Prev
               </Button>
-              <Button type="submit" className="mt-4 mr-4 w-[120px]" onClick={submit}>
+              <Button type="button" className="mt-4 mr-4 w-[120px]" onClick={handleNext}>
                 Next
               </Button>
             </div>

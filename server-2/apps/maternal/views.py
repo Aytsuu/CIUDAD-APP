@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from .serializer import (
     MedicalHistorySerializer, ObstetricalHistorySerializer, PostpartumCompleteSerializer,
     PrenatalCompleteSerializer, PregnancyDetailSerializer,BodyMeasurementReadSerializer,
-    ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer
+    PreviousPregnancyCreateSerializer, ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer
 ) 
 # PreviousHospitalizationSerializer, PreviousPregnancySerializer, TTStatusSerializer,
 #     Guide4ANCVisitSerializer, ChecklistSerializer,
@@ -17,8 +17,8 @@ from .models import *
 from datetime import datetime
 import logging
 
-# Create your views here.
 
+# medical history GET
 class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
         patient = get_object_or_404(Patient, pat_id=pat_id)
@@ -26,7 +26,7 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
         try:
             all_patrec_w_medhis = PatientRecord.objects.filter(
                 pat_id=patient,
-                patrec_type__in=['Prenatal', 'Familly Planning', 'Medical Consultation']
+                patrec_type__in=['Prenatal', 'Family Planning', 'Medical Consultation']
             )
             print("Found patient records w/ medical history for patient: ", patient.pat_id)
 
@@ -38,8 +38,8 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 })
 
             medical_history_obj = MedicalHistory.objects.filter(
-                patrec_id__in=all_patrec_w_medhis 
-            ).select_related('ill_id', 'patrec_id').order_by('-created_at')
+                patrec__in=all_patrec_w_medhis 
+            ).select_related('ill', 'patrec').order_by('-created_at')
 
             print(f'Found medical history for patient: {patient.pat_id}')
 
@@ -57,6 +57,7 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 'medical_history': []
             })
 
+# obstetrical history GET
 class PrenatalPatientObsHistoryView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
         patient = get_object_or_404(Patient, pat_id=pat_id)
@@ -83,6 +84,7 @@ class PrenatalPatientObsHistoryView(generics.RetrieveAPIView):
             })  
 
 
+# body measurement GET
 class PrenatalPatientBodyMeasurementView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
         patient = get_object_or_404(Patient, pat_id=pat_id)
@@ -108,8 +110,48 @@ class PrenatalPatientBodyMeasurementView(generics.RetrieveAPIView):
             })
 
 
-logger = logging.getLogger(__name__)
+class PrenatalRecordCreateView(generics.CreateAPIView):
+    serializer_class = PrenatalCompleteSerializer # Use the new complete serializer
+    queryset = Prenatal_Form.objects.all() # Keep queryset for DRF
 
+    def create(self, request, *args, **kwargs):
+        logger.info(f"Creating prenatal record with data: {request.data}")
+        
+        try:
+            serializer = self.get_serializer(data=request.data)
+            
+            if not serializer.is_valid():
+                logger.error(f"Serializer validation errors: {serializer.errors}")
+                return Response(
+                    {
+                        'error': 'Validation failed',
+                        'details': serializer.errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            prenatal_record = serializer.save()
+            logger.info(f"Successfully created prenatal record: {prenatal_record.pf_id}")
+            
+            return Response(
+                {
+                    'message': 'Prenatal record created successfully',
+                    'pf_id': prenatal_record.pf_id,
+                    'patrec_id': prenatal_record.patrec_id.patrec_id if prenatal_record.patrec_id else None,
+                    'data': serializer.data # Return serialized data for confirmation
+                },
+                status=status.HTTP_201_CREATED
+            )
+                
+        except Exception as e:
+            logger.error(f"Error creating prenatal record: {str(e)}")
+            return Response(
+                {'error': f'Failed to create prenatal record: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+logger = logging.getLogger(__name__)
 class PostpartumRecordCreateView(generics.CreateAPIView):
     serializer_class = PostpartumCompleteSerializer
     queryset = PostpartumRecord.objects.all()
@@ -200,51 +242,25 @@ def get_maternal_patients(request):
         }, status=500)
 
 
-# @api_view(['GET'])
-# def get_postpartum_records(request):
-#     """Get all postpartum records with related data"""
-#     try:
-#         records = PostpartumRecord.objects.select_related(
-#             'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'pregnancy_id'
-#         ).prefetch_related(
-#             'postpartum_delivery_record', 'postpartum_assessment'
-#         ).all()
-        
-#         serializer = PostpartumCompleteSerializer(records, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-        
-#     except Exception as e:
-#         logger.error(f"Error fetching postpartum records: {str(e)}")
-#         return Response(
-#             {'error': f'Failed to fetch postpartum records: {str(e)}'},
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        # )
+@api_view(['GET'])
+def get_all_active_pregnancies(request):
+    """Get all active pregnancies with related prenatal and postpartum records"""
+    try:
+        pregnancies = Pregnancy.objects.filter(
+            status="active"
+        ).count()
 
+        return Response({
+            'success': True,
+            'active_pregnancy_count': pregnancies
+        }, status=status.HTTP_200_OK)
 
-# @api_view(['GET'])
-# def get_postpartum_record_detail(request, ppr_id):
-#     """Get specific postpartum record with all related data"""
-#     try:
-#         record = PostpartumRecord.objects.select_related(
-#             'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
-#         ).prefetch_related(
-#             'postpartum_delivery_record', 'postpartum_assessment'
-#         ).get(ppr_id=ppr_id)
-        
-#         serializer = PostpartumCompleteSerializer(record)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-        
-#     except PostpartumRecord.DoesNotExist:
-#         return Response(
-#             {'error': f'Postpartum record with ID {ppr_id} does not exist'},
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-#     except Exception as e:
-#         logger.error(f"Error fetching postpartum record: {str(e)}")
-#         return Response(
-#             {'error': f'Failed to fetch postpartum record: {str(e)}'},
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#         )
+    except Exception as e:
+        logger.error(f"Error fetching active pregnancies: {str(e)}")
+        return Response(
+            {'error': f'Failed to fetch active pregnancies: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @api_view(['GET'])
@@ -364,43 +380,150 @@ def get_patient_pregnancy_records(request, pat_id):
         )
     
 
-class PrenatalRecordCreateView(generics.CreateAPIView):
-    serializer_class = PrenatalCompleteSerializer # Use the new complete serializer
-    queryset = Prenatal_Form.objects.all() # Keep queryset for DRF
+@api_view(['GET'])
+def get_prenatal_followup_visit(request, pat_id):
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
 
-    def create(self, request, *args, **kwargs):
-        logger.info(f"Creating prenatal record with data: {request.data}")
+        # check for latest active pregnancy with prenatal records
+        active_pregnancy = Pregnancy.objects.filter(
+            pat_id=patient,
+            status="active"
+        ).order_by('-created_at').first()
+
+        if not active_pregnancy:
+            return Response({
+                'error': 'No active pregnancy found for this patient'
+            }, status=status.HTTP_200_OK)
+
+
+        # get all prenatal records
+        prenatal_records = Prenatal_Form.objects.filter(pregnancy_id=active_pregnancy)
+        if not prenatal_records.exists():
+            return Response({
+                'message': 'No prenatal records found for this pregnancy'
+            }, status=status.HTTP_200_OK)
+
+        response_data = {
+            'pat_id': patient.pat_id,
+            'pregnancy': {
+                'pregnancy_id': active_pregnancy.pregnancy_id,
+                'status': active_pregnancy.status,
+                'created_at': active_pregnancy.created_at,
+            },
+            'prenatal_records': []
+        }
+
+        for prenatal in prenatal_records: 
+            prenatal_data = {
+                'prenatal_id': prenatal.pf_id,
+                'created_at': prenatal.created_at,
+                'followup_visits': None,
+            }
+
+            if prenatal.followv_id:
+                try:
+                    fu_visits = prenatal.followv_id
+                    prenatal_data['followup_visits'] = {
+                        'followv_id': fu_visits.followv_id,
+                        'followv_date': fu_visits.followv_date,
+                        'followv_status': fu_visits.followv_status,
+                    }
+                except FollowUpVisit.DoesNotExist:
+                    prenatal_data['followup_visits'] = None
+
+            response_data['prenatal_records'].append(prenatal_data)
         
-        try:
-            serializer = self.get_serializer(data=request.data)
-            
-            if not serializer.is_valid():
-                logger.error(f"Serializer validation errors: {serializer.errors}")
-                return Response(
-                    {
-                        'error': 'Validation failed',
-                        'details': serializer.errors
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            prenatal_record = serializer.save()
-            logger.info(f"Successfully created prenatal record: {prenatal_record.pf_id}")
-            
-            return Response(
-                {
-                    'message': 'Prenatal record created successfully',
-                    'pf_id': prenatal_record.pf_id,
-                    'patrec_id': prenatal_record.patrec_id.patrec_id if prenatal_record.patrec_id else None,
-                    'data': serializer.data # Return serialized data for confirmation
-                },
-                status=status.HTTP_201_CREATED
-            )
-                
-        except Exception as e:
-            logger.error(f"Error creating prenatal record: {str(e)}")
-            return Response(
-                {'error': f'Failed to create prenatal record: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return Response(response_data, status=status.HTTP_200_OK)
     
+    except Patient.DoesNotExist:
+        return Response({
+            'error': f'Patient with ID {pat_id} does not exist'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error fetching prenatal follow-up visits for patient {pat_id}: {str(e)}')
+        return Response({
+            'error': f'Failed to fetch prenatal follow-up visits: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+@api_view(['GET'])
+def get_prenatal_prev_hospitalization(request, pat_id):
+    """Get previous hospitalization records for a specific patient"""
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+
+        pf_records = Prenatal_Form.objects.filter(
+            patrec_id__pat_id=patient
+        ).select_related('patrec_id')
+
+        if not pf_records.exists():
+            return Response({
+                'pat_id': pat_id,
+                'message': 'No prenatal forms found for this patient',
+                'previous_hospitalization': []
+            }, status=status.HTTP_200_OK)
+        
+        prev_hospitalization = Previous_Hospitalization.objects.filter(
+            pf_id__in=pf_records
+        ).select_related('pf_id', 'pf_id__patrec_id').order_by('-pfph_id')
+
+        if not prev_hospitalization.exists():
+            return Response({
+                'pat_id': pat_id,
+                'message': 'No previous hospitalization records found for this patient',
+                'previous_hospitalization': []
+            }, status=status.HTTP_200_OK)
+
+        prev_hospitalization_data = []
+        for prev_hosp in prev_hospitalization:
+            prev_hospitalization_data.append({
+                'pf_id': prev_hosp.pf_id.pf_id,
+                'pfph_id': prev_hosp.pfph_id,
+                'prev_hospitalization': prev_hosp.prev_hospitalization,
+                'prev_hospitalization_year': prev_hosp.prev_hospitalization_year
+            })
+
+        return Response({
+            'pat_id': pat_id,
+            'previous_hospitalization': prev_hospitalization_data
+        }, status=status.HTTP_200_OK)
+
+    except Patient.DoesNotExist:
+        return Response({
+            'error': f'Patient with ID {pat_id} does not exist'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error fetching previous hospitalization records for patient {pat_id}: {str(e)}')
+        return Response({
+            'error': f'Failed to fetch previous hospitalization records: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_prenatal_prev_pregnancy(request, pat_id):
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+
+        latest_prev_pregnancy = Previous_Pregnancy.objects.filter(
+            patrec_id__pat_id=patient,
+        ).select_related('patrec_id').order_by('-pfpp_id').first()
+        print(f'Found latest previous pregnancy record')
+
+        if not latest_prev_pregnancy:
+            return Response({
+                'patient': patient.pat_id,
+                'message': 'No previous pregnancy records found for this patient'
+            }, status=status.HTTP_200_OK)
+
+        prev_preg_data = PreviousPregnancyCreateSerializer(latest_prev_pregnancy).data
+
+        return Response({
+            'patient': patient.pat_id,
+            'previous_pregnancy': prev_preg_data
+        })
+
+    except Exception as e:
+        return Response({
+            'error': f'Failed to fetch previous pregnancy records: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

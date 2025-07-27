@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/dialog/dialog"
 import { Button } from "@/components/ui/button/button"
 import { Edit } from "lucide-react"
-import ServiceScheduleForm from "../schedules/schedule-form"
-import type { WeeklySchedule } from "../schedules/schedule-types"
+import ServiceScheduleForm from "../scheduler/schedule-form"
+import type { WeeklySchedule } from "../scheduler/schedule-types"
 
 interface ScheduleDialogProps {
   weeklySchedule: WeeklySchedule
