@@ -24,7 +24,6 @@ function BudgetPlan() {
     const [deletedPlanYear, setDeletedPlanYear] = useState<string | null>(null);
     const currentYear = new Date().getFullYear().toString();
     const navigate = useNavigate();
-    let shouldClone = false;
 
     const { data: fetchedData = [], isLoading } = usegetBudgetPlan();
 
@@ -264,7 +263,6 @@ function BudgetPlan() {
                         onCancel={() => {
                             navigate("/budgetplan-forms", { 
                                 state: { 
-                                    isEdit: false,
                                     shouldClone: false
                                 } 
                             });
@@ -272,7 +270,6 @@ function BudgetPlan() {
                         onConfirm={() => {
                             navigate("/budgetplan-forms", { 
                                 state: { 
-                                    isEdit: false,
                                     shouldClone: true
                                 } 
                             });
