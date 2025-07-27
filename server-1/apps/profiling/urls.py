@@ -9,6 +9,7 @@ from .views.address_views import *
 from .views.request_registration_views import *
 from .views.business_views import *
 from .views.analytics_views import *
+from .views.kyc_views import *
 
 urlpatterns = [
     # Sitio Urls
@@ -20,8 +21,9 @@ urlpatterns = [
     path("per_address/list/", PerAddressListView.as_view(), name="per-address-list"),
 
     # Personal Urls
-    path("personal/update/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
+    path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
+    path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
 
     # Family Urls
     path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
@@ -31,9 +33,11 @@ urlpatterns = [
     path("family/<str:fam_id>/members/", FamilyMembersListView.as_view(), name="family-members-list"),
     path("family/create/", FamilyCreateView.as_view(), name="family-create"),
     path("family/id/<str:rp>/", FamilyIDView.as_view(), name="retrieve-family-id"),
+    path("family/composition/delete/<str:fam>/<str:rp>/", FamilyMemberDeleteView.as_view(), name="member-deletion"),
     path("family/role/update/<str:fam>/<str:rp>/", FamilyRoleUpdateView.as_view(), name="family-composition-update"),
     path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
+    path("family/verify/account-create/", VerifyFamily.as_view(), name="join-existing-family"),
 
     # Househould Urls
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
@@ -43,29 +47,38 @@ urlpatterns = [
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 
     # Resident Urls
-    path("resident/", ResidentProfileListExcludeFamView.as_view(), name="resident-details"),
+    path("resident/", ResidentProfileListWithOptions.as_view(), name="resident-details"),
     path("resident/list/table/", ResidentProfileTableView.as_view(), name="residents-table"),
     path("resident/create/combined/", ResidentPersonalCreateView.as_view(), name="resident-combined-create"),
     path("resident/personal/<str:rp_id>/", ResidentPersonalInfoView.as_view(), name="resident-personal-info"),
-    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListExcludeFamView.as_view(), name="resident-list-with exclusions"),
+    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListWithOptions.as_view(), name="resident-list-with exclusions"),
     path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
 
     # Request Urls
     path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
     path("request/create/", RequestCreateView.as_view(), name="request-create"),
-    path("request/file/create/", RequestFileCreateView.as_view(), name="request-file-create"),
     path("request/link/registration/", LinkRegVerificationView.as_view(), name="link-registration-verification"),
     path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
     path("request/count/", RequestCountView.as_view(), name="total-request"),
 
     # Business Urls
-    path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),
+    path("business/active/list/table/", ActiveBusinessTableView.as_view(), name="business-active-list"),
+    path("business/pending/list/table/", PendingBusinessTableView.as_view(), name="business-pending-list"),
+    path("business/respondent/list/table/", BusinessRespondentTableView.as_view(), name="business-respondent-list"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
+    path("business/create-respondent/", BusRespondentCreateView.as_view(), name="business-create-respondent"),
+    path("business/<int:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
+    path("business/respondent/<int:br_id>/info/", BusinessRespondentInfoView.as_view(), name="business-respondent-data"),
     path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
+    path("business/specific/ownership/", SpecificOwnerView.as_view(), name="business-for-specific-owner"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
+    path("business/verify/account-creation/", VerifyBusinessRespondent.as_view(), name="respondent-account-creation"),
     
     # Analytics Urls,
     path("card/analytics/data/", CardAnalyticsView.as_view(), name='card-analytics'),
     path("sidebar/analytics/data/", SidebarAnalyticsView.as_view(), name="sidebar-analytics"),
-
+    
+    # KYC
+    path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
+    path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
 ]

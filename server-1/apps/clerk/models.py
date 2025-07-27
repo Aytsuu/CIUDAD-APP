@@ -1,4 +1,45 @@
 from django.db import models
+from django.utils import timezone
+
+# Create your models here.
+# create models para as documets later
+class ClerkCertificate(models.Model):
+    cr_id = models.CharField(max_length=10, primary_key=True)
+    req_pay_method = models.CharField(max_length=50)
+    req_request_date = models.DateField()
+    req_claim_date = models.DateField()
+    req_transac_id = models.CharField(max_length=100, default='None')
+    # req_bsnss_name = models.CharField(max_length=100, default='None')
+    # req_bsnss_address = models.CharField(max_length=200, default='None')
+    req_type = models.CharField(max_length=100, default='None')
+    # req_sales_proof = models.CharField(max_length=100, default='None')
+    req_status = models.CharField(max_length=100, default='None')
+    req_payment_status = models.CharField(max_length=100, default='None')
+    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='certificates', null=True)
+    ra_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='ra_id', related_name='ra_certificates', null=True)
+    rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id')
+
+    class Meta:
+        db_table = 'certification_request'
+
+class ClerkBusinessPermit(models.Model):
+    busi_req_no = models.CharField(max_length=10, primary_key=True)
+    busi_name = models.CharField(max_length=50)
+    busi_add = models.CharField(max_length=50)
+    busi_gross_sale = models.DecimalField(max_digits=10, decimal_places=2)
+    busi_pay_method = models.CharField(max_length=20, choices=[('Cash', 'Cash'), ('Card', 'Card'), ('Online', 'Online')])
+    busi_date_req = models.DateField()
+    busi_date_claim = models.DateField()
+    
+    class Meta:
+        db_table = 'clerk_business_permit'
+
+class DocumentsPDF(models.Model):
+    # pdf_file = models.FileField(upload_to='template/')  
+    pdf_url = models.URLField(blank=True, null=True)  
+
+    class Meta:
+        db_table = 'clerk_pdf_documents'
 from datetime import datetime
 from django.utils import timezone
 # Create your models here.
@@ -33,64 +74,77 @@ class Address(models.Model):
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)
     cpnt_name = models.CharField(max_length=100)
+    cpnt_gender = models.CharField(max_length=20)
+    cpnt_age = models.CharField(max_length=2)
+    cpnt_number = models.CharField(max_length=11)
+    cpnt_relation_to_respondent = models.CharField(max_length=20)
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='complainant')
-    
+
     class Meta:
         db_table = 'complainant'
-        managed = False
+
 
 class Accused(models.Model):
     acsd_id = models.BigAutoField(primary_key=True)
     acsd_name = models.CharField(max_length=100)
+    acsd_age = models.CharField(max_length=2)
+    acsd_gender = models.CharField(max_length=20)
+    acsd_description = models.TextField()
     add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='accused')
-    
+
     class Meta:
         db_table = 'accused'
-        managed = False
 
 class Complaint(models.Model):
     comp_id = models.BigAutoField(primary_key=True)
+    comp_location = models.CharField(max_length=255)
     comp_incident_type = models.CharField(max_length=100)
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
-    comp_category = models.CharField(max_length=100, default='Low')
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_is_archive = models.BooleanField(default=False)
-    cpnt = models.ForeignKey(Complainant, related_name='complaints', on_delete=models.CASCADE)
-    
+
+    complainant = models.ManyToManyField(
+        Complainant,
+        through='ComplaintComplainant',
+        related_name='complaint'
+    )
+    accused = models.ManyToManyField(
+        Accused,
+        through='ComplaintAccused',
+        related_name='complaint'
+    )
+
     class Meta:
         db_table = 'complaint'
-        managed = False
+
+class ComplaintComplainant(models.Model):
+    cc_id = models.BigAutoField(primary_key=True)
+    comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
+    cpnt = models.ForeignKey(Complainant, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'complaint_complainant'
+        unique_together = ('comp', 'cpnt')  
 
 class ComplaintAccused(models.Model):
     ca_id = models.BigAutoField(primary_key=True)
     comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
     acsd = models.ForeignKey(Accused, on_delete=models.CASCADE)
-    
+
     class Meta:
         db_table = 'complaint_accused'
-        unique_together = ('comp', 'acsd')  # Prevent duplicate relationships
-        managed = False
-
-class Complaint_File(models.Model):
-    cf_id = models.BigAutoField(primary_key=True)
-    comp = models.ForeignKey(Complaint, related_name='complaint_file', on_delete=models.CASCADE)
-    file = models.ForeignKey('file.File', related_name='complaint_file', on_delete=models.CASCADE)
-    
-    class Meta:
-        db_table = 'complaint_file'
-        managed = False
+        unique_together = ('comp', 'acsd')
 
 class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
-    sr_req_date = models.DateTimeField(default=timezone.now)
+    sr_req_date = models.DateTimeField(default=datetime.now)
     sr_status = models.CharField(null=True, blank=True)
     sr_payment_status = models.CharField(null=True, blank=True)
     sr_type = models.CharField(null=True, blank=True)
     sr_decision_date = models.DateTimeField(null=True, blank=True)
-    comp = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-
+    comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
     parent_summon = models.ForeignKey(
         'self',
         null=True, blank=True,
@@ -111,6 +165,7 @@ class CaseActivity(models.Model):
     ca_reason = models.CharField(max_length=100)
     ca_hearing_date = models.DateField(null=False)
     ca_hearing_time = models.TimeField(null=False)
+    ca_mediation = models.CharField()
     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
     srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
@@ -118,12 +173,25 @@ class CaseActivity(models.Model):
     class Meta:
         db_table = 'case_activity'
 
+class CaseSuppDoc(models.Model):
+    csd_id = models.BigAutoField(primary_key=True)
+    csd_name = models.CharField(max_length=255)
+    csd_type = models.CharField(max_length=100)
+    csd_path = models.CharField(max_length=500)
+    csd_url = models.CharField(max_length=500)
+    csd_description = models.TextField(null=False)
+    csd_upload_date = models.DateTimeField(default=datetime.now)
+    ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
+
+    class Meta:
+        db_table = 'case_activity_supp_doc'
+
 
 class ServiceChargeRequestFile(models.Model):
     srf_id = models.BigAutoField(primary_key=True)
     srf_name = models.CharField(max_length=255)
-    srf_type = models.CharField(max_length=100)
-    srf_path = models.CharField(max_length=500)
+    srf_type = models.CharField(max_length=100, null=True, blank=True)
+    srf_path = models.CharField(max_length=500, null=True, blank=True)
     srf_url = models.CharField(max_length=500)
     
     class Meta:

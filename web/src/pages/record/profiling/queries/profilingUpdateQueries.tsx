@@ -29,11 +29,17 @@ export const useUpdateFamilyRole = () => {
 }
 
 export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ personalId, values} : { 
       personalId: string;
       values: Record<string, any>;
     }) => updateProfile(personalId, values),
+    onSuccess: (variables) => {
+      const { per_id } = variables;
+      queryClient.invalidateQueries({queryKey: ['personalInfo', per_id]});
+      queryClient.invalidateQueries({queryKey: ['personalHistory', per_id]});
+    }
   });
 };
 
@@ -99,11 +105,22 @@ export const useUpdateFamily = () => {
 }
 
 export const useUpdateBusiness = () => {
+  const queryclient = useQueryClient();
   return useMutation({
     mutationFn: ({data, businessId} : {
       data: Record<string, any>;
       businessId: string;
-    }) => updateBusiness(data, businessId)
+    }) => updateBusiness(data, businessId),
+    onSuccess: (newData) => {
+      queryclient.setQueryData(['businessInfo'], (old: any) => ({
+        ...(old || {}),
+        ...newData
+      }));
+
+      queryclient.invalidateQueries({queryKey: ['activeBusinesses']});
+      queryclient.invalidateQueries({queryKey: ['pendingBusinesses']});
+      queryclient.invalidateQueries({queryKey: ['businessInfo']});
+    }
   })
 }
 

@@ -90,7 +90,7 @@ export default function ResidentRecords() {
                   </View>
                   <View className="bg-gray-100 px-2 py-1 rounded-full">
                     <Text className="text-gray-700 text-xs">
-                      {item.gender}
+                      {item.sex}
                     </Text>
                   </View>
               </View>
@@ -231,6 +231,8 @@ export default function ResidentRecords() {
             ) : (
               <>
                 <FlatList
+                  maxToRenderPerBatch={1}
+                  overScrollMode="never"
                   data={residents}
                   renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
                   keyExtractor={(item) => item.rp_id}

@@ -53,7 +53,7 @@ export default function FamilyRecords() {
 
   return (
     // ----------------- RENDER --------------------
-    <MainLayoutComponent title="Family Profiling" description="Manage and view all family records in your community">
+    <MainLayoutComponent title="Family" description="Manage and view all family records in your community">
       <div className="space-y-6">
         <Card>
           {/* Search and Actions Bar */}
@@ -62,7 +62,7 @@ export default function FamilyRecords() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <Input
-                  placeholder="Search by family name, head of family, address..."
+                  placeholder="Search by family name, head of family, sitio..."
                   className="pl-11"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

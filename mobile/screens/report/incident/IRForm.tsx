@@ -23,11 +23,13 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
 import { CheckCircle } from "@/lib/icons/CheckCircle"
 import { AlertCircle } from "@/lib/icons/AlertCircle"
+import { useAuth } from "@/contexts/AuthContext"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 
 export default function IRForm() {
   const router = useRouter()
+  const { user } = useAuth();
   const defaultValues = generateDefaultValues(IncidentReportSchema)
   
   // Form state
@@ -105,10 +107,10 @@ export default function IRForm() {
 
       const values = getValues()
       
-      await addIncidentReport(capitalizeAllFields({
+      addIncidentReport(capitalizeAllFields({
         ...values,
         'ir_other_type': addReportType,
-        'rp': "00003250609",
+        'rp': user?.staff?.staff_id,
       }))
 
       

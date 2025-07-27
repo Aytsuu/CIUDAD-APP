@@ -1,130 +1,51 @@
-import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form/form";
 import BudgetHeaderSchema from "@/form-schema/treasurer/budgetplan-header-schema";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod"
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import BudgetAllocationSchema from "@/form-schema/treasurer/budget-allocation-schema";
-import BudgetAllocationForm from "./budgetAllocationForm";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { useState } from "react";
+import { FormInput } from "@/components/ui/form/form-input";
 import { UseFormReturn } from "react-hook-form";
+import { Button } from "@/components/ui/button/button";
 
-function BudgetHeaderForm({form}: {
-    form: UseFormReturn<z.infer<typeof BudgetHeaderSchema>>
+function BudgetHeaderForm({form, onSubmit}: {
+    form: UseFormReturn<z.infer<typeof BudgetHeaderSchema>>;
+    onSubmit: () => void;
 }){
-    const onSubmit = (values: z.infer<typeof BudgetHeaderSchema>) => {
-        // setFormValues(values);
-        // setShowHeaderForm(false);
-        // setIsDialogOpen(true); 
-    }
-    
-    return(
-        <>
+    const handleSubmit = (values: z.infer<typeof BudgetHeaderSchema>) => {
+        onSubmit();
+    };
+
+    return (
+        <div className="flex items-center justify-center">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="balance"
-                            render={({field}) =>(
-                                <FormItem>
-                                    <FormLabel className="text-black">Balance From Previous Year</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type='number' placeholder="0.00"></Input>
-                                    </FormControl>
-                                    <FormMessage/>
-                                </FormItem>
-                        )}></FormField>
-
-                        <FormField
-                            control={form.control}
-                            name="realtyTaxShare"
-                            render={({field}) =>(
-                                <FormItem>
-                                    <FormLabel className="text-black">Realty Tax Share</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type='number' placeholder="0.00"></Input>
-                                    </FormControl>
-                                    <FormMessage/>
-                                </FormItem>
-                        )}></FormField>
-
-                        <FormField
-                        control={form.control}
-                        name="taxAllotment"
-                        render={({field}) =>(
-                            <FormItem>
-                                <FormLabel className="text-black">National Tax Allotment</FormLabel>
-                                <FormControl>
-                                    <Input {...field} type='number' placeholder="0.00"></Input>
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}></FormField>
-
-                        <FormField
-                        control={form.control}
-                        name="clearanceAndCertFees"
-                        render={({field}) =>(
-                            <FormItem>
-                                <FormLabel className="text-black">Clearance & Certification Fees</FormLabel>
-                                <FormControl>
-                                    <Input {...field} type='number' placeholder="0.00"></Input>
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}></FormField>
-
-                        <FormField
-                        control={form.control}
-                        name="otherSpecificIncome"
-                        render={({field}) =>(
-                            <FormItem>
-                                <FormLabel className="text-black">Other Specific Income</FormLabel>
-                                <FormControl>
-                                    <Input {...field} type='number' placeholder="0.00"></Input>
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}></FormField>
+                <form 
+                    onSubmit={form.handleSubmit(handleSubmit)} 
+                    className="w-full max-w-md bg-white p-5 rounded-md shadow-md"
+                >
+                    <div className="text-xl font-semibold text-darkBlue2 pb-2 border-b border-gray-200 mb-3">
+                        Budget Header Form
                     </div>
 
-                    <div className="space-y-4">
-                        <FormField
-                        control={form.control}
-                        name="actualIncome"
-                        render={({field}) =>(
-                            <FormItem>
-                                <FormLabel className="text-black">Actual Income</FormLabel>
-                                <FormControl>
-                                    <Input {...field} type="number" placeholder="0.00" ></Input>
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}></FormField>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-4">
+                            <FormInput control={form.control} name="balance" label="Balance From Previous Year" type="number" placeholder="0.00" />
+                            <FormInput control={form.control} name="realtyTaxShare" label="Realty Tax Share" type="number" placeholder="0.00" />
+                            <FormInput control={form.control} name="taxAllotment" label="National Tax Allotment" type="number" placeholder="0.00" />
+                            <FormInput control={form.control} name="clearanceAndCertFees" label="Clearance & Certification Fees" type="number" placeholder="0.00" />
+                            <FormInput control={form.control} name="otherSpecificIncome" label="Other Specific Income" type="number" placeholder="0.00" />
+                        </div>
 
-                        <FormField
-                        control={form.control}
-                        name="actualRPT"
-                        render={({field}) => (
-                            <FormItem>
-                                <FormLabel className="text-black">Actual RPT Income</FormLabel>
-                                <FormControl>
-                                    <Input {...field} type='number' placeholder="0.00"></Input>
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}></FormField>
+                        <div className="space-y-4">
+                            <FormInput control={form.control} name="actualIncome" label="Actual Income" type="number" placeholder="0.00" />
+                            <FormInput control={form.control} name="actualRPT" label="Actual RPT Income" type="number" placeholder="0.00" />
+                        </div>
                     </div>
-                </div>
-            </form>
-        </Form>
 
-        </>
-    )
+                    <div className="mt-6 flex justify-end">
+                        <Button type="submit">Next</Button>
+                    </div>
+                </form>
+            </Form>
+        </div>
+    );
 }
 
 export default BudgetHeaderForm

@@ -325,9 +325,23 @@ export const FormComboCheckbox   = React.memo(
                     >
                       <Command>
                         <CommandInput placeholder="Search options..." />
-                        <CommandList>
+                        <CommandList 
+                          className="max-h-64 overflow-auto"
+                          onWheel={(e) => {
+                            e.stopPropagation()
+                            const el = e.currentTarget
+                            if (e.deltaY > 0 && el.scrollTop >= el.scrollHeight - el.clientHeight) {
+                              return
+                            }
+                            if (e.deltaY < 0 && el.scrollTop <= 0) {
+                              return
+                            }
+                            e.preventDefault()
+                            el.scrollTop += e.deltaY
+                          }}
+                        >
                           <CommandEmpty>No options found.</CommandEmpty>
-                          <CommandGroup className="max-h-64 overflow-auto">
+                          <CommandGroup>
                             {options.map((option) => (
                               <CommandItem
                                 key={option.id}

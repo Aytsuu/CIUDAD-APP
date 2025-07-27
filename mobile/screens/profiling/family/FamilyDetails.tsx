@@ -5,6 +5,7 @@ import {
   ScrollView,
   Alert,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -15,10 +16,10 @@ import { Calendar } from "@/lib/icons/Calendar";
 import { MapPin } from "@/lib/icons/MapPin";
 import { UserRound } from "@/lib/icons/UserRound";
 import { Home } from "@/lib/icons/Home";
-import { Edit } from "@/lib/icons/Edit";
-import { Phone } from "@/lib/icons/Phone";
-import { Mail } from "@/lib/icons/Mail";
 import PageLayout from "@/screens/_PageLayout";
+import { formatDate } from "@/helpers/dateHelpers";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useGetFamilyMembers } from "../queries/profilingGetQueries";
 
 export default function FamilyDetails() {
   const router = useRouter();
@@ -34,60 +35,9 @@ export default function FamilyDetails() {
     }
   }, [params.family]);
 
-  React.useEffect(() => {
-    if (!family) {
-      Alert.alert('Error', 'Family data not found', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
-    }
-  }, [family]);
-
-  if (!family) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={24} className="text-gray-700" />
-          </TouchableOpacity>
-        }
-        headerTitle={
-          <Text className="text-gray-900 text-[13px]">
-            Family Details
-          </Text>
-        }
-      >
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-gray-500">Loading...</Text>
-        </View>
-      </PageLayout>
-    );
-  }
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const getInitials = (name: string) => {
-    if (!name) return 'F';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const handleEdit = () => {
-    Alert.alert('Edit Family', 'Edit functionality will be implemented here');
-  };
+  const { data: familyMembers, isLoading: loadingFam } = useGetFamilyMembers(family?.fam_id);
+  const members = familyMembers?.results || []
+  const totalCount = familyMembers?.count || 0
 
   const handleViewMember = (member: any) => {
     // Navigate to individual member details
@@ -105,7 +55,7 @@ export default function FamilyDetails() {
     value: string | number,
     valueColor?: string
   }) => (
-    <View className="flex-row items-center py-3 border-b border-gray-100">
+    <View className="flex-row items-center py-3 border-t border-gray-100">
       <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-3">
         <Icon size={18} className="text-gray-600" />
       </View>
@@ -116,64 +66,41 @@ export default function FamilyDetails() {
     </View>
   );
 
-  const familyName = `Family ${family.fam_id}`;
-  const memberCount = family.members || 0;
-  const householdNo = family.household_no || 'N/A';
-  const sitio = family.sitio || 'N/A';
-  const building = family.fam_building || 'N/A';
-  const isIndigenous = family.fam_indigenous;
-  const registeredDate = formatDate(family.fam_date_registered);
-  const registeredBy = family.registered_by || 'N/A';
-  
-  // Parent information
-  const mother = family.mother || 'N/A';
-  const father = family.father || 'N/A';
-  const guardian = family.guardian || 'N/A';
-  
-  // Mock family members data (replace with actual data from your API)
-  const familyMembers = family.family_members || [];
-
-  const renderMemberCard = ({ item, index }: { item: any; index: number }) => {
-    const fullName = `${item.fname} ${item.mname ? item.mname + ' ' : ''}${item.lname}`;
-    
-    return (
-      <TouchableOpacity
-        onPress={() => handleViewMember(item)}
-        className="mb-3"
-        activeOpacity={0.7}
-      >
-        <Card className="p-3 bg-gray-50 border border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-blue-600 font-semibold text-sm">
-                  {item.fname?.charAt(0).toUpperCase() || 'M'}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-gray-900 font-medium text-sm" numberOfLines={1}>
-                  {fullName}
-                </Text>
-                <View className="flex-row items-center mt-1">
-                  <Text className="text-gray-500 text-xs mr-3">
-                    Age: {item.age || 'N/A'}
-                  </Text>
-                  <Text className="text-gray-500 text-xs">
-                    {item.gender || 'N/A'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            <View className="bg-blue-100 px-2 py-1 rounded-full">
-              <Text className="text-blue-600 text-xs font-medium">
-                {item.relationship || 'Member'}
-              </Text>
-            </View>
+  const FamilyMemberCard = ({ member }: { member: any }) => (
+    <View className="bg-gray-50 rounded-lg p-4 mb-3">
+      <View className="flex-row items-center mb-2">
+        <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
+          <Text className="text-blue-600 font-bold text-lg">
+            {member.name?.split(",")[0]?.charAt(0)?.toUpperCase() || "N"}
+          </Text>
+        </View>
+        <View className="flex-1">
+          <Text className="text-gray-900 font-semibold text-base">{member.name}</Text>
+          <Text className="text-blue-600 text-sm font-medium">{member.fc_role}</Text>
+        </View>
+      </View>
+      <View className="ml-15">
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-gray-500 text-sm">ID:</Text>
+          <Text className="text-gray-700 text-sm">{member.rp_id}</Text>
+        </View>
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-gray-500 text-sm">Gender:</Text>
+          <Text className="text-gray-700 text-sm">{member.sex}</Text>
+        </View>
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-gray-500 text-sm">Status:</Text>
+          <Text className="text-gray-700 text-sm">{member.status}</Text>
+        </View>
+        {member.dob && (
+          <View className="flex-row justify-between">
+            <Text className="text-gray-500 text-sm">Birth Date:</Text>
+            <Text className="text-gray-700 text-sm">{member.dob}</Text>
           </View>
-        </Card>
-      </TouchableOpacity>
-    );
-  };
+        )}
+      </View>
+    </View>
+  )
 
   return (
     <PageLayout
@@ -190,34 +117,29 @@ export default function FamilyDetails() {
           Family Details
         </Text>
       }
-      rightAction={
-        <TouchableOpacity
-          onPress={handleEdit}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <Edit size={20} className="text-gray-700" />
-        </TouchableOpacity>
-      }
+      rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView className="flex-1 bg-gray-50">
+      <ScrollView className="flex-1 px-5"
+        overScrollMode="never"
+        showsHorizontalScrollIndicator={false} 
+        showsVerticalScrollIndicator={false}
+      >
         {/* Family Header */}
-        <Card className="mx-5 mt-4 p-6 bg-white shadow-sm border border-gray-100">
+        <View className="pb-6">
           <View className="items-center">
-            <View className="w-24 h-24 bg-blue-100 rounded-full items-center justify-center mb-4">
-              <Text className="text-blue-600 font-bold text-2xl">
-                {getInitials(familyName)}
-              </Text>
-            </View>
-            <Text className="text-gray-900 font-bold text-xl text-center mb-2">
-              {familyName}
+            <Text className="text-gray-500 text-sm text-center mb-2">
+              Family ID
             </Text>
-            <View className="flex-row items-center space-x-2">
+            <Text className="text-gray-900 font-bold text-xl text-center mb-2">
+              {family.fam_id}
+            </Text>
+            <View className="flex-row items-center gap-2">
               <View className="bg-blue-100 px-3 py-1 rounded-full">
                 <Text className="text-blue-600 font-medium text-sm">
-                  ID: {family.fam_id}
+                  {`${family.members} ${family.members === 1 ? 'Member' : 'Members'}`}
                 </Text>
               </View>
-              {isIndigenous && (
+              {family.fam_indigenous && (
                 <View className="bg-orange-100 px-3 py-1 rounded-full">
                   <Text className="text-orange-600 font-medium text-sm">
                     Indigenous
@@ -226,36 +148,18 @@ export default function FamilyDetails() {
               )}
             </View>
           </View>
-        </Card>
+        </View>
 
         {/* Family Overview */}
-        <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
+        <Card className="mt-4 p-4 bg-white shadow-sm border border-gray-100">
           <Text className="text-gray-900 font-semibold text-lg mb-4">
             Family Overview
           </Text>
           
-          <InfoRow 
-            icon={Home} 
-            label="Household Number" 
-            value={householdNo} 
-          />
-          
-          <InfoRow 
-            icon={UsersRound} 
-            label="Family Members" 
-            value={`${memberCount} ${memberCount === 1 ? 'Member' : 'Members'}`} 
-          />
-          
-          <InfoRow 
-            icon={MapPin} 
-            label="Location" 
-            value={`${sitio}${building !== 'N/A' ? `, ${building}` : ''}`} 
-          />
-          
-          <InfoRow 
-            icon={Calendar} 
-            label="Date Registered" 
-            value={registeredDate} 
+          <InfoRow icon={Home} label="Household Number" value={family.household_no} />
+          <InfoRow icon={MapPin} label="Location" value={`Sitio ${family.sitio}${family.street !== 'N/A' ? `, ${family.street}` : ''}`} />
+          <InfoRow icon={Calendar} label="Date Registered" 
+            value={formatDate(family.fam_date_registered, true) as string} 
           />
           
           <View className="flex-row items-center py-3">
@@ -264,130 +168,72 @@ export default function FamilyDetails() {
             </View>
             <View className="flex-1">
               <Text className="text-gray-500 text-sm">Registered By</Text>
-              <Text className="text-gray-900 text-base font-medium">{registeredBy}</Text>
+              <Text className="text-gray-900 text-base font-medium">{family.registered_by}</Text>
             </View>
           </View>
         </Card>
 
         {/* Family Heads */}
-        <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
+        <Card className="mt-4 p-4">
           <Text className="text-gray-900 font-semibold text-lg mb-4">
             Family Heads
           </Text>
           
-          {father !== 'N/A' && (
-            <InfoRow 
-              icon={UserRound} 
-              label="Father" 
-              value={father} 
-            />
+          {family.father !== '-' && (
+            <InfoRow icon={UserRound} label="Father" value={family.father} />
           )}
           
-          {mother !== 'N/A' && (
-            <InfoRow 
-              icon={UserRound} 
-              label="Mother" 
-              value={mother} 
-            />
+          {family.mother !== '-' && (
+            <InfoRow icon={UserRound} label="Mother" value={family.mother} />
           )}
           
-          {guardian !== 'N/A' && (
-            <InfoRow 
-              icon={UserRound} 
-              label="Guardian" 
-              value={guardian} 
-            />
+          {family.guardian !== '-' && (
+            <InfoRow icon={UserRound} label="Guardian" value={family.guardian} />
           )}
         </Card>
 
-        {/* Family Members */}
-        {familyMembers.length > 0 && (
-          <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-gray-900 font-semibold text-lg">
-                Family Members
-              </Text>
-              <View className="bg-blue-100 px-2 py-1 rounded-full">
-                <Text className="text-blue-600 text-xs font-medium">
-                  {familyMembers.length} {familyMembers.length === 1 ? 'Member' : 'Members'}
-                </Text>
-              </View>
-            </View>
-            
-            <FlatList
-              data={familyMembers}
-              renderItem={renderMemberCard}
-              keyExtractor={(item, index) => `member-${index}`}
-              scrollEnabled={false}
-              showsVerticalScrollIndicator={false}
-            />
-          </Card>
-        )}
-
-        {/* Contact Information (if available) */}
-        {(family.contact_number || family.email) && (
-          <Card className="mx-5 mt-4 p-4 bg-white shadow-sm border border-gray-100">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">
-              Contact Information
-            </Text>
-            
-            {family.contact_number && (
-              <InfoRow 
-                icon={Phone} 
-                label="Contact Number" 
-                value={family.contact_number} 
-              />
-            )}
-            
-            {family.email && (
-              <InfoRow 
-                icon={Mail} 
-                label="Email Address" 
-                value={family.email} 
-              />
-            )}
-          </Card>
-        )}
-
-        {/* Additional Information */}
-        <Card className="mx-5 mt-4 mb-6 p-4 bg-white shadow-sm border border-gray-100">
-          <Text className="text-gray-900 font-semibold text-lg mb-4">
-            Additional Information
-          </Text>
-          
-          {family.fam_income && (
-            <InfoRow 
-              icon={Home} 
-              label="Family Income" 
-              value={`₱${family.fam_income.toLocaleString()}`} 
-            />
-          )}
-          
-          {family.fam_type && (
-            <InfoRow 
-              icon={UsersRound} 
-              label="Family Type" 
-              value={family.fam_type} 
-            />
-          )}
-          
-          {family.fam_status && (
-            <InfoRow 
-              icon={Home} 
-              label="Family Status" 
-              value={family.fam_status} 
-            />
-          )}
-          
-          {family.remarks && (
-            <View className="pt-3 border-t border-gray-100">
-              <Text className="text-gray-500 text-sm mb-2">Remarks</Text>
-              <Text className="text-gray-900 text-sm leading-5">
-                {family.remarks}
-              </Text>
-            </View>
-          )}
-        </Card>
+        {/* Family Members with Accordion */}
+        {members.length > 0 &&  (<View className="mt-4 mb-6">
+          <Accordion type="single" className="border-0">
+            <AccordionItem value="family-members" className="border-0">
+              <AccordionTrigger className="px-2 py-4">
+                <View className="flex-row justify-between items-center flex-1">
+                  <Text className="text-gray-900 font-semibold text-lg">Family Members</Text>
+                  {!loadingFam && totalCount > 0 && (
+                    <View className="bg-blue-100 px-2 py-1 rounded-full mr-4">
+                      <Text className="text-blue-600 text-xs font-medium">
+                        {totalCount} member{totalCount !== 1 ? "s" : ""}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </AccordionTrigger>
+              <AccordionContent className="px-2 pb-4">
+                {loadingFam ? (
+                  <View className="items-center py-8">
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <Text className="text-gray-500 text-sm mt-2">Loading family members...</Text>
+                  </View>
+                ) : members.length > 0 ? (
+                  <ScrollView className="max-h-96" 
+                    showsVerticalScrollIndicator={false} 
+                    overScrollMode="never"
+                    nestedScrollEnabled={true}
+                  >
+                    {members.map((member: any, index: number) => (
+                      <FamilyMemberCard key={member.rp_id || index} member={member} />
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <View className="items-center py-8">
+                    <UsersRound size={48} className="text-gray-300 mb-2" />
+                    <Text className="text-gray-500 text-sm">No family members found</Text>
+                  </View>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </View>)}
       </ScrollView>
     </PageLayout>
   );

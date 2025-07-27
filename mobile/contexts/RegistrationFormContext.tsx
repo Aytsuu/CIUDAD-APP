@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { RegistrationFormSchema } from '@/form-schema/registration-schema';
 import { z } from 'zod';
@@ -23,7 +23,7 @@ export const RegistationFormProvider = ({
 export const useRegistrationFormContext = () => {
   const context = useContext(FormContext);
   if (!context) {
-    throw new Error('useFormContext must be used within a FormProvider');
+    throw new Error('useRegistrationFormContext must be used within a ContextProvider');
   }
   return context;
 };

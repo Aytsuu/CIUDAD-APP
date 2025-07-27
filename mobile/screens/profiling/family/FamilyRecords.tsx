@@ -36,7 +36,6 @@ export default function FamilyRecords() {
 
   const families = familiesTableData?.results || [];
   const totalCount = familiesTableData?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -49,139 +48,92 @@ export default function FamilyRecords() {
     setCurrentPage(1);
   }, [searchInputVal]);
 
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const getInitials = (name: string) => {
-    if (!name) return 'F';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
   const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const familyName = `Family ${item.fam_id}`;
-    const memberCount = item.members || 0;
-    const householdNo = item.household_no || 'N/A';
-    const sitio = item.sitio || 'N/A';
-    const building = item.fam_building || 'N/A';
-    const isIndigenous = item.fam_indigenous;
-    const registeredDate = formatDate(item.fam_date_registered);
-    const registeredBy = item.registered_by || 'N/A';
-    
+    const memberCount = item.members || 0
+    const sitio = item.sitio || "N/A"
+    const street = item.street || "N/A"
+    const building = item.fam_building || "N/A"
+    const isIndigenous = item.fam_indigenous
+
     // Parent information
-    const mother = item.mother || 'N/A';
-    const father = item.father || 'N/A';
-    const guardian = item.guardian || 'N/A';
-    
+    const mother = item.mother || "N/A"
+    const father = item.father || "N/A"
+    const guardian = item.guardian || "N/A"
+
     // Determine primary guardian/head
-    const primaryHead = father !== 'N/A' ? father : mother !== 'N/A' ? mother : guardian;
-    
+    const primaryHead = father !== "N/A" ? father : mother !== "N/A" ? mother : guardian
+
+    // Format location
+    const location = building !== "N/A" ? `${sitio}, ${street}` : sitio
+
     return (
       <TouchableOpacity
         onPress={() => {
           router.push({
-            pathname: '/(profiling)/family/details', // or '/resident-details' depending on your structure
+            pathname: "/(profiling)/family/details",
             params: {
-              family: JSON.stringify(item)
-            }
-          });
+              family: JSON.stringify(item),
+            },
+          })
         }}
-        className="mb-4 mx-5"
+        className="mb-3 mx-5"
         activeOpacity={0.7}
       >
-        <Card className="p-4 bg-white shadow-sm border border-gray-100 rounded-lg">
-          {/* Header Section */}
+        <Card className="p-4 bg-white border border-gray-100 rounded-xl">
+          {/* Header with Family ID and Status */}
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-1">
-              <View className="flex-row items-center">
-                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-blue-600 font-bold text-sm">
-                    {getInitials(familyName)}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
-                    {familyName}
-                  </Text>
-                  <Text className="text-gray-500 text-sm">
-                    ID: {item.fam_id} • Household: {householdNo}
-                  </Text>
-                </View>
-              </View>
+              <Text className="text-gray-900 font-bold text-lg" numberOfLines={1}>
+                {item.fam_id}
+              </Text>
+              <Text className="text-gray-500 text-sm mt-1">Family Record</Text>
             </View>
-            <ChevronRight size={20} className="text-gray-400 ml-2" />
+
+            <View className="flex-row items-center">
+              {isIndigenous && (
+                <View className="bg-orange-100 px-3 py-1 rounded-full mr-2">
+                  <Text className="text-orange-700 text-xs font-semibold">Indigenous</Text>
+                </View>
+              )}
+              <ChevronRight size={20} className="text-gray-400" />
+            </View>
           </View>
 
-          {/* Family Head Information */}
-          {primaryHead !== 'N/A' && (
-            <View className="mb-3">
-              <View className="flex-row items-center mb-1">
-                <UserRound size={14} className="text-gray-500 mr-2" />
-                <Text className="text-gray-600 text-sm font-medium">Family Head</Text>
+          {/* Family Head */}
+          {primaryHead !== "N/A" && (
+            <View className="flex-row items-center mb-3 bg-gray-50 p-3 rounded-lg">
+              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
+                <UserRound size={18} className="text-blue-600" />
               </View>
-              <Text className="text-gray-800 text-sm ml-5" numberOfLines={1}>
-                {primaryHead}
-              </Text>
+              <View className="flex-1">
+                <Text className="text-gray-500 text-xs font-medium uppercase tracking-wide">Family Head</Text>
+                <Text className="text-gray-900 font-semibold text-base mt-1" numberOfLines={1}>
+                  {primaryHead}
+                </Text>
+              </View>
             </View>
           )}
 
-          {/* Location Information */}
-          <View className="mb-3">
-            <View className="flex-row items-center mb-1">
-              <Text className="text-gray-600 text-sm font-medium">Location</Text>
+          {/* Key Information Row */}
+          <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
+            {/* Members Count */}
+            <View className="flex-">
+              <Text className="text-gray-500 text-xs">Members</Text>
+              <Text className="text-gray-900 font-semibold text-sm">{memberCount}</Text>
             </View>
-            <Text className="text-gray-800 text-sm ml-5" numberOfLines={1}>
-              {sitio}{building !== 'N/A' ? `, ${building}` : ''}
-            </Text>
-          </View>
 
-          {/* Family Details Row */}
-          <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center">
-              <UsersRound size={14} className="text-gray-500 mr-2" />
-              <Text className="text-gray-600 text-sm">
-                {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
-              </Text>
-            </View>
-            
-            {isIndigenous && (
-              <View className="bg-orange-100 px-2 py-1 rounded-full">
-                <Text className="text-orange-600 text-xs font-medium">
-                  Indigenous
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Registration Information */}
-          <View className="pt-3 border-t border-gray-100">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <Calendar size={14} className="text-gray-500 mr-2" />
-                <Text className="text-gray-500 text-xs">
-                  Registered: {registeredDate}
-                </Text>
-              </View>
-              <Text className="text-gray-400 text-xs">
-                By: {registeredBy}
+            {/* Location */}
+            <View className="flex-1 ml-4">
+              <Text className="text-gray-500 text-xs">Location</Text>
+              <Text className="text-gray-900 font-medium text-sm" numberOfLines={1}>
+                {location}
               </Text>
             </View>
           </View>
         </Card>
       </TouchableOpacity>
-    );
-  });
+    )
+  })
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
@@ -207,45 +159,6 @@ export default function FamilyRecords() {
     </View>
   );
 
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    return (
-      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4 mx-5">
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1 ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === 1 ? 'text-gray-400' : 'text-white'
-          }`}>
-            Previous
-          </Text>
-        </TouchableOpacity>
-        
-        <Text className="text-gray-600 font-medium">
-          Page {currentPage} of {totalPages}
-        </Text>
-        
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === totalPages ? 'text-gray-400' : 'text-white'
-          }`}>
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   return (
     <PageLayout
@@ -311,6 +224,8 @@ export default function FamilyRecords() {
             ) : (
               <>
                 <FlatList
+                  maxToRenderPerBatch={1}
+                  overScrollMode="never"
                   data={families}
                   renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
                   keyExtractor={(item) => item.fam_id.toString()}
@@ -324,7 +239,6 @@ export default function FamilyRecords() {
                   }
                   contentContainerStyle={{ paddingBottom: 20 }}
                 />
-                {renderPagination()}
               </>
             )}
           </View>

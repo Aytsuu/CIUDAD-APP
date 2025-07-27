@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.account.models import Account
-from apps.profiling.serializers.full import ResidentProfileFullSerializer
+from apps.profiling.serializers.resident_profile_serializers import ResidentProfileFullSerializer
 from apps.administration.serializers.staff_serializers import StaffFullSerializer
 from apps.administration.serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.administration.models import Staff

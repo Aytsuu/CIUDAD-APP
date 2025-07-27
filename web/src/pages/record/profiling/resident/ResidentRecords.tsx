@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, Download } from "lucide-react"
+import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, Download, CircleUserRound, House, UsersRound, Building } from "lucide-react"
 import { Link } from "react-router"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
@@ -16,6 +16,27 @@ import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQue
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
+import { capitalize } from "@/helpers/capitalize"
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
+
+const profiles = [
+  {
+    id: 'account', 
+    icon: CircleUserRound,
+  },
+  {
+    id: 'household', 
+    icon: House
+  },
+  {
+    id: 'family', 
+    icon: UsersRound
+  },
+  {
+    id: 'business', 
+    icon: Building
+  },
+]
 
 export default function ResidentRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -49,23 +70,10 @@ export default function ResidentRecords() {
   }, [isLoading])
 
   // ----------------- HANDLERS --------------------
-  const handleExport = (type: "csv" | "excel" | "pdf") => {
-    switch (type) {
-      case "csv":
-        exportToCSV(residents)
-        break
-      case "excel":
-        exportToExcel(residents)
-        break
-      case "pdf":
-        exportToPDF(residents)
-        break
-    }
-  }
 
   return (
     // ----------------- RENDER --------------------
-    <MainLayoutComponent title="Resident Profiling" description="Manage and view all residents in your community">
+    <MainLayoutComponent title="Resident" description="Manage and view all residents in your community">
       <div className="space-y-6">
         {/* Search and Actions */}
         <Card>
@@ -75,7 +83,7 @@ export default function ResidentRecords() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search residents by name, ID, or address..."
+                    placeholder="Search residents by name, ID, or sitio..."
                     className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -84,30 +92,21 @@ export default function ResidentRecords() {
               </div>
 
               <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport("csv")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("excel")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as Excel
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <DropdownLayout
+                    trigger={
+                      <Button variant="outline" className="gap-2">
+                        <FileDown className="h-4 w-4" />
+                        Export
+                      </Button>
+                    }
+                    options={[
+                      { id: "csv", name: "Export as CSV" },
+                      { id: "excel", name: "Export as Excel" },
+                      { id: "pdf", name: "Export as PDF" },
+                    ]}
+                  />
 
-                <Link to="/resident/pending" className="flex-1 sm:flex-none">
+                <Link to="/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending
@@ -122,12 +121,12 @@ export default function ResidentRecords() {
                 </Link>
 
                 <Link
-                  to="/resident/form"
+                  to="/resident/registration"
                   state={{
                     params: {
                       origin: "create",
                       title: "Resident Registration",
-                      Description: "Provide the necessary details, and complete the registration.",
+                      description: "Provide the necessary details, and complete the registration.",
                     },
                   }}
                   className="flex-1 sm:flex-none"
@@ -143,7 +142,7 @@ export default function ResidentRecords() {
 
           <CardContent className="p-0">
             {/* Table Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 border-b bg-gray-50">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>Show</span>
                 <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
@@ -159,6 +158,19 @@ export default function ResidentRecords() {
                   </SelectContent>
                 </Select>
                 <span>entries</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex item-center justify-between gap-12">
+                  {profiles.map((profile: any, idx: number) => (
+                    <div key={idx} className="flex gap-2">
+                      <profile.icon size={18} 
+                        className=""
+                      />
+                      <p>-</p>
+                      <p>{capitalize(profile.id)}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

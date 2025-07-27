@@ -48,3 +48,8 @@ export const initialFormData4 = {
     disasterTraining: "",
     disasterSupplies: "",
 };
+
+export type BudgetPlanPage1FormData = typeof initialFormData1;
+export type BudgetPlanPage2FormData = typeof initialFormData2;
+export type BudgetPlanPage3FormData = typeof initialFormData3;
+export type BudgetPlanPage4FormData = typeof initialFormData4;
