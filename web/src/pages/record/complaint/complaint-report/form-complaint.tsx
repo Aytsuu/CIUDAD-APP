@@ -10,6 +10,7 @@ import { ComplainantInfo } from "./complainant";
 import { AccusedInfo } from "./accused";
 import { IncidentInfo } from "./incident";
 import { DocumentUploaded } from "./document";
+import { ProgressBar } from "@/components/progress-bar";
 import { toast } from "sonner";
 import { api } from "@/api/api";
 import { Button } from "@/components/ui/button/button";
@@ -21,22 +22,24 @@ import {
   FileText,
   AlertTriangle,
   Search,
+  User,
+  Users,
+  MapPin,
+  Paperclip,
+  Eye,
+  HelpCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { BsChevronLeft } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { useDebounce } from "@/hooks/use-debounce";
-import { searchComplainants, searchAccused } from "../restful-api/complaint-api";
+import {
+  searchComplainants,
+  searchAccused,
+} from "../restful-api/complaint-api";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 export const ComplaintForm = () => {
   const [step, setStep] = useState(1);
@@ -46,6 +49,11 @@ export const ComplaintForm = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const [showIntroModal, setShowIntroModal] = useState(() => {
+    return localStorage.getItem("hideIntroDialog") !== "true";
+  });
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const { user } = useAuth();
   const { send } = useNotifications();
@@ -277,6 +285,19 @@ export const ComplaintForm = () => {
     }
   };
 
+  // Fixed dialog handlers
+  const handleDismissIntro = () => {
+    if (dontShowAgain) {
+      localStorage.setItem("hideIntroDialog", "true");
+    }
+    setShowIntroModal(false);
+  };
+
+  // Manual trigger function to show dialog
+  const showIntroManually = () => {
+    setShowIntroModal(true);
+  };
+
   const handleSendAlert = async () => {
     await send({
       title: "Complaint Report Filed",
@@ -306,34 +327,40 @@ export const ComplaintForm = () => {
     {
       number: 1,
       title: "Complainant",
-      description: "Your contact and identification detail",
+      description: "(Nagrereklamo)",
+      icon: User,
     },
     {
       number: 2,
       title: "Respondent",
-      description: "Details of the individual/party involved",
+      description: "(Isinasakdal)",
+      icon: Users,
     },
     {
       number: 3,
       title: "Incident",
-      description: "Specifics about when and where it happened",
+      description: "(Detalye ng Reklamo)",
+      icon: MapPin,
     },
     {
       number: 4,
       title: "Documents",
       description: "Supplemental materials to support your complaint",
+      icon: Paperclip,
     },
     {
       number: 5,
       title: "Review",
       description: "Confirm the accuracy of your complaint details",
+      icon: Eye,
     },
   ];
 
   return (
-    <div className="max-h-screen bg-gradient-to-br from-gray-50 to-gray-100 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <Card className="overflow-hidden">
+    <div className="max-h-screen">
+      {/* Main Content */}
+      <div className="flex-1">
+        <Card className="overflow-hidden h-full">
           <CardHeader className="flex flex-row items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               <Button
@@ -346,80 +373,95 @@ export const ComplaintForm = () => {
               </Button>
               <div>
                 <h2 className="text-2xl font-bold text-darkBlue2">
-                  {steps[step - 1].title}
+                  Barangay Complaint Form
                 </h2>
-                <p className="text-black/70 font-normal text-base">
-                  {steps[step - 1].description}
+                <p className="text-black/70 font-normal text-base italic">
+                  (Pormularyo ng Reklamo)
                 </p>
               </div>
             </div>
-
-            {(step === 1 || step === 2) && (
-              <div className="relative w-96">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-                <Input
-                  placeholder={
-                    step === 1
-                      ? "Search..."
-                      : "Search..."
-                  }
-                  className="pl-10 pr-4 h-10 border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white transition-all duration-200 rounded-lg w-full"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onFocus={() => setShowSearchResults(true)}
-                />
-
-                {showSearchResults &&
-                  (searchResults.length > 0 || isSearching) && (
-                    <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 max-h-60 overflow-auto">
-                      {isSearching ? (
-                        <div className="px-4 py-2 text-sm text-gray-500">
-                          Searching...
-                        </div>
-                      ) : searchResults.length === 0 ? (
-                        <div className="px-4 py-2 text-sm text-gray-500">
-                          No results found
-                        </div>
-                      ) : (
-                        searchResults.map((result) => (
-                          <div
-                            key={result.id}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                            onClick={() => handleResultClick(result)}
-                          >
-                            {step === 1 ? (
-                              <>
-                                <div className="font-medium">
-                                  {result.cpnt_name}
-                                </div>
-                                <div className="text-gray-500">
-                                  {result.add?.add_barangay},{" "}
-                                  {result.add?.add_city}
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="font-medium">
-                                  {result.acsd_name}
-                                </div>
-                                <div className="text-gray-500">
-                                  {result.acsd_description}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-              </div>
-            )}
           </CardHeader>
 
+          <ProgressBar
+            steps={steps}
+            currentStep={step}
+            showDescription={false}
+          />
+
           <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-row items-center justify-between px-6 py-4">
+              <div className="flex items-center gap-x-2">
+                <div>
+                  <h2 className="text-2xl font-semibold text-darkBlue2">
+                    {steps[step - 1].title}
+                  </h2>
+                  <p className="text-black/70 font-normal text-base italic mt-1">
+                    {steps[step - 1].description}
+                  </p>
+                </div>
+              </div>
+
+              {(step === 1 || step === 2) && (
+                <div className="relative w-96">
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={18}
+                  />
+                  <Input
+                    placeholder={step === 1 ? "Search..." : "Search..."}
+                    className="pl-10 pr-4 h-10 border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white transition-all duration-200 rounded-lg w-full"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onFocus={() => setShowSearchResults(true)}
+                  />
+
+                  {showSearchResults &&
+                    (searchResults.length > 0 || isSearching) && (
+                      <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 max-h-60 overflow-auto">
+                        {isSearching ? (
+                          <div className="px-4 py-2 text-sm text-gray-500">
+                            Searching...
+                          </div>
+                        ) : searchResults.length === 0 ? (
+                          <div className="px-4 py-2 text-sm text-gray-500">
+                            No results found
+                          </div>
+                        ) : (
+                          searchResults.map((result) => (
+                            <div
+                              key={result.id}
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                              onClick={() => handleResultClick(result)}
+                            >
+                              {step === 1 ? (
+                                <>
+                                  <div className="font-medium">
+                                    {result.cpnt_name}
+                                  </div>
+                                  <div className="text-gray-500">
+                                    {result.add?.add_barangay},{" "}
+                                    {result.add?.add_city}
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="font-medium">
+                                    {result.acsd_name}
+                                  </div>
+                                  <div className="text-gray-500">
+                                    {result.acsd_description}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
+
             <FormProvider {...methods}>
               <div>
                 <div className="mb-8">
@@ -483,35 +525,84 @@ export const ComplaintForm = () => {
             </FormProvider>
           </CardContent>
         </Card>
-
-        <div className="mt-8 p-4 rounded-md border border-blue-200 bg-blue-50 text-blue-900 flex items-start gap-3">
-          <FileText className="w-5 h-5 mt-1 text-blue-600 flex-shrink-0" />
-          <div>
-            <p className="font-semibold text-sm">
-              Confidentiality Acknowledgment
-            </p>
-            <p className="text-sm mt-1">
-              All information provided in this report will be treated with the
-              utmost confidentiality and will only be used for official and
-              lawful purposes.
-            </p>
-          </div>
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={showIntroManually}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            <HelpCircle className="w-4 h-4 mr-1" />
+            Help
+          </Button>
         </div>
+      </div>
 
-        {/* Confirmation Modal */}
-        <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                File a Report
-              </DialogTitle>
-              <DialogDescription className="text-left">
-                You are about to submit your complaint report. Please review all
-                the information carefully before proceeding.
-              </DialogDescription>
-            </DialogHeader>
+      {/* Fixed Intro Dialog */}
+      <DialogLayout
+        isOpen={showIntroModal}
+        onOpenChange={setShowIntroModal}
+        title="Barangay Complaint Report"
+        description={
+          <p className="text-left">
+            This form is used to submit barangay blotter reports. Please review
+            the process carefully before proceeding.
+          </p>
+        }
+        className="sm:max-w-lg"
+        mainContent={
+          <div className="space-y-4 text-sm text-gray-700">
+            <div className="mt-4 p-2 mx-4 rounded-md border border-blue-200 bg-blue-50 text-blue-900 flex items-start gap-3">
+              <FileText className="w-5 h-5 mt-1 text-blue-600 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">
+                  Confidentiality Acknowledgment
+                </p>
+                <p className="text-sm mt-1">
+                  All information provided in this report will be treated with
+                  the utmost confidentiality and will only be used for official
+                  and lawful purposes.
+                </p>
+              </div>
+            </div>
 
+
+            <div className="flex justify-between pt-4 border-t">
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="dontShowAgain"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="dontShowAgain"
+                  className="text-sm text-gray-700"
+                >
+                  Don't show this again
+                </label>
+              </div>
+              <Button onClick={() => setShowIntroModal(false)}>Continue</Button>
+            </div>
+          </div>
+        }
+      />
+
+      {/* Confirm Submit Dialog */}
+      <DialogLayout
+        isOpen={showConfirmModal}
+        onOpenChange={setShowConfirmModal}
+        title="File a Report"
+        description={
+          <p className="text-left">
+            You are about to submit your complaint report. Please review all the
+            information carefully before proceeding.
+          </p>
+        }
+        className="sm:max-w-md"
+        mainContent={
+          <>
             <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
               <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-amber-800">
@@ -523,7 +614,7 @@ export const ComplaintForm = () => {
               </div>
             </div>
 
-            <DialogFooter className="flex gap-2 sm:gap-0">
+            <div className="flex justify-end mt-4 gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -549,10 +640,10 @@ export const ComplaintForm = () => {
                   </>
                 )}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </div>
+          </>
+        }
+      />
     </div>
   );
 };

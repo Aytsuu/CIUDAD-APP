@@ -31,6 +31,11 @@ class Complaint(models.Model):
     comp_allegation = models.TextField()
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_is_archive = models.BooleanField(default=False)
+    # comp_status = models.CharField(
+    #     max_length=20, 
+    #     default='Filed',
+    #     choices=["Resolved", "Escalated", "Pending"]
+    # )
     complainant = models.ManyToManyField(
         Complainant,
         through='ComplaintComplainant',

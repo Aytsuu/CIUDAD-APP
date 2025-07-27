@@ -3,36 +3,8 @@ import { Complaint } from "../complaint-type";
 export function filterComplaints(
   complaints: Complaint[],
   query: string,
-  timeFilter: string | null
 ): Complaint[] {
   let result = [...complaints];
-  const now = new Date();
-  let startDate = new Date();
-
-  // Time filtering
-  if (timeFilter) {
-    switch (timeFilter) {
-      case "today":
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "week":
-        startDate.setDate(now.getDate() - now.getDay());
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "month":
-        startDate.setDate(1);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "year":
-        startDate.setMonth(0, 1);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-    }
-
-    result = result.filter(
-      (c) => new Date(c.comp_created_at) >= startDate
-    );
-  }
 
   // Search filtering
   if (query.trim()) {

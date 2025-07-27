@@ -10,7 +10,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
 
 export const ComplainantInfo = () => {
   const { control } = useFormContext();
@@ -52,7 +58,7 @@ export const ComplainantInfo = () => {
   };
 
   const selectedGender = watch(`complainant.${activeTab}.gender`);
-  
+
   useEffect(() => {
     if (fields.length === 0) {
       append({
@@ -164,10 +170,10 @@ export const ComplainantInfo = () => {
                   Full Name *
                 </FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="Enter full name" 
-                    className="max-w-md"
-                    {...field} 
+                  <Input
+                    placeholder="Enter full name"
+                    className="max-w-full"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -175,8 +181,7 @@ export const ComplainantInfo = () => {
             )}
           />
 
-          {/* Age and Gender Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <FormField
               control={control}
               name={`complainant.${activeTab}.age`}
@@ -187,7 +192,7 @@ export const ComplainantInfo = () => {
                     Age *
                   </FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       type="number"
                       min="1"
                       max="150"
@@ -196,7 +201,7 @@ export const ComplainantInfo = () => {
                       onChange={(e) => {
                         const value = e.target.value;
                         // Only allow positive integers
-                        if (value === '' || /^\d+$/.test(value)) {
+                        if (value === "" || /^\d+$/.test(value)) {
                           field.onChange(value);
                         }
                       }}
@@ -207,64 +212,80 @@ export const ComplainantInfo = () => {
               )}
             />
 
-            {/* Gender and Gender Details Combined */}
-            <div className="md:col-span-3">
+            <div>
               <FormLabel className="font-semibold text-black/50">
                 Gender *
               </FormLabel>
-              <div className="flex my-2">
+              <div className="flex mt-2">
                 <FormField
                   control={control}
                   name={`complainant.${activeTab}.gender`}
                   render={({ field }) => (
                     <FormItem className="flex-shrink-0">
                       <FormControl>
-                        <Select 
+                        <Select
+                        
                           onValueChange={(value) => {
                             field.onChange(value);
                             // Auto-fill the gender input field based on selection
                             const genderInputField = `complainant.${activeTab}.genderInput`;
                             if (value === "Other") {
                               // Clear the input when Other is selected so user can type
-                              control._formValues.complainant[activeTab].genderInput = "";
+                              control._formValues.complainant[
+                                activeTab
+                              ].genderInput = "";
                             } else {
                               // Auto-fill with the selected value
-                              control._formValues.complainant[activeTab].genderInput = value;
+                              control._formValues.complainant[
+                                activeTab
+                              ].genderInput = value;
                             }
-                          }} 
+                          }}
                           value={field.value}
                         >
                           <SelectTrigger className="w-16 h-9 px-2 rounded-r-none border-r-0">
                             <SelectValue>
-                              {field.value === "Male" && <User className="h-4 w-4 text-blue-600" />}
-                              {field.value === "Female" && <Users className="h-4 w-4 text-pink-600" />}
-                              {field.value === "Other" && <HelpCircle className="h-4 w-4 text-purple-600" />}
-                              {field.value === "Prefer not to say" && <UserX className="h-4 w-4 text-gray-600" />}
-                              {!field.value && <span className="text-gray-400 text-xs">Select</span>}
+                              {field.value === "Male" && (
+                                <User className="h-4 w-4 text-darkGray" />
+                              )}
+                              {field.value === "Female" && (
+                                <Users className="h-4 w-4 text-darkGray" />
+                              )}
+                              {field.value === "Other" && (
+                                <HelpCircle className="h-4 w-4 text-darkGray" />
+                              )}
+                              {field.value === "Prefer not to say" && (
+                                <UserX className="h-4 w-4 text-darkGray" />
+                              )}
+                              {!field.value && (
+                                <span className="text-gray-400 text-xs">
+                                  Select
+                                </span>
+                              )}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Male">
                               <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-blue-600" />
+                                <User className="h-4 w-4 text-darkGray" />
                                 <span>Male</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="Female">
                               <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-pink-600" />
+                                <Users className="h-4 w-4 text-darkGray" />
                                 <span>Female</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="Other">
                               <div className="flex items-center gap-2">
-                                <HelpCircle className="h-4 w-4 text-purple-600" />
+                                <HelpCircle className="h-4 w-4 text-darkGray" />
                                 <span>Other</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="Prefer not to say">
                               <div className="flex items-center gap-2">
-                                <UserX className="h-4 w-4 text-gray-600" />
+                                <UserX className="h-4 w-4 text-darkGray" />
                                 <span>Prefer not to say</span>
                               </div>
                             </SelectItem>
@@ -276,18 +297,34 @@ export const ComplainantInfo = () => {
                   )}
                 />
 
-                <FormField 
+                <FormField
                   control={control}
                   name={`complainant.${activeTab}.genderInput`}
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Input 
-                          placeholder={selectedGender === "Other" ? "Enter gender" : "Auto-filled from selection"}
+                        <Input
+                          placeholder={
+                            selectedGender === "Other"
+                              ? "Enter gender"
+                              : "Auto-filled from selection"
+                          }
                           disabled={selectedGender !== "Other"}
-                          value={selectedGender === "Other" ? field.value : selectedGender || ""}
-                          onChange={selectedGender === "Other" ? field.onChange : undefined}
-                          className={`h-10 rounded-l-none ${selectedGender !== "Other" ? "bg-gray-100 cursor-not-allowed" : ""} h-9`}
+                          value={
+                            selectedGender === "Other"
+                              ? field.value
+                              : selectedGender || ""
+                          }
+                          onChange={
+                            selectedGender === "Other"
+                              ? field.onChange
+                              : undefined
+                          }
+                          className={`h-10 rounded-l-none text-black ${
+                            selectedGender !== "Other"
+                              ? "bg-gray-100 text-black cursor-not-allowed"
+                              : ""
+                          } h-9 `}
                         />
                       </FormControl>
                       {selectedGender === "Other" && <FormMessage />}
@@ -296,10 +333,7 @@ export const ComplainantInfo = () => {
                 />
               </div>
             </div>
-          </div>
 
-          {/* Contact and Relationship Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={control}
               name={`complainant.${activeTab}.contactNumber`}
@@ -309,17 +343,20 @@ export const ComplainantInfo = () => {
                     Contact Number *
                   </FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       type="tel"
-                      placeholder="e.g. +63 912 345 6789" 
-                      {...field} 
+                      placeholder="e.g. +63 912 345 6789"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
 
+          {/* Contact and Relationship Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={control}
               name={`complainant.${activeTab}.relation_to_respondent`}
@@ -329,9 +366,9 @@ export const ComplainantInfo = () => {
                     Relationship to Respondent *
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="e.g. Neighbor, Friend, Relative" 
-                      {...field} 
+                    <Input
+                      placeholder="e.g. Neighbor, Friend, Relative"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -342,21 +379,17 @@ export const ComplainantInfo = () => {
 
           {/* Address Section */}
           <div className="space-y-4 pt-4 border-t border-gray-200">
-            <h4 className="text-base font-semibold text-black/70">
-              Address Information
-            </h4>
-            
             <div className="space-y-3">
               <FormLabel className="font-semibold text-black/50">
                 Complete Address (Street / Barangay / Municipality / Province) *
               </FormLabel>
-              
+
               <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
                 {[
                   { key: "street", placeholder: "Street/Sitio" },
                   { key: "barangay", placeholder: "Barangay" },
                   { key: "city", placeholder: "Municipality/City" },
-                  { key: "province", placeholder: "Province" }
+                  { key: "province", placeholder: "Province" },
                 ].map(({ key, placeholder }, i) => (
                   <div key={key} className="flex-1 flex items-center">
                     <FormField
@@ -375,7 +408,9 @@ export const ComplainantInfo = () => {
                       )}
                     />
                     {i < 3 && (
-                      <span className="hidden md:inline mx-2 text-gray-400 font-medium">/</span>
+                      <span className="hidden md:inline mx-2 text-gray-400 font-medium">
+                        /
+                      </span>
                     )}
                   </div>
                 ))}

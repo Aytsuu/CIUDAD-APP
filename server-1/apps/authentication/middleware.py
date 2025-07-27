@@ -10,11 +10,11 @@ class AuthCheckingMiddleware:
 
     def __call__(self, request):
         protected_paths = [
-            '/authentication/user/',
-            '/authentication/refresh/',
-            '/authentication/upload-image/',
-            '/dashboard',
-            '/complaint/',
+            # '/authentication/user/',
+            # '/authentication/refresh/',
+            # '/authentication/upload-image/',
+            # '/dashboard',
+            # '/complaint/',
         ]
 
         if not any(request.path.startswith(path) for path in protected_paths):

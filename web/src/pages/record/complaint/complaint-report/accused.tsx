@@ -172,7 +172,7 @@ export const AccusedInfo = () => {
           />
 
           {/* Age and Gender */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={control}
               name={`accused.${activeTab}.age`}
@@ -185,6 +185,7 @@ export const AccusedInfo = () => {
                     <Input
                       type="number"
                       placeholder="Age"
+                      className="!text-black"
                       {...field}
                       onChange={(e) => {
                         // Only allow numbers
@@ -198,7 +199,7 @@ export const AccusedInfo = () => {
               )}
             />
 
-            <div className="md:col-span-3">
+            <div>
               <FormLabel className="font-semibold text-black/50">
                 Gender *
               </FormLabel>
@@ -220,16 +221,16 @@ export const AccusedInfo = () => {
                           <SelectTrigger className="w-20 h-9 rounded-r-none border-r-0 px-2">
                             <SelectValue>
                               {field.value === "Male" && (
-                                <User className="h-4 w-4 text-blue-600" />
+                                <User className="h-4 w-4 text-darkGray" />
                               )}
                               {field.value === "Female" && (
-                                <Users className="h-4 w-4 text-pink-600" />
+                                <Users className="h-4 w-4 text-darkGray" />
                               )}
                               {field.value === "Other" && (
-                                <HelpCircle className="h-4 w-4 text-purple-600" />
+                                <HelpCircle className="h-4 w-4 text-darkGray" />
                               )}
                               {field.value === "Prefer not to say" && (
-                                <UserX className="h-4 w-4 text-gray-600" />
+                                <UserX className="h-4 w-4 text-darkGray" />
                               )}
                               {!field.value && (
                                 <span className="text-gray-400 text-xs">
@@ -241,25 +242,25 @@ export const AccusedInfo = () => {
                           <SelectContent>
                             <SelectItem value="Male">
                               <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-blue-600" />
+                                <User className="h-4 w-4 text-darkGray" />
                                 <span>Male</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="Female">
                               <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-pink-600" />
+                                <Users className="h-4 w-4 text-darkGray" />
                                 <span>Female</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="Other">
                               <div className="flex items-center gap-2">
-                                <HelpCircle className="h-4 w-4 text-purple-600" />
+                                <HelpCircle className="h-4 w-4 text-darkGray" />
                                 <span>Other</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="Prefer not to say">
                               <div className="flex items-center gap-2">
-                                <UserX className="h-4 w-4 text-gray-600" />
+                                <UserX className="h-4 w-4 text-darkGray" />
                                 <span>Prefer not to say</span>
                               </div>
                             </SelectItem>
@@ -294,9 +295,9 @@ export const AccusedInfo = () => {
                               ? field.onChange
                               : undefined
                           }
-                          className={`h-10 rounded-l-none ${
+                          className={`h-10 rounded-l-none !text-black ${
                             selectedGender !== "Other"
-                              ? "bg-gray-100 cursor-not-allowed"
+                              ? "bg-gray-100 cursor-not-allowed !text-black"
                               : ""
                           }`}
                         />

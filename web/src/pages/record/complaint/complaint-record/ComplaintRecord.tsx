@@ -33,7 +33,6 @@ export default function ComplaintRecord() {
     setCurrentPage(1);
   }, [searchQuery, pageSize]);
 
-  // if (isLoading) return <BlotterRecordSkeleton />;
   if (error) return <div>Error: {error.message}</div>;
 
   const columns = useMemo(() => complaintColumns(complaints), [complaints]);
