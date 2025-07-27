@@ -16,14 +16,15 @@ export const addAddress =  async (data: Record<string, any>[]) => {
 }
 
 // POST request for personal address
-export const addPersonalAddress = async (data: Record<string, any>[], staff_id: string) => {
+export const addPersonalAddress = async (data: Record<string, any>[], staff_id?: string, history_id?: string) => {
   try {
     const values = {
       per_add: data,
-      staff_id: staff_id
+      staff_id: staff_id,
+      history_id: history_id
     }
     const res = await api.post("profiling/per_address/create/", values);
-    await api2.post("health-profiling/per_address/create/", data)
+    await api2.post("health-profiling/per_address/create/", values);
     return res.data;
   } catch (err) {
     throw err;

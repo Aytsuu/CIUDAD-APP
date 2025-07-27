@@ -35,12 +35,14 @@ export default function IndividualScan() {
   ) => {
     try {
       const personal = await addPersonal(capitalizeAllFields(per));
-      const addresses = await addAddress(per_addresses.list);
+      const new_addresses = await addAddress(per_addresses.list);
       await addPersonalAddress(
-        addresses.map((add: any) => ({
-          per: personal.per_id,
-          add: add.add_id,
-        }))
+        {
+          data: new_addresses?.map((address: any) => ({
+            add: address.add_id,
+            per: personal.per_id,
+          })),
+        }
       );
 
       await addRequest(
@@ -75,12 +77,16 @@ export default function IndividualScan() {
   ) => {
     try {
       const personal = await addPersonal({ ...capitalizeAllFields(per) });
+      console.log(personal)
       const new_addresses = await addAddress(per_addresses.list);
       await addPersonalAddress(
-        new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: personal.per_id,
-        }))
+        {
+          data: new_addresses?.map((address: any) => ({
+            add: address.add_id,
+            per: personal.per_id,
+          })),
+          history_id: personal.history
+        }
       );
 
       const respondent = await addBusinessRespondent({
@@ -90,11 +96,17 @@ export default function IndividualScan() {
       await addAccount({
         ...account,
         br: respondent.br_id,
-      });
+      }, {
+          onSuccess: () => {
+            setIsSubmitting(false);
+            // setStatus("success");
+            // setShowFeedback(true);
+          },
+        });
     } catch (error) {
-      setStatus("failure");
+      // setStatus("failure");
       setIsSubmitting(false);
-      setShowFeedback(true);
+      // setShowFeedback(true);
     }
   };
 
@@ -106,10 +118,10 @@ export default function IndividualScan() {
 
     switch (type) {
       case "business":
-        busRespondentRegistration(per, per_addresses, account);
+        await busRespondentRegistration(per, per_addresses, account);
         break;
       default:
-        residentRegistration(per, per_addresses, account);
+        await residentRegistration(per, per_addresses, account);
         break;
     }
   };

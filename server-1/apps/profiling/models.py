@@ -75,7 +75,6 @@ class PersonalAddress(models.Model):
 
 class PersonalAddressHistory(models.Model):
     pah_id = models.BigAutoField(primary_key=True)
-    pah_date = models.DateTimeField(auto_now_add=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
     history_id = models.IntegerField()
