@@ -11,11 +11,6 @@ export type BudgetPlan = {
     plan_budgetaryObligations: number;
     plan_balUnappropriated: number;
     plan_issue_date?: string;
-    plan_personalService_limit: number,
-    plan_miscExpense_limit: number,
-    plan_localDev_limit: number,
-    plan_skFund_limit: number,
-    plan_calamityFund_limit: number,
     plan_is_archive?: boolean,
     details?: BudgetPlanDetail[];
 }

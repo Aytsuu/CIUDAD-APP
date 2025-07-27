@@ -17,11 +17,11 @@ class Budget_Plan(models.Model):
     plan_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
     plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
-    plan_personalService_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_miscExpense_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_localDev_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_skFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_calamityFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_personalService_limit= models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    plan_miscExpense_limit= models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    plan_localDev_limit= models.DecimalField(max_digits=10, decimal_places=2, null = True)
+    plan_skFund_limit= models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    plan_calamityFund_limit= models.DecimalField(max_digits=10, decimal_places=2, null=True)
     plan_is_archive = models.BooleanField(default=False)
 
     class Meta:

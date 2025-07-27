@@ -4,8 +4,6 @@ import { budget_plan, budget_plan_details, addBudgetPlanSuppDoc } from "../restf
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { BudgetPlan } from "../budgetPlanInterfaces"
 import { CircleCheck } from "lucide-react"
-import { MediaUploadType } from "@/components/ui/media-upload";
-import { fi } from "date-fns/locale"
 
 
 const BudgetPlanDetailSchema = z.object({
