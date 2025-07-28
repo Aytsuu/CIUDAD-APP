@@ -14,8 +14,7 @@ export const useUpdateBudgetHeader = (onSuccess: () => void) => {
         updateBudgetHeader(values),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
-
-            toast.loading('Updating budget header...', {id: "updateHeader"});
+            queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
     
             toast.success('Budget Header Updated!', {
                 id: "updateHeader",

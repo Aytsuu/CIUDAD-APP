@@ -15,7 +15,6 @@ import BudgetPlanHistory from "./budgetPlanHistory";
 import BudgetPlanSuppDocs from "./budgetplanSuppDocs";
 import { useState } from "react";
 import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "./budgetItemDefinition";
-import BudgetHeaderForm from "./budgetPlanForm/budgetHeaderForm";
 import BudgetHeaderEditForm from "./budgetPlanForm/budgetHeaderEditForm";
 
 const styles = {
@@ -226,6 +225,7 @@ function ViewBudgetPlan(){
                                         otherSpecificIncome={fetchedData?.plan_other_income || 0}
                                         actualIncome={fetchedData?.plan_actual_income || 0}
                                         actualRPT={fetchedData?.plan_rpt_income || 0}
+                                        budgetaryObligations = {fetchedData?.plan_budgetaryObligations}
                                         planId={planId}
                                         onSuccess={() => {
                                             setIsEditingHeader(false);

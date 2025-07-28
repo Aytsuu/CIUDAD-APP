@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useUpdateBudgetHeader } from "../queries/budgetPlanUpdateQueries";
 
-function BudgetHeaderEditForm({balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, actualIncome, actualRPT, planId, onSuccess}: {
+function BudgetHeaderEditForm({balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, actualIncome, actualRPT, planId, budgetaryObligations, onSuccess}: {
     balance: number;
     realtyTaxShare: number;
     taxAllotment: number;
@@ -16,9 +16,11 @@ function BudgetHeaderEditForm({balance, realtyTaxShare, taxAllotment, clearanceA
     actualIncome: number;
     actualRPT: number;
     planId: number;
+    budgetaryObligations: number;
     onSuccess: () => void;
 }) {
     const {mutate: updateHeader, isPending} = useUpdateBudgetHeader(onSuccess);
+    
     const form = useForm<z.infer<typeof BudgetPlanStep1Schema>>({
         resolver: zodResolver(BudgetPlanStep1Schema),
         defaultValues: {
@@ -29,11 +31,13 @@ function BudgetHeaderEditForm({balance, realtyTaxShare, taxAllotment, clearanceA
             otherSpecificIncome: otherSpecificIncome.toString(),
             actualIncome: actualIncome.toString(),
             actualRPT: actualRPT.toString(),
-            planId: planId
+            planId: planId,
+            budgetaryObligations: budgetaryObligations.toString()
         }
     })
 
     const onSubmit = (values: z.infer<typeof BudgetPlanStep1Schema>) => {
+        console.log('Values:', values)
         updateHeader(values)
     }
     return (

@@ -4,7 +4,10 @@ import { parseFloatSafe } from "@/helpers/floatformatter";
 export const updateBudgetHeader = async(budgetInfo: Record<string, any>) => {
     try{
 
-      const budgetObligations = Number(budgetInfo.realtyTaxShare) + Number(budgetInfo.balance) + Number(budgetInfo.taxAllotment) + Number(budgetInfo.clearanceAndCertFees) + Number(budgetInfo.otherSpecificIncome)
+      const newuBalUnappropiated = (Number(budgetInfo.realtyTaxShare) + 
+                                    Number(budgetInfo.balance) + Number(budgetInfo.taxAllotment) +
+                                    Number(budgetInfo.clearanceAndCertFees) + Number(budgetInfo.otherSpecificIncome)) 
+                                    - Number(budgetInfo.budgetaryObligations)
 
         console.log({
             plan_actual_income: parseFloatSafe(budgetInfo.actualIncome), 
@@ -14,7 +17,7 @@ export const updateBudgetHeader = async(budgetInfo: Record<string, any>) => {
             plan_tax_allotment: parseFloatSafe(budgetInfo.taxAllotment), 
             plan_cert_fees: parseFloatSafe(budgetInfo.clearanceAndCertFees), 
             plan_other_income: parseFloatSafe(budgetInfo.otherSpecificIncome), 
-            plan_budgetaryObligations: parseFloatSafe(budgetObligations),
+            plan_balUnappropriated: parseFloatSafe(newuBalUnappropiated),
             planId: budgetInfo.planId
         });
 
@@ -27,7 +30,7 @@ export const updateBudgetHeader = async(budgetInfo: Record<string, any>) => {
             plan_tax_allotment: parseFloatSafe(budgetInfo.taxAllotment), 
             plan_cert_fees: parseFloatSafe(budgetInfo.clearanceAndCertFees), 
             plan_other_income: parseFloatSafe(budgetInfo.otherSpecificIncome), 
-            plan_budgetaryObligations: parseFloatSafe(budgetObligations),
+            plan_balUnappropriated: parseFloatSafe(newuBalUnappropiated),
         })
 
         return res.data;
