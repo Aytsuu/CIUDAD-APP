@@ -43,7 +43,7 @@ export const BudgetPlanStep1Schema = z.object({
     otherSpecificIncome: DataRequirement,
     actualIncome: DataRequirement,
     actualRPT: DataRequirement,
-
+    planId: z.number().default(0)
 })
 
 export const BudgetPlanStep2Schema = z.object({

@@ -308,26 +308,6 @@ export default function AcceptedTable() {
                             }
                             content="View Image"
                           />
-
-                          {/* Confirm Pickup */}
-                          {/* <TooltipLayout
-                            trigger={
-                              <div>
-                                <ConfirmationModal
-                                  trigger={
-                                    <div className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg cursor-pointer transition-colors">
-                                      <Check size={14} />
-                                    </div>
-                                  }
-                                  title="Confirm Pickup"
-                                  description="Would you like to confirm that the pickup has been done?"
-                                  actionLabel="Confirm"
-                                  onClick={() => handleConfirm(request.garb_id)}
-                                />
-                              </div>
-                            }
-                            content="Confirm"
-                          /> */}
                         </div>
                     </div>
                   </div>

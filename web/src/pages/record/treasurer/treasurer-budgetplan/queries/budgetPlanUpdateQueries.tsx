@@ -1,84 +1,38 @@
-import z from "zod";
+import {z} from "zod"
+import { BudgetPlanStep1Schema } from "@/form-schema/treasurer/budgetplan-schema";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CircleCheck } from "lucide-react";
-import { updateBudgetPlan, updateBudgetDetails, archiveBudgetPlan, restoreBudgetPlan } from "../restful-API/budgetPlanPutAPI";
-import { createBudgetPlanDetailHistory, createBudgetPlanHistory } from "../restful-API/budgetPlanPostAPI";
-import { ProcessedOldBudgetDetail, BudgetHeaderUpdate, BudgetDetailUpdate } from "../budgetPlanInterfaces";
+import { updateBudgetHeader, restoreBudgetPlan, archiveBudgetPlan } from "../restful-API/budgetPlanPutAPI";
 
-export const useUpdateBudgetPlan = (onSuccess?: (planId?: number) => void) => {
+
+export const useUpdateBudgetHeader = (onSuccess: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (values: {
-            newBudgetHeader: BudgetHeaderUpdate;
-            oldBudgetHeader: BudgetHeaderUpdate;
-            newBudgetDetails: BudgetDetailUpdate[];
-            oldBudgetDetails: ProcessedOldBudgetDetail[];
-        }) => {
-            toast.loading("Updating Budget plan...", { id: "updateBudgetPlan" });
+        mutationFn: (values: z.infer<typeof BudgetPlanStep1Schema>) => 
+        updateBudgetHeader(values),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
 
-            try {
-                // 1. First create history records
-                const historyResponse = await createBudgetPlanHistory(values.oldBudgetHeader);
-                const bph_id = historyResponse.data.bph_id;
-
-                console.log('bph', bph_id)
-
-                // Create detail histories in parallel
-                await Promise.all(
-                    values.oldBudgetDetails.map(detail => 
-                        createBudgetPlanDetailHistory(bph_id, {
-                            budget_item: detail.budget_item,
-                            proposed_budget: detail.proposed_budget,
-                            category: detail.category,
-                            is_changed: detail.is_changed
-                        })
-                    )
-                );
-
-                // 2. Update current budget plan
-                const headerResponse = await updateBudgetPlan(values.newBudgetHeader);
-                if (!headerResponse) throw new Error("Budget header update failed");
-
-                // 3. Update details
-                if (values.newBudgetDetails?.length > 0) {
-                    const detailsResponse = await updateBudgetDetails(values.newBudgetDetails);
-                    if (!detailsResponse || detailsResponse.length !== values.newBudgetDetails.length) {
-                        throw new Error("Some budget details failed to update");
-                    }
-                }
-
-                return values.newBudgetHeader.plan_id;
-            } catch (error) {
-                console.error("Update error:", error);
-                toast.dismiss("updateBudgetPlan");
-                throw error;
-            }
-        },
-        onSuccess: (planId) => {
-            toast.success('Budget Plan updated successfully', {
-                id: 'updateBudgetPlan',
+            toast.loading('Updating budget header...', {id: "updateHeader"});
+    
+            toast.success('Budget Header Updated!', {
+                id: "updateHeader",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                 duration: 2000
             });
-
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
-            queryClient.invalidateQueries({ queryKey: ['budgetPlanDetails'] });
-            queryClient.invalidateQueries({ queryKey: ['budgetPlanHistory'] });
-
-            onSuccess?.(planId);
-            window.location.href = '/treasurer-budget-plan';
+            onSuccess?.()
         },
-        onError: (error: Error) => {
-            console.error("Mutation error:", error);
-            toast.error(`Failed to update budget plan: ${error.message}`, {
-                id: 'updateBudgetPlan'
-            });
+        onError: (err) => {
+            console.error("Error updating budget header:", err);
+            toast.error(
+                "Failed to udpate budget header. Please check the input data and try again.",
+                { duration: 2000 }
+            );
         }
-    });
-};
-
+    })
+}
 
 export const useArchiveBudgetPlan = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()

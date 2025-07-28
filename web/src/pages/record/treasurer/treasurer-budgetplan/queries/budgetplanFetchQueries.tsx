@@ -14,7 +14,6 @@ export const usegetBudgetPlan = () => {
     });
 };
 
-
 export type BudgetPlanDetailType = BudgetPlanDetail
 
 export const usegetBudgetPlanDetail = (plan_id: string) => {
