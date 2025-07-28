@@ -4,7 +4,7 @@ import { formatDate } from "@/helpers/dateHelpers";
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/address/create/", data);
-    await api2.post("health-profiling/address/create/", data);
+    // await api2.post("health-profiling/address/create/", data);
     return res.data;
   } catch (err) {
     throw err;
@@ -81,7 +81,6 @@ export const postDocumentData = async (data: Record<string, any>) => {
 
 export const addAccount = async (data: Record<string, any>) => {
   try {
-    console.log(data)
     const response = await api.post('authentication/signup/', data);
 
     return response.data;

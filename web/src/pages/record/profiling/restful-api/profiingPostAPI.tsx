@@ -51,7 +51,7 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
       staff: staffId || null
     }
     const res = await api.post("profiling/resident/create/combined/", data);
-    await api2.post("health-profiling/resident/create/combined/", data);
+    // await api2.post("health-profiling/resident/create/combined/", data);
     
     return res.data
   } catch (err) { 

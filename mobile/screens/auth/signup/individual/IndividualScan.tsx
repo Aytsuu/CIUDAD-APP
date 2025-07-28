@@ -14,12 +14,14 @@ import {
 } from "../../queries/authPostQueries";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
+import { View, Text } from "react-native";
 
 export default function IndividualScan() {
   const { getValues, reset } = useRegistrationFormContext();
   const { type } = useRegistrationTypeContext();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
+  const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
   const [status, setStatus] = React.useState<"success" | "failure">("success");
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addAddress } = useAddAddress();
@@ -36,14 +38,12 @@ export default function IndividualScan() {
     try {
       const personal = await addPersonal(capitalizeAllFields(per));
       const new_addresses = await addAddress(per_addresses.list);
-      await addPersonalAddress(
-        {
-          data: new_addresses?.map((address: any) => ({
-            add: address.add_id,
-            per: personal.per_id,
-          })),
-        }
-      );
+      await addPersonalAddress({
+        data: new_addresses?.map((address: any) => ({
+          add: address.add_id,
+          per: personal.per_id,
+        })),
+      });
 
       await addRequest(
         {
@@ -60,6 +60,7 @@ export default function IndividualScan() {
             setIsSubmitting(false);
             setStatus("success");
             setShowFeedback(true);
+            setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features")
           },
         }
       );
@@ -67,6 +68,7 @@ export default function IndividualScan() {
       setStatus("failure");
       setIsSubmitting(false);
       setShowFeedback(true);
+      setFeedbackMessage("Something went wrong! Operation failed to proceed. Please check your internet")
     }
   };
 
@@ -77,32 +79,33 @@ export default function IndividualScan() {
   ) => {
     try {
       const personal = await addPersonal({ ...capitalizeAllFields(per) });
-      console.log(personal)
+      console.log(personal);
       const new_addresses = await addAddress(per_addresses.list);
-      await addPersonalAddress(
-        {
-          data: new_addresses?.map((address: any) => ({
-            add: address.add_id,
-            per: personal.per_id,
-          })),
-          history_id: personal.history
-        }
-      );
+      await addPersonalAddress({
+        data: new_addresses?.map((address: any) => ({
+          add: address.add_id,
+          per: personal.per_id,
+        })),
+        history_id: personal.history,
+      });
 
       const respondent = await addBusinessRespondent({
         per: personal.per_id,
       });
 
-      await addAccount({
-        ...account,
-        br: respondent.br_id,
-      }, {
+      await addAccount(
+        {
+          ...account,
+          br: respondent.br_id,
+        },
+        {
           onSuccess: () => {
             setIsSubmitting(false);
             // setStatus("success");
             // setShowFeedback(true);
           },
-        });
+        }
+      );
     } catch (error) {
       // setStatus("failure");
       setIsSubmitting(false);
@@ -141,6 +144,13 @@ export default function IndividualScan() {
           router.push("/(auth)");
           reset();
         }}
+        message={
+          <View className="flex-1">
+            <Text className="text-base text-gray-600 text-center mb-8 leading-6 px-4 max-w-sm">
+              {feedbackMessage}
+            </Text>
+          </View>
+        }
       />
     );
   }

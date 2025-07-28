@@ -40,6 +40,8 @@ export default function RegistrationRequests() {
   const totalCount = requests?.count || 0
   const totalPages = Math.ceil(totalCount / pageSize)
 
+  console.log(requestList)
+
   const sidebarItems = [
     {
       id: "individual" as RequestType,
@@ -80,6 +82,8 @@ export default function RegistrationRequests() {
         return {
           req_id: request.req_id,
           req_date: request.req_date,
+          acc: personal.acc,
+          per_id: personal.per_id,
           per_lname: personal.per_lname,
           per_fname: personal.per_fname,
           per_mname: personal.per_mname,
