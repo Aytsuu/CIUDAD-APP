@@ -16,6 +16,7 @@ import BudgetPlanSuppDocs from "./budgetplanSuppDocs";
 import { useState } from "react";
 import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "./budgetItemDefinition";
 import BudgetHeaderEditForm from "./budgetPlanForm/budgetHeaderEditForm";
+import BudgetItemEditForm from "./budgetPlanForm/budgetItemEditForm";
 
 const styles = {
     mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -233,7 +234,15 @@ function ViewBudgetPlan(){
                                         }}
                                     />
                                 </div>
-                            ) : (
+                            ) : 
+                            isEditingItem ?(
+                                <div className="flex flex-col gap-4">
+                                     <Button  variant="outline"  className="w-fit"  onClick={() => setIsEditingItem(false)}>
+                                        <ChevronLeft size={16} /> Back to menu
+                                    </Button>
+                                    <BudgetItemEditForm/>
+                                </div>
+                            ):(
                                 <div className="flex flex-col gap-2">
                                     <Button className="w-full" onClick={() => setIsEditingHeader(true)}  >
                                         Budget Plan Header
