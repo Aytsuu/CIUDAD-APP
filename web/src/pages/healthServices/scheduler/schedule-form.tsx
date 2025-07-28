@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import type { ServiceScheduleFormProps, WeeklySchedule, DailySchedule, ServiceTimeSlots } from "../scheduler/schedule-types"
+import { useAddScheduler } from "../scheduler/queries/schedulerAddQueries"
 
 export default function ServiceScheduleForm({
   initialSchedule,
@@ -22,6 +23,9 @@ export default function ServiceScheduleForm({
   const [currentWeeklySchedule, setCurrentWeeklySchedule] = useState<WeeklySchedule>(initialSchedule)
   const [newServiceName, setNewServiceName] = useState("")
   const [isAddingService, setIsAddingService] = useState(false)
+  
+  // ✅ Use the mutation hook
+  const addSchedulerMutation = useAddScheduler()
 
   // Update internal state if initialSchedule prop changes
   useEffect(() => {
@@ -63,8 +67,50 @@ export default function ServiceScheduleForm({
     }
   }
 
-  const handleSave = () => {
-    onSave(currentWeeklySchedule)
+  // ✅ Updated handleSave to create individual scheduler entries using your API
+  const handleSave = async () => {
+    try {
+      console.log("Saving weekly schedule:", currentWeeklySchedule)
+      
+      // Convert the weekly schedule to individual scheduler entries
+      const schedulerEntries = []
+      
+      for (const [date, dailySchedule] of Object.entries(currentWeeklySchedule)) {
+        for (const [serviceName, timeSlots] of Object.entries(dailySchedule)) {
+          if (timeSlots.AM) {
+            schedulerEntries.push({
+              service: serviceName,
+              meridiem: 'AM' as const,
+            })
+          }
+          if (timeSlots.PM) {
+            schedulerEntries.push({
+              service: serviceName,
+              meridiem: 'PM' as const,
+            })
+          }
+        }
+      }
+
+      console.log("Scheduler entries to create:", schedulerEntries)
+
+      // Create all scheduler entries using your existing API
+      const createdEntries = []
+      for (const entry of schedulerEntries) {
+        console.log("Creating scheduler entry:", entry)
+        const result = await addSchedulerMutation.mutateAsync(entry)
+        createdEntries.push(result)
+        console.log("Created scheduler with ID:", result)
+      }
+
+      console.log("All scheduler entries created:", createdEntries)
+
+      // Call the parent component's onSave
+      onSave(currentWeeklySchedule)
+      
+    } catch (error) {
+      console.error('Error saving schedule:', error)
+    }
   }
 
   return (
@@ -151,8 +197,13 @@ export default function ServiceScheduleForm({
           )
         })}
 
-        <Button onClick={handleSave} className="w-full mt-4">
-          Save Weekly Schedule
+        {/* ✅ Updated Save button with loading state */}
+        <Button 
+          onClick={handleSave} 
+          className="w-full mt-4"
+          disabled={addSchedulerMutation.isPending}
+        >
+          {addSchedulerMutation.isPending ? 'Saving Schedule...' : 'Save Weekly Schedule'}
         </Button>
       </CardContent>
     </Card>

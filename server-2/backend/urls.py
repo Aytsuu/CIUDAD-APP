@@ -34,6 +34,7 @@ urlpatterns = [
     path('medicine/', include("apps.medicineservices.urls")),
     path('firstaid/',include("apps.firstaid.urls")),
     path('child-health/',include("apps.childhealthservices.urls")),
+	path('servicescheduler/', include("apps.servicescheduler.urls")),
 
     
     # path('user/', include('apps.account.urls')),
