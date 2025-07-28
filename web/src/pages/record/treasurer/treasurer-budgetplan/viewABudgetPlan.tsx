@@ -240,7 +240,10 @@ function ViewBudgetPlan(){
                                      <Button  variant="outline"  className="w-fit"  onClick={() => setIsEditingItem(false)}>
                                         <ChevronLeft size={16} /> Back to menu
                                     </Button>
-                                    <BudgetItemEditForm/>
+                                    <BudgetItemEditForm
+                                        planId = {planId}
+                                        budgetItems={fetchedData?.details || []}
+                                    />
                                 </div>
                             ):(
                                 <div className="flex flex-col gap-2">
