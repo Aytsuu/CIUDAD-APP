@@ -36,6 +36,7 @@ export default function IndivVaccinationRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setfilter] = useState<filter>("all");
+  
 
   // Guard clause for missing patientData
   if (!patientData?.pat_id) {
@@ -51,7 +52,6 @@ export default function IndivVaccinationRecords() {
       setSelectedPatientData(patientData);
     }
   }, [location.state]);
-
   const { data: vaccinationRecords, isLoading: isVaccinationRecordsLoading } =
     useIndivPatientVaccinationRecords(patientData?.pat_id);
 
@@ -66,6 +66,7 @@ export default function IndivVaccinationRecords() {
   const { data: followupVaccines = [] } = useFollowupVaccines(
     patientData?.pat_id
   );
+
 
   const filteredData = React.useMemo(() => {
     if (!vaccinationRecords) return [];

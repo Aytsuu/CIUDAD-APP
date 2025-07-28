@@ -7,13 +7,12 @@ import {
   createChildHealthNotes,
   createChildVitalSign,
   createNutritionalStatus,
-} from "./createAPI";
-import {
-  createExclusiveBFCheck,
   createSupplementStatus,
+  createExclusiveBFCheck,
   createChildHealthRecord,
   createChildHealthHistory,
-} from "./chrecord";
+} from "./createAPI";
+
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
@@ -155,7 +154,7 @@ export async function addChildHealthRecord({
   const bmi_id = newBMI.bm_id;
 
   const vitalsigns = await createVitalSigns({
-    vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
+    temp: submittedData.vitalSigns?.[0]?.temp || "",
   });
   const vital_id = vitalsigns.vital_id;
 
@@ -238,20 +237,7 @@ export async function addChildHealthRecord({
     });
   }
 
-  // // Handle medicines
-  // if (submittedData.medicines && submittedData.medicines.length > 0) {
-  //   await processMedicineRequest({
-  //     pat_id: submittedData.pat_id,
-  //     medicines: submittedData.medicines.map(med => ({
-  //       minv_id: med.minv_id,
-  //       medrec_qty: med.medrec_qty,
-  //       reason: med.reason || ""
-  //     }))
-  //   },staff || null);
-  // }
-
-  // Handle medicines
-  // Handle medicines
+  
   if (submittedData.medicines && submittedData.medicines.length > 0) {
     await processMedicineRequest(
       {
@@ -263,7 +249,7 @@ export async function addChildHealthRecord({
         })),
       },
       staff || null,
-      current_chhist_id // assuming you have this in submittedData
+      current_chhist_id 
     );
   }
 
@@ -276,14 +262,9 @@ export async function addChildHealthRecord({
   };
 }
 
-// export const formatBirthOrder = (order: number): string => {
-//   if (order === 1) return "1st";
-//   if (order === 2) return "2nd";
-//   if (order === 3) return "3rd";
-//   return `${order}th`;
-// };
 
-// src/hooks/useChildHealthRecordMutation.ts
+
+
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -294,9 +275,9 @@ export const useChildHealthRecordMutation = () => {
 
   return useMutation({
     mutationFn: addChildHealthRecord,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
-
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory",data.chrec_id] }); 
       toast.success("Child health record created successfully!");
       navigate(-1);
     },

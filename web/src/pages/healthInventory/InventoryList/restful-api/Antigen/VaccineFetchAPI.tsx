@@ -1,17 +1,19 @@
 import {api2} from "@/api/api";
-export const getVaccineList = async () => {
-    try {
-      const res = await api2.get("inventory/vac_list/");
-      if (res.status !== 200) {
-        console.error("Failed to fetch vaccine data");
+  export const getVaccineList = async () => {
+      try {
+        const res = await api2.get("inventory/vac_list/");
+        if (res.status !== 200) {
+          console.error("Failed to fetch vaccine data");
+          return [];
+        }
+        return res.data; // Return the actual data
+      } catch (err) {
+        console.error("Error fetching vaccine data:", err);
         return [];
       }
-      return res.data; // Return the actual data
-    } catch (err) {
-      console.error("Error fetching vaccine data:", err);
-      return [];
-    }
-  };
+    };
+
+    
 export const getAntigen = async () => {
   try {
     // Fetch all data in parallel including immunization supplies

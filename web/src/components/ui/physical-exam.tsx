@@ -22,10 +22,10 @@ import { Edit2, Plus, Save, X, ChevronDown, ChevronRight } from "lucide-react";
 import {
   updatePEOption,
   
-} from "@/pages/healthServices/doctor/restful-api/update";
+} from "@/pages/healthServices/doctor/medical-con/restful-api/update";
 import {
   createPEOption,
-} from "@/pages/healthServices/doctor/restful-api/create";
+} from "@/pages/healthServices/doctor/medical-con/restful-api/create";
 
 interface ExamOption {
   pe_option_id: number;

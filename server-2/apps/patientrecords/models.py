@@ -189,14 +189,9 @@ class FollowUpVisit(models.Model):
     followv_status = models.CharField(max_length=100)
     followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateField(null=True,blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
-    missedfollowv = models.ForeignKey(
-       'self',  # 👈 this is the "self" we're talking about
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='follow_up_visits')
+    
     class Meta:
         db_table = 'follow_up_visit'
         
@@ -229,16 +224,7 @@ class BodyMeasurement(models.Model):
         db_table = 'body_measurement'
            
 
-# class NutritionalStatus(models.Model): 
-#     nutstat_id = models.BigAutoField(primary_key=True)
-#     nutstat_WFA = models.CharField(max_length=100, default="")
-#     nutstat_HFA = models.CharField(max_length=100, default="")
-#     nutstat_WFH = models.CharField(max_length=100, default="")
-#     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='nutritional_status', null=True, blank=True)
-#     class Meta:
-#         db_table = 'nutritional_status'
     
-       
 class Illness(models.Model):
     ill_id = models.BigAutoField(primary_key=True)
     illname = models.CharField(max_length=100,default="",null=True,blank=True)

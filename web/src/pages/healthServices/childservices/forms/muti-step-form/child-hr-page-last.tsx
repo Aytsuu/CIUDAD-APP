@@ -199,11 +199,20 @@ export default function LastPage({
     },
   });
 
-  const supplementStatusEditForm = useForm<{ date_completed: string | null }>({
+  const supplementStatusEditForm = useForm<{ 
+    date_completed: string | null;
+    date_given_iron: string | null;
+  }>({
     resolver: zodResolver(
-      z.object({ date_completed: z.string().nullable().optional() })
+      z.object({ 
+        date_completed: z.string().nullable().optional(),
+        date_given_iron: z.string().nullable().optional()
+      })
     ),
-    defaultValues: { date_completed: null },
+    defaultValues: { 
+      date_completed: null,
+      date_given_iron: null 
+    },
   });
 
   const {
@@ -306,7 +315,13 @@ export default function LastPage({
   }, [currentAge, latestOverallVitalSign, vitalSignForm]);
 
   useEffect(() => {
-    setValue("historicalSupplementStatuses", historicalSupplementStatusesProp);
+    setValue(
+      "historicalSupplementStatuses",
+      historicalSupplementStatusesProp.map((status) => ({
+        ...status,
+        date_given_iron: status.date_given_iron ?? undefined,
+      }))
+    );
   }, [historicalSupplementStatusesProp, setValue]);
 
   const handleMedicineSelectionChange = (
@@ -359,28 +374,32 @@ export default function LastPage({
 
   const handleSaveAnemiaDate = (
     index: number,
-    newDateCompleted: string | null
+    newDateCompleted: string | null,
+    newDateGivenIron: string | null
   ) => {
     const updatedStatuses = [...historicalSupplementStatusesProp];
     if (index >= 0 && index < updatedStatuses.length) {
       updatedStatuses[index] = {
         ...updatedStatuses[index],
         date_completed: newDateCompleted,
+        date_given_iron: newDateGivenIron
       };
       onUpdateHistoricalSupplementStatus(updatedStatuses);
     }
     setEditingAnemiaIndex(null);
   };
-
+  
   const handleSaveBirthWeightDate = (
     index: number,
-    newDateCompleted: string | null
+    newDateCompleted: string | null,
+    newDateGivenIron: string | null
   ) => {
     const updatedStatuses = [...historicalSupplementStatusesProp];
     if (index >= 0 && index < updatedStatuses.length) {
       updatedStatuses[index] = {
         ...updatedStatuses[index],
         date_completed: newDateCompleted,
+        date_given_iron: newDateGivenIron
       };
       onUpdateHistoricalSupplementStatus(updatedStatuses);
     }

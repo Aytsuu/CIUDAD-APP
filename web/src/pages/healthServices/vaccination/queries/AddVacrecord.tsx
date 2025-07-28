@@ -7,25 +7,20 @@ import {
   createVaccinationHistory,
   createVitalSigns,
   createFollowUpVisit,
-
 } from "../restful-api/post";
-import   {getVaccineStock} from "../restful-api/get";
-import { deleteVaccinationRecord,
+import { getVaccineStock } from "../restful-api/get";
+import {
+  deleteVaccinationRecord,
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
   deleteVaccinationHistory,
 } from "../restful-api/delete";
-
 import { api2 } from "@/api/api";
-import { getVaccinationHistory } from "../restful-api/get";
 import { CircleCheck } from "lucide-react";
-import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
 import { useNavigate } from "react-router";
-import { checkVaccineStatus } from "../restful-api/fetch";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
-import { VaccinationRecord } from "../tables/columns/types";
-
+import { updateVaccineStock } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/restful-api/VaccinePutAPI";
 // Mutation for Step 2 submission
 export const useSubmitStep2 = () => {
   const queryClient = useQueryClient();
@@ -84,8 +79,7 @@ export const useSubmitStep2 = () => {
         let age = form.getValues("age");
 
         console.log("VACCCination ", vaccinationHistory);
-        let old_vacrec_id =
-          vaccinationHistory[0]?.vacrec_details?.vacrec_id || null;
+        let old_vacrec_id = vaccinationHistory[0]?.vacrec || null;
         let vacrec_totaldose = Number(
           vaccinationHistory[0]?.vacrec_details?.vacrec_totaldose
         );
@@ -98,17 +92,21 @@ export const useSubmitStep2 = () => {
           vital_id = vitalSigns.vital_id;
         }
 
-        await api2.put(
-          `inventory/vaccine_stocks/${parseInt(vacStck_id, 10)}/`,
-          {
-            vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
-            vacStck_used: vaccineData.vacStck_used + 1,
-          }
-        );
+        await updateVaccineStock({
+          vacStck_id: parseInt(vacStck_id, 10),
+          vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
+        });
+
         await createAntigenStockTransaction(
           parseInt(vacStck_id, 10),
           staff_id ?? ""
         );
+
+        let status = "in queue"; // Default status
+
+        if (assignmentOption === "other") {
+          status = "forwarded"; // Set status to 'forwarded' if assignmentOption is 'other'
+        }
 
         // ======================================================//
 
@@ -126,11 +124,10 @@ export const useSubmitStep2 = () => {
             );
           }
 
-          const vaccinationRecord = await createVaccinationRecord(
+          const vaccinationRecord = await createVaccinationRecord({
             patrec_id,
-            staff_id,
-            form_vacrec_totaldose
-          );
+            vacrec_totaldose: form_vacrec_totaldose,
+          });
 
           vacrec_id = vaccinationRecord.vacrec_id;
           const followUpVisit = await createFollowUpVisit(
@@ -144,7 +141,18 @@ export const useSubmitStep2 = () => {
           );
           followv_id = followUpVisit.followv_id;
 
-        
+          await createVaccinationHistory({
+            vacrec: vacrec_id ?? "",
+            assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
+            vacStck_id,
+            vachist_doseNo: doseNo,
+            vachist_status: status, // Use the determined status
+            vachist_age: age,
+            staff: staff_id,
+            vital: vital_id,
+            followv: followv_id,
+            date_administered: new Date().toISOString().split("T")[0],
+          });
         } else if (vac_type === "primary") {
           if (doseNo === 1) {
             const patientRecord = await createPatientRecord(
@@ -160,11 +168,10 @@ export const useSubmitStep2 = () => {
               );
             }
 
-            const vaccinationRecord = await createVaccinationRecord(
-              patrec_id,
-              staff_id,
-              form_vacrec_totaldose
-            );
+            const vaccinationRecord = await createVaccinationRecord({
+              patrec_id: patrec_id,
+              vacrec_totaldose: form_vacrec_totaldose,
+            });
 
             vacrec_id = vaccinationRecord.vacrec_id;
 
@@ -178,6 +185,19 @@ export const useSubmitStep2 = () => {
               "pending" // Added description
             );
             followv_id = followUpVisit.followv_id;
+
+            await createVaccinationHistory({
+              vacrec: vacrec_id ?? "",
+              assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
+              vacStck_id,
+              vachist_doseNo: doseNo,
+              vachist_status: status, // Use the determined status
+              vachist_age: age,
+              staff: staff_id,
+              vital: vital_id,
+              followv: followv_id,
+              date_administered: new Date().toISOString().split("T")[0],
+            });
           } else if (doseNo < form_vacrec_totaldose) {
             const followUpVisit = await createFollowUpVisit(
               vaccinationHistory?.vacrec_details?.patrec_id ?? "",
@@ -190,8 +210,35 @@ export const useSubmitStep2 = () => {
             );
             followv_id = followUpVisit.followv_id;
             console.log("pisty dosenumber", doseNo);
+
+            await createVaccinationHistory({
+              vacrec: old_vacrec_id ?? "",
+              assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
+              vacStck_id,
+              vachist_doseNo: doseNo,
+              vachist_status: status, // Use the determined status
+              vachist_age: age,
+              nstaff: staff_id,
+              vital: vital_id,
+              followv: followv_id,
+              date_administered: new Date().toISOString().split("T")[0],
+            });
+          } else {
+            await createVaccinationHistory({
+              vacrec: old_vacrec_id ?? "",
+              assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
+              vacStck_id,
+              vachist_doseNo: doseNo,
+              vachist_status: status, // Use the determined status
+              vachist_age: age,
+              staff: staff_id,
+              vital: vital_id,
+              followv: null,
+              date_administered: new Date().toISOString().split("T")[0],
+            });
           }
         }
+
         // ==================CONDITIONAL====================================//
         else if (vac_type === "conditional") {
           console.log("Conditional Logic Executed");
@@ -211,13 +258,25 @@ export const useSubmitStep2 = () => {
               );
             }
 
-            const vaccinationRecord = await createVaccinationRecord(
-              patrec_id,
-              staff_id,
-              form_vacrec_totaldose
-            );
+            const vaccinationRecord = await createVaccinationRecord({
+              patrec_id: patrec_id,
+              vacrec_totaldose: form_vacrec_totaldose,
+            });
 
             vacrec_id = vaccinationRecord.vacrec_id;
+
+            await createVaccinationHistory({
+              vacrec: vacrec_id ?? "",
+              assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
+              vacStck_id,
+              vachist_doseNo: doseNo,
+              vachist_status: status, // Use the determined status
+              vachist_age: age,
+              staff: staff_id,
+              vital: vital_id,
+              followv: followv_id,
+              date_administered: new Date().toISOString().split("T")[0],
+            });
           } else if (doseNo < form_vacrec_totaldose) {
             console.log("Logic 3");
 
@@ -231,33 +290,33 @@ export const useSubmitStep2 = () => {
               "pending" // Added description
             );
             followv_id = followUpVisit.followv_id;
-          }
-        }
 
-        if (assignmentOption === "other") {
-          await createVaccinationHistory(
-            vacrec_id ?? "",
-            { ...data },
-            vacStck_id,
-            doseNo,
-            "forwarded",
-            age,
-            staff_id,
-            vital_id,
-            followv_id
-          );
-        } else {
-          await createVaccinationHistory(
-            vacrec_id ?? "",
-            { ...data },
-            vacStck_id,
-            doseNo,
-            "in queue",
-            age,
-            staff_id,
-            vital_id,
-            followv_id
-          );
+            await createVaccinationHistory({
+              vacrec: old_vacrec_id ?? "",
+              assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
+              vacStck_id,
+              vachist_doseNo: doseNo,
+              vachist_status: status, // Use the determined status
+              vachist_age: age,
+              staff: staff_id,
+              vital: vital_id,
+              followv: followv_id,
+              date_administered: new Date().toISOString().split("T")[0],
+            });
+          } else {
+            await createVaccinationHistory({
+              vacrec: old_vacrec_id ?? "",
+              assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
+              vacStck_id,
+              vachist_doseNo: doseNo,
+              vachist_status: status, // Use the determined status
+              vachist_age: age,
+              staff: staff_id,
+              vital: vital_id,
+              followv: followv_id,
+              date_administered: new Date().toISOString().split("T")[0],
+            });
+          }
         }
 
         queryClient.invalidateQueries({

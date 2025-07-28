@@ -67,21 +67,26 @@ export const useSubmitStep1 = () => {
             );
           }
 
-          const vaccinationRecord = await createVaccinationRecord(patrec_id,staff_id, 1);
+          const vaccinationRecord = await createVaccinationRecord({patrec_id:patrec_id, vacrec_totaldose:1});
 
           vacrec_id = vaccinationRecord.vacrec_id;
           let age = data.age;
           console.log("age", data.age);
           if (vacrec_id) {
             await createVaccinationHistory(
-              vacrec_id,
-              data,
+             { vacrec:vacrec_id,
+              assigned_to:data.assignto ? parseInt(data.assignto, 10) : null,
               vacStck_id,
-              1,
-              "forwarded",
-              age,
-              staff_id
+              vachist_doseNo:1,
+             vachist_status: "forwarded",
+              vachist_age:age,
+              staff:staff_id,
+              date_administered: new Date().toISOString().split("T")[0]
+              
+            }
             );
+
+
           } else {
             throw new Error(
               "Vaccination record ID is null. Cannot create vaccination history."
@@ -162,7 +167,7 @@ export const useSubmitStep2 = () => {
 
         if (!patrec_id) { throw new Error( "Patient record ID is null. Cannot create vaccination record." ); }
 
-        const vaccinationRecord = await createVaccinationRecord(patrec_id,staff_id,maxDoses);
+        const vaccinationRecord = await createVaccinationRecord({patrec_id:patrec_id,staff:staff_id,vacrec_totaldose:maxDoses});
         vacrec_id = vaccinationRecord.vacrec_id;
 
         const vitalSigns = await createVitalSigns(data);
@@ -223,15 +228,17 @@ export const useSubmitStep2 = () => {
         const historyStatus =
           maxDoses === 1 ? "completed" : "partially vaccinated";
         await createVaccinationHistory(
-          vacrec_id ?? "",
-          { ...data },
+          {vacrec:vacrec_id ?? "",
+          assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
           vacStck_id,
-          1,
-          historyStatus,
-          form.getValues("age"),
-          staff_id,
-          vital_id,
-          followv_id
+          vachist_doseNo:1,
+          vachist_status:historyStatus,
+          vachist_age: form.getValues("age"),
+          staff:staff_id,
+          vital:vital_id,
+          followv:followv_id,
+          date_administered: new Date().toISOString().split("T")[0]
+        }
         );
 
         queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });

@@ -5,92 +5,55 @@ import axios, { AxiosError } from 'axios';
 
 
 export const createVaccinationRecord = async (
-  patrec_id: string,
-  staff_id: string | null = null,
-  // status: "forwarded" | "completed" | "partially vaccinated",
-  totalDoses: number
+  data:Record<string,any>
+ 
 ) => {
-  const parsedPatrecId = parseInt(patrec_id, 10);
-  const response = await api2.post("vaccination/vaccination-record/", {
-    patrec_id: parsedPatrecId,
-    // vacrec_status: status,
-    vacrec_totaldose: totalDoses,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    staff: staff_id || null, // Ensure staff_id is parsed as an integer
-  });
+  const response = await api2.post("vaccination/vaccination-record/", data);
   return response.data;
 };
 
 
 
 export const createVaccinationHistory = async (
-  vacrec_id: string,
-  data: Record<string, any>,
-  vacStck_id: string,
-  doseNo: number,
-  status: "forwarded" | "completed" | "partially vaccinated" | "in queue",
-  age:string,
-  staff_id: string | null,
-  vital_id?: string | null,
-  followv_id?: string | null ,
+ 
+  data:Record<string,any>
   
 ) => {
   try {
-    const response = await api2.post("vaccination/vaccination-history/", {
-      vachist_doseNo: doseNo,
-      vachist_status: status,
-      vachist_age: age,
-      staff: staff_id,
-      vacrec: vacrec_id,
-      vital: vital_id,
-      created_at: new Date().toISOString(),
-      vacStck_id: parseInt(vacStck_id, 10),
-      assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
-      followv: followv_id,
-      // staff:staff_id|| null
-    });
+    const response = await api2.post("vaccination/vaccination-history/", data
+    
+  
+  );
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // Handle 400 Bad Request specifically
-      if (error.response?.status === 400) {
-        console.error("Bad Request Details:", {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers,
-        });
-
-        // Extract validation errors if available
-        const validationErrors = error.response.data;
-        throw new Error(`Validation failed: ${JSON.stringify(validationErrors)}`);
-      }
-
-      // Handle other HTTP errors
-      console.error("API Error:", {
-        message: error.message,
-        code: error.code,
-        config: error.config,
-      });
-    } else {
-      console.error("Unexpected Error:", error);
-    }
-
+   console.error("Error creating vaccination history:", error);
     throw error; // Re-throw for calling code
   }
 };
 
+
 export const createVitalSigns = async (data: Record<string, any>) => {
-  const response = await api2.post("patientrecords/vital-signs/", {
-    vital_bp_systolic: data.bpsystolic?.toString() || "",
-    vital_bp_diastolic: data.bpdiastolic?.toString() || "",
-    vital_temp: data.temp?.toString() || "",
-    vital_RR: "",
-    vital_o2: data.o2?.toString() || "",
-    vital_pulse: data.pr?.toString() || "",
-    created_at: new Date().toISOString(),
-  });
-  return response.data;
+  
+  try {
+    const response = await api2.post("patientrecords/vital-signs/", {
+      vital_bp_systolic: data.bpsystolic?.toString() || "",
+      vital_bp_diastolic: data.bpdiastolic?.toString() || "",
+      vital_temp: data.temp?.toString() || "",
+      vital_RR: "",
+      vital_o2: data.o2?.toString() || "",
+      vital_pulse: data.pr?.toString() || "",
+      created_at: new Date().toISOString(),
+    });
+    console.log("Vital sign created", response.data)
+
+    return response.data;
+  } catch (error) {
+    console.log(error)
+    throw error
+    
+  }
+    
+  
 };
 
 
@@ -99,7 +62,6 @@ export const createFollowUpVisit = async (
   followv_date: string,
   followv_description: string ,
   followv_status: "pending" | "completed" | "missed",
-  missedfollowv_id ?: string | null, // Optional parameter for missed follow-up visit
 ) => {
   try {
     const response = await api2.post("patientrecords/follow-up-visit/", {
@@ -107,7 +69,6 @@ export const createFollowUpVisit = async (
       patrec: parseInt(patrec_id, 10),
       followv_status:  followv_status || "pending",
       followv_description,
-      missedfollowv: missedfollowv_id ? parseInt(missedfollowv_id, 10) : null, // Handle optional parameter
       created_at: new Date().toISOString(),
 
     });

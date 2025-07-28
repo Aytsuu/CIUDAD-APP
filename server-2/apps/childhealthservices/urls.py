@@ -21,6 +21,7 @@ urlpatterns = [
    
     path('exclusive-bf-check/', ExclusiveBFCheckView.as_view(), name='exclusive-bf-check'),
     path('immunization-history/', ChildHealthImmunizationHistoryView.as_view(), name='immunization-history'),
+    path('immunization-history/<int:imt_id>/', DeleteChildHealthImmunizationHistoryView.as_view(), name='immunization-history-delete'),
     path('child-vitalsigns/', ChildHealthVitalSignsView.as_view(), name='child-vitalsigns'),
     path('update/child-vitalsigns/<int:chvital_id>/', UpdateChildHealthVitalSignsView.as_view(), name='child-vitalsigns-detail'),
     

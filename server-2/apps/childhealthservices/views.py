@@ -92,6 +92,7 @@ class UpdateChildHealthSupplementsStatusView(generics.RetrieveUpdateAPIView):
         for item in data:
             chssupplementstat_id = item.get("chssupplementstat_id")
             date_completed = item.get("date_completed")
+            date_given_iron= item.get("date_given_iron")
 
             if not chssupplementstat_id:
                 errors.append(
@@ -115,7 +116,11 @@ class UpdateChildHealthSupplementsStatusView(generics.RetrieveUpdateAPIView):
                 continue
 
             # Only include the allowed field(s)
-            update_data = {"date_completed": date_completed}
+            update_data = {}
+            if date_completed is not None:
+                update_data["date_completed"] = date_completed
+            if date_given_iron is not None:
+                update_data["date_given_iron"] = date_given_iron
 
             serializer = ChildHealthSupplementStatusSerializer(
                 instance, data=update_data, partial=True
@@ -196,15 +201,11 @@ class ExclusiveBFCheckView(generics.ListCreateAPIView):
 class ChildHealthImmunizationHistoryView(generics.ListCreateAPIView):
     queryset = ChildHealthImmunizationHistory.objects.all()
     serializer_class = ChildHealthImmunizationHistorySerializer
+class DeleteChildHealthImmunizationHistoryView(generics.DestroyAPIView):
+    queryset = ChildHealthImmunizationHistory.objects.all()
+    serializer_class = ChildHealthImmunizationHistorySerializer
+    lookup_field = 'imt_id'
 
-# class ChildHealthHistoryByPatientView(generics.ListAPIView):
-#     serializer_class = ChildHealthHistoryFullSerializer
-
-#     def get_queryset(self):
-#         pat_id = self.kwargs.get("pat_id")
-#         return ChildHealth_History.objects.filter(
-#             chrec__patrec__pat_id=pat_id
-#         )
 class IndivChildHealthHistoryView(generics.ListAPIView):
     serializer_class = ChildHealthHistoryFullSerializer
 
@@ -214,29 +215,49 @@ class IndivChildHealthHistoryView(generics.ListAPIView):
     
     
     
-# class IndivChildHealthHistoryView(generics.ListAPIView):
-#     serializer_class = ChildHealthrecordSerializerFull
 
-#     def get_queryset(self):
-#         chrec_id = self.kwargs['chrec_id']
-#         return ChildHealthrecord.objects.filter(chrec_id=chrec_id).order_by('-created_at')  # Optional: most recent first
-    
 class IndivChildHealthHistoryView(generics.ListAPIView):
     serializer_class = ChildHealthrecordSerializerFull
 
     def get_queryset(self):
         chrec_id = self.kwargs['chrec_id']
+
+        # Prefetch ChildHealth_History and its deep relations
+        child_health_history_qs = (
+            ChildHealth_History.objects
+            .filter(status__in=["recorded", "immunization", "check-up"])
+            .select_related('chrec')  # already implied, but safe
+            .prefetch_related(
+                'child_health_notes',
+                'child_health_notes__followv',
+                'child_health_notes__staff',
+                'child_health_vital_signs',
+                'child_health_vital_signs__vital',
+                'child_health_vital_signs__bm',
+                'child_health_vital_signs__find',
+                'child_health_vital_signs__nutritional_status',
+                'child_health_supplements',
+                'child_health_supplements__medrec',
+                'exclusive_bf_checks',
+                'immunization_tracking',
+                'immunization_tracking__vachist',
+                'supplements_statuses',
+            )
+        )
+
         return (
             ChildHealthrecord.objects
             .filter(chrec_id=chrec_id)
+            .select_related('patrec', 'staff')
             .prefetch_related(
-            Prefetch(
-                'child_health_histories',
-                queryset=ChildHealth_History.objects.filter(status__in=["recorded", "immunization","check-up"])
+                Prefetch(
+                    'child_health_histories',
+                    queryset=child_health_history_qs
+                ),
+                Prefetch('patrec__patient_disabilities')  # For disabilities
             )
-            )
-            .order_by('-created_at')
         )
+        
 class GeChildHealthRecordCountView(APIView):
     def get(self, request, pat_id):
         try:
@@ -247,9 +268,7 @@ class GeChildHealthRecordCountView(APIView):
         
 class ChildHealthRecordByPatIDView(APIView):
     def get(self, request, pat_id):
-        """
-        GET /api/child-health-records/by-patient/<pat_id>/
-        """
+       
         try:
             chrec = ChildHealthrecord.objects.get(
                 patrec__pat_id=pat_id,
@@ -261,7 +280,7 @@ class ChildHealthRecordByPatIDView(APIView):
         serializer = ChildHealthrecordSerializerFull(chrec)
         return Response(serializer.data)
     
-    
+
 
 
         

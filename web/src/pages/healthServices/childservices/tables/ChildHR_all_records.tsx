@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
 import { ChildHealthRecord } from "../forms/muti-step-form/types";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AllChildHealthRecords() {
   const { data: childHealthRecords, isLoading } = useChildHealthRecords();
@@ -92,6 +93,7 @@ export default function AllChildHealthRecords() {
   const [currentData, setCurrentData] = useState<ChildHealthRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState("all");
+ 
 
   const filterOptions = [
     { id: "all", name: "All Records" },

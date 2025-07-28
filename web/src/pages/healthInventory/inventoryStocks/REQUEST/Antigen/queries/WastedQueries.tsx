@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import {
   fetchVaccineStockById,
-  updateVaccineStockQuantity,
   createVaccineWasteTransaction,
   updateImmunizationStockQuantity,
   createImmunizationWasteTransaction,
   fetchImzSupplyStockById,
 } from "../restful-api/WastedAPI";
+import { updateVaccineStock } from "../restful-api/VaccinePutAPI";
 
 // Vaccine Stock Mutations
 export const useFetchVaccineStockById = () => {
@@ -29,18 +29,8 @@ export const useFetchImzSupplyById = () => {
 
 export const useUpdateVaccineStockQuantity = () => {
   return useMutation({
-    mutationFn: ({
-      vacStck_id,
-      wasted_dose,
-      vacStck_qty_avail,
-    }: // vacStck_used,
-    {
-      vacStck_id: number;
-      wasted_dose: number;
-      vacStck_qty_avail: number;
-      // vacStck_used: number;
-    }) =>
-      updateVaccineStockQuantity(vacStck_id, wasted_dose, vacStck_qty_avail),
+    mutationFn: (data: Record<string, any> ) =>
+      updateVaccineStock({data}),
     onError: (error: Error) => {
       console.error("Error updating vaccine stock quantity:", error.message);
     },
@@ -76,11 +66,7 @@ export const useUpdateImmunizationStockQuantity = () => {
       wasted_items: number;
       imzStck_avail: number;
     }) =>
-      updateImmunizationStockQuantity(
-        imzStck_id,
-        wasted_items,
-        imzStck_avail,
-      ),
+      updateImmunizationStockQuantity(imzStck_id, wasted_items, imzStck_avail),
     onError: (error: Error) => {
       console.error(
         "Error updating immunization stock quantity:",
@@ -135,7 +121,6 @@ export const useHandleWaste = () => {
     }
 
     const currentQtyAvail = existingItem.vacStck_qty_avail;
-    const existingUsedItem = existingItem.vacStck_used;
 
     if (currentQtyAvail === 0) {
       throw new Error("Current quantity available is 0.");
@@ -145,7 +130,6 @@ export const useHandleWaste = () => {
     }
 
     const newQty = currentQtyAvail - wastedAmount;
-    const newUsedItem = existingUsedItem + wastedAmount;
     const unit = record.solvent === "diluent" ? "containers" : "doses";
 
     await updateVaccineStock({
@@ -153,7 +137,6 @@ export const useHandleWaste = () => {
       wasted_dose:
         (record.wastedDose ? parseInt(record.wastedDose) : 0) + wastedAmount,
       vacStck_qty_avail: newQty,
-      // vacStck_used: newUsedItem
     });
 
     await createVaccineWaste({
@@ -201,14 +184,13 @@ export const useHandleWaste = () => {
     if (record.imzStck_unit === "boxes") {
       const pcsPerBox = record.imzStck_pcs || 0;
       piecesToDeduct = wastedAmount * pcsPerBox;
-
     }
 
     // Update the stock
     await updateImmunizationStockQuantity(
       record.imzStck_id,
       updatePayload.wasted_items,
-      updatePayload.imzStck_avail,
+      updatePayload.imzStck_avail
     );
 
     // Create waste record

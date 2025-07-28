@@ -14,6 +14,10 @@ import { api2 } from "@/api/api";
 import { PatientSummarySection } from "./CurrentHistoryView";
 import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
+import { getChildHealthHistory } from "../forms/restful-api/get";
+import { useChildHealthHistory } from "../forms/queries/fetchQueries";
+
+
 export default function ChildHealthHistoryDetail() {
   // Navigation and routing
   const navigate = useNavigate();
@@ -24,7 +28,6 @@ export default function ChildHealthHistoryDetail() {
   const [fullHistoryData, setFullHistoryData] = useState<
     ChildHealthHistoryRecord[]
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [recordsPerPage, setRecordsPerPage] = useState(2);
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
@@ -34,38 +37,30 @@ export default function ChildHealthHistoryDetail() {
     [fullHistoryData]
   );
 
-  // Data fetching
+
+  const { 
+    data: historyData, 
+    isLoading, 
+    isError 
+  } = useChildHealthHistory(chrecId);
+
+  
   useEffect(() => {
-    const fetchAllData = async () => {
-      setIsLoading(true);
-      try {
-        const historyResponse = await api2.get(
-          `/child-health/history/${chrecId}/`
+    if (historyData) {
+      const sortedHistory = (historyData[0]?.child_health_histories || [])
+        .sort((a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
-        const sortedHistory = (
-          historyResponse.data[0]?.child_health_histories || []
-        ).sort(
-          (a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        setFullHistoryData(sortedHistory);
+      
+      setFullHistoryData(sortedHistory);
 
-        // Set initial index to the selected record
-        const initialIndex = sortedHistory.findIndex(
-          (record: ChildHealthHistoryRecord) => record.chhist_id === chhistId
-        );
-        setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
-      } catch (error) {
-        console.error("Error fetching child health history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (patId) {
-      fetchAllData();
+      // Set initial index to the selected record
+      const initialIndex = sortedHistory.findIndex(
+        (record: ChildHealthHistoryRecord) => record.chhist_id === chhistId
+      );
+      setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
     }
-  }, [patId, chrecId, chhistId]);
+  }, [historyData, chhistId]);
 
   // Memoized data for display
   const recordsToDisplay = useMemo(() => {

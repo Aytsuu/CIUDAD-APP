@@ -41,6 +41,8 @@ export const useUnvaccinatedResidents = () => {
 };
 
 
+
+
 export const fetchVaccinesWithStock = () => {
   return useQuery({
     queryKey: ["vaccineStocks"],
@@ -90,6 +92,9 @@ export const fetchVaccinesWithStock = () => {
     },
   });
 };
+
+
+
 
 
 // In fetchVaccinesWithStockVacID function

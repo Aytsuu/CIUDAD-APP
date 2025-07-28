@@ -34,6 +34,7 @@ urlpatterns = [
     
     path('count-scheduled-vaccinations/', CountScheduledVaccinationView.as_view(), name='count_scheduled_vaccinations'),
     path('vaccination-records/monthly/', MonthlyVaccinationRecordsAPIView.as_view(), name='monthly_vaccination_records'),
+    path('child-vaccination/', BulkVaccinationCreateView.as_view(), name='child-vaccination'),
 
 
 ]

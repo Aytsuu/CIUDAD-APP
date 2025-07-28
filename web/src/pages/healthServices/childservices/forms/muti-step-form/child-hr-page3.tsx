@@ -3,17 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form/form";
-import { Button } from "@/components/ui/button/button"; // Corrected import path
-import {
-  Calendar,
-  Trash2,
-  Loader2,
-  Plus,
-  Info,
-  CheckCircle,
-  AlertCircle,
-  ChevronLeft
-} from "lucide-react";
+import { Button } from "@/components/ui/button/button";
+import { ChevronLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   VaccinesSchema,
@@ -21,60 +12,93 @@ import {
   type VaccineRecord,
   type ExistingVaccineRecord,
 } from "@/form-schema/chr-schema/chr-schema";
-import { Combobox } from "@/components/ui/combobox";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { api2 } from "@/api/api";
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { FormInput } from "@/components/ui/form/form-input";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/ui/table/data-table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card/card"; // Corrected import path
-import { Switch } from "@/components/ui/switch";
+import { ImmunizationTracking } from "./types";
 
 type Page3Props = {
   onPrevious: () => void;
   onNext: () => void;
   updateFormData: (data: Partial<VaccineType>) => void;
   formData: VaccineType;
-  position: string; // Still passed, but not used for conditional rendering of forms
-  mode: "addnewchildhealthrecord" | "newchildhealthrecord" ;
+  immunizationTracking: ImmunizationTracking[];
 };
 
 export default function ChildHRPage3({
   onPrevious,
   onNext,
-  updateFormData,
-  formData,
-  position,
-  mode,
+  immunizationTracking
 }: Page3Props) {
-  
+  // Check if immunizationTracking has data
+  const hasImmunizationData = immunizationTracking && immunizationTracking.length > 0;
+
   return (
     <div className="bg-white p-8">
       <div className="font-light text-zinc-400 flex justify-end mb-8">
         Page 3 of 4
       </div>
 
-      <div className="flex justify-end items-center pt-6 gap-2 border-t">
+      <h2 className="text-lg font-semibold mb-4">Immunization History</h2>
+      
+      {hasImmunizationData ? (
+        <div className="space-y-4">
+          {immunizationTracking.map((track, index) => (
+            <div key={`${track.vaccine_name}-${track.dose_number}-${index}`} 
+                 className="border p-4 rounded-lg shadow-sm">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium text-gray-900">{track.vaccine_name}</span>
+                <Badge variant={track.status === "completed" ? "default" : "outline"}>
+                  Dose {track.dose_number}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                <div>
+                  <span className="font-medium">Date: </span>
+                  {track.date_administered || "Not specified"}
+                </div>
+                <div>
+                  <span className="font-medium">Status: </span>
+                  {track.status}
+                </div>
+                {track.batch_number && (
+                  <div>
+                    <span className="font-medium">Batch: </span>
+                    {track.batch_number}
+                  </div>
+                )}
+                {track.expiry_date && (
+                  <div>
+                    <span className="font-medium">Expiry: </span>
+                    {track.expiry_date}
+                  </div>
+                )}
+                {track.follow_up_date && (
+                  <div className="col-span-2">
+                    <span className="font-medium">Next follow-up: </span>
+                    {track.follow_up_date} ({track.follow_up_status})
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-gray-500 p-4 border rounded-lg text-center">
+          No immunization records found
+        </div>
+      )}
+
+      <div className="flex justify-end items-center pt-6 gap-2 border-t mt-8">
         <Button
           variant="outline"
           type="button"
           onClick={onPrevious}
-          className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent"
+          className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200"
         >
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
         <Button 
-          type="button"  // Changed from "submit" to "button" since we're not in a form
-          onClick={onNext}  // Added onClick handler
+          type="button"
+          onClick={onNext}
           className="flex items-center gap-2 px-6"
         >
           Continue

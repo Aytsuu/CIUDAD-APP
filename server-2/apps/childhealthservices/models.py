@@ -1,7 +1,7 @@
 from django.db import models
 from apps.patientrecords.models import PatientRecord,BodyMeasurement,VitalSigns, Finding,FollowUpVisit
 from apps.inventory.models import MedicineInventory
-from apps.vaccination.models import VaccinationRecord
+from apps.vaccination.models import VaccinationRecord,VaccinationHistory
 from apps.administration.models import Staff
 from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,MedicineRecord
 
@@ -145,7 +145,7 @@ class ExclusiveBFCheck(models.Model):
         
 class ChildHealthImmunizationHistory(models.Model):
     imt_id = models.BigAutoField(primary_key=True)
-    vacrec = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='immunization_tracking', db_column='vacrec_id')
+    vachist = models.ForeignKey(VaccinationHistory, on_delete=models.CASCADE, related_name='immunization_tracking', db_column='vachist_id')
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='immunization_tracking', db_column='chhist_id')
     hasExistingVaccination = models.BooleanField(default=False)  # Indicates if there is an existing vaccination record
     created_at = models.DateTimeField(auto_now_add=True)

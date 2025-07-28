@@ -8,19 +8,19 @@ import {
   createPEResults,
   createFindings,
   createFindingPlantreatment,
-} from "../../restful-api/create";
-import { updateMedicalConsultation } from "../../restful-api/update";
+} from "../../medical-con/restful-api/create";
+import { updateMedicalConsultation } from "../../medical-con/restful-api/update";
 import {
   deleteMedicalHistory,
   deleteMedicineRequest,
   deleteFindings,
   deletePEResults,
   deleteNotes,
-} from "../../restful-api/delete";
+} from "../../medical-con/restful-api/delete";
 import {
   updateChildHistoryStatus,
   updateChildVitalSigns,
-} from "../../restful-api/update";
+} from "../../medical-con/restful-api/update";
 import { SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { toast } from "sonner";
 import { createChildHealthNotes } from "@/pages/healthServices/childservices/forms/restful-api/createAPI";

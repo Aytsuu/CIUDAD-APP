@@ -1,23 +1,27 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { HeartPulse, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { Card, CardContent } from "@/components/ui/card/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Form } from "@/components/ui/form/form";
-import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { ImmunizationSection } from "./ImmunizationSection";
+
 import { toast } from "sonner";
+import { format, isValid } from "date-fns";
 import { api2 } from "@/api/api";
 import {
   VitalSignType,
   VaccineRecord,
   ExistingVaccineRecord,
   ImmunizationFormData,
-  getCurrentDate,
   OptionalImmunizationFormSchema,
 } from "@/form-schema/ImmunizationSchema";
 import { createImmunizationColumns } from "./columns";
@@ -26,10 +30,30 @@ import {
   createChildHealthNotes,
 } from "../forms/restful-api/createAPI";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import { useAuth } from "@/context/AuthContext";
 import { updateCHHistory } from "../forms/restful-api/updateAPI";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
+import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
+import { createPatientRecord } from "../../restful-api-patient/createPatientRecord";
+import { getVaccineStock } from "../../vaccination/restful-api/get";
+import { getVaccineList } from "@/pages/healthInventory/InventoryList/restful-api/Antigen/VaccineFetchAPI";
+import { createAntigenStockTransaction } from "../../vaccination/restful-api/post";
+import { useAuth } from "@/context/AuthContext";
+import { NotesDialog } from "./NotesDialog";
+import { VaccinationSection } from "./VaccinationSection";
+import { updateFollowUpVisit } from "../../vaccination/restful-api/update";
+import {
+  deleteVaccinationHistory,
+  deleteVaccinationRecord,
+  deletePatientRecord,
+  deleteFollowUpVisit,
+} from "../../vaccination/restful-api/delete";
+import { createVaccinationRecord,createVaccinationHistory } from "../../vaccination/restful-api/post";
+import { getVaccinationRecordById } from "../../vaccination/restful-api/get";
+import { createimmunizationRecord } from "./restful-api/postAPI";
+import { updateVaccineStock } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/restful-api/VaccinePutAPI";
+import { useImmunizationMutations } from "./queries/submitStep2";
+
 
 export interface ImmunizationProps {
   ChildHealthRecord: ChildHealthHistoryRecord;
@@ -50,6 +74,21 @@ export interface ImmunizationProps {
   setExistingVaccines?: (vaccines: ExistingVaccineRecord[]) => void;
   showVaccineList: boolean;
   setShowVaccineList: (value: boolean) => void;
+  vaccinesData?: {
+    default: any[];
+    formatted: { 
+      id: string; 
+      name: React.ReactNode; // Changed from string to ReactNode
+      quantity?: number 
+    }[];
+  };
+  vaccinesListData?: {
+    default: any[];
+    formattedOptions: { id: string; name: string }[];
+  };
+  isLoading: boolean;
+  vaccineHistory?: any[]; // Add this line
+
 }
 
 export default function Immunization({
@@ -64,9 +103,14 @@ export default function Immunization({
   setExistingVaccines: propSetExistingVaccines,
   showVaccineList,
   setShowVaccineList,
+  vaccinesData = { default: [], formatted: [] },
+  vaccinesListData = { default: [], formattedOptions: [] },
+  isLoading = false,
+  vaccineHistory = [], // Add this to destructured props
+
+
+
 }: ImmunizationProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [latestVitalSigns, setLatestVitalSigns] =
     useState<VitalSignType | null>(null);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
@@ -85,14 +129,73 @@ export default function Immunization({
     default: any[];
     formatted: { id: string; name: string }[];
   }>({ default: [], formatted: [] });
-  const [isLoadingVaccines, setIsLoadingVaccines] = useState(false);
-  const [isLoadingVaccineList, setIsLoadingVaccineList] = useState(false);
+  const [nextVisitDate, setNextVisitDate] = useState<string | null>(null);
+  const [nextVisitDescription, setNextVisitDescription] = useState<
+    string | null
+  >(null);
+  const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(
+    null
+  );
+  const [isVaccineComplted, setisVaccineComplted] = useState(false);
+  const [currentVaccineTotalDoses, setCurrentVaccineTotalDoses] =
+    useState<number>(1);
+  const [existingVaccineTotalDoses, setExistingVaccineTotalDoses] =
+    useState<number>(1);
+  const [currentDoseNumber, setCurrentDoseNumber] = useState<number>(1);
+  const [newVaccineErrors, setNewVaccineErrors] = useState<{
+    vaccine?: string;
+    dose?: string;
+    date?: string;
+  }>({});
+  const [existingVaccineErrors, setExistingVaccineErrors] = useState<{
+    vaccine?: string;
+    dose?: string;
+    date?: string;
+  }>({});
+  let pat_id =
+    ChildHealthRecord?.chrec_details?.patrec_details?.pat_id.toString() || "";
   const { user } = useAuth();
-  const staffId = user?.staff?.staff_id || null;
+  const staff_id = user?.staff?.staff_id || null;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [basicVaccineList, setBasicVaccineList] = useState<any[]>([]);
 
-  // Update local state when props change
+ 
+  
+
+
+  useEffect(() => {
+    if (vaccinesListData) {
+      setBasicVaccineList(vaccinesListData.default);
+      setVaccineListOptions({
+        default: vaccinesListData.default,
+        formatted: vaccinesListData.formattedOptions,
+      });
+    }
+  }, [vaccinesListData]);
+
+
+
+  useEffect(() => {
+    if (vaccinesData) {
+      setVaccineOptions({
+        default: vaccinesData.default,
+        formatted: vaccinesData.formatted.map((vaccine) => ({
+          ...vaccine,
+          name:
+            typeof vaccine.name === "string"
+              ? vaccine.name
+              : String(vaccine.name),
+        })),
+      });
+    }
+  }, [vaccinesData]);
+
+
+
+
+  
+
   useEffect(() => {
     setVaccines(propVaccines);
   }, [propVaccines]);
@@ -102,9 +205,8 @@ export default function Immunization({
   }, [propExistingVaccines]);
 
   const form = useForm<ImmunizationFormData>({
-    resolver: zodResolver(OptionalImmunizationFormSchema),
     defaultValues: {
-      date: getCurrentDate(),
+      date: new Date().toISOString().split("T")[0],
       age: "",
       wt: "",
       ht: "",
@@ -113,73 +215,36 @@ export default function Immunization({
       followUpVisit: "",
       followv_status: "pending",
       notes: "",
-      existingVaccines: propExistingVaccines,
-      vaccines: propVaccines,
+      existingVaccines: propExistingVaccines.map((v) => ({
+        vac_id: v.vac_id,
+        vac_name: v.vac_name,
+        vaccineType: v.vaccineType,
+        dose: v.dose,
+        date: v.date,
+        hasExistingVaccination: true,
+        totalDoses: v.totalDoses || "",
+        vacrec: v.vacrec || "",
+      })),
+      vaccines: propVaccines.map((v) => ({
+        vacStck_id: v.vacStck_id,
+        vaccineType: v.vaccineType,
+        dose: v.dose,
+        date: v.date,
+        vac_id: v.vac_id,
+        vac_name: v.vac_name,
+        expiry_date: v.expiry_date,
+        totalDoses: v.totalDoses || "",
+        nextFollowUpDate: v.nextFollowUpDate || "",
+        vacrec: v.vacrec || "",
+        existingFollowvId: v.existingFollowvId,
+      })),
     },
   });
 
   useEffect(() => {
-    const fetchVaccinesWithStock = async () => {
-      setIsLoadingVaccines(true);
-      try {
-        const response = await api2.get("/inventory/vaccine_stocks/");
-        const stocks = response.data;
-        const availableStocks = stocks.filter((stock: any) => {
-          const isExpired =
-            stock.inv_details?.expiry_date &&
-            new Date(stock.inv_details.expiry_date) < new Date();
-          return stock.vacStck_qty_avail > 0 && !isExpired;
-        });
-        setVaccineOptions({
-          default: availableStocks,
-          formatted: availableStocks.map((stock: any) => ({
-            id: `${stock.vacStck_id},${stock.vac_id},${
-              stock.vaccinelist?.vac_name || "Unknown"
-            },${stock.inv_details?.expiry_date || ""}`,
-            name: `${stock.vaccinelist?.vac_name || "Unknown"} (Exp: ${
-              stock.inv_details?.expiry_date
-                ? new Date(stock.inv_details.expiry_date).toLocaleDateString()
-                : "N/A"
-            })`,
-            quantity: stock.vacStck_qty_avail,
-          })),
-        });
-      } catch (error) {
-        console.error("Error fetching vaccine stocks:", error);
-        toast.error("Failed to load vaccine stocks");
-      } finally {
-        setIsLoadingVaccines(false);
-      }
-    };
-
-    const fetchVaccineList = async () => {
-      setIsLoadingVaccineList(true);
-      try {
-        const response = await api2.get("/inventory/vac_list/");
-        const vaccines = response.data;
-        setVaccineListOptions({
-          default: vaccines,
-          formatted: vaccines.map((vaccine: any) => ({
-            id: `${vaccine.vac_id},${vaccine.vac_name}`,
-            name: vaccine.vac_name,
-          })),
-        });
-      } catch (error) {
-        console.error("Error fetching vaccine list:", error);
-        toast.error("Failed to load vaccine list");
-      } finally {
-        setIsLoadingVaccineList(false);
-      }
-    };
-
-    fetchVaccinesWithStock();
-    fetchVaccineList();
-  }, []);
-
-  useEffect(() => {
     if (historicalVitalSigns.length > 0) {
       const todaysRecord = historicalVitalSigns.find(
-        (vital) => vital.date === getCurrentDate()
+        (vital) => vital.date === new Date().toISOString().split("T")[0]
       );
 
       if (todaysRecord) {
@@ -195,7 +260,7 @@ export default function Immunization({
         );
         setLatestVitalSigns(sortedVitalSigns[0]);
         form.reset({
-          date: getCurrentDate(),
+          date:  new Date().toISOString().split("T")[0],
           age: sortedVitalSigns[0]?.age || "",
           wt: sortedVitalSigns[0]?.wt || "",
           ht: sortedVitalSigns[0]?.ht || "",
@@ -208,9 +273,318 @@ export default function Immunization({
         });
       }
     }
-    setIsLoading(false);
   }, [historicalVitalSigns, form, existingVaccines, vaccines]);
 
+
+
+  useEffect(() => {
+    form.setValue("vaccines.0.date", new Date().toISOString().split("T")[0]);
+  }, [form]);
+  const handleVaccineChange = (value: string) => {
+    form.setValue("vaccines.0.vaccineType", value);
+    setisVaccineComplted(false);
+
+    setSelectedVaccineId(value);
+    setNextVisitDate(null);
+    setNextVisitDescription(null);
+    form.setValue("vaccines.0.nextFollowUpDate", "");
+    form.setValue("vaccines.0.totalDoses", "");
+
+    if (!value) return;
+
+    const [vacStck_id, vac_id, vac_name, expiry_date] = value.split(",");
+    const numericVacId = parseInt(vac_id, 10);
+
+    const selectedVaccine = vaccinesData?.default?.find(
+      (v: any) => v.vacStck_id === parseInt(vacStck_id, 10)
+    );
+
+    if (!selectedVaccine) {
+      console.error("Selected vaccine not found");
+      return;
+    }
+
+    const { vaccinelist } = selectedVaccine;
+
+    const vaccineHistoryForThis = vaccineHistory.filter((record) => {
+      const recordVacId =
+        record.vacrec_details?.vacrec_vaccine ||
+        record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
+      return recordVacId === numericVacId;
+    });
+
+    let highestDose = 0;
+    let existingVacrecId = "";
+    let existingFollowvId = "";
+    let existingTotalDoses = vaccinelist.no_of_doses; // Default to vaccine list's total doses
+
+    vaccineHistoryForThis.forEach((record) => {
+      const doseNo = record.vachist_doseNo
+        ? parseInt(record.vachist_doseNo)
+        : 0;
+      if (doseNo > highestDose) {
+        highestDose = doseNo;
+        existingVacrecId = record.vacrec?.toString() || "";
+        existingFollowvId = record.followv?.toString() || "";
+
+          // Get total doses from vaccination record if available
+      if (record.vacrec_details?.vacrec_totaldose) {
+        existingTotalDoses = record.vacrec_details?.vacrec_totaldose;
+      }
+      }
+    });
+
+    form.setValue("vaccines.0.existingFollowvId", existingFollowvId);
+    form.setValue("vaccines.0.vacrec", existingVacrecId);
+    form.setValue("vaccines.0.totalDoses", existingTotalDoses.toString());
+
+
+    const nextDose = highestDose + 1;
+    console.log("Vaccination Record", existingVacrecId);
+
+    form.setValue("vaccines.0.dose", nextDose.toString());
+    setCurrentDoseNumber(nextDose);
+
+    if (vaccinelist.no_of_doses) {
+      form.setValue(
+        "vaccines.0.totalDoses",
+        vaccinelist.no_of_doses.toString()
+      );
+      setCurrentVaccineTotalDoses(existingTotalDoses);
+    }
+
+    const isCompleted = nextDose > vaccinelist.no_of_doses;
+
+
+
+
+
+
+    const disableSubmit = isCompleted && vaccinelist.vac_type_choices === "primary" || (vaccinelist.vac_type_choices === "conditional" && isCompleted);
+    setisVaccineComplted(disableSubmit);
+    if (disableSubmit) {
+      toast.warning(
+        `${vac_name} vaccine is already completed`
+      );
+    }
+
+    setSelectedVaccineType(vaccinelist.vac_type_choices);
+
+    // Modified follow-up date calculation logic
+    if (vaccinelist.vac_type_choices === "routine") {
+      const { interval, time_unit } = vaccinelist.routine_frequency;
+      const nextDate = calculateNextVisitDate(
+        interval,
+        time_unit,
+        new Date().toISOString()
+      );
+      setNextVisitDate(nextDate.toISOString().split("T")[0]);
+      setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+      form.setValue(
+        "vaccines.0.nextFollowUpDate",
+        nextDate.toISOString().split("T")[0]
+      );
+    } else if (nextDose < vaccinelist.no_of_doses) {
+      // Only set follow-up for non-routine vaccines if not the last dose
+      const doseInterval = vaccinelist.intervals?.find(
+        (interval: any) => interval.dose_number === nextDose
+      );
+      if (doseInterval) {
+        const nextDate = calculateNextVisitDate(
+          doseInterval.interval,
+          doseInterval.time_unit,
+          new Date().toISOString()
+        );
+        setNextVisitDate(nextDate.toISOString().split("T")[0]);
+        setNextVisitDescription(`Dose ${nextDose + 1} of ${vaccinelist.vac_name}`);
+        form.setValue(
+          "vaccines.0.nextFollowUpDate",
+          nextDate.toISOString().split("T")[0]
+        );
+      }
+    }
+  };
+
+  const handleExistingVaccineChange = (value: string) => {
+    setisVaccineComplted(false);
+
+    setSelectedVaccineListId(value);
+    form.setValue(`existingVaccines.0.vaccineType`, value);
+
+    if (!value) return;
+
+    const [vac_id, vac_name] = value.split(",");
+    const numericVacId = parseInt(vac_id, 10);
+
+    const selectedVaccine = basicVaccineList.find(
+      (v: any) => v.vac_id === numericVacId
+    );
+
+    if (!selectedVaccine) {
+      console.error("Selected vaccine not found");
+      return;
+    }
+
+    const vaccineHistoryForThis = vaccineHistory.filter((record) => {
+      const recordVacId =
+        record.vacrec_details?.vacrec_vaccine ||
+        record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
+      return recordVacId === numericVacId;
+    });
+
+    let highestDose = 0;
+    let existingVacrecId = "";
+    let existingTotalDoses = selectedVaccine.no_of_doses; // Default to vaccine list's total doses
+
+    vaccineHistoryForThis.forEach((record) => {
+      const doseNo = record.vachist_doseNo
+        ? parseInt(record.vachist_doseNo)
+        : 0;
+      if (doseNo > highestDose) {
+        highestDose = doseNo;
+        existingVacrecId = record.vacrec?.toString() || "";
+
+          // Get total doses from vaccination record if available
+      if (record.vacrec_details?.vacrec_totaldose) {
+        existingTotalDoses = record.vacrec_details.vacrec_totaldose;
+      }
+      }
+    });
+    
+    const nextDose = highestDose + 1;
+    console.log("Vaccination Rdfdfdfecord", existingVacrecId);
+    form.setValue("existingVaccines.0.vacrec", existingVacrecId);
+    form.setValue("existingVaccines.0.totalDoses", existingTotalDoses.toString());
+
+    form.setValue(`existingVaccines.0.dose`, nextDose.toString());
+    setCurrentDoseNumber(nextDose);
+
+    if (selectedVaccine.no_of_doses) {
+      form.setValue(
+        `existingVaccines.0.totalDoses`,
+        selectedVaccine.no_of_doses.toString()
+      );
+      setExistingVaccineTotalDoses(selectedVaccine.no_of_doses);
+    }
+
+    const isCompleted = nextDose > selectedVaccine.no_of_doses;
+
+  
+
+    const disableSubmit = isCompleted && selectedVaccine.vac_type_choices !== "routine" || (selectedVaccine.vac_type_choices === "conditional" && isCompleted);;
+    setisVaccineComplted(disableSubmit);
+    if (disableSubmit) {
+      toast.warning(
+        `${vac_name} vaccine is already completed )`
+      );
+    }
+
+    setSelectedVaccineType(selectedVaccine.vac_type_choices);
+  };
+
+  const addVac = () => {
+    if (!selectedVaccineId) {
+      toast.error("Please select a vaccine first");
+      return;
+    }
+
+
+    const formValues = form.getValues();
+    const [vacStck_id, vac_id, vac_name, expiry_date] = selectedVaccineId.split(",");
+  
+    const vaccineToAdd: VaccineRecord = {
+      vacStck_id: vacStck_id.trim(),
+      vaccineType: vac_name.trim(),
+      dose: formValues.vaccines?.[0]?.dose || "1",
+      date: formValues.vaccines?.[0]?.date ||  new Date().toISOString().split("T")[0],
+      vac_id: vac_id.trim(),
+      vac_name: vac_name.trim(),
+      expiry_date: expiry_date.trim(),
+      totalDoses: formValues.vaccines?.[0]?.totalDoses || currentVaccineTotalDoses.toString(),
+      nextFollowUpDate: formValues.vaccines?.[0]?.nextFollowUpDate || nextVisitDate || "",
+      vacrec: formValues.vaccines?.[0]?.vacrec || "",
+      existingFollowvId: formValues.vaccines?.[0]?.existingFollowvId || ""
+    };
+  
+    console.log("Adding vaccine:", vaccineToAdd);
+    const newVaccines = [...vaccines, vaccineToAdd];
+    setVaccines(newVaccines);
+    if (propSetVaccines) propSetVaccines(newVaccines);
+    
+    form.setValue("vaccines", newVaccines);
+    form.setValue("vaccines.0.vaccineType", "");
+    form.setValue("vaccines.0.dose", "1");
+    form.setValue("vaccines.0.date",  new Date().toISOString().split("T")[0]);
+    form.setValue("vaccines.0.totalDoses", "");
+    form.setValue("vaccines.0.nextFollowUpDate", "");
+  
+    setSelectedVaccineId("");
+  };
+
+  const addExistingVac = async() => {
+    if (!selectedVaccineListId) {
+      toast.error("Please select a vaccine first");
+      return;
+    }
+
+    const isValid =await form.trigger(["vaccines.0.vaccineType", "vaccines.0.dose", "vaccines.0.date"]);
+
+    if (!isValid) {
+      toast.error("Please fill in the fields");
+      return;
+    }
+
+    const formValues = form.getValues();
+    const [vac_id, vac_name] = selectedVaccineListId.split(",");
+
+    const vaccineToAdd: ExistingVaccineRecord = {
+      vac_id: vac_id.trim(),
+      vac_name: vac_name.trim(),
+      vaccineType: vac_name.trim(),
+      dose: formValues.existingVaccines?.[0]?.dose || "1",
+      date: formValues.existingVaccines?.[0]?.date || "",
+      hasExistingVaccination: true,
+      vacrec: formValues.existingVaccines?.[0]?.vacrec || "",
+      totalDoses: existingVaccineTotalDoses.toString(),
+    };
+
+    console.log("Adding existing vaccine:", vaccineToAdd);
+
+    const newExistingVaccines = [...existingVaccines, vaccineToAdd];
+    setExistingVaccines(newExistingVaccines);
+    if (propSetExistingVaccines) propSetExistingVaccines(newExistingVaccines);
+    form.setValue("existingVaccines", newExistingVaccines);
+
+    setSelectedVaccineListId("");
+    form.setValue("existingVaccines.0", {
+      dose: "",
+      date: "",
+      vac_id: "",
+      vac_name: "",
+      vaccineType: "",
+      hasExistingVaccination: false,
+      vacrec: "",
+      totalDoses: "",
+    });
+
+  };
+  const deleteVac = (index: number) => {
+    const updatedVaccines = [...vaccines];
+    updatedVaccines.splice(index, 1); // Remove the vaccine at the specific index
+    setVaccines(updatedVaccines);
+    if (propSetVaccines) propSetVaccines(updatedVaccines);
+    form.setValue("vaccines", updatedVaccines);
+    toast.success("Vaccine removed successfully!");
+  };
+  
+  const deleteExistingVac = (index: number) => {
+    const updatedExistingVaccines = [...existingVaccines];
+    updatedExistingVaccines.splice(index, 1); // Remove the vaccine at the specific index
+    setExistingVaccines(updatedExistingVaccines);
+    if (propSetExistingVaccines) propSetExistingVaccines(updatedExistingVaccines);
+    form.setValue("existingVaccines", updatedExistingVaccines);
+    toast.success("Existing vaccine removed successfully!");
+  };
   const handleUpdateVitalSign = (index: number, values: VitalSignType) => {
     const updatedVitalSigns = [...historicalVitalSigns];
     const existingIndex = updatedVitalSigns.findIndex(
@@ -244,14 +618,10 @@ export default function Immunization({
 
   const handleSaveNotes = async (data: VitalSignType) => {
     try {
-      setIsLoading(true);
-
       const notesData = {
         ...data,
         chrec: ChildHealthRecord.chrec,
       };
-
-      console.log("Notes data to save:", notesData);
 
       if (editingRowIndex !== null) {
         handleUpdateVitalSign(editingRowIndex, {
@@ -269,335 +639,124 @@ export default function Immunization({
     } catch (error) {
       console.error("Error saving notes:", error);
       toast.error("Failed to save notes");
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const onSubmit = async (data: ImmunizationFormData) => {
-    console.log("Data to save:", data);
-    if (!form.formState.isValid) {
-      console.log("Form errors:", form.formState.errors);
-      return;
-    }
-
-    // Check if any data has been added
-    const hasVaccines = vaccines.length > 0;
-    const hasExistingVaccines = existingVaccines.length > 0;
-    const hasNotes = data.notes && data.notes.trim() !== "";
-    const hasFollowUp = data.followUpVisit && data.followUpVisit.trim() !== "";
-    const hasFollowUpReason =
-      data.follov_description && data.follov_description.trim() !== "";
-
-    if (
-      !hasVaccines &&
-      !hasExistingVaccines &&
-      !hasNotes &&
-      !hasFollowUp &&
-      !hasFollowUpReason
-    ) {
-      toast.info("No changes have been made");
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-
-      const saveData = {
-        ...data,
-        chrec: ChildHealthRecord.chrec,
-        vaccines: hasVaccines ? vaccines : undefined,
-        existingVaccines: hasExistingVaccines ? existingVaccines : undefined,
-      };
-
-      // Remove undefined fields
-      const cleanData = Object.fromEntries(
-        Object.entries(saveData).filter(([_, v]) => v !== undefined)
-      );
-      console.log("Data to save:", cleanData);
-
-      console.log("Child Health Record:", ChildHealthRecord);
-      const chrec_id=ChildHealthRecord.chrec
-      console.log("Child Health Record ID:", chrec_id);
-      const patrec_id =
-        ChildHealthRecord.chrec_details.patrec_details.patrec_id.toString();
-      console.log("Patient Record ID:", patrec_id);
-      const chist_id = ChildHealthRecord.chhist_id;
-
-      // Only create follow-up if there's follow-up data
-      let followv_id = null;
-      if (hasNotes || hasFollowUp || hasFollowUpReason) {
-        if (hasFollowUp || hasFollowUpReason) {
-          const newFollowUp = await createFollowUpVisit({
-            followv_date: data.followUpVisit ?? null,
-            created_at: new Date().toISOString(),
-            followv_description:
-              data.follov_description || "Follow Up for Child Health",
-            patrec: patrec_id,
-            followv_status: "pending",
-            updated_at: new Date().toISOString(),
-          });
-          followv_id = newFollowUp.followv_id;
-        }
-
-        // Only create notes if there are notes
-        await createChildHealthNotes({
-          chn_notes: data.notes || "",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          followv: followv_id,
-          chhist: chist_id,
-          staff: staffId,
-        });
-      }
-      await updateCHHistory(Number(chist_id));
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); 
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords", chrec_id] });
-      // Update with your query key
-      toast.success("Immunization data saved successfully!");
-      navigate(-1);
-      if (editingRowIndex !== null) {
-        handleUpdateVitalSign(editingRowIndex, data);
-      }
-    } catch (error) {
-      console.error("Error saving immunization data:", error);
-      toast.error("Failed to save immunization data");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const addVac = () => {
-    if (!selectedVaccineId) {
-      toast.error("Please select a vaccine first");
-      return;
-    }
-
-    const formValues = form.getValues();
-    const [vacStck_id, vac_id, vac_name, expiry_date] =
-      selectedVaccineId.split(",");
-
-    const vaccineToAdd: VaccineRecord = {
-      vacStck_id: vacStck_id.trim(),
-      vaccineType: vac_name.trim(),
-      dose: formValues.vaccines?.[0]?.dose || "1",
-      date: getCurrentDate(), // Always use today's date
-      vac_id: vac_id.trim(),
-      vac_name: vac_name.trim(),
-      expiry_date: expiry_date.trim(),
-    };
-
-    const newVaccines = [...vaccines, vaccineToAdd];
-    setVaccines(newVaccines);
-    if (propSetVaccines) propSetVaccines(newVaccines);
-    form.setValue("vaccines", newVaccines);
-    setSelectedVaccineId("");
-    toast.success("Vaccine added successfully!");
-  };
-
-  const addExistingVac = () => {
-    const formValues = form.getValues();
-    const [vac_id, vac_name] = selectedVaccineListId.split(",");
-
-    const vaccineToAdd: ExistingVaccineRecord = {
-      vac_id: vac_id.trim(),
-      vac_name: vac_name.trim(),
-      vaccineType: vac_name.trim(),
-      dose: formValues.existingVaccines?.[0]?.dose || "",
-      date: getCurrentDate(), // Always use today's date
-    };
-
-    const newExistingVaccines = [...existingVaccines, vaccineToAdd];
-    setExistingVaccines(newExistingVaccines);
-    if (propSetExistingVaccines) propSetExistingVaccines(newExistingVaccines);
-    form.setValue("existingVaccines", newExistingVaccines);
-
-    setSelectedVaccineListId("");
-    form.setValue("existingVaccines.0", {
-      dose: "",
-      date: getCurrentDate(),
+  const { vitalSignsColumns, vaccineColumns, existingVaccineColumns } =
+    createImmunizationColumns({
+      editingRowIndex,
+      isLoading,
+      historicalNotes,
+      handleStartEdit,
+      deleteVac,
+      deleteExistingVac,
     });
 
-    toast.success("Existing vaccine added successfully!");
+    
+
+    
+
+  const handleShowVaccineListChange = (checked: boolean) => {
+    setShowVaccineList(checked);
+    if (!checked) {
+      setExistingVaccines([]);
+      setSelectedVaccineListId("");
+      setExistingVaccineErrors({});
+    }
   };
 
-  const deleteVac = (vacStck_id: string) => {
-    const updatedVaccines = vaccines.filter(
-      (vac) => vac.vacStck_id !== vacStck_id
-    );
-    setVaccines(updatedVaccines);
-    if (propSetVaccines) propSetVaccines(updatedVaccines);
-    form.setValue("vaccines", updatedVaccines);
-    toast.success("Vaccine removed successfully!");
+
+  const { mutate: saveImmunization, isPending: isSaving } = useImmunizationMutations();
+
+  const onSubmit = async (data: ImmunizationFormData) => {
+  
+    saveImmunization({
+      data,
+      vaccines,
+      existingVaccines,
+      ChildHealthRecord,
+      staff_id,
+      pat_id,
+    });
   };
-
-  const deleteExistingVac = (vac_id: string) => {
-    const updatedExistingVaccines = existingVaccines.filter(
-      (vac) => vac.vac_id !== vac_id
-    );
-    setExistingVaccines(updatedExistingVaccines);
-    if (propSetExistingVaccines)
-      propSetExistingVaccines(updatedExistingVaccines);
-    form.setValue("existingVaccines", updatedExistingVaccines);
-    toast.success("Existing vaccine removed successfully!");
-  };
-
-  const { vitalSignsColumns } = createImmunizationColumns({
-    editingRowIndex,
-    isLoading,
-    historicalNotes,
-    handleStartEdit,
-    deleteVac,
-    deleteExistingVac,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full p-6">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
+ 
 
   return (
-    <>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <HeartPulse className="h-6 w-6 text-red-500" />
-                <h2 className="text-lg font-semibold">Latest Vital Signs</h2>
-              </div>
-
-              {latestVitalSigns ? (
-                <DataTable
-                  columns={vitalSignsColumns}
-                  data={[latestVitalSigns]}
-                />
-              ) : (
-                <div className="text-center py-4 text-gray-500">
-                  No vital signs recorded yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <ImmunizationSection
-            vaccines={vaccines}
-            existingVaccines={existingVaccines}
-            setVaccines={setVaccines}
-            setExistingVaccines={setExistingVaccines}
-            form={form}
-            vaccineOptions={vaccineOptions}
-            vaccineListOptions={vaccineListOptions}
-            isLoadingVaccines={isLoadingVaccines}
-            isLoadingVaccineList={isLoadingVaccineList}
-            selectedVaccineId={selectedVaccineId}
-            setSelectedVaccineId={setSelectedVaccineId}
-            selectedVaccineListId={selectedVaccineListId}
-            setSelectedVaccineListId={setSelectedVaccineListId}
-            addVac={addVac}
-            addExistingVac={addExistingVac}
-            showVaccineList={showVaccineList}
-            setShowVaccineList={setShowVaccineList}
-          />
-
-          {/* Error display */}
-          {Object.keys(form.formState.errors).length > 0 && (
-            <div className="text-red-500 text-sm mb-4 p-4 bg-red-50 rounded-lg">
-              <h4 className="font-medium mb-2">Form Errors:</h4>
-              <ul className="list-disc pl-5 space-y-1">
-                {Object.entries(form.formState.errors).map(([key, error]) => (
-                  <li key={key}>
-                    {key}: {error.message}
-                  </li>
-                ))}
-              </ul>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <HeartPulse className="h-6 w-6 text-red-500" />
+              <h2 className="text-lg font-semibold">Latest Vital Signs</h2>
             </div>
-          )}
 
-          {isNotesDialogOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-3xl">
-                <h3 className="text-lg font-semibold mb-4">Notes</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <FormTextArea
-                      control={form.control}
-                      label="Clinical Notes"
-                      name="notes"
-                      placeholder="Enter clinical notes..."
-                      className="w-full min-h-[200px]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <FormTextArea
-                      label="Follow-up Reason"
-                      control={form.control}
-                      name="follov_description"
-                      placeholder="Enter follow-up reason..."
-                      className="w-full min-h-[100px]"
-                    />
-                    <FormDateTimeInput
-                      control={form.control}
-                      name="followUpVisit"
-                      label="Follow-up date"
-                      type="date"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 mt-6">
-                  <Button variant="outline" onClick={handleCancelEdit}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const formValues = form.getValues();
-                      handleSaveNotes({
-                        ...formValues,
-                      });
-                      setIsNotesDialogOpen(false);
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Save Notes"
-                    )}
-                  </Button>
-                </div>
+            {latestVitalSigns ? (
+              <DataTable
+                columns={vitalSignsColumns}
+                data={[latestVitalSigns]}
+              />
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                No vital signs recorded yet
               </div>
-            </div>
-          )}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" type="button" onClick={onBack}>
-              <ChevronLeft />
-              Previous
-            </Button>
-            <Button
-              type="submit"
-              className="w-[120px] px-2"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Submitting
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </>
+            )}
+          </CardContent>
+        </Card>
+
+        <VaccinationSection
+          showVaccineList={showVaccineList}
+          handleShowVaccineListChange={handleShowVaccineListChange}
+          vaccineListOptions={vaccineListOptions}
+          selectedVaccineListId={selectedVaccineListId}
+          handleExistingVaccineChange={handleExistingVaccineChange}
+          setSelectedVaccineListId={setSelectedVaccineListId}
+          existingVaccineErrors={existingVaccineErrors}
+          form={form}
+          existingVaccineTotalDoses={existingVaccineTotalDoses}
+          addExistingVac={addExistingVac}
+          vaccinesData={vaccinesData}
+          formWatch={form.watch}
+          handleVaccineChange={handleVaccineChange}
+          setSelectedVaccineId={setSelectedVaccineId}
+          isLoading={isLoading}
+          newVaccineErrors={newVaccineErrors}
+          currentVaccineTotalDoses={currentVaccineTotalDoses}
+          selectedVaccineId={selectedVaccineId}
+          nextVisitDate={nextVisitDate}
+          nextVisitDescription={nextVisitDescription}
+          addVac={addVac}
+          isVaccineCompleted={isVaccineComplted}
+          existingVaccines={existingVaccines}
+          existingVaccineColumns={existingVaccineColumns}
+          vaccines={vaccines}
+          vaccineColumns={vaccineColumns}
+        />
+
+        <NotesDialog
+          isOpen={isNotesDialogOpen}
+          onClose={handleCancelEdit}
+          form={form}
+          isLoading={isLoading}
+          onSave={(formValues) => handleSaveNotes({ ...formValues })}
+        />
+        <div className="flex justify-end gap-3 pt-4">
+          <Button variant="outline" type="button" onClick={onBack}>
+            <ChevronLeft />
+            Previous
+          </Button>
+          <Button type="submit" className="w-[120px] px-2" disabled={isSaving } >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Submitting
+              </>
+            ) : (
+              "Save"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

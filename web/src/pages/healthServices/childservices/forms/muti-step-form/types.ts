@@ -2,6 +2,20 @@
 import type {FormData, VitalSignType, NutritionalStatusType,} from "@/form-schema/chr-schema/chr-schema";
 import type { Patient } from "@/components/ui/patientSearch"; // Ensure this import is correct
 
+export interface ImmunizationTracking {
+  imt_id: string;
+  vachist_id: string;
+  vaccine_name: string;
+  dose_number: string;
+  date_administered: string;
+  status: string;
+  hasExistingVaccination: boolean;
+  follow_up_date: string;
+  follow_up_status: string;
+  age_at_vaccination: string;
+  batch_number?: string;
+  expiry_date?: string;
+}
 
 export interface CHSSupplementStat {
     chssupplementstat_id?: number
@@ -9,11 +23,12 @@ export interface CHSSupplementStat {
     birthwt?: string | null
     status_type: string
     date_seen: string
-    date_given_iron: string
+    date_given_iron?: string |null
     created_at?: string
     updated_at?: string
     chsupplement?: number
     date_completed?: string | null
+
   }
   
 

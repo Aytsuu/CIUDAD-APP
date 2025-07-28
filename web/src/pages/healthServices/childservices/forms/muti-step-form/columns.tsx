@@ -409,22 +409,26 @@ export const createHistoricalMedicineColumns = (): ColumnDef<Medicine>[] => [
   },
 ];
 
-// Historical Supplement Status Columns
 export const createHistoricalSupplementStatusColumns = (
   editingAnemiaIndex: number | null,
   editingBirthWeightIndex: number | null,
-  supplementStatusEditFormControl: Control<{ date_completed: string | null }>,
+  supplementStatusEditFormControl: Control<{ 
+    date_completed: string | null;
+    date_given_iron: string | null;
+  }>,
   supplementStatusEditFormHandleSubmit: UseFormHandleSubmit<{
     date_completed: string | null;
+    date_given_iron: string | null;
   }>,
-  onSaveAnemiaDate: (index: number, date: string | null) => void,
-  onSaveBirthWeightDate: (index: number, date: string | null) => void,
-  onStartEditAnemia: (index: number, currentDate: string | null) => void,
-  onStartEditBirthWeight: (index: number, currentDate: string | null) => void,
+  onSaveAnemiaDate: (index: number, date: string | null, ironDate: string | null) => void,
+  onSaveBirthWeightDate: (index: number, date: string | null, ironDate: string | null) => void,
+  onStartEditAnemia: (index: number, currentDate: string | null, currentIronDate: string | null) => void,
+  onStartEditBirthWeight: (index: number, currentDate: string | null, currentIronDate: string | null) => void,
   onCancelEditAnemia: () => void,
   onCancelEditBirthWeight: () => void,
   supplementStatusEditFormReset: (data: {
     date_completed: string | null;
+    date_given_iron: string | null;
   }) => void
 ): ColumnDef<CHSSupplementStat>[] => [
   {
@@ -456,10 +460,39 @@ export const createHistoricalSupplementStatusColumns = (
   {
     accessorKey: "date_given_iron",
     header: "Date Iron Given",
-    cell: ({ row }) =>
-      row.original.date_given_iron
+    cell: ({ row }) => {
+      const isEditingAnemia =
+        editingAnemiaIndex === row.index &&
+        row.original.status_type === "anemic";
+      const isEditingBirthWeight =
+        editingBirthWeightIndex === row.index &&
+        row.original.status_type === "birthwt";
+      
+      if ((isEditingAnemia || isEditingBirthWeight) && row.original.date_given_iron) {
+        return (
+          <div 
+            className="flex items-center h-full"
+            title="Date iron given cannot be modified once set"
+          >
+            {row.original.date_given_iron
+              ? new Date(row.original.date_given_iron).toLocaleDateString()
+              : "N/A"}
+          </div>
+        );
+      } else if (isEditingAnemia || isEditingBirthWeight) {
+        return (
+          <FormDateTimeInput
+            control={supplementStatusEditFormControl}
+            name="date_given_iron"
+            label=""
+            type="date"
+          />
+        );
+      }
+      return row.original.date_given_iron
         ? new Date(row.original.date_given_iron).toLocaleDateString()
-        : "N/A",
+        : "N/A";
+    },
   },
   {
     accessorKey: "date_completed",
@@ -493,9 +526,8 @@ export const createHistoricalSupplementStatusColumns = (
       const isAnemic = row.original.status_type === "anemic";
       const isBirthWeight = row.original.status_type === "birthwt";
       const isEditingAnemia = editingAnemiaIndex === row.index && isAnemic;
-      const isEditingBirthWeight =
-        editingBirthWeightIndex === row.index && isBirthWeight;
-      const hasDateCompleted = !!row.original.date_completed; // Check if date_completed exists
+      const isEditingBirthWeight = editingBirthWeightIndex === row.index && isBirthWeight;
+      const hasDateCompleted = !!row.original.date_completed;
 
       if (isEditingAnemia) {
         return (
@@ -503,7 +535,11 @@ export const createHistoricalSupplementStatusColumns = (
             <Button
               size="sm"
               onClick={supplementStatusEditFormHandleSubmit((data) =>
-                onSaveAnemiaDate(row.index, data.date_completed || null)
+                onSaveAnemiaDate(
+                  row.index, 
+                  data.date_completed || null,
+                  data.date_given_iron || null
+                )
               )}
               className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700"
             >
@@ -525,7 +561,11 @@ export const createHistoricalSupplementStatusColumns = (
             <Button
               size="sm"
               onClick={supplementStatusEditFormHandleSubmit((data) =>
-                onSaveBirthWeightDate(row.index, data.date_completed || null)
+                onSaveBirthWeightDate(
+                  row.index, 
+                  data.date_completed || null,
+                  data.date_given_iron || null
+                )
               )}
               className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700"
             >
@@ -542,28 +582,30 @@ export const createHistoricalSupplementStatusColumns = (
           </div>
         );
       } else if ((isAnemic || isBirthWeight) && !hasDateCompleted) {
-        // Only show edit button if no date_completed
         return (
           <Button
             size="sm"
             onClick={() => {
               supplementStatusEditFormReset({
                 date_completed: row.original.date_completed || null,
+                date_given_iron: row.original.date_given_iron || null
               });
               if (isAnemic) {
                 onStartEditAnemia(
                   row.index,
-                  row.original.date_completed || null
+                  row.original.date_completed || null,
+                  row.original.date_given_iron || null
                 );
               } else {
                 onStartEditBirthWeight(
                   row.index,
-                  row.original.date_completed || null
+                  row.original.date_completed || null,
+                  row.original.date_given_iron || null
                 );
               }
             }}
             className="px-2 py-1"
-            title="Update date completed"
+            title="Update supplement status"
           >
             Update
           </Button>

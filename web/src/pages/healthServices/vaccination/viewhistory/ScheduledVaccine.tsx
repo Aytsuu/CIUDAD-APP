@@ -118,8 +118,10 @@ export default function ScheduledVaccine() {
           );
         } else {
           updateFollowUpVisit(
-            String(previousVaccination.follow_up_visit.followv_id),
-            "completed"
+           { followv_id:String(previousVaccination.follow_up_visit.followv_id),
+            followv_status:"completed",
+            completed_at: new Date().toISOString().split("T")[0], // Format to YYYY-MM-DD
+          }
           );
 
           console.log(
@@ -129,7 +131,7 @@ export default function ScheduledVaccine() {
         }
       }
 
-      await updateVaccinationHistory(Vaccination.vachist_id, "completed");
+      await updateVaccinationHistory(Vaccination.vachist_id, "immunization");
 
       queryClient.invalidateQueries({
         queryKey: ["patientVaccinationRecords", patientId],
