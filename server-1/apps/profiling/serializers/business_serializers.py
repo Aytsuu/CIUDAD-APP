@@ -174,7 +174,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         sitio = validated_data.pop('sitio', None)
         street = validated_data.pop('bus_street', '')
         files = validated_data.pop('files', [])
-        respondent = validated_data.pop('respondent', None)
+        staff = validated_data.get('staff', None)
         rp = validated_data.pop('rp', None)
         br = validated_data.pop('br', None)
 
@@ -194,7 +194,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
 
         # Handle respondent/rp/br logic
         business_instance = self._create_business_instance(
-            validated_data, address, respondent, rp, br
+            validated_data, address, rp, br
         )
 
         # Handle file uploads
@@ -207,21 +207,13 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         logger.error(f"Business creation failed: {str(e)}")
         raise serializers.ValidationError(str(e))
 
-  def _create_business_instance(self, validated_data, address, respondent, rp, br):
-      if respondent:
-          respondent_instance = BusinessRespondent.objects.create(**respondent)
-          return Business.objects.create(
-              br=respondent_instance,
-              add=address,
-              **validated_data
-          )
-      else:
-          return Business.objects.create(
-            rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
-            br=BusinessRespondent.objects.get(br_id=br) if br else None,
-            add=address,
-            **validated_data
-          )
+  def _create_business_instance(self, validated_data, address, rp, br):
+      return Business.objects.create(
+        rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
+        br=BusinessRespondent.objects.get(br_id=br) if br else None,
+        add=address,
+        **validated_data
+      )
 
   def _upload_files(self, business_instance, files):
       business_files = []

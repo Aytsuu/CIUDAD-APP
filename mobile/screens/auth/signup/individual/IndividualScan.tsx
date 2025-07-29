@@ -84,7 +84,6 @@ export default function IndividualScan() {
   ) => {
     try {
       const personal = await addPersonal({ ...capitalizeAllFields(per) });
-      console.log(personal);
       const new_addresses = await addAddress(per_addresses.list);
       await addPersonalAddress({
         data: new_addresses?.map((address: any) => ({

@@ -16,7 +16,18 @@ def get_realtime_channel():
 
 def upload_to_storage(file_data):
     try:
-        file_bytes = base64.b64decode(file_data['file'])
+        b64_string = file_data['file']
+
+        # Strip data URL prefix if present
+        if b64_string.startswith('data:'):
+            b64_string = b64_string.split(',')[1]
+
+        # Add padding if necessary
+        missing_padding = len(b64_string) % 4
+        if missing_padding:
+            b64_string += '=' * (4 - missing_padding)
+
+        file_bytes = base64.b64decode(b64_string)
                     
         upload_path = f"uploads/{file_data['name']}"
         supabase.storage.from_('business-bucket').upload(

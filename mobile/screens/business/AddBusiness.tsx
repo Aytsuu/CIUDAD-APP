@@ -36,9 +36,6 @@ export default function AddBusiness() {
       return;
     }
     try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
       const values = getValues();
       await addBusiness({
         data: {
@@ -50,10 +47,8 @@ export default function AddBusiness() {
             file: img.file
           }))
         },
-        signal: controller.signal
       });
 
-      clearTimeout(timeoutId);
       setIsSubmitting(false);
     } catch (err) {
       setIsSubmitting(false);
