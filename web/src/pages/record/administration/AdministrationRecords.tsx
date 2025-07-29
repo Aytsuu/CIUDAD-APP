@@ -230,12 +230,12 @@ export default function AdministrationRecords() {
             </div>
           )}
         </Card>
-        <div className="flex items-center gap-2">
-        <CircleAlert size={18}/>
-        <p className="text-sm">
-          Staff with admin position cannot be modified.
-        </p>
-      </div>
+        <div className="flex items-center gap-2 pb-8">
+          <CircleAlert size={18}/>
+          <p className="text-sm">
+            Staff with admin position cannot be modified.
+          </p>
+        </div>
       </div>
     </MainLayoutComponent>
   );

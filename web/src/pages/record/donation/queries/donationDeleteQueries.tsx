@@ -4,7 +4,7 @@ import { CircleCheck } from "lucide-react";
 import { deldonationreq } from "../request-db/donationDelRequest";
 
 export type Donation = {
-  don_num: number;
+  don_num: string;
   don_donorfname: string; 
   don_donorlname: string;
   don_item_name: string;
@@ -20,7 +20,7 @@ export const useDeleteDonation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (don_num: number) => deldonationreq(don_num),
+    mutationFn: (don_num: string) => deldonationreq(don_num),
     onSuccess: (_, don_num) => {
       // Optimistically update the cache
       queryClient.setQueryData(["donations"], (old: Donation[] = []) => 

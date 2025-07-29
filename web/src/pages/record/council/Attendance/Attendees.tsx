@@ -11,6 +11,7 @@ import { useGetAttendees } from "../Calendar/queries/fetchqueries";
 import { useAddAttendee } from "../Calendar/queries/addqueries";
 import { Attendee } from "../Calendar/queries/fetchqueries";
 import { useUpdateAttendee } from "../Calendar/queries/updatequeries";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface AttendeesProps {
   isEditMode: boolean;
@@ -27,9 +28,7 @@ function Attendees({ isEditMode, onEditToggle, onSave, ceId }: AttendeesProps) {
   const { data: eventAttendees = [], isLoading, error } = useGetAttendees(ceId);
   const addAttendee = useAddAttendee();
   const updateAttendee = useUpdateAttendee();
-
-  console.log("Event Attendees:", eventAttendees);
-  console.log("ceId:", ceId);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (error) {
     return <div className="w-full h-full p-4 text-center text-red-500">Error loading attendees: {error.message}</div>;
@@ -218,12 +217,17 @@ async function onSubmit(values: z.infer<typeof MarkAttendeesSchema>) {
         {eventAttendees.length > 0 && (
           <div className="flex justify-end pt-10">
             {isEditMode ? (
-              <Button
-                onClick={form.handleSubmit(onSubmit)}
-                className="w-full sm:w-20"
-              >
-                Save
-              </Button>
+               <ConfirmationModal
+              trigger={
+                <Button className="w-full sm:w-20" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : "Save"}
+                </Button>
+              }
+              title="Confirm Attendance"
+              description="Are you sure you want to save these attendance changes?"
+              actionLabel="Confirm"
+              onClick={form.handleSubmit(onSubmit)}
+            />
             ) : (
               <Button
                 type="button"

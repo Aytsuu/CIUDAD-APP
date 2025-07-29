@@ -35,6 +35,6 @@ export default () => {
             headerShown: false,
           }}
         />
-      </Tabs>
-  );
-};
+    </Tabs>
+  )
+}

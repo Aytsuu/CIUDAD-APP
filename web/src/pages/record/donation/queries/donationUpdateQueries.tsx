@@ -8,7 +8,7 @@ export const useUpdateDonation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ don_num, donationInfo }: { don_num: number; donationInfo: Partial<Donation> }) => 
+    mutationFn: ({ don_num, donationInfo }: { don_num: string; donationInfo: Partial<Donation> }) => 
       putdonationreq(don_num, donationInfo),
     onSuccess: (updatedData, variables) => {
       // Optimistically update the cache

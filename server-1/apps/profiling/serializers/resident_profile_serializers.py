@@ -68,7 +68,6 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()
     per_id = serializers.IntegerField(write_only=True, allow_null=True, required=False)
-    staff = serializers.CharField(allow_null=True, required=False) 
 
     class Meta:
         model = ResidentProfile
@@ -83,33 +82,31 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
         # Extract personal data
         personal_data = validated_data.pop('per')
         per = validated_data.pop('per_id', None)
-        staff_id = validated_data.get('staff')
+        staff = validated_data.pop('staff', None)
 
-        try:
-            staff = Staff.objects.get(staff_id=staff_id)
-        except Staff.DoesNotExist:
-            raise serializers.ValidationError({"staff_id" : "Invalid staff ID"})
-        
         if per:
-            personal = Personal.objects.get(per_id=per)
+            personal = Personal.objects.filter(per_id=per).first()
         else:
             # Create Personal record
-            personal_serializer = PersonalBaseSerializer(data=personal_data)
-            personal_serializer.is_valid(raise_exception=True)
-            personal = personal_serializer.save()
-
+            personal = Personal(**personal_data)
             personal._history_user = staff
-            personal._history_change_reason = f"Created by staff {staff_id}"
             personal.save()
 
         # Create ResidentProfile record
         resident_profile = ResidentProfile.objects.create(
             rp_id = self.generate_resident_no(),
             per = personal,
-            staff_id = staff
+            staff = staff
         )
         
         return resident_profile
+
+    def to_representation(self, instance):
+        return {
+            'rp_id': instance.rp_id,
+            'per': PersonalWithHistorySerializer(instance.per).data,
+            'staff': instance.staff_id,
+        }
 
     def generate_resident_no(self):
         next_val = ResidentProfile.objects.count() + 1

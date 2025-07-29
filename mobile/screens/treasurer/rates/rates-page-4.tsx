@@ -1,13 +1,14 @@
 import React from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator, FlatList, ScrollView,} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, ScrollView,} from 'react-native';
 import { Plus, Edit3, Trash2, History, CheckCircle, XCircle, Search,} from 'lucide-react-native';
 import { useGetPurposeAndRate, type PurposeAndRate } from './queries/ratesFetchQueries';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useRouter } from 'expo-router';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useDeletePurposeAndRate } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function RatesPage4() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function RatesPage4() {
 
   const handleCreate = () => {
      router.push({
-      pathname: '/treasurer/rates/purpose-and-rate-create',
+      pathname: '/(treasurer)/rates/purpose-and-rate-create',
       params: {
         category: 'Permit Clearance'
       }
@@ -43,7 +44,7 @@ export default function RatesPage4() {
 
   const handleEdit = (item: PurposeAndRate) => {
     router.push({
-      pathname: '/treasurer/rates/purpose-and-rate-edit',
+      pathname: '/(treasurer)/rates/purpose-and-rate-edit',
       params: {
         pr_id: item.pr_id.toString(),
         pr_purpose: item.pr_purpose,
@@ -84,17 +85,14 @@ export default function RatesPage4() {
 
           {showActions && (
             <View className="flex-row space-x-2 gap-2">
-              <Pressable 
-                className="bg-blue-50 p-2 rounded-lg"
-                onPress={() => handleEdit(item)}
-              >
+              <TouchableOpacity className="bg-blue-50 p-2 rounded-lg" onPress={() => handleEdit(item)}>
                 <Edit3 size={16} color="#3b82f6" />
-              </Pressable>
+              </TouchableOpacity>
               <ConfirmationModal
                 trigger={ 
-                  <Pressable className="bg-red-50 p-2 rounded-lg">
+                  <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
                     <Trash2 size={16} color="#ef4444" />
-                  </Pressable>
+                  </TouchableOpacity>
                 }
                 title="Confirm Delete"
                 description="Are you sure you want to delete this record? This action will set the record to inactive state and cannot be undone."
@@ -119,88 +117,84 @@ export default function RatesPage4() {
     </Card>
   );
 
-  if (isLoading) {
+   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center bg-white">
+      <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#2a3a61" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView contentContainerStyle={{ paddingBottom: 60 }} >
-        {/* Header */}
+    <View className="flex-1 bg-white">
+      {/* Header */}
+      <View className="mb-4">
         <Text className="font-bold text-xl text-[#1a2332] text-center mb-1">
-            Barangay Clearance For Permits
+          Barangay Clearance For Permits
         </Text>
         <View className="h-1 bg-gradient-to-r from-[#2a3a61] to-[#4f46e5] rounded-full" />
+      </View>
 
-        {/* Search and Add */}
-        <View className="mb-4">
-          <View className="relative mb-3">
-            <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-            <TextInput
-              placeholder="Search..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="pl-10 w-full h-10 bg-white text-base rounded-lg p-2 border border-gray-300"
-            />
-          </View>
-          <Pressable
-            onPress={handleCreate}
-            className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md"
-          >
-            <Plus size={20} color="white" />
-            <Text className="text-white ml-2 font-semibold">Add</Text>
-          </Pressable>
+      {/* Search and Add */}
+      <View className="mb-4">
+        <View className="relative mb-3">
+          <Input placeholder="Search..." value={searchQuery} onChangeText={setSearchQuery} className="bg-white text-black rounded-lg p-2 border border-gray-300 pl-10"/>
         </View>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'active' | 'archive')}>
-          <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
-            <TabsTrigger  value="active"  className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`} >
-              <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                Active
+        <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
+          <Plus size={20} color="white" />
+          <Text className="text-white ml-2 font-semibold">Add</Text>
+        </Button>
+      </View>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'active' | 'archive')} className="flex-1">
+        <TabsList className="bg-blue-50 mb-5 flex-row justify-between">
+          <TabsTrigger value="active" className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
+            <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+              Active
+            </Text>
+          </TabsTrigger>
+          <TabsTrigger value="archive" className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}>
+            <View className="flex-row items-center justify-center">
+              <History size={16} className="mr-1" color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'}/>
+              <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
+                History
               </Text>
-            </TabsTrigger>
-            <TabsTrigger  value="archive" className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`} >
-              <View className="flex-row items-center justify-center">
-                <History  size={16} className="mr-1" color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'}/>
-                  <Text className={`${ activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500' } pl-1`}>
-                    History
-                  </Text>
-              </View>
-            </TabsTrigger>
-          </TabsList>
+            </View>
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Active Tab */}
-          <TabsContent value="active">
+        {/* Active Tab */}
+        <TabsContent value="active" className="flex-1">
+          <ScrollView  className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false} >
             <FlatList
               data={filteredData}
-              renderItem={({ item }) => renderRateCard(item, false, true)} // showActions = true
+              renderItem={({ item }) => renderRateCard(item, false, true)}
               keyExtractor={item => item.pr_id.toString()}
               scrollEnabled={false}
               ListEmptyComponent={
                 <Text className="text-center text-gray-500 py-4">No rates found</Text>
               }
             />
-          </TabsContent>
+          </ScrollView>
+        </TabsContent>
 
-          {/* History Tab */}
-          <TabsContent value="archive">
+        {/* History Tab */}
+        <TabsContent value="archive" className="flex-1">
+          <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false} >
             <FlatList
               data={filteredData}
-              renderItem={({ item }) => renderRateCard(item, true, false)} // showStatus = true
+              renderItem={({ item }) => renderRateCard(item, true, false)}
               keyExtractor={item => item.pr_id.toString()}
               scrollEnabled={false}
               ListEmptyComponent={
                 <Text className="text-center text-gray-500 py-4">No rates found</Text>
               }
             />
-          </TabsContent>
-        </Tabs>
-      </ScrollView>
-    </SafeAreaView>
+          </ScrollView>
+        </TabsContent>
+      </Tabs>
+    </View>
   );
 }

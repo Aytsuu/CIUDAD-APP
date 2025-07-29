@@ -17,6 +17,7 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import PageLayout from '@/screens/_PageLayout';
 
 const DonationAdd = () => {
   const router = useRouter();
@@ -103,20 +104,20 @@ const DonationAdd = () => {
 
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Add Donation Entry</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
+      headerTitle={<Text>Add Donation</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
+      }
     >
-      <View className="space-y-4">
+      <View className="space-y-4 p-4 flex-1">
         <View className="mb-4">
           <DonorSelect
             placeholder="Select donor or enter name"
@@ -156,7 +157,7 @@ const DonationAdd = () => {
             options={[
               { label: 'Cash', value: 'Cash' },
               { label: 'Cheque', value: 'Cheque' },
-              { label: 'E-Money', value: 'E-Money' },
+              { label: 'E-money', value: 'E-money' },
             ]}
           />
         ) : (
@@ -193,20 +194,20 @@ const DonationAdd = () => {
         />
 
         {/* Submit Button with Confirmation Modal */}
-        <View className="mt-6">
+        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
           <ConfirmationModal
             trigger={
               <TouchableOpacity
-                className="bg-blue-500 py-3 rounded-lg flex-row justify-center items-center"
+                className="bg-primaryBlue py-3 rounded-lg"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 size={20} color="white" className="animate-spin mr-2" />
-                    <Text className="text-white text-lg font-medium">Saving...</Text>
+                    <Text className="text-white text-base font-semibold text-center">Saving...</Text>
                   </>
                 ) : (
-                  <Text className="text-white text-lg font-medium">Save</Text>
+                  <Text className="text-white text-base font-semibold text-center">Save</Text>
                 )}
               </TouchableOpacity>
             }
@@ -219,7 +220,7 @@ const DonationAdd = () => {
           />
         </View>
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 

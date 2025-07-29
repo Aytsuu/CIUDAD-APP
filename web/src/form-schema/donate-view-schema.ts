@@ -11,7 +11,7 @@ const DataRequirement = z.union([
 ]).transform((val) => String(val));
 
 const ClerkDonateViewSchema = z.object({
-  don_num: z.number().optional(),
+  don_num: z.string().optional(),
   don_donor: z.string().min(1, "Donor name or 'Anonymous' is required"),
   per_id: z.number().nullable().optional(),
   don_item_name: z.string().min(1, "Item name is required"),

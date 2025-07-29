@@ -41,6 +41,7 @@ export type Attendee = {
   atn_present_or_absent?: string;
   ce_id: number;
   staff_id: string | null;
+  composite_id: string;
 };
 
 export type AttendeeInput = {
@@ -84,6 +85,24 @@ export type Staff = {
   full_name: string;
   position_title: string;
 };
+
+export interface EditEventFormProps {
+  initialValues: {
+    ce_id: number;
+    ce_title: string;
+    ce_date: string;
+    ce_time: string;
+    ce_place: string;
+    ce_type: string;
+    ce_description: string;
+    ce_is_archive?: boolean;
+    staff_id?: string | null;
+    attendees?: { name: string; designation: string; present_or_absent?: string }[];
+  };
+  onClose: () => void;
+}
+
+export type EventCategory = "meeting" | "activity" | undefined;
 
 export const useGetCouncilEvents = () => {
   return useQuery<CouncilEvent[], Error>({

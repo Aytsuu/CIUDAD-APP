@@ -65,6 +65,7 @@ export default function AnnualGrossSalesEdit() {
               name="minRange"
               placeholder="Enter minimum amount"
               keyboardType="numeric"
+              editable={false}
             />
             <FormInput
               control={control}
@@ -72,6 +73,7 @@ export default function AnnualGrossSalesEdit() {
               name="maxRange"
               placeholder="Enter maximum amount"
               keyboardType="numeric"
+              editable={false}
             />
             <FormInput
               control={control}

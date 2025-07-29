@@ -80,6 +80,7 @@ export type SitioRecord = {
 
 export type IndividualRequestRecord = {
   req_id: string;
+  per_id: string;
   per_lname: string;
   per_fname: string;
   per_mname: string;

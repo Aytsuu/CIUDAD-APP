@@ -14,13 +14,16 @@ import {
 } from "../../queries/authPostQueries";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
+import { View, Text } from "react-native";
+import { Button } from "@/components/ui/button";
 
 export default function IndividualScan() {
   const { getValues, reset } = useRegistrationFormContext();
   const { type } = useRegistrationTypeContext();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
-  const [status, setStatus] = React.useState<"success" | "failure">("success");
+  const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
+  const [status, setStatus] = React.useState<"success" | "failure" | "loading" | "message">("success");
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
@@ -35,13 +38,14 @@ export default function IndividualScan() {
   ) => {
     try {
       const personal = await addPersonal(capitalizeAllFields(per));
-      const addresses = await addAddress(per_addresses.list);
-      await addPersonalAddress(
-        addresses.map((add: any) => ({
+      const new_addresses = await addAddress(per_addresses.list);
+      await addPersonalAddress({
+        data: new_addresses?.map((address: any) => ({
+          add: address.add_id,
           per: personal.per_id,
-          add: add.add_id,
-        }))
-      );
+        })),
+        history_id: personal.history,
+      });
 
       await addRequest(
         {
@@ -55,16 +59,21 @@ export default function IndividualScan() {
         },
         {
           onSuccess: () => {
-            setIsSubmitting(false);
-            setStatus("success");
-            setShowFeedback(true);
+            setShowFeedback(false);
+            setTimeout(() => {
+              setStatus("success");
+              setShowFeedback(true); 
+            }, 0)
           },
         }
       );
     } catch (err) {
-      setStatus("failure");
-      setIsSubmitting(false);
-      setShowFeedback(true);
+      setShowFeedback(false);
+      setTimeout(() => {
+        setStatus("failure");
+        setShowFeedback(true);
+        setIsSubmitting(false);
+      }, 0);
     }
   };
 
@@ -75,62 +84,143 @@ export default function IndividualScan() {
   ) => {
     try {
       const personal = await addPersonal({ ...capitalizeAllFields(per) });
+      console.log(personal);
       const new_addresses = await addAddress(per_addresses.list);
-      await addPersonalAddress(
-        new_addresses?.map((address: any) => ({
+      await addPersonalAddress({
+        data: new_addresses?.map((address: any) => ({
           add: address.add_id,
           per: personal.per_id,
-        }))
-      );
+        })),
+        history_id: personal.history,
+      });
 
       const respondent = await addBusinessRespondent({
         per: personal.per_id,
       });
 
-      await addAccount({
-        ...account,
-        br: respondent.br_id,
-      });
+      await addAccount(
+        {
+          ...account,
+          br: respondent.br_id,
+        },
+        {
+          onSuccess: () => {
+            setShowFeedback(false);
+            setTimeout(() => {
+              setStatus("success");
+              setShowFeedback(true); 
+            }, 0)
+          },
+        }
+      );
     } catch (error) {
-      setStatus("failure");
-      setIsSubmitting(false);
-      setShowFeedback(true);
+      setShowFeedback(false);
+      setTimeout(() => {
+        setStatus("failure");
+        setShowFeedback(true);
+        setIsSubmitting(false);
+      }, 0);
     }
   };
 
   const submit = async () => {
-    setIsSubmitting(true);
+    setIsSubmitting(true)
+    setStatus('loading');
+    setShowFeedback(true);
+
     const { accountFormSchema, personalInfoSchema } = getValues();
     const { per_addresses, ...per } = personalInfoSchema;
     const { confirmPassword, ...account } = accountFormSchema;
 
     switch (type) {
       case "business":
-        busRespondentRegistration(per, per_addresses, account);
+        await busRespondentRegistration(per, per_addresses, account);
         break;
       default:
-        residentRegistration(per, per_addresses, account);
+        await residentRegistration(per, per_addresses, account);
         break;
     }
   };
+
+  const FeedbackContents: any = {
+    success: (
+      <View className="flex-1 justify-end">
+        <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
+          onPress={() => {
+            setShowFeedback(false);  
+            if(type == 'business') {
+              // reset()
+              router.replace('/(tabs)')
+            } else {
+              setTimeout(() => {
+                setStatus('message')
+                setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features")
+                setShowFeedback(true);
+              }, 0);
+            }
+
+          }}
+        >
+          <Text className="text-white text-base font-semibold">
+            Continue
+          </Text>
+        </Button>
+      </View>
+    ),
+    failure: (
+      <View className="flex-1 justify-end">
+        <View>
+          <Button variant={"outline"} className={`rounded-xl native:h-[45px]`}
+          >
+            <Text className="text-white text-base font-semibold">
+              Cancel
+            </Text>
+          </Button>
+          <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
+            onPress={() => {
+              setShowFeedback(false)
+              setTimeout(() => {
+                submit();
+              }, 0)
+            }}
+          >
+            <Text className="text-white text-base font-semibold">
+              Try Again
+            </Text>
+          </Button>
+        </View>
+      </View>
+    ),
+    message: (
+      <View className="flex-1 justify-between mt-5">
+        <Text className="text-base text-gray-600 text-center mb-8 leading-6 px-4 max-w-sm">
+          {feedbackMessage}
+        </Text>
+        <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
+          onPress={() => {
+            reset()
+            router.replace('/(tabs)')
+          }}
+        >
+          <Text className="text-white text-base font-semibold">
+            Continue
+          </Text>
+        </Button>
+      </View>
+    )
+  }
 
   if (showFeedback) {
     return (
       <FeedbackScreen
         status={status}
-        onRetry={() => {
-          // Simulate a retry that might succeed
-          const willSucceed = Math.random() > 0.5;
-          setTimeout(() => {
-            setStatus(willSucceed ? "success" : "failure");
-          }, 1500);
-        }}
-        onOk={() => {
-          router.push("/(auth)");
-          reset();
-        }}
+        content={FeedbackContents[status]}
       />
     );
+  }
+
+  if (isSubmitting) {
+    return
   }
 
   return (

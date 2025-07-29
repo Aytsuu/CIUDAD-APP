@@ -128,7 +128,7 @@ function IncomeCreateForm() {
       }
       stickyFooter={true}
     >
-        <View className="w-full">
+        <View className="w-full px-4">
 
             <FormDateAndTimeInput
               control={form.control}

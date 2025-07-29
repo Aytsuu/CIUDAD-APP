@@ -233,7 +233,7 @@ export default function RespondentDetails() {
 
   // ==================== RENDER ====================
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-4">
       <Card className="w-full p-10">
         <div className="pb-4 flex gap-4">
           <div>

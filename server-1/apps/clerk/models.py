@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from datetime import datetime
+
 
 # Create your models here.
 # create models para as documets later
@@ -40,9 +42,6 @@ class DocumentsPDF(models.Model):
 
     class Meta:
         db_table = 'clerk_pdf_documents'
-from datetime import datetime
-from django.utils import timezone
-# Create your models here.
 
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
@@ -139,12 +138,14 @@ class ComplaintAccused(models.Model):
 class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
+    sr_code = models.CharField(max_length=10, blank=True, null=True) 
     sr_req_date = models.DateTimeField(default=datetime.now)
     sr_status = models.CharField(null=True, blank=True)
     sr_payment_status = models.CharField(null=True, blank=True)
     sr_type = models.CharField(null=True, blank=True)
     sr_decision_date = models.DateTimeField(null=True, blank=True)
-    comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+    sr_decision_date = models.DateTimeField(null=True, blank=True)
+    comp = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
     parent_summon = models.ForeignKey(
         'self',
         null=True, blank=True,
@@ -153,7 +154,7 @@ class ServiceChargeRequest(models.Model):
     )
     file_action_file = models.OneToOneField(
         'ServiceChargeRequestFile', null=True, blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.SET_NULL,  
         related_name='file_action'
     )
 
@@ -165,6 +166,7 @@ class CaseActivity(models.Model):
     ca_reason = models.CharField(max_length=100)
     ca_hearing_date = models.DateField(null=False)
     ca_hearing_time = models.TimeField(null=False)
+    ca_mediation = models.CharField()
     ca_mediation = models.CharField()
     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
@@ -190,6 +192,8 @@ class CaseSuppDoc(models.Model):
 class ServiceChargeRequestFile(models.Model):
     srf_id = models.BigAutoField(primary_key=True)
     srf_name = models.CharField(max_length=255)
+    srf_type = models.CharField(max_length=100, null=True, blank=True)
+    srf_path = models.CharField(max_length=500, null=True, blank=True)
     srf_type = models.CharField(max_length=100, null=True, blank=True)
     srf_path = models.CharField(max_length=500, null=True, blank=True)
     srf_url = models.CharField(max_length=500)

@@ -253,7 +253,7 @@ export default function CompleteScanProcess({params} : {params: Record<string, a
           {/* Start Button */}
           <TouchableOpacity
             onPress={submit}
-            className={`${isCompleted ? 'bg-blue-600 ' : 'bg-gray-300'} rounded-xl py-4 px-6 mt-8 shadow-sm`}
+            className={`${isCompleted ? 'bg-primaryBlue ' : 'bg-gray-300'} rounded-xl py-4 px-6 mt-8 shadow-sm`}
             accessibilityLabel="Start identity verification"
           >
             <Text className={`${isCompleted ? "text-white" : "text-gray-800"} font-semibold text-center text-lg`}>
