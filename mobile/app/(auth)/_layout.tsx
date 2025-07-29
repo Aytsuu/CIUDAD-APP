@@ -8,6 +8,7 @@ import { RegistationFormProvider } from "@/contexts/RegistrationFormContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import { RegistrationTypeProvider } from "@/contexts/RegistrationTypeContext";
+import { ToastProvider } from "@/components/ui/toast";
 
 type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
 const defaultValues = generateDefaultValues(RegistrationFormSchema)

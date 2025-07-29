@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { ComplaintFormProvider } from "@/contexts/ComplaintFormContext";
+import { ToastProvider } from "@/components/ui/toast";
 
 type ComplaintForm = z.infer<typeof complaintFormSchema>;
 const defaultValues = generateDefaultValues(complaintFormSchema)
@@ -17,10 +18,10 @@ export default () => {
 
   return (
     <ComplaintFormProvider methods={methods}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false}} />
-        <Stack.Screen name="complaint-form" options={{ headerShown: false}} />
-      </Stack>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false}} />
+          <Stack.Screen name="complaint-form" options={{ headerShown: false}} />
+        </Stack>
     </ComplaintFormProvider>
   )
 }

@@ -31,7 +31,9 @@ import { cn } from "@/lib/utils"
     data: TData[];
     reset?: boolean;
     setReset?: React.Dispatch<React.SetStateAction<boolean>>
-    onSelectedRowsChange?: (rows: TData[]) => void
+    onSelectedRowsChange?: (rows: TData[]) => void;
+    rowSelection?: Record<string, boolean>;
+    setRowSelection?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
   }
    
   export function DataTable<TData, TValue>({
@@ -43,13 +45,17 @@ import { cn } from "@/lib/utils"
     data,
     reset,
     setReset,
-    onSelectedRowsChange
+    onSelectedRowsChange,
+    rowSelection: externalRowSelection,
+    setRowSelection: externalSetRowSelection
   }: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = React.useState({})
+    const [internalRowSelection, setInternalRowSelection] = React.useState({});
+    const rowSelectionState = externalRowSelection ?? internalRowSelection;
+    const setRowSelectionState = externalSetRowSelection ?? setInternalRowSelection;
 
     const table = useReactTable({
       data,
@@ -60,12 +66,13 @@ import { cn } from "@/lib/utils"
       getSortedRowModel: getSortedRowModel(),
       getFilteredRowModel: getFilteredRowModel(),
       onColumnVisibilityChange: setColumnVisibility,
-      onRowSelectionChange: setRowSelection,
+      onRowSelectionChange: setRowSelectionState,
+      enableRowSelection: true,
       state: {
         sorting,
         columnFilters,
         columnVisibility,
-        rowSelection,
+        rowSelection: rowSelectionState,
       },
     })
 
@@ -74,7 +81,7 @@ import { cn } from "@/lib/utils"
         const selectedRows = table.getSelectedRowModel().rows.map(row => row.original)
         onSelectedRowsChange(selectedRows)
       }
-    }, [onSelectedRowsChange, rowSelection]);
+    }, [onSelectedRowsChange, rowSelectionState]);
 
     React.useEffect(() => {
       if(reset) {
