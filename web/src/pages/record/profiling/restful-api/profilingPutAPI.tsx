@@ -5,12 +5,12 @@ export const updateProfile = async (
   data: Record<string, any>
 ) => {
   try {
-    const res = await api.put(
+    const res = await api.patch(
       `profiling/personal/update/${perId}/`, data
     );
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 

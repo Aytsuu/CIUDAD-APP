@@ -18,7 +18,7 @@ export const accountFormSchema = z.object({
 })
 .refine((data) => data.password === data.confirmPassword, {
   message: "Password does not match",
-  path: ["confirmPassowrd"]
+  path: ["confirmPassword"]
 })
 
 export const accountUpdateSchema = z.object({

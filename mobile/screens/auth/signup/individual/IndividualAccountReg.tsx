@@ -7,10 +7,12 @@ import { TouchableOpacity, Text} from "react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { X } from "@/lib/icons/X";
+import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 
 export default function IndividualAccountReg() {
   const router = useRouter();
   const { reset } = useRegistrationFormContext();
+  const { type } = useRegistrationTypeContext();
 
   const submit = () => {
    router.push('/registration/individual/information');
@@ -20,7 +22,6 @@ export default function IndividualAccountReg() {
     reset();
     router.replace("/(auth)");
   };
-
   
   return (
     <PageLayout

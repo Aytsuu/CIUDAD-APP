@@ -7,16 +7,20 @@ from apps.account.models import Account
 from ..serializers.business_serializers import *
 from apps.pagination import StandardResultsPagination
 
+class BusRespondentCreateView(generics.CreateAPIView):
+  serializer_class = BusinessRespondentBaseSerializer
+  queryset = BusinessRespondent.objects.all()
+
 class BusinessCreateView(generics.CreateAPIView):
   serializer_class = BusinessCreateUpdateSerializer
   queryset = Business.objects.all()
 
-class BusinessTableView(generics.ListAPIView):
+class ActiveBusinessTableView(generics.ListAPIView):
   serializer_class = BusinessTableSerializer
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Business.objects.select_related(
+    queryset = Business.objects.filter(~Q(bus_status='Pending')).select_related(
       'add',
       'staff',
     ).prefetch_related(
@@ -25,7 +29,7 @@ class BusinessTableView(generics.ListAPIView):
       'bus_id',
       'bus_name',
       'bus_gross_sales',
-      'bus_date_registered',
+      'bus_date_verified',
       'staff__rp__per__per_lname',
       'staff__rp__per__per_fname',
       'staff__rp__per__per_mname',
@@ -45,6 +49,25 @@ class BusinessTableView(generics.ListAPIView):
       ).distinct()
 
     return queryset.order_by('bus_id')
+  
+class PendingBusinessTableView(generics.ListAPIView):
+  serializer_class = BusinessTableSerializer
+  pagination_class = StandardResultsPagination
+
+  def get_queryset(self):
+    queryset = Business.objects.filter(bus_status='Pending')
+
+    return queryset
+  
+class BusinessRespondentTableView(generics.ListAPIView):
+  serializer_class = BusinessRespondentTableSerializer
+  pagination_class = StandardResultsPagination
+
+  def get_queryset(self):
+    queryset = BusinessRespondent.objects.all()
+
+    return queryset
+
 
 class BusinessFileCreateView(generics.CreateAPIView):
   serializer_class = BusinessFileBaseSerializer
@@ -67,6 +90,11 @@ class BusinessInfoView(generics.RetrieveAPIView):
   serializer_class = BusinessInfoSerializer
   queryset = Business.objects.all()
   lookup_field = 'bus_id'
+
+class BusinessRespondentInfoView(generics.RetrieveAPIView):
+  serializer_class = BusinessRespondentInfoSerializer
+  queryset = BusinessRespondent.objects.all()
+  lookup_field = 'br_id'
 
 class BusinessUpdateView(generics.UpdateAPIView):
   serializer_class = BusinessCreateUpdateSerializer
@@ -117,6 +145,6 @@ class SpecificOwnerView(APIView):
       queryset = Business.objects.filter(br=br)
     
     if queryset:
-      return Response(data=ForSpecificOwnerSerializer(queryset).data, status=status.HTTP_200_OK)
+      return Response(data=ForSpecificOwnerSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
     return Response(data=None)
 
