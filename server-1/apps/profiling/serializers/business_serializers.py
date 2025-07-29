@@ -174,7 +174,6 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         sitio = validated_data.pop('sitio', None)
         street = validated_data.pop('bus_street', '')
         files = validated_data.pop('files', [])
-        staff = validated_data.get('staff', None)
         rp = validated_data.pop('rp', None)
         br = validated_data.pop('br', None)
 
