@@ -20,10 +20,10 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { api } from "@/api/api";
 import { passwordFormSchema } from "@/form-schema/account-schema";
 import { useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
+import supabase from "@/supabase/supabase";
 
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
@@ -57,49 +57,52 @@ export default function Security() {
     { text: "At least one special character", regex: /[^A-Za-z0-9]/ },
   ];
 
-  const changePasswordMutation = useMutation({
-    mutationFn: async (data: PasswordFormData) => {
-      const response = await api.post("/api/account/change-password/", {
-        old_password: data.old_password,
-        new_password: data.new_password,
+const changePasswordMutation = useMutation({
+  mutationFn: async (data: PasswordFormData) => {
+    try {
+      // First verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email!,
+        password: data.old_password,
       });
-      return response.data;
-    },
-    onSuccess: () => {
-      toast.success("Password updated successfully", {
-        description: "Your password has been changed.",
-        action: {
-          label: "Dismiss",
-          onClick: () => {},
-        },
-      });
-      reset();
-      setIsChangingPassword(false);
-    },
-    onError: (error: any) => {
-      console.error("Password change error:", error);
       
-      let errorMessage = "Failed to update password";
-      if (error.response?.data?.old_password) {
-        errorMessage = error.response.data.old_password[0];
-      } else if (error.response?.data?.new_password) {
-        errorMessage = error.response.data.new_password[0];
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (signInError) {
+        throw new Error("Current password is incorrect");
       }
 
-      toast.error("Password change failed", {
-        description: errorMessage,
-        action: {
-          label: "Try again",
-          onClick: () => {},
-        },
+      // Update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: data.new_password,
       });
-    },
-  });
+      
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Password change error:', error);
+      throw error;
+    }
+  },
+  onSuccess: () => {
+    console.log('Password change successful, showing toast');
+    toast.success("Password updated successfully", {
+      description: "Your password has been changed.",
+    });
+    reset();
+    setIsChangingPassword(false);
+  },
+  onError: (error: any) => {
+    console.error('Password change failed:', error);
+    toast.error("Password change failed", {
+      description: error.message || "Failed to update password.",
+    });
+  },
+});
 
   const onSubmit = async (data: PasswordFormData) => {
-    if (!user) {
+    if (!user?.email) {
       toast.error("Authentication required", {
         description: "You must be logged in to change your password",
       });
@@ -146,13 +149,8 @@ export default function Security() {
                   size="icon"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  aria-label={showCurrentPassword ? "Hide password" : "Show password"}
                 >
-                  {showCurrentPassword ? (
-                    <EyeOff size={16} />
-                  ) : (
-                    <Eye size={16} />
-                  )}
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </Button>
               </div>
               {errors.old_password?.message && (
@@ -188,7 +186,6 @@ export default function Security() {
                   size="icon"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  aria-label={showNewPassword ? "Hide password" : "Show password"}
                 >
                   {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </Button>
@@ -198,8 +195,7 @@ export default function Security() {
                   <AlertCircle size={14} /> {errors.new_password.message}
                 </p>
               )}
-              
-              {/* Password Strength Meter */}
+
               {newPassword && (
                 <div className="mt-2">
                   <PasswordStrengthMeter password={newPassword} />
@@ -228,7 +224,6 @@ export default function Security() {
                   size="icon"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? (
                     <EyeOff size={16} />
@@ -340,35 +335,17 @@ function PasswordStrengthMeter({ password }: { password: string }) {
   const getStrength = (pass: string) => {
     let score = 0;
     if (!pass) return 0;
-    
-    // Length
     if (pass.length >= 8) score++;
     if (pass.length >= 12) score++;
-    
-    // Complexity
     if (/[A-Z]/.test(pass)) score++;
     if (/[0-9]/.test(pass)) score++;
     if (/[^A-Za-z0-9]/.test(pass)) score++;
-    
     return Math.min(score, 4);
   };
 
   const strength = getStrength(password);
-  const strengthText = [
-    "Very Weak",
-    "Weak",
-    "Moderate",
-    "Strong",
-    "Very Strong",
-  ][strength];
-  
-  const strengthColor = [
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-yellow-500",
-    "bg-blue-500",
-    "bg-green-500",
-  ][strength];
+  const strengthText = ["Very Weak", "Weak", "Moderate", "Strong", "Very Strong"][strength];
+  const strengthColor = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-blue-500", "bg-green-500"][strength];
 
   return (
     <div className="space-y-1">
