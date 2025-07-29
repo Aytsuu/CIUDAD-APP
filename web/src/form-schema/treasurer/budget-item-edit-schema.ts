@@ -5,3 +5,7 @@ export const BudgetItemEditSchema = z.object({
   amount: z.string().min(1, "This field is required"),
   from: z.string().nonempty("This field is required.")
 })
+
+export const BudgetItemsSchema = z.object({
+  items: z.array(BudgetItemEditSchema)
+});

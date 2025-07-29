@@ -1,96 +1,20 @@
-//  import { Label } from "@/components/ui/label";
-//  import { Form } from "@/components/ui/form/form";
-//  import { zodResolver } from "@hookform/resolvers/zod";
-//  import {z} from "zod"
-//  import { useForm } from "react-hook-form";
-//  import { FormSelect } from "@/components/ui/form/form-select";
-//  import { FormInput } from "@/components/ui/form/form-input";
-//  import { BudgetItemEditSchema } from "@/form-schema/treasurer/budget-item-edit-schema";
-//  import { Button } from "@/components/ui/button/button";
-//  import { Plus } from "lucide-react";
-
-//  export default function BudgetItemEditForm({planId}: {
-//     planId: number
-//  }){
-
-//     const fromOptions = [
-//         {id: "Test", name: "Test"}
-//     ]
-
-//     const toOptions = [
-//         {id: "Test", name: "Test"}
-//     ]
-
-//     const form = useForm<z.infer<typeof BudgetItemEditSchema>>({
-//         resolver: zodResolver(BudgetItemEditSchema),
-//         defaultValues: {
-//             to: "",
-//             amount: "",
-//             from: ""
-//         }
-
-//     })
-//     return (
-//         <div>
-//             <Form {...form}>
-//                 <div className="mb-3 mt-2 flex justify-end">
-//                     <Button>
-//                         <Plus size={16} color="#fff" />
-//                         Add
-//                     </Button>
-//                 </div>
-//                 <form>
-//                     <div className="flex flex-col-3 gap-3">
-//                         <FormSelect
-//                             name="from"
-//                             control={form.control}
-//                             label="From"
-//                             options={fromOptions}
-//                         />
-
-//                         <FormInput
-//                             control={form.control}
-//                             label="Amount"
-//                             name="amount"
-//                             placeholder="0.00"
-//                         />
-
-//                         <FormSelect
-//                             name="to"
-//                             control={form.control}
-//                             label="To"
-//                             options={toOptions}
-//                         />
-//                     </div>
-
-//                     <div className="flex justify-end mt-3">
-//                         <Button>Update</Button>
-//                     </div>
-//                 </form>
-//             </Form>
-//         </div>
-//     )
-//  }
-
-
-import { Label } from "@/components/ui/label";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormInput } from "@/components/ui/form/form-input";
-import { BudgetItemEditSchema } from "@/form-schema/treasurer/budget-item-edit-schema";
+import { BudgetItemsSchema } from "@/form-schema/treasurer/budget-item-edit-schema";
 import { Button } from "@/components/ui/button/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { BudgetPlanDetail } from "../budgetPlanInterfaces";
+import { useFieldArray } from "react-hook-form";
 
-interface BudgetItemEditFormProps {
-  planId: number;
-  budgetItems: BudgetPlanDetail[];
-}
 
-export default function BudgetItemEditForm({ planId, budgetItems }: BudgetItemEditFormProps) {
+export default function BudgetItemEditForm({ planId, budgetItems }: {
+    planId: number;
+    budgetItems: BudgetPlanDetail[]
+}) {
   // Create options from budget items
   const fromOptions = budgetItems.map((item) => ({
     id: item.dtl_budget_item,
@@ -100,59 +24,103 @@ export default function BudgetItemEditForm({ planId, budgetItems }: BudgetItemEd
 
   const toOptions = [...fromOptions];
 
-  const form = useForm<z.infer<typeof BudgetItemEditSchema>>({
-    resolver: zodResolver(BudgetItemEditSchema),
+  const form = useForm<z.infer<typeof BudgetItemsSchema>>({
+    resolver: zodResolver(BudgetItemsSchema),
     defaultValues: {
-      to: "",
-      amount: "",
-      from: ""
+      items: [{
+        to: "",
+        amount: "",
+        from: ""
+      }]
     }
   });
 
-  const handleSubmit = (data: z.infer<typeof BudgetItemEditSchema>) => {
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items"
+  });
+
+  const handleSubmit = (data: z.infer<typeof BudgetItemsSchema>) => {
     console.log("Form submitted:", data);
     // Handle form submission here
   };
 
-  return (
-    <div>
-      <Form {...form}>
-        <div className="mb-3 mt-2 flex justify-end">
-          <Button type="button">
-            <Plus size={16} color="#fff" />
-            Add
-          </Button>
-        </div>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <div className="flex flex-col-3 gap-3">
-            <FormSelect
-              name="from"
-              control={form.control}
-              label="From"
-              options={fromOptions}
-            />
+  const handleAddItem = () => {
+    append({
+      to: "",
+      amount: "",
+      from: ""
+    });
+  };
 
-            <FormInput
-              control={form.control}
-              label="Amount"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-            />
+   return (
+        <div className="h-full flex flex-col">
+          <Form {...form}>
+              <div className="mb-3 mt-2 flex justify-end">
+                  <Button type="button" onClick={handleAddItem}>
+                      <Plus size={16} color="#fff" />
+                      Add
+                  </Button>
+              </div>
+              
+              {/* Scrollable container */}
+              <div className="flex-1 overflow-y-auto max-h-[calc(100vh-300px)] pr-2">
+                  <form onSubmit={form.handleSubmit(handleSubmit)}>
+                      {fields.map((field, index) => (
+                          <div key={field.id} className="mb-4">
+                              <div className="flex flex-wrap gap-3 items-end"> 
+                                  <div className="flex-1 min-w-[250px]"> 
+                                      <FormSelect
+                                          name={`items.${index}.from`}
+                                          control={form.control}
+                                          label="From"
+                                          options={fromOptions}
+                                          className="w-full"  
+                                      />
+                                  </div>
 
-            <FormSelect
-              name="to"
-              control={form.control}
-              label="To"
-              options={toOptions}
-            />
-          </div>
+                                  <div className="flex-1 min-w-[150px]"> 
+                                      <FormInput
+                                          control={form.control}
+                                          label="Amount"
+                                          name={`items.${index}.amount`}
+                                          placeholder="0.00"
+                                          type="number"
+                                          className="w-full"
+                                      />
+                                  </div>
 
-          <div className="flex justify-end mt-3">
-            <Button type="submit">Update</Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+                                  <div className="flex-1 min-w-[250px]">  
+                                      <FormSelect
+                                          name={`items.${index}.to`}
+                                          control={form.control}
+                                          label="To"
+                                          options={toOptions}
+                                          className="w-full"
+                                      />
+                                  </div>
+
+                                  {fields.length > 1 && (
+                                      <Button
+                                          type="button"
+                                          variant="ghost"
+                                          onClick={() => remove(index)}
+                                          className="text-red-500 hover:text-red-700"
+                                      >
+                                          <Trash2 size={16} />
+                                      </Button>
+                                  )}
+                              </div>
+                          </div>
+                      ))}
+                  </form>
+              </div>
+
+              {/* Submit button stays fixed at the bottom */}
+              <div className="flex justify-end mt-3 pt-2 border-t">
+                  <Button type="submit">Update</Button>
+              </div>
+          </Form>
+      </div>
   );
 }

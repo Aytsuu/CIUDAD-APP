@@ -258,6 +258,7 @@ function ViewBudgetPlan(){
                         }
                         isOpen={editingRowId === Number(planId)}
                         onOpenChange={(open) => setEditingRowId(open ? Number(planId) : null)}
+                        className="min-w-[800px]"
                     />
                 )}
 
