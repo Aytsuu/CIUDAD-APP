@@ -16,10 +16,15 @@ export const addAddress =  async (data: Record<string, any>[]) => {
 }
 
 // POST request for personal address
-export const addPersonalAddress = async (data: Record<string, any>[]) => {
+export const addPersonalAddress = async (data: Record<string, any>[], staff_id?: string, history_id?: string) => {
   try {
-    const res = await api.post("profiling/per_address/create/", data);
-    await api2.post("health-profiling/per_address/create/", data)
+    const values = {
+      per_add: data,
+      staff_id: staff_id,
+      history_id: history_id
+    }
+    const res = await api.post("profiling/per_address/create/", values);
+    await api2.post("health-profiling/per_address/create/", values);
     return res.data;
   } catch (err) {
     throw err;
@@ -29,7 +34,7 @@ export const addPersonalAddress = async (data: Record<string, any>[]) => {
 // POST request for resident_profile combined with personal model 
 export const addResidentAndPersonal = async (personalInfo: Record<string, any>, staffId: string) => {
   try {
-    const res = await api.post("profiling/resident/create/combined/", {
+    const data = {
       per: {
         per_lname: personalInfo.per_lname || null,
         per_fname: personalInfo.per_fname || null,
@@ -44,23 +49,9 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
       },
       per_id: +personalInfo.per_id || null,
       staff: staffId || null
-    });
-
-    await api2.post("health-profiling/resident/create/combined/", {
-      per: {
-        per_lname: personalInfo.per_lname,
-        per_fname: personalInfo.per_fname,
-        per_mname: personalInfo.per_mname || null,
-        per_suffix: personalInfo.per_suffix || null,
-        per_dob: formatDate(personalInfo.per_dob),
-        per_sex: personalInfo.per_sex,
-        per_status: personalInfo.per_status,
-        per_edAttainment: personalInfo.per_edAttainment || null,
-        per_religion: personalInfo.per_religion,
-        per_contact: personalInfo.per_contact,
-      },
-      staff: staffId || null
-    });
+    }
+    const res = await api.post("profiling/resident/create/combined/", data);
+    // await api2.post("health-profiling/resident/create/combined/", data);
     
     return res.data
   } catch (err) { 
@@ -75,12 +66,15 @@ export const addFamily = async (
   staffId: string
 ) => {
   try {
-    const res = await api.post("profiling/family/create/", {
+
+    const data = {
       fam_indigenous: capitalize(demographicInfo.indigenous),
       fam_building: capitalize(demographicInfo.building),
       hh: demographicInfo.householdNo.split(" ")[0] || null,
       staff: staffId,
-    });
+    }
+    const res = await api.post("profiling/family/create/", data);
+    await api2.post("health-profiling/family/create/", data);
 
     return res.data;
   } catch (err) {
@@ -91,8 +85,8 @@ export const addFamily = async (
 // POST request for family_composition model 
 export const addFamilyComposition = async (data: Record<string, any>[]) => {
   try {
-    console.log(data)
     const res = await api.post("profiling/family/composition/bulk/create/", data);
+    await api2.post("health-profiling/family/composition/bulk/create/", data);
 
     return res.data
   } catch (err) {
@@ -103,18 +97,14 @@ export const addFamilyComposition = async (data: Record<string, any>[]) => {
 // POST request for household model 
 export const addHousehold = async (householdInfo: Record<string, string>, staffId: string) => {
   try {
-    console.log({
-      hh_nhts: capitalize(householdInfo.nhts),
-      add: +householdInfo.add_id,
-      rp: householdInfo.householdHead.split(" ")[0],
-      staff: staffId
-    })
-    const res = await api.post("profiling/household/create/", {
+    const data = {
       hh_nhts: capitalize(householdInfo.nhts),
       add: householdInfo.add_id,
       rp: householdInfo.householdHead.split(" ")[0],
       staff: staffId
-    });
+    }
+    const res = await api.post("profiling/household/create/", data);
+    await api2.post("health-profiling/household/create/", data);
 
     return res.data;
   } catch (err) {

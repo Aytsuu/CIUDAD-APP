@@ -1,5 +1,3 @@
-"use client"
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Badge } from "@/components/ui/badge"

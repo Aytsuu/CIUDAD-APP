@@ -16,10 +16,6 @@ import {
   useAddFamily, 
   useAddFamilyComposition,
 } from "../../queries/profilingAddQueries";
-import {
-  useAddFamilyHealth,
-  useAddFamilyCompositionHealth 
-} from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
@@ -43,15 +39,8 @@ export default function DependentsInfoLayout({
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const { user } = useAuth();
   const { safeNavigate } = useSafeNavigate(); 
-  
-  // Main database hooks
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
-  
-  // Health database hooks
-  const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
-  const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
-  
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   React.useEffect(() => {
@@ -185,46 +174,6 @@ export default function DependentsInfoLayout({
           });
 
           addFamilyComposition(bulk_composition);
-        }
-      });
-
-      // Store information to the health database
-      await addFamilyHealth({
-        demographicInfo: demographicInfo, 
-        staffId: user?.staff?.staff_id || ""
-      }, {
-        onSuccess: (family) => {
-          let bulk_composition: {
-          fam: string, 
-          fc_role: string, 
-          rp: string}[] = [];
-
-          // Prepare composition data for both databases
-          selectedParents.forEach((parentId, index) => {
-            if(!parentId) return;
-            
-            const compositionData = {
-              fam: family.fam_id,
-              fc_role: PARENT_ROLES[index],
-              rp: parentId
-            };
-            
-            bulk_composition.push(compositionData);
-          });
-
-          dependentsInfo.forEach((dependent) => {
-            const dependentId = dependent.id?.split(" ")[0] as string;
-            
-            const compositionData = {
-              fam: family.fam_id,
-              fc_role: 'Dependent',
-              rp: dependentId
-            };
-            
-            bulk_composition.push(compositionData);
-          });
-
-          addFamilyCompositionHealth(bulk_composition);
         }
       });
 
