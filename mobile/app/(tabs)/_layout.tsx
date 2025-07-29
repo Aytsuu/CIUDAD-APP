@@ -6,7 +6,6 @@ import { ToastProvider } from "@/components/ui/toast";
 
 export default () => {
   return (
-    <ToastProvider>
       <Tabs tabBar={(props) => <NavigationBar {...props} />}>
         <Tabs.Screen
           name="index"
@@ -37,6 +36,5 @@ export default () => {
           }}
         />
       </Tabs>
-    </ToastProvider>
   );
 };
