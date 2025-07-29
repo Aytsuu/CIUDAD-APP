@@ -62,4 +62,18 @@ export const restoreBudgetPlan = async (planId: number) => {
     }
 }
 
+export const updateBudgetItem = async (budgetItems: Array<{ dtl_id: number, dtl_proposed_budget: number }>) => {    
+    try {
+        const updatePromises = budgetItems.map(item => 
+            api.put(`treasurer/update-budget-details/${item.dtl_id}/`, {
+                dtl_proposed_budget: item.dtl_proposed_budget
+            })
+        );
+        const results = await Promise.all(updatePromises);
+        return results;
+    } catch(err) {
+        console.error(err);
+        throw err; 
+    }
+}
 

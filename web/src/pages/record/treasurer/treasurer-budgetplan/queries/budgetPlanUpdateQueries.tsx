@@ -3,7 +3,7 @@ import { BudgetPlanStep1Schema } from "@/form-schema/treasurer/budgetplan-schema
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { updateBudgetHeader, restoreBudgetPlan, archiveBudgetPlan } from "../restful-API/budgetPlanPutAPI";
+import { updateBudgetHeader, restoreBudgetPlan, archiveBudgetPlan, updateBudgetItem } from "../restful-API/budgetPlanPutAPI";
 
 
 export const useUpdateBudgetHeader = (onSuccess: () => void) => {
@@ -88,3 +88,32 @@ export const useRestoreBudgetPlan = (onSuccess?: () => void) => {
         }
     })
 }
+
+export const useUpdateBudgetItem = (onSuccess: () => void) => {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: (values: Array<{ dtl_id: number, dtl_proposed_budget: number }>) => 
+            updateBudgetItem(values),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
+            queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
+    
+            toast.success('Budget Items Updated!', {
+                id: "updateItems",
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                duration: 2000
+            });
+            onSuccess?.()
+        },
+        onError: (err) => {
+            console.error("Error updating budget items:", err);
+            toast.error(
+                "Failed to update budget items. Please check the input data and try again.",
+                { duration: 2000 }
+            );
+        }
+    })
+}
+
+
