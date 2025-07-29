@@ -20,7 +20,7 @@ export const api2 = axios.create({
 api.interceptors.request.use(async (config) => {
   // Skip auth for login and signup endpoints
   if (
-    config.url?.includes("/authentication/login/") ||
+    config.url?.includes("/authentication/mobile/login/") ||
     config.url?.includes("/authentication/signup/")
   ) {
     return config;

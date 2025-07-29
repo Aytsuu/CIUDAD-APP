@@ -9,6 +9,7 @@ import supabase from "@/supabase/supabase";
 //     "Accept": "application/json",
 //   },
 // });
+
 export const api = axios.create({
   baseURL: "http://192.168.1.9:8000",
   withCredentials: true,
@@ -31,27 +32,6 @@ export const api2 = axios.create({
 //   ) {
 //     return config;
 //   }
-
-  try {
-    // Get current session
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error("Error getting session:", error);
-      return config;
-    }
-    
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
-    } else {
-      console.warn("No access token found in session");
-    }
-  } catch (error) {
-    console.error("Error in request interceptor:", error);
-  }
-  
-  return config;
-});
 
 // Response interceptor to handle auth errors
 api.interceptors.response.use(
