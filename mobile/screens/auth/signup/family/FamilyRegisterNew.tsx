@@ -116,7 +116,8 @@ const StepItem = React.memo(({
 export default function FamilyRegisterNew() {
   const router = useRouter();
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
-  const [status, setStatus] = React.useState<"success" | "failure">("success");
+  const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
+  const [status, setStatus] = React.useState<"success" | "failure" | "loading" | "message">("success");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { toast } = useToastContext();
   const { getValues, reset } = useRegistrationFormContext();
@@ -206,88 +207,159 @@ export default function FamilyRegisterNew() {
     if (!canSubmit) return;
     
     setIsSubmitting(true);
-    const { 
-      accountFormSchema, 
-      personalInfoSchema,   
-      fatherInfoSchema,
-      motherInfoSchema,
-      guardianInfoSchema,
-      dependentInfoSchema
-    } = getValues();
+    setStatus('loading');
+    setShowFeedback(true);
 
-    const {confirmPassword, ...account } = accountFormSchema
-    const dependents = dependentInfoSchema.list
+    try {
+      const { 
+        accountFormSchema, 
+        personalInfoSchema,   
+        fatherInfoSchema,
+        motherInfoSchema,
+        guardianInfoSchema,
+        dependentInfoSchema
+      } = getValues();
 
-    const data = [
-      fatherInfoSchema,
-      motherInfoSchema,
-      guardianInfoSchema,
-      ...dependents
-    ].map((info: any) => {
-      const {role, ...per} = info;
-      return JSON.stringify(per) === JSON.stringify(personalInfoSchema) ? 
-        { per: per, role: role, acc: account } : 
-        { per: per, role: role }
+      const {confirmPassword, ...account } = accountFormSchema
+      const dependents = dependentInfoSchema.list
 
-    }).filter((info) => info.per.per_contact !== "")
+      const data = [
+        fatherInfoSchema,
+        motherInfoSchema,
+        guardianInfoSchema,
+        ...dependents
+      ].map((info: any) => {
+        const {role, ...per} = info;
+        return JSON.stringify(per) === JSON.stringify(personalInfoSchema) ? 
+          { per: per, role: role, acc: account } : 
+          { per: per, role: role }
 
-    const request_info = [];
-  
-    for (const item of data) {
-      const { per_addresses, ...per } = item.per;
-      
-      // Add personal info
-      const personal = await addPersonal(capitalizeAllFields(per));
+      }).filter((info) => info.per.per_contact !== "")
 
-      // Add addresses
-      const addresses = await addAddress(per_addresses.list);
+      const request_info = [];
+    
+      for (const item of data) {
+        const { per_addresses, ...per } = item.per;
+        
+        // Add personal info
+        const personal = await addPersonal(capitalizeAllFields(per));
 
-      // Link addresses to personal
-      await addPersonalAddress(
-        addresses.map((address: any) => ({
-          add: address.add_id,
-          per: personal.per_id,
-        }))
-      );
+        // Add addresses
+        const addresses = await addAddress(per_addresses.list);
 
-      // Build the result object
-      const result = {
-        ...item,
-        per: personal.per_id
-      };
+        // Link addresses to personal
+        await addPersonalAddress({
+          data: addresses.map((address: any) => ({
+            add: address.add_id,
+            per: personal.per_id,
+          })),
+          history_id: personal.history
+        });
 
-      request_info.push(result);
-    }
+        // Build the result object
+        const result = {
+          ...item,
+          per: personal.per_id
+        };
 
-    addRequest({
-      comp: request_info
-    }, {
-      onSuccess: () => {
-        setIsSubmitting(false);
-        setStatus('success');
-        setShowFeedback(true);
-      },
-      onError: () => {
-        setIsSubmitting(false);
+        request_info.push(result);
       }
-    })
+
+      addRequest({
+        comp: request_info
+      }, {
+        onSuccess: () => {
+          setShowFeedback(false);
+          setTimeout(() => {
+            setStatus('success');
+            setShowFeedback(true);
+          }, 0);
+        }
+      })
+    } catch (err) {
+      setShowFeedback(false);
+      setTimeout(() => {
+        setStatus("failure");
+        setShowFeedback(true);
+        setIsSubmitting(false);
+      }, 0);
+    }
+  }
+
+  const FeedbackContents: any = {
+    success: (
+      <View className="flex-1 justify-end">
+        <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
+          onPress={() => {
+            setShowFeedback(false);  
+            setTimeout(() => {
+              setStatus('message')
+              setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features")
+              setShowFeedback(true);
+            }, 0);
+          }}
+        >
+          <Text className="text-white text-base font-semibold">
+            Continue
+          </Text>
+        </Button>
+      </View>
+    ),
+    failure: (
+      <View className="flex-1 justify-end">
+        <View className="flex-row gap-3">
+          <Button variant={"outline"} className={`flex-1 rounded-xl native:h-[45px]`}
+          >
+            <Text className="text-gray-600 text-base font-semibold">
+              Cancel
+            </Text>
+          </Button>
+          <Button className={`bg-primaryBlue flex-1 rounded-xl native:h-[45px]`}
+            onPress={() => {
+              setShowFeedback(false)
+              setTimeout(() => {
+                submit();
+              }, 0)
+            }}
+          >
+            <Text className="text-white text-base font-semibold">
+              Try Again
+            </Text>
+          </Button>
+        </View>
+      </View>
+    ),
+    message: (
+      <View className="flex-1 justify-between mt-5">
+        <Text className="text-base text-gray-600 text-center mb-8 leading-6 px-4 max-w-sm">
+          {feedbackMessage}
+        </Text>
+        <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
+          onPress={() => {
+            reset()
+            router.replace('/(tabs)')
+          }}
+        >
+          <Text className="text-white text-base font-semibold">
+            Continue
+          </Text>
+        </Button>
+      </View>
+    )
   }
 
   if (showFeedback) {
-      return (
-        <FeedbackScreen
-          status={status}
-          onRetry={() => {  
-            // Simulate a retry that might succeed
-            const willSucceed = Math.random() > 0.5;
-            setTimeout(() => {
-              setStatus(willSucceed ? "success" : "failure");
-            }, 1500);
-          }}
-          onOk={() => router.push('/(auth)')}
-        />
-      );
-    }
+    return (
+      <FeedbackScreen
+        status={status}
+        content={FeedbackContents[status]}
+      />
+    );
+  }
+
+  if (isSubmitting) {
+    return
+  }
 
   return (
     <>

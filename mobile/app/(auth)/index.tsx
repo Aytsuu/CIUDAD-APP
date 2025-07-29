@@ -1,6 +1,5 @@
 import LoginScreen from "@/screens/auth/login";
-import Business from "../(business)";
-import AddBusiness from "@/screens/business/AddBusiness";
+import { FeedbackScreen } from "@/components/ui/feedback-screen";
 export default () => {
     return <LoginScreen/>
 }
