@@ -93,6 +93,11 @@ INSTALLED_APPS = [
     'apps.medicineservices',
     'apps.firstaid',
 
+    'backend.firebase.notifications',
+    'detection',
+    'apps.childhealthservices',
+    'apps.servicescheduler',
+
 ]
 
 print("INSTALLED_APPS:", INSTALLED_APPS)

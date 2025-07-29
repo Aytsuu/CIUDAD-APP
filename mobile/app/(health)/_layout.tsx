@@ -35,6 +35,8 @@ export default () => {
             <Stack.Screen name="admin/familyplanning/individual" options={{headerShown:false}} />
             <Stack.Screen name="admin/familyplanning/viewpage1" options={{headerShown:false}} />
             <Stack.Screen name="admin/familyplanning/overall" options={{headerShown:false}} />
+
+            <Stack.Screen name="admin/scheduler/schedule-weekly" options={{headerShown:false}}/>
         </Stack>
     );
 }

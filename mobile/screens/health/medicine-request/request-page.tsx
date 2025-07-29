@@ -8,14 +8,17 @@ import { useMedicines } from "../admin/admin-inventory/queries/medicine/Medicine
 
 // Type definition for medicines displayed on this page (matches backend response from MedicineInventorySerializer)
 export type MedicineDisplay = {
-  minv_id: number; // Corresponds to id in CartMedicineType
-  medicine_name: string; // Corresponds to name
-  category_name: string; // Corresponds to category
-  medicine_type: string; // Corresponds to medicine_type (e.g., 'Prescription', 'OTC')
-  minv_dsg: number; // Dosage number
-  minv_dsg_unit: string; // Dosage unit
-  description?: string; // Optional: from backend
-  minv_qty_avail: number; // Available stock
+  minv_id: number;
+  med_detail: {
+    med_name: string;
+    catlist: string;
+    med_type: string;
+  };
+  minv_dsg: number;
+  minv_dsg_unit: string;
+  minv_form: string;
+  minv_qty_avail: number; // Included but won't be displayed
+  description?: string; // Optional, as it’s not in the provided data but was in your original type
 };
 
 
@@ -23,7 +26,7 @@ export default function MedicineRequestScreen() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [showCategories, setShowCategories] = useState(false)
-  
+
   // Use the global cart state hook
   const { cartItems } = useGlobalCartState();
 
@@ -34,23 +37,22 @@ export default function MedicineRequestScreen() {
   const medicines = useMemo(() => {
     if (!fetchedMedicines) return [];
 
-    // First, filter only medicines with stock
     const inStockMedicines = fetchedMedicines.filter(
       (item: MedicineDisplay) => item.minv_qty_avail > 0
     );
 
-    // Then apply search and category filters
     const lowercasedQuery = searchQuery.toLowerCase();
     return inStockMedicines.filter((medicine: MedicineDisplay) => {
       const matchesSearch =
-        medicine.medicine_name.toLowerCase().includes(lowercasedQuery) ||
-        medicine.category_name.toLowerCase().includes(lowercasedQuery) ||
-        medicine.medicine_type.toLowerCase().includes(lowercasedQuery) ||
-        (medicine.minv_dsg_unit && `${medicine.minv_dsg} ${medicine.minv_dsg_unit}`.toLowerCase().includes(lowercasedQuery)) ||
-        (medicine.description && medicine.description.toLowerCase().includes(lowercasedQuery));
+        (medicine.med_detail?.med_name && typeof medicine.med_detail.med_name === "string" && medicine.med_detail.med_name.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.med_detail?.catlist && typeof medicine.med_detail.catlist === "string" && medicine.med_detail.catlist.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.med_detail?.med_type && typeof medicine.med_detail.med_type === "string" && medicine.med_detail.med_type.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.minv_dsg_unit && typeof medicine.minv_dsg_unit === "string" && medicine.minv_dsg != null &&
+          `${medicine.minv_dsg} ${medicine.minv_dsg_unit}`.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.description && typeof medicine.description === "string" && medicine.description.toLowerCase().includes(lowercasedQuery));
 
       const matchesCategory =
-        selectedCategory === "All" || medicine.category_name === selectedCategory;
+        selectedCategory === "All" || (medicine.med_detail?.catlist && medicine.med_detail.catlist === selectedCategory);
 
       return matchesSearch && matchesCategory;
     });
@@ -60,7 +62,13 @@ export default function MedicineRequestScreen() {
   // Extract unique categories for filter dropdown
   const categories = useMemo(() => {
     if (!fetchedMedicines) return ["All"];
-    const uniqueCategories = Array.from(new Set(fetchedMedicines.map((med: MedicineDisplay) => med.category_name)));
+    const uniqueCategories = Array.from(
+      new Set(
+        fetchedMedicines
+          .filter((med: MedicineDisplay) => med.med_detail?.catlist && typeof med.med_detail.catlist === "string")
+          .map((med: MedicineDisplay) => med.med_detail.catlist)
+      )
+    );
     return ["All", ...uniqueCategories];
   }, [fetchedMedicines]);
 
@@ -69,7 +77,7 @@ export default function MedicineRequestScreen() {
     // Encode the entire medicine object as a JSON string to pass it as a parameter
     const medicineString = JSON.stringify({
       id: medicine.minv_id,
-      name: medicine.medicine_name,
+      name: medicine.med_detail?.med_name,
       category: medicine.category_name,
       medicine_type: medicine.medicine_type,
       dosage: `${medicine.minv_dsg} ${medicine.minv_dsg_unit}`.trim(),
@@ -165,14 +173,12 @@ export default function MedicineRequestScreen() {
                       setSelectedCategory(category as string)
                       setShowCategories(false)
                     }}
-                    className={`py-3 px-4 ${
-                      selectedCategory === category ? "bg-blue-50" : "bg-white"
-                    } border-b border-gray-100 last:border-b-0`}
+                    className={`py-3 px-4 ${selectedCategory === category ? "bg-blue-50" : "bg-white"
+                      } border-b border-gray-100 last:border-b-0`}
                   >
                     <Text
-                      className={`text-gray-800 ${
-                        selectedCategory === category ? "font-semibold text-blue-600" : ""
-                      }`}
+                      className={`text-gray-800 ${selectedCategory === category ? "font-semibold text-blue-600" : ""
+                        }`}
                     >
                       {category as string}
                     </Text>
@@ -188,26 +194,33 @@ export default function MedicineRequestScreen() {
           <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
             {medicines.length > 0 ? (
               <View className="px-4 py-3 gap-2">
-                {medicines.map((medicine: MedicineDisplay) => ( // Use MedicineDisplay type here
+                {medicines.map((medicine: MedicineDisplay) => (
                   <TouchableOpacity
-                    key={medicine.minv_id} // Use minv_id as key as it's unique from backend
+                    key={medicine.minv_id}
                     onPress={() => handleMedicinePress(medicine)}
                     className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-lg shadow-sm border border-gray-300"
                   >
                     <Pill size={24} color="blue" />
                     <View className="flex-1 ml-4">
-                      <Text className="text-lg font-semibold text-gray-900">{medicine.medicine_name}</Text>
+                      <Text className="text-lg font-semibold text-gray-900">
+                        {medicine.med_detail?.med_name || "Unknown Medicine"}
+                      </Text>
                       <View className="flex-row items-center justify-between mt-1">
                         <Text className="text-sm font-medium text-gray-700">
-                          {medicine.category_name}
+                          {medicine.med_detail?.catlist || "Unknown Category"}
                         </Text>
-                        {/* <Text className="text-sm text-gray-600 ml-2">
-                          Type: {medicine.medicine_type}
-                        </Text> */}
+                        <Text className="text-sm text-gray-600 ml-2">
+                          Type: {medicine.med_detail?.med_type || "Unknown Type"}
+                        </Text>
                       </View>
                       {medicine.minv_dsg && medicine.minv_dsg_unit && (
                         <Text className="text-gray-600 text-sm mt-1">
                           Dosage: {medicine.minv_dsg} {medicine.minv_dsg_unit}
+                        </Text>
+                      )}
+                      {medicine.minv_form && (
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Form: {medicine.minv_form}
                         </Text>
                       )}
                       {medicine.description && (
@@ -215,23 +228,12 @@ export default function MedicineRequestScreen() {
                           {medicine.description}
                         </Text>
                       )}
-                      <View className="mt-2">
-                        {/* <Text
-                          className={`text-sm font-semibold ${
-                            medicine.minv_qty_avail > 0 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {medicine.minv_qty_avail > 0
-                            ? `${medicine.minv_qty_avail} in stock`
-                            : "Out of stock"}
-                        </Text> */}
-                      </View>
                     </View>
                     <View className="ml-4">
                       <ChevronDown
                         size={20}
                         color="#9CA3AF"
-                        style={{ transform: [{ rotate: "270deg" }] }} // Points right
+                        style={{ transform: [{ rotate: "270deg" }] }}
                       />
                     </View>
                   </TouchableOpacity>

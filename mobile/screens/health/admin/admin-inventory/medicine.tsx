@@ -1,9 +1,9 @@
-import { View, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator, FlatList } from "react-native"
+import { View, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator, FlatList, Alert } from "react-native"
 import { Search, Package, ChevronLeft, AlertTriangle, Filter } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import * as React from "react"
-import { Link, router } from "expo-router"
 import { api2 } from "@/api/api"
+import { router } from "expo-router"
 
 interface InventoryItem {
   id: number;
@@ -17,7 +17,12 @@ interface InventoryItem {
   lastUpdated: string;
 }
 
-export default function InventoryScreen() {
+interface InventoryScreenProps {
+  onBack?: () => void;
+  onNavigateToTransactions?: () => void;
+}
+
+export default function InventoryScreen({ onBack, onNavigateToTransactions }: InventoryScreenProps) {
   const [selectedCategory, setSelectedCategory] = React.useState('all')
   const [selectedStockFilter, setSelectedStockFilter] = React.useState('all')
   const [searchQuery, setSearchQuery] = React.useState('')
@@ -68,9 +73,9 @@ export default function InventoryScreen() {
       if (medicinesResult?.success && medicinesResult.data) {
         const standardizedMedicines: InventoryItem[] = medicinesResult.data.map((item: any) => ({
           id: item.minv_id,
-          name: item.med_detail?.med_name,
+          name: item.med_detail?.med_name || 'Unknown Medicine',
           category: 'medicine',
-          description: item.med_detail?.med_type,
+          description: item.med_detail?.med_type || 'Medicine',
           stock: item.minv_qty_avail || 0,
           minStock: 20,
           expiryDate: item.inv_detail?.expiry_date || 'N/A',
@@ -81,10 +86,10 @@ export default function InventoryScreen() {
         allInventory.push(...standardizedMedicines)
       }
 
+      // Process commodities
       const commoditiesResult = results.find(r => r.name === 'commodities')
       if (commoditiesResult?.success && commoditiesResult.data) {
         const standardizedCommodities: InventoryItem[] = commoditiesResult.data.map((item: any) => {
-
           let userTypeDisplay = item.user_type;
           if (item.user_type === 'Both') {
             userTypeDisplay = 'Current user & New Acceptor';
@@ -97,7 +102,6 @@ export default function InventoryScreen() {
           return {
             id: item.cinv_id,
             name: item.com_detail?.com_name || item.com_id?.com_name || 'Unknown Commodity',
-
             category: 'commodity',
             description: `For ${userTypeDisplay}`,
             stock: item.cinv_qty_avail || 0,
@@ -194,6 +198,16 @@ export default function InventoryScreen() {
     fetchInventoryData()
   }, [fetchInventoryData])
 
+
+  const handleTransactionsPress = () => {
+    if (onNavigateToTransactions) {
+      onNavigateToTransactions()
+    } else {
+      // Fallback - you can replace this with your preferred navigation method
+      Alert.alert("Transactions", "Navigate to transactions screen")
+    }
+  }
+
   const categories = [
     { id: 'all', name: 'All' },
     { id: 'medicine', name: 'Medicine' },
@@ -251,7 +265,7 @@ export default function InventoryScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center">
-        <View className="bg-white p-8 rounded-2xl items-center ">
+        <View className="bg-white p-8 items-center ">
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading inventory...</Text>
         </View>
@@ -284,19 +298,20 @@ export default function InventoryScreen() {
       {/* Header */}
       <View className="bg-white shadow-sm">
         <View className="flex-row items-center p-4 pt-12">
-          <Link href="/" asChild>
-            <TouchableOpacity className="p-2 mr-3 bg-gray-100 rounded-full">
-              <ChevronLeft size={24} color="#374151" />
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity 
+            className="p-2 mr-3 bg-gray-100 rounded-full"
+            onPress={()=> router.back}
+          >
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
           <View className="flex-1">
             <Text className="text-xl font-bold text-gray-800">Medical Inventory</Text>
           </View>
         </View>
 
         {/* Search and Filter */}
-        <View className="px-4 pb-4">
-          <View className="flex-row items-center space-x-3">
+        <View className="px-4  pb-4">
+          <View className="flex-row items-center gap-3 ">
             <View className="flex-1 flex-row items-center p-2 border border-gray-200 bg-gray-50 rounded-xl">
               <Search size={20} color="#6B7280" />
               <TextInput
@@ -364,11 +379,9 @@ export default function InventoryScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Stats Cards */}
-        <View className="p-4 ">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row ">
+        <View className="p-4">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
             <View className="gap-3 flex-row">
-
-
               <View className="bg-white p-4 rounded-xl shadow-sm min-w-[110px]">
                 <View className="flex-row items-center mb-2">
                   <Package size={18} color="#3B82F6" />
@@ -411,14 +424,9 @@ export default function InventoryScreen() {
               Inventory ({filteredInventory.length})
             </Text>
 
-            <TouchableOpacity onPress={() => router.push("/(health)/admin/inventory/transaction")}
-              className="bg-blue-500 px-4 py-2 rounded-md"
-            >
+             <TouchableOpacity className="bg-green-700 px-4 py-1.5 rounded-xl"  onPress={() => router.push('/admin/inventory/transaction')}>
               <Text className="text-white text-sm font-medium">Transactions</Text>
             </TouchableOpacity>
-            {/* <Text className="text-gray-500 text-sm">
-              Showing {stats.showingItems}
-            </Text> */}
           </View>
 
           {filteredInventory.length === 0 ? (

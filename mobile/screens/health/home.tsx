@@ -1,3 +1,4 @@
+// MultipleFiles/home.tsx
 import React from "react";
 import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,6 +7,10 @@ import { Text } from "@/components/ui/text";
 import { Card } from "@/components/ui/card";
 import { router } from "expo-router";
 import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search } from "lucide-react-native";
+import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
+
+
+
 
 const { width } = Dimensions.get('window');
 
@@ -19,7 +24,8 @@ const Homepage = () => {
     { name: 'Medicine Requests', route: '/admin-medicinerequest/admin-medicinerequest', icon: Pill },
     { name: 'Patients Records', route: '/admin/patientsrecord/patientsrecord', icon: Users },
     { name: 'Schedules', route: 'appointments/schedules', icon: Calendar },
-    { name: 'Inventory', route: '/inventory/medicine', icon: Archive },
+    { name: 'Inventory', route: 'admin/inventory/medicine', icon: Archive },
+    // { name: 'Transactions', route: 'admin/inventory/transaction', icon: Archive },
   ];
 
   const quickActions = [
@@ -48,6 +54,11 @@ const Homepage = () => {
     },
   ];
 
+  // Function to navigate to the full scheduler screen
+  const handleViewWeeklySchedule = () => {
+    router.push('/admin/scheduler/schedule-weekly'); 
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <StatusBar barStyle="light-content" backgroundColor="#1e40af" />
@@ -66,6 +77,11 @@ const Homepage = () => {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Today's Schedule Widget */}
+        <View className="px-6 mt-5">
+          <TodayScheduleWidget onViewWeeklySchedule={handleViewWeeklySchedule} />
+        </View>
+
         <View className="mt-5">
           <ScrollView
             horizontal
@@ -94,7 +110,7 @@ const Homepage = () => {
                     </View>
                     <View className="p-4 flex-row items-center justify-between">
                       <Heart size={20} color="#059669" />
-                      <TouchableOpacity className="bg-green-700 px-4 py-1.5 rounded-full">
+                      <TouchableOpacity className="bg-green-700 px-4 py-1.5 rounded-full"  onPress={() => router.push("/family-planning/famplanning")}>
                         <Text className="text-white text-xs font-PoppinsSemiBold">Learn More</Text>
                       </TouchableOpacity>
                     </View>
@@ -120,7 +136,7 @@ const Homepage = () => {
                     </View>
                     <View className="p-4 flex-row items-center justify-between">
                       <Dog size={20} color="#1E40AF" />
-                      <TouchableOpacity className="bg-green-700 px-4 py-1.5 rounded-full">
+                      <TouchableOpacity className="bg-green-700 px-4 py-1.5 rounded-full"  onPress={() => router.push('/animalbite/animalbite')}>
                         <Text className="text-white text-xs font-PoppinsSemiBold">Learn More</Text>
                       </TouchableOpacity>
                     </View>
@@ -182,7 +198,6 @@ const Homepage = () => {
                   />
                   <View className="absolute inset-0 bg-black/40" />
 
-                  <View className="absolute inset-0 bg-emerald-600/70" />
                   <View className="absolute top-3 left-3">
                     <BookHeart size={32} color="white" />
                   </View>
@@ -205,7 +220,7 @@ const Homepage = () => {
                     resizeMode="cover"
                   />
                    <View className="absolute inset-0 bg-black/40" />
-                  <View className="absolute inset-0 bg-pink-500/70" />
+                  
                   <View className="absolute top-3 left-3">
                     <ShieldPlus size={32} color="white" />
                   </View>

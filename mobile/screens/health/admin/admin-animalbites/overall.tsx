@@ -16,7 +16,7 @@ type PatientSummary = {
   patient_type: string
   patient_address: string
   record_count: number
-  latest_record_date: string
+  record_created_at: string
   first_record_date: string
 }
 
@@ -332,7 +332,7 @@ export default function AnimalBiteOverallScreen() {
                           <Text className="text-gray-600 text-sm ml-2">
                             Latest Record:{" "}
                             <Text className="font-semibold text-gray-800">
-                              {formatDateSafely(patient.latest_record_date)}
+                              {formatDateSafely(patient.record_created_at)}
                             </Text>
                           </Text>
                         </View>

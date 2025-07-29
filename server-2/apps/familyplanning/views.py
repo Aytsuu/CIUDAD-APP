@@ -1589,7 +1589,7 @@ def get_complete_fp_record(request, fprecord_id):
                     ),
                 }
             ]
-            complete_data["follow_up_visit"] = FollowUpVisitSerializer(fp_assessment.followv).data if fp_assessment.followv else None
+            # complete_data["follow_up_visit"] = FollowUpVisitSerializer(fp_assessment.followv).data if fp_assessment.followv else None
         except FP_Assessment_Record.DoesNotExist:
             complete_data["fp_assessment"] = None
             complete_data["follow_up_visit"] = None

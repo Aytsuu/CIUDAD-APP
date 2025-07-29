@@ -329,7 +329,7 @@ class VaccineStock(models.Model):
     volume = models.PositiveIntegerField(default=0)
     qty = models.PositiveIntegerField(default=0)
     dose_ml = models.PositiveIntegerField(default=0)
-    vacStck_used = models.PositiveIntegerField(default=0)
+    # vacStck_used = models.PositiveIntegerField(default=0)
     vacStck_qty_avail = models.PositiveIntegerField(default=0)
     wasted_dose =models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

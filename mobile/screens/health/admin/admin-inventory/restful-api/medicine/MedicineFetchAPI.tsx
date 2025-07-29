@@ -16,7 +16,7 @@ import {api2} from "@/api/api";
   
   export const getMedicines = async () => {
     try {
-      const res = await api2.get("inventory/medicine_inventory/"); // Corrected endpoint
+      const res = await api2.get("inventory/medicineinventorylist/"); // Corrected endpoint
       if (res.status === 200) {
         return res.data;
       }
