@@ -1,32 +1,32 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format, startOfWeek, addDays, isSameDay } from "date-fns"
+import { format, startOfWeek, addDays } from "date-fns"
 import { enUS } from "date-fns/locale"
-
 import ScheduleCard from "../scheduler/schedule-card"
 import ScheduleDialog from "../scheduler/schedule-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
 import type { WeeklySchedule, DailySchedule } from "../scheduler/schedule-types"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { useGetUniqueServices, useGetServices } from "../scheduler/queries/schedulerFetchQueries"
+import { useGetServices, useGetScheduler } from "../scheduler/queries/schedulerFetchQueries"
 
 export default function SchedulerMain() {
   // ✅ Fetch services from database instead of hardcoded values
-  const { data: servicesFromDB = [], isLoading: servicesLoading, error: servicesError } = useGetUniqueServices()
-  const { data: schedulersFromDB = [], isLoading: schedulersLoading } = useGetServices()
-  
+  const { data: servicesData = []} = useGetServices()
+  const { data: schedulersData = [] } = useGetScheduler()
+
   const [services, setServices] = useState<string[]>([])
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>({})
   const [weekDays, setWeekDays] = useState<Date[]>([])
 
   // ✅ Update services state when data is fetched from database
   useEffect(() => {
-    if (servicesFromDB.length > 0) {
-      console.log("Setting services from database:", servicesFromDB)
-      setServices(servicesFromDB)
+    if (servicesData.length > 0) {
+      const serviceNames = servicesData.map((service) => service.service_name)
+      console.log("Setting services from database:", servicesData)
+      setServices(serviceNames)
     }
-  }, [servicesFromDB])
+  }, [servicesData])
 
   useEffect(() => {
     const today = new Date()
@@ -37,48 +37,40 @@ export default function SchedulerMain() {
     }
     setWeekDays(days)
 
-    // ✅ Build schedule from database data instead of simulated data
-    if (schedulersFromDB.length > 0) {
-      console.log("Building schedule from database:", schedulersFromDB)
-      const scheduleFromDB: WeeklySchedule = {}
-      
+    // build schedule from database data instead of simulated data
+    if (schedulersData.length > 0) {
+      console.log("Building schedule from database:")
+      console.log("Schedulers data:", schedulersData)
+      console.log("Services data:", servicesData)
+
+      const schedule: WeeklySchedule = {}
+
       days.forEach((day) => {
         const formattedDate = format(day, "yyyy-MM-dd")
+        const dayName = format(day, "EEEE")
         const daily: DailySchedule = {}
-        
+
         // Initialize all services with false values
-        servicesFromDB.forEach(serviceName => {
-          daily[serviceName] = { AM: false, PM: false }
+        servicesData.forEach((service) => {
+          daily[service.service_name] = { AM: false, PM: false }
         })
-        
+
         // Set actual scheduled services from database
-        schedulersFromDB.forEach(scheduler => {
-          if (daily[scheduler.service]) {
-            daily[scheduler.service][scheduler.meridiem] = true
+        schedulersData.forEach((scheduler) => {
+          if (scheduler.day === dayName && daily[scheduler.service_name]) {
+            daily[scheduler.service_name][scheduler.meridiem] = true
           }
         })
-        
-        scheduleFromDB[formattedDate] = daily
+
+        schedule[formattedDate] = daily
       })
-      
-      setWeeklySchedule(scheduleFromDB)
+
+      setWeeklySchedule(schedule)
     } else {
-      // ✅ Initialize empty schedule if no data from database
-      const emptySchedule: WeeklySchedule = {}
-      days.forEach((day) => {
-        const formattedDate = format(day, "yyyy-MM-dd")
-        const daily: DailySchedule = {}
-        
-        // Initialize all services with false values
-        servicesFromDB.forEach(serviceName => {
-          daily[serviceName] = { AM: false, PM: false }
-        })
-        
-        emptySchedule[formattedDate] = daily
-      })
-      setWeeklySchedule(emptySchedule)
+      console.log("No schedulers data found")
     }
-  }, [schedulersFromDB, servicesFromDB])
+  }, [schedulersData, servicesData])
+
 
   const handleSaveSchedule = (newSchedule: WeeklySchedule) => {
     setWeeklySchedule(newSchedule)
@@ -92,56 +84,57 @@ export default function SchedulerMain() {
     }
   }
 
-  // ✅ Show loading state while fetching services
-  if (servicesLoading || schedulersLoading) {
-    return (
-      <LayoutWithBack
-        title="Service Scheduler"
-        description="Schedule services for the week"
-      >
-        <main className="min-h-screen bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
-              <div className="text-lg">Loading services...</div>
-            </div>
-          </div>
-        </main>
-      </LayoutWithBack>
-    )
+  const handleAddDay = (newDay: Date) => {
+    const newWeekDays = [...weekDays, newDay]
+    setWeekDays(newWeekDays)
+
+    // Initialize the new day in the schedule
+    const formattedDate = format(newDay, "yyyy-MM-dd")
+    const newDailySchedule: DailySchedule = {}
+
+    services.forEach((serviceName) => {
+      newDailySchedule[serviceName] = { AM: false, PM: false }
+    })
+
+    setWeeklySchedule((prev) => ({
+      ...prev,
+      [formattedDate]: newDailySchedule,
+    }))
   }
 
-  // ✅ Show error state if services fetch fails
-  if (servicesError) {
-    return (
-      <LayoutWithBack
-        title="Service Scheduler"
-        description="Schedule services for the week"
-      >
-        <main className="min-h-screen bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-center items-center h-64">
-              <div className="text-lg text-red-600">
-                Error loading services. Please try again later.
-              </div>
-            </div>
-          </div>
-        </main>
-      </LayoutWithBack>
-    )
-  }
+  // ✅ Show loading state while fetching services
+  // if (servicesLoading || schedulersLoading) {
+  //   return (
+  //     <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
+  //       <main className="min-h-screen bg-gray-50">
+  //         <div className="max-w-7xl mx-auto">
+  //           <div className="flex justify-center items-center h-64">
+  //             <div className="text-lg">Loading services...</div>
+  //           </div>
+  //         </div>
+  //       </main>
+  //     </LayoutWithBack>
+  //   )
+  // }
+
+  // if (servicesError) {
+  //   return (
+  //     <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
+  //       <main className="min-h-screen bg-gray-50">
+  //         <div className="max-w-7xl mx-auto">
+  //           <div className="flex justify-center items-center h-64">
+  //             <div className="text-lg text-red-600">Error loading services. Please try again later.</div>
+  //           </div>
+  //         </div>
+  //       </main>
+  //     </LayoutWithBack>
+  //   )
+  // }
 
   return (
-    <LayoutWithBack
-      title="Service Scheduler"
-      description="Schedule services for the week"
-    >
+    <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="w-full flex mb-8 justify-end">
-            
-          </div>
-
           {/* Services Overview */}
           <div className="mb-4">
             <Card className="flex">
@@ -149,7 +142,7 @@ export default function SchedulerMain() {
                 <CardHeader>
                   <CardTitle>Available Services</CardTitle>
                   <CardDescription>
-                    Current services that can be scheduled {/* ✅ Updated description */}
+                    Current services that can be scheduled
                     {services.length > 0 && `(${services.length} services loaded from database)`}
                   </CardDescription>
                 </CardHeader>
@@ -161,15 +154,13 @@ export default function SchedulerMain() {
                       </span>
                     ))}
                   </div>
-                  {/* ✅ Show message if no services */}
                   {services.length === 0 && (
-                    <div className="text-gray-500">
-                      No services found. Add some services to get started.
-                    </div>
+                    <div className="text-gray-500">No services found. Add some services to get started.</div>
                   )}
                 </CardContent>
               </div>
-              
+
+              {/* schedule dialog */}
               <div className="w-full flex justify-end items-center">
                 <div className="mr-5">
                   <ScheduleDialog
@@ -178,20 +169,26 @@ export default function SchedulerMain() {
                     services={services}
                     onSave={handleSaveSchedule}
                     onAddService={handleAddService}
+                    onAddDay={handleAddDay}
                   />
                 </div>
               </div>
             </Card>
           </div>
 
-          {/* Schedule Cards Grid */}
+          {/* schedule cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {weekDays.map((day) => {
               const formattedDate = format(day, "yyyy-MM-dd")
               const dailySchedule = weeklySchedule[formattedDate] || {}
-
-              return <ScheduleCard key={formattedDate} day={day} dailySchedule={dailySchedule} services={services} />
-            })}
+              return (
+                <ScheduleCard 
+                  key={formattedDate} 
+                  day={day} 
+                  dailySchedule={dailySchedule} 
+                  services={services} />
+                )
+              })}
           </div>
         </div>
       </main>

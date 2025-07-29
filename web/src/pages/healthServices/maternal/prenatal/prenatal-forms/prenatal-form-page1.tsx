@@ -27,7 +27,6 @@ import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import { usePrenatalPatientMedHistory, 
         usePrenatalPatientObsHistory, 
         usePrenatalPatientPrevHospitalization,
-        usePrenatalPatientPrevPregnancy
 } from "../../queries/maternalFetchQueries"
 import { usePrenatalPatientBodyMeasurement } from "../../queries/maternalFetchQueries"
 

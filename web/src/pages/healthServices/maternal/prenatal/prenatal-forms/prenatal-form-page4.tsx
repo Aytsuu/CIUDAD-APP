@@ -1,7 +1,6 @@
 "use client"
 
 import { useFormContext, type UseFormReturn } from "react-hook-form"
-import { useNavigate } from "react-router"
 import { Form } from "@/components/ui/form/form"
 import type { z } from "zod"
 
@@ -27,10 +26,9 @@ export default function PrenatalFormFourthPq({
   onSubmit: () => void
   back: () => void
 }) {
-  const { control, trigger, setValue, getValues } = useFormContext()
+  const { control, setValue, getValues } = useFormContext()
   const addPrenatalRecordMutation = useAddPrenatalRecord()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const navigate = useNavigate()
 
   // Watch values from other parts of the form to auto-fill
   const momWt = form.watch("motherPersonalInfo.motherWt")
