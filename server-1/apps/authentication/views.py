@@ -126,9 +126,63 @@ class SignupView(APIView):
                 {'error': 'Account creation failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+class MobileLoginView(APIView):
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            password = request.data.get('password')
+            if not email or not password:
+                return Response(
+                    {'error': 'Both email and password are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
+            try:
+                supabase_response = supabase.auth.sign_in_with_password({
+                    "email": email,
+                    "password": password
+                })
+                supabase_user = supabase_response.user
+                if not supabase_user:
+                    return Response(
+                        {'error': 'Invalid credentials'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+                
+            except Exception as supabase_error:
+                logger.error(f"Supabase authentication failed: {str(supabase_error)}")
+                return Response(
+                    {'error': 'Authentication failed'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
 
-class LoginView(APIView):
+            # Check if account exists in local database
+            account = Account.objects.filter(email=email).first()
+            
+            if not account:
+                return Response(
+                    {'error': 'Account not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = UserAccountSerializer(account)
+
+            return Response({
+                'user': serializer.data,
+                'access_token': supabase_response.session.access_token,
+                'message': 'Login successful',
+                'supabase_token': supabase_response.session.access_token
+            })
+
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Authentication failed'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+class WebLoginView(APIView):
     def post(self, request):
         try:
             email = request.data.get('email')
@@ -189,8 +243,7 @@ class LoginView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-class UserView(APIView):
+class WebUserView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -223,6 +276,45 @@ class UserView(APIView):
                     {'error': "Staff Privileges Required"}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
+            
+            return Response({
+                'user': serializer.data,
+                'message': 'User data retrieved successfully'
+            })
+            
+        except Exception as e:
+            logger.error(f"User retrieval error: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Failed to retrieve user data'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+class MobileUserView(APIView):
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            # Get the Supabase user from the request (set by middleware)
+            supabase_user = getattr(request, 'supabase_user', None)
+            
+            if not supabase_user:
+                return Response(
+                    {'error': 'User not found in request'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            user_email = supabase_user.email
+            
+            # Find the corresponding account in database
+            account = Account.objects.filter(email=user_email).first()
+            
+            if not account:
+                return Response(
+                    {'error': 'Account not found in system'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = UserAccountSerializer(account)
             
             return Response({
                 'user': serializer.data,

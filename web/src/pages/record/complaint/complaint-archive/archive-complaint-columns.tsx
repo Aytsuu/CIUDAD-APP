@@ -2,18 +2,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
-import {
-  UserCheck2,
-  ArrowUpDown,
-  MoreHorizontal,
-  File,
-  ArchiveIcon,
-} from "lucide-react";
+import ViewButton from "@/components/ui/view-button";
+import { Archive, ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 
-export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
+export const archiveComplaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
     id: "select",
     header: ({ table }) => {
@@ -60,16 +54,16 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     cell: ({ row }) => {
       return (
         <div className="relative flex items-center justify-center h-full">
-          {/* Icon on the far left */}
+          {/* Archive icon on the far left */}
           <div className="absolute left-2">
             <TooltipLayout
-              trigger={<UserCheck2 className="text-green-500" size={20} />}
-              content="Filed"
+              trigger={<Archive className="text-gray-500" size={20} />}
+              content="Archived"
             />
           </div>
 
           {/* Badge centered */}
-          <Badge variant="outline" className="font-medium">
+          <Badge variant="outline" className="font-medium bg-gray-50 text-gray-700">
             COMP-2025-{row.original.comp_id}
           </Badge>
         </div>
@@ -101,10 +95,10 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
       const remainingCount = complainants.length - 1;
 
       return (
-        <div className="font-normal text-gray-900">
+        <div className="font-normal text-gray-700">
           {firstComplainant}
           {remainingCount > 0 && (
-            <Badge className="bg-white text-black hover:bg-slate-100">
+            <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 ml-2">
               +{remainingCount} more
             </Badge>
           )}
@@ -112,7 +106,6 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
       );
     },
   },
-
   {
     accessorKey: "accused_persons",
     header: ({ column }) => (
@@ -131,17 +124,16 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
       }
 
       const name = accusedPersons[0].acsd_name;
-      const firstAccused =
-        name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+      const firstAccused = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
       const remainingCount = accusedPersons.length - 1;
 
       return (
-        <div className="font-normal text-gray-900">
+        <div className="font-normal text-gray-700">
           {firstAccused}
           {remainingCount > 0 && (
             <TooltipLayout
               trigger={
-                <Badge className="bg-white text-black hover:bg-slate-100">
+                <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 ml-2">
                   +{remainingCount}
                 </Badge>
               }
@@ -156,18 +148,41 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     accessorKey: "comp_incident_type",
     header: "Incident Type",
     cell: ({ row }) => (
-      <div className="font-normal text-gray-900">
+      <div className="font-normal text-gray-700">
         {row.getValue("comp_incident_type")}
       </div>
     ),
   },
   {
     accessorKey: "comp_status",
-    header: "Status",
+    header: "Final Status",
     cell: ({ row }) => {
+      const status = row.getValue("comp_status") as string;
       return (
         <div>
-          <Badge className=""></Badge>
+          <Badge variant="secondary" className="bg-gray-200 text-gray-800">
+            {status}
+          </Badge>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "date_archived",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Date Archived
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+    //   const dateArchived = row.original.date_archived;
+      return (
+        <div className="font-normal text-gray-700">
+          {/* {dateArchived ? new Date(dateArchived).toLocaleDateString() : "N/A"} */}
         </div>
       );
     },
@@ -175,54 +190,15 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
     accessorKey: "actions",
     header: "Action",
-    cell: ({ row }) => {
-      const complaint = row.original;
-
-      const options = [
-        {
-          id: "view",
-          name: (
-            <Link
-              to={`/complaint/${complaint.comp_id}`}
-              state={{ complaint }}
-              className="w-full h-full flex items-center gap-2"
-            >
-              <File size={16} className="text-darkGray" />
-              View File
-            </Link>
-          ),
-        },
-        {
-          id: "archive",
-          name: (
-            <div className="flex items-center gap-2">
-              <ArchiveIcon size={16} className="text-darkGray" />
-              Move to Archive
-            </div>
-          ),
-        },
-      ];
-
-      const handleSelect = (id: string) => {
-        if (id === "archive") {
-          // archive logic
-          console.log("Archive:", complaint.comp_id);
-        }
-      };
-
-      return (
-        <div className="flex items-center justify-center h-full min-w-[50px]">
-          <DropdownLayout
-            trigger={
-              <button className="p-2 hover:bg-muted rounded-full">
-                <MoreHorizontal className="w-5 h-5 text-gray-600" />
-              </button>
-            }
-            options={options}
-            onSelect={handleSelect}
-          />
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <div className="min-w-[50px]">
+        <Link
+          to={`/complaint/${row.original.comp_id}`}
+          state={{ complaint: row.original }}
+        >
+          <ViewButton onClick={() => {}} />
+        </Link>
+      </div>
+    ),
   },
 ];

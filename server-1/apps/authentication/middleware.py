@@ -10,7 +10,8 @@ class AuthCheckingMiddleware:
 
     def __call__(self, request):
         protected_paths = [
-            # '/authentication/user/',
+            '/authentication/mobile/user/', 
+            '/authentication/web/user/',
             # '/authentication/refresh/',
             # '/authentication/upload-image/',
             # '/dashboard',

@@ -19,6 +19,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
             'profile_image',
             'resident',
             'staff',
+            'br_id',
         ]
         read_only_fields = ['acc_id', 'supabase_id']
 

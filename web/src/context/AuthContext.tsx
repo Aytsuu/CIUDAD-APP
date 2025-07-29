@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(supabaseError.message);
       }
 
-      const response = await api.post('authentication/login/', {
+      const response = await api.post('authentication/web/login/', {
         email,
         password,
       });

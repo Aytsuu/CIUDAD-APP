@@ -1,30 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  Archive,
-  Search,
-  Filter,
-  Calendar,
-  User,
-  AlertTriangle,
-  Eye,
-  Download,
-  Trash2,
-  RotateCcw,
-  FileText,
-  ChevronDown,
-  X,
-} from "lucide-react";
-import { toast } from "sonner";
-import {
-  getArchivedComplaints,
-  restoreComplaint,
-  deleteComplaint,
-  getComplaintById,
-} from "./restful-api/complaint-api";
 import { Button } from "@/components/ui/button/button";
 import { Link, useNavigate } from "react-router-dom";
 import { BsChevronLeft } from "react-icons/bs";
-import { Badge } from "@/components/ui/badge";
 
 type Complaint = {
   id: string;
@@ -44,7 +21,7 @@ const ArchiveComplaints = () => {
     <div className="">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex gap-3">
+        <div className="flex gap-3 mb-2">
           {/* Column 1 - Button */}
           <div className="flex items-center">
             <Link to="/complaint">
@@ -66,10 +43,12 @@ const ArchiveComplaints = () => {
             </p>
           </div>
         </div>
+        <hr />
       </div>
 
       <body>
-        <div className=""></div>
+        <div className="">
+        </div>
       </body>
 
       <footer></footer>
