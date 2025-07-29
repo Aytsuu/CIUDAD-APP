@@ -1,4 +1,4 @@
-import api from '@/pages/api/api';
+import { api } from "@/api/api";
 
 export const postProjectProposal = async (proposalInfo: Record<string, any>) => {
   try {

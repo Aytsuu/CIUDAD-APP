@@ -12,7 +12,7 @@ import logging
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-
+from django.db.models import Sum 
 
 Personal = apps.get_model('profiling', 'Personal')
 
@@ -276,10 +276,11 @@ class PaymentStatus(APIView):
                 Donation.objects.get_or_create(
                     od_transaction=donation,
                     defaults={
+                        'don_num': donation.od_transaction_id,
                         'don_item_name': "E-money",
                         'don_qty': donation.od_amount,
                         'don_description': "Sent thru an online payment channel",
-                        'don_category': "Monetary Donation",
+                        'don_category': "Monetary Donations",
                         'per_id': donation.account.rp.per if donation.account else None
                     }
                 )
@@ -298,3 +299,12 @@ class PaymentStatus(APIView):
             
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+
+class MonetaryDonationTotalView(APIView):
+    def get(self, request):
+        # Sum all donations where category is "Monetary Donations"
+        total = Donation.objects.filter(
+            don_category="Monetary Donations"
+        ).aggregate(total=Sum('don_qty'))['total'] or 0
+        
+        return Response({'total_monetary_donations': total})

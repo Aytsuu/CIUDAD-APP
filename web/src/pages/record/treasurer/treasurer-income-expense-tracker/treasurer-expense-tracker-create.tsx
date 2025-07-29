@@ -324,6 +324,8 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;
 
+    console.log("EXP REMAIN BAL CREATE: ", totBud)
+
     // const onSubmit = (values: z.infer<typeof IncomeExpenseFormSchema>) => {
 
 

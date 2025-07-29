@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export const delCouncilEvent = async (ce_id: number, permanent: boolean = false) => {
     // Validate ID first

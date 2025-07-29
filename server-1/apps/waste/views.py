@@ -8,6 +8,8 @@ from rest_framework import status, filters
 from .models import WasteTruck
 from apps.profiling.models import Sitio
 from rest_framework import generics
+from .signals import archive_completed_hotspots
+from datetime import date, timedelta
 
 # Create your views here.
 #KANI 3RD
@@ -20,7 +22,6 @@ class WasteCollectionStaffView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionStaffSerializer
     queryset = WasteCollectionStaff.objects.all()
 
-# WASTE COLLECTION RETRIEVE / VIEW
 # WASTE COLLECTION RETRIEVE / VIEW
 class WasteCollectionSchedView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionSchedSerializer
@@ -140,10 +141,34 @@ class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
+        archive_completed_hotspots()
         return WasteHotspot.objects.select_related(
-            'wstp_id__staff_id__rp__per', 
+            'wstp_id__staff__rp__per', 
             'sitio_id'                   
         ).all()
+    
+class UpcomingHotspotView(generics.ListAPIView):
+    serializer_class = WasteHotspotSerializer
+
+    def get_queryset(self):
+        today = date.today()
+        time_range = self.request.query_params.get('range', 'week')  # default to week
+        
+        queryset = WasteHotspot.objects.select_related(
+            'wstp_id__staff__rp__per', 
+            'sitio_id'
+        ).filter(
+            wh_is_archive=False,
+            wh_date__gte=today
+        )
+        
+        if time_range == 'today':
+            queryset = queryset.filter(wh_date=today)
+        else:  # week
+            end_of_week = today + timedelta(days=7)
+            queryset = queryset.filter(wh_date__lte=end_of_week)
+            
+        return queryset.order_by('wh_date', 'wh_start_time')
 
 class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
     serializer_class = WasteHotspotSerializer
@@ -169,6 +194,17 @@ class DeleteHotspotView(generics.DestroyAPIView):
 class WasteReportFileView(generics.ListCreateAPIView):
     serializer_class = WasteReportFileSerializer
     queryset = WasteReport_File.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        rep_num = self.request.query_params.get('rep_num')
+        if rep_num:
+            queryset = queryset.filter(rep_num=rep_num)
+        return queryset
+
+class WasteReportResolveFileView(generics.ListCreateAPIView):
+    serializer_class = WasteReportResolveFileSerializer
+    queryset = WasteReportResolve_File.objects.all()
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -414,6 +450,20 @@ class WatchmanView(generics.GenericAPIView):
 
         data = [watchman.to_dict() for watchman in watchmen]
         return Response(data)
+    
+
+class GarbagePickupRequestAnalyticsView(APIView):
+    def get(self, request, format=None):
+        counts = {
+            'pending': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='pending').count(),
+            'accepted': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='accepted').count(),
+            'rejected': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='rejected').count(),
+            'completed': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='completed').count(),
+            'total': Garbage_Pickup_Request.objects.count()
+        }
+        
+        return Response(counts, status=status.HTTP_200_OK)
+
      
 class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer

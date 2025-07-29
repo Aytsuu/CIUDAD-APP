@@ -14,14 +14,17 @@ import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAddCouncilEvent, useAddAttendee } from "./queries/addqueries";
 import { useGetStaffList } from "./queries/fetchqueries";
-import { formatDate } from '@/helpers/dateHelper';
+import { formatDate } from "@/helpers/dateHelper";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface SchedEventFormProps {
   onSuccess?: () => void;
 }
 
 function SchedEventForm({ onSuccess }: SchedEventFormProps) {
-  const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string }[]>([]);
+  const [selectedAttendees, setSelectedAttendees] = useState<
+    { name: string; designation: string }[]
+  >([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [ceId, setCeId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,11 +58,15 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
   const staffAttendees = form.watch("staffAttendees");
 
   const selectedAttendeeDetails = useMemo(() => {
-    const details = staffAttendees.map(staffId => {
-      const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase());
+    const details = staffAttendees.map((staffId) => {
+      const staff = staffList.find(
+        (s) => s.staff_id.toLowerCase() === staffId.toLowerCase()
+      );
       return {
         name: staff ? staff.full_name : `Unknown (ID: ${staffId})`,
-        designation: staff ? staff.position_title || "No Designation" : "No Designation",
+        designation: staff
+          ? staff.position_title || "No Designation"
+          : "No Designation",
       };
     });
     return details;
@@ -69,7 +76,9 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
     setSelectedAttendees(selectedAttendeeDetails);
   }, [selectedAttendeeDetails]);
 
-  const handleSubmitEvent = async (values: z.infer<typeof AddEventFormSchema>) => {
+  const handleSubmitEvent = async (
+    values: z.infer<typeof AddEventFormSchema>
+  ) => {
     setIsSubmitting(true);
     const [hour, minute] = values.eventTime.split(":");
     const formattedTime = `${hour}:${minute}:00`;
@@ -90,13 +99,17 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
         setCeId(ce_id);
         if (eventCategory === "meeting" && values.staffAttendees.length > 0) {
           values.staffAttendees.forEach((staffId) => {
-            const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase());
+            const staff = staffList.find(
+              (s) => s.staff_id.toLowerCase() === staffId.toLowerCase()
+            );
             addAttendee({
               staff_id: staff ? staff.staff_id : null,
               atn_present_or_absent: "Present",
               ce_id: ce_id,
               atn_name: staff ? staff.full_name : "Unknown",
-              atn_designation: staff ? staff.position_title || "No Designation" : "No Designation",
+              atn_designation: staff
+                ? staff.position_title || "No Designation"
+                : "No Designation",
             });
           });
         }
@@ -106,7 +119,7 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
       },
       onError: () => {
         setIsSubmitting(false);
-      }
+      },
     });
   };
 
@@ -139,11 +152,6 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
-      <div className="pb-2">
-        <h2 className="text-lg font-semibold">ADD EVENT</h2>
-        <p className="text-xs text-black/50">Fill out all necessary fields</p>
-      </div>
-
       <Form {...form}>
         <form className="flex flex-col gap-4">
           <div className="grid gap-4">
@@ -220,21 +228,28 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
 
           <div className="mt-4 flex justify-end gap-3">
             {eventCategory === "activity" ? (
-              <Button 
-                type="button" 
-                className=""
-                onClick={handleSave}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Saving..." : "Save"}
-              </Button>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className=""
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Save"}
+                  </Button>
+                }
+                title="Save Event"
+                description="Proceed to scheduling the event?"
+                actionLabel="Confirm"
+                onClick={form.handleSubmit(handleSubmitEvent)}
+              />
             ) : (
               <>
                 <DialogLayout
                   trigger={
                     <Button
                       type="button"
-                      className="bg-gray-500 text-black hover:bg-gray-600"
+                      className="bg-white text-black hover:bg-gray-100"
                       onClick={handlePreview}
                     >
                       Preview
@@ -259,14 +274,29 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
                   isOpen={isPreviewOpen}
                   onOpenChange={setIsPreviewOpen}
                 />
-                <Button 
+               <ConfirmationModal
+                  trigger={
+                    <Button
+                      type="button"
+                      className=""
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Saving..." : "Save"}
+                    </Button>
+                  }
+                  title="Save Event"
+                  description="Proceed to scheduling the event?"
+                  actionLabel="Confirm"
+                  onClick={form.handleSubmit(handleSubmitEvent)}
+                />
+                {/* <Button 
                   type="button" 
                   className=""
                   onClick={handleSave}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Saving..." : "Save"}
-                </Button>
+                </Button> */}
               </>
             )}
           </div>

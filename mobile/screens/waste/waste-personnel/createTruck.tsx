@@ -46,13 +46,13 @@ export default function WasteTruckCreate() {
       contentPadding="medium"
       loadingMessage="Creating truck..."
     >
-          <View className="space-y-4">
+          <View className="space-y-4 p-4 flex-1">
             <View className="mb-4">
               <FormInput
                 control={control}
                 name="truck_plate_num"
                 label="Plate Number"
-                placeholder="Plate Number"
+                placeholder="Truck's Plate Number"
               />
             </View>
 
@@ -95,16 +95,16 @@ export default function WasteTruckCreate() {
               />
             </View>
 
-            <View className="flex-row justify-end mt-6">
+            <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
               <TouchableOpacity
-                className="px-6 py-3 bg-blue-500 rounded-lg flex-row items-center justify-center min-w-[120px]"
+                className="bg-primaryBlue py-3 rounded-lg"
                 onPress={handleSubmit(onSubmit)}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text className="text-white text-lg font-medium">Create</Text>
+                  <Text className="text-white text-base font-semibold text-center">Create</Text>
                 )}
               </TouchableOpacity>
             </View>

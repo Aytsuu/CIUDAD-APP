@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Dimensions
+  Dimensions,
+  RefreshControl
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Trash, Archive, ArchiveRestore, Edit, X, Loader2, ChevronLeft } from "lucide-react-native";
@@ -35,6 +36,7 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { Button } from "@/components/ui/button";
 import MultiImageUploader, { MediaFileType } from "@/components/ui/multi-media-upload";
 import { useRouter } from "expo-router";
+import PageLayout from "@/screens/_PageLayout";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const MarkAttendeesSchema = z.object({
@@ -43,11 +45,17 @@ const MarkAttendeesSchema = z.object({
 
 
 const MarkAttendance = ({ ceId }: { ceId: number }) => {
-  const { data: allAttendees = [], isLoading, error } = useGetAttendees(ceId);
+  const { data: allAttendees = [], isLoading, error, refetch } = useGetAttendees(ceId);
   const addAttendee = useAddAttendee();
   const updateAttendee = useUpdateAttendee();
   const { toast } = useToastContext();
+const [refreshing, setRefreshing] = useState(false)
 
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
   const eventAttendees = useMemo(() => {
     return allAttendees.filter(attendee => attendee.ce_id === ceId);
   }, [allAttendees, ceId]);
@@ -155,7 +163,7 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
               />
               <Text className="ml-3 text-base font-medium text-gray-900">Select All</Text>
             </View>
-            <ScrollView style={{ maxHeight: 500, minHeight: 500 }} showsVerticalScrollIndicator={true}>
+            <ScrollView style={{ maxHeight: 500, minHeight: 500 }} showsVerticalScrollIndicator={true} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
               <View className="space-y-3">
                 {eventAttendees.map((attendee: Attendee, index) => {
                   const isSelected = selectedAttendees.includes(attendee.atn_name);
@@ -186,7 +194,7 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
                 })}
               </View>
             </ScrollView>
-            <View className="flex-row justify-end">
+            <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
               <ConfirmationModal
                 trigger={
                   // <TouchableOpacity
@@ -200,7 +208,7 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
                   //     <Loader2 size={16} color="white" className="ml-2 animate-spin" />
                   //   )}
                   // </TouchableOpacity>
-                  <Button className='bg-blue-600'><Text className="text-white font-medium">Save</Text></Button>
+                  <Button className='bg-primaryBlue'><Text className="text-white text-base font-semibold text-center">Save</Text></Button>
                 }
                 title="Confirm Save Attendance"
                 description="Are you sure you want to save these attendance changes?"
@@ -236,7 +244,7 @@ const AttendanceSheets = () => {
   const parsedCeId = Number(ceId) || 0;
   
   // Get all sheets and filter based on view mode
-  const { data: allSheets = [] } = useGetAttendanceSheets();
+  const { data: allSheets = [], refetch } = useGetAttendanceSheets();
   const filteredSheets = allSheets.filter(sheet => 
     sheet.ce_id === parsedCeId && 
     sheet.att_is_archive === (viewMode === "archive")
@@ -247,6 +255,13 @@ const AttendanceSheets = () => {
   const deleteSheet = useDeleteAttendanceSheet();
   const addAttendanceSheet = useAddAttendanceSheet();
   const { toast } = useToastContext();
+  const [refreshing, setRefreshing] = useState(false)
+  
+    const onRefresh = async () => {
+      setRefreshing(true)
+      await refetch()
+      setRefreshing(false)
+    }
 
   const handleAddAttendanceSheet = async () => {
     if (mediaFiles.length === 0) {
@@ -288,19 +303,18 @@ const AttendanceSheets = () => {
             <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Attendance Sheets and Records</Text>}
         showExitButton={false}
         headerAlign="left"
         scrollable={true}
         keyboardAvoiding={true}
         contentPadding="medium"
     >
-      <View className="flex-1">
+      <View className="flex-1 p-2">
         <Tabs value={modalTab} onValueChange={handleTabChange}>
           <TabsList className="flex-row bg-white px-4 pb-4">
             <TabsTrigger
               value="view"
-              className={`flex-1 h-10 rounded-l-lg ${modalTab === "view" ? "bg-blue-600" : "bg-gray-200"} mr-1`}
+              className={`flex-1 h-10 rounded-l-lg ${modalTab === "view" ? "bg-primaryBlue" : "bg-gray-200"} mr-1`}
             >
               <Text className={`text-sm font-medium ${modalTab === "view" ? "text-white" : "text-gray-700"}`}>
                 View Sheets
@@ -308,7 +322,7 @@ const AttendanceSheets = () => {
             </TabsTrigger>
             <TabsTrigger
               value="mark"
-              className={`flex-1 h-10 rounded-r-lg ${modalTab === "mark" ? "bg-blue-600" : "bg-gray-200"}`}
+              className={`flex-1 h-10 rounded-r-lg ${modalTab === "mark" ? "bg-primaryBlue" : "bg-gray-200"}`}
             >
               <Text className={`text-sm font-medium ${modalTab === "mark" ? "text-white" : "text-gray-700"}`}>
                 Mark Attendance
@@ -319,7 +333,7 @@ const AttendanceSheets = () => {
           <TabsContent value="view" className="flex-1">
             <View className="px-4 pt-4 flex-row justify-between items-center">
               <Button 
-                className="bg-blue-600 mb-4"
+                className="bg-primaryBlue mb-4"
                 onPress={() => setUploadModalVisible(true)}
               >
                 <Text className="text-white">Upload</Text>
@@ -350,7 +364,7 @@ const AttendanceSheets = () => {
                 </Text>
               </View>
             ) : (
-              <ScrollView className="px-4">
+              <ScrollView className="px-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
                 {filteredSheets.map((sheet) => (
                   <Card key={sheet.att_id} className="mb-4">
                     <CardContent>
@@ -442,7 +456,7 @@ const AttendanceSheets = () => {
                 <Text className="text-gray-800">Cancel</Text>
               </Button>
               <Button
-                className="flex-1 bg-blue-600"
+                className="flex-1 bg-primaryBlue"
                 onPress={handleAddAttendanceSheet}
                 disabled={mediaFiles.length === 0}
               >

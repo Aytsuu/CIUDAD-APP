@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 import { Staff } from "../queries/fetchqueries";
 
 export const getCouncilEvents = async () => {
