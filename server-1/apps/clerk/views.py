@@ -5,21 +5,37 @@ from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Prefetch
-from django.db.models import Prefetch
 
 class ServiceChargeRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargeRequestSerializer
 
     def get_queryset(self):
-        return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon").select_related(
-            'comp'  
+        return ServiceChargeRequest.objects.filter(
+            sr_payment_status="Paid", 
+            sr_type="Summon"
+        ).select_related(
+            'comp'
         ).prefetch_related(
-            'comp__complaintaccused_set__acsd'  
-        )
+            Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
+            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add')),
+            'file_action_file'
+        ).order_by('-sr_req_date')
+
+# class FileActionrequestView(generics.ListCreateAPIView):
+#     serializer_class = FileActionRequestSerializer
+#     queryset = ServiceChargeRequest.objects.all()
 
 class FileActionrequestView(generics.ListCreateAPIView):
     serializer_class = FileActionRequestSerializer
-    queryset = ServiceChargeRequest.objects.all()
+    
+    def get_queryset(self):
+        return ServiceChargeRequest.objects.select_related(
+            'comp',
+            'file_action_file'
+        ).prefetch_related(
+            Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
+            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add'))
+        ).order_by('-sr_req_date')
 
 class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
     serializer_class = ServiceChargeRequestDetailSerializer
@@ -30,16 +46,32 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
             sr_payment_status="Paid",
             sr_type="Summon"
         ).select_related(
-            'comp'
+            'comp',
+            'file_action_file',
+            'parent_summon'
         ).prefetch_related(
-            'comp__complainant', 
-            'comp__complaintaccused_set__acsd',
-            Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
+            Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
+            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add')),
+            Prefetch('case', queryset=CaseActivity.objects.prefetch_related(
+                'supporting_docs',
+                'srf'
+            ))
         )
             
+# class CaseActivityView(generics.ListCreateAPIView):
+#     serializer_class = CaseActivitySerializer
+#     queryset = CaseActivity.objects.all()
+
 class CaseActivityView(generics.ListCreateAPIView):
     serializer_class = CaseActivitySerializer
-    queryset = CaseActivity.objects.all()
+    
+    def get_queryset(self):
+        return CaseActivity.objects.select_related(
+            'sr',
+            'srf'
+        ).prefetch_related(
+            'supporting_docs'
+        ).order_by('-ca_date_of_issuance')
 
 class CaseSuppDocView(generics.ListCreateAPIView):
     serializer_class = CaseSuppDocSerializer

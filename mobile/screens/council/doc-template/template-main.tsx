@@ -634,7 +634,7 @@ function TemplateMainPage() {
 
   const previewTemplate = (item: any) => {
     router.push({
-      pathname: '/council/template/template-view-page',
+      pathname: '/(council)/template/template-view-page',
       params: {
         headerImage: item.temp_header,
         belowHeaderContent: item.temp_below_headerContent,

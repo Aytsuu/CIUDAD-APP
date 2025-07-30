@@ -63,48 +63,22 @@ class BudgetPlan_File(models.Model):
 
     class Meta:
         db_table = 'budget_plan_file'
-
-
+    
 class Budget_Plan_History(models.Model):
     bph_id = models.BigAutoField(primary_key=True)
+    bph_date_updated = models.DateTimeField(default = date.today)
+    bph_source_item = models.CharField(default="None")
+    bph_to_item = models.CharField(default = "None")
+    bph_from_new_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_from_prev_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_to_new_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_to_prev_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_transfer_amount = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
     plan = models.ForeignKey('Budget_Plan', on_delete=models.CASCADE, related_name='history')
-    bph_change_date = models.DateTimeField(default=datetime.now)
-
-    bph_year = models.CharField(max_length=4)
-    bph_actual_income = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_rpt_income = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_balance = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_tax_share = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_tax_allotment = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_cert_fees = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_other_income = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_personalService_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_miscExpense_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_localDev_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_skFund_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_calamityFund_limit = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         db_table = 'budget_plan_history'
-        ordering = ['-bph_change_date']
-
-
-class Budget_Plan_Detail_History(models.Model):
-    bpdh_id = models.BigAutoField(primary_key=True)
-    bph = models.ForeignKey('Budget_Plan_History', on_delete=models.CASCADE, related_name='history')
-
-    # Snapshot fields
-    bpdh_budget_item = models.CharField(max_length=200)
-    bpdh_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2)
-    bpdh_budget_category = models.CharField(max_length=200)
-    bpdh_is_changed = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'budget_plan_detail_history'
-    
-
+        ordering = ['-bph_date_updated']
 
 
 #=======================================================================================

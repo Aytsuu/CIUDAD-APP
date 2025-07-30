@@ -10,8 +10,6 @@ import { useQuery } from "@tanstack/react-query";
         wh_is_archive: boolean;
         sitio: string;
         watchman: string;
-        sitio_id: string;
-        wstp_id: string;
     }
 
     export const useGetUpcomingHotspots = () => {

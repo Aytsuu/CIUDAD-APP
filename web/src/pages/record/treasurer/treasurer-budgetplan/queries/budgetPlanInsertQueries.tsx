@@ -4,8 +4,6 @@ import { budget_plan, budget_plan_details, addBudgetPlanSuppDoc } from "../restf
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { BudgetPlan } from "../budgetPlanInterfaces"
 import { CircleCheck } from "lucide-react"
-import { MediaUploadType } from "@/components/ui/media-upload";
-import { fi } from "date-fns/locale"
 
 
 const BudgetPlanDetailSchema = z.object({
@@ -24,7 +22,7 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             newBudgetHeader: BudgetPlan;
             newBudgetDetails: z.infer<typeof BudgetPlanDetailSchema>[];
         }) => {
-            toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
+            // toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
 
             try {
                 const validatedDetails = values.newBudgetDetails.map(detail => {
