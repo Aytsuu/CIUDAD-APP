@@ -426,7 +426,6 @@ const CLSchedulePreview = () => {
                   <Text className="text-gray-500 mr-2">
                     Loading attendees...
                   </Text>
-                  <Loader2 size={20} color="gray" className="animate-spin" />
                 </View>
               ) : (
                 <>
@@ -485,7 +484,6 @@ const CLSchedulePreview = () => {
                 >
                   {addEventMutation.isPending || updateEventMutation.isPending ? (
                     <>
-                      <Loader2 size={20} color="white" className="animate-spin mr-2" />
                       <Text className="text-white text-base font-semibold">
                         {addEventMutation.isPending ? 'Creating...' : 'Updating...'}
                       </Text>

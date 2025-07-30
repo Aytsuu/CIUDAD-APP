@@ -159,15 +159,16 @@ export const main_router: RouteObject[] = [
       ...res_router,
       ...attendance_router,
       ...mom_router,
+      ...template_router,
       ...council_calendar_router,
       ...donation_router,
       ...treasurer_router.map((route) => ({
         ...route,
-        element: (
-          <ProtectedRoute requiredPosition="treasurer">
-            {route.element}
-          </ProtectedRoute>
-        ),
+        // element: (
+        //   <ProtectedRoute requiredPosition="treasurer">
+        //     {route.element}
+        //   </ProtectedRoute>
+        // ),
       })),
       ...waste_router,
       ...maternal_router,
