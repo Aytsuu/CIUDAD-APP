@@ -17,11 +17,6 @@ class Budget_Plan(models.Model):
     plan_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
     plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
-    plan_personalService_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_miscExpense_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_localDev_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_skFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_calamityFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
     plan_is_archive = models.BooleanField(default=False)
 
     class Meta:
@@ -63,7 +58,8 @@ class BudgetPlan_File(models.Model):
 
     class Meta:
         db_table = 'budget_plan_file'
-    
+
+
 class Budget_Plan_History(models.Model):
     bph_id = models.BigAutoField(primary_key=True)
     bph_date_updated = models.DateTimeField(default = date.today)
