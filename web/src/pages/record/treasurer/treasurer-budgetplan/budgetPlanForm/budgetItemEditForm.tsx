@@ -12,8 +12,8 @@ import { useFieldArray } from "react-hook-form"
 import { useEffect } from "react"
 import { useUpdateBudgetItem } from "../queries/budgetPlanUpdateQueries"
 
-export default function BudgetItemEditForm({budgetItems, onSuccess}: {
-
+export default function BudgetItemEditForm({planId, budgetItems, onSuccess}: {
+  planId: number;
   budgetItems: BudgetPlanDetail[];
   onSuccess: () => void;
 }) {
@@ -69,33 +69,92 @@ export default function BudgetItemEditForm({budgetItems, onSuccess}: {
     })
   }, [formValues.items, form, fields, budgetItems])
 
+  // const handleSubmit = (data: z.infer<typeof BudgetItemsSchema>) => {
+  //   // Prepare the data for submission with proper type safety
+  //     const updatedItemData = data.items.flatMap(item => {
+  //         if (!item.from || !item.to || !item.amount) return []
+          
+  //         const fromItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.from)
+  //         const toItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.to)
+  //         const amount = Number.parseFloat(item.amount) || 0
+
+  //         if (!fromItem?.dtl_id || !toItem?.dtl_id) return []
+
+  //         return [
+  //             {
+  //               // From or Source Item
+  //                 dtl_id: fromItem.dtl_id,
+  //                 dtl_proposed_budget: Number(fromItem.dtl_proposed_budget) - amount,
+  //             },
+  //             {
+  //               // To item
+  //                 dtl_id: toItem.dtl_id,
+  //                 dtl_proposed_budget: Number(toItem.dtl_proposed_budget) + amount,
+  //             }
+  //         ]
+  //     })
+
+  //     if (updatedItemData.length > 0) {
+  //         console.log("Prepared submission data:", updatedItemData)
+  //         updateItems(updatedItemData)
+  //     }
+  // }
+
   const handleSubmit = (data: z.infer<typeof BudgetItemsSchema>) => {
     // Prepare the data for submission with proper type safety
-      const updatedItemData = data.items.flatMap(item => {
-          if (!item.from || !item.to || !item.amount) return []
-          
-          const fromItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.from)
-          const toItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.to)
-          const amount = Number.parseFloat(item.amount) || 0
+    const updatedItemData = data.items.flatMap(item => {
+      if (!item.from || !item.to || !item.amount) return []
+      
+      const fromItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.from)
+      const toItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.to)
+      const amount = Number.parseFloat(item.amount) || 0
 
-          if (!fromItem?.dtl_id || !toItem?.dtl_id) return []
+      if (!fromItem?.dtl_id || !toItem?.dtl_id) return []
 
-          return [
-              {
-                  dtl_id: fromItem.dtl_id,
-                  dtl_proposed_budget: Number(fromItem.dtl_proposed_budget) - amount
-              },
-              {
-                  dtl_id: toItem.dtl_id,
-                  dtl_proposed_budget: Number(toItem.dtl_proposed_budget) + amount
-              }
-          ]
-      })
+      return [
+        {
+          // From or Source Item
+          dtl_id: fromItem.dtl_id,
+          dtl_proposed_budget: Number(fromItem.dtl_proposed_budget) - amount,                  
+        },
+        {
+          // To item
+          dtl_id: toItem.dtl_id,
+          dtl_proposed_budget: Number(toItem.dtl_proposed_budget) + amount,
+        }
+      ]
+    })
 
-      if (updatedItemData.length > 0) {
-          console.log("Prepared submission data:", updatedItemData)
-          updateItems(updatedItemData)
+    // Prepare history records
+    const historyRecords = data.items.flatMap(item => {
+      if (!item.from || !item.to || !item.amount) return []
+      
+      const fromItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.from)
+      const toItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.to)
+      const amount = Number.parseFloat(item.amount) || 0
+
+      if (!fromItem || !toItem) return []
+
+      return {
+        bph_source_item: fromItem.dtl_budget_item,
+        bph_to_item: toItem.dtl_budget_item,
+        bph_from_new_balance: Number(fromItem.dtl_proposed_budget) - amount,
+        bph_to_new_balance: Number(toItem.dtl_proposed_budget) + amount,
+        bph_transfer_amount: amount,
+        plan: planId, 
       }
+    })
+
+    if (updatedItemData.length > 0) {
+      console.log("Prepared submission data:", {
+        budgetUpdates: updatedItemData,
+        historyRecords: historyRecords
+      })
+      updateItems({
+        updatedItemData: updatedItemData,
+        historyRecords: historyRecords
+      })
+    }
   }
 
   const handleAddItem = () => {

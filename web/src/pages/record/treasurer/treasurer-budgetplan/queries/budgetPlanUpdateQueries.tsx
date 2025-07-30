@@ -93,8 +93,17 @@ export const useUpdateBudgetItem = (onSuccess: () => void) => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (values: Array<{ dtl_id: number, dtl_proposed_budget: number }>) => 
-            updateBudgetItem(values),
+        mutationFn: ({ updatedItemData, historyRecords }: {
+        updatedItemData: Array<{ dtl_id: number, dtl_proposed_budget: number }>,
+        historyRecords: Array<{
+            bph_source_item: string,
+            bph_to_item: string,
+            bph_from_new_balance: number,
+            bph_to_new_balance: number,
+            bph_transfer_amount: number,
+            plan: number
+        }>
+        }) => updateBudgetItem(updatedItemData, historyRecords),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });

@@ -241,6 +241,7 @@ function ViewBudgetPlan(){
                                         <ChevronLeft size={16} /> Back to menu
                                     </Button>
                                     <BudgetItemEditForm
+                                        planId = {planId}
                                         budgetItems={fetchedData?.details || []}
                                         onSuccess={() => {
                                             setIsEditingItem(false);

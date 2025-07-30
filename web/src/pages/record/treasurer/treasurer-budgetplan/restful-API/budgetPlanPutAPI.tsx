@@ -62,7 +62,16 @@ export const restoreBudgetPlan = async (planId: number) => {
     }
 }
 
-export const updateBudgetItem = async (budgetItems: Array<{ dtl_id: number, dtl_proposed_budget: number }>) => {    
+export const updateBudgetItem = async ( budgetItems: Array<{ dtl_id: number, dtl_proposed_budget: number }>,
+  historyRecords: Array<{
+    bph_source_item: string,
+    bph_to_item: string,
+    bph_from_new_balance: number,
+    bph_to_new_balance: number,
+    bph_transfer_amount: number,
+    plan: number
+  }>
+) => {    
     try {
         const updatePromises = budgetItems.map(item => 
             api.put(`treasurer/update-budget-details/${item.dtl_id}/`, {
@@ -70,10 +79,36 @@ export const updateBudgetItem = async (budgetItems: Array<{ dtl_id: number, dtl_
             })
         );
         const results = await Promise.all(updatePromises);
+
+        await addHistory(historyRecords);
         return results;
     } catch(err) {
         console.error(err);
         throw err; 
     }
 }
+
+const addHistory = async ( historyRecords: Array<{
+    bph_source_item: string,
+    bph_to_item: string,
+    bph_from_new_balance: number,
+    bph_to_new_balance: number,
+    bph_transfer_amount: number,
+    plan: number
+  }>
+) => {
+   try {
+    const recordsWithDate = historyRecords.map(record => ({
+      ...record,
+      bph_date_updated: new Date().toISOString()
+    }));
+
+    console.log("Sending history records:", recordsWithDate);
+
+    const res = await api.post('treasurer/budget-plan-history/', recordsWithDate);
+    return res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
 
