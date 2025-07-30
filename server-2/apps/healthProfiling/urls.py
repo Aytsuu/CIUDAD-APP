@@ -7,6 +7,7 @@ from .views.family_composition_views import *
 from .views.household_views import *
 from .views.sitio_views import *
 from .views.address_views import *
+from .views.request_registration_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -59,6 +60,14 @@ urlpatterns = [
     path('per_additional_details/create/', HealthRelatedDetailsCreateView.as_view(), name='health-details-create'),
     path('mother-health-info/', MotherHealthInfoListView.as_view(), name='mother-health-info-list'),
     path('mother-health-info/<int:pk>/', MotherHealthInfoView.as_view(), name='mother-health-info-detail'),
+
+    #   # Request Urls
+    # path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
+    # # path("request/create/", RequestCreateView.as_view(), name="request-create"),
+    # path("request/link/registration/", LinkRegVerificationView.as_view(), name="link-registration-verification"),
+    # path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
+    # path("request/count/", RequestCountView.as_view(), name="total-request"),
+
 
     # Request Urls
     # path("request/", RequestRegistrationView.as_view(), name="request-details"),

@@ -23,7 +23,7 @@ export const addPersonalAddress = async (data: Record<string, any>[], staff_id: 
       staff_id: staff_id
     }
     const res = await api.post("profiling/per_address/create/", values);
-    await api2.post("health-profiling/per_address/create/", data)
+    await api2.post("health-profiling/per_address/create/", values)
     return res.data;
   } catch (err) {
     throw err;

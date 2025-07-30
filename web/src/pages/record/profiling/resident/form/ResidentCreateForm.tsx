@@ -192,6 +192,13 @@ export default function ResidentCreateForm({
         throw new Error("Staff information not available");
       }
 
+      // Log the payload being sent
+      console.log("ResidentCreateForm submit payload:", {
+        personalInfo,
+        staffId,
+        addresses
+      });
+
       const resident = await addResidentAndPersonal({
         personalInfo: personalInfo,
         staffId: staffId
@@ -199,10 +206,13 @@ export default function ResidentCreateForm({
 
       const new_addresses = await addAddress(addresses)
 
-      await addPersonalAddress(new_addresses?.map((address: any) => ({
-        add: address.add_id,
-        per: resident.per.per_id,
-      })))
+      await addPersonalAddress({
+        data: new_addresses?.map((address: any) => ({
+          add: address.add_id,
+          per: resident.per.per_id,
+        })),
+        staff_id: staffId
+      })
       
       showSuccessToast('Successfully registered new resident!')
       if (params?.isRegistrationTab) {

@@ -6,6 +6,8 @@
 from django.db import models
 from django.conf import settings
 from datetime import date
+from simple_history.models import HistoricalRecords
+
 
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
@@ -43,11 +45,21 @@ class Personal(models.Model):
     per_status = models.CharField(max_length=100)
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
-    per_contact = models.CharField(max_length=100)  
+    per_contact = models.CharField(max_length=20)  
+
+    history = HistoricalRecords(
+        table_name='personal_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
 
     class Meta:
         db_table = 'personal'
-
+        indexes = [
+            models.Index(fields=['per_lname', 'per_fname']),
+            models.Index(fields=['per_contact']),
+        ]
 
     def __str__(self):
         name_parts = [self.per_lname, self.per_fname]
@@ -65,6 +77,16 @@ class PersonalAddress(models.Model):
     class Meta:
         db_table = 'personal_address'
 
+class PersonalAddressHistory(models.Model):
+    pah_id = models.BigAutoField(primary_key=True)
+    pah_date = models.DateTimeField(auto_now_add=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+    history_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'personal_address_history'
+
 class ResidentProfile(models.Model):
     rp_id = models.CharField(max_length=50, primary_key=True)
     rp_date_registered = models.DateField(default=date.today)
@@ -73,6 +95,11 @@ class ResidentProfile(models.Model):
 
     class Meta:
         db_table = 'resident_profile'
+        indexes = [
+            models.Index(fields=['rp_id']),
+            models.Index(fields=['per']),
+            models.Index(fields=['rp_date_registered'])
+        ]
 
     def __str__(self):
         return f"{self.per} (ID: {self.rp_id})"
@@ -127,17 +154,23 @@ class FamilyComposition(models.Model):
     def __str__(self):
         return f"{self.rp} in Family {self.fam.fam_id}"
 
-    
-class RequestRegistration(models.Model):
-    req_id = models.BigAutoField(primary_key=True)
-    req_date = models.DateField()
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+# class RequestRegistration(models.Model):
+#     req_id = models.BigAutoField(primary_key=True)
+#     req_date = models.DateField(auto_now_add=True)
+#     req_is_archive = models.BooleanField(default=False)
 
-    class Meta: 
-        db_table = 'request_registration'
+#     class Meta: 
+#         db_table = 'request_registration'
 
-    def __str__(self):
-        return f"Request #{self.req_id} by {self.per} on {self.req_date}"
+# class RequestRegistrationComposition(models.Model):
+#     rrc_id = models.BigAutoField(primary_key=True)
+#     rrc_fam_role = models.CharField(max_length=50)
+#     req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name="request_composition")
+#     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+#     acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, null=True)
+
+#     class Meta:
+#         db_table = 'request_registration_composition'
 
 class HealthRelatedDetails(models.Model):
     hrd_id = models.BigAutoField(primary_key=True)
@@ -228,19 +261,6 @@ class NonCommunicableDisease(models.Model):
     class Meta:
         db_table = 'non_communicable_disease'
 
-class RequestFile(models.Model):
-    rf_id = models.BigAutoField(primary_key=True)
-    rf_name = models.CharField(max_length=500)
-    rf_type = models.CharField(max_length=50)
-    rf_path = models.CharField(max_length=500)
-    rf_url = models.URLField()
-    rf_is_id = models.BooleanField(default=False)
-    rf_id_type = models.CharField(max_length=50, null=True ,blank=True)
-    rf_created_at = models.DateTimeField(auto_now_add=True)
-    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name='files') 
- 
-    class Meta:
-        db_table = 'request_file'
 
 class MotherHealthInfo(models.Model):
     mhi_id = models.BigAutoField(primary_key=True)
@@ -257,8 +277,20 @@ class MotherHealthInfo(models.Model):
         db_table = 'mother_health_info'
         unique_together = ('rp', 'fam')
         
+class KYCRecord(models.Model):
+    kyc_id = models.BigAutoField(primary_key=True)
+    id_document_front = models.TextField(null=True, blank=True)
+    id_has_face = models.BooleanField(null=True, default=False)
+    id_face_embedding = models.BinaryField(null=True, blank=True)
+    face_photo = models.TextField(null=True, blank=True)
+    document_info_match = models.BooleanField(null=True, default=False)
+    face_match_score = models.FloatField(null=True, blank=True)
+    is_verified = models.BooleanField(null=True, default=False)
+    created_at = models.DateTimeField(null=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, auto_now=True)
 
-
+    class Meta:
+        db_table = 'kyc_record'
 
 
 # class RiskClassGroups(models.Model):

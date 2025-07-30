@@ -123,7 +123,7 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
         resident_profile = ResidentProfile.objects.create(
             rp_id = self.generate_resident_no(),
             per = personal,
-            staff_id = staff
+            staff = staff
         )
         
         return resident_profile

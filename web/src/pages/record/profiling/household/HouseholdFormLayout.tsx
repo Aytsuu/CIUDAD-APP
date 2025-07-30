@@ -116,7 +116,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
       const householdInfo = form.getValues()
 
-      // Add to main household database
+      // Add to main household database and health household database
       await addHousehold({
         householdInfo: householdInfo,
         staffId: user?.staff?.staff_id,

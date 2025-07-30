@@ -18,7 +18,10 @@ export const addAddressHealth =  async (data: Record<string, any>[]) => {
 // POST request for personal address
 export const addPersonalAddressHealth = async (data: Record<string, any>[]) => {
   try {
-    const res = await api2.post("health-profiling/per_address/create/", data);
+    const values = {
+      per_add: data
+    }
+    const res = await api2.post("health-profiling/per_address/create/", values);
     return res.data;
   } catch (err) {
     throw err;
