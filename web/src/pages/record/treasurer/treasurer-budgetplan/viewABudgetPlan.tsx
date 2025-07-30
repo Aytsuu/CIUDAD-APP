@@ -1,6 +1,4 @@
 import TableLayout from "@/components/ui/table/table-layout";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useState } from "react";
 import { ChevronLeft, Pen, ChevronRightIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
@@ -15,7 +13,10 @@ import { usegetBudgetPlanDetail } from "./queries/budgetplanFetchQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BudgetPlanHistory from "./budgetPlanHistory";
 import BudgetPlanSuppDocs from "./budgetplanSuppDocs";
-
+import { useState } from "react";
+import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "./budgetItemDefinition";
+import BudgetHeaderEditForm from "./budgetPlanForm/budgetHeaderEditForm";
+import BudgetItemEditForm from "./budgetPlanForm/budgetItemEditForm";
 
 const styles = {
     mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -34,18 +35,19 @@ const styles = {
 };
 
 // Table Header
-const headerProp = ["", "Per Proposed Budget", "Budgetary Limitation", "Balance"].map(
+const headerProp = ["", "Per Proposed Budget"].map(
     (text) => <span className={styles.header}>{text}</span>
 );
 
 function ViewBudgetPlan(){
-    //get the passed Id
     const location = useLocation();
+    const [isEditingHeader, setIsEditingHeader] = useState(false)
+    const [isEditingItem, setIsEditingItem] = useState(false)
     const planId = location.state?.planId;
-    const [currentPage, setCurrentPage] = useState(1);
     const [activeTab, setActiveTab] = useState("current");
-
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [editingRowId, setEditingRowId] = useState<number | null>(null)
 
     // calculating net available resources
     const availableResources = 
@@ -55,7 +57,7 @@ function ViewBudgetPlan(){
     Number(fetchedData?.plan_cert_fees || 0) +
     Number(fetchedData?.plan_other_income || 0);
 
-    // calculating totals per category (using original unsorted data)
+    // calculating totals per category
     const personalServiceTotal = fetchedData?.details
                                 ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category === "Personal Service")
                                 ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0;
@@ -76,25 +78,28 @@ function ViewBudgetPlan(){
                         ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category == "LDRRM Fund")
                         ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0 ) || 0;
 
-    // Limit Calculations
-    const personalServiceLimit = (fetchedData?.plan_actual_income ?? 0) * ((fetchedData?.plan_personalService_limit ?? 0) / 100);
-    const miscExpenseLimit = (fetchedData?.plan_rpt_income ?? 0) * ((fetchedData?.plan_miscExpense_limit ?? 0) / 100);
-    const nonOfficeLimit = (fetchedData?.plan_tax_allotment ?? 0) * ((fetchedData?.plan_localDev_limit ?? 0) / 100);
-    const skfundLimit = availableResources * ((fetchedData?.plan_skFund_limit ?? 0) / 100);
-    const calamityfundLimit = availableResources * ((fetchedData?.plan_calamityFund_limit ?? 0) / 100);
+    // 1. Prepare ordered label list from budgetItemDefinition
+    const orderedBudgetLabels = [
+        ...budgetItemsPage1,
+        ...budgetItemsPage2,
+        ...budgetItemsPage3,
+        ...budgetItemsPage4,
+    ].map((item) => item.label);
 
-    // Create sorted copy of details only for display
-    const sortedDetails = [...(fetchedData?.details || [])].sort((a, b) => 
-        (a.dtl_id || 0) - (b.dtl_id || 0)
-    );
+    // 2. Sort fetched details by this order
+    const sortedDetails = [...(fetchedData?.details || [])].sort((a, b) => {
+        const idxA = orderedBudgetLabels.indexOf(a.dtl_budget_item ?? "");
+        const idxB = orderedBudgetLabels.indexOf(b.dtl_budget_item ?? "");
+        return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
+    });
 
-    // populating the rows using SORTED details for display only
+    // 3. Build rows using the sorted details
     const rowsProp = sortedDetails.reduce((acc: any[], detail: BudgetPlanDetail) => {
         // adding title at the beginning of the table
         if(acc.length == 0){
             acc.push(
                 [<span className={styles.mainCategory}>CURRENT OPERATING EXPENDITURES</span>],
-                [<span className={styles.subCategory}>Personal Services ({fetchedData?.plan_personalService_limit}%)</span>]
+                [<span className={styles.subCategory}>Personal Services</span>]
             )
         }
 
@@ -110,81 +115,51 @@ function ViewBudgetPlan(){
             "Disaster Response Program"
         ].includes(detail.dtl_budget_item);
 
-        const itemLabel = detail.dtl_budget_item === "Extraordinary & Miscellaneous Expense"
-        ? `${detail.dtl_budget_item} (${fetchedData?.plan_miscExpense_limit ?? 0}%)`
-        : detail.dtl_budget_item;
-
+        const itemLabel = detail.dtl_budget_item;
 
         const mainRow = [
             <span className={isIndented ? styles.indentedRowItem : styles.rowItem}>{itemLabel}</span>,
             <span className={styles.rowValue}>{formatNumber(detail.dtl_proposed_budget)}</span>
         ];
 
-        // addding necessary footers(totals, budget limits, and balances)
-        if (detail.dtl_budget_item === "Membership Dues/ Contribution to Organization") {
-            mainRow.push(
-                <span className={styles.rowValue}>{formatNumber(detail.dtl_proposed_budget)}</span>,
-            );
-        }else if(detail.dtl_budget_item == "Extraordinary & Miscellaneous Expense"){
-            mainRow.push(
-                <span className={styles.rowValue}>{formatNumber(miscExpenseLimit)}</span>,
-                <span className={styles.rowValue}>{formatNumber(miscExpenseLimit - detail.dtl_proposed_budget)}</span>
-            );
-        }else if(detail.dtl_budget_item == "Subsidy to Sangguniang Kabataan (SK) Fund"){
-            mainRow.push(
-                <span className={styles.rowValue}>{formatNumber(skfundLimit)}</span>,
-                <span className={styles.rowValue}>{formatNumber(skfundLimit - detail.dtl_proposed_budget)}</span>
-            );
-        }
         acc.push(mainRow);
     
         if (detail.dtl_budget_item === "Commutation of Leave Credits") {
             acc.push(
                 [
                     <div ></div>, 
-                    <div className={styles.budgetFooter}>Total: {formatNumber(personalServiceTotal)}</div>,
-                    <div className={styles.budgetFooter}>{formatNumber(personalServiceLimit)}</div>,
-                    <div className={styles.budgetFooter}>{formatNumber(personalServiceLimit - personalServiceTotal)}</div>
+                    <div className={styles.budgetFooter}>Total: {formatNumber(personalServiceTotal)}</div>
                 ],
-        
                 [<span className={styles.subCategory}>Maint. & Other Operating Expenses</span>]
             );
         } else if(detail.dtl_budget_item == "Disaster Supplies"){
             acc.push(
                 [
                     <div ></div>, 
-                    <div className={styles.budgetFooter}>Total: {formatNumber(calamityFundTotal)}</div>,
-                    <div className={styles.budgetFooter}>{formatNumber(calamityfundLimit)}</div>,
-                    <div className={styles.budgetFooter}>{formatNumber(calamityfundLimit - calamityFundTotal)}</div>
+                    <div className={styles.budgetFooter}>Total: {formatNumber(calamityFundTotal)}</div>
                 ])
-        } else if(detail.dtl_budget_item == "Repair and Maintenance of Motor Vehicle"){
-            acc.push( 
-                [<span className={styles.subCategory}>Maint. & Other Operating Expenses</span>],
-            )
-        }else if(detail.dtl_budget_item == "Insurance Expenses"){
+        } else if(detail.dtl_budget_item == "Insurance Expenses"){
             acc.push([
                 <span className={styles.rowItem}>Other Maint. & Operating Expenses</span>
             ])
-        }else if(detail.dtl_budget_item == "Rehabilitation of Multi-Purpose"){
+        } else if(detail.dtl_budget_item == "Rehabilitation of Multi-Purpose"){
             acc.push(
                 [
                     <div ></div>, 
-                    <div className={styles.budgetFooter}>Total: {formatNumber(nonOfficeTotal)}</div>,
-                    <div className={styles.budgetFooter}>{formatNumber(nonOfficeLimit)}</div>,
-                    <div className={styles.budgetFooter}>{formatNumber(nonOfficeLimit - nonOfficeTotal)}</div>
+                    <div className={styles.budgetFooter}>Total: {formatNumber(nonOfficeTotal)}</div>
                 ],
                 [],
-                [<span className={styles.subCategory}>Sangguniang Kabataan Fund ({fetchedData?.plan_skFund_limit}% )</span>],
+                [<span className={styles.subCategory}>Sangguniang Kabataan Fund</span>],
             )
-        }else if(detail.dtl_budget_item == "Total Capital Outlays"){
+        } else if(detail.dtl_budget_item == "Total Capital Outlays"){
             acc.push([
                 <div ></div>, 
                 <div className={styles.budgetFooter}>Total: {formatNumber(capitalOutlaysTotal)}</div>,
             ],
             [<span className={styles.mainCategory}>NON-OFFICE</span>],
-            [<span className={styles.subCategory}>Local Development Fund ({fetchedData?.plan_localDev_limit}%)</span>],
+            [<span className={styles.subCategory}>Local Development Fund</span>],
             );
-        }else if(detail.dtl_budget_item.startsWith("Extraordinary & Miscellaneous Expense")){
+        } else if(detail.dtl_budget_item.startsWith("Extraordinary & Miscellaneous Expense")){
             acc.push([
                 <div ></div>, 
                 <div className={styles.budgetFooter}>Total: {formatNumber(otherExpenseTotal)}</div>,
@@ -193,14 +168,13 @@ function ViewBudgetPlan(){
             );
         } else if(detail.dtl_budget_item == "Subsidy to Sangguniang Kabataan (SK) Fund"){
             acc.push(
-                [<span className={styles.subCategory}>LDRRM Fund /Calamity Fund ({fetchedData?.plan_calamityFund_limit}%)</span>],
+                [<span className={styles.subCategory}>LDRRM Fund /Calamity Fund</span>],
             )
         }
     
         return acc;
     }, []) || [];
 
-    //  Loading screen
     if (isLoading){
         return (
             <div className="w-full h-full">
@@ -211,13 +185,6 @@ function ViewBudgetPlan(){
             </div>
         )
     }
-
-    // Pagination
-    const totalPages = Math.ceil(rowsProp.length / 12);
-    const handlePageChange = (newPage: number) => { setCurrentPage(newPage); };
-    const startIndex = (currentPage - 1) * 12;
-    const endIndex = startIndex + 12;
-    const currentRows = rowsProp.slice(startIndex, endIndex);
 
     return (
         <Tabs defaultValue="current" className="w-full">
@@ -232,18 +199,71 @@ function ViewBudgetPlan(){
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
 
-                {fetchedData?.plan_year  === String(new Date().getFullYear()) && (
-                    <Link to="/budgetplan-forms" state={{
-                            budgetData: fetchedData,
-                            isEdit: true,
-                            from: 'view',
-                            plan_id: planId
-                        }}
-                    >
-                        <Button>
-                            <Pen size={16} /> <span>Edit</span>
-                        </Button>
-                    </Link>
+                   {fetchedData?.plan_year === String(new Date().getFullYear()) && (
+                    <DialogLayout
+                        trigger={
+                            <Button>
+                                <Pen size={16} /> <span>Edit</span>
+                            </Button>
+                        }
+                        title={isEditingHeader ? "Edit Budget Plan Header" : "Edit Budget Plan"}
+                        description={
+                            isEditingHeader 
+                                ? "Update the budget plan header information." 
+                                : "Select a part of the budget plan that you want to update."
+                        }
+                        mainContent={
+                            isEditingHeader ? (
+                                <div className="flex flex-col gap-4">
+                                    <Button  variant="outline"  className="w-fit"  onClick={() => setIsEditingHeader(false)}>
+                                        <ChevronLeft size={16} /> Back to menu
+                                    </Button>
+                                    <BudgetHeaderEditForm 
+                                        balance= {fetchedData?.plan_balance || 0}
+                                        realtyTaxShare = {fetchedData?.plan_tax_share || 0}
+                                        taxAllotment={fetchedData?.plan_tax_allotment || 0}
+                                        clearanceAndCertFees={fetchedData?.plan_cert_fees || 0}
+                                        otherSpecificIncome={fetchedData?.plan_other_income || 0}
+                                        actualIncome={fetchedData?.plan_actual_income || 0}
+                                        actualRPT={fetchedData?.plan_rpt_income || 0}
+                                        budgetaryObligations = {fetchedData?.plan_budgetaryObligations}
+                                        planId={planId}
+                                        onSuccess={() => {
+                                            setIsEditingHeader(false);
+                                            setEditingRowId(null);
+                                        }}
+                                    />
+                                </div>
+                            ) : 
+                            isEditingItem ?(
+                                <div className="flex flex-col gap-4">
+                                     <Button  variant="outline"  className="w-fit"  onClick={() => setIsEditingItem(false)}>
+                                        <ChevronLeft size={16} /> Back to menu
+                                    </Button>
+                                    <BudgetItemEditForm
+                                        planId = {planId}
+                                        budgetItems={fetchedData?.details || []}
+                                        onSuccess={() => {
+                                            setIsEditingItem(false);
+                                            setEditingRowId(null);
+                                        }}
+                                    />
+                                </div>
+                            ):(
+                                <div className="flex flex-col gap-2">
+                                    <Button className="w-full" onClick={() => setIsEditingHeader(true)}  >
+                                        Budget Plan Header
+                                    </Button>
+                                    <Button className="w-full"  onClick={() => setIsEditingItem(true)} >
+                                        Budget Plan Items
+                                    </Button>
+                                </div>
+                            )
+                        }
+                        isOpen={editingRowId === Number(planId)}
+                        onOpenChange={(open) => setEditingRowId(open ? Number(planId) : null)}
+                        className="min-w-[800px]"
+                    />
                 )}
 
             </div>
@@ -253,7 +273,7 @@ function ViewBudgetPlan(){
                     Current Budget Plan
                 </TabsTrigger>
                 <TabsTrigger value="history" onClick={() => setActiveTab("history")}>
-                    Revision History
+                    Update History
                 </TabsTrigger>
                  <TabsTrigger value="documents" onClick={() => setActiveTab("documents")}>
                     Supporting Documents
@@ -315,12 +335,7 @@ function ViewBudgetPlan(){
 
                 {/* Budget Table */}
                 <div className="bg-white p-5 overflow-x-auto">
-                    <TableLayout header={headerProp} rows={currentRows} />
-                </div>
-
-                {/* Pagination */}
-                <div className="mt-4 flex justify-center">
-                    <PaginationLayout totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange} />
+                    <TableLayout header={headerProp} rows={rowsProp} />
                 </div>
             </TabsContent>
 
