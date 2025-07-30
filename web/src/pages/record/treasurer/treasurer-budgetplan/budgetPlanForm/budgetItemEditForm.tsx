@@ -308,6 +308,7 @@ import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
+import { FormSelect } from "@/components/ui/form/form-select";
 import { FormInput } from "@/components/ui/form/form-input";
 import { BudgetItemsSchema } from "@/form-schema/treasurer/budget-item-edit-schema";
 import { Button } from "@/components/ui/button/button";
@@ -579,7 +580,7 @@ export default function BudgetItemEditForm({
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select source" />
+                            <SelectValue placeholder="Select item" />
                           </SelectTrigger>
                           <SelectContent>
                             {getAvailableFromOptions(index).map((option) => (
@@ -616,7 +617,7 @@ export default function BudgetItemEditForm({
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select destination" />
+                            <SelectValue placeholder="Select item" />
                           </SelectTrigger>
                           <SelectContent>
                             {getAvailableToOptions(index).map((option) => (
