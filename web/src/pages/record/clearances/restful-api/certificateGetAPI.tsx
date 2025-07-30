@@ -1,11 +1,11 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
 
-// Fetch certificates (only paid ones)
+// Fetch certificates
 export const getCertificates = async () => {
     try {
-        console.log('Making request to /clerk/certificate/?payment_status=paid');
-        const res = await api.get('/clerk/certificate/?payment_status=paid');
+        console.log('Making request to /clerk/certificate/');
+        const res = await api.get('/clerk/certificate/');
         console.log('API Response:', res.data);  // Log the response data
         return res.data;
     } catch (err) {

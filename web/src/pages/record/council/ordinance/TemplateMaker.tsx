@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { createTemplate, updateTemplate, getTemplateById } from './restful-api/TemplateAPI';
 import { generateOrdinancePDFAsBlob } from '@/services/pdfGenerator';
 import { uploadPDFToSupabase } from '@/services/supabaseStorage';
+import headerImage from '@/assets/images/SanRoqueHeader.png';
 
 interface TemplateData {
     title: string;
@@ -113,8 +114,8 @@ function TemplateMaker() {
     const [templateData, setTemplateData] = useState<TemplateData>({
         title: '',
         templateBody: '',
-        withSeal: false,
-        withSignature: false,
+        withSeal: true, // Always include seal for official documents
+        withSignature: false, // Remove signature requirement
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [headerMedia, setHeaderMedia] = useState<File | null>(null);
@@ -134,8 +135,8 @@ function TemplateMaker() {
                         setTemplateData({
                             title: template.title,
                             templateBody: template.template_body,
-                            withSeal: template.with_seal,
-                            withSignature: template.with_signature,
+                            withSeal: true, // Always include seal for official documents
+                            withSignature: false, // Remove signature requirement
                             headerMedia: undefined
                         });
                     } else {
@@ -226,7 +227,7 @@ function TemplateMaker() {
 
         try {
             // Generate PDF as Blob
-            const pdfBlob = generateOrdinancePDFAsBlob(
+            const pdfBlob = await generateOrdinancePDFAsBlob(
                 templateData,
                 {
                     ordinanceNumber: '01',
@@ -269,7 +270,7 @@ function TemplateMaker() {
             setIsSubmitting(true);
             
             // Generate PDF as Blob
-            const pdfBlob = generateOrdinancePDFAsBlob(
+            const pdfBlob = await generateOrdinancePDFAsBlob(
                 templateData,
                 {
                     ordinanceNumber: '01',
@@ -291,8 +292,8 @@ function TemplateMaker() {
             const formData = new FormData();
             formData.append('title', templateData.title);
             formData.append('template_body', templateData.templateBody);
-            formData.append('with_seal', templateData.withSeal.toString());
-            formData.append('with_signature', templateData.withSignature.toString());
+            formData.append('with_seal', 'true'); // Always include seal for official documents
+            formData.append('with_signature', 'false'); // Remove signature requirement
             formData.append('pdf_url', uploadResult.url || '');
 
             if (templateId) {
@@ -386,54 +387,24 @@ function TemplateMaker() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Document Header */}
-                        <div className="space-y-3">
-                            <Label className="text-sm font-medium">Document Header</Label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                                <input
-                                    type="file"
-                                    id="header-media"
-                                    className="hidden"
-                                    accept="image/*,.pdf"
-                                    onChange={handleFileUpload}
-                                />
-                                <label htmlFor="header-media" className="cursor-pointer">
-                                    <div className="flex flex-col items-center space-y-2">
-                                        <Upload className="h-8 w-8 text-gray-400" />
-                                        <div className="text-sm text-gray-600">
-                                            {headerMedia ? headerMedia.name : "Add Media"}
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Document Footer Options */}
-                        <div className="space-y-3">
-                            <Label className="text-sm font-medium">Document Footer</Label>
-                            <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="with-seal"
-                                        checked={templateData.withSeal}
-                                        onCheckedChange={(checked) => 
-                                            setTemplateData(prev => ({ ...prev, withSeal: checked as boolean }))
-                                        }
-                                    />
-                                    <Label htmlFor="with-seal" className="text-sm">With Seal</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="with-signature"
-                                        checked={templateData.withSignature}
-                                        onCheckedChange={(checked) => 
-                                            setTemplateData(prev => ({ ...prev, withSignature: checked as boolean }))
-                                        }
-                                    />
-                                    <Label htmlFor="with-signature" className="text-sm">With Applicant Signature</Label>
-                                </div>
-                            </div>
-                        </div>
+                                                 {/* Document Header - Official Letterhead */}
+                         <div className="space-y-3">
+                             <Label className="text-sm font-medium">Document Header</Label>
+                             <div className="border-2 border-gray-300 rounded-lg p-6 bg-white">
+                                 <div className="flex items-center justify-center">
+                                     {/* Header Image Preview */}
+                                     <img 
+                                         src={headerImage} 
+                                         alt="Official Letterhead"
+                                         className="max-w-full h-auto max-h-32 object-contain"
+                                     />
+                                 </div>
+                                 
+                                 <div className="mt-4 text-xs text-gray-500 text-center">
+                                     Official letterhead will be automatically included in all generated ordinances
+                                 </div>
+                             </div>
+                         </div>
 
                         {/* Title */}
                         <div className="space-y-3">

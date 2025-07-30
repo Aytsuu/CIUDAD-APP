@@ -6,4 +6,5 @@ router = routers.DefaultRouter()
 
 urlpatterns = [
     path('', ActivityLogViewSet.as_view({'get': 'list'}), name='activity-log-list'),
+    path('<int:pk>/', ActivityLogViewSet.as_view({'get': 'retrieve'}), name='activity-log-detail'),
 ]
