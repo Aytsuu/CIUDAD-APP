@@ -53,7 +53,6 @@ const WasteMainScheduling = () => {
   ];
 
   if (isHotspotLoading || isWasteColLoading) {
-  if (isHotspotLoading || isWasteColLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />

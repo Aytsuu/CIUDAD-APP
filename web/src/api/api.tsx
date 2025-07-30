@@ -10,12 +10,21 @@ import supabase from "@/supabase/supabase";
 //   },
 // });
 
+// export const api = axios.create({
+//     baseURL: "http://localhost:8000",
+//     headers: {
+//         'Content-Type': 'application/json', // Ensure JSON is used for requests
+//     },
+// });
 export const api = axios.create({
-    baseURL: "http://localhost:8000",
-    headers: {
-        'Content-Type': 'application/json', // Ensure JSON is used for requests
-    },
+  baseURL: "https://ciudad-app.onrender.com",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
 });
+
 
 export const api2 = axios.create({
   baseURL: "http://localhost:8001",
