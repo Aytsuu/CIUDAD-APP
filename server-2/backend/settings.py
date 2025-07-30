@@ -212,7 +212,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     config('FRONTEND_URL', default='http://localhost:3000'),
 ]
-
+ALLOWED_HOSTS = ['*'] 
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True
 

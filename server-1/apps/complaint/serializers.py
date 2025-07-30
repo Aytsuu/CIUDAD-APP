@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Complaint, Complainant, Accused, ComplaintAccused, Complaint_File
+from .models import *
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 
 class AccusedSerializer(serializers.ModelSerializer):
@@ -22,26 +22,29 @@ class ComplaintFileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ComplaintSerializer(serializers.ModelSerializer):
-    cpnt = ComplainantSerializer(read_only=True)
+    complainant = serializers.SerializerMethodField()
     accused_persons = serializers.SerializerMethodField()
     complaint_files = ComplaintFileSerializer(source='complaint_file', many=True, read_only=True)
     
     class Meta:
         model = Complaint
         fields = [
-            'comp_id', 
-            'comp_incident_type', 
-            'comp_datetime', 
-            'comp_allegation', 
+            'comp_id',
+            'comp_incident_type',
+            'comp_location',
+            'comp_datetime',
+            'comp_allegation',
             'comp_created_at',
             'comp_is_archive',
-            'comp_category',
-            'cpnt', 
-            'accused_persons',
-            'complaint_files'
+            'complainant', 
+            'accused_persons',      
+            'complaint_files',
         ]
-    
+
     def get_accused_persons(self, obj):
-        """Get all accused persons for this complaint"""
         complaint_accused = ComplaintAccused.objects.filter(comp=obj).select_related('acsd__add')
         return AccusedSerializer([ca.acsd for ca in complaint_accused], many=True).data
+
+    def get_complainant(self, obj):  # Fixed method name
+        complaint_complainant = ComplaintComplainant.objects.filter(comp=obj).select_related('cpnt__add')
+        return ComplainantSerializer([cc.cpnt for cc in complaint_complainant], many=True).data

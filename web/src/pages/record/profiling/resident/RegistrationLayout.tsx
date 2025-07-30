@@ -139,15 +139,6 @@ export default function RegistrationLayout() {
         />
       )}
       {currentStep === 2 && (
-        <AccountRegistrationLayout 
-          tab_params={{
-            residentId: residentId,
-            isRegistrationTab: true,
-            next: () => setCurrentStep((prev) => prev + 1)
-          }}
-        />
-      )}
-      {currentStep === 3 && (
         <HouseholdFormLayout 
           tab_params={{
             residentId: residentId,
@@ -157,7 +148,7 @@ export default function RegistrationLayout() {
           }}
         />
       )}
-      {currentStep === 4 && (
+      {currentStep === 3 && (
         <div className="flex justify-center">
             {!hasFamily ? (
               <SoloFormLayout 
@@ -179,7 +170,7 @@ export default function RegistrationLayout() {
             )}
         </div>
       )}
-      {currentStep === 5 && (
+      {currentStep === 4 && (
         <BusinessFormLayout 
           tab_params={{
             residentId: residentId,
@@ -188,7 +179,7 @@ export default function RegistrationLayout() {
           }}
         />
       )}
-      {currentStep === 6 && ( // Completion page with animation
+      {currentStep === 5 && (
         <RegistrationCompletion />
       )}
     </>

@@ -40,6 +40,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     [sitioList]
   );
 
+  console.log(params.data)
   // ==================== HANDLERS ====================
 
   const submit = async () => {
@@ -52,30 +53,29 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     }
 
     try {
-      addResidentAndPersonal({
+      const resident = await addResidentAndPersonal({
         personalInfo: {
           per_id: params.data?.per_id,
         },
         staffId: user?.staff?.staff_id,
-      }, {
-        onSuccess: (newData) => {
-          updateAccount({
-            accNo: params.data.acc,
-            data: { rp: newData.rp_id },
-          }, {
-              onSuccess: () => {
-                deleteRequest(params.data.req_id);
-                showSuccessToast("Request Approved!");
-                params?.setResidentId(newData.rp_id);
-                params?.setAddresses(params?.data.addresses)
-                params?.next();
-              },
-            }
-          );
-        },
       });
+
+      await updateAccount({
+        accNo: params.data.acc,
+        data: { rp: resident.rp_id },
+      }, {
+          onSuccess: () => {
+            deleteRequest(params.data.req_id);
+            showSuccessToast("Request Approved!");
+            params?.setResidentId(resident.rp_id);
+            params?.setAddresses(params?.data.addresses)
+            params?.next();
+          },
+        }
+      );
     } catch (error) {
       showErrorToast("Failed to process request");
+      setIsSubmitting(false);
     }
   };
 

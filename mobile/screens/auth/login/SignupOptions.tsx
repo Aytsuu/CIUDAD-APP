@@ -5,6 +5,7 @@ import { useToastContext } from "@/components/ui/toast";
 import { Ionicons } from "@expo/vector-icons";
 import { Drawer } from "@/components/ui/drawer";
 import { ScrollView } from "react-native";
+import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 
 
 export const SignupOptions = ({
@@ -17,6 +18,7 @@ export const SignupOptions = ({
   const router = useRouter();
   const { height: screenHeight } = Dimensions.get("window");
   const { toast } = useToastContext();
+  const { setType } = useRegistrationTypeContext();
 
   const handleClose = () => {
     onClose();
@@ -53,11 +55,11 @@ export const SignupOptions = ({
     {
       id: "business",
       title: "Business Account",
-      description: "Connect to an existing business profile",
+      description: "For business owners not residing in Brgy. San Roque",
       icon: "business-outline",
       color: "#3B82F6",
       bgColor: "#EFF6FF",
-      route: "/registration/business/respondent-verification",
+      route: "/registration/individual/account-reg",
     },
   ];
 
@@ -79,6 +81,7 @@ export const SignupOptions = ({
               key={option.id}
               onPress={() => {
                 onClose();
+                setType(option.id)
                 router.push(option.route as any);
               }}
               className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"

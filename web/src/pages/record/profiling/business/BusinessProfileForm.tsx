@@ -246,8 +246,12 @@ export default function BusinessProfileForm({
           isComplete={hasBusinessInfo}
         />
 
-        {formType !== Type.Viewing &&  <InfoAlert>
+        {formType === Type.Create || formType === Type.Editing &&  <InfoAlert>
           Provide accurate business information as this will be used for official records and tax assessment purposes.
+        </InfoAlert>}
+
+        {formType === Type.Request &&  <InfoAlert>
+          Review business information and ensure they are accurate as this will be used for official records and tax assessment purposes.
         </InfoAlert>}
 
         <div className="space-y-4">
@@ -339,7 +343,7 @@ export default function BusinessProfileForm({
           isRequired={false}
         />
 
-        {formType !== Type.Viewing ? (
+        {formType == Type.Create || formType == Type.Editing ? (
           <div className="space-y-4">
             <Alert className="border-amber-200 bg-amber-50">
               <AlertDescription className="text-amber-800">

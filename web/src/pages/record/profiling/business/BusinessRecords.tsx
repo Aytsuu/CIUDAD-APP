@@ -1,200 +1,112 @@
 import React from "react"
-import { Search, Plus, Download, Building2, FileDown, Loader2 } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button/button"
-import { Link } from "react-router"
-import { DataTable } from "@/components/ui/table/data-table"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { businessColumns } from "./BusinessColumns"
+import { Users, CircleCheck, Clock } from "lucide-react"
+
+import { Outlet, useNavigate } from "react-router"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useBusinesses } from "../queries/profilingFetchQueries"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card/card"
-import { useDebounce } from "@/hooks/use-debounce"
-import { useLoading } from "@/context/LoadingContext"
+import { cn } from "@/lib/utils"
+
+  const sidebarItems = [
+    {
+      id: "active",
+      label: "Active",
+      icon: CircleCheck,
+      description: "Record of active businesses",
+      route: "active",
+    },
+    {
+      id: "pending",
+      label: "Pending",
+      icon: Clock,
+      description: "Record of pending registrations",
+      route: "pending",
+    },
+    {
+      id: "respondent",
+      label: "Respondent",
+      icon: Users,
+      description: "Record of business repsondents",
+      route: "respondent",
+    },
+  ]
 
 export default function BusinessRecords() {
   // ----------------- STATE INITIALIZATION --------------------
-  const {showLoading, hideLoading} = useLoading();
-  const [searchQuery, setSearchQuery] = React.useState<string>("")
-  const [pageSize, setPageSize] = React.useState<number>(10)
-  const [currentPage, setCurrentPage] = React.useState<number>(1)
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
-  const debouncedPageSize = useDebounce(pageSize, 100)
-  const { data: businesses, isLoading} = useBusinesses(
-    currentPage, 
-    debouncedPageSize,
-    debouncedSearchQuery
-  )
+  const navigate = useNavigate();
+  const currentPath = location.pathname.split("/").pop() || ""
+  const [selectedRecord, setSelectedRecord] = React.useState<string>(currentPath);
 
-  const businessList = businesses?.results || [];
-  const totalCount = businesses?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
-  
-  // ----------------- SIDE EFFECTS --------------------
-  React.useEffect(() => {
-    if(isLoading) showLoading();
-    else hideLoading();
-  }, [isLoading])
-
-  // ----------------- HANDLERS --------------------
-  const handleExport = (type: "csv" | "excel" | "pdf") => {
-    switch (type) {
-      case "csv":
-        // exportToCSV(filteredBusinesses)
-        break
-      case "excel":
-        // exportToExcel(filteredBusinesses)
-        break
-      case "pdf":
-        // exportToPDF(filteredBusinesses)
-        break
-    }
+  const handleSelectionChange = (selected: string) => {
+    setSelectedRecord(selected);
   }
-
+  console.log(currentPath)
   return (
     // ----------------- RENDER --------------------
     <MainLayoutComponent
       title="Business"
       description="View and manage registered businesses, including their details, location, and registration information."
     >
-      <div className="space-y-6">
-        <Card>
-          {/* Search and Actions Bar */}
-          <div className="bg-white rounded-xl p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <Input
-                  placeholder="Search by business name, respondent, sitio, street, sales..."
-                  className="pl-11"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport("csv")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("excel")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as Excel
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Export as PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Link
-                  to="/business/form"
-                  state={{
-                    params: {
-                      type: "create",
-                    },
-                  }}
-                >
-                  <Button className="px-4">
-                    <Plus size={16} className="mr-2" />
-                    Register Business
-                  </Button>
-                </Link>
-              </div>
+      <div className="flex gap-4">
+        <div className="w-64 flex-shrink-0">
+          <Card className="overflow-hidden">
+            <div className="p-4 bg-gray-50 border-b">
+              <h3 className="font-semibold text-gray-900">Record</h3>
+              <p className="text-xs text-gray-600 mt-1">Select a record to view</p>
             </div>
-          </div>
+            <div className="p-2">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon
+                const isSelected = selectedRecord == 'details' && item.id == 'respondent' ? 
+                                    true : selectedRecord == item.id
 
-          <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Show</span>
-                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
-                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-gray-600">entries</span>
-              </div>
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      handleSelectionChange(item.id)
+                      navigate(item.route, { replace: true })
+                    }}
+                                            className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-lg text-left outline-none transition-colors duration-200 group",
+                      isSelected
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "hover:bg-gray-50 text-gray-700 hover:text-gray-900",
+                    )}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div
+                        className={cn(
+                          "p-1.5 rounded-md transition-colors",
+                          isSelected
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-gray-100 text-gray-500 group-hover:bg-gray-200",
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className={cn(
+                            "font-medium text-sm truncate",
+                            isSelected ? "text-blue-700" : "text-gray-900",
+                          )}
+                        >
+                          {item.label}
+                        </div>
+                        <div className={cn("text-xs truncate", isSelected ? "text-blue-600" : "text-gray-500")}>
+                          {item.description}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
-          </div>
-
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Loading businesses...</span>
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!isLoading && businessList.length === 0 && (
-            <div className="text-center py-12">
-              <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchQuery ? "No businesses found" : "No businesses yet"}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {searchQuery
-                  ? `No businesses match "${searchQuery}". Try adjusting your search.`
-                  : "Get started by registering your first business."}
-              </p>
-              {!searchQuery && (
-                <Link
-                  to="/business/form"
-                  state={{
-                    params: {
-                      type: "create",
-                    },
-                  }}
-                >
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Register First Business
-                  </Button>
-                </Link>
-              )}
-            </div>
-          )}
-
-          {/* Data Table */}
-          {!isLoading && businessList.length > 0 && (
-            <DataTable columns={businessColumns} data={businessList} />
-          )}
-
-          {/* Pagination */}
-            {!isLoading && businessList.length > 0 && (
-              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
-                <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-                  Showing <span className="font-medium">{totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> -{" "}
-                  <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
-                  <span className="font-medium">{totalCount}</span> residents
-                </p>
-
-                {totalPages > 0 && (
-                  <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-                )}
-              </div>
-            )}
-        </Card>
+          </Card>
+        </div>
+        <div className="w-full">
+          <Outlet/>
+        </div>
       </div>
     </MainLayoutComponent>
   )

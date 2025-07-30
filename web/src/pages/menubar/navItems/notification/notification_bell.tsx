@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useNotifications } from '@/context/NotificationContext'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Bell, RefreshCw, Settings, X, CheckCheck, Trash2, Clock, AlertCircle, MessageSquare, Heart, Star, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
+import { Bell, CheckCheck, Clock, AlertCircle, MessageSquare, Heart, Star, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Notification } from '@/context/auth-types'
+import DropdownLayout from '@/components/ui/dropdown/dropdown-layout'
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -37,12 +38,11 @@ const formatTimeAgo = (dateString: string | number | Date) => {
 }
 
 export const NotificationBell: React.FC = () => {
-  const { notifications, unreadCount, markAsRead, refresh } = useNotifications()
+  const { notifications, unreadCount, markAsRead } = useNotifications()
   const [open, setOpen] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [filter, setFilter] = useState('all')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     console.log('Notifications updated:', notifications)
@@ -60,18 +60,6 @@ export const NotificationBell: React.FC = () => {
       return () => document.removeEventListener('click', handleClickOutside)
     }
   }, [openMenuId])
-
-  const handleRefresh = async () => {
-    try {
-      setIsRefreshing(true)
-      await refresh()
-      console.log('Notifications refreshed')
-    } catch (error) {
-      console.error('Failed to refresh notifications:', error)
-    } finally {
-      setIsRefreshing(false)
-    }
-  }
 
   const filteredNotifications = notifications
     .filter(notification => {
@@ -141,19 +129,11 @@ export const NotificationBell: React.FC = () => {
             </div>
             <div className="flex items-center gap-1">
               <button 
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className={`p-2 hover:bg-white/70 rounded-xl transition-all duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
-                title="Refresh notifications"
-              >
-                <RefreshCw className="h-4 w-4 text-gray-600" />
-              </button>
-              <button 
                 onClick={() => setShowSettings(!showSettings)}
                 className="p-2 hover:bg-white/70 rounded-xl transition-all duration-200"
                 title="Settings"
               >
-                <Settings className="h-4 w-4 text-gray-600" />
+                <MoreHorizontal className="h-4 w-4 text-gray-600" />
               </button>
             </div>
           </div>

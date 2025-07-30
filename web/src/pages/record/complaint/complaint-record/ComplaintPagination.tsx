@@ -22,6 +22,7 @@ export default function ComplaintPagination({
       <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
         Showing {entriesStart}-{entriesEnd} of {totalData} entries
       </p>
+      
       <div className="w-full sm:w-auto flex justify-center">
         <PaginationLayout
           currentPage={currentPage}

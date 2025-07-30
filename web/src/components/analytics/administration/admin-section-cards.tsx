@@ -19,7 +19,7 @@ export const AdminSectionCards = () => {
             <CardHeader>
               <CardDescription>{sec.title}</CardDescription>
               <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                {!isLoading ? adminCardAnalytics[idx] : "..."}
+                {!isLoading && adminCardAnalytics && adminCardAnalytics.length ? adminCardAnalytics[idx] : "..."}
               </CardTitle>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1.5 text-sm">

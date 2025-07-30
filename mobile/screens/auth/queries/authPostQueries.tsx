@@ -12,7 +12,11 @@ export const useAddAddress = () => {
 
 export const useAddPerAddress = () => {
   return useMutation({
-    mutationFn: (data: Record<string, any>[]) => addPersonalAddress(data)
+    mutationFn: ({data, staff_id, history_id} : {
+      data: Record<string, any>[], 
+      staff_id?: string,
+      history_id?: string
+    }) => addPersonalAddress(data, staff_id, history_id)
   })
 }
 
@@ -61,6 +65,20 @@ export const useAddAccount = () => {
   const router = useRouter();
   return useMutation({
     mutationFn: (data: Record<string, any>) => addAccount(data)
+  })
+}
+
+export const useAddBusinessRespondent = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        console.log('respondent:', data)
+        const res = await api.post('profiling/business/create-respondent/', data);
+        return res.data;
+      } catch (err ) {
+        throw err;
+      }
+    }
   })
 }
 
