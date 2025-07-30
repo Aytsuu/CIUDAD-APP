@@ -243,6 +243,8 @@ function ViewBudgetPlan(){
                                     <BudgetItemEditForm
                                         planId = {planId}
                                         budgetItems={fetchedData?.details || []}
+                                        balanceUnappropriated = {fetchedData?.plan_balUnappropriated}
+                                        budgetaryObligations = {fetchedData?.plan_budgetaryObligations}
                                         onSuccess={() => {
                                             setIsEditingItem(false);
                                             setEditingRowId(null);

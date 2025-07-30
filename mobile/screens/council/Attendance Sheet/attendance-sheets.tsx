@@ -194,7 +194,7 @@ const [refreshing, setRefreshing] = useState(false)
                 })}
               </View>
             </ScrollView>
-            <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
+            <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
               <ConfirmationModal
                 trigger={
                   // <TouchableOpacity
@@ -208,7 +208,7 @@ const [refreshing, setRefreshing] = useState(false)
                   //     <Loader2 size={16} color="white" className="ml-2 animate-spin" />
                   //   )}
                   // </TouchableOpacity>
-                  <Button className='bg-primaryBlue'><Text className="text-white text-base font-semibold text-center">Save</Text></Button>
+                  <Button className='bg-primaryBlue py-3 rounded-lg'><Text className="text-white text-base font-semibold text-center">Save</Text></Button>
                 }
                 title="Confirm Save Attendance"
                 description="Are you sure you want to save these attendance changes?"
