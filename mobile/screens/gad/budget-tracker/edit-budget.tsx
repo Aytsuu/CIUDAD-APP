@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, TextInput, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Modal } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useExpenseParticulars, useIncomeParticulars } from "./queries/fetch";
 import { useGetGADYearBudgets } from "./queries/yearqueries";
 import { useUpdateGADBudget } from "./queries/update";
-import _ScreenLayout from "@/screens/_ScreenLayout";
 import MultiImageUploader, { MediaFileType } from "@/components/ui/multi-media-upload";
 import BudgetTrackerSchema from "@/form-schema/gad-budget-tracker-schema";
 import { ChevronLeft, Loader2 } from "lucide-react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { Modal } from "react-native";
 import { z } from "zod";
+import PageLayout from "@/screens/_PageLayout";
 
 type FormValues = z.infer<typeof BudgetTrackerSchema>;
 
@@ -38,7 +36,7 @@ function GADViewEditEntryForm() {
   const gbud_reference_num = params.gbud_reference_num as string | undefined;
   const gbud_inc_amt = params.gbud_inc_amt ? Number(params.gbud_inc_amt) : undefined;
   const gdb_id = params.gdb_id ? Number(params.gdb_id) : undefined;
-  const gbud_is_archive = params.gbud_is_archive
+  const gbud_is_archive = params.gbud_is_archive;
 
   // Parse files
   let parsedFiles: any[] = [];
@@ -49,7 +47,6 @@ function GADViewEditEntryForm() {
         console.error("Parsed params.files is not an array:", parsedFiles);
         parsedFiles = [];
       }
-      console.log("Parsed params.files:", parsedFiles);
     } catch (error) {
       console.error("Error parsing params.files:", error);
       parsedFiles = [];
@@ -71,24 +68,12 @@ function GADViewEditEntryForm() {
   const [showIncomeParticularsModal, setShowIncomeParticularsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: yearBudgets, isLoading, error } = useGetGADYearBudgets();
   const { data: expenseItems = [] } = useExpenseParticulars();
   const { data: incomeParticulars = [], isLoading: incomeParticularsLoading } = useIncomeParticulars(year);
-  const { mutate: updateBudget, isPending } = useUpdateGADBudget(yearBudgets || []);
-
-  useEffect(() => {
-    if (yearBudgets) {
-      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
-      console.log("Year Budget Data:", {
-        year,
-        currentYearBudget,
-        gbudy_budget: currentYearBudget?.gbudy_budget,
-        gbudy_expenses: currentYearBudget?.gbudy_expenses,
-        gbudy_income: currentYearBudget?.gbudy_income,
-      });
-    }
-  }, [yearBudgets, year]);
+  const { mutate: updateBudget } = useUpdateGADBudget(yearBudgets || []);
 
   const isUploading = mediaFiles.some((file) => file.status === "uploading");
 
@@ -96,9 +81,9 @@ function GADViewEditEntryForm() {
     return (
       <View className="flex-1 justify-center items-center">
         <Text>Error: Year and entry ID are required. Received: year={year}, gbud_num={gbud_num}</Text>
-        <Button onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Text>Go Back</Text>
-        </Button>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -115,9 +100,9 @@ function GADViewEditEntryForm() {
     return (
       <View className="flex-1 justify-center items-center">
         <Text>Error loading budgets: {error.message}</Text>
-        <Button onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Text>Go Back</Text>
-        </Button>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -130,49 +115,32 @@ function GADViewEditEntryForm() {
     return (
       <View className="flex-1 justify-center items-center">
         <Text>Error: No budget found for year {year}</Text>
-        <Button onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Text>Go Back</Text>
-        </Button>
+        </TouchableOpacity>
       </View>
     );
   }
 
   const calculateRemainingBalance = () => {
-  if (!currentYearBudget) {
-    console.log("No currentYearBudget available");
-    return 0;
-  }
-  const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
-  const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-  const totalIncome = Number(currentYearBudget.gbudy_income) || 0; // Include income if applicable
-  const isActualExpense = gbud_actual_expense != null && gbud_type === "Expense";
-  const currentExpense = isActualExpense
-    ? Number(gbud_actual_expense) || 0
-    : Number(gbud_proposed_budget) || 0;
+    if (!currentYearBudget) return 0;
+    const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
+    const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
+    const totalIncome = Number(currentYearBudget.gbudy_income) || 0;
+    const isActualExpense = gbud_actual_expense != null && gbud_type === "Expense";
+    const currentExpense = isActualExpense
+      ? Number(gbud_actual_expense) || 0
+      : Number(gbud_proposed_budget) || 0;
 
-  // If editing an existing entry, adjust for the old expense
-  const oldExpense = params.gbud_actual_expense != null
-    ? Number(params.gbud_actual_expense) || 0
-    : Number(params.gbud_proposed_budget) || 0;
+    const oldExpense = params.gbud_actual_expense != null
+      ? Number(params.gbud_actual_expense) || 0
+      : Number(params.gbud_proposed_budget) || 0;
 
-  // Calculate base balance: initial budget + income - total expenses + old expense (to revert its effect)
-  let result = initialBudget - (totalExpenses - oldExpense);
+    let result = initialBudget - (totalExpenses - oldExpense);
+    result = result - currentExpense;
 
-  // Subtract the current expense (actual or proposed)
-  result = result - currentExpense;
-
-  console.log("Remaining Balance Calculation:", {
-    initialBudget,
-    totalIncome,
-    totalExpenses,
-    oldExpense,
-    currentExpense,
-    isActualExpense,
-    result
-  });
-
-  return Number(result.toFixed(2));
-};
+    return Number(result.toFixed(2));
+  };
 
   const remainingBalance = calculateRemainingBalance();
 
@@ -199,27 +167,7 @@ function GADViewEditEntryForm() {
     },
   });
 
-  const initialFormValues = {
-    gbud_type: gbud_type || "Expense",
-    gbud_datetime: gbud_datetime || new Date().toISOString(),
-    gbud_files: [],
-    gbud_add_notes: gbud_add_notes || null,
-    gbud_inc_particulars: gbud_type === "Income" ? gbud_particulars || null : null,
-    gbud_inc_amt: gbud_type === "Income" ? formatNumericValue(gbud_inc_amt) : null,
-    gbud_exp_particulars: gbud_type === "Expense" ? gbud_particulars || null : null,
-    gbud_proposed_budget: gbud_type === "Expense" ? formatNumericValue(gbud_proposed_budget) : null,
-    gbud_actual_expense: gbud_type === "Expense" ? formatNumericValue(gbud_actual_expense) : null,
-    gbud_reference_num: gbud_reference_num || null,
-    gbud_remaining_bal: null,
-    gbudy: currentYearBudget.gbudy_num,
-    gdb_id: gdb_id ?? null,
-  };
-
-  useEffect(() => {
-    console.log("Form state:", form.formState);
-    console.log("Form errors:", form.formState.errors);
-    console.log("Form values:", form.getValues());
-  }, [form.formState, form.watch()]);
+  const initialFormValues = form.getValues();
 
   useEffect(() => {
     const filesForForm = mediaFiles
@@ -230,7 +178,6 @@ function GADViewEditEntryForm() {
         path: file.path,
         uri: file.publicUrl || file.uri,
       }));
-    console.log("Setting gbud_files:", filesForForm);
     form.setValue("gbud_files", filesForForm);
 
     const errorFiles = mediaFiles.filter((file) => file.status === "error");
@@ -262,16 +209,16 @@ function GADViewEditEntryForm() {
   };
 
   const onSubmit = (values: FormValues) => {
-    console.log("Starting submission...", values);
+    setIsSubmitting(true);
     const inputDate = new Date(values.gbud_datetime);
     const inputYear: string = inputDate.getFullYear().toString();
-    console.log("Date validation:", { inputYear, expectedYear: year });
 
     if (inputYear !== year) {
       form.setError("gbud_datetime", {
         type: "manual",
         message: `Date must be in ${year}`,
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -284,6 +231,7 @@ function GADViewEditEntryForm() {
           type: "manual",
           message: `Exceeds remaining balance of ₱${remainingBalance.toLocaleString()}`,
         });
+        setIsSubmitting(false);
         return;
       }
     }
@@ -294,6 +242,7 @@ function GADViewEditEntryForm() {
         type: "manual",
         message: `Some files are not uploaded: ${invalidFiles.map((f) => f.name).join(", ")}`,
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -305,13 +254,6 @@ function GADViewEditEntryForm() {
       gbud_remaining_bal = Number(
         (remainingBalance - currentExpense).toFixed(2)
       );
-      console.log("gbud_remaining_bal Calculation:", {
-        remainingBalance,
-        currentExpense,
-        gbud_actual_expense: values.gbud_actual_expense,
-        gbud_proposed_budget: values.gbud_proposed_budget,
-        gbud_remaining_bal,
-      });
     }
 
     const payload = {
@@ -338,15 +280,14 @@ function GADViewEditEntryForm() {
       filesToDelete: [],
     };
 
-    console.log("Submission payload:", JSON.stringify(payload, null, 2));
-
     updateBudget(payload, {
       onSuccess: () => {
+        setIsSubmitting(false);
         setIsEditing(false);
         router.back();
       },
       onError: (error: any) => {
-        console.error("Error updating budget:", error.response?.data || error.message);
+        setIsSubmitting(false);
         if (error.response?.data) {
           Object.entries(error.response.data).forEach(([field, messages]) => {
             form.setError(field as keyof FormValues, {
@@ -365,88 +306,18 @@ function GADViewEditEntryForm() {
   };
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+          <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Budget Entry" : "View Budget Entry"}</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={isPending}
-      loadingMessage="Updating entry..."
-      footer={
-        <View className="px-4 pb-4">
-          {!isEditing ? (
-            <Button
-              onPress={() => setIsEditing(true)}
-              className="bg-primaryBlue py-3 rounded-lg"
-            >
-              <Text className="text-white text-base font-semibold">Edit</Text>
-            </Button>
-          ) : (
-            <View className="flex-row gap-2">
-              <Button
-                onPress={() => {
-                  setIsEditing(false);
-                  form.reset(initialFormValues);
-                }}
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
-              >
-                <Text className="text-primaryBlue text-base font-semibold">Cancel</Text>
-              </Button>
-              <ConfirmationModal
-                trigger={
-                  <Button
-                    className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
-                    disabled={isPending || isUploading || !!fileUploadError}
-                  >
-                    {isPending || isUploading ? (
-                      <>
-                        <Loader2 size={20} color="white" className="animate-spin mr-2" />
-                        <Text className="text-white text-sm font-semibold">
-                          {isUploading ? "Uploading files..." : "Saving..."}
-                        </Text>
-                      </>
-                    ) : (
-                      <Text className="text-white text-sm font-semibold">Save</Text>
-                    )}
-                  </Button>
-                }
-                title="Confirm Save"
-                description="Are you sure you want to save these changes?"
-                actionLabel="Confirm"
-                onPress={() => form.handleSubmit(onSubmit)()}
-              />
-            </View>
-          )}
-          {!form.formState.isValid && isEditing && (
-            <Text className="text-red-500 text-xs mt-2">
-              Please fill out all required fields correctly.
-            </Text>
-          )}
-          {form.formState.errors.root && (
-            <Text className="text-red-500 text-xs mt-2">
-              {form.formState.errors.root.message}
-            </Text>
-          )}
-          {form.formState.errors.gbud_files && (
-            <Text className="text-red-500 text-xs mt-2">
-              {form.formState.errors.gbud_files.message}
-            </Text>
-          )}
-          {fileUploadError && (
-            <Text className="text-red-500 text-xs mt-2">{fileUploadError}</Text>
-          )}
-        </View>
+      headerTitle={<Text>{isEditing ? "Edit Budget Entry" : "View Budget Entry"}</Text>}
+      rightAction={
+        <View />
       }
-      stickyFooter={true}
     >
-      <View className="flex-1 px-4">
+      <ScrollView className="flex-1 p-4 pb-24">
         <View className="space-y-4">
           <View className="relative">
             <FormSelect
@@ -519,12 +390,12 @@ function GADViewEditEntryForm() {
                 <View className="p-4 flex-1">
                   <View className="flex-row justify-between items-center mb-4">
                     <Text className="text-lg font-bold">Select Income Particulars</Text>
-                    <Button
+                    <TouchableOpacity 
                       onPress={() => setShowIncomeParticularsModal(false)}
-                      className="bg-gray-200 py-1 rounded-lg"
+                      className="bg-gray-200 px-3 py-1 rounded"
                     >
                       <Text>Close</Text>
-                    </Button>
+                    </TouchableOpacity>
                   </View>
 
                   <TextInput
@@ -556,7 +427,7 @@ function GADViewEditEntryForm() {
                               form.setValue("gbud_inc_particulars", searchTerm);
                               setShowIncomeParticularsModal(false);
                             }}
-                            className="mt-4 flex items-center bg-blue-500 p-3 rounded-lg"
+                            className="mt-4 bg-blue-500 p-3 rounded-lg"
                           >
                             <Text className="text-white text-center">Use "{searchTerm}" as new particular</Text>
                           </TouchableOpacity>
@@ -692,8 +563,75 @@ function GADViewEditEntryForm() {
             </View>
           )}
         </View>
+      </ScrollView>
+
+      {/* Sticky footer buttons */}
+      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+        {!isEditing ? (
+          <TouchableOpacity
+            onPress={() => setIsEditing(true)}
+            className="bg-primaryBlue py-3 rounded-lg"
+          >
+            <Text className="text-white text-base font-semibold text-center">Edit</Text>
+          </TouchableOpacity>
+        ) : (
+          <View className="flex-row gap-2">
+            <TouchableOpacity
+              onPress={() => {
+                setIsEditing(false);
+                form.reset(initialFormValues);
+              }}
+              className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
+            >
+              <Text className="text-primaryBlue text-base font-semibold text-center">Cancel</Text>
+            </TouchableOpacity>
+            
+            <ConfirmationModal
+              trigger={
+                <TouchableOpacity
+                  className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
+                  disabled={isSubmitting || isUploading || !!fileUploadError}
+                >
+                  {isSubmitting || isUploading ? (
+                    <>
+                      <Loader2 size={20} color="white" className="animate-spin mr-2" />
+                      <Text className="text-white text-sm font-semibold">
+                        {isUploading ? "Uploading files..." : "Saving..."}
+                      </Text>
+                    </>
+                  ) : (
+                    <Text className="text-white text-sm font-semibold">Save</Text>
+                  )}
+                </TouchableOpacity>
+              }
+              title="Confirm Save"
+              description="Are you sure you want to save these changes?"
+              actionLabel="Confirm"
+              onPress={() => form.handleSubmit(onSubmit)()}
+            />
+          </View>
+        )}
+        
+        {!form.formState.isValid && isEditing && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            Please fill out all required fields correctly.
+          </Text>
+        )}
+        {form.formState.errors.root && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            {form.formState.errors.root.message}
+          </Text>
+        )}
+        {form.formState.errors.gbud_files && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            {form.formState.errors.gbud_files.message}
+          </Text>
+        )}
+        {fileUploadError && (
+          <Text className="text-red-500 text-xs mt-2 text-center">{fileUploadError}</Text>
+        )}
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 
