@@ -27,7 +27,6 @@ class BudgetPlanFileSerializer(serializers.ModelSerializer):
         model = BudgetPlan_File
         fields = '__all__'
 
-
 class BudgetPlanHistorySerializer(serializers.ModelSerializer):
     class Meta: 
         model = Budget_Plan_History

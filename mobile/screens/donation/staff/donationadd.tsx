@@ -203,7 +203,6 @@ const DonationAdd = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={20} color="white" className="animate-spin mr-2" />
                     <Text className="text-white text-base font-semibold text-center">Saving...</Text>
                   </>
                 ) : (
