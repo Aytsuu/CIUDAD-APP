@@ -18,11 +18,6 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0], 
-            plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
-            plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
-            plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
-            plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
-            plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
         });
 
         const res = await api.post('treasurer/budget-plan/', {
@@ -36,12 +31,7 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_other_income: parseFloatSafe(budgetInfo.plan_other_income), 
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
-            plan_issue_date: new Date().toISOString().split('T')[0], 
-            plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
-            plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
-            plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
-            plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
-            plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
+            plan_issue_date: new Date().toISOString().split('T')[0],
             plan_is_archive: false,
         });
 

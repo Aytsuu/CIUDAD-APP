@@ -21,7 +21,6 @@ import {
   type ProjectProposal,
 } from "./queries/fetchqueries";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
-import { QueryProvider } from "./api/query-provider";
 import { ProjectProposalView } from "./view-projprop";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { useRouter } from "expo-router";
@@ -183,7 +182,7 @@ const StatusUpdateModal: React.FC<{
   );
 };
 
-const AdminUpdateStatusContent: React.FC = () => {
+const AdminUpdateStatus: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<ProjectProposal | null>(null);
@@ -519,14 +518,6 @@ const AdminUpdateStatusContent: React.FC = () => {
         )}
       </ScrollView>
     </ScreenLayout>
-  );
-};
-
-const AdminUpdateStatus: React.FC = () => {
-  return (
-    <QueryProvider>
-      <AdminUpdateStatusContent />
-    </QueryProvider>
   );
 };
 

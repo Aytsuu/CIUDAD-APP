@@ -5,6 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { Loader2, ChevronLeft } from "lucide-react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { UpdateEventFormSchema } from "../../../form-schema/council-event-schema";
 import { useAddCouncilEvent, useUpdateCouncilEvent } from "./queries";
 import { useGetStaffList, useGetAttendees, Staff } from "./queries";
@@ -85,11 +86,6 @@ const CLSchedulePreview = () => {
         })`,
       };
     });
-    console.log("Raw staffList:", staffList);
-    console.log(
-      "staffOptions:",
-      options.map((o) => ({ id: o.id, name: o.name }))
-    );
     return options;
   }, [staffList, attendees]);
 
@@ -131,12 +127,10 @@ const CLSchedulePreview = () => {
   useEffect(() => {
     if (!isAttendeesLoading && !isAdding && ceId && attendees.length > 0) {
       try {
-        console.log("attendees in useEffect:", attendees);
         const attendeeIds = attendees
           .filter((a: any) => String(a.ce_id) === String(ceId))
           .map((a: any) => String(a.atn_id))
           .filter((id): id is string => id !== undefined && id !== null);
-        console.log("Initialized staffAttendees with:", attendeeIds);
         reset({
           ...getValues(),
           staffAttendees: attendeeIds,
@@ -186,7 +180,6 @@ const CLSchedulePreview = () => {
           } as Attendee;
         })
         .filter((item): item is Attendee => item !== null);
-      console.log("Updated selectedAttendees:", newAttendees);
       setSelectedAttendees(newAttendees);
     }
   }, [
@@ -222,14 +215,6 @@ const CLSchedulePreview = () => {
           a.atn_present_or_absent !== initial.atn_present_or_absent
         );
       });
-    console.log(
-      "haveAttendeesChanged:",
-      hasChanged,
-      "selectedAttendees:",
-      selectedAttendees,
-      "initialAttendees:",
-      initialAttendees
-    );
     return hasChanged;
   };
 
@@ -268,7 +253,6 @@ const CLSchedulePreview = () => {
                 atn_present_or_absent: a.atn_present_or_absent || "Present",
               })),
             };
-            console.log("updateAttendees payload (add):", attendeePayload);
             updateAttendees(attendeePayload);
           }
           router.back();
@@ -295,7 +279,6 @@ const CLSchedulePreview = () => {
                   atn_present_or_absent: a.atn_present_or_absent || "Present",
                 })),
               };
-              console.log("updateAttendees payload (edit):", attendeePayload);
               updateAttendees(attendeePayload, {
                 onSuccess: () =>
                   refetch().catch((err) =>
@@ -303,14 +286,6 @@ const CLSchedulePreview = () => {
                   ),
               });
             } else {
-              console.log(
-                "No attendee update triggered: eventCategory:",
-                data.eventCategory,
-                "selectedAttendees.length:",
-                selectedAttendees.length,
-                "haveAttendeesChanged:",
-                haveAttendeesChanged()
-              );
               refetch().catch((err) =>
                 console.error("Refetch error:", err.message)
               );
@@ -337,7 +312,7 @@ const CLSchedulePreview = () => {
       }
     >
       {isArchived && (
-        <View className="bg-yellow-100 p-2 mb-4 mx-4 rounded-md">
+        <View className="bg-yellow-100 p-4 mb-4 rounded-md">
           <Text className="text-yellow-800 text-center">
             This event is archived and cannot be modified
           </Text>
@@ -352,10 +327,7 @@ const CLSchedulePreview = () => {
               name="eventTitle"
               label="Event Title"
               placeholder="Enter event title"
-              returnKeyType="next"
-              submitBehavior={
-                isEditMode && !isArchived ? "newline" : "blurAndSubmit"
-              }
+              editable={isEditMode && !isArchived}
             />
             {(!isEditMode || isArchived) && (
               <TouchableOpacity
@@ -387,10 +359,7 @@ const CLSchedulePreview = () => {
               name="roomPlace"
               label="Room/Place"
               placeholder="Enter room or place"
-              returnKeyType="next"
-              submitBehavior={
-                isEditMode && !isArchived ? "newline" : "blurAndSubmit"
-              }
+              editable={isEditMode && !isArchived}
             />
             {(!isEditMode || isArchived) && (
               <TouchableOpacity
@@ -437,7 +406,6 @@ const CLSchedulePreview = () => {
               name="eventDescription"
               label="Event Description"
               placeholder="Enter description"
-              returnKeyType="done"
             />
             {(!isEditMode || isArchived) && (
               <TouchableOpacity
@@ -470,100 +438,82 @@ const CLSchedulePreview = () => {
                     readOnly={!isEditMode || isArchived}
                     placeholder="Select staff attendees"
                   />
-                </>
-              )}
-              {/* {!isEditMode && (
-                <View>
-                  <Text className="text-sm font-medium text-gray-700 mb-2 mt-4">Selected Attendees</Text>
-                  <View className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
-                    {selectedAttendees.length > 0 ? (
-                      selectedAttendees.map((attendee: Attendee, index: number) => (
-                        <Text key={index} className="text-sm text-gray-900">
-                          {attendee.atn_name} ({attendee.atn_designation})
-                        </Text>
-                      ))
-                    ) : (
-                      <Text className="text-sm text-gray-900">No attendees selected</Text>
-                    )}
-                  </View>
-                </View>
-              )} */}
-            </View>
-          )}
-
-          <View className="px-4 pb-4 mt-40">
-            {isEditMode ? (
-              <View className="flex-row gap-2">
-                <TouchableOpacity
-                  className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
-                  onPress={() => {
-                    setIsEditMode(false);
-                    reset({
-                      ...getValues(),
-                      staffAttendees: initialAttendees.map((a) =>
-                        String(a.atn_id)
-                      ),
-                    });
-                  }}
-                >
-                  <Text className="text-primaryBlue text-base font-semibold text-center">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-
-                <ConfirmationModal
-                  trigger={
-                    <TouchableOpacity
-                      className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
-                      disabled={
-                        addEventMutation.isPending ||
-                        updateEventMutation.isPending
-                      }
-                    >
-                      {addEventMutation.isPending ||
-                      updateEventMutation.isPending ? (
-                        <>
-                          <Loader2
-                            size={20}
-                            color="white"
-                            className="animate-spin mr-2"
-                          />
-                          <Text className="text-white text-sm font-semibold">
-                            {addEventMutation.isPending
-                              ? "Saving..."
-                              : "Updating..."}
-                          </Text>
-                        </>
+                  {/* <View className="mt-4">
+                    <Text className="text-sm font-medium text-gray-700 mb-2">
+                      Selected Attendees
+                    </Text>
+                    <View className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
+                      {selectedAttendees.length > 0 ? (
+                        selectedAttendees.map((attendee, index) => (
+                          <View key={index} className="flex-row items-center py-1">
+                            <MaterialIcons name="person" size={16} color="#4b5563" />
+                            <Text className="text-sm text-gray-900 ml-2">
+                              {attendee.atn_name} ({attendee.atn_designation})
+                            </Text>
+                          </View>
+                        ))
                       ) : (
-                        <Text className="text-white text-sm font-semibold">
-                          Save
+                        <Text className="text-sm text-gray-500">
+                          No attendees selected
                         </Text>
                       )}
-                    </TouchableOpacity>
-                  }
-                  title="Confirm Changes"
-                  description="Are you sure you want to save these changes?"
-                  actionLabel="Save"
-                  onPress={() => handleSubmit(onSubmit)()}
-                  loading={
-                    addEventMutation.isPending || updateEventMutation.isPending
-                  }
-                />
-              </View>
-            ) : (
-              !isArchived && (
-                <TouchableOpacity
-                  className="bg-primaryBlue py-3 rounded-lg"
-                  onPress={() => setIsEditMode(true)}
-                >
-                  <Text className="text-white text-base font-semibold text-center">
-                    Edit
-                  </Text>
-                </TouchableOpacity>
-              )
-            )}
-          </View>
+                    </View>
+                  </View> */}
+                </>
+              )}
+            </View>
+          )}
         </View>
+      </View>
+
+      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+        {isEditMode ? (
+          <View className="flex-row gap-2">
+            <TouchableOpacity
+              className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
+              onPress={() => router.back()}
+            >
+              <Text className="text-primaryBlue text-base font-semibold text-center">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            <ConfirmationModal
+              trigger={
+                <TouchableOpacity
+                  className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
+                  disabled={addEventMutation.isPending || updateEventMutation.isPending}
+                >
+                  {addEventMutation.isPending || updateEventMutation.isPending ? (
+                    <>
+                      <Loader2 size={20} color="white" className="animate-spin mr-2" />
+                      <Text className="text-white text-base font-semibold">
+                        {addEventMutation.isPending ? 'Creating...' : 'Updating...'}
+                      </Text>
+                    </>
+                  ) : (
+                    <Text className="text-white text-base font-semibold">Save</Text>
+                  )}
+                </TouchableOpacity>
+              }
+              title="Confirm Changes"
+              description="Are you sure you want to save these changes?"
+              actionLabel="Save"
+              onPress={() => handleSubmit(onSubmit)()}
+              loading={addEventMutation.isPending || updateEventMutation.isPending}
+            />
+          </View>
+        ) : (
+          !isArchived && (
+            <TouchableOpacity
+              className="bg-primaryBlue py-3 rounded-lg"
+              onPress={() => setIsEditMode(true)}
+            >
+              <Text className="text-white text-base font-semibold text-center">
+                Edit
+              </Text>
+            </TouchableOpacity>
+          )
+        )}
       </View>
     </PageLayout>
   );
