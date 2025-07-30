@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBudgetPlan } from "../restful-API/budgetplanGetAPI";
-import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanAndDetailHistory, getBudgetPlanSuppDocs, getBudgetPlanFromPreviousYear, getBudgetPlanDetailFromPreviousYear } from "../restful-API/budgetplanGetAPI";
+import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanSuppDocs, getBudgetPlanFromPreviousYear, getBudgetPlanDetailFromPreviousYear } from "../restful-API/budgetplanGetAPI";
 import { BudgetPlanDetail } from "../budgetPlanInterfaces"; 
 import { BudgetPlan } from "../budgetPlanInterfaces";
 
@@ -49,6 +49,8 @@ export type BudgetPlanHistory = {
   bph_to_item: string;
   bph_from_new_balance: number;
   bph_to_new_balance: number;
+  bph_to_prev_balance: number,
+  bph_from_prev_balance: number,
   bph_transfer_amount: number;
 }
 

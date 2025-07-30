@@ -68,6 +68,8 @@ export const updateBudgetItem = async ( budgetItems: Array<{ dtl_id: number, dtl
     bph_to_item: string,
     bph_from_new_balance: number,
     bph_to_new_balance: number,
+    bph_to_prev_balance: number,
+    bph_from_prev_balance: number,
     bph_transfer_amount: number,
     plan: number
   }>
@@ -93,6 +95,8 @@ const addHistory = async ( historyRecords: Array<{
     bph_to_item: string,
     bph_from_new_balance: number,
     bph_to_new_balance: number,
+    bph_to_prev_balance: number,
+    bph_from_prev_balance: number,
     bph_transfer_amount: number,
     plan: number
   }>

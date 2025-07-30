@@ -69,37 +69,6 @@ export default function BudgetItemEditForm({planId, budgetItems, onSuccess}: {
     })
   }, [formValues.items, form, fields, budgetItems])
 
-  // const handleSubmit = (data: z.infer<typeof BudgetItemsSchema>) => {
-  //   // Prepare the data for submission with proper type safety
-  //     const updatedItemData = data.items.flatMap(item => {
-  //         if (!item.from || !item.to || !item.amount) return []
-          
-  //         const fromItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.from)
-  //         const toItem = budgetItems.find(bi => bi.dtl_id?.toString() === item.to)
-  //         const amount = Number.parseFloat(item.amount) || 0
-
-  //         if (!fromItem?.dtl_id || !toItem?.dtl_id) return []
-
-  //         return [
-  //             {
-  //               // From or Source Item
-  //                 dtl_id: fromItem.dtl_id,
-  //                 dtl_proposed_budget: Number(fromItem.dtl_proposed_budget) - amount,
-  //             },
-  //             {
-  //               // To item
-  //                 dtl_id: toItem.dtl_id,
-  //                 dtl_proposed_budget: Number(toItem.dtl_proposed_budget) + amount,
-  //             }
-  //         ]
-  //     })
-
-  //     if (updatedItemData.length > 0) {
-  //         console.log("Prepared submission data:", updatedItemData)
-  //         updateItems(updatedItemData)
-  //     }
-  // }
-
   const handleSubmit = (data: z.infer<typeof BudgetItemsSchema>) => {
     // Prepare the data for submission with proper type safety
     const updatedItemData = data.items.flatMap(item => {
@@ -140,6 +109,8 @@ export default function BudgetItemEditForm({planId, budgetItems, onSuccess}: {
         bph_to_item: toItem.dtl_budget_item,
         bph_from_new_balance: Number(fromItem.dtl_proposed_budget) - amount,
         bph_to_new_balance: Number(toItem.dtl_proposed_budget) + amount,
+        bph_to_prev_balance: Number(toItem.dtl_proposed_budget),
+        bph_from_prev_balance: Number(fromItem.dtl_proposed_budget),
         bph_transfer_amount: amount,
         plan: planId, 
       }

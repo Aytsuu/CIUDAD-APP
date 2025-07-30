@@ -100,6 +100,8 @@ export const useUpdateBudgetItem = (onSuccess: () => void) => {
             bph_to_item: string,
             bph_from_new_balance: number,
             bph_to_new_balance: number,
+            bph_to_prev_balance: number,
+            bph_from_prev_balance: number,
             bph_transfer_amount: number,
             plan: number
         }>
@@ -107,6 +109,7 @@ export const useUpdateBudgetItem = (onSuccess: () => void) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['budgetPlanHistory'] });
     
             toast.success('Budget Items Updated!', {
                 id: "updateItems",

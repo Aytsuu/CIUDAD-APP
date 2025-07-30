@@ -66,7 +66,9 @@ class Budget_Plan_History(models.Model):
     bph_source_item = models.CharField(default="None")
     bph_to_item = models.CharField(default = "None")
     bph_from_new_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_from_prev_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
     bph_to_new_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_to_prev_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
     bph_transfer_amount = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
     plan = models.ForeignKey('Budget_Plan', on_delete=models.CASCADE, related_name='history')
 

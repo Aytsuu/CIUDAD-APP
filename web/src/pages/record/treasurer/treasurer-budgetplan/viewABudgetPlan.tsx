@@ -273,7 +273,7 @@ function ViewBudgetPlan(){
                     Current Budget Plan
                 </TabsTrigger>
                 <TabsTrigger value="history" onClick={() => setActiveTab("history")}>
-                    Revision History
+                    Update History
                 </TabsTrigger>
                  <TabsTrigger value="documents" onClick={() => setActiveTab("documents")}>
                     Supporting Documents
