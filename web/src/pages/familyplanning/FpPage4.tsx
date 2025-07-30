@@ -185,11 +185,11 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                 )}
               />
             </div>
-            <span className="text-xs italic mt-5 m">
+            {/* <span className="text-xs italic mt-5 m">
               {(formData.weight > 0 || formData.height > 0) && (
                 `Weight & height last recorded (y/m/d): ${formatDate(formData.bodyMeasurementRecordedAt)}`
               )}
-            </span>
+            </span> */}
 
             <div className="grid md:grid-cols-3 gap-6 mt-6">
               {/* Skin Examination */}

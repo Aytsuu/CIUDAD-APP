@@ -187,7 +187,7 @@ class FollowUpVisit(models.Model):
     followv_status = models.CharField(max_length=100)
     followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateField(null=True,blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
     class Meta:
         db_table = 'follow_up_visit'

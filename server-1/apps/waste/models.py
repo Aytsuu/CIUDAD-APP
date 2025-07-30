@@ -1,12 +1,12 @@
 from django.db import models
+from django.db.models import Q, ExpressionWrapper, F, DateTimeField
 from datetime import date, datetime
 from django.core.validators import MaxValueValidator
-
-# Create your models here.
-# KANI UNA 
+from django.utils import timezone
 
 def current_time():
     return datetime.now().time()
+
 
 class WasteEvent(models.Model):
     we_num = models.BigAutoField(primary_key=True)
@@ -17,37 +17,20 @@ class WasteEvent(models.Model):
     we_description = models.CharField(max_length=200, null=True)
     we_organizer = models.CharField(max_length=100, null=True)
     we_invitees = models.CharField(max_length=100, null=True)
-    #wf_id = models.ForeignKey(?, on_delete=models.CASCADE)
-    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
     
     class Meta:
         db_table = 'waste_event'
 
 class WasteCollectionStaff(models.Model):
     wstf_id = models.BigAutoField(primary_key=True)
-    # ra_id = models.ForeignKey(ResidentAccount, on_delete=models.CASCADE)
-    # pos_id = models.ForeignKey(Postion, on_delete=models.CASCADE)
-
+    
     class Meta:
         db_table = 'waste_collection_staff'
 
 
-class WasteHotspot(models.Model):
-    wh_num = models.BigAutoField(primary_key=True)
-    wh_date = models.DateField(null=True)
-    wh_time = models.TimeField(null=True)
-    wh_add_info = models.CharField(max_length=200, null=True)
-    # sitio_id = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    # staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'waste_hotspot'
-
-
 class WasteReport(models.Model):
     rep_id = models.BigAutoField(primary_key=True)
-    rep_image = models.CharField(default="none", null=True, blank=True)
+    # rep_image = models.CharField(default="none", null=True, blank=True)
     rep_matter = models.CharField(default="none")
     rep_location = models.CharField(default="none")
     rep_add_details = models.CharField(max_length=200, null=True)
@@ -56,9 +39,9 @@ class WasteReport(models.Model):
     rep_anonymous = models.BooleanField(default=False)
     rep_contact = models.CharField(default="none")
     rep_status = models.CharField(max_length=100, default="pending")
-    rep_date = models.DateField(default=date.today)
-    rep_date_resolved = models.DateField(null=True)
-    rep_resolved_img = models.CharField(null=True, blank=True)
+    rep_date = models.DateTimeField(null=True)
+    rep_date_resolved = models.DateTimeField(null=True)
+    # rep_resolved_img = models.CharField(null=True, blank=True)
 
     sitio_id = models.ForeignKey(
         'profiling.Sitio', 
@@ -113,6 +96,27 @@ class WasteReport_File(models.Model):
     class Meta:
         db_table = 'waste_report_file'
 
+
+class WasteReportResolve_File(models.Model):
+    wrsf_id = models.BigAutoField(primary_key=True)
+    wrsf_name = models.CharField(max_length=255)
+    wrsf_type = models.CharField(max_length=100)
+    wrsf_path = models.CharField(max_length=500)
+    wrsf_url = models.CharField(max_length=500)
+
+    rep_id = models.ForeignKey(
+        WasteReport,
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True,
+        related_name='waste_report_rslv_file',
+        db_column='rep_id'
+    )
+
+    class Meta:
+        db_table = 'waste_report_rslv_file'
+
+
 class WastePersonnel(models.Model):
     wstp_id = models.BigAutoField(primary_key=True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
@@ -120,46 +124,44 @@ class WastePersonnel(models.Model):
     class Meta:
         db_table = 'waste_personnel'
 
-    # def get_staff_position(self):
-    #     return self.staff_id.pos.pos_title if self.staff_id.pos else None
+    def get_staff_position(self):
+        return self.staff.pos.pos_title if self.staff.pos else None  
 
-    # def get_staff_name(self):
-    #     if self.staff_id.rp and self.staff_id.rp.per:
-    #         return f"{self.staff_id.rp.per.per_fname} {self.staff_id.rp.per.per_lname}"
-    #     return "Unknown"
+    def get_staff_name(self):
+        if self.staff.rp and self.staff.rp.per:  
+            return f"{self.staff.rp.per.per_fname} {self.staff.rp.per.per_lname}"
+        return "Unknown"
     
-
-    
-    # def to_dict(self):
-    #     return {
-    #         "wstp_id": self.wstp_id,
-    #         "staff": {
-    #             "staff_id": self.staff_id.staff_id,
-    #             "staff_assign_date": self.staff_id.staff_assign_date.isoformat(),
-    #             "rp": {
-    #                 "rp_id": self.staff_id.rp.rp_id,
-    #                 "rp_date_registered": self.staff_id.rp.rp_date_registered.isoformat(),
-    #                 "per": {
-    #                     "per_id": self.staff_id.rp.per.per_id,
-    #                     "per_lname": self.staff_id.rp.per.per_lname,
-    #                     "per_fname": self.staff_id.rp.per.per_fname,
-    #                     "per_mname": self.staff_id.rp.per.per_mname,
-    #                     "per_suffix": self.staff_id.rp.per.per_suffix,
-    #                     "per_dob": self.staff_id.rp.per.per_dob.isoformat(),
-    #                     "per_sex": self.staff_id.rp.per.per_sex,
-    #                     "per_status": self.staff_id.rp.per.per_status,
-    #                     "per_edAttainment": self.staff_id.rp.per.per_edAttainment,
-    #                     "per_religion": self.staff_id.rp.per.per_religion,
-    #                     "per_contact": self.staff_id.rp.per.per_contact,
-    #                 }
-    #             },
-    #             "pos": {
-    #                 "pos_id": self.staff_id.pos.pos_id,
-    #                 "pos_title": self.staff_id.pos.pos_title,
-    #                 "pos_max": self.staff_id.pos.pos_max,
-    #             }
-    #         }
-    #     }
+    def to_dict(self):
+        return {
+            "wstp_id": self.wstp_id,
+            "staff": {
+                "staff": self.staff.staff_id,  
+                "staff_assign_date": self.staff.staff_assign_date.isoformat(),  
+                "rp": {
+                    "rp_id": self.staff.rp.rp_id,  
+                    "rp_date_registered": self.staff.rp.rp_date_registered.isoformat(),  
+                    "per": {
+                        "per_id": self.staff.rp.per.per_id,  
+                        "per_lname": self.staff.rp.per.per_lname,  
+                        "per_fname": self.staff.rp.per.per_fname,  
+                        "per_mname": self.staff.rp.per.per_mname,  
+                        "per_suffix": self.staff.rp.per.per_suffix,  
+                        "per_dob": self.staff.rp.per.per_dob.isoformat(),  
+                        "per_sex": self.staff.rp.per.per_sex,  
+                        "per_status": self.staff.rp.per.per_status,  
+                        "per_edAttainment": self.staff.rp.per.per_edAttainment,  
+                        "per_religion": self.staff.rp.per.per_religion,  
+                        "per_contact": self.staff.rp.per.per_contact,  
+                    }
+                },
+                "pos": {
+                    "pos_id": self.staff.pos.pos_id,  
+                    "pos_title": self.staff.pos.pos_title,  
+                    "pos_max": self.staff.pos.pos_max, 
+                }
+            }
+        }
 
 class WasteTruck(models.Model):
     truck_id = models.BigAutoField(primary_key=True)
@@ -224,7 +226,7 @@ class Garbage_Pickup_Request(models.Model):
     garb_additional_notes = models.TextField()
     garb_created_at = models.DateTimeField(default=datetime.now)
     rp = models.ForeignKey(
-        'profiling.ResidentProfile' , 
+        'profiling.ResidentProfile', 
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -236,6 +238,14 @@ class Garbage_Pickup_Request(models.Model):
         null=True,
         blank=True,
         db_column='file_id'
+    )
+    
+    sitio_id = models.ForeignKey(
+        'profiling.Sitio',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        db_column='sitio_id'
     )
 
     class Meta:
@@ -253,23 +263,15 @@ class Pickup_Request_Decision(models.Model):
         on_delete=models.CASCADE,
         db_column='garb_id' 
     )
-    # staff_id = models.ForeignKey(
-    #     'administration.Staff',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     db_column='staff_id'
-    # )
 
     class Meta:
         db_table = 'pickup_request_decision'
     
-
 class Pickup_Assignment(models.Model):
     pick_id = models.BigAutoField(primary_key=True)
     pick_date = models.DateField(default=date.today)
     pick_time = models.TimeField(default=current_time)
-    truck_id  = models.ForeignKey(
+    truck_id = models.ForeignKey(
         WasteTruck, 
         on_delete=models.CASCADE,
         db_column='truck_id' 
@@ -279,13 +281,6 @@ class Pickup_Assignment(models.Model):
         on_delete=models.CASCADE,
         db_column='wstp_id' 
     )
-    # staff_id = models.ForeignKey(
-    #     'administration.Staff',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     db_column='staff_id'
-    # )
     garb_id = models.ForeignKey(
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,
@@ -311,7 +306,6 @@ class Assignment_Collector(models.Model):
     class Meta:
         db_table = 'assignment_collector'
 
-
 class Pickup_Confirmation(models.Model):
     conf_id = models.BigAutoField(primary_key=True)
     conf_resident_conf = models.BooleanField(blank=True)
@@ -325,11 +319,29 @@ class Pickup_Confirmation(models.Model):
     )
 
     class Meta: 
-        db_table="pickup_confirmation"
+        db_table = "pickup_confirmation"
 
 
+class WasteHotspot(models.Model):
+    wh_num = models.BigAutoField(primary_key=True)
+    wh_date = models.DateField()
+    wh_start_time = models.TimeField()
+    wh_end_time = models.TimeField()
+    wh_add_info = models.CharField(max_length=200, null=True, blank=True)
+    wh_is_archive = models.BooleanField(default=False)
+    sitio_id = models.ForeignKey(
+        'profiling.Sitio',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        db_column='sitio_id'
+    )
+    wstp_id = models.ForeignKey(
+        'WastePersonnel', 
+        on_delete=models.CASCADE,
+        db_column='wstp_id',
+        default=None,
+    )
 
-
-    
-
-
+    class Meta:
+        db_table = 'waste_hotspot'

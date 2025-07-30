@@ -55,6 +55,11 @@ class PositionUpdateView(generics.RetrieveUpdateAPIView):
     
 class PositionGroupsListView(APIView):
     def get(self, request, *args, **kwargs):
-        queryset = Position.objects.values_list('pos_group', flat=True).distinct()
-        return Response(queryset)
+        queryset = Position.objects.filter(pos_group__isnull=False) \
+                .exclude(pos_group__exact='') \
+                .values_list('pos_group', flat=True) \
+                .distinct()
+        if queryset:
+            return Response(queryset)
+        return None
         

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny 
 from rest_framework.decorators import api_view, permission_classes
 from django.db import transaction
 from rest_framework.authtoken.models import Token
@@ -12,7 +12,7 @@ import logging
 from django.http import JsonResponse
 from supabase import create_client
 from apps.account.models import Account
-from apps.profiling.models import ResidentProfile
+from apps.profiling.models import ResidentProfile, BusinessRespondent
 from .serializers import UserAccountSerializer
 from utils.supabase_client import supabase
 from rest_framework.permissions import IsAuthenticated
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
         
 #     ],
 #     'Barangay Staff' : [
-        
+#         'auth/'
 #     ],
 #     'resident': [
         
@@ -50,7 +50,6 @@ class AuthBaseView(APIView):
         
         return supabase_id, email
 
-
 class SignupView(APIView):
     permission_classes = [AllowAny]
     
@@ -60,6 +59,7 @@ class SignupView(APIView):
             password = request.data.get('password')
             username = request.data.get('username')
             resident_id = request.data.get('resident_id')
+            br = request.data.get('br')
 
             if not email or not password:
                 return Response(
@@ -82,6 +82,16 @@ class SignupView(APIView):
                 except ResidentProfile.DoesNotExist:
                     return Response(
                         {'error': 'Invalid resident ID provided'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            # Validate business respondent id if provided
+            business_respondent = None
+            if br:
+                try:
+                   business_respondent = BusinessRespondent.objects.get(br_id=br)
+                except Exception as e:
+                    return Response(
+                        {'error': 'Invalid business respondent ID provided'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
@@ -111,7 +121,8 @@ class SignupView(APIView):
                         email=email,
                         username=username or email.split('@')[0],
                         supabase_id=supabase_response.user.id,  # Store Supabase ID
-                        rp=resident_profile 
+                        rp=resident_profile,
+                        br=business_respondent
                     )
 
                 # Check if email confirmation is required
@@ -201,7 +212,8 @@ class LoginView(APIView):
             return Response({
                 'user': serializer.data,
                 'access_token': supabase_response.session.access_token,
-                'message': 'Login successful'
+                'message': 'Login successful',
+                'supabase_token': supabase_response.session.access_token
             })
 
         except Exception as e:
@@ -213,6 +225,8 @@ class LoginView(APIView):
 
 
 class UserView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
         try:
             # Get the Supabase user from the request (set by middleware)

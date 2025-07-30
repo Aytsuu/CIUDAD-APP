@@ -81,7 +81,6 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     logs = ProjectProposalLogSerializer(many=True, read_only=True)
 
-
     def get_status(self, obj):
         return obj.current_status
 
@@ -91,7 +90,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gpr_id', 'gpr_title', 'gpr_background', 'gpr_date', 'gpr_venue',
             'gpr_monitoring', 'gpr_header_img', 'gpr_created', 'gpr_is_archive',
             'gpr_objectives', 'gpr_participants', 'gpr_budget_items', 'gpr_signatories',
-            'staff', 'status', 'logs', 'gpr_page_size'
+            'staff', 'status', 'logs', 'gpr_page_size', 'gbud'
         ]
         extra_kwargs = {
             'gpr_id': {'read_only': True},
@@ -101,7 +100,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 'write_only': True
             }
         }
-
+    
     def to_representation(self, instance):
         data = super().to_representation(instance)
         return {
@@ -126,55 +125,14 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         }
 
 
-class ProposalSuppDocSerializer(serializers.ModelSerializer):
-    file_url = serializers.CharField(write_only=True)
-    file_path = serializers.CharField(write_only=True)
-    file_name = serializers.CharField(write_only=True)
-    file_type = serializers.CharField(write_only=True)
-    file = FileUploadSerializer(read_only=True)
-    
+class ProposalSuppDocSerializer(serializers.ModelSerializer):   
     class Meta:
         model = ProposalSuppDoc
-        fields = '__all__'
+        fields = ['psd_id', 'psd_is_archive', 'psd_url', 'psd_name', 'psd_type', 'psd_path']
         extra_kwargs = {
             'gpr': {'read_only': True},
             'psd_is_archive': {'default': False}
         }
-
-    def create(self, validated_data):
-        try:
-            # Extract file data from validated_data
-            file_url = validated_data.pop('file_url')
-            file_path = validated_data.pop('file_path')
-            file_name = validated_data.pop('file_name')
-            file_type = validated_data.pop('file_type')
-            
-            # Create File record
-            file_record = File.objects.create(
-                file_name=file_name,
-                file_type=file_type,
-                file_path=file_path,
-                file_url=file_url
-            )
-            
-            # Get the proposal from context (set in the view)
-            proposal = self.context.get('proposal')
-            if not proposal:
-                raise ValidationError("Proposal context is missing")
-            
-            # Create ProposalSuppDoc
-            return ProposalSuppDoc.objects.create(
-                gpr=proposal,
-                file=file_record,
-                **validated_data
-            )
-            
-        except Exception as e:
-            # Clean up if something goes wrong
-            if 'file_record' in locals() and file_record.id:
-                file_record.delete()
-            raise serializers.ValidationError(str(e))
-
 
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()

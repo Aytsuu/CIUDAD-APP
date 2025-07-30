@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.account.models import Account
-from apps.profiling.serializers.full import ResidentProfileFullSerializer
+from apps.profiling.serializers.resident_profile_serializers import ResidentProfileFullSerializer
 from apps.administration.serializers.staff_serializers import StaffFullSerializer
 from apps.administration.models import Staff
 
@@ -23,7 +23,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
     def get_staff(self, obj):
         """
-        Get staff profile information through the resident profile.
+            Get staff profile information through the resident profile.
         """
         # Check if account has a resident profile
         if hasattr(obj, 'rp') or obj.rp:

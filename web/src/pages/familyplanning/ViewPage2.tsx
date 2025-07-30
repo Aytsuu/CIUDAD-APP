@@ -97,7 +97,7 @@ export default function FamilyPlanningView2() {
 };
 
   return (
-    <div className="container bg-white mx-auto p-4 max-w-7xl">
+    <div className="container bg-white mx-auto p-4 max-w">
       <Button
         className="text-black p-2 self-start"
         variant={"outline"}
