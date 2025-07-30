@@ -19,6 +19,7 @@ const WasteMainScheduling = () => {
   const [activeTab, setActiveTab] = useState("calendar");
   const { data: councilEvents = [] } = useGetCouncilEvents();
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
+  console.log('Hotspots:', hotspotData)
 
   const calendarSources = [
     {
@@ -51,6 +52,7 @@ const WasteMainScheduling = () => {
     },
   ];
 
+  if (isHotspotLoading || isWasteColLoading) {
   if (isHotspotLoading || isWasteColLoading) {
     return (
       <div className="space-y-4">

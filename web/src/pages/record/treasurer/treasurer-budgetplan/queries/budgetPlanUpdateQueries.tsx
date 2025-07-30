@@ -94,7 +94,7 @@ export const useUpdateBudgetItem = (onSuccess: () => void) => {
 
     return useMutation({
         mutationFn: ({ updatedItemData, historyRecords }: {
-        updatedItemData: Array<{ dtl_id: number, dtl_proposed_budget: number }>,
+        updatedItemData: Array<{ dtl_id: number, dtl_proposed_budget: number, plan_budgetaryObligations?: number}>,
         historyRecords: Array<{
             bph_source_item: string,
             bph_to_item: string,

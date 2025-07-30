@@ -141,7 +141,7 @@ class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
-        archive_completed_hotspots()
+        # archive_completed_hotspots()
         return WasteHotspot.objects.select_related(
             'wstp_id__staff__rp__per', 
             'sitio_id'                   

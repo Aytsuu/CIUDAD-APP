@@ -1,4 +1,4 @@
-from django.db import models
+# from django.db import models
 
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)
@@ -100,12 +100,12 @@ class ComplaintRecipient(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = 'complaint_recipient'
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['status']),
-        ]
+#     class Meta:
+#         db_table = 'complaint_recipient'
+#         ordering = ['-created_at']
+#         indexes = [
+#             models.Index(fields=['status']),
+#         ]
 
     def __str__(self):
         return f"Recipient {self.recipient.username} for case #{self.comp_acc.ca_id}"
