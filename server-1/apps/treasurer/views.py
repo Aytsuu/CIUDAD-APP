@@ -30,17 +30,6 @@ class BudgetPlanDetailView(generics.ListCreateAPIView):
         else:
             return super().create(request, *args, **kwargs) 
         
-# class BudgetPlanHistoryView(generics.ListCreateAPIView):
-#     serializer_class = BudgetPlanHistorySerializer
-#     queryset = Budget_Plan_History.objects.all()
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         print(serializer.errors)  # Add this line
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BudgetPlanHistoryView(generics.ListCreateAPIView):
     serializer_class = BudgetPlanHistorySerializer
@@ -48,12 +37,20 @@ class BudgetPlanHistoryView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        plan_id = self.request.query_params.get('plan_id')
+        plan_id = self.kwargs.get('plan_id')  
         if plan_id:
             queryset = queryset.filter(plan_id=plan_id)
-        return queryset
+        return queryset.order_by('-bph_date_updated')  
 
     def post(self, request, *args, **kwargs):
+        plan_id = self.kwargs.get('plan_id')
+        if plan_id:
+            if isinstance(request.data, list):
+                for item in request.data:
+                    item['plan'] = plan_id
+            else:
+                request.data['plan'] = plan_id
+        
         serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
         if serializer.is_valid():
             serializer.save()
