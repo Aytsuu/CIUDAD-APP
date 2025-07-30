@@ -78,78 +78,34 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       budgetData: Record<string, any>;
       files: MediaFileType[];
       filesToDelete: string[];
+      remainingBalance: number;
     }) => {
       // Fetch current entry
       const currentEntryRes = await api.get(`/gad/gad-budget-tracker-entry/${data.gbud_num}/`);
       const currentEntry = currentEntryRes.data;
 
-      // Get old values (default to 0 if null/undefined)
-      const oldActualExpense = Number(currentEntry.gbud_actual_expense) || 0;
-      const oldProposedBudget = Number(currentEntry.gbud_proposed_budget) || 0;
-      const oldExpense = oldActualExpense || oldProposedBudget;
-
-      // Validate remaining balance for Expense entries
-      if (data.budgetData.gbud_type === "Expense") {
+      if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
         const currentYearBudget = yearBudgets.find(
           (b) => b.gbudy_year === new Date(data.budgetData.gbud_datetime).getFullYear().toString()
         );
-        
         if (!currentYearBudget) {
           throw new Error("No budget found for the selected year");
         }
-
-        const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
-        const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-        const totalIncome = Number(currentYearBudget.gbudy_income) || 0;
-        
-        // Calculate current available balance
-        const currentAvailable = initialBudget - (totalExpenses - oldExpense);
-
-        // Determine new expense value (prioritize actual over proposed)
-        const newExpenseValue = data.budgetData.gbud_actual_expense != null 
-          ? Number(data.budgetData.gbud_actual_expense) || 0
-          : Number(data.budgetData.gbud_proposed_budget) || 0;
-
-        // Validate against available balance
-        if (newExpenseValue > currentAvailable) {
+        const remainingBalance = data.remainingBalance; // Use passed remainingBalance
+        if (data.budgetData.gbud_actual_expense > remainingBalance) {
           throw new Error(
-            `Expense cannot exceed available balance of ₱${currentAvailable.toLocaleString()}`
+            `Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`
           );
         }
 
-        // Calculate expected remaining balance
-        const expectedRemaining = currentAvailable - newExpenseValue;
-
-        // Only validate remaining balance if explicitly provided
-        if (data.budgetData.gbud_remaining_bal != null) {
-          // Allow 1% tolerance for floating point differences
-          const tolerance = currentAvailable * 0.01;
-          const difference = Math.abs(Number(data.budgetData.gbud_remaining_bal) - expectedRemaining);
-          
-          if (difference > tolerance) {
-            console.log("Budget Calculation Details:", {
-              initialBudget,
-              totalExpenses,
-              totalIncome,
-              oldActualExpense,
-              oldProposedBudget,
-              oldExpense,
-              currentAvailable,
-              newExpenseValue,
-              expectedRemaining,
-              receivedRemaining: data.budgetData.gbud_remaining_bal,
-              difference,
-              tolerance
-            });
-            
+        if (data.budgetData.gbud_remaining_bal !== undefined) {
+          const expectedRemaining = remainingBalance - data.budgetData.gbud_actual_expense;
+          if (Math.abs(data.budgetData.gbud_remaining_bal - expectedRemaining) > 0.01) {
             throw new Error(
-              `Remaining balance mismatch: expected ₱${expectedRemaining.toFixed(2)}, got ₱${Number(data.budgetData.gbud_remaining_bal).toFixed(2)}`
+              `Remaining balance mismatch: expected ₱${expectedRemaining.toLocaleString()}, got ₱${data.budgetData.gbud_remaining_bal.toLocaleString()}`
             );
           }
         }
-
-        // Auto-calculate remaining balance if not provided
-        data.budgetData.gbud_remaining_bal = Number(expectedRemaining.toFixed(2));
       }
 
       // Update budget entry

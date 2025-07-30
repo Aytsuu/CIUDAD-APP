@@ -35,7 +35,7 @@ export const report_router = [
     element: <ReportDocument/>
   },
   {
-    path: '/report/weekly/missing-report/create',
+    path: '/report/weekly-accomplishment/missing-report/create',
     element: <CreateMissingWeeks/>
   }
 ]

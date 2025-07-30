@@ -129,10 +129,10 @@ export default function ComplaintForm() {
             </View>
             
             <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <MediaPicker 
-                selectedImage={selectedImage}
+              {/* <MediaPicker 
+                selectedImages={selectedImage}
                 setSelectedImage={setSelectedImage}
-              />
+              /> */}
             </View>
           </View>
         </View>

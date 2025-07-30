@@ -4,27 +4,41 @@ export interface Address {
   add_barangay: string;
   add_street: string;
   add_external_sitio?: string;
-  sitio?: number;
+  sitio?: number | null;
 }
 
+// Matches backend Complainant model + nested Address
 export interface Complainant {
   cpnt_id: number;
   cpnt_name: string;
+  cpnt_gender: string;
+  cpnt_age: string;
+  cpnt_number: string;
+  cpnt_relation_to_respondent: string;
   add: Address;
 }
 
+// Matches backend Accused model + nested Address
 export interface Accused {
   acsd_id: number;
   acsd_name: string;
+  acsd_age: string;
+  acsd_gender: string;
+  acsd_description: string;
   add: Address;
 }
 
+// Matches Complaint_File model
 export interface ComplaintFile {
-  cf_id: number;
-  file: any;
+  comp_file_id: number;
+  comp_file_name: string;
+  comp_file_type: string;
+  comp_file_path: string;
+  supabase_path: string;
+  file_size: number;
 }
 
-export interface Complaint{
+export interface Complaint {
   comp_id: number;
   comp_incident_type: string;
   comp_datetime: string;
@@ -32,62 +46,7 @@ export interface Complaint{
   comp_category: string;
   comp_created_at: string;
   comp_is_archive: boolean;
-  cpnt: Complainant;
+  complainant: Complainant[];
   accused_persons: Accused[];
-  complaint_files?: ComplaintFile[];
-}
-
-
-// This interface matches what your Django view expects
-export interface ComplaintFormValues {
-  complainant: {
-    name: string;
-    address: Address;
-  };
-  accused: Array<{
-    name: string;
-    address: Address;
-  }>;
-  incident_type: string;
-  datetime: string;
-  allegation: string;
-  category: string;
-  media_files: File[];
-}
-
-// For media upload component
-export interface MediaFile {
-  id: string;
-  file: File | null;
-  preview?: string;
-}
-
-export interface ComplaintPayload {
-  complainant: {
-    name: string;
-    address: {
-      add_province: string;
-      add_city: string;
-      add_barangay: string;
-      add_street: string;
-      add_external_sitio: string;
-      sitio: null | number;
-    };
-  };
-  accused: Array<{
-    name: string;
-    address: {
-      add_province: string;
-      add_city: string;
-      add_barangay: string;
-      add_street: string;
-      add_external_sitio: string;
-      sitio: null | number;
-    };
-  }>;
-  incident_type: string;
-  datetime: string;
-  allegation: string;
-  category: string;
-  media_files: File[];
+  complaint_file?: ComplaintFile[];
 }

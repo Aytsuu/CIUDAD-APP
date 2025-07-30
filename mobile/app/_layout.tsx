@@ -54,6 +54,7 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(business)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
               <Stack.Screen name="(profiling)" options={{ headerShown: false }} />

@@ -29,7 +29,7 @@ export const IncidentInfo = () => {
                   <SelectItem value="Assault">Assault</SelectItem>
                   <SelectItem value="Property Damage">Property Damage</SelectItem>
                   <SelectItem value="Noise">Noise Complaint</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -37,7 +37,7 @@ export const IncidentInfo = () => {
           )}
         />
 
-        {incidentType === "other" && (
+        {incidentType === "Other" && (
           <FormField
             control={control}
             name="incident.otherType"
@@ -60,7 +60,7 @@ export const IncidentInfo = () => {
           name="incident.date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="font-semibold text-black/50">Date of Incident *</FormLabel>
+              <FormLabel className="font-semibold text-black/50">Date *</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -74,7 +74,7 @@ export const IncidentInfo = () => {
           name="incident.time"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="font-semibold text-black/50">Time of Incident *</FormLabel>
+              <FormLabel className="font-semibold text-black/50">Time *</FormLabel>
               <FormControl>
                 <Input type="time" {...field} />
               </FormControl>
@@ -83,7 +83,19 @@ export const IncidentInfo = () => {
           )}
         />
       </div>
-
+        <FormField
+          control={control}
+          name="incident.location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-semibold text-black/50">Location *</FormLabel>
+              <FormControl>
+                <Input placeholder="Specific place of where the incident happened" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       <FormField
         control={control}
         name="incident.description"

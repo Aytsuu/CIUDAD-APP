@@ -33,3 +33,13 @@ export const deleteComplaint = (id: string) => {
 export const raiseIssue = (compId : number) => {
   return api.post(`/complaint/${compId}/issue-raise/`)
 };
+
+export const searchComplainants = async (query: string) => {
+  const response = await api.get(`complaint/complainant/search/?q=${query}`);
+  return response.data;
+};
+
+export const searchAccused = async (query: string) => {
+  const response = await api.get(`complaint/accused/search/?q=${query}`);
+  return response.data;
+};
