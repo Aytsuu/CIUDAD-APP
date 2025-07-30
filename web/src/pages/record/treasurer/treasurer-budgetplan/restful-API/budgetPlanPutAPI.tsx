@@ -62,7 +62,41 @@ export const restoreBudgetPlan = async (planId: number) => {
     }
 }
 
-export const updateBudgetItem = async ( budgetItems: Array<{ dtl_id: number, dtl_proposed_budget: number }>,
+// export const updateBudgetItem = async ( budgetItems: Array<{ dtl_id: number, dtl_proposed_budget: number }>,
+//   historyRecords: Array<{
+//     bph_source_item: string,
+//     bph_to_item: string,
+//     bph_from_new_balance: number,
+//     bph_to_new_balance: number,
+//     bph_to_prev_balance: number,
+//     bph_from_prev_balance: number,
+//     bph_transfer_amount: number,
+//     plan: number
+//   }>
+// ) => {    
+//     try {
+//         const updatePromises = budgetItems.map(item => 
+
+//             if(item.dtl_id == -1){
+//                 api.put(`treasurer/update-budget-plan/${historyRecords.plan}/`, {
+//                     plan_balUnappropriated: item.dtl_proposed_budget,
+//                 })
+//             }
+//             api.put(`treasurer/update-budget-details/${item.dtl_id}/`, {
+//                 dtl_proposed_budget: item.dtl_proposed_budget
+//             })
+//         );
+//         const results = await Promise.all(updatePromises);
+
+//         await addHistory(historyRecords);
+//         return results;
+//     } catch(err) {
+//         console.error(err);
+//         throw err; 
+//     }
+// }
+
+export const updateBudgetItem = async ( budgetItems: Array<{ dtl_id: number, dtl_proposed_budget: number, plan_budgetaryObligations?: number }>,
   historyRecords: Array<{
     bph_source_item: string,
     bph_to_item: string,
@@ -75,14 +109,29 @@ export const updateBudgetItem = async ( budgetItems: Array<{ dtl_id: number, dtl
   }>
 ) => {    
     try {
-        const updatePromises = budgetItems.map(item => 
-            api.put(`treasurer/update-budget-details/${item.dtl_id}/`, {
-                dtl_proposed_budget: item.dtl_proposed_budget
-            })
-        );
-        const results = await Promise.all(updatePromises);
+        const planId = historyRecords[0]?.plan;
 
+        const updatePromises = budgetItems.map(item => {
+            if (item.dtl_id === -1) {
+
+                console.log({
+                    plan_balUnappropriated: item.dtl_proposed_budget,
+                    plan_budgetaryObligations: item.plan_budgetaryObligations
+                })
+                return api.put(`treasurer/update-budget-plan/${planId}/`, {
+                    plan_balUnappropriated: item.dtl_proposed_budget,
+                    plan_budgetaryObligations: item.plan_budgetaryObligations
+                });
+            }
+            return api.put(`treasurer/update-budget-details/${item.dtl_id}/`, {
+                dtl_proposed_budget: item.dtl_proposed_budget
+            });
+        });
+
+        const results = await Promise.all(updatePromises);
+        
         await addHistory(historyRecords);
+        
         return results;
     } catch(err) {
         console.error(err);
@@ -115,4 +164,3 @@ const addHistory = async ( historyRecords: Array<{
     console.error(err);
   }
 };
-
