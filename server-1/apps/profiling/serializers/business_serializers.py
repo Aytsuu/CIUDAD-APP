@@ -115,7 +115,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
               'bus_registered_by', 'files']
     
   def get_files(self, obj):
-    files = BusinessFile.objects.filter(bus=obj)
+    files = BusinessFile.objects.filter(bus=obj.bus_id)
     return [
       {
         'id': file.bf_id,
@@ -233,8 +233,6 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     files = validated_data.pop('files', [])
     sitio = validated_data.pop('sitio')
     street = validated_data.pop('bus_street')
-    BusinessFile.objects.filter(bus=instance).delete()
-
     address, _ = Address.objects.get_or_create(
         sitio=sitio,
         add_street=street,
@@ -253,10 +251,8 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     instance.save()
 
     if files:
-      BusinessFile.objects.bulk_create([
-        BusinessFile(bus=instance, **file) 
-        for file in files
-      ])
+      self._upload_files(instance, files)
+      
     return instance
 
 class ForSpecificOwnerSerializer(serializers.ModelSerializer):
