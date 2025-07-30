@@ -593,6 +593,10 @@ function ExpenseEdit() {
       return;
     }
 
+    if(!values.iet_additional_notes){
+        values.iet_additional_notes = "None";
+    }    
+
     if (amount < 0 || actualAmount < 0) {
       if (amount < 0) {
         form.setError("iet_amount", {
