@@ -35,7 +35,7 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save(
-            gbud_datetime=timezone.now(),
+            # gbud_datetime=timezone.now(),
             staff=getattr(self.request.user, 'staff', None)  # Safely get staff or None
         )
     
