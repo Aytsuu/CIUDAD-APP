@@ -100,6 +100,13 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
         # Extract personal data
         personal_data = validated_data.pop('per')
         per = validated_data.pop('per_id', None)
+        staff_id = validated_data.get('staff')
+
+        try:
+            staff = Staff.objects.get(staff_id=staff_id)
+        except Staff.DoesNotExist:
+            raise serializers.ValidationError({"staff_id" : "Invalid staff ID"})
+        
         if per:
             personal = Personal.objects.get(per_id=per)
         else:
@@ -108,11 +115,15 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
             personal_serializer.is_valid(raise_exception=True)
             personal = personal_serializer.save()
 
+            personal._history_user = staff
+            personal._history_change_reason = f"Created by staff {staff_id}"
+            personal.save()
+
         # Create ResidentProfile record
         resident_profile = ResidentProfile.objects.create(
             rp_id = self.generate_resident_no(),
             per = personal,
-            staff_id = validated_data.get('staff', None)
+            staff_id = staff
         )
         
         return resident_profile

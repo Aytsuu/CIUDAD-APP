@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from datetime import date
+from simple_history.models import HistoricalRecords
 
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
@@ -43,6 +44,13 @@ class Personal(models.Model):
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
 
+    history = HistoricalRecords(
+        table_name='personal_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
+
     class Meta:
         db_table = 'personal'
         indexes = [
@@ -62,9 +70,18 @@ class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
-
     class Meta:
         db_table = 'personal_address'
+
+class PersonalAddressHistory(models.Model):
+    pah_id = models.BigAutoField(primary_key=True)
+    pah_date = models.DateTimeField(auto_now_add=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+    history_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'personal_address_history'
 
 class ResidentProfile(models.Model):
     rp_id = models.CharField(max_length=50, primary_key=True)

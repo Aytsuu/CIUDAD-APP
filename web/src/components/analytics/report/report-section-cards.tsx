@@ -31,7 +31,7 @@ export const ReportSectionCards = () => {
             <CardHeader>
               <CardDescription>{sec.title}</CardDescription>
               <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                {!isLoading ? reportCardAnalytics[idx] : "..."}
+                {!isLoading &&reportCardAnalytics && reportCardAnalytics.length > 0 ? reportCardAnalytics[idx] : "..."}
               </CardTitle>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1.5 text-sm">

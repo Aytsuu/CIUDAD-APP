@@ -5,12 +5,41 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Q
+from django.db.models import Count
 from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
+from apps.treasurer.models import Purpose_And_Rates
+from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.exceptions import NotFound
+
 
 logger = logging.getLogger(__name__)
+
+class UpdateTemplateByPrIdView(generics.UpdateAPIView):
+    def update(self, request, *args, **kwargs):
+        old_id = request.data.get("old_pr_id")
+        new_id = request.data.get("new_pr_id")
+        
+        try:
+            new_purpose_rate = get_object_or_404(Purpose_And_Rates, pk=new_id)
+            templates = Template.objects.filter(pr_id=old_id)
+            
+            updated_count = templates.update(pr_id=new_purpose_rate)  # More efficient bulk update
+            
+            return Response({
+                "status": "updated",
+                "count": updated_count,
+                "message": f"Updated {updated_count} template(s)"
+            })
+            
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class CouncilSchedulingView(generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
@@ -155,6 +184,29 @@ class RestoreAttendanceView(generics.UpdateAPIView):
         return Response({"message": "Attendance sheet restored"},
                       status=status.HTTP_200_OK)
 
+class StaffAttendanceRankingView(generics.ListAPIView):
+    serializer_class = StaffAttendanceRankingSerializer
+
+    def get_queryset(self):
+        # Aggregate present attendees by atn_name for non-archived events
+        current_year = datetime.now().year
+        return (
+            CouncilAttendees.objects
+            .filter(
+                atn_present_or_absent='Present',
+                ce_id__ce_is_archive=False,
+                ce_id__ce_date__year=current_year,
+            )
+            .values('atn_name', 'atn_designation')
+            .annotate(attendance_count=Count('atn_id'))
+            .order_by('-attendance_count')
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
     queryset = Staff.objects.select_related('pos', 'rp__per').only(
@@ -168,12 +220,27 @@ class StaffListView(generics.ListAPIView):
 #TEMPLATE
 class TemplateView(generics.ListCreateAPIView):
     serializer_class = TemplateSerializer
-    queryset = Template.objects.filter(temp_is_archive=False) 
+    queryset = Template.objects.all()
 
-#Use as updating the values as well as archiving 
+
+class SummonTemplateView(APIView):
+    def get(self, request):
+        filename = request.query_params.get('filename')
+        if not filename:
+            raise NotFound("Missing 'filename' parameter")
+
+        try:
+            template = Template.objects.get(temp_filename=filename, temp_is_archive=False)
+        except Template.DoesNotExist:
+            raise NotFound("Template not found")
+
+        serializer = TemplateSerializer(template)
+        return Response(serializer.data)
+
+#UPDATE TEMPLATE
 class UpdateTemplateView(generics.RetrieveUpdateAPIView):
     serializer_class = TemplateSerializer
-    queryset = Template.objects.filter(temp_is_archive=False) 
+    queryset = Template.objects.all()
     lookup_field = 'temp_id'
 
     def update(self, request, *args, **kwargs):
@@ -183,6 +250,32 @@ class UpdateTemplateView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#DELETE TEMPLATE
+class DeleteTemplateView(generics.DestroyAPIView):
+    serializer_class = TemplateSerializer    
+    queryset = Template.objects.all()
+
+    def get_object(self):
+        temp_id = self.kwargs.get('temp_id')
+        return get_object_or_404(Template, temp_id=temp_id) 
+
+
+
+class DeleteTemplateByPrIdView(generics.DestroyAPIView):
+    serializer_class = TemplateSerializer
+    queryset = Template.objects.all()
+
+    def delete(self, request, *args, **kwargs):
+        pr_id = kwargs.get('pr_id')
+        deleted_count, _ = Template.objects.filter(pr_id=pr_id).delete()
+        
+        if deleted_count == 0:
+            return Response(
+                {"detail": "No templates found with this pr_id."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
  # =================================  RESOLUTION =================================
@@ -254,4 +347,74 @@ class ResolutionSupDocsView(generics.ListCreateAPIView):
 class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
     queryset = ResolutionSupDocs.objects.all()
     serializer_class = ResolutionSupDocsSerializer
-    lookup_field = 'rsd_id' 
+    lookup_field = 'rsd_id'     
+
+
+class PurposeRatesListView(generics.ListCreateAPIView):
+    queryset = Purpose_And_Rates.objects.all()
+    serializer_class = PurposeRatesListViewSerializer
+    
+
+class MinutesOfMeetingView(generics.ListCreateAPIView):
+    serializer_class = MinutesOfMeetingSerializer
+    queryset = MinutesOfMeeting.objects.all()
+
+class MOMAreaOfFocusView(generics.ListCreateAPIView):
+    serializer_class = MOMAreaOfFocusSerializer
+    queryset = MOMAreaOfFocus.objects.all()
+
+class MOMFileView(generics.ListCreateAPIView):
+    serializer_class = MOMFileSerialzer
+    queryset = MOMFile.objects.all()
+
+
+class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
+    serializer_class = MinutesOfMeetingSerializer
+    queryset = MinutesOfMeeting.objects.all()
+    lookup_field = 'mom_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
+    serializer_class = MinutesOfMeetingSerializer    
+    queryset = MinutesOfMeeting.objects.all()
+
+    def get_object(self):
+        mom_id = self.kwargs.get('mom_id')
+        return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
+    
+
+class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
+    serializer_class = MOMFileSerialzer
+    queryset = MOMFile.objects.all()
+    lookup_field = 'momf_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteMOMAreaOfFocusView(APIView):
+    def delete(self, request, mom_id):
+        get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
+        deleted_count, _ = MOMAreaOfFocus.objects.filter(mom_id=mom_id).delete()
+
+        return Response(
+            {"detail": f"{deleted_count} area(s) of focus deleted."},
+            status=status.HTTP_204_NO_CONTENT
+        )
+    
+
+class MOMSuppDocView(generics.ListCreateAPIView):
+    serializer_class = MOMSuppDocSerializer
+    query_set = MOMSuppDoc.objects.all()

@@ -5,6 +5,198 @@ import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
+import React from "react";
+
+// Define the columns for the data table
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// export const residentColumns: ColumnDef<ResidentRecord>[] = [
+//   {
+//     accessorKey: 'has_account',
+//     header: '',
+//     cell: ({ row }) => {
+//       const account = row.original.has_account
+
+//       return (
+//         <div className="flex items-center justify-center">
+//           {!account && (
+//             <TooltipLayout 
+//               trigger={
+//                 <Link to="/account/create"
+//                   state={{
+//                     params: {
+//                       residentId: row.original.rp_id
+//                     }
+//                   }}
+//                 >
+//                   <UserRoundPlus size={18} className="text-orange-400"/>
+//                 </Link> 
+//               }
+//               content="Account not registered"
+//             />
+//           )}
+//         </div>
+//       )
+//     }
+//   },
+//   {
+//     accessorKey: "rp_id",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Resident No.
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//   },
+//   {
+//     accessorKey: "household_no",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Household No.
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => {
+//         const householdNo: string = row.getValue("household_no");
+        
+//         return householdNo ? (<div>{householdNo}</div>) :
+//         (<div className="flex justify-center items-center">
+//           <TooltipLayout
+//               trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+//               content="Family not registered"
+//           />
+//         </div>)
+//     },
+//   },
+//   {
+//     accessorKey: "family_no",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Family No.
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => {
+//         const familyNo: string = row.getValue("family_no");
+        
+//         return familyNo ? (<div>{familyNo}</div>) :
+//         (<div className="flex justify-center items-center">
+//           <TooltipLayout
+//               trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+//               content="Family not registered"
+//           />
+//         </div>)
+//     },
+//   },
+//   {
+//     accessorKey: "business_owner",
+//     header: "Business Owner",
+//     cell: ({ row }) => (
+//       <div className="flex justify-center items-center">
+//         {row.original.business_owner === true ? (
+//         <Store className="w-4 h-4 text-green-500"/>
+//         ) : (
+//           <div className="w-2 h-2 rounded-full bg-red-500"/>
+//         )}
+//       </div>
+      
+//     ),
+//   },
+//   {
+//     accessorKey: "lname",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         Last Name
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => (
+//       <div className="hidden lg:block max-w-xs truncate">
+//         {row.getValue("lname")}
+//       </div>
+//     ),
+//   },
+//   {
+//     accessorKey: "fname",
+//     header: ({ column }) => (
+//       <div
+//         className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//       >
+//         First Name
+//         <ArrowUpDown size={14} />
+//       </div>
+//     ),
+//     cell: ({ row }) => (
+//       <div className="hidden lg:block max-w-xs truncate">
+//         {row.getValue("fname")}
+//       </div>
+//     ),
+//   },
+//   {
+//     accessorKey: "mname",
+//     header: ({ column }) => (
+      //   <div
+      //     className="flex w-full justify-center items-center gap-2 cursor-pointer"
+      //     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      //   >
+      //     Middle Name
+      //     <ArrowUpDown size={14} />
+      //   </div>
+      // ),
+//   },
+//   {
+//     accessorKey: "rp_date_registered",
+//     header: "Date Registered"
+//   },
+//   {
+//     accessorKey: "action",
+//     header: "Action",
+//     cell: ({ row }) => {
+//       const navigate = useNavigate();
+//       const { showLoading, hideLoading } = useLoading();
+
+//       const handleViewClick = async () => {
+//         showLoading();
+//         try {
+//           const personalInfo = await getPersonalInfo(row.original.rp_id);
+//           navigate("/resident/view", {
+//             state: {
+//               params: {
+//                 type: 'viewing',
+//                 data: {
+//                   personalInfo: personalInfo,
+//                   residentId: row.original.rp_id,
+//                   familyId: row.original.family_no
+//                 },
+//               }
+//             }
+//           });
+//         } finally {
+//           hideLoading();
+//         }
+//       }
+    
+//       return (
+//         <ViewButton onClick={handleViewClick} />
+//       )
+//     },
+//     enableSorting: false,
+//     enableHiding: false,
+//   },
+// ];
 
 export const residentColumns: ColumnDef<ResidentRecord>[] = [
   {
@@ -108,10 +300,10 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
 
       return (
         <div className="flex items-center justify-between px-5">
-          {profiles.map((profile: any) => (
-            completed.includes(profile.id) ? (
-              <TooltipLayout
-                key={profile.id}
+          {profiles.map((profile: any, idx: number) => (
+            <React.Fragment key={idx}>
+              {completed.includes(profile.id) ? (
+                <TooltipLayout
                 trigger={
                   <profile.icon size={20} 
                     className="text-blue-600"
@@ -119,13 +311,12 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
                 }
                 content={profile.tooltip}
               />
-            ) : (
-              <profile.icon 
-                key={profile.id}
-                size={20} 
-                className="text-gray-300"
-              />
-            )
+              ) : (
+                <profile.icon size={20} 
+                  className="text-gray-300"
+                />
+              )}
+            </React.Fragment>
           ))}
         </div>
       )

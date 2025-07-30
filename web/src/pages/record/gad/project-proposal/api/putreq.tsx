@@ -29,11 +29,11 @@ export const putProjectProposal = async (
       gpr_is_archive: proposalInfo.gprIsArchive,
       gpr_page_size: proposalF.paperSize,
       support_docs: proposalInfo.supportDocs?.map(doc => ({
-        psd_id: doc.psdId,
-        file_url: doc.fileUrl,
-        file_name: doc.fileName,
-        file_type: doc.fileType,
-        psd_is_archive: doc.isArchive,
+        psd_id: doc.psd_id,
+        psd_url: doc.psd_url,
+        psd_name: doc.psd_name,
+        psd_type: doc.psd_type,
+        psd_is_archive: doc.psd_is_archive,
       })) || [],
     };
 

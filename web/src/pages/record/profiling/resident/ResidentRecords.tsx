@@ -423,8 +423,8 @@ export default function ResidentRecords() {
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <div className="flex item-center justify-between gap-12">
-                  {profiles.map((profile: any) => (
-                    <div className="flex gap-2">
+                  {profiles.map((profile: any, idx: number) => (
+                    <div key={idx} className="flex gap-2">
                       <profile.icon size={18} 
                         className=""
                       />
