@@ -159,6 +159,7 @@ class GADDevelopmentBudgetSerializer(serializers.ModelSerializer):
         fields = ['gdb_id', 'gdb_name', 'gdb_pax', 'gdb_price']
 class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
     budgets = GADDevelopmentBudgetSerializer(many=True, required=False)
+    staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, required=False)
 
     class Meta:
         model = DevelopmentPlan
@@ -168,7 +169,7 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
         budgets_data = validated_data.pop('budgets', [])
         plan = DevelopmentPlan.objects.create(**validated_data)
         for budget in budgets_data:
-            DevelopmentPlan.objects.create(dev=plan, **budget)
+            DevelopmentBudget.objects.create(dev=plan, **budget)
         return plan
 
     def update(self, instance, validated_data):

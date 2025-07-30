@@ -4,11 +4,14 @@ import IllegalDumpCreateForm from "@/screens/report/illegal-dumping/resident/ill
 import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
 import IncomeExpenseMain from "@/screens/treasurer/treasurer-budget-tracker/income-expense-main";
 import WasteCollectionMain from "@/screens/waste/waste-collection/waste-collection-main";
-import ResolutionPage from "@/screens/council/resolution/resolution-main";
-import TemplateMainPage from "@/screens/council/doc-template/template-main";
-import ReceiptPage from "@/screens/treasurer/receipt/receipt-main";
-import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
+import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
+import AnnualDevPlanMain from "@/screens/gad/annual-dev-plan/main";
+import Request from "../(request)";
+import CertificatesMain from "@/screens/certificates/main";
+import ClearanceRequestList from "@/screens/treasurer/clearance-request";
 
 export default () => {
-    return <PurposeAndRatesMain/>
+    return <ClearanceRequestList/>
+    // return <Request/>
+    // return <CertificatesMain/>
 }

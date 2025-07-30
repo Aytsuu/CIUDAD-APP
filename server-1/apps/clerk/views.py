@@ -343,7 +343,7 @@ class CertificateListView(generics.ListCreateAPIView):
     serializer_class = ClerkCertificateSerializer
 
     def get_queryset(self):
-        return ClerkCertificate.objects.select_related(
+        queryset = ClerkCertificate.objects.select_related(
             'rp__per'
         ).prefetch_related(
             Prefetch(
@@ -356,9 +356,17 @@ class CertificateListView(generics.ListCreateAPIView):
             'req_request_date',
             'req_claim_date',
             'req_type',
+            'req_payment_status',
             'rp__per__per_fname',
             'rp__per__per_lname'
         )
+        
+        # Filter for paid certificates only
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(req_payment_status__iexact=payment_status)
+        
+        return queryset
 
     def list(self, request, *args, **kwargs):
         try:
@@ -463,19 +471,8 @@ class BusinessPermitListView(generics.ListCreateAPIView):
             'req_transac_id',
             'business__bus_id',
             'business__bus_name',
-            'business__bus_gross_sales',
-            'business__bus_province',
-            'business__bus_city',
-            'business__bus_barangay',
-            'business__bus_street',
-            'business__bus_respondentLname',
-            'business__bus_respondentFname',
-            'business__bus_respondentMname',
-            'business__bus_respondentSex',
-            'business__bus_respondentDob',
-            'business__bus_date_registered',
-            'business__sitio_id',
-            'business__staff_id'
+            'business__bus_gross_sales'
+            # Removed all problematic fields that don't exist in database
         )
 
     def list(self, request, *args, **kwargs):
@@ -579,15 +576,9 @@ def get_permit_clearances(request):
             'req_payment_status',
             'req_transac_id',
             'business__bus_id',
-            'business__bus_gross_sales',
-            'business__bus_respondentMname',
-            'business__bus_respondentSex',
-            'business__bus_respondentDob',
-            'business__bus_date_registered',
-            'business__staff_id',
-            'business__add_id',
-            'business__bus_respondentAddress',
-            'business__bus_respondentContact',
+            'business__bus_name',
+            'business__bus_gross_sales'
+            # Removed problematic fields that don't exist in database
         ).all()
         serializer = BusinessPermitSerializer(permits, many=True)
         return Response(serializer.data)

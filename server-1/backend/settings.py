@@ -388,6 +388,12 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.gad',
     'apps.clerk',
+<<<<<<< HEAD
+=======
+    'apps.council',
+    'apps.secretary',
+    'apps.act_log',
+>>>>>>> 08e94eb06 (bulk commit)
     'backend.firebase.notifications',
     
 ]
@@ -507,6 +513,7 @@ REST_FRAMEWORK = {
 # ========================
 # CORS SETTINGS
 # ========================
+<<<<<<< HEAD
 # CORS_ALLOWED_ORIGINS = [
 #     config('FRONTEND_URL', default='http://localhost:3000'), # replace this with the domain e.g 'https://ciudad-app.onrender.com'
 # ]
@@ -531,6 +538,20 @@ CORS_ALLOW_HEADERS = [
 
 CORS_EXPOSE_HEADERS = ['Authorization']
 
+=======
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://192.168.0.109:8000",
+    "http://192.168.0.109:3000",
+    "http://192.168.0.109:19006",  # Expo development server
+    config('FRONTEND_URL', default='http://localhost:3000'),
+]
+ALLOWED_HOSTS = ['*'] 
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_HEADERS = True
+>>>>>>> 08e94eb06 (bulk commit)
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',

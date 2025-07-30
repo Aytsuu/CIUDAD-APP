@@ -365,6 +365,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
         model = ClerkCertificate
         fields = [
             'cr_id',
+            'rp',
             'resident_details',
             'req_type',
             'req_request_date',
@@ -372,6 +373,10 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'req_payment_status',
             'req_pay_method',
             'req_transac_id',
+            'pr_id',
+            'ra_id',
+            'staff_id',
+            'req_status',
             'invoice'
         ]
 

@@ -13,18 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='clerkcertificate',
-            name='req_bsnss_address',
-        ),
-        migrations.RemoveField(
-            model_name='clerkcertificate',
-            name='req_bsnss_name',
-        ),
-        migrations.RemoveField(
-            model_name='clerkcertificate',
-            name='req_sales_proof',
-        ),
         migrations.AddField(
             model_name='clerkcertificate',
             name='pr_id',

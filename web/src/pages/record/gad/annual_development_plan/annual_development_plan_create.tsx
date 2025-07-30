@@ -6,9 +6,9 @@ import { createAnnualDevPlan } from "./restful-api/annualPostAPI";
 import { toast } from "sonner";
 
 interface BudgetItem {
-  name: string;
-  pax: string;
-  price: string;
+  gdb_name: string;
+  gdb_pax: string;
+  gdb_price: string;
 }
 
 export default function AnnualDevelopmentPlanCreate() {
@@ -22,7 +22,7 @@ export default function AnnualDevelopmentPlanCreate() {
     dev_res_person: "",
     dev_indicator: "",
     dev_gad_budget: "0",
-    staff: "00001250609", // Default staff ID, you might want to make this dynamic
+    staff: "", // Optional staff ID - can be empty
   });
   const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_price: string}[]>([]);
   const [currentBudgetItem, setCurrentBudgetItem] = useState({
@@ -63,7 +63,13 @@ export default function AnnualDevelopmentPlanCreate() {
     setIsLoading(true);
 
     try {
-      const payload = { ...formData, budgets: budgetItems };
+      // Filter out empty staff value to avoid validation errors
+      const { staff, ...restFormData } = formData;
+      const payload = { 
+        ...restFormData, 
+        staff: staff || null, // Send null if staff is empty
+        budgets: budgetItems 
+      };
       await createAnnualDevPlan(payload);
       toast.success("Annual development plan created successfully!");
       navigate(-1);

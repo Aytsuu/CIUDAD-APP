@@ -6,9 +6,9 @@ import { updateAnnualDevPlan } from "./restful-api/annualPutAPI";
 import { toast } from "sonner";
 
 interface BudgetItem {
-  name: string;
-  pax: string;
-  price: string;
+  gdb_name: string;
+  gdb_pax: string;
+  gdb_price: string;
 }
 
 interface DevelopmentPlan {
@@ -35,13 +35,13 @@ export default function AnnualDevelopmentPlanEdit() {
     dev_res_person: "",
     dev_indicator: "",
     dev_gad_budget: "0",
-    staff: "00001250609", // Default staff ID
+    staff: "", // Optional staff ID - can be empty
   });
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [currentBudgetItem, setCurrentBudgetItem] = useState<BudgetItem>({
-    name: "",
-    pax: "",
-    price: "",
+    gdb_name: "",
+    gdb_pax: "",
+    gdb_price: "",
   });
 
   useEffect(() => {
@@ -89,20 +89,20 @@ export default function AnnualDevelopmentPlanEdit() {
   };
 
   const addBudgetItem = () => {
-    if (currentBudgetItem.name && currentBudgetItem.pax && currentBudgetItem.price) {
+    if (currentBudgetItem.gdb_name && currentBudgetItem.gdb_pax && currentBudgetItem.gdb_price) {
       setBudgetItems(prev => [...prev, currentBudgetItem]);
       // Update total budget
-      const totalBudget = budgetItems.reduce((sum, item) => sum + parseFloat(item.price), 0) + parseFloat(currentBudgetItem.price);
+      const totalBudget = budgetItems.reduce((sum, item) => sum + parseFloat(item.gdb_price), 0) + parseFloat(currentBudgetItem.gdb_price);
       setFormData(prev => ({
         ...prev,
         dev_gad_budget: totalBudget.toString()
       }));
-      setCurrentBudgetItem({ name: "", pax: "", price: "" });
+      setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_price: "" });
     }
   };
 
   const clearBudgetItem = () => {
-    setCurrentBudgetItem({ name: "", pax: "", price: "" });
+    setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_price: "" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,7 +113,13 @@ export default function AnnualDevelopmentPlanEdit() {
       if (!devId) {
         throw new Error("No development plan ID provided");
       }
-      const payload = { ...formData, budgets: budgetItems };
+      // Filter out empty staff value to avoid validation errors
+      const { staff, ...restFormData } = formData;
+      const payload = { 
+        ...restFormData, 
+        staff: staff || null, // Send null if staff is empty
+        budgets: budgetItems 
+      };
       await updateAnnualDevPlan(parseInt(devId), payload);
       toast.success("Annual development plan updated successfully!");
       navigate(-1);
@@ -236,24 +242,24 @@ export default function AnnualDevelopmentPlanEdit() {
                     <label className="text-sm font-medium mb-2 text-gray-700">Name</label>
                     <input
                       type="text"
-                      name="name"
-                      value={currentBudgetItem.name}
+                      name="gdb_name"
+                      value={currentBudgetItem.gdb_name}
                       onChange={handleBudgetItemChange}
                       className="border rounded-md px-3 py-2 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <label className="text-sm font-medium mb-2 text-gray-700">Pax</label>
                     <input
                       type="text"
-                      name="pax"
-                      value={currentBudgetItem.pax}
+                      name="gdb_pax"
+                      value={currentBudgetItem.gdb_pax}
                       onChange={handleBudgetItemChange}
                       className="border rounded-md px-3 py-2 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <label className="text-sm font-medium mb-2 text-gray-700">Price</label>
                     <input
                       type="text"
-                      name="price"
-                      value={currentBudgetItem.price}
+                      name="gdb_price"
+                      value={currentBudgetItem.gdb_price}
                       onChange={handleBudgetItemChange}
                       className="border rounded-md px-3 py-2 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -280,7 +286,7 @@ export default function AnnualDevelopmentPlanEdit() {
                       {budgetItems.map((item, index) => (
                         <div key={index} className="mb-2">
                           <p className="text-sm">
-                            {item.name} - {item.pax} - ₱{item.price}
+                            {item.gdb_name} - {item.gdb_pax} - ₱{item.gdb_price}
                           </p>
                         </div>
                       ))}
