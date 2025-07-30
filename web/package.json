@@ -65,6 +65,7 @@
     "cmdk": "^1.0.0",
     "date-fns": "^2.29.3",
     "docx": "^9.5.0",
+    "docx-templates": "^4.14.1",
     "dompurify": "^3.2.4",
     "echarts-for-react": "^3.0.2",
     "file-saver": "^2.0.5",

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -62,7 +62,7 @@ export const columns: ColumnDef<Certificate>[] = [
   {
     accessorKey: "req_pay_method",
     header: "Payment Method",
-    cell: ({ row }) => <div>{row.getValue("req_pay_method")}</div>,
+    cell: ({ row }) => <div className="capitalize">{row.getValue("req_pay_method")}</div>,
   },
   {
     accessorKey: "req_request_date",
@@ -77,7 +77,7 @@ export const columns: ColumnDef<Certificate>[] = [
   {
     accessorKey: "req_type",
     header: "Purpose",
-    cell: ({ row }) => <div>{row.getValue("req_type")}</div>,
+    cell: ({ row }) => <div className="capitalize">{row.getValue("req_type")}</div>,
   }
 ];
 
@@ -97,11 +97,15 @@ function CertificatePage() {
   };
 
   const handleRowClick = (row: Certificate) => {
+    const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
     navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
       state: {
-        name: `${row.cr_id}`,
+        name: fullName || row.cr_id, // Use full name if available, fallback to ID
         purpose: row.req_type,
         date: row.req_claim_date,
+        requestId: row.cr_id,
+        requestDate: row.req_request_date,
+        paymentMethod: row.req_pay_method,
       },
     });
   };
@@ -155,7 +159,9 @@ function CertificatePage() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="text-center py-5">Loading certificates...</div>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+            </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (

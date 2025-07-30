@@ -5,7 +5,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, ArrowLeft } from "lucide-react";
+import { Search, ArrowLeft, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { getIssuedCertificates } from "./restful-api/issuedCertGetAPI";
 
@@ -152,7 +152,9 @@ function IssuedCertificates() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="text-center py-5">Loading certificates...</div>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+            </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
@@ -172,6 +174,6 @@ function IssuedCertificates() {
       </div>
     </div>
   );
-}
+}`,`
 
 export default IssuedCertificates; 

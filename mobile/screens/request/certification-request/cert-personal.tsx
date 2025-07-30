@@ -20,10 +20,10 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
   const [paymentMode, setPaymentMode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // --- Use mutation hook ---
+  
   const addPersonalCert = useAddPersonalCertification();
 
-  // --- Submit handler ---
+  
   const handleSubmit = () => {
     setError(null);
     

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Plus, Search, ArrowUpDown } from "lucide-react";
+import { Plus, Search, ArrowUpDown, Loader2 } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -175,7 +175,9 @@ function BusinessDocumentPage() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="text-center py-5">Loading business documents...</div>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+            </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (

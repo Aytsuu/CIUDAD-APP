@@ -151,7 +151,11 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                       <span>₱{plan.dev_gad_budget}</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 align-top border border-gray-200">{plan.dev_res_person}</td>
+                  <td className="px-3 py-2 align-top border border-gray-200">
+                    <ul className="list-disc list-inside">
+                      <li>{plan.dev_res_person}</li>
+                    </ul>
+                  </td>
                 </tr>
               ))}
               <tr className="bg-gray-50 font-semibold">

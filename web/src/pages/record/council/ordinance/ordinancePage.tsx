@@ -1,7 +1,7 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Pencil, Trash, Eye, Plus, Search, Download } from 'lucide-react';
+import { Pencil, Trash, Eye, Plus, Search, Download, Loader2 } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card/c
 import { toast } from 'sonner';
 import { Ordinance, getAllOrdinances, archiveOrdinance, deleteOrdinance } from './restful-api/OrdinanceGetAPI';
 import { getAllTemplates, deleteTemplate, archiveTemplate, OrdinanceTemplate } from './restful-api/TemplateAPI';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 // Combined type for ordinances and templates
 type OrdinanceItem = Ordinance | (OrdinanceTemplate & { type: 'template' });
@@ -21,12 +21,15 @@ function isTemplate(item: OrdinanceItem): item is OrdinanceTemplate & { type: 't
 }
 
 function OrdinancePage() {
+    const navigate = useNavigate();
     const [ordinanceItems, setOrdinanceItems] = useState<OrdinanceItem[]>([]);
     const [filter, setFilter] = useState<string>("all");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<OrdinanceItem | null>(null);
 
     const filterOptions = [
         { id: "all", name: "All" },
@@ -75,23 +78,31 @@ function OrdinancePage() {
     };
 
     const handleDeleteItem = async (item: OrdinanceItem) => {
-        const isTemplateItem = isTemplate(item);
+        setItemToDelete(item);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+        
+        const isTemplateItem = isTemplate(itemToDelete);
         const itemType = isTemplateItem ? 'template' : 'ordinance';
         
-        if (window.confirm(`Are you sure you want to delete this ${itemType}?`)) {
-            try {
-                if (isTemplateItem) {
-                    await deleteTemplate(item.template_id);
-                    toast.success('Template deleted successfully');
-                } else {
-                    await deleteOrdinance(item.ord_num);
-                    toast.success('Ordinance deleted successfully');
-                }
-                fetchAllItems();
-            } catch (error) {
-                console.error(`Error deleting ${itemType}:`, error);
-                toast.error(`Failed to delete ${itemType}`);
+        try {
+            if (isTemplateItem) {
+                await deleteTemplate(itemToDelete.template_id);
+                toast.success('Template deleted successfully');
+            } else {
+                await deleteOrdinance(itemToDelete.ord_num);
+                toast.success('Ordinance deleted successfully');
             }
+            fetchAllItems();
+        } catch (error) {
+            console.error(`Error deleting ${itemType}:`, error);
+            toast.error(`Failed to delete ${itemType}`);
+        } finally {
+            setDeleteDialogOpen(false);
+            setItemToDelete(null);
         }
     };
 
@@ -158,7 +169,9 @@ function OrdinancePage() {
 
             <div className="w-full">
                 {loading ? (
-                    <div className="text-center py-8">Loading ordinances and templates...</div>
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+                    </div>
                 ) : filteredItems.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                         No ordinances or templates found. Create your first ordinance!
@@ -260,7 +273,7 @@ function OrdinancePage() {
                                                                 variant="outline"
                                                                 size="sm"
                                                                 className="flex items-center gap-1"
-                                                                onClick={() => window.open(`/template-maker?id=${item.template_id}`, '_blank')}
+                                                                onClick={() => navigate(`/template-maker?id=${item.template_id}`)}
                                                             >
                                                                 <Pencil className="h-3 w-3" />
                                                                 Update
@@ -302,6 +315,34 @@ function OrdinancePage() {
                     />
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <DialogLayout
+                isOpen={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                className="max-w-md"
+                title="Confirm Delete"
+                description={`Are you sure you want to delete this ${itemToDelete && (isTemplate(itemToDelete) ? 'template' : 'ordinance') || 'item'}? This action cannot be undone.`}
+                mainContent={
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setDeleteDialogOpen(false);
+                                setItemToDelete(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDelete}
+                        >
+                            Delete
+                        </Button>
+                    </div>
+                }
+            />
         </div>
     );
 }

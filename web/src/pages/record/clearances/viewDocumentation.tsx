@@ -19,6 +19,16 @@ export default function ViewDocumentation() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const handleBackNavigation = () => {
+    // Try to go back in history, if that fails, navigate to the certificates page
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // Fallback to the certificates page
+      navigate('/record/clearances/Certification');
+    }
+  };
+
   const processPurposes = () => {
     if (!state?.purpose) return ["unknown"];
     
@@ -33,10 +43,61 @@ export default function ViewDocumentation() {
     return [state.purpose.toLowerCase().trim()];
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  const formatPurpose = (purpose: string) => {
+    // Convert purpose to proper case for display
+    return purpose.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const adjustTextForField = (text: string, maxLength: number = 50) => {
+    if (!text) return "";
+    
+    // If text is longer than maxLength, try to fit it by reducing font size or wrapping
+    if (text.length > maxLength) {
+      // For very long names, try to fit them by using initials for middle names
+      const words = text.split(' ');
+      if (words.length > 2) {
+        // Keep first and last name, abbreviate middle names
+        const firstName = words[0];
+        const lastName = words[words.length - 1];
+        const middleNames = words.slice(1, -1).map(name => name.charAt(0) + '.');
+        return `${firstName} ${middleNames.join(' ')} ${lastName}`;
+      }
+    }
+    
+    return text;
+  };
+
+  const getOptimalFontSize = (text: string, fieldWidth: number, defaultSize: number = 12) => {
+    if (!text || text.length < 20) return defaultSize;
+    
+    // Estimate font size based on text length and field width
+    const estimatedSize = Math.max(8, Math.min(defaultSize, (fieldWidth * 0.8) / text.length));
+    return estimatedSize;
+  };
+
   const requestData = {
     name: state?.name || "Unknown",
     purposes: processPurposes(),
     date: state?.date || "Unknown",
+    requestId: state?.requestId || "",
+    requestDate: state?.requestDate || "",
+    paymentMethod: state?.paymentMethod || "",
   };
 
   const getPdfPathByPurpose = (purpose: string) => {
@@ -97,10 +158,112 @@ export default function ViewDocumentation() {
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
       const form = pdfDoc.getForm();
 
-      // Fill the form fields
-      form.getTextField("RequestName")?.setText(requestData.name);
-      form.getTextField("RequestPurpose")?.setText(purpose);
-      form.getTextField("RequestDate")?.setText(requestData.date);
+      // Fill the form fields with comprehensive data
+      const fields = form.getFields();
+      
+      // Debug: Log available fields (remove this in production)
+      console.log("Available PDF fields:", fields.map(f => f.getName()));
+      
+             // Map common field names to our data with smart text adjustment
+       const fieldMappings = {
+         // Name fields - use adjusted text for long names
+         "RequestName": adjustTextForField(requestData.name, 40),
+         "Name": adjustTextForField(requestData.name, 40),
+         "FullName": adjustTextForField(requestData.name, 40),
+         "RequestorName": adjustTextForField(requestData.name, 40),
+         "ClientName": adjustTextForField(requestData.name, 40),
+         
+         // Purpose fields
+         "RequestPurpose": formatPurpose(purpose),
+         "Purpose": formatPurpose(purpose),
+         "RequestType": formatPurpose(purpose),
+         "CertificationType": formatPurpose(purpose),
+         "Reason": formatPurpose(purpose),
+         
+         // Date fields
+         "Date": formatDate(requestData.date),
+         "ClaimDate": formatDate(requestData.date),
+         "IssueDate": formatDate(requestData.date),
+         "DateIssued": formatDate(requestData.date),
+         
+         // Additional fields
+         "RequestId": requestData.requestId,
+         "ReferenceNumber": requestData.requestId,
+         "TransactionId": requestData.requestId,
+         "PaymentMethod": requestData.paymentMethod,
+         "RequestDate": formatDate(requestData.requestDate),
+       };
+      
+             // Try to fill each field if it exists with smart font sizing
+       Object.entries(fieldMappings).forEach(([fieldName, value]) => {
+         try {
+           const field = form.getTextField(fieldName);
+           if (field) {
+             // Set the text
+             field.setText(value || "");
+             
+             // For name fields, try to adjust font size if text is long
+             if (fieldName.toLowerCase().includes('name') && value && value.length > 20) {
+               try {
+                 // Try to set a smaller font size for long names
+                 const fontSize = getOptimalFontSize(value, 200); // Assume field width of 200
+                 field.setFontSize(fontSize);
+               } catch (fontError) {
+                 // Font size adjustment failed, keep default
+                 console.log(`Could not adjust font size for ${fieldName}`);
+               }
+             }
+           }
+         } catch (error) {
+           // Field doesn't exist, skip silently
+         }
+       });
+      
+      // Also try common variations of field names
+      fields.forEach(field => {
+        const fieldName = field.getName().toLowerCase();
+        
+        // Only process text fields
+        if (field.constructor.name === 'PDFTextField') {
+          const textField = field as any; // Cast to access getValue/setText
+          const fieldValue = textField.getValue();
+          
+                     // If field is empty and we can guess what it should be
+           if (!fieldValue || fieldValue === "") {
+             if (fieldName.includes("name") || fieldName.includes("requestor")) {
+               try {
+                 const adjustedName = adjustTextForField(requestData.name, 40);
+                 textField.setText(adjustedName);
+                 
+                 // Try to adjust font size for long names
+                 if (adjustedName.length > 20) {
+                   try {
+                     const fontSize = getOptimalFontSize(adjustedName, 200);
+                     textField.setFontSize(fontSize);
+                   } catch (fontError) {
+                     // Font size adjustment failed, keep default
+                   }
+                 }
+               } catch (error) {
+                 // Field might be read-only
+               }
+             } else if (fieldName.includes("purpose") || fieldName.includes("reason")) {
+               try {
+                 textField.setText(purpose);
+               } catch (error) {
+                 // Field might be read-only
+               }
+             } else if (fieldName.includes("date")) {
+               try {
+                 textField.setText(requestData.date);
+               } catch (error) {
+                 // Field might be read-only
+               }
+             }
+           }
+        }
+      });
+      
       form.flatten();
 
       return await pdfDoc.save();
@@ -134,7 +297,7 @@ export default function ViewDocumentation() {
       if (urls.length === 0) {
         throw new Error("No valid PDFs could be generated");
       }
-      
+       
       setPdfUrls(urls);
     } catch (error) {
       console.error("PDF processing failed:", error);
@@ -181,7 +344,7 @@ export default function ViewDocumentation() {
     <div className="min-h-screen flex flex-col p-4 bg-gray-50">
       <div className="flex justify-between items-center mb-6">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBackNavigation}
           className="bg-[#1273B8] text-white flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:bg-[#0e5a8f] transition-colors"
         >
           <ArrowLeft size={20} /> Back
