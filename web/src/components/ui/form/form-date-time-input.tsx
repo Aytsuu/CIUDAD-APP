@@ -22,26 +22,9 @@ export const FormDateTimeInput = React.memo(
     name: string;
     label: string;
     readOnly?: boolean;
-    type: "date" | "time";
+    type: "date" | "time" | "datetime-local" | "month";
     min?: string;
     max?: string;
-  }) => (
-// Reusable Form Date Input Component
-export const FormDateTimeInput = React.memo(
-  ({
-    control,
-    name,
-    label,
-    readOnly,
-    type,
-    disabled = false,
-  }: {
-    control: any;
-    name: string;
-    label: string;
-    readOnly?: boolean;
-    type: "date" | "time" | "datetime-local" | "month";
-    disabled?: boolean;
   }) => (
     <FormField
       control={control}
