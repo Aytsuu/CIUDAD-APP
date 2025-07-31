@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils import timezone
+from datetime import date
 
 # Create your models here.
 # create models para as documets later
@@ -198,7 +198,7 @@ class ServiceChargeRequestFile(models.Model):
 
 class SummonDateAvailability(models.Model):
     sd_id = models.BigAutoField(primary_key=True)
-    sd_date = models.DateField(default=datetime.date.today)
+    sd_date = models.DateField(default=date.today)
     sd_is_available = models.BooleanField(default=False)
     
     class Meta:
