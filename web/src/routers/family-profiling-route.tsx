@@ -2,7 +2,7 @@
 // import { FamilyProfileForm } from "@/pages/health-profiling/form-pages/FamilyProfileForm"
 // import  FamilyProfileView from "@/pages/health-profiling/FamilyProfileView"
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm"
-import { DemographicData } from "@/pages/health-profiling/form-pages/DemographicData"
+// import { DemographicData } from "@/pages/health-profiling/form-pages/DemographicData"
 
 export const familyProfilingRoute = [
 

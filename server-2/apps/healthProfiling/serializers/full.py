@@ -3,7 +3,7 @@ from apps.administration.models import Staff
 from ..models import *
 from .base import *
 from .minimal import *
-# from apps.account.serializers import UserAccountSerializer
+
 
 class ResidentProfileFullSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
@@ -14,7 +14,6 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         source='per'
     )
     is_staff = serializers.SerializerMethodField()
-    # account = UserAccountSerializer(read_only=True)
     staff = serializers.SerializerMethodField()
     staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff", allow_null=True)
 
