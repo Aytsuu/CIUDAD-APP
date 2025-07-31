@@ -1,19 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getdonationreq, getPersonalList } from "../request-db/donationGetRequest";
+import { Donations, Personal } from "../donation-types";
 
-export type Donation = {
-  don_num: string;
-  don_donor: string;
-  don_item_name: string;
-  don_qty: string;
-  don_category: string;
-  don_description?: string;
-  don_date: string;
-  per_id?: number | null;
-};
 
 export const useGetDonations = () => {
-  return useQuery<Donation[], Error>({
+  return useQuery<Donations[], Error>({
     queryKey: ["donations"],
     queryFn: () => getdonationreq().catch((error) => {
         console.error("Error fetching donations:", error);
@@ -21,11 +12,6 @@ export const useGetDonations = () => {
       }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-};
-
-export type Personal = {
-  per_id: number;
-  full_name: string;
 };
 
 export const useGetPersonalList = () => {
