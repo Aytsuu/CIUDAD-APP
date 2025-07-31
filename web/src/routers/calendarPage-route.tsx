@@ -1,5 +1,5 @@
-import CalendarPage from "@/pages/record/council/Calendar/CalendarPage"
-import AddEvent from "@/pages/record/council/Calendar/AddEvent-Modal"
+import CalendarPage from "@/pages/record/council/Calendar/MainCalendarPage"
+import AddEvent from "@/pages/record/council/Calendar/SchedEventForm"
 
 export const council_calendar_router = [
     {

@@ -21,6 +21,21 @@ export const recordOverviewFields: FieldConfig[] = [
   // { label: "Status", path: ["status"] },
 ];
 
+
+
+const formatSupplement = (supplement: CHSupplement): string => {
+  const medDetails = supplement.medrec_details?.minv_details;
+  if (!medDetails) return "N/A";
+  const name = medDetails.med_detail?.med_name || "Unknown Medicine";
+  const dosage = medDetails.minv_dsg
+    ? `${medDetails.minv_dsg}${medDetails.minv_dsg_unit || ""}`
+    : "N/A";
+  const form = medDetails.minv_form || "N/A";
+  const qty = supplement.medrec_details?.medrec_qty || "N/A";
+  return `${name} - Dosage: ${dosage} - Form: ${form} - Qty: ${qty}`;
+};
+
+
 export const childPersonalInfoFields: FieldConfig[] = [
   {
     label: "Patient ID",
@@ -189,6 +204,112 @@ export const vitalSignsFields: FieldConfig[] = [
   },
 ];
 
+
+export const findingsFields: FieldConfig[] = [
+  {
+    label: "Assessment Summary",
+    path: ["child_health_vital_signs", "0", "find_details", "assessment_summary"],
+    format: (val: string): JSX.Element[] => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-assessment" className="text-center">
+            <span>No assessment summary found</span>
+          </div>,
+        ];
+      }
+      
+      // Split by new lines and filter empty lines
+      const lines = val.split('\n').filter(line => line.trim() !== '');
+      
+      return lines.map((line, index) => (
+        <div key={`assessment-${index}`} className="flex justify-center mb-1">
+          <div className="text-left">
+            {line.startsWith(',') ? (
+              <div>- {line.substring(1).trim()}</div>
+            ) : (
+              <div>{line}</div>
+            )}
+          </div>
+        </div>
+      ));
+    }
+  },
+  {
+    label: "Objective Findings",
+    path: ["child_health_vital_signs", "0", "find_details", "obj_summary"],
+    format: (val: string) => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-objective" className="text-center">
+            <span>No objective findings</span>
+          </div>,
+        ];
+      }
+      
+      const lines = val.split('\n').filter(line => line.trim() !== '');
+      
+      return lines.map((line, index) => (
+        <div key={`objective-${index}`} className="flex justify-center mb-1">
+          <div className="text-left">
+            {line.startsWith('-') ? (
+              <div>- {line.substring(1).trim()}</div>
+            ) : (
+              <div>{line}</div>
+            )}
+          </div>
+        </div>
+      ));
+    }
+  },
+  {
+    label: "Subjective Findings",
+    path: ["child_health_vital_signs", "0", "find_details", "subj_summary"],
+    format: (val: string) => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-subjective" className="text-center">
+            <span>No subjective findings</span>
+          </div>,
+        ];
+      }
+      
+      return [
+        <div key="subjective" className="flex justify-center">
+          <div className="text-left">{val}</div>
+        </div>,
+      ];
+    }
+  },
+  {
+    label: "Plan/Treatment",
+    path: ["child_health_vital_signs", "0", "find_details", "plantreatment_summary"],
+    format: (val: string): JSX.Element[] => {
+      if (!val || val.trim() === "") {
+        return [
+          <div key="no-plan" className="text-center">
+            <span>No treatment plan found</span>
+          </div>,
+        ];
+      }
+      
+      const lines = val.split('\n').filter(line => line.trim() !== '');
+      
+      return lines.map((line, index) => (
+        <div key={`plan-${index}`} className="flex justify-center mb-1">
+          <div className="text-left">
+            {line.startsWith('-') ? (
+              <div>- {line.substring(1).trim()}</div>
+            ) : (
+              <div>{line}</div>
+            )}
+          </div>
+        </div>
+      ));
+    }
+  }
+];
+
+
 export const nutritionStatusesFields: FieldConfig[] = [
   { label: "Weight-for-Age (WFA)", path: ["nutrition_statuses", "0", "wfa"] },
   {
@@ -202,6 +323,8 @@ export const nutritionStatusesFields: FieldConfig[] = [
   { label: "MUAC", path: ["nutrition_statuses", "0", "muac"] },
   { label: "MUAC Status", path: ["nutrition_statuses", "0", "muac_status"] },
 ];
+
+
 export const notesFields: FieldConfig[] = [
   {
     label: "Clinical Notes",
@@ -291,28 +414,63 @@ export const notesFields: FieldConfig[] = [
   },
 ];
 
-const formatSupplement = (supplement: CHSupplement): string => {
-  const medDetails = supplement.medrec_details?.minv_details;
-  if (!medDetails) return "N/A";
-  const name = medDetails.med_detail?.med_name || "Unknown Medicine";
-  const dosage = medDetails.minv_dsg
-    ? `${medDetails.minv_dsg}${medDetails.minv_dsg_unit || ""}`
-    : "N/A";
-  const form = medDetails.minv_form || "N/A";
-  const qty = supplement.medrec_details?.medrec_qty || "N/A";
-  return `${name} - Dosage: ${dosage} - Form: ${form} - Qty: ${qty}`;
-};
+
 
 export const supplementsFields: FieldConfig[] = [
   {
     label: "Supplements",
     path: ["child_health_supplements"],
-    format: (val) =>
-      val && val.length > 0
-        ? val.map(formatSupplement).join(" | ")
-        : "No supplements recorded",
+    format: (val: CHSupplement[]) => {
+      if (!val || val.length === 0) {
+        return [
+          <div key="no-supplements" className="text-center">
+            <span>No supplements recorded</span>
+          </div>,
+        ];
+      }
+
+      return val.map((supplement, index) => {
+        const formatted = formatSupplement(supplement);
+        if (formatted === "N/A") {
+          return (
+            <div key={`supplement-na-${index}`} className="text-center">
+              <span>N/A</span>
+            </div>
+          );
+        }
+
+        return (
+          <div key={`supplement-${index}`} className="mb-2 flex justify-center">
+            <div className="text-left">
+              <div className="font-medium">
+                {supplement.medrec_details?.minv_details?.med_detail?.med_name || "Unknown Medicine"}{" "}{formatDosage(supplement)}
+              </div>
+              
+              <div className="ml-4 flex flex-col gap-1 text-sm">
+                
+                <div className="">
+                 ({supplement.medrec_details?.minv_details?.minv_form || "N/A"})
+                </div>
+                <div>
+                  <span className="font-semibold">Quantity:</span> {supplement.medrec_details?.medrec_qty || "N/A"}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      });
+    },
   },
 ];
+
+const formatDosage = (supplement: CHSupplement): string => {
+  const medDetails = supplement.medrec_details?.minv_details;
+  if (!medDetails) return "N/A";
+  return medDetails.minv_dsg
+    ? `${medDetails.minv_dsg}${medDetails.minv_dsg_unit || ""}`
+    : "N/A";
+};
+
 export const exclusiveBfCheckFields: FieldConfig[] = [
   {
     label: "EBF Check Dates",
@@ -334,54 +492,67 @@ export const immunizationTrackingFields: FieldConfig[] = [
   {
     label: "Immunizations",
     path: ["immunization_tracking"],
-    format: (val: any[]) => {
-      if (!val || val.length === 0) return "No immunization records";
+    format: (val: any[], record?: any) => {
+      if (!val || val.length === 0) {
+        return [
+          <div key="no-immunizations" className="text-center">
+            <span>No immunization records</span>
+          </div>,
+        ];
+      }
 
-      return val
-        .map((imt) => {
-          const vacrec = imt.vacrec_details;
-          if (
-            !vacrec ||
-            !vacrec.vaccination_histories ||
-            vacrec.vaccination_histories.length === 0
-          ) {
-            return "No vaccination details";
-          }
+      return val.map((imt, index) => {
+        const vachist = imt.vachist_details;
+        if (!vachist) {
+          return (
+            <div key={`no-details-${index}`} className="text-center">
+              <span>No vaccination details</span>
+            </div>
+          );
+        }
 
-          // Get the first vaccination history (assuming there's at least one)
-          const vachist = vacrec.vaccination_histories[0];
-          const vaccine = vachist.vaccine_stock?.vaccinelist;
+        const vaccine = vachist.vaccine_stock?.vaccinelist;
+        const doseNumber = vachist.vachist_doseNo;
+        const doseSuffix =
+          doseNumber === 1
+            ? "1st dose"
+            : doseNumber === 2
+            ? "2nd dose"
+            : doseNumber === 3
+            ? "3rd dose"
+            : `${doseNumber}th dose`;
 
-          const doseNumber = vachist.vachist_doseNo;
-          const doseSuffix =
-            doseNumber === 1
-              ? "1st dose"
-              : doseNumber === 2
-              ? "2nd dose"
-              : doseNumber === 3
-              ? "3rd dose"
-              : `${doseNumber}th dose`;
-
-          const details = [
-            `${vaccine?.vac_name || "Unknown"} (${doseSuffix})`,
-            `Status: ${vachist.vachist_status}`,
-            // `Date: ${new Date(vachist.created_at).toLocaleDateString()}`,
-            // `Age at vaccination: ${vachist.vachist_age}`,
-            // `Next follow-up: ${
-            //   vachist.follow_up_visit
-            //     ? new Date(vachist.follow_up_visit.followv_date).toLocaleDateString()
-            //     : "None"
-            // }`,
-          ]
-            .filter(Boolean)
-            .join("  ");
-
-          return details;
-        })
-        .join("\n"); // Separate multiple immunizations with new lines
+        return (
+          <div key={`immunization-${index}`} className="mb-2 flex justify-center">
+            <div className="text-left">
+              <div className="font-medium">
+              - {vaccine?.vac_name || vachist.vac_details?.vac_name} ({doseSuffix})
+              </div>
+              
+              <div className="ml-4 flex flex-col gap-1 text-sm">
+                <div>
+                  <span className="font-semibold">Status:</span> {vachist.vachist_status}
+                </div>
+                <div>
+                  <span className="font-semibold">Date:</span> {new Date(vachist.created_at).toLocaleDateString()}
+                </div>
+                <div>
+                  <span className="font-semibold">Age at vaccination:</span> {vachist.vachist_age}
+                </div>
+                {vachist.follow_up_visit && (
+                  <div className=" bg-red-100 rounded-md p-1 text-red-500">
+                    <span className="font-semibold ">Next follow-up:</span> {new Date(vachist.follow_up_visit.followv_date).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      });
     },
   },
 ];
+
 
 export const getSupplementStatusesFields = (
   fullHistoryData: ChildHealthHistoryRecord[]
@@ -476,7 +647,7 @@ export const getSupplementStatusesFields = (
                   : "N/A"}
               </div>
               {showCompletedDate && (
-                <div className="ml-4 text-left">
+                <div className="ml-4 text-left bg-red-100 rounded-md p-1 text-red-500">
                   - Completed: {dateCompleted}
                 </div>
               )}

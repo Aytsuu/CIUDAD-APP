@@ -10,7 +10,7 @@ import {
   Loader2,
   Search,
   Archive,
-  RotateCcw,
+  ArchiveRestore,
 } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
 import { useUpdateWasteTruck } from "./queries/truckUpdate";
-import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
+import { useGetAllPersonnel, useGetTrucks, PersonnelData, TruckData } from "./queries/truckFetchQueries";
 import { useDeleteWasteTruck, useRestoreWasteTruck } from "./queries/truckDelQueries";
 import { useAddWasteTruck } from "./queries/truckAddQueries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,34 +32,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useQueryClient } from "@tanstack/react-query";
-
-type PersonnelCategory = "Watchman" | "Waste Driver" | "Waste Collector" | "Trucks";
-
-interface PersonnelItem {
-  id: string;
-  name: string;
-  position: string;
-  contact?: string;
-}
-
-interface PersonnelData {
-  Watchman: PersonnelItem[];
-  "Waste Driver": PersonnelItem[];
-  "Waste Collector": PersonnelItem[];
-  Trucks: TruckData[];
-}
-
-type TruckStatus = "Operational" | "Maintenance";
-
-interface TruckData {
-  truck_id: string;
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: TruckStatus;
-  truck_last_maint: string;
-  truck_is_archive?: boolean;
-}
+import type { PersonnelCategory, TruckStatus } from "./queries/truckFetchQueries";
 
 const WastePersonnel = () => {
   const queryClient = useQueryClient();
@@ -315,7 +288,9 @@ const WastePersonnel = () => {
                       {getCategoryIcon(category)}
                     </div>
                     <span className="text-2xl font-semibold">
-                      {personnelData[category].length}
+                      {category === "Trucks"
+                        ? personnelData.Trucks.filter((t) => !t.truck_is_archive).length
+                        : personnelData[category].length}
                     </span>
                   </div>
                   <div>
@@ -333,7 +308,7 @@ const WastePersonnel = () => {
                       <span>
                         {category === "Trucks"
                           ? `Operational: ${
-                              trucks.filter((t) => t.truck_status === "Operational").length
+                              trucks.filter((t) => t.truck_status === "Operational" && t.truck_is_archive === false).length
                             }`
                           : "Active"}
                       </span>
@@ -397,7 +372,7 @@ const WastePersonnel = () => {
               </button>
             </div>
 
-            <div className="relative w-full flex gap-2 mr-2 max-w-md">
+            {/* <div className="relative w-full flex gap-2 mr-2 max-w-md">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
                 size={17}
@@ -408,7 +383,7 @@ const WastePersonnel = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+            </div> */}
 
             {truckViewMode === "active" && (
               <Button
@@ -491,7 +466,7 @@ const WastePersonnel = () => {
                                         {restoreTruck.isPending ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                          <RotateCcw className="h-4 w-4 text-green-500" />
+                                          <ArchiveRestore className="h-4 w-4 text-green-500" />
                                         )}
                                       </Button>
                                     }
@@ -518,7 +493,7 @@ const WastePersonnel = () => {
                                         {deleteTruck.isPending ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                          <Archive className="h-4 w-4 text-yellow-500" />
+                                          <Archive className="h-4 w-4" />
                                         )}
                                       </Button>
                                     }
@@ -647,7 +622,7 @@ const WastePersonnel = () => {
             <div className="grid gap-4">
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit(handleSubmit)}
+                  onSubmit={(e) => e.preventDefault()}
                   className="flex flex-col gap-4"
                 >
                   <FormInput
@@ -734,21 +709,33 @@ const WastePersonnel = () => {
                         >
                           Cancel
                         </Button>
-                        <Button
-                          type="submit"
-                          disabled={
-                            currentTruck
-                              ? updateTruck.isPending
-                              : addTruck.isPending
+                        <ConfirmationModal
+                          trigger={
+                            <Button
+                              type="button"
+                              disabled={
+                                currentTruck
+                                  ? updateTruck.isPending
+                                  : addTruck.isPending
+                              }
+                            >
+                              {currentTruck ? "Update" : "Add"} Truck
+                              {(currentTruck
+                                ? updateTruck.isPending
+                                : addTruck.isPending) && (
+                                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                              )}
+                            </Button>
                           }
-                        >
-                          {currentTruck ? "Update" : "Add"} Truck
-                          {(currentTruck
-                            ? updateTruck.isPending
-                            : addTruck.isPending) && (
-                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                          )}
-                        </Button>
+                          title={`Confirm ${currentTruck ? "Update" : "Add"} Truck`}
+                          description={
+                            currentTruck
+                              ? `Are you sure you want to update truck ${currentTruck.truck_plate_num}?`
+                              : "Are you sure you want to add this new truck?"
+                          }
+                          actionLabel={currentTruck ? "Update" : "Add"}
+                          onClick={form.handleSubmit(handleSubmit)}
+                        />
                       </>
                     )}
                   </div>

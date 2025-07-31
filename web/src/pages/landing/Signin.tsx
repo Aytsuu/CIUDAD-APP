@@ -27,7 +27,11 @@ import { useNavigate } from "react-router";
 import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 
-export default function SignIn() {
+interface SignInProps {
+  onShowForgotPassword?: () => void;
+}
+
+export default function SignIn({ onShowForgotPassword }: SignInProps) {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,7 +65,7 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">Sign In</CardTitle>
@@ -151,7 +155,12 @@ export default function SignIn() {
                     Remember me
                   </Label>
                 </div>
-                <Button variant="link" className="px-0 text-sm">
+                <Button 
+                  type="button"
+                  variant="link" 
+                  className="px-0 text-sm"
+                  onClick={onShowForgotPassword}
+                >
                   Forgot your password?
                 </Button>
               </div>
@@ -171,17 +180,6 @@ export default function SignIn() {
               </Button>
             </form>
           </Form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,4 +1,4 @@
-import {api} from '@/api/api';
+import { api } from "@/api/api";
 
 export const postProjectProposal = async (proposalInfo: Record<string, any>) => {
   try {
@@ -31,10 +31,10 @@ export const postProjectProposal = async (proposalInfo: Record<string, any>) => 
 };
 
 export const addSupportDocument = async (gprId: number, fileData: {
-  file_url: string;
-  file_path: string;
-  file_name: string;
-  file_type: string;
+  psd_url: string;
+  psd_path: string;
+  psd_name: string;
+  psd_type: string;
 }) => {
   if (!gprId) {
     throw new Error("Project ID is required");
@@ -43,7 +43,8 @@ export const addSupportDocument = async (gprId: number, fileData: {
   try {
     const res = await api.post(`gad/project-proposals/${gprId}/support-docs/`, {
       ...fileData,
-      psd_is_archive: false
+      psd_is_archive: false,
+      gpr_id: gprId 
     });
     return res.data;
   } catch (error) {

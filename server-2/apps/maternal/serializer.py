@@ -102,9 +102,6 @@ class PreviousPregnancyCreateSerializer(serializers.ModelSerializer):
         fields = ['date_of_delivery', 'outcome', 'type_of_delivery', 'babys_wt', 'gender', 'ballard_score', 'apgar_score']
 
 class TTStatusCreateSerializer(serializers.ModelSerializer):
-    # Note: vaccineType from frontend schema is not directly mapped here.
-    # It implies a VaccinationRecord, which TT_Status links to.
-    # For simplicity, we'll only map TT_Status fields directly.
     class Meta:
         model = TT_Status
         fields = ['tts_status', 'tts_date_given', 'tts_tdap']

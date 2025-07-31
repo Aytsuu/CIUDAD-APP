@@ -150,12 +150,12 @@ class PatientRecord(models.Model):
         
 class VitalSigns(models.Model):
     vital_id = models.BigAutoField(primary_key=True)
-    vital_bp_systolic = models.CharField(max_length=100)
-    vital_bp_diastolic = models.CharField(max_length=100,default="N/A")
-    vital_temp = models.CharField(max_length=100,default="N/A")
-    vital_RR = models.CharField(max_length=100,default="N/A")
-    vital_o2 = models.CharField(max_length=100,default="N/A")
-    vital_pulse = models.CharField(max_length=100,default="N/A")
+    vital_bp_systolic = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_bp_diastolic = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_temp = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_RR = models.CharField(max_length=100,default="" , null=True, blank=True)
+    vital_o2 = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_pulse = models.CharField(max_length=100,default="", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vital_signs',null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='vital_signs', null=True, blank=True)
@@ -180,19 +180,22 @@ class Obstetrical_History(models.Model):
     class Meta:
         db_table = 'obstetrical_history'
         
-        
+  
+  
+
 class FollowUpVisit(models.Model):
     followv_id = models.BigAutoField(primary_key=True)
     followv_date = models.DateField()
     followv_status = models.CharField(max_length=100)
     followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateField(null=True,blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
+    
     class Meta:
         db_table = 'follow_up_visit'
-         
         
+
 class Spouse(models.Model):
     spouse_id = models.BigAutoField(primary_key=True)
     spouse_type = models.CharField(max_length=10)
@@ -221,16 +224,7 @@ class BodyMeasurement(models.Model):
         db_table = 'body_measurement'
            
 
-# class NutritionalStatus(models.Model): 
-#     nutstat_id = models.BigAutoField(primary_key=True)
-#     nutstat_WFA = models.CharField(max_length=100, default="")
-#     nutstat_HFA = models.CharField(max_length=100, default="")
-#     nutstat_WFH = models.CharField(max_length=100, default="")
-#     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='nutritional_status', null=True, blank=True)
-#     class Meta:
-#         db_table = 'nutritional_status'
     
-       
 class Illness(models.Model):
     ill_id = models.BigAutoField(primary_key=True)
     illname = models.CharField(max_length=100,default="",null=True,blank=True)

@@ -8,6 +8,10 @@ from collections import defaultdict
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from .serializers import *
 from django.db.models import Count, Q
+from apps.childhealthservices.models import *
+from apps.childhealthservices.serializers import *
+from datetime import date
+
 
 
 def get_unvaccinated_vaccines_for_patient(pat_id):
@@ -39,10 +43,11 @@ def has_existing_vaccine_history(pat_id, vac_id):
     ).exists()
     
     
+
+
 def get_patient_vaccines_with_followups(pat_id):
     history_records = VaccinationHistory.objects.filter(
-        vacrec__patrec_id__pat_id=pat_id,
-        followv__followv_status="pending"  # ✅ only pending follow-up visits
+        vacrec__patrec_id__pat_id=pat_id
     ).select_related('vacStck_id__vac_id', 'followv')
 
     if not history_records.exists():
@@ -56,17 +61,113 @@ def get_patient_vaccines_with_followups(pat_id):
 
         vac_name = getattr(vac, 'vac_name', None)
         vac_type = getattr(vac, 'vac_type_choices', None)
-        followup_date = getattr(record.followv, 'followv_date', None)
-        followup_status = getattr(record.followv, 'followv_status', None)
+        followup = getattr(record, 'followv', None)
+
+        followup_date = getattr(followup, 'followv_date', None)
+        followup_status = getattr(followup, 'followv_status', None)
+        completed_at = getattr(followup, 'completed_at', None)  # Use correct field name
+
+        # Use today’s date if not completed
+        today = date.today()
+        reference_date = completed_at if completed_at else today
+
+        missed_status = None
+        days_missed = None
+
+        if followup_date and reference_date > followup_date:
+            missed_status = "missed"
+            days_missed = (reference_date - followup_date).days
 
         results.append({
             'vac_name': vac_name,
             'vac_type_choices': vac_type,
             'followup_date': followup_date,
             'followup_status': followup_status,
+            'completed_at': completed_at,
+            'missed_status': missed_status,
+            'days_missed': days_missed,
         })
 
     return results
+
+
+
+
+
+
+def get_child_followups(pat_id):
+    # Get follow-ups from vaccination history
+    history_records = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id,
+        followv__isnull=False
+    ).select_related('followv')
+
+    # Get follow-ups from child health notes
+    child_history_records = ChildHealthNotes.objects.filter(
+        chhist__chrec__patrec__pat_id=pat_id,
+        followv__isnull=False
+    ).select_related('followv')
+
+    if not history_records.exists() and not child_history_records.exists():
+        return [{"message": "No follow ups or pending follow-up visit data found for this patient."}]
+
+    results = []
+
+    # Current date for comparison
+    today = date.today()
+
+    # Add from VaccinationHistory
+    for record in history_records:
+        followup = record.followv
+        followup_date = followup.followv_date
+        completed_at = getattr(followup, 'completed_at', None)
+
+        reference_date = completed_at if completed_at else today
+
+        missed_status = None
+        days_missed = 0
+        if followup_date and reference_date > followup_date:
+            missed_status = "missed"
+            days_missed = (reference_date - followup_date).days
+
+        results.append({
+            'source': 'VaccinationHistory',
+            'followup_description': followup.followv_description,
+            'followup_date': followup_date,
+            'followup_status': followup.followv_status,
+            'completed_at': completed_at,
+            'missed_status': missed_status,
+            'days_missed': days_missed if missed_status else None,
+        })
+
+    # Add from ChildHealthNotes
+    for note in child_history_records:
+        followup = note.followv
+        followup_date = followup.followv_date
+        completed_at = getattr(followup, 'completed_at', None)
+
+        reference_date = completed_at if completed_at else today
+
+        missed_status = None
+        days_missed = 0
+        if followup_date and reference_date > followup_date:
+            missed_status = "missed"
+            days_missed = (reference_date - followup_date).days
+
+        results.append({
+            'source': 'ChildHealthNotes',
+            'followup_description': followup.followv_description,
+            'followup_date': followup_date,
+            'followup_status': followup.followv_status,
+            'completed_at': completed_at,
+            'missed_status': missed_status,
+            'days_missed': days_missed if missed_status else None,
+        })
+
+    return results
+
+
+
 
 def get_patient_info_from_vaccination_record(patrec_pat_id):
     try:
@@ -86,7 +187,6 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
     
 
 def get_vaccination_record_count(pat_id):
-   
     return VaccinationRecord.objects.filter(patrec_id__pat_id=pat_id).count()
 
 

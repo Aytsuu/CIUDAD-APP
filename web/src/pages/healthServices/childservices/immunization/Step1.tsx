@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion } from "@/components/ui/accordion";
 import { ChildHealthHistoryRecord } from "../viewrecords/types";
-import { getSupplementStatusesFields } from "../viewrecords/config";
+import { getSupplementStatusesFields } from "../viewrecords/Config";
 import { PatientSummarySection } from "../viewrecords/CurrentHistoryView";
 import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";

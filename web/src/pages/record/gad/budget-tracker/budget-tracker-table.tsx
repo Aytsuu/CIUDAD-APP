@@ -7,7 +7,6 @@ import {
   ArchiveRestore,
   Eye,
   Search,
-  FileInput,
   ChevronLeft,
   Calendar,
   ArrowUpDown,
@@ -33,7 +32,7 @@ import {
 import { useGADBudgets } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { GADBudgetEntry } from "./requestAPI/BTGetRequest";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function BudgetTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,15 +49,21 @@ function BudgetTracker() {
   const { mutate: permanentDeleteEntry } = usePermanentDeleteGADBudget();
 
   const handleArchive = (gbud_num: number) => {
-    archiveEntry(gbud_num);
+    archiveEntry(gbud_num, {
+      onSuccess: () => refetch(),
+    });
   };
 
   const handleRestore = (gbud_num: number) => {
-    restoreEntry(gbud_num);
+    restoreEntry(gbud_num, {
+      onSuccess: () => refetch(),
+    });
   };
 
   const handlePermanentDelete = (gbud_num: number) => {
-    permanentDeleteEntry(gbud_num);
+    permanentDeleteEntry(gbud_num, {
+      onSuccess: () => refetch(),
+    });
   };
 
   const {
@@ -101,12 +106,6 @@ function BudgetTracker() {
     { id: "12", name: "December" },
   ];
 
-  const filterOptions = [
-    { id: "All", name: "All" },
-    { id: "Income", name: "Income" },
-    { id: "Expense", name: "Expense" },
-  ];
-
   const filteredData = budgetEntries.filter((entry: GADBudgetEntry) => {
     if (activeTab === "active" && entry.gbud_is_archive) return false;
     if (activeTab === "archive" && !entry.gbud_is_archive) return false;
@@ -116,7 +115,9 @@ function BudgetTracker() {
     const matchesFilter =
       selectedFilter === "All" || entry.gbud_type === selectedFilter;
 
-    const matchesSearch = `${entry.gbud_inc_particulars} ${entry.gbud_type} ${
+    const matchesSearch = `${entry.gbud_inc_particulars} ${
+      entry.gbud_exp_particulars
+    } ${entry.gbud_type} ${
       entry.gbud_inc_amt ||
       entry.gbud_proposed_budget ||
       entry.gbud_actual_expense
@@ -133,6 +134,115 @@ function BudgetTracker() {
     currentPage * pageSize
   );
 
+  const calculateTotalProposedWithoutActual = () => {
+    if (!budgetEntries || budgetEntries.length === 0) return 0;
+
+    return budgetEntries.reduce((total, entry) => {
+      // Skip archived or non-expense entries
+      if (entry.gbud_is_archive || entry.gbud_type !== "Expense") return total;
+
+      // Convert all values to numbers safely (handles strings like "0.00")
+      const toNum = (val: any) => {
+        if (val === undefined || val === null) return undefined;
+        const num = +val; // Convert to number
+        return isNaN(num) ? undefined : num;
+      };
+
+      const actual = toNum(entry.gbud_actual_expense);
+      const proposed = toNum(entry.gbud_proposed_budget);
+
+      // Include if:
+      // 1. Actual is either undefined/null OR equals 0 (as number)
+      // 2. Proposed exists and is not 0
+      const shouldInclude =
+        (actual === undefined || actual === null || actual === 0) &&
+        proposed !== undefined &&
+        proposed !== null &&
+        proposed !== 0;
+
+      if (shouldInclude) {
+        return total + proposed;
+      }
+      return total;
+    }, 0);
+  };
+
+  // const getLatestRemainingBalance = (): number => {
+  //   // If no entries, return the initial budget
+  //   if (!budgetEntries || budgetEntries.length === 0) {
+  //     return currentYearBudget ? Number(currentYearBudget) : 0;
+  //   }
+
+  //   // Filter active entries if needed
+  //   const activeEntries = budgetEntries.filter(
+  //     (entry) => !entry.gbud_is_archive
+  //   );
+
+  //   // If no active entries, return initial budget
+  //   if (activeEntries.length === 0) {
+  //     return currentYearBudget ? Number(currentYearBudget) : 0;
+  //   }
+
+  //   // Find the most recent entry with an explicit remaining balance
+  //   const latestExpenseWithBalance = [...activeEntries]
+  //   .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())
+  //   .find(entry => 
+  //     entry.gbud_type === "Expense" && 
+  //     entry.gbud_remaining_bal !== undefined && 
+  //     entry.gbud_remaining_bal !== null
+  //   );
+
+  //   if (latestExpenseWithBalance) {
+  //   return latestExpenseWithBalance.gbud_remaining_bal || 0;
+  // }
+
+  //   // Fallback: Calculate balance from scratch
+  //   let balance = currentYearBudget ? Number(currentYearBudget) : 0;
+
+  //   // Process entries in chronological order
+  //   const sortedEntries = [...activeEntries].sort(
+  //     (a, b) =>
+  //       new Date(a.gbud_datetime).getTime() -
+  //       new Date(b.gbud_datetime).getTime()
+  //   );
+
+  //   sortedEntries.forEach((entry) => {
+  //   if (entry.gbud_type === "Expense") {
+  //     const amount =
+  //       entry.gbud_actual_expense ?? entry.gbud_proposed_budget ?? 0;
+  //     balance -= amount;
+  //   }
+  // });
+
+  //   return balance;
+  // };
+  
+const getLatestRemainingBalance = (): number => {
+  // If no entries, return the initial budget
+  if (!budgetEntries || budgetEntries.length === 0) {
+    return currentYearBudget ? Number(currentYearBudget) : 0;
+  }
+
+  // Filter active (unarchived) entries
+  const activeEntries = budgetEntries.filter((entry) => !entry.gbud_is_archive);
+
+  // If no active entries, return initial budget
+  if (activeEntries.length === 0) {
+    return currentYearBudget ? Number(currentYearBudget) : 0;
+  }
+
+  // Calculate balance from scratch using only gbud_actual_expense
+  let balance = currentYearBudget ? Number(currentYearBudget) : 0;
+
+  activeEntries.forEach((entry) => {
+    if (entry.gbud_type === "Expense" && entry.gbud_actual_expense !== null) {
+      const amount = Number(entry.gbud_actual_expense) || 0;
+      balance -= amount;
+    }
+  });
+
+  return balance;
+};
   const columns: ColumnDef<GADBudgetEntry>[] = [
     {
       accessorKey: "gbud_datetime",
@@ -141,7 +251,7 @@ function BudgetTracker() {
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          DATETIME
+          Date & Time
           <ArrowUpDown size={14} />
         </div>
       ),
@@ -153,39 +263,46 @@ function BudgetTracker() {
     },
     {
       accessorKey: "gbud_type",
-      header: "TYPE",
+      header: "Type",
     },
     {
-      accessorKey: "gbud_inc_particulars",
-      header: "PARTICULAR",
+      id: "particulars",
+      header: "Particular",
+      cell: ({ row }) => {
+        const particulars =
+          row.original.gbud_inc_particulars ||
+          row.original.gbud_exp_particulars;
+        return <div>{particulars}</div>;
+      },
     },
     {
       accessorKey: "gbud_amount",
-      header: "AMOUNT",
+      header: "Amount",
       cell: ({ row }) => {
-        const type = row.getValue("gbud_type") as string;
-        const incAmt = row.original.gbud_inc_amt;
-        const proposedBudget = row.original.gbud_proposed_budget;
-        const actualExpense = row.original.gbud_actual_expense;
+        const {
+          gbud_type,
+          gbud_inc_amt,
+          gbud_actual_expense,
+          gbud_proposed_budget,
+        } = row.original;
+        const num = (val: any) =>
+          val !== undefined && val !== null ? +val : undefined;
 
-        let amountToShow;
-        if (type === "Income" && incAmt !== undefined) {
-          amountToShow = incAmt;
-        } else if (type === "Expense") {
-          amountToShow =
-            actualExpense !== undefined && actualExpense !== null
-              ? actualExpense
-              : proposedBudget;
+        let amount;
+        if (gbud_type === "Income") {
+          amount = num(gbud_inc_amt) ?? 0;
         } else {
-          amountToShow = 0;
+          amount =
+            num(gbud_actual_expense) > 0
+              ? num(gbud_actual_expense)
+              : num(gbud_proposed_budget) ?? 0;
         }
-
-        return <div>Php {Number(amountToShow).toFixed(2)}</div>;
+        return <div>Php {amount.toFixed(2)}</div>;
       },
     },
     {
       accessorKey: "files",
-      header: "SUPPORTING DOCS",
+      header: "Supporting Docs",
       cell: ({ row }) => {
         const entry = row.original;
         const files = entry.files || [];
@@ -220,8 +337,8 @@ function BudgetTracker() {
       },
     },
     {
-      accessorKey: "action",
-      header: "ACTION",
+      id: "action",
+      header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-1">
           <TooltipLayout
@@ -269,19 +386,19 @@ function BudgetTracker() {
   ];
 
   const archiveColumns: ColumnDef<GADBudgetEntry>[] = [
-    ...columns.filter((col) => col.accessorKey !== "action"),
+    ...columns.filter((col) => col.id !== "action"),
     {
-      accessorKey: "action",
-      header: "ACTION",
+      id: "action",
+      header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-1">
           <TooltipLayout
             trigger={
               <ConfirmationModal
                 trigger={
-                  <Button variant="secondary">
+                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
                     <ArchiveRestore size={16} />
-                  </Button>
+                  </div>
                 }
                 title="Restore Entry"
                 description="This will move the entry back to active. Continue?"
@@ -355,11 +472,23 @@ function BudgetTracker() {
       </div>
       <hr className="border-gray mb-6 sm:mb-6" />
 
-      <div className="flex flex-row gap-5 mb-5">
+      <div className="flex flex-row gap-5 mb-5 flex-wrap">
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Budget:</Label>
           <Label className="text-red-500 text-md font-bold">
             Php {formattedBudget}
+          </Label>
+        </div>
+        <div className="flex flex-row gap-2">
+          <Label className="w-35 text-md">Remaining:</Label>
+          <Label className="text-green-600 text-md font-bold">
+            Php {getLatestRemainingBalance()}
+          </Label>
+        </div>
+        <div className="flex flex-row gap-2">
+          <Label className="w-35 text-md">Pending Expenses:</Label>
+          <Label className="text-yellow-600 text-md font-bold">
+            Php {calculateTotalProposedWithoutActual()}
           </Label>
         </div>
       </div>

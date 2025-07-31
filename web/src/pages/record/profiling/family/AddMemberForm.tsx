@@ -16,6 +16,7 @@ import { formatResidents } from "../profilingFormats";
 import { useAddFamilyComposition } from "../queries/profilingAddQueries";
 import { toast } from "sonner";
 import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
+import { capitalize } from "@/helpers/capitalize";
 
 export default function AddMemberForm({ 
   familyId, 
@@ -35,7 +36,7 @@ export default function AddMemberForm({
   const formattedResidents = React.useMemo(() => 
     formatResidents(residentsWithFamExclusion)
   , [residentsWithFamExclusion]);
-  const defaultValues = React.useRef(generateDefaultValues(newMemberFormSchema)).current;
+  const defaultValues = generateDefaultValues(newMemberFormSchema);
   const form = useForm<z.infer<typeof newMemberFormSchema>>({
     resolver: zodResolver(newMemberFormSchema),
     defaultValues,
@@ -54,26 +55,27 @@ export default function AddMemberForm({
       return;
     }
 
-    const role = form.getValues().role;
-    const newComposition = await addFamilyComposition([{
+    const values = form.getValues();
+    addFamilyComposition([{
       "fam": familyId,
-      "fc_role": role,
+      "fc_role": capitalize(values.role),
       "rp": residentId
     }], {
-      onSuccess: () => {
+      onSuccess: (newComposition) => {3
         setIsOpenDialog(false);
         setIsSubmitting(false);
         setCompositions((prev: any) => [
           ...prev,
-          newComposition
-        ])
-        }
+          newComposition[0]
+        ]);
+      }
     });
   };
 
   if(isLoadingResidents) {
     return <Loader2 className="animate-spin" />
   }
+  
 
   return (
     <Form {...form}>

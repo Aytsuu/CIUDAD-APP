@@ -23,7 +23,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.http import JsonResponse
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
 
 urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -44,4 +47,6 @@ urlpatterns = [
     path('authentication/', include('apps.authentication.urls')),
     path('api/detection/', include('detection.urls')),
     path('gad/', include('apps.gad.urls')),
+    path('council/', include('apps.council.urls')),
+    path('clerk/', include('apps.clerk.urls')),
 ]

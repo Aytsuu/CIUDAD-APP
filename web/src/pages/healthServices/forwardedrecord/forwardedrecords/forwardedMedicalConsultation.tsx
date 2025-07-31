@@ -11,7 +11,7 @@ import { Toaster } from "sonner";
 import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { MedicalConsultationHistory } from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
-import { medicalConsultation } from "@/routers/medConsultation";
+import { medicalConsultation } from "@/routers/med-consultation";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FileInput } from "lucide-react";
 import {

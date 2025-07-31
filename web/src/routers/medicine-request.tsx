@@ -14,7 +14,6 @@ export const medicineRequest = [
     element: <IndivMedicineRecord />,
   },
  
- 
   {
     path: "/medicine-requests",
     element: <MedicineRequests />,

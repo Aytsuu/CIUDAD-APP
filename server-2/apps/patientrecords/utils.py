@@ -50,6 +50,7 @@ def get_latest_height_weight(pat_id):
             return {
                 'height': float(latest.height),
                 'weight': float(latest.weight),
+                'created_at': latest.created_at
             }
         else:
             return None

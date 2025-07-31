@@ -72,13 +72,21 @@ export const getImmunizationTransactions = async () => {
 
 
 
-export const getAntigenTransactions = async () => {
+// restful-api/GetRequest.ts
+export const getAntigenTransactions = async (
+  page: number,
+  pageSize: number,
+  search: string = ""
+) => {
   try {
-    const res = await api2.get("inventory/antigens_stocks/transaction/");
+    const res = await api2.get("inventory/antigens_stocks/transaction/", {
+      params: { page, page_size: pageSize, search }
+    });
 
-    return res.data;
+    return res.data; // Includes: results, count, next, previous
   } catch (err) {
     console.log(err);
-    return [];
+    return { results: [], count: 0 };
   }
 };
+

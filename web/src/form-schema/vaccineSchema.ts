@@ -44,16 +44,20 @@ export const VaccineSchema = z
     vaccinetype: z.string().min(1, "Vaccine type is required"),
     datevaccinated: z.string().min(1, "Date vaccinated is required"),
     assignto: z.string().optional(),
-    age: z.string().optional()
+    age: z.string().optional(),
+    followv_date: z.string().optional(),
+    vachist_doseNo: z.number().optional(),
+    vacrec_totaldose: z.string().optional(),
+
   })
   
 
 export const VitalSignsSchema = z.object({
-  pr: z.string().min(1, "Pulse rate is required"),
-  temp: z.string().min(1, "Temperature is required"),
-  o2: z.string().min(1, "Oxygen saturation is required"),
-  bpsystolic: z.string().min(1, "Systolic blood pressure is required"),
-  bpdiastolic: z.string().min(1, "Diastolic blood pressure is required"),
+  pr: z.string().optional(),
+  temp: z.string().optional(),
+  o2: z.string().optional(),
+  bpsystolic: z.string().optional(),
+  bpdiastolic: z.string().optional(),
 });
 
 export type VaccineSchemaType = z.infer<typeof VaccineSchema>;

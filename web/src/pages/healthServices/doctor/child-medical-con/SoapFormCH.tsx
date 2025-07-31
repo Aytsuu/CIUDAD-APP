@@ -9,7 +9,7 @@ import { useNavigate } from "react-router";
 import SoapFormFields from "@/components/ui/soap-form";
 
 import { useAuth } from "@/context/AuthContext";
-import { usePhysicalExamQueries } from "../queries.tsx/fetch";
+import { usePhysicalExamQueries } from "../medical-con/queries.tsx/fetch";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
 import { useSubmitSoapForm } from "./queries.tsx/soap-submission";
 

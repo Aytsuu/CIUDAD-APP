@@ -1,4 +1,4 @@
-import {api} from "@/api/api";
+import { api } from "@/api/api";
 
 export const archiveProjectProposal = async (gprId: number) => {
   try {
@@ -42,12 +42,48 @@ export const permanentDeleteProjectProposal = async (gprId: number) => {
 //   }
 // };
 
-export const deleteSupportDocument = async (psdId: number) => {
+export const deleteSupportDocument = async (gprId: number, psdId: number) => {
+  if (!gprId || !psdId) {
+    throw new Error("Project ID and Document ID are required");
+  }
+  
   try {
     const res = await api.delete(`gad/support-docs/${psdId}/`);
     return res.data;
-  } catch (err) {
-    console.error(`Error deleting support document ${psdId}:`, err);
-    throw err;
+  } catch (error) {
+    console.error("Error deleting support document:", error);
+    throw error;
+  }
+};
+
+export const archiveSupportDocument = async (gprId: number, psdId: number) => {
+  if (!gprId || !psdId) {
+    throw new Error("Project ID and Document ID are required");
+  }
+  
+  try {
+    const res = await api.patch(`gad/support-docs/${psdId}/`, {
+      psd_is_archive: true
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error archiving support document:", error);
+    throw error;
+  }
+};
+
+export const restoreSupportDocument = async (gprId: number, psdId: number) => {
+  if (!gprId || !psdId) {
+    throw new Error("Project ID and Document ID are required");
+  }
+  
+  try {
+    const res = await api.patch(`gad/support-docs/${psdId}/`, {
+      psd_is_archive: false
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error restoring support document:", error);
+    throw error;
   }
 };

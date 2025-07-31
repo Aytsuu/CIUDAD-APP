@@ -4,6 +4,7 @@ from apps.patientrecords.models import *
 from apps.inventory.models import *
 from apps.healthProfiling.models import *
 from apps.administration.models import Staff
+
         
         
 class MedicineRequest(models.Model):
@@ -35,12 +36,6 @@ class MedicineRequestItem(models.Model):
 
 class MedicineRecord(models.Model):
    
-    # Request type choices
-    # REQ_TYPE_CHOICES = [
-    #     ('WALK IN', 'Walk In'),
-    #     ('APP', 'App'),
-    # ]
-
     medrec_id = models.BigAutoField(primary_key=True)
     medrec_qty = models.PositiveIntegerField(default=0)
     # req_type = models.CharField(max_length=10, choices=REQ_TYPE_CHOICES)
@@ -59,4 +54,13 @@ class MedicineRecord(models.Model):
     class Meta:
         db_table = 'medicine_record'
          
+class FindingsPlanTreatment(models.Model):
+    fpt_id = models.BigAutoField(primary_key=True)
+    medreq = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='findings_plan_treatments')
+    find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='findings_plan_treatments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+   
+    class Meta:
+        db_table = 'findings_plan_treatment'
         

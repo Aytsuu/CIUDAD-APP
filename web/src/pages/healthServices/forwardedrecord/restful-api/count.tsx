@@ -53,4 +53,18 @@ export function usePendingMedicalConCount() {
   }
 
 
+  
+  export function useScheduledVaccinationCount() { 
+    return useQuery({
+      queryKey: ["scheduledvaccination-count"],
+      queryFn: async () => {
+        const response = await api2.get(`/vaccination/count-scheduled-vaccinations/`);
+        return response.data;
+      },
+      refetchOnMount: true,
+      staleTime: 0,
+    });
+  }
+
+
 

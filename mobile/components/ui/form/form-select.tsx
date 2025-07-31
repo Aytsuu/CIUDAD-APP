@@ -1,10 +1,10 @@
 import { View } from "react-native"
-import { type Control, Controller, type FieldValues, type Path } from "react-hook-form"
+import { type Control, Controller, type FieldValues } from "react-hook-form"
 import { SelectLayout, type DropdownOption } from "../select-layout"
 
 interface FormCustomDropdownProps<T extends FieldValues> {
-  control: Control<T>
-  name: Path<T>
+  control: Control<any>
+  name: string
   options: DropdownOption[]
   label?: string
   placeholder?: string
@@ -41,6 +41,7 @@ export const FormSelect = <T extends FieldValues>({
             disabled={disabled}
             maxHeight={maxHeight}
             className={className}
+            isInModal={isInModal}
           />
         </View>
       )}

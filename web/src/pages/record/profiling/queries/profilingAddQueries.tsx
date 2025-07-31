@@ -20,8 +20,17 @@ export const useAddAddress = () => {
 }
 
 export const useAddPerAddress = () => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, any>[]) => addPersonalAddress(data)
+    mutationFn: ({data, staff_id, history_id} : {
+      data: Record<string, any>[], 
+      staff_id?: string,
+      history_id?: string
+    }) => addPersonalAddress(data, staff_id, history_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['personalInfo']})
+      queryClient.invalidateQueries({queryKey: ['personalHistory']});
+    }
   })
 }
 
@@ -117,12 +126,7 @@ export const useAddFamilyComposition = () => {
       queryClient.invalidateQueries({queryKey: ['familyCompositions']});
       queryClient.invalidateQueries({ queryKey: ["families"] });
       queryClient.invalidateQueries({queryKey: ['residents']});
-
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
-      }
+    }
   });
 };
 

@@ -174,12 +174,14 @@ export interface PersonalInfo {
     staff: string;
   }
   
+
   export interface CHVitalSigns {
     chvital_id: number;
     find_details: any;
     bm_details: BMDetails;
     chhist_details: any;
     temp: string;
+    vital:string;
     created_at: string;
     bm: number;
     find: any;
@@ -265,6 +267,141 @@ export interface PersonalInfo {
     chvital: number;
   }
   
+  
+export interface ImmunizationTracking {
+  imt_id: number;
+  vachist_details: VaccinationHistoryDetails;
+  hasExistingVaccination: boolean;
+  created_at: string;
+  vachist: number;
+  chhist: number;
+
+}
+
+
+
+export interface VaccineDetails {
+  vac_id: number;
+  routine_frequency: null | string;
+  age_group: AgeGroup;
+  vac_type_choices: string;
+  vac_name: string;
+  no_of_doses: number;
+  created_at: string;
+  updated_at: string;
+  category: string;
+  ageGroup: number;
+}
+export interface VaccinationHistoryDetails {
+  vachist_id: number;
+  vital_signs: VitalSigns;
+  vaccine_stock: VaccineStock;
+  follow_up_visit: FollowUpVisit;
+  vacrec_details: VaccinationRecordDetails;
+  vachist_doseNo: number;
+  vachist_age: string;
+  vachist_status: string;
+  created_at: string;
+  assigned_to: null | any; // You might want to replace 'any' with a specific type
+  staff: null | any; // You might want to replace 'any' with a specific type
+  vital: number;
+  vacrec: number;
+  vacStck_id: number;
+  vac_details: VaccineDetails; // You might want to replace 'any' with a specific type
+  followv: number;
+  
+}
+
+export interface VitalSigns {
+  vital_id: number;
+  vital_bp_systolic: string;
+  vital_bp_diastolic: string;
+  vital_temp: string;
+  vital_RR: string;
+  vital_o2: string;
+  vital_pulse: string;
+  created_at: string;
+  patrec: null | any; // You might want to replace 'any' with a specific type
+  staff: null | any; // You might want to replace 'any' with a specific type
+}
+
+export interface VaccineStock {
+  vacStck_id: number;
+  vaccinelist: VaccineList;
+  inv_details: InventoryDetails;
+  inv_id: string;
+  vac_id: number;
+  solvent: string;
+  batch_number: string;
+  volume: number;
+  qty: number;
+  dose_ml: number;
+  vacStck_used: number;
+  vacStck_qty_avail: number;
+  wasted_dose: number;
+  updated_at: string;
+  created_at: string;
+}
+
+export interface VaccineList {
+  vac_id: number;
+  intervals: any[]; // You might want to replace 'any' with a specific type
+  routine_frequency: RoutineFrequency;
+  age_group: AgeGroup;
+  vac_type_choices: string;
+  vac_name: string;
+  no_of_doses: number;
+  created_at: string;
+  updated_at: string;
+  category: string;
+  ageGroup: number;
+}
+
+export interface RoutineFrequency {
+  routineF_id: number;
+  interval: number;
+  dose_number: number;
+  time_unit: string;
+  vac_id: number;
+}
+
+export interface AgeGroup {
+  agegrp_id: number;
+  agegroup_name: string;
+  min_age: number;
+  max_age: number;
+  time_unit: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InventoryDetails {
+  inv_id: string;
+  expiry_date: string;
+  inv_type: string;
+  created_at: string;
+  is_Archived: boolean;
+  updated_at: string;
+}
+
+export interface FollowUpVisit {
+  followv_id: number;
+  followv_date: string;
+  followv_status: string;
+  followv_description: string;
+  created_at: string;
+  updated_at: string;
+  patrec: number;
+}
+
+export interface VaccinationRecordDetails {
+  vacrec_id: number;
+  vacrec_totaldose: number;
+  created_at: string;
+  updated_at: string;
+  patrec_id: number;
+}
+
   export interface ChildHealthHistoryRecord {
     chhist_id: string;
     disabilities: Disability[];
@@ -277,13 +414,11 @@ export interface PersonalInfo {
     child_health_vital_signs: CHVitalSigns[];
     child_health_supplements: CHSupplement[];
     exclusive_bf_checks: EBFCheck[];
-    immunization_tracking: any[];
-    supplements_statuses: CHSSupplementStat[];
+    immunization_tracking: ImmunizationTracking[];
+        supplements_statuses: CHSSupplementStat[];
     nutrition_statuses: NutritionStatus[];
   }
 
-
-  
 
 export interface FieldConfig {
     label: string;
@@ -293,3 +428,7 @@ export interface FieldConfig {
       record?: ChildHealthHistoryRecord
     ) => string | JSX.Element[] | string[];
   }
+
+
+
+  

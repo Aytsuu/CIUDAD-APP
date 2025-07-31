@@ -14,7 +14,7 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMedconRecordById } from "../restful-api/GetMedicalRecord";
+import { getMedconRecordById } from "../restful-api/get";
 import { Toaster } from "sonner";
 import { Syringe, AlertCircle } from "lucide-react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
@@ -319,7 +319,10 @@ export default function InvMedicalConRecords() {
 
             {/* New Consultation Button */}
             <Button className="w-full sm:w-auto">
-              <Link to="/IndivMedicalForm" state={{ params: { patientData } }}>
+              <Link
+                to="/medical-consultation-form"
+                state={{ params: { patientData, mode: "fromindivrecord" } }}
+              >
                 New Consultation Record
               </Link>
             </Button>

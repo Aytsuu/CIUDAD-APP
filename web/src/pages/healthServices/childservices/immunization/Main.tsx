@@ -11,11 +11,11 @@ import z from "zod";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { VitalSignType, FormData, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
+import { useVaccinesListImmunization } from "./queries/fetchQueries";
+import { fetchVaccinesWithStock } from "../../vaccination/restful-api/fetch";
+import { getVaccinationRecordById } from "../../vaccination/restful-api/get";
+import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 
-const fetchChildHealthHistory = async (chrec: string) => {
-  const response = await api2.get(`/child-health/history/${chrec}/`);
-  return response.data;
-};
 
 export default function ChildImmunization() {
   const location = useLocation();
@@ -25,51 +25,56 @@ export default function ChildImmunization() {
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
   const [historicalNotes, setHistoricalNotes] = useState<any[]>([]);
   const [fullHistoryData, setFullHistoryData] = useState<ChildHealthHistoryRecord[]>([]);
-  
-  // State lifted to parent component
+  const { data: vaccinesData, isLoading: isVaccinesLoading } = fetchVaccinesWithStock();
+  const { data: vaccinesListData, isLoading: isVaccinesListLoading } = useVaccinesListImmunization();
   const [showVaccineList, setShowVaccineList] = useState<boolean>(false);
   const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
   const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>([]);
+  const [vaccineHistory, setVaccineHistory] = useState<any[]>([]);
 
-  const {
-    data: historyData,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["childHealthHistory", ChildHealthRecord?.chrec],
-    queryFn: () => fetchChildHealthHistory(ChildHealthRecord?.chrec),
-    enabled: !!ChildHealthRecord?.chrec,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { 
+    data: historyData, 
+    isLoading: isChildLoading, 
+    isError, 
+    refetch 
+  } = useChildHealthHistory(ChildHealthRecord?.chrec);
 
-  const [formData, setFormData] = useState<FormData>({
-    date: "",
-    age: "",
-    ht: "",
-    wt: "",
-    temp: "",
-    follov_description: undefined,
-    notes: undefined,
-    followUpVisit: undefined,
-    followv_status: undefined,
-    vaccines: [],
-    existingVaccines: [],
-  });
 
+  const isLoading = isChildLoading || isVaccinesLoading || isVaccinesListLoading;
+
+
+
+  useEffect(() => {
+    const fetchVaccineHistory = async () => {
+      try {
+        if (ChildHealthRecord?.chrec_details?.patrec_details?.pat_id) {
+          const pat_id = ChildHealthRecord.chrec_details.patrec_details.pat_id.toString();
+          const response = await getVaccinationRecordById(pat_id);
+          setVaccineHistory(response);
+        }
+      } catch (error) {
+        console.error("Error fetching vaccine history:", error);
+      }
+    };
+    
+    fetchVaccineHistory();
+  }, [ChildHealthRecord]);
+
+  
   useEffect(() => {
     if (historyData) {
       const sortedHistory = (historyData[0]?.child_health_histories || []).sort(
         (a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
-
+  
       setFullHistoryData(sortedHistory);
-
+  
       const allVitalSigns: VitalSignType[] = [];
-      const allNotes: any[] = [];
-
+      const filteredNotes: any[] = [];
+  
       sortedHistory.forEach((history: any) => {
+        // Process vital signs (unchanged)
         const vitalSigns = history.child_health_vital_signs?.map((vital: any) => ({
           date: vital.created_at
             ? new Date(vital.created_at).toISOString().split("T")[0]
@@ -88,29 +93,32 @@ export default function ChildImmunization() {
           followv_status: "pending",
         })) || [];
         allVitalSigns.push(...vitalSigns);
-
+  
+        // Only process notes that match the history record's creation date
         if (history.child_health_notes) {
-          allNotes.push({
-            date: history.created_at,
-            notes: history.child_health_notes?.[0]?.chn_notes || "",
-            follov_description:
-              history.child_health_notes?.[0]?.followv_details
-                ?.followv_description || "",
-            followUpVisit:
-              history.child_health_notes?.[0]?.followv_details?.followv_date ||
-              "",
-            followv_status:
-              history.child_health_notes?.[0]?.followv_details
-                ?.followv_status || "pending",
-            chnotes_id: history.child_health_notes?.[0]?.chnotes_id,
+          history.child_health_notes.forEach((note: any) => {
+            const noteDate = new Date(note.created_at).toISOString().split("T")[0];
+            const recordDate = new Date(history.created_at).toISOString().split("T")[0];
+            
+            if (noteDate === recordDate) {
+              filteredNotes.push({
+                date: history.created_at,
+                notes: note.chn_notes || "",
+                follov_description: note.followv_details?.followv_description || "",
+                followUpVisit: note.followv_details?.followv_date || "",
+                followv_status: note.followv_details?.followv_status || "pending",
+                chnotes_id: note.chnotes_id,
+              });
+            }
           });
         }
       });
-
+  
       setHistoricalVitalSigns(allVitalSigns);
-      setHistoricalNotes(allNotes);
+      setHistoricalNotes(filteredNotes); // Now only contains same-day notes
     }
   }, [historyData]);
+
 
   const nextStep = useCallback(() => {
     setCurrentStep(2);
@@ -147,8 +155,8 @@ export default function ChildImmunization() {
       </div>
       <hr className="border-gray mb-4 sm:mb-6" />
 
-      {isLoading || !ChildHealthRecord ? (
-        <div className="w-full h-full p-6">
+      {isLoading ? (
+        <div className="w-full h-full px-6">
           <Skeleton className="h-10 w-1/6 mb-3" />
           <Skeleton className="h-7 w-1/4 mb-6" />
           <Skeleton className="h-10 w-full mb-4" />
@@ -185,6 +193,11 @@ export default function ChildImmunization() {
                   setExistingVaccines={setExistingVaccines}
                   showVaccineList={showVaccineList}
                   setShowVaccineList={setShowVaccineList}
+                  vaccinesData={vaccinesData}
+                  vaccinesListData={vaccinesListData}
+                  isLoading={isLoading}
+                  vaccineHistory={vaccineHistory} // Pass the vaccine history
+
                 />
               )}
             </>

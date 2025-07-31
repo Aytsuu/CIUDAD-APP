@@ -354,7 +354,7 @@ export default function MedicineRequests() {
 
         <div className="w-full sm:w-auto">
           <Button className="w-full sm:w-auto" asChild>
-            <Link to="/medicine-requests/new">New Request</Link>
+            <Link to="/medicine-request-form">New Request</Link>
           </Button>
         </div>
       </div>

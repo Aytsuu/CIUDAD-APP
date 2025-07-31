@@ -43,7 +43,7 @@ export default function PrenatalFormSecPg({
   const pat_id = form.watch("pat_id")
 
   const { data: prevPregnancyData, isLoading: prevPregnancyLoading } = usePrenatalPatientPrevPregnancy(pat_id || "")
-  const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock()
+  // const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock()
 
 
   useEffect(() => {
@@ -254,9 +254,8 @@ export default function PrenatalFormSecPg({
                     <div className="mb-2">
                       <Label className="flex text-black/70 items-center">Vaccine Type</Label>
                     </div>
-
-                    <Combobox
-                      options={vaccineStocksOptions.map((vaccine) => ({
+                    {/* <Combobox
+                      options={vaccineStocksOptions.map((vaccine: any) => ({
                         id: vaccine.id,
                         name: `${vaccine.name} (Expiry: ${vaccine.expiry || "N/A"})`,
                       }))}
@@ -271,7 +270,7 @@ export default function PrenatalFormSecPg({
                         </div>
                       }
                       onChange={handleVaccineChange}
-                    />
+                    /> */}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-2 mb-5">

@@ -17,53 +17,45 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
 import { api2 } from "@/api/api";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
-// API functions
-const getChildHealthRecords = async (chrec_id: number) => {
-  const response = await api2.get(`/child-health/history/${chrec_id}/`);
-  return response.data;
-};
-
-type NutritionStatus = {
-  wfa: string;
-  lhfa: string;
-  wfl: string;
-  muac: string;
-  edemaSeverity: string;
-};
-
-type ChrRecords = {
-  chrec_id: number;
-  chhist_id: number;
-  id: number;
-  age: string;
-  wt: number;
-  ht: number;
-  bmi: string;
-  latestNote: string | null;
-  followUpDescription: string;
-  followUpDate: string;
-  followUpStatus: string;
-  vaccineStat: string;
-  nutritionStatus: NutritionStatus;
-  updatedAt: string;
-  rawCreatedAt: string;
-  status: string;
-};
+import { useChildHealthHistory } from "../forms/queries/fetchQueries";
+import { getChildHealthColumns } from "./columns/indiv_col";
+import CardLayout from "@/components/ui/card/card-layout";
+import { useUnvaccinatedVaccines } from "../../vaccination/queries/fetch";
+import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
+import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
+import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
+import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
+import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function InvChildHealthRecords() {
+  const { showLoading, hideLoading } = useLoading();
+
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
-  const mode = location.state.mode as
-    | "addnewchildhealthrecord"
-    | "immunization"
-    | undefined;
-
   const [childData, setChildData] = useState(ChildHealthRecord);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
+    useUnvaccinatedVaccines(ChildHealthRecord?.pat_id, ChildHealthRecord.dob);
+  const { data: followUps = [], isLoading: followupLoading } =
+    useFollowupChildHealthandVaccines(ChildHealthRecord?.pat_id);
+  const {
+    data: historyData = [],
+    isLoading: childHistoryLoading,
+    isError,
+    error,
+  } = useChildHealthHistory(childData.chrec_id);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =
+    usePatientVaccinationDetails(ChildHealthRecord?.pat_id);
+  const isLoading =
+    followupLoading ||
+    isUnvaccinatedLoading ||
+    isCompleteVaccineLoading ||
+    childHistoryLoading;
 
   useEffect(() => {
     if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
@@ -73,6 +65,14 @@ export default function InvChildHealthRecords() {
     }
   }, [ChildHealthRecord, navigate]);
 
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
+
   if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
     return (
       <div className="w-full h-full flex items-center justify-center text-red-500">
@@ -81,170 +81,113 @@ export default function InvChildHealthRecords() {
     );
   }
 
-  const {
-    data: historyData = [],
-    isLoading,
-    isError,
-    error,
-  } = useQuery<any, Error, ChrRecords[]>({
-    queryKey: ["indivchildhistory", childData.chrec_id],
-    queryFn: () => getChildHealthRecords(childData.chrec_id),
-    enabled: !!childData.chrec_id,
-    staleTime: 300000,
-    gcTime: 600000,
-    select: (data) => {
-      const mainRecord = data && data.length > 0 ? data[0] : null;
-      if (!mainRecord || !mainRecord.child_health_histories) {
-        return [];
+  // Process the raw history data into our desired format
+  const processedHistoryData = useMemo(() => {
+    if (!historyData || historyData.length === 0) return [];
+    const mainRecord = historyData[0];
+    if (!mainRecord || !mainRecord.child_health_histories) {
+      return [];
+    }
+    const sortedHistories = [...mainRecord.child_health_histories].sort(
+      (a: any, b: any) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    return sortedHistories.map((record: any, index: number) => {
+      let bmi = "N/A";
+      if (record.child_health_vital_signs?.length > 0) {
+        const vital = record.child_health_vital_signs[0];
+        if (vital.bm_details?.height && vital.bm_details?.weight) {
+          const heightInM = vital.bm_details.height / 100;
+          const bmiValue = (
+            vital.bm_details.weight /
+            (heightInM * heightInM)
+          ).toFixed(1);
+          bmi = bmiValue;
+        }
       }
 
-      const sortedHistories = [...mainRecord.child_health_histories].sort(
-        (a: any, b: any) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      let latestNoteContent: string | null = null;
+      let followUpDescription = "";
+      let followUpDate = "";
+      let followUpStatus = "";
 
-      return sortedHistories.map((record: any, index: number) => {
-        let bmi = "N/A";
-        if (record.child_health_vital_signs?.length > 0) {
-          const vital = record.child_health_vital_signs[0];
-          if (vital.bm_details?.height && vital.bm_details?.weight) {
-            const heightInM = vital.bm_details.height / 100;
-            const bmiValue = (
-              vital.bm_details.weight /
-              (heightInM * heightInM)
-            ).toFixed(1);
-            bmi = bmiValue;
-          }
-        }
-
-        let latestNoteContent: string | null = null;
-        let followUpDescription = "";
-        let followUpDate = "";
-        let followUpStatus = "";
-
-        if (record.child_health_notes && record.child_health_notes.length > 0) {
-          const sortedNotes = [...record.child_health_notes].sort(
-            (a: any, b: any) =>
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
-          latestNoteContent = sortedNotes[0].chn_notes || null;
-          
-          if (sortedNotes[0].followv_details) {
-            followUpDescription = sortedNotes[0].followv_details.followv_description || "";
-            followUpDate = sortedNotes[0].followv_details.followv_date || "";
-            followUpStatus = sortedNotes[0].followv_details.followv_status || "";
-          }
-        }
-
-        const nutritionStatus = record.nutrition_statuses?.[0] || {
-          wfa: "N/A",
-          lhfa: "N/A",
-          wfl: "N/A",
-          muac: "N/A",
-          edemaSeverity: "none",
-        };
-
-        return {
-          chrec_id: mainRecord.chrec_id,
-          patrec: mainRecord.patrec_id,
-          status: record.status || "N/A",  
-          chhist_id: record.chhist_id,
-          id: index + 1,
-          temp: record.child_health_vital_signs?.[0]?.temp || 0,
-          age: record.child_health_vital_signs?.[0]?.bm_details?.age || "N/A",
-          wt: record.child_health_vital_signs?.[0]?.bm_details?.weight || 0,
-          ht: record.child_health_vital_signs?.[0]?.bm_details?.height || 0,
-          bmi,
-          latestNote: latestNoteContent,
-          followUpDescription,
-          followUpDate,
-          followUpStatus,
-          vaccineStat: record.tt_status || "N/A",
-          nutritionStatus: {
-            wfa: nutritionStatus.wfa || "N/A",
-            lhfa: nutritionStatus.lhfa || "N/A",
-            wfl: nutritionStatus.wfl || "N/A",
-            muac: nutritionStatus.muac || "N/A",
-            edemaSeverity: nutritionStatus.edemaSeverity || "none",
-          },
-          updatedAt: new Date(record.created_at).toLocaleDateString(),
-          rawCreatedAt: record.created_at,
-        };
-      });
-    },
-  });
-
-  const today = new Date().toISOString().split("T")[0];
-
-  useEffect(() => {
-    if (!childData?.patrec_id || !historyData?.length) return;
-
-    const updateFollowUps = async () => {
-      try {
-        const response = await api2.get(
-          `/patientrecords/followup-pending/${childData.patrec_id}/`
+      if (record.child_health_notes && record.child_health_notes.length > 0) {
+        const sortedNotes = [...record.child_health_notes].sort(
+          (a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
+        latestNoteContent = sortedNotes[0].chn_notes || null;
 
-        const visits = response.data.results ?? [];
-        if (!visits.length) return;
-
-        await Promise.all(
-          visits.map(async (visit: any) => {
-            const newStatus = visit.date === today ? "completed" : "missed";
-            const todayNote =
-              newStatus === "missed"
-                ? `Missed on ${today}`
-                : `Completed on ${today}`;
-
-            await api2.patch(`/patientrecords/follow-up-visit/${visit.id}/`, {
-              followv_status: newStatus,
-              followv_description:
-                (visit.description ? `${visit.description} | ` : "") +
-                todayNote,
-            });
-          })
-        );
-      } catch (err) {
-        console.error("Failed to update follow-ups:", err);
+        if (sortedNotes[0].followv_details) {
+          followUpDescription =
+            sortedNotes[0].followv_details.followv_description || "";
+          followUpDate = sortedNotes[0].followv_details.followv_date || "";
+          followUpStatus = sortedNotes[0].followv_details.followv_status || "";
+        }
       }
-    };
 
-    updateFollowUps();
-  }, [childData?.pat_id, historyData]);
+      const nutritionStatus = record.nutrition_statuses?.[0] || {
+        wfa: "N/A",
+        lhfa: "N/A",
+        wfl: "N/A",
+        muac: "N/A",
+        edemaSeverity: "none",
+      };
 
-  const latestRecord = useMemo(() => {
-    if (historyData.length === 0) return null;
-    return historyData[0];
+      return {
+        chrec_id: mainRecord.chrec_id,
+        patrec: mainRecord.patrec_id,
+        status: record.status || "N/A",
+        chhist_id: record.chhist_id,
+        id: index + 1,
+        temp: record.child_health_vital_signs?.[0]?.temp || 0,
+        age: record.child_health_vital_signs?.[0]?.bm_details?.age || "N/A",
+        wt: record.child_health_vital_signs?.[0]?.bm_details?.weight || 0,
+        ht: record.child_health_vital_signs?.[0]?.bm_details?.height || 0,
+        bmi,
+        latestNote: latestNoteContent,
+        followUpDescription,
+        followUpDate,
+        followUpStatus,
+        vaccineStat: record.tt_status || "N/A",
+        nutritionStatus: {
+          wfa: nutritionStatus.wfa || "N/A",
+          lhfa: nutritionStatus.lhfa || "N/A",
+          wfl: nutritionStatus.wfl || "N/A",
+          muac: nutritionStatus.muac || "N/A",
+          edemaSeverity: nutritionStatus.edemaSeverity || "none",
+        },
+        updatedAt: new Date(record.created_at).toLocaleDateString(),
+        rawCreatedAt: record.created_at,
+      };
+    });
   }, [historyData]);
 
+  const latestRecord = useMemo(() => {
+    if (processedHistoryData.length === 0) return null;
+    return processedHistoryData[0];
+  }, [processedHistoryData]);
 
-  // Filter out immunization records when not in immunization mode
-const filteredData = useMemo(() => {
-  return historyData.filter((item: ChrRecords) => {
-    // Skip immunization records when not in immunization mode
-    if (mode !== "immunization" && item.status === "immunization") {
-      return false;
-    }
-    
-    const searchText = `${item.age} ${item.wt} ${item.ht} ${item.bmi} ${
-      item.vaccineStat
-    } ${item.nutritionStatus.wfa} ${item.nutritionStatus.lhfa} ${
-      item.nutritionStatus.wfl
-    } ${item.updatedAt} ${item.latestNote || ""} ${
-      item.followUpDescription || ""
-    }`.toLowerCase();
-    return searchText.includes(searchQuery.toLowerCase());
-  });
-}, [searchQuery, historyData, mode]);
+  const isLatestRecordImmunizationOrCheckup = useMemo(() => {
+    if (!latestRecord) return false;
+    return (
+      latestRecord.status === "immunization" ||
+      latestRecord.status === "check-up"
+    );
+  }, [latestRecord]);
 
-// Disable button when not in immunization mode and latest record is immunization
-const shouldDisableButton = useMemo(() => {
-  if (!latestRecord) return false;
-  return mode !== "immunization" && latestRecord.status === "check-up" ;
-}, [latestRecord, mode]);
-
-// Button text based on mode
-const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record";
+  const filteredData = useMemo(() => {
+    return processedHistoryData.filter((item: any) => {
+      const searchText = `${item.age} ${item.wt} ${item.ht} ${item.bmi} ${
+        item.vaccineStat
+      } ${item.nutritionStatus.wfa} ${item.nutritionStatus.lhfa} ${
+        item.nutritionStatus.wfl
+      } ${item.updatedAt} ${item.latestNote || ""} ${
+        item.followUpDescription || ""
+      }`.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    });
+  }, [searchQuery, processedHistoryData]);
 
   const currentData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -263,163 +206,25 @@ const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record"
             originalRecord: latestRecord,
             patientData: childData,
             chrecId: childData?.chrec_id,
-            mode: mode,
+            mode: "addnewchildhealthrecord",
           },
         },
       });
     }
   };
 
-  const columns: ColumnDef<ChrRecords>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "age",
-      header: "Age",
-    },
-    {
-      accessorKey: "wt",
-      header: "WT (kg)",
-    },
-    {
-      accessorKey: "ht",
-      header: "HT (cm)",
-    },
-    {
-      accessorKey: "temp",
-      header: "Temp (°C)",
-    },
-    {
-      accessorKey: "nutritionStatus.wfa",
-      header: "WFA",
-      cell: ({ row }) => row.original.nutritionStatus.wfa || "N/A",
-    },
-    {
-      accessorKey: "nutritionStatus.lhfa",
-      header: "LFA",
-      cell: ({ row }) => row.original.nutritionStatus.lhfa || "N/A",
-    },
-    {
-      accessorKey: "nutritionStatus.wfl",
-      header: "WFL",
-      cell: ({ row }) => row.original.nutritionStatus.wfl || "N/A",
-    },
-    {
-      accessorKey: "nutritionStatus.muac",
-      header: "MUAC",
-      cell: ({ row }) => row.original.nutritionStatus.muac || "N/A",
-    },
-    {
-      accessorKey: "nutritionStatus.edemaSeverity",
-      header: "Edema",
-      cell: ({ row }) =>
-        row.original.nutritionStatus.edemaSeverity === "none"
-          ? "None"
-          : row.original.nutritionStatus.edemaSeverity,
-    },
-    {
-      accessorKey: "latestNote",
-      header: "Notes & Follow-up",
-      cell: ({ row }) => {
-        const record = row.original;
-        return (
-          <div className="min-w-[200px] max-w-[300px]">
-            {record.latestNote ? (
-              <p className="text-sm mb-2">{record.latestNote}</p>
-            ) : (
-              <p className="text-gray-500 text-sm mb-2">No notes</p>
-            )}
-
-            {(record.followUpDescription || record.followUpDate) && (
-              <div className="border-t pt-2 mt-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-gray-600">Follow-up:</span>
-                  <span 
-                    className={`text-xs px-2 py-1 rounded ${
-                      record.followUpStatus === 'completed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : record.followUpStatus === 'missed' 
-                          ? 'bg-red-100 text-red-800' 
-                          : 'bg-blue-100 text-blue-800'
-                    }`}
-                  >
-                    {record.followUpStatus || 'pending'}
-                  </span>
-                </div>
-                
-                {record.followUpDescription && (
-                  <p className="text-xs text-gray-600 break-words">
-                    {record.followUpDescription.split('|').map((part, i) => (
-                      <span key={i}>
-                        {part.trim()}
-                        {i < record.followUpDescription.split('|').length - 1 && <br />}
-                      </span>
-                    ))}
-                  </p>
-                )}
-                
-                {record.followUpDate && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    <span className="font-medium">Date:</span> {record.followUpDate}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated At",
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const originalRecord = historyData.find(
-          (rec: any) => rec.chhist_id === row.original.chhist_id
-        );
-        return (
-          <div className="flex justify-center gap-2">
-            <Link
-              to="/child-health-history-detail"
-              state={{
-                params: {
-                  chhistId: originalRecord?.chhist_id,
-                  patId: childData?.pat_id,
-                  originalRecord,
-                  patientData: childData,
-                  chrecId: childData?.chrec_id,
-                },
-              }}
-            >
-              <Button variant="ghost">View</Button>
-            </Link>
-          </div>
-        );
-      },
-    },
-  ];
-
-
+  const columns = useMemo(() => getChildHealthColumns(childData), [childData]);
 
   if (isError) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-red-500">
+      <div className="w-full h-full flex flex-col items-center justify-center">
+        <div className="text-red-500 mb-4">
           Error loading data:{" "}
           {error instanceof Error ? error.message : "Unknown error"}
         </div>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Refresh
+        </Button>
       </div>
     );
   }
@@ -449,15 +254,37 @@ const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record"
         <ChildHealthRecordCard child={childData} />
       </div>
 
+      {isLoading ? (
+        <VaccinationStatusCardsSkeleton />
+      ) : (
+        <div className="flex flex-col lg:flex-row gap-6 mb-4">
+          <div className="w-full">
+            <VaccinationStatusCards
+              unvaccinatedVaccines={unvaccinatedVaccines}
+              vaccinations={vaccinations}
+            />
+          </div>
+
+          <div className="w-full">
+            <FollowUpsCard childHealthFollowups={followUps} />
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
         {latestRecord && (
-          <div className="ml-auto mt-4 sm:mt-0">
-            <Button 
-              onClick={navigateToUpdateLatest}
-              disabled={shouldDisableButton}
-            >
-              {buttonText}
-              </Button>
+          <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+            {isLatestRecordImmunizationOrCheckup ? (
+              <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+                <span className="text-sm font-medium">
+                  {latestRecord.status === "immunization"
+                    ? "This child is currently receiving an immunization."
+                    : "This child is currently undergoing a health check-up."}
+                </span>
+              </div>
+            ) : (
+              <Button onClick={navigateToUpdateLatest}>New record</Button>
+            )}
           </div>
         )}
       </div>
@@ -505,11 +332,10 @@ const buttonText = mode === "immunization" ? "Administer Vaccine" : "New Record"
             </DropdownMenu>
           </div>
         </div>
-      
+
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-               <TableSkeleton columns={columns} rowCount={3} />
-
+            <TableSkeleton columns={columns} rowCount={3} />
           ) : (
             <DataTable columns={columns} data={currentData} />
           )}

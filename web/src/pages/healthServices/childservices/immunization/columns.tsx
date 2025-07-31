@@ -1,7 +1,14 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Info, Calendar, Trash2, Plus, Pencil } from "lucide-react";
+import {
+  CheckCircle,
+  Info,
+  Calendar,
+  Trash2,
+  Plus,
+  Pencil,
+} from "lucide-react";
 import {
   VitalSignType,
   VaccineRecord,
@@ -13,8 +20,8 @@ interface ColumnsProps {
   isLoading?: boolean;
   historicalNotes?: any[];
   handleStartEdit?: (index: number, data: any) => void;
-  deleteVac?: (vacStck_id: string) => void;
-  deleteExistingVac?: (vac_id: string) => void;
+  deleteVac?: (id: number) => void;
+  deleteExistingVac?: (id: number) => void;
 }
 
 export const createImmunizationColumns = (props: ColumnsProps) => {
@@ -60,14 +67,19 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       header: "Notes",
       cell: ({ row }) => {
         const displayNotes = row.original.notes || "";
+        const currentDate = row.original.date;
+        // Filter notes to only show those matching the current row's date
+        const filteredNotes = historicalNotes.filter(
+          (note) =>
+            new Date(note.date).toISOString().split("T")[0] === currentDate
+        );
 
         return (
-            
           <div className="flex flex-col justify-center">
             <div className="text-left">
-              {historicalNotes.length > 0 ? (
+              {filteredNotes.length > 0 ? (
                 <div className="space-y-4">
-                  {historicalNotes.map((note, index) => (
+                  {filteredNotes.map((note, index) => (
                     <div key={index}>
                       {note.notes && (
                         <div className="mt-2">
@@ -95,7 +107,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
                 </div>
               ) : (
                 <div className="text-center py-4 text-gray-500">
-                  No notes found
+                  No notes found for this date
                 </div>
               )}
             </div>
@@ -133,7 +145,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
             className="px-2 py-1"
           >
             <Pencil className="h-4 w-4 mr-1" />
-             Notes
+            Notes
           </Button>
         );
       },
@@ -161,6 +173,15 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       ),
     },
     {
+      accessorKey: "nextdose",
+      header: "Next Dose",
+      cell: ({ row }) => (
+        <Badge variant="default" className="bg-blue-100 text-blue-800">
+          Dose {row.original.nextFollowUpDate || "No more Next dose"}
+        </Badge>
+      ),
+    },
+    {
       accessorKey: "date",
       header: "Date Administered",
       cell: ({ row }) => (
@@ -182,7 +203,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
           variant="outline"
           size="sm"
           type="button"
-          onClick={() => deleteVac(row.original.vacStck_id || "")}
+          onClick={() => deleteVac(row.index)} // Pass the row index
           className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
         >
           <Trash2 className="h-4 w-4" />
@@ -233,7 +254,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
           variant="outline"
           size="sm"
           type="button"
-          onClick={() => deleteExistingVac(row.original.vac_id || "")}
+          onClick={() => deleteExistingVac(row.index)} // Pass the row index
           className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
         >
           <Trash2 className="h-4 w-4" />

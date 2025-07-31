@@ -1,7 +1,7 @@
 // components/HealthHistoryAccordions.tsx
 import { ChildHealthHistoryRecord } from "@/pages/healthServices/childservices/viewrecords/types";
-import { SectionRenderer } from "@/components/ui/SectionRenderer";
-import { EbfRenderer } from "@/components/ui/EbfRenderer";
+import { SectionRenderer } from "@/components/ui/section-renderer";
+import { EbfRenderer } from "@/components/ui/ebf-renderer";
 import {
   ClipboardList,
   User,
@@ -15,7 +15,7 @@ import {
 import {
   recordOverviewFields,
   childPersonalInfoFields,
-  familyHeadInfoFields,
+  findingsFields,
   disabilitiesFields,
   vitalSignsFields,
   nutritionStatusesFields,
@@ -23,7 +23,7 @@ import {
   supplementsFields,
   exclusiveBfCheckFields,
   immunizationTrackingFields,
-} from "@/pages/healthServices/childservices/viewrecords/config";
+} from "@/pages/healthServices/childservices/viewrecords/Config";
 import { AccordionSection } from "@/components/ui/accordion-section";
 
 interface HealthHistoryAccordionsProps {
@@ -51,17 +51,6 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
-      {/* <AccordionSection
-        value="child-details"
-        title="Child Details"
-        icon={<User className="h-5 w-5" />}
-      >
-        <SectionRenderer
-          fields={childPersonalInfoFields}
-          recordsToDisplay={recordsToDisplay}
-          chhistId={chhistId}
-        />
-      </AccordionSection> */}
 
       {/* <AccordionSection
         value="parent-newborn"
@@ -87,6 +76,19 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
+
+      <AccordionSection
+        value="find-details"
+        title="Findings Details"
+        icon={<User className="h-5 w-5" />}
+      >
+        <SectionRenderer
+          fields={findingsFields}
+          recordsToDisplay={recordsToDisplay}
+          chhistId={chhistId}
+        />
+      </AccordionSection>
+      
       <AccordionSection
         value="disabilities"
         title="Disabilities"

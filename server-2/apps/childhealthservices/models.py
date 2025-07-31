@@ -1,7 +1,7 @@
 from django.db import models
 from apps.patientrecords.models import PatientRecord,BodyMeasurement,VitalSigns, Finding,FollowUpVisit
 from apps.inventory.models import MedicineInventory
-from apps.vaccination.models import VaccinationRecord
+from apps.vaccination.models import VaccinationRecord,VaccinationHistory
 from apps.administration.models import Staff
 from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,MedicineRecord
 
@@ -35,6 +35,7 @@ class ChildHealthrecord(models.Model):
     
     class Meta:
         db_table = 'child_healthrecord'
+        ordering = ['-created_at']
        
     
 class ChildHealth_History(models.Model):
@@ -55,6 +56,8 @@ class ChildHealth_History(models.Model):
     
     class Meta:
         db_table = 'child_health_history'
+        
+
 class ChildHealthNotes(models.Model):
     chnotes_id = models.BigAutoField(primary_key=True)
     chn_notes = models.TextField(blank=True, null=True)
@@ -66,14 +69,15 @@ class ChildHealthNotes(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) 
     
+    
     class Meta:
         db_table = 'child_health_notes'
 
 class ChildHealthVitalSigns(models.Model):
     chvital_id = models.BigAutoField(primary_key=True)
-    # vital =models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
+    vital =models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
-    temp = models.CharField(max_length=100, blank=True, null=True)  # Temperature
+    # temp = models.CharField(max_length=100, blank=True, null=True)  # Temperature
     find =models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_vital_signs')
     # chnotes = models.ForeignKey(ChildHealthNotes, on_delete=models.CASCADE, related_name='child_health_vital_signs', null=True, blank=True)
@@ -100,10 +104,6 @@ class ChildHealthSupplementsStatus(models.Model):
     # status = models.CharField(max_length=100, blank=True, null=True)
     date_completed = models.DateField(blank=True, null=True)  # Date when the status was completed
     birthwt = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    # anemic_seen = models.CharField(max_length=100, blank=True, null=True)
-    # anemic_iron_given = models.CharField(max_length=100, blank=True, null=True)
-    # birthwt_seen = models.CharField(max_length=100, blank=True, null=True)
-    # birthwt_given_iron = models.CharField(max_length=100, blank=True, null=True)
     status_type = models.CharField(choices=[('birthwt', 'Birth Weight'), ('anemic', 'Anemic')])
     date_seen = models.CharField(max_length=100, blank=True, null=True)
     date_given_iron = models.CharField(max_length=100, blank=True, null=True)
@@ -141,7 +141,7 @@ class ExclusiveBFCheck(models.Model):
         
 class ChildHealthImmunizationHistory(models.Model):
     imt_id = models.BigAutoField(primary_key=True)
-    vacrec = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='immunization_tracking', db_column='vacrec_id')
+    vachist = models.ForeignKey(VaccinationHistory, on_delete=models.CASCADE, related_name='immunization_tracking', db_column='vachist_id')
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='immunization_tracking', db_column='chhist_id')
     hasExistingVaccination = models.BooleanField(default=False)  # Indicates if there is an existing vaccination record
     created_at = models.DateTimeField(auto_now_add=True)

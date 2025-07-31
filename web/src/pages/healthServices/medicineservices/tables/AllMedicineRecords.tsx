@@ -223,7 +223,6 @@ export default function AllMedicineRecords() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-col items-center ">

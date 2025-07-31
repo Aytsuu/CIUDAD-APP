@@ -2,25 +2,26 @@ import axios from "axios";
 import { supabase } from "@/lib/supabase";
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.52:8000", 
+  baseURL: "https://ciudad-app.onrender.com",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
+    "Accept": "application/json",
   },
-  timeout: 10000, // 10 second timeout
 });
 
 export const api2 = axios.create({
-  baseURL: "http://localhost:8001",
+  baseURL: "http://192.168.1.52:8001",
   timeout: 10000,
 });
+
 
 // Request interceptor to add auth token
 api.interceptors.request.use(async (config) => {
   // Skip auth for login and signup endpoints
   if (
-    config.url?.includes("authentication/login/") ||
-    config.url?.includes("authentication/signup/")
+    config.url?.includes("/authentication/mobile/login/") ||
+    config.url?.includes("/authentication/signup/")
   ) {
     return config;
   }
@@ -47,7 +48,7 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Response interceptor to handle auth errors
+// // Response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => {
     console.log("API Response:", response.config.url, response.status);
@@ -92,15 +93,6 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject({
-      config: error.config,
-      response: {
-        status: error.response?.status,
-        data: {
-          error: "API_REQUEST_FAILED",
-          details: error.response?.data
-        }
-      }
-    });
+    return Promise.reject(error);
   }
 );

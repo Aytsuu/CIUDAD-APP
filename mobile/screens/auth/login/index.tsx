@@ -82,7 +82,7 @@ export default function SignInScreen() {
     <ScreenLayout 
       showExitButton={false}
       showBackButton={false}
-    >
+    > 
       <View className="flex-1 px-5">
         <View className="items-center mt-7">
           <Image source={require("@/assets/images/Logo.png")} className="w-24 h-24" />
@@ -120,7 +120,7 @@ export default function SignInScreen() {
           </View>
 
           <TouchableWithoutFeedback 
-            onPress={() => router.push("/forgot-password")}
+            // onPress={() => router.push("/forgot-password")}
             disabled={isLoading}
           >
             <View className="flex-row justify-end mt-3 mb-4">

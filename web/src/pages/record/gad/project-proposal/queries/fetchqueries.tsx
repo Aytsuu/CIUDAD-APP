@@ -1,22 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs } from "../api/getreq";
+import { ProposalStatus } from "./updatequeries";
 
 export type ProjectProposalLog = {
   gprlId: number;
   gprlDateApprovedRejected: string;
   gprlReason: string | null;
   gprlDateSubmitted: string;
-  gprlStatus: "Pending" | "Approved" | "Rejected" | "Viewed";
+  gprlStatus: "Pending" | "Amend" |"Approved" | "Rejected" | "Viewed";
   staffId: number | null;
 };
 
 export type SupportDoc = {
-  psdId: number;
-  fileUrl: string;
-  fileName: string;
-  fileType: string;
-  storagePath?: string;
-  isArchive: boolean;
+  psd_id: number;
+  psd_url: string;
+  psd_name: string;
+  psd_type: string;
+  psd_path?: string;
+  psd_is_archive: boolean;
 };
 
 export type ProjectProposal = {
@@ -35,11 +36,16 @@ export type ProjectProposal = {
   gprIsArchive: boolean;
   staffId: number | null;
   staffName: string;
-  status: "Pending" | "Approved" | "Rejected" | "Viewed";
+  status: ProposalStatus;
   statusReason: string | null;
   logs: ProjectProposalLog[];
   paperSize: "a4" | "letter" | "legal";
   supportDocs: SupportDoc[];
+  current_budget_balance?: number | null;
+  gbud?: {
+    gbud_num: number;
+    gbud_remaining_bal: number;
+  }
 };
 
 export type ProjectProposalInput = {
@@ -96,16 +102,7 @@ export const useGetStaffList = (options = {}) => {
 export const useGetSupportDocs = (proposalId: number, options = {}) => {
   return useQuery<SupportDoc[], Error>({
     queryKey: ["supportDocs", proposalId],
-    queryFn: async () => {
-      const data = await getSupportDocs(proposalId);
-      return data.map((doc: { psd_id: number; psd_is_archive: boolean; file: { file_url: string; file_name: string; file_type: string } }) => ({
-        psdId: doc.psd_id ?? 0,
-        fileUrl: doc.file?.file_url ?? '',
-        fileName: doc.file?.file_name ?? 'Unknown',
-        fileType: doc.file?.file_type ?? 'application/octet-stream',
-        isArchive: doc.psd_is_archive ?? false
-      }));
-    },
+    queryFn: () => getSupportDocs(proposalId),
     enabled: !!proposalId,
     ...options
   });

@@ -80,12 +80,16 @@ class ARByDateView(APIView):
   def get(self, request, *args, **kwargs):
     year = request.query_params.get('year')
     month = request.query_params.get('month')
+    start_day = request.query_params.get('start_day')
+    end_day = request.query_params.get('end_day')
     ar_reports = AcknowledgementReport.objects.filter(ar_status='Signed')
 
     if year and month:
         ar_reports = ar_reports.filter(
             ar_created_at__year=year,
-            ar_created_at__month=month
+            ar_created_at__month=month,
+            ar_created_at__day__gte=start_day,
+            ar_created_at__day__lte=end_day
         ).distinct()
 
     return Response(ARTableSerializer(ar_reports, many=True).data)

@@ -151,6 +151,7 @@ export default function IndivMedicineRecords() {
           </div>
         )}
 
+
         <div className="w-full lg:flex justify-between items-center mb-4 gap-6 mt-4">
           <div className="flex gap-2 items-center p-2">
             <div className="flex items-center justify-center">

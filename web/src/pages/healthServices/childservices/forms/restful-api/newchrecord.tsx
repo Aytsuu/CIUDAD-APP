@@ -7,13 +7,13 @@ import {
   createChildHealthNotes,
   createChildVitalSign,
   createNutritionalStatus,
-} from "./createAPI";
-import {
-  createExclusiveBFCheck,
   createSupplementStatus,
+  createExclusiveBFCheck,
   createChildHealthRecord,
   createChildHealthHistory,
-} from "./chrecord";
+} from "./createAPI";
+
+import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
@@ -36,8 +36,6 @@ export async function addChildHealthRecord({
   submittedData,
   staff,
 }: AddRecordArgs): Promise<AddRecordResult> {
-  const queryClient = useQueryClient();
-
   // Validate required fields
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -155,12 +153,20 @@ export async function addChildHealthRecord({
   });
   const bmi_id = newBMI.bm_id;
 
+  const vitalsigns = await createVitalSigns({
+    temp: submittedData.vitalSigns?.[0]?.temp || "",
+  });
+  const vital_id = vitalsigns.vital_id;
+
+  console.log("Vital signs created:", vitalsigns);
   // Create vital signs
   const newVitalSign = await createChildVitalSign({
-    temp: submittedData.vitalSigns?.[0]?.temp || null,
+    // temp: submittedData.vitalSigns?.[0]?.temp || null,
+    vital: vital_id,
     bm: bmi_id,
     chhist: current_chhist_id,
     created_at: new Date().toISOString(),
+
   });
   const chvital_id = newVitalSign.chvital_id;
 
@@ -231,20 +237,7 @@ export async function addChildHealthRecord({
     });
   }
 
-  // // Handle medicines
-  // if (submittedData.medicines && submittedData.medicines.length > 0) {
-  //   await processMedicineRequest({
-  //     pat_id: submittedData.pat_id,
-  //     medicines: submittedData.medicines.map(med => ({
-  //       minv_id: med.minv_id,
-  //       medrec_qty: med.medrec_qty,
-  //       reason: med.reason || ""
-  //     }))
-  //   },staff || null);
-  // }
-
-  // Handle medicines
-  // Handle medicines
+  
   if (submittedData.medicines && submittedData.medicines.length > 0) {
     await processMedicineRequest(
       {
@@ -256,10 +249,9 @@ export async function addChildHealthRecord({
         })),
       },
       staff || null,
-      current_chhist_id // assuming you have this in submittedData
+      current_chhist_id 
     );
   }
-  queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
 
   return {
     patrec_id,
@@ -270,14 +262,9 @@ export async function addChildHealthRecord({
   };
 }
 
-// export const formatBirthOrder = (order: number): string => {
-//   if (order === 1) return "1st";
-//   if (order === 2) return "2nd";
-//   if (order === 3) return "3rd";
-//   return `${order}th`;
-// };
 
-// src/hooks/useChildHealthRecordMutation.ts
+
+
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -288,9 +275,10 @@ export const useChildHealthRecordMutation = () => {
 
   return useMutation({
     mutationFn: addChildHealthRecord,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory",data.chrec_id] }); 
       toast.success("Child health record created successfully!");
-
       navigate(-1);
     },
     onError: (error: unknown) => {

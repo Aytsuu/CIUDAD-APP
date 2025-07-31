@@ -11,11 +11,58 @@ export const getBudgetDetails = async (planId: string): Promise<BudgetPlan> => {
     }
 }
 
+
 export const getBudgetPlan = async () => {
     try{
-        const res = await api.get('/treasurer/budget-plan/');
+        const res = await api.get('treasurer/budget-plan/');
         return res.data
     } catch(error){
         console.error(error);
+    }
+}
+
+
+export const getBudgetPlanHistory = async (planId: string) => {
+    try{
+        const res = await api.get(`treasurer/budget-plan-history/${planId}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getBudgetPlanAndDetailHistory = async (bph_id: string) => {
+    try{
+        const res = await api.get(`treasurer/budget-plan-and-detail-history/${bph_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getBudgetPlanSuppDocs = async (plan_id: string) => {
+    try{
+        const res = await api.get(`treasurer/budget-plan-file/${plan_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getBudgetPlanFromPreviousYear = async() => {
+    try{
+        const res = await api.get('treasurer/previous-budget-plan/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getBudgetPlanDetailFromPreviousYear = async () => {
+    try{
+        const res = await api.get('treasurer/previous-budget-plan-details/')
+        return res.data
+    }catch(err){
+        console.error(err)
     }
 }

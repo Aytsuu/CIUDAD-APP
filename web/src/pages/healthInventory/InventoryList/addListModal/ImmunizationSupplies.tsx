@@ -1,23 +1,23 @@
 import React, { useState } from "react";
-import { Form,} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button/button";
-import {
-  ImmunizationSchema,
-  ImmunizationType,
-} from "@/form-schema/inventory/lists/inventoryListSchema";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { useAddImzSupplies } from "../queries/Antigen/ImzPostQueries";
-import { getImzSup } from "../restful-api/Antigen/ImzFetchAPI";
-import { FormInput } from "@/components/ui/form/form-input";
-import { Label } from "@/components/ui/label";
-import { Pill } from "lucide-react";
-import { Link } from "react-router";
-import { CircleCheck } from "lucide-react";
+import { Pill, CircleCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+
+// Components
+import { Form } from "@/components/ui/form/form";
+import { Button } from "@/components/ui/button/button";
+import { FormInput } from "@/components/ui/form/form-input";
+import { Label } from "@/components/ui/label";
+import CardLayout from "@/components/ui/card/card-layout";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+
+// Schema and API
+import { ImmunizationSchema, ImmunizationType } from "@/form-schema/inventory/lists/inventoryListSchema";
+import { useAddImzSupplies } from "../queries/Antigen/ImzPostQueries";
+import { getImzSup } from "../restful-api/Antigen/ImzFetchAPI";
 
 export default function AddImmunizationSupplies() {
   const form = useForm<ImmunizationType>({
@@ -30,7 +30,6 @@ export default function AddImmunizationSupplies() {
   const { mutate: addImzSuppliesMutation, isPending } = useAddImzSupplies();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newImzName, setNewImzName] = useState<string>("");
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const confirmAdd = async () => {
@@ -40,20 +39,14 @@ export default function AddImmunizationSupplies() {
     if (formData.imz_name.trim()) {
       addImzSuppliesMutation(formData, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["immunizationsupplies"] });
           toast.success("Immunization supply added successfully", {
-            icon: (
-              <CircleCheck size={18} className="fill-green-500 stroke-white" />
-            ),
-            duration: 2000,
+            icon: <CircleCheck className="w-5 h-5 text-green-500" />,
           });
-          form.reset();
-          navigate("/mainInventoryList");
+          navigate(-1);
         },
-        onError: (error: unknown) => {
-          console.error("Failed to add immunization supply:", error);
+        onError: () => {
           toast.error("Failed to add immunization supply");
-        },
+        }
       });
     } else {
       form.setError("imz_name", {
@@ -94,47 +87,61 @@ export default function AddImmunizationSupplies() {
   };
 
   return (
-    <div className="w-full flex items-center justify-center p-2 sm:p-4">
-      <Form {...form}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="bg-white p-4 w-full max-w-[500px] rounded-sm"
-        >
-          <div className="flex flex-col gap-3">
-            <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
-              <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              Add Immunization Supply List
-            </Label>
-            <FormInput
-              control={form.control}
-              name="imz_name"
-              label="Item"
-              placeholder="Enter item name"
-            />
+    <div className=" flex items-center justify-center ">
+      <CardLayout
+        cardClassName="max-w-md w-full "
+        content={
+          <div className="px-4 py-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-4">
+                    <Pill className="h-6 w-6 text-blue-600 mr-2" />
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Add Immunization Supply
+                    </h2>
+                  </div>
+                
+                </div>
+
+                <div className="space-y-4 pt-6">
+                  <FormInput
+                    control={form.control}
+                    name="imz_name"
+                    label="Item Name"
+                    placeholder="Enter item name"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => navigate(-1)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full sm:w-auto"
+                    disabled={isPending}
+                                              >
+                    {isPending ? "Submitting..." : "Submit"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+
+            <ConfirmationDialog
+                isOpen={isAddConfirmationOpen}
+                onOpenChange={setIsAddConfirmationOpen}
+                onConfirm={confirmAdd}
+                title="Add Immunization Supply"
+                description={`Are you sure you want to add the new item "${newImzName}"?`}
+              />
           </div>
-
-          <div className="w-full flex flex-col sm:flex-row justify-end mt-6 sm:mt-8 gap-2">
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Link to="/mainInventoryList">Cancel</Link>
-            </Button>
-
-            <Button 
-              className="bg-blue text-white px-4 py-2 rounded w-full sm:w-auto"
-              disabled={isPending}
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              {isPending ? "Adding..." : "Submit"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-
-      <ConfirmationDialog
-        isOpen={isAddConfirmationOpen}
-        onOpenChange={setIsAddConfirmationOpen}
-        onConfirm={confirmAdd}
-        title="Add Immunization Supply"
-        description={`Are you sure you want to add the new item "${newImzName}"?`}
+        }
       />
     </div>
   );

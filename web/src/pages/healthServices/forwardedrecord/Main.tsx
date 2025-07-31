@@ -3,6 +3,7 @@ import {
   usePendingMedicalConCount,
   useForwardedVaccinationCount,
   useForwardedChildMedRecordCount,
+  useScheduledVaccinationCount,
 } from "./restful-api/count";
 import { SyringeIcon, Pill, Baby, Frown } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
@@ -18,12 +19,18 @@ export default function MainForwardedRecord() {
     useForwardedVaccinationCount();
   const { data: forwardedChildMedRecordCount, isLoading: isLoadingChildMed } =
     useForwardedChildMedRecordCount();
+  const { data: scheduledVaccinationCount } = useScheduledVaccinationCount();
+  
+
+  console.log("Vaccination Count Data:",scheduledVaccinationCount );
+
+
 
   const CHimmunizationcountData = CHimmunizationcount?.count || 0;
   const pendingMedicalConCountData = pendingMedicalConCount?.count || 0;
   const forwardedVaccinationCountData = forwardedVaccinationCount?.count || 0;
-  const forwardedChildMedRecordCountData =
-    forwardedChildMedRecordCount?.count || 0;
+  const forwardedChildMedRecordCountData = forwardedChildMedRecordCount?.count || 0;
+  const scheduledVaccinationCountData = scheduledVaccinationCount?.count || 0;
 
   const totalconsultationCount =
     forwardedChildMedRecordCountData + pendingMedicalConCountData;
@@ -34,7 +41,8 @@ export default function MainForwardedRecord() {
   const hasNoRecords =
     CHimmunizationcountData === 0 &&
     pendingMedicalConCountData === 0 &&
-    forwardedVaccinationCountData === 0;
+    forwardedVaccinationCountData === 0 &&
+    scheduledVaccinationCountData === 0 ;
 
   return (
     <>
@@ -131,7 +139,7 @@ export default function MainForwardedRecord() {
                       </div>
                     </div>
                   </div>
-                  <Link to="/main-forwarded-records/forwarded-vaccination-form">
+                  <Link to="/forwarded-vaccination-records">
                     <Button
                       variant="outline"
                       size="sm"
@@ -174,6 +182,39 @@ export default function MainForwardedRecord() {
                 </div>
               </div>
             )}
+            {scheduledVaccinationCountData > 0 && (
+              <div className="p-4 rounded-lg border border-blue-200 mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg">
+                      <Pill className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Scheduled Vaccination Records
+                      </h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-blue-200 px-2 py-1 rounded-md">
+                          {scheduledVaccinationCountData} Records scheduled
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/main-forwarded-records/scheduled-vaccinations">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-6 bg-white border-blue-300 text-blue-700 font-medium"
+                    >
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+
+            
           </div>
         </>
       )}

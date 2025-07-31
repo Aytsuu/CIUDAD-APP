@@ -28,7 +28,8 @@ class VaccinationHistorySerializerBase(PartialUpdateMixin,serializers.ModelSeria
     vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
     vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
-  
+    vac_details = VacccinationListSerializer(source='vac', read_only=True)
+
     class Meta:
         model = VaccinationHistory
         fields = '__all__'
@@ -40,6 +41,7 @@ class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerialize
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
     vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
     patient = serializers.SerializerMethodField()
+    vac_details = VacccinationListSerializer(source='vac', read_only=True)
   
     class Meta:
         model = VaccinationHistory
@@ -92,3 +94,6 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     #         vaccination_records__vacrec_status__iexact='complete'
     #     ).distinct()
     #     return PatientRecordSerializer(records, many=True).data
+
+
+

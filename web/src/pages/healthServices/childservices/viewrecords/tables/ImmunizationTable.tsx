@@ -19,19 +19,10 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({
   fullHistoryData,
   chhistId,
 }) => {
-  // Helper function to get vaccine status
-  const getVaccineStatus = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "Completed";
-      case "missed":
-        return "Missed";
-      case "pending":
-        return "Pending";
-      default:
-        return status;
-    }
-  };
+  // Check if there are any immunization records
+  const hasImmunizationRecords = fullHistoryData.some(
+    (record) => record.immunization_tracking && record.immunization_tracking.length > 0
+  );
 
   return (
     <div className="border overflow-hidden">
@@ -45,13 +36,13 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {fullHistoryData.length === 0 ? (
+          {!hasImmunizationRecords ? (
             <TableRow className="hover:bg-inherit">
               <TableCell
-                colSpan={8}
+                colSpan={5}
                 className="text-center text-gray-600 py-4 border-r hover:bg-inherit"
               >
-                No immunization records available.
+                No vaccination records yet.
               </TableCell>
             </TableRow>
           ) : (
@@ -78,45 +69,43 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({
               )
               .map(({ record, tracking }) => {
                 const isCurrentRecord = record.chhist_id === chhistId;
-                const vaccinationHistory =
-                  tracking.vacrec_details?.vaccination_histories?.[0] || {};
+                const vaccinationHistory = tracking.vachist_details || {};
                 const vaccineStock = vaccinationHistory.vaccine_stock || {};
                 const vaccineDetails = vaccineStock.vaccinelist || {};
 
+                // Format dose number with suffix
+                const doseNumber = vaccinationHistory.vachist_doseNo;
+                const doseSuffix =
+                  doseNumber === 1
+                    ? "1st dose"
+                    : doseNumber === 2
+                    ? "2nd dose"
+                    : doseNumber === 3
+                    ? "3rd dose"
+                    : `${doseNumber}th dose`;
+
                 return (
                   <TableRow
-                    key={`${tracking.imt_id}-${
-                      vaccinationHistory.vachist_id || ""
-                    }`}
+                    key={`${tracking.imt_id}-${vaccinationHistory.vachist_id || ""}`}
                     className={`hover:bg-inherit ${
-                      isCurrentRecord ? "bg-blue-50 font-medium" : ""
+                      isCurrentRecord ? " font-medium" : ""
                     }`}
                   >
                     <TableCell className="border-r">
-                      {record.created_at && isValid(new Date(record.created_at))
-                        ? format(new Date(record.created_at), "MMM dd, yyyy")
+                      {vaccinationHistory.created_at && isValid(new Date(vaccinationHistory.created_at))
+                        ? format(new Date(vaccinationHistory.created_at), "MMM dd, yyyy")
                         : "N/A"}
                     </TableCell>
                     <TableCell className="border-r">
-                      {vaccineDetails.vac_name || "N/A"}
+                      {vaccineDetails.vac_name ||  vaccinationHistory?.vac_details?.vac_name}
                     </TableCell>
                     <TableCell className="border-r">
-                      {vaccinationHistory.vachist_doseNo
-                        ? `${vaccinationHistory.vachist_doseNo}${
-                            ["th", "st", "nd", "rd"][
-                              vaccinationHistory.vachist_doseNo % 10 > 3 ||
-                              [11, 12, 13].includes(
-                                vaccinationHistory.vachist_doseNo % 100
-                              )
-                                ? 0
-                                : vaccinationHistory.vachist_doseNo % 10
-                            ]
-                          } dose`
-                        : "N/A"}
+                      {doseSuffix}
                     </TableCell>
                     <TableCell className="border-r">
                       {vaccinationHistory.vachist_age || "N/A"}
                     </TableCell>
+                   
                   </TableRow>
                 );
               })

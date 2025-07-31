@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from django.db.models import ProtectedError
+from apps.pagination import StandardResultsPagination
 
 
 # ----------------------CATEGORY---VIEW------------------------------------
@@ -521,17 +522,21 @@ class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
         queryset = ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
         return queryset
     
-
 class AntigenTransactionView(generics.ListCreateAPIView):
-    serializer_class=AntigenTransactionSerializer
-    queryset=AntigenTransaction.objects.all()
-    
+    serializer_class = AntigenTransactionSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        return AntigenTransaction.objects.all().order_by('-created_at')  # or any logic
+
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
     
 class ImmunizationTransactionView(generics.ListCreateAPIView):
     serializer_class=ImmunizationSuppliesTransactionSerializer
-    queryset=ImmunizationTransaction.objects.all() 
+    # queryset=ImmunizationTransaction.objects.all() 
+    pagination_class = StandardResultsPagination
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)

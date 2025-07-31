@@ -16,6 +16,12 @@ interface NutritionalStatusCalculatorProps {
   initialStatus?: NutritionalStatusType
 }
 
+interface AgeDetails {
+  days: number;
+  weeks: number;
+  months: number;
+}
+
 export function NutritionalStatusCalculator({
   weight,
   height,
@@ -35,133 +41,161 @@ export function NutritionalStatusCalculator({
   )
   const [manualMuac, setManualMuac] = useState<number | undefined>(muac)
 
-  // Convert age string to months (simplified - assumes format like "2 years 3 months" or "15 months")
-  const parseAgeToMonths = (ageStr: string): number => {
-    if (!ageStr) return 0
+  const parseAge = (ageStr: string): AgeDetails => {
+    if (!ageStr) return { days: 0, weeks: 0, months: 0 };
 
-    // Simple parsing - you might want to make this more robust
-    const yearMatch = ageStr.match(/(\d+)\s*year/i)
-    const monthMatch = ageStr.match(/(\d+)\s*month/i)
+    const yearsMatch = ageStr.match(/(\d+)\s*year/i);
+    const monthsMatch = ageStr.match(/(\d+)\s*month/i);
+    const weeksMatch = ageStr.match(/(\d+)\s*week/i);
+    const daysMatch = ageStr.match(/(\d+)\s*day/i);
 
-    const years = yearMatch ? Number.parseInt(yearMatch[1]) : 0
-    const months = monthMatch ? Number.parseInt(monthMatch[1]) : 0
+    return {
+      days: daysMatch ? parseInt(daysMatch[1]) : 0,
+      weeks: weeksMatch ? parseInt(weeksMatch[1]) : 0,
+      months: (monthsMatch ? parseInt(monthsMatch[1]) : 0) + 
+              (yearsMatch ? parseInt(yearsMatch[1]) * 12 : 0)
+    };
+  };
 
-    return years * 12 + months
-  }
+  const calculateWFA = (weight: number, age: AgeDetails): string => {
+    if (!weight) return "";
 
-  // Simplified WHO z-score calculations (in real app, use actual WHO tables)
-  const calculateWFA = (weight: number, ageInMonths: number): "" | "N" | "UW" | "SUW" | undefined => {
-    if (!weight || !ageInMonths) return ""
+    const totalDays = age.days + (age.weeks * 7) + (age.months * 30);
 
-    // Simplified calculation - replace with actual WHO standards
-    const expectedWeight = 3.5 + ageInMonths * 0.5 // Very simplified
-    const zScore = (weight - expectedWeight) / (expectedWeight * 0.15)
-
-    if (zScore < -3) return "SUW"
-    if (zScore < -2) return "UW"
-    return "N"
-  }
-
-  const calculateLHFA = (height: number, ageInMonths: number): "" | "N" | "ST" | "SST" | "T" | "OB" | undefined => {
-    if (!height || !ageInMonths) return ""
-
-    // Simplified calculation - replace with actual WHO standards
-    const expectedHeight = 50 + ageInMonths * 1.2 // Very simplified
-    const zScore = (height - expectedHeight) / (expectedHeight * 0.1)
-
-    if (zScore < -3) return "SST"
-    if (zScore < -2) return "ST"
-    if (zScore > 3) return "T"
-    if (zScore > 2) return "OB"
-    return "N"
-  }
-
-  const calculateWFH = (weight: number, height: number): "" | "N" | "W" | "SW" | "OW" | undefined => {
-    if (!weight || !height) return ""
-
-    // BMI-like calculation for children
-    const bmi = weight / (height / 100) ** 2
-
-    // Simplified thresholds - replace with actual WHO standards
-    if (bmi < 12) return "SW"
-    if (bmi < 14) return "W"
-    if (bmi > 20) return "OW"
-    if (bmi >= 14 && bmi <= 20) return "N"
-    return ""
-  }
-
-  const calculateMUACStatus = (muacValue: number): "" | "N" | "MAM" | "SAM" | undefined => {
-    if (!muacValue) return ""
-
-    // MUAC thresholds in cm
-    if (muacValue < 11.5) return "SAM"
-    if (muacValue < 12.5) return "MAM"
-    return "N"
-  }
-
-  // Calculate nutritional status when inputs change
-  useEffect(() => {
-    if (weight && height && age) {
-      const ageInMonths = parseAgeToMonths(age)
-
-      const newStatus: NutritionalStatusType = {
-        wfa: calculateWFA(weight, ageInMonths),
-        lhfa: calculateLHFA(height, ageInMonths),
-        wfh: calculateWFH(weight, height),
-        muac: manualMuac,
-        muac_status: manualMuac ? calculateMUACStatus(manualMuac) : "",
-      }
-
-      setNutritionalStatus(newStatus)
-      onStatusChange(newStatus)
+    // Newborns (0-28 days)
+    if (totalDays < 28) {
+      if (weight < 2.1) return "SUW";
+      if (weight < 2.5) return "UW";
+      return "N";
     }
-  }, [weight, height, age, manualMuac, onStatusChange])
+
+    // Infants 1-6 months (4-24 weeks)
+    if (age.months < 6) {
+      const expectedWeight = 3.3 + (age.weeks * 0.16);
+      const zScore = (weight - expectedWeight) / 0.4;
+      if (zScore < -3) return "SUW";
+      if (zScore < -2) return "UW";
+      return "N";
+    }
+
+    // Older infants/children (6+ months)
+    const expectedWeight = 6 + (age.months * 0.25);
+    const zScore = (weight - expectedWeight) / (expectedWeight * 0.15);
+    if (zScore < -3) return "SUW";
+    if (zScore < -2) return "UW";
+    return "N";
+  };
+
+  const calculateLHFA = (height: number, age: AgeDetails): string => {
+    if (!height) return "";
+
+    const totalDays = age.days + (age.weeks * 7) + (age.months * 30);
+
+    // Newborns (0-28 days)
+    if (totalDays < 28) {
+      if (height < 45) return "SST";
+      if (height < 48) return "ST";
+      return "N";
+    }
+
+    // Infants 1-6 months (4-24 weeks)
+    if (age.months < 6) {
+      const expectedHeight = 50 + (age.weeks * 0.3);
+      const zScore = (height - expectedHeight) / 1.2;
+      if (zScore < -3) return "SST";
+      if (zScore < -2) return "ST";
+      return "N";
+    }
+
+    // Older infants/children
+    const expectedHeight = 60 + (age.months * 0.8);
+    const zScore = (height - expectedHeight) / (expectedHeight * 0.1);
+    if (zScore < -3) return "SST";
+    if (zScore < -2) return "ST";
+    if (zScore > 3) return "T";
+    if (zScore > 2) return "OB";
+    return "N";
+  };
+
+  const calculateWFH = (weight: number, height: number): string => {
+    if (!weight || !height) return "";
+
+    const bmi = weight / (height / 100) ** 2;
+
+    if (bmi < 12) return "SW";
+    if (bmi < 14) return "W";
+    if (bmi > 20) return "OW";
+    if (bmi >= 14 && bmi <= 20) return "N";
+    return "";
+  };
+
+  const calculateMUACStatus = (muacValue: number): string => {
+    if (!muacValue) return "";
+
+    if (muacValue < 11.5) return "SAM";
+    if (muacValue < 12.5) return "MAM";
+    return "N";
+  };
+
+  useEffect(() => {
+    const ageDetails = parseAge(age || "");
+    
+    const newStatus: NutritionalStatusType = {
+      wfa: weight ? (calculateWFA(weight, ageDetails) as "" | "N" | "UW" | "SUW" | undefined) : "",
+      lhfa: height ? (calculateLHFA(height, ageDetails) as "" | "N" | "ST" | "SST" | "T" | "OB" | undefined) : "",
+      wfh: weight && height ? (calculateWFH(weight, height) as "" | "N" | "W" | "SW" | "OW" | undefined) : "",
+      muac: manualMuac,
+      muac_status: manualMuac ? (calculateMUACStatus(manualMuac) as "" | "N" | "MAM" | "SAM" | undefined) : ""
+    };
+
+    setNutritionalStatus(newStatus);
+    onStatusChange(newStatus);
+  }, [weight, height, age, manualMuac, onStatusChange]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "N":
-        return "bg-green-100 text-green-800 border-green-200"
+        return "bg-green-100 text-green-800 border-green-200";
       case "UW":
       case "ST":
       case "W":
       case "MAM":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "SUW":
       case "SST":
       case "SW":
       case "SAM":
-        return "bg-red-100 text-red-800 border-red-200"
+        return "bg-red-100 text-red-800 border-red-200";
       case "T":
       case "OB":
       case "OW":
-        return "bg-blue-100 text-blue-800 border-blue-200"
+        return "bg-blue-100 text-blue-800 border-blue-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "N":
-        return <CheckCircle className="w-4 h-4" />
+        return <CheckCircle className="w-4 h-4" />;
       case "UW":
       case "ST":
       case "W":
       case "MAM":
-        return <AlertTriangle className="w-4 h-4" />
+        return <AlertTriangle className="w-4 h-4" />;
       case "SUW":
       case "SST":
       case "SW":
       case "SAM":
-        return <AlertCircle className="w-4 h-4" />
+        return <AlertCircle className="w-4 h-4" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <Card className="w-full">
-     
       <CardContent className="space-y-4">
         {/* Input Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -268,9 +302,7 @@ export function NutritionalStatusCalculator({
             </div>
           </div>
         </div>
-
-      
       </CardContent>
     </Card>
-  )
+  );
 }

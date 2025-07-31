@@ -9,11 +9,15 @@ import { Button } from "@/components/ui/button/button";
 import { Accordion } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChildHealthHistoryRecord } from "./types";
-import { getSupplementStatusesFields } from "./config";
+import { getSupplementStatusesFields } from "./Config";
 import { api2 } from "@/api/api";
 import { PatientSummarySection } from "./CurrentHistoryView";
 import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
+import { getChildHealthHistory } from "../forms/restful-api/get";
+import { useChildHealthHistory } from "../forms/queries/fetchQueries";
+
+
 export default function ChildHealthHistoryDetail() {
   // Navigation and routing
   const navigate = useNavigate();
@@ -24,7 +28,6 @@ export default function ChildHealthHistoryDetail() {
   const [fullHistoryData, setFullHistoryData] = useState<
     ChildHealthHistoryRecord[]
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [recordsPerPage, setRecordsPerPage] = useState(2);
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
@@ -34,38 +37,30 @@ export default function ChildHealthHistoryDetail() {
     [fullHistoryData]
   );
 
-  // Data fetching
+
+  const { 
+    data: historyData, 
+    isLoading, 
+    isError 
+  } = useChildHealthHistory(chrecId);
+
+  
   useEffect(() => {
-    const fetchAllData = async () => {
-      setIsLoading(true);
-      try {
-        const historyResponse = await api2.get(
-          `/child-health/history/${chrecId}/`
+    if (historyData) {
+      const sortedHistory = (historyData[0]?.child_health_histories || [])
+        .sort((a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
-        const sortedHistory = (
-          historyResponse.data[0]?.child_health_histories || []
-        ).sort(
-          (a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        setFullHistoryData(sortedHistory);
+      
+      setFullHistoryData(sortedHistory);
 
-        // Set initial index to the selected record
-        const initialIndex = sortedHistory.findIndex(
-          (record: ChildHealthHistoryRecord) => record.chhist_id === chhistId
-        );
-        setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
-      } catch (error) {
-        console.error("Error fetching child health history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (patId) {
-      fetchAllData();
+      // Set initial index to the selected record
+      const initialIndex = sortedHistory.findIndex(
+        (record: ChildHealthHistoryRecord) => record.chhist_id === chhistId
+      );
+      setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
     }
-  }, [patId, chrecId, chhistId]);
+  }, [historyData, chhistId]);
 
   // Memoized data for display
   const recordsToDisplay = useMemo(() => {
@@ -125,127 +120,140 @@ export default function ChildHealthHistoryDetail() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
-      {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto bg-white mb-6">
-          <TabsTrigger
-            value="current"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-          >
-            <Baby />
-            Current Record
-          </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-          >
-            <History />
-            View History
-          </TabsTrigger>
-        </TabsList>
+      <CardLayout
+        cardClassName="px-6"
+        title=""
+        content={
+          <>
+            {/* Tab Navigation */}
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 h-auto bg-white mb-6">
+                <TabsTrigger
+                  value="current"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <Baby />
+                  Current Record
+                </TabsTrigger>
+                <TabsTrigger
+                  value="history"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <History />
+                  View History
+                </TabsTrigger>
+              </TabsList>
 
-        {/* Current Record Tab */}
-        <TabsContent value="current">
-          <PatientSummarySection
-            recordsToDisplay={[fullHistoryData[currentIndex]]}
-            fullHistoryData={fullHistoryData}
-            chhistId={chhistId}
-          />
-        </TabsContent>
+              {/* Current Record Tab */}
+              <TabsContent value="current">
+                <PatientSummarySection
+                  recordsToDisplay={[fullHistoryData[currentIndex]]}
+                  fullHistoryData={fullHistoryData}
+                  chhistId={chhistId}
+                />
+              </TabsContent>
 
-        {/* History Tab */}
-        <TabsContent value="history">
-          {recordsToDisplay.length === 0 ? (
-            <div className="p-6 text-center text-gray-600">
-              <p>No health history found for this child.</p>
-            </div>
-          ) : (
-            <CardLayout
-              cardClassName="border rounded-lg shadow-sm"
-              content={
-                <div className="space-y-6 p-6">
-                  {/* Pagination Controls with Record Count */}
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-500 font-medium">
-                      Showing records {currentIndex + 1}-
-                      {Math.min(
-                        currentIndex + recordsPerPage,
-                        fullHistoryData.length
-                      )}{" "}
-                      of {fullHistoryData.length}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleSwipeRight}
-                        disabled={currentIndex === 0}
-                        className="border-gray-300 hover:bg-gray-50 transition-colors"
-                        aria-label="Previous records"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleSwipeLeft}
-                        disabled={
-                          currentIndex >=
-                          fullHistoryData.length - recordsPerPage
-                        }
-                        className="border-gray-300 hover:bg-gray-50 transition-colors"
-                        aria-label="Next records"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {/* History Tab */}
+              <TabsContent value="history">
+                {recordsToDisplay.length === 0 ? (
+                  <div className="p-6 text-center text-gray-600">
+                    <p>No health history found for this child.</p>
                   </div>
+                ) : (
+                  <CardLayout
+                    cardClassName="border rounded-lg shadow-sm"
+                    content={
+                      <div className="space-y-6 p-6">
+                        {/* Pagination Controls with Record Count */}
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                          <div className="text-sm text-gray-500 font-medium">
+                            Showing records {currentIndex + 1}-
+                            {Math.min(
+                              currentIndex + recordsPerPage,
+                              fullHistoryData.length
+                            )}{" "}
+                            of {fullHistoryData.length}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={handleSwipeRight}
+                              disabled={currentIndex === 0}
+                              className="border-gray-300 hover:bg-gray-50 transition-colors"
+                              aria-label="Previous records"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={handleSwipeLeft}
+                              disabled={
+                                currentIndex >=
+                                fullHistoryData.length - recordsPerPage
+                              }
+                              className="border-gray-300 hover:bg-gray-50 transition-colors"
+                              aria-label="Next records"
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
 
-                  {/* Divider */}
-                  <hr className="border-gray-200" />
+                        {/* Divider */}
+                        <hr className="border-gray-200" />
 
-                  {/* Accordion Sections */}
-                  <Accordion
-                    type="multiple"
-                    className="w-full space-y-4"
-                    defaultValue={["record-overview", "child-details"]}
-                  >
-                    <HealthHistoryAccordions
-                      recordsToDisplay={recordsToDisplay}
-                      chhistId={chhistId}
-                      supplementStatusesFields={supplementStatusesFields}
-                    />
-                  </Accordion>
+                        {/* Accordion Sections */}
+                        <Accordion
+                          type="multiple"
+                          className="w-full space-y-4"
+                          defaultValue={["record-overview", "child-details"]}
+                        >
+                          <HealthHistoryAccordions
+                            recordsToDisplay={recordsToDisplay}
+                            chhistId={chhistId}
+                            supplementStatusesFields={supplementStatusesFields}
+                          />
+                        </Accordion>
 
-                  {/* Bottom Pagination Controls (for mobile) */}
-                  <div className="sm:hidden flex justify-center gap-4 pt-4">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleSwipeRight}
-                      disabled={currentIndex === 0}
-                      className="border-gray-300 hover:bg-gray-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleSwipeLeft}
-                      disabled={
-                        currentIndex >= fullHistoryData.length - recordsPerPage
-                      }
-                      className="border-gray-300 hover:bg-gray-50"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              }
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+                        {/* Bottom Pagination Controls (for mobile) */}
+                        <div className="sm:hidden flex justify-center gap-4 pt-4">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleSwipeRight}
+                            disabled={currentIndex === 0}
+                            className="border-gray-300 hover:bg-gray-50"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleSwipeLeft}
+                            disabled={
+                              currentIndex >=
+                              fullHistoryData.length - recordsPerPage
+                            }
+                            className="border-gray-300 hover:bg-gray-50"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    }
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        }
+      />
     </>
   );
 }

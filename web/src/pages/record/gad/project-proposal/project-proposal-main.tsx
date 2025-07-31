@@ -29,6 +29,8 @@ import {
   useDeleteSupportDocument,
   useArchiveProjectProposal,
   useRestoreProjectProposal,
+  useArchiveSupportDocument,
+  useRestoreSupportDocument,
 } from "./queries/delqueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -39,24 +41,158 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "./view-projprop";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+
+function DocumentCard({
+  doc,
+  showActions,
+  onDelete,
+  onArchive,
+  onRestore,
+  isDeleting,
+  isArchived = false,
+}: {
+  doc: SupportDoc;
+  showActions: boolean;
+  onDelete?: () => void;
+  onArchive?: () => void;
+  onRestore?: () => void;
+  isDeleting: boolean;
+  isArchived?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center p-4 rounded-lg">
+      <div className="relative w-full h-64 flex justify-center items-center">
+        {showActions && (
+          <div className="absolute right-2 top-2 z-10 flex gap-2">
+            {isArchived ? (
+              <>
+                {onRestore && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button
+                        size="icon"
+                        className="h-8 w-8 bg-green-600"
+                        disabled={isDeleting}
+                      >
+                        <ArchiveRestore size={16} />
+                      </Button>
+                    }
+                    title="Restore Supporting Document"
+                    description="Are you sure you want to restore this document?"
+                    actionLabel={isDeleting ? "Restoring..." : "Restore"}
+                    onClick={onRestore}
+                    type="success"
+                  />
+                )}
+                {onDelete && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={isDeleting}
+                      >
+                        <Trash size={16} />
+                      </Button>
+                    }
+                    title="Delete Supporting Document"
+                    description="Are you sure you want to permanently delete this document?"
+                    actionLabel={isDeleting ? "Deleting..." : "Delete"}
+                    onClick={onDelete}
+                    type="destructive"
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                {onArchive && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={isDeleting}
+                      >
+                        <Archive size={16} />
+                      </Button>
+                    }
+                    title="Archive Supporting Document"
+                    description="Are you sure you want to archive this document?"
+                    actionLabel={isDeleting ? "Archiving..." : "Archive"}
+                    onClick={onArchive}
+                    type="warning"
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {doc.psd_type?.startsWith("image/") && doc.psd_url ? (
+          <a
+            href={doc.psd_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full h-full flex justify-center items-center"
+          >
+            <img
+              src={doc.psd_url}
+              alt={`Supporting Document ${doc.psd_name || "Unknown"}`}
+              className="w-full h-full object-contain rounded-md cursor-pointer"
+              onError={(e) => {
+                console.error(`Failed to load image: ${doc.psd_url}`);
+                (e.target as HTMLImageElement).src = "/placeholder-image.png";
+              }}
+            />
+          </a>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-md">
+            <p className="mt-2 text-sm text-gray-600">
+              {doc.psd_name || "No file name"}
+            </p>
+            {doc.psd_url ? (
+              <a
+                href={doc.psd_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 text-blue-600 hover:underline"
+              >
+                View Document
+              </a>
+            ) : (
+              <p className="mt-2 text-sm text-red-500">No file available</p>
+            )}
+          </div>
+        )}
+      </div>
+      <p className="mt-2 text-sm text-gray-500 text-center">
+        {doc.psd_name || "Unknown"} {isArchived && "(Archived)"}
+      </p>
+    </div>
+  );
+}
 
 function GADProjectProposal() {
   const style = {
     projStat: {
       pending: "text-blue",
       approved: "text-green-500",
-      rejected: "text-red",
+      amend: "text-yellow-500",
+      rejected: "text-red-500",
       viewed: "text-darkGray",
     },
   };
 
   const filter = [
     { id: "All", name: "All" },
-    { id: "Approved", name: "Approved" },
     { id: "Pending", name: "Pending" },
-    { id: "Rejected", name: "Rejected" },
     { id: "Viewed", name: "Viewed" },
+    { id: "Amend", name: "Amend" },
+    { id: "Approved", name: "Approved" },
+    { id: "Rejected", name: "Rejected" },
   ];
 
   const {
@@ -70,6 +206,9 @@ function GADProjectProposal() {
   const { mutate: deleteSupportDoc } = useDeleteSupportDocument();
   const { mutate: archiveProject } = useArchiveProjectProposal();
   const { mutate: restoreProject } = useRestoreProjectProposal();
+  const { mutate: archiveSupportDoc } = useArchiveSupportDocument();
+  const { mutate: restoreSupportDoc } = useRestoreSupportDocument();
+
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -86,6 +225,9 @@ function GADProjectProposal() {
   const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
   const [isDeletingDoc, setIsDeletingDoc] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
+  const [suppDocTab, setSuppDocTab] = useState<"active" | "archived">("active");
+  const [pageSize, setPageSize] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -127,6 +269,13 @@ function GADProjectProposal() {
       const search = searchTerm.toLowerCase();
       return title.includes(search) || background.includes(search);
     });
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredProjects.length / pageSize);
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const handleDelete = (gprId: number) => {
     setIsDeleting(true);
@@ -181,22 +330,72 @@ function GADProjectProposal() {
   };
 
   const handleDeleteDoc = async (psdId: number) => {
+    if (!selectedProject) return;
+
     setIsDeletingDoc(true);
-    deleteSupportDoc(psdId, {
-      onSuccess: () => {
-        console.log(`Successfully deleted document with psdId: ${psdId}`);
-        setSelectedSuppDocs((prev) =>
-          prev.filter((doc) => doc.psdId !== psdId)
-        );
-      },
-      onError: (err) => {
-        console.error(`Error deleting document with psdId: ${psdId}`, err);
-      },
-      onSettled: () => {
-        setIsDeletingDoc(false);
-      },
-    });
+    deleteSupportDoc(
+      { gprId: selectedProject.gprId, psdId },
+      {
+        onSuccess: () => {
+          setSelectedSuppDocs((prev) =>
+            prev.filter((doc) => doc.psd_id !== psdId)
+          );
+        },
+        onSettled: () => setIsDeletingDoc(false),
+      }
+    );
   };
+
+  const handleArchiveDoc = async (psdId: number) => {
+    if (!selectedProject) return;
+
+    setIsDeletingDoc(true);
+    archiveSupportDoc(
+      { gprId: selectedProject.gprId, psdId },
+      {
+        onSuccess: () => {
+          setSelectedSuppDocs((prev) =>
+            prev.map((doc) =>
+              doc.psd_id === psdId ? { ...doc, psd_is_archive: true } : doc
+            )
+          );
+        },
+        onSettled: () => setIsDeletingDoc(false),
+      }
+    );
+  };
+
+  const handleRestoreDoc = async (psdId: number) => {
+    if (!selectedProject) return;
+
+    setIsDeletingDoc(true);
+    restoreSupportDoc(
+      { gprId: selectedProject.gprId, psdId },
+      {
+        onSuccess: () => {
+          setSelectedSuppDocs((prev) =>
+            prev.map((doc) =>
+              doc.psd_id === psdId ? { ...doc, psd_is_archive: false } : doc
+            )
+          );
+        },
+        onSettled: () => setIsDeletingDoc(false),
+      }
+    );
+  };
+
+  // Calculate total budget of all displayed projects
+  const totalBudget = filteredProjects.reduce((sum, project) => {
+    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
+
+    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
+      const amount = item.amount || 0;
+      const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
+      return projectSum + (paxCount * amount);
+    }, 0);
+
+    return sum + projectTotal;
+  }, 0);
 
   if (isLoading) {
     return (
@@ -309,14 +508,29 @@ function GADProjectProposal() {
         </Tabs>
       </div>
 
-      <div className="flex flex-col mt-4 gap-4">
-        {filteredProjects.length === 0 && (
+      {/* Dynamic Total Budget Display */}
+      <div className="flex justify-end mt-2 mb-2">
+        <div className="bg-white border px-4 py-2 rounded-lg">
+          <span className="font-medium text-black">
+            Grand Total:{" "}
+            <span className="font-bold text-green-700">
+              ₱{new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2 
+              }).format(totalBudget)}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {paginatedProjects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No {viewMode === "active" ? "active" : "archived"} project proposals
             found.
           </div>
         )}
-        {filteredProjects.map((project: ProjectProposal, index: number) => {
+        {paginatedProjects.map((project: ProjectProposal, index: number) => {
           const status =
             project.status.toLowerCase() as keyof typeof style.projStat;
           const reason = project.statusReason || "No reason provided";
@@ -336,11 +550,12 @@ function GADProjectProposal() {
                       onClick={() => handleViewProject(project)}
                     />
                     {viewMode === "active" ? (
+                      project.status !== 'Viewed' && project.status !== 'Amend' && (
                       <>
                         <ConfirmationModal
                           trigger={
                             <Archive
-                              className="text-gray-500 hover:text-yellow-600 cursor-pointer"
+                              className="text-gray-500 hover:text-red-600 cursor-pointer"
                               size={20}
                             />
                           }
@@ -351,7 +566,7 @@ function GADProjectProposal() {
                           type="warning"
                         />
                       </>
-                    ) : (
+                    )) : (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -394,6 +609,26 @@ function GADProjectProposal() {
                       Date: {project.date || "No date provided"}
                     </span>
                   </div>
+                  <span className="text-xs text-gray-500 underline">
+                       Total Budget: ₱{
+                          project.budgetItems && project.budgetItems.length > 0
+                            ? new Intl.NumberFormat('en-US', { 
+                                style: 'decimal', 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              }).format(
+                                project.budgetItems.reduce((grandTotal, item) => {
+                                  const amount = item.amount || 0;
+                                  const paxCount = 
+                                    item.pax?.includes("pax") 
+                                      ? parseInt(item.pax) || 1 
+                                      : 1;
+                                  return grandTotal + (paxCount * amount);
+                                }, 0)
+                              )
+                            : "N/A"
+                        }
+                    </span>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex flex-col gap-1">
                       <span
@@ -404,7 +639,7 @@ function GADProjectProposal() {
                         {project.status || "Pending"}
                       </span>
                       <span className="text-xs text-gray-400">
-                        Reason: {reason}
+                        Remark(s): {reason}
                       </span>
                     </div>
                     <div>
@@ -427,7 +662,26 @@ function GADProjectProposal() {
             />
           );
         })}
+
+        {/* Pagination Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+          <p className="text-xs sm:text-sm text-darkGray">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
+            {filteredProjects.length} rows
+          </p>
+          {filteredProjects.length > 0 && (
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+              }}
+            />
+          )}
+        </div>
       </div>
+
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
         <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
           <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
@@ -441,7 +695,7 @@ function GADProjectProposal() {
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
                   disabled={
-                    !selectedProject || selectedProject.status !== "Pending"
+                    !selectedProject || (selectedProject.status !== "Pending" && selectedProject.status !== "Amend")|| selectedProject.gprIsArchive === true
                   }
                 >
                   <Edit size={16} /> Edit
@@ -468,94 +722,91 @@ function GADProjectProposal() {
       </Dialog>
 
       <Dialog open={isSuppDocDialogOpen} onOpenChange={setIsSuppDocDialogOpen}>
-        <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] p-4 flex flex-col">
-          <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+        <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
+          <DialogHeader className="sticky top-0 z-10 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle>Supporting Documents</DialogTitle>
-              <Button
-                variant="ghost"
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => setIsSuppDocDialogOpen(false)}
-              >
-                <X size={20} />
-              </Button>
             </div>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto mt-4 space-y-6">
-            {isSupportDocsLoading ? (
-              <p className="text-gray-500 text-center py-8">
-                Loading documents...
-              </p>
-            ) : selectedSuppDocs.length > 0 ? (
-              selectedSuppDocs.map((doc) => (
-                <div
-                  key={doc.psdId || Math.random()}
-                  className="flex flex-col items-center"
-                >
-                  <div className="relative w-full max-w-4xl">
-                    <div className="absolute right-4 top-4 z-10">
-                      <ConfirmationModal
-                        trigger={
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            disabled={!doc.psdId || isDeletingDoc}
-                          >
-                            <Trash size={16} />
-                          </Button>
-                        }
-                        title="Delete Supporting Document"
-                        description="Are you sure you want to delete this document?"
-                        actionLabel={isDeletingDoc ? "Deleting..." : "Delete"}
-                        onClick={() => handleDeleteDoc(doc.psdId)}
-                        type="destructive"
-                      />
-                    </div>
-                    {doc.fileType?.startsWith("image/") && doc.fileUrl ? (
-                      <img
-                        src={doc.fileUrl}
-                        alt={`Supporting Document ${doc.fileName || "Unknown"}`}
-                        className="w-full max-h-[70vh] object-contain"
-                        onError={(e) => {
-                          console.error(`Failed to load image: ${doc.fileUrl}`);
-                          (e.target as HTMLImageElement).src =
-                            "/placeholder-image.png";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg">
-                        <p className="mt-2 text-sm text-gray-600">
-                          {doc.fileName || "No file name"}
-                        </p>
-                        {doc.fileUrl ? (
-                          <a
-                            href={doc.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 text-blue-600 hover:underline"
-                          >
-                            View Document
-                          </a>
-                        ) : (
-                          <p className="mt-2 text-sm text-red-500">
-                            No file available
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">
-                    {doc.fileName || "Unknown"}
+
+          <Tabs
+            value={suppDocTab}
+            onValueChange={(value) =>
+              setSuppDocTab(value as "active" | "archived")
+            }
+            className="w-full flex-1 flex flex-col"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="archived">Archived</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {isSupportDocsLoading ? (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    Loading documents...
                   </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-8">
-                No supporting documents available.
-              </p>
-            )}
-          </div>
+                ) : selectedSuppDocs.filter((doc) => !doc.psd_is_archive)
+                    .length > 0 ? (
+                  selectedSuppDocs
+                    .filter((doc) => !doc.psd_is_archive)
+                    .map((doc) => (
+                      <DocumentCard
+                        key={doc.psd_id}
+                        doc={doc}
+                        showActions={
+                          selectedProject?.gprIsArchive === false &&
+                          selectedProject?.status === "Pending"
+                        }
+                        onDelete={() => handleDeleteDoc(doc.psd_id)}
+                        onArchive={() => handleArchiveDoc(doc.psd_id)}
+                        isDeleting={isDeletingDoc}
+                      />
+                    ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    No active supporting documents available.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="archived"
+              className="flex-1 overflow-y-auto p-4"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {isSupportDocsLoading ? (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    Loading documents...
+                  </p>
+                ) : selectedSuppDocs.filter((doc) => doc.psd_is_archive)
+                    .length > 0 ? (
+                  selectedSuppDocs
+                    .filter((doc) => doc.psd_is_archive)
+                    .map((doc) => (
+                      <DocumentCard
+                        key={doc.psd_id}
+                        doc={doc}
+                        showActions={
+                          selectedProject?.gprIsArchive === false &&
+                          selectedProject?.status === "Pending"
+                        }
+                        onDelete={() => handleDeleteDoc(doc.psd_id)}
+                        onRestore={() => handleRestoreDoc(doc.psd_id)}
+                        isDeleting={isDeletingDoc}
+                        isArchived
+                      />
+                    ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8 col-span-full">
+                    No archived supporting documents available.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
