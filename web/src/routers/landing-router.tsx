@@ -54,13 +54,8 @@ export const landing_router: RouteObject[] = [
         element: <SignIn />
       },
       {
-<<<<<<< HEAD
-        path: "announcements",
-        element: <Announcements/>
-=======
         path: "forgot-password",
         element: <ForgotPassword />
->>>>>>> master
       }
     ]
   }
