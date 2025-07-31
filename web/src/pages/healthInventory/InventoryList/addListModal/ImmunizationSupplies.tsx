@@ -1,32 +1,25 @@
 import React, { useState } from "react";
-import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
-  Form,
-} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Pill, CircleCheck } from "lucide-react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+
+// Components
+import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
-import {
-  ImmunizationSchema,
-  ImmunizationType,
-} from "@/form-schema/inventory/inventoryListSchema";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { addImzSupplies } from "../requests/post/immunization";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getImzSup } from "../requests/get/getAntigen";
 import { FormInput } from "@/components/ui/form/form-input";
+import { Label } from "@/components/ui/label";
+import CardLayout from "@/components/ui/card/card-layout";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
-interface ImmunizationSuppliesProps {
-  setIsDialog: (isOpen: boolean) => void;
-}
+// Schema and API
+import { ImmunizationSchema, ImmunizationType } from "@/form-schema/inventory/lists/inventoryListSchema";
+import { useAddImzSupplies } from "../queries/Antigen/ImzPostQueries";
+import { getImzSup } from "../restful-api/Antigen/ImzFetchAPI";
 
-export default function ImmunizationSupplies({
-  setIsDialog,
-}: ImmunizationSuppliesProps) {
+export default function AddImmunizationSupplies() {
   const form = useForm<ImmunizationType>({
     resolver: zodResolver(ImmunizationSchema),
     defaultValues: {
@@ -34,26 +27,32 @@ export default function ImmunizationSupplies({
     },
   });
 
-  // State for add confirmation dialog
+  const { mutate: addImzSuppliesMutation, isPending } = useAddImzSupplies();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [newimz_name, setnewimz_name] = useState<string>("");
-  const queryClient = useQueryClient();
-  const confirmAdd = async () => {
-    if (newimz_name.trim()) {
-      try {
-        if (await addImzSupplies(newimz_name)) {
-          console.log("✅  added successfully");
-        } else {
-          console.error("Failed to add .");
-        }
-      } catch (err) {
-        console.error(err);
-      }
-      queryClient.invalidateQueries({ queryKey: ["imz_supplies"] });
-      setIsAddConfirmationOpen(false);
-      setIsDialog(false);
+  const [newImzName, setNewImzName] = useState<string>("");
+  const navigate = useNavigate();
 
-      setnewimz_name("");
+  const confirmAdd = async () => {
+    const formData = form.getValues();
+    setIsAddConfirmationOpen(false);
+
+    if (formData.imz_name.trim()) {
+      addImzSuppliesMutation(formData, {
+        onSuccess: () => {
+          toast.success("Immunization supply added successfully", {
+            icon: <CircleCheck className="w-5 h-5 text-green-500" />,
+          });
+          navigate(-1);
+        },
+        onError: () => {
+          toast.error("Failed to add immunization supply");
+        }
+      });
+    } else {
+      form.setError("imz_name", {
+        type: "manual",
+        message: "Item name is required",
+      });
     }
   };
 
@@ -66,43 +65,83 @@ export default function ImmunizationSupplies({
   const onSubmit = async (data: ImmunizationType) => {
     try {
       const existingImzSup = await getImzSup();
-      if (!Array.isArray(existingImzSup))
-        throw new Error("Invalid API response");
+
+      if (!Array.isArray(existingImzSup)) {
+        throw new Error("Invalid API response - expected an array");
+      }
 
       if (isDuplicateImzSup(existingImzSup, data.imz_name)) {
         form.setError("imz_name", {
           type: "manual",
-          message: "already eixst",
+          message: "Item already exists",
         });
         return;
       }
-      setnewimz_name(data.imz_name);
+
+      setNewImzName(data.imz_name);
       setIsAddConfirmationOpen(true);
     } catch (err) {
-      console.log(err);
+      console.error("Error checking for duplicates:", err);
+      toast.error("An error occurred while checking for duplicates");
     }
   };
 
   return (
-    <div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-3">
-            <FormInput control={form.control} name="imz_name" label="Antigen" placeholder="Enter first aid item name"/>
-          </div>
+    <div className=" flex items-center justify-center ">
+      <CardLayout
+        cardClassName="max-w-md w-full "
+        content={
+          <div className="px-4 py-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-4">
+                    <Pill className="h-6 w-6 text-blue-600 mr-2" />
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Add Immunization Supply
+                    </h2>
+                  </div>
+                
+                </div>
 
-          <div className="w-full flex justify-end mt-8">
-            <Button type="submit">Submit</Button>
-          </div>
-        </form>
-      </Form>
+                <div className="space-y-4 pt-6">
+                  <FormInput
+                    control={form.control}
+                    name="imz_name"
+                    label="Item Name"
+                    placeholder="Enter item name"
+                  />
+                </div>
 
-      <ConfirmationDialog
-        isOpen={isAddConfirmationOpen}
-        onOpenChange={setIsAddConfirmationOpen}
-        onConfirm={confirmAdd}
-        title="Add Antigen Supplies"
-        description={`Are you sure you want to add the new  "${newimz_name}"?`}
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => navigate(-1)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full sm:w-auto"
+                    disabled={isPending}
+                                              >
+                    {isPending ? "Submitting..." : "Submit"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+
+            <ConfirmationDialog
+                isOpen={isAddConfirmationOpen}
+                onOpenChange={setIsAddConfirmationOpen}
+                onConfirm={confirmAdd}
+                title="Add Immunization Supply"
+                description={`Are you sure you want to add the new item "${newImzName}"?`}
+              />
+          </div>
+        }
       />
     </div>
   );

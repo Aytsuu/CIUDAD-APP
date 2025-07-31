@@ -111,16 +111,19 @@ import { gad_router } from "./gad-router";
 import { bites_route } from "./AnimalBite-router";
 import { announcement_route } from "./Announcement-router";
 import { famplanning_route } from "./FamilyPlanning-router";
-import { medicalConsultation } from "./medConsultation";
+import { medicalConsultation } from "./med-consultation";
 import { doctorRouting } from "./doctor-router";
 import { familyProfilingRoute } from "./family-profiling-route";
 import { patientsRecordRouter } from "./patients-record-router";
 import { health_administration_router } from "./administration-health-router";
 import { reports_router } from "./reports-router";
+import { medicineRequest } from "./medicine-request";
+import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
+import { firstaid_router } from "./firstaid-router";
+import { health_schedule_routes } from "./health-schedules-router";
 import { summon_router } from "./summon-router";
 import { RouteWithTransition } from '@/components/route-transition/route-with-transition';
 import { withTransition } from '@/helpers/withTransition';
-
 import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
@@ -130,7 +133,7 @@ export const main_router: RouteObject[] = [
     children: withTransition([
       {
         path: "/",
-        element: <Navigate to="/home" />,
+        element: <Navigate to="/dashboard" />,
       },
       {
         path: "dashboard",
@@ -187,6 +190,10 @@ export const main_router: RouteObject[] = [
       ...familyProfilingRoute,
       ...patientsRecordRouter,
       ...health_administration_router,
+      ...medicineRequest,
+      ...forwardedhealthrecord_router,
+      ...firstaid_router,
+      ...health_schedule_routes,
     ]),
   },
 ];

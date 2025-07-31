@@ -17,7 +17,7 @@ import SignatureCanvas from "react-signature-canvas"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { page6Schema, type FormData, type ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 
 
 const methods = ["COC", "POP", "Injectable", "Implant", "IUD", "Interval", "Post Partum", "Condom", "BOM/CMM", "BBT", "STM", "SDM", "LAM", "Others"]
