@@ -39,9 +39,9 @@ export default function SchedulerMain() {
 
     // build schedule from database data instead of simulated data
     if (schedulersData.length > 0) {
-      console.log("Building schedule from database:")
-      console.log("Schedulers data:", schedulersData)
-      console.log("Services data:", servicesData)
+      // console.log("Building schedule from database:")
+      // console.log("Schedulers data:", schedulersData)
+      // console.log("Services data:", servicesData)
 
       const schedule: WeeklySchedule = {}
 
@@ -102,34 +102,6 @@ export default function SchedulerMain() {
     }))
   }
 
-  // ✅ Show loading state while fetching services
-  // if (servicesLoading || schedulersLoading) {
-  //   return (
-  //     <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
-  //       <main className="min-h-screen bg-gray-50">
-  //         <div className="max-w-7xl mx-auto">
-  //           <div className="flex justify-center items-center h-64">
-  //             <div className="text-lg">Loading services...</div>
-  //           </div>
-  //         </div>
-  //       </main>
-  //     </LayoutWithBack>
-  //   )
-  // }
-
-  // if (servicesError) {
-  //   return (
-  //     <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
-  //       <main className="min-h-screen bg-gray-50">
-  //         <div className="max-w-7xl mx-auto">
-  //           <div className="flex justify-center items-center h-64">
-  //             <div className="text-lg text-red-600">Error loading services. Please try again later.</div>
-  //           </div>
-  //         </div>
-  //       </main>
-  //     </LayoutWithBack>
-  //   )
-  // }
 
   return (
     <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
@@ -143,7 +115,6 @@ export default function SchedulerMain() {
                   <CardTitle>Available Services</CardTitle>
                   <CardDescription>
                     Current services that can be scheduled
-                    {services.length > 0 && `(${services.length} services loaded from database)`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

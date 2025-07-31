@@ -46,7 +46,6 @@ export const getDays = async (): Promise<Day[]> => {
 
 export const getScheduler = async (): Promise<SchedulerGetData[]> => {
   try {
-    console.log("Fetching services from API...");
     const res = await api2.get("servicescheduler/service-scheduler/");
     
     console.log("Services fetched:", res.data);

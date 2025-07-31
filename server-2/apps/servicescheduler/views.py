@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import ServiceSchedulerCreateSerializer, ServiceSerializer, DaySerializer, ServiceSchedulerListSerializer
 from .models import ServiceScheduler, Service, Day
+from django.db import transaction, IntegrityError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,34 @@ class ServiceDetailView(generics.RetrieveUpdateAPIView):
    queryset = Service.objects.all()
    lookup_field = 'service_id'
 
+class ServiceDeleteView(generics.DestroyAPIView):
+   queryset = Service.objects.all()
+   lookup_field = 'service_id'
+
+   def destroy(self, request, *args, **kwargs):
+      try:
+         service = self.get_object()
+         service_name = service.service_name
+         service_id = service.service_id
+
+         with transaction.atomic():
+            deleted_schedules = ServiceScheduler.objects.filter(service_id=service_id).delete()
+            
+            service.delete()
+         
+         logger.info(f'Service deleted successfully')
+
+         return Response({
+            'message': f'Service "{service_name}" deleted successfully',
+            'deleted_schedules': deleted_schedules[0] if deleted_schedules[0] else 0
+         }, status=status.HTTP_200_OK)
+
+      except Exception as e:
+         logger.error(f"Error deleting service: {e}")
+         return Response({
+            'error': f'Failed to delete service: {str(e)}'
+         }, status=status.HTTP_400_BAD_REQUEST)
+
    
 class DayListCreateView(generics.ListCreateAPIView):
    serializer_class = DaySerializer
@@ -47,6 +76,31 @@ class DayDetailView(generics.RetrieveUpdateAPIView):
    serializer_class = DaySerializer
    queryset = Day.objects.all()
    lookup_field = 'day_id'
+
+class DayDeleteView(generics.DestroyAPIView):
+   queryset = Day.objects.all()
+   lookup_field = 'day_id'
+
+   def destroy(self, request, *args, **kwargs):
+      try:
+         day = self.get_object()
+         day_name = day.day
+         day_id = day.day_id
+
+         with transaction.atomic():
+            deleted_schedules = ServiceScheduler.objects.filter(day_id=day_id).delete()
+
+            day.delete()
+         
+         return Response({
+            'message': f'Day {day_name} deleted successfully',
+            'deleted_schedules': deleted_day[0] if deleted_schedules[0] else 0
+         }, status=status.HTTP_200_OK)
+
+      except Exception as e:
+         return Response({
+            'error': f'Failed to delete day: {str(e)}'
+         }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ServiceSchedulerCreateView(generics.ListCreateAPIView):
