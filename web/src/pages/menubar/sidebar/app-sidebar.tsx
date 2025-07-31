@@ -167,11 +167,11 @@
 //     const groupedFeatures = assignedFeatures.reduce((acc, item) => {
 //       const feature = item.feat;
 //       const category = feature.feat_category;
-      
+
 //       if (!acc[category]) {
 //         acc[category] = [];
 //       }
-      
+
 //       // Check if this feature already exists in the category to avoid duplicates
 //       const existingFeature = acc[category].find((f: { title: string; url: string }) => f.title === feature.feat_name && f.url === feature.feat_url);
 //       if (!existingFeature) {
@@ -180,7 +180,7 @@
 //           url: feature.feat_url,
 //         });
 //       }
-      
+
 //       return acc;
 //     }, {} as Record<string, Array<{ title: string; url: string }>>);
 
@@ -193,7 +193,7 @@
 //           url: features[0].url,
 //         };
 //       }
-      
+
 //       // If multiple features, make it a dropdown
 //       return {
 //         title: category,
@@ -229,7 +229,6 @@
 
 // export default AppSidebar;
 
-
 import React, { useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -260,10 +259,10 @@ const items: MenuItem[] = [
   },
   {
     title: "Profiling",
-    subItems: true, 
+    subItems: true,
     url: "/",
     items: [
-      { title: "Resident", url: "/resident"},
+      { title: "Resident", url: "/resident" },
       { title: "Family", url: "/family" },
       { title: "Household", url: "/household" },
       { title: "Business", url: "/business" },
@@ -283,17 +282,17 @@ const items: MenuItem[] = [
   },
   {
     title: "Summon & Case Tracker",
-    url: "/summon-and-case-tracking"
+    url: "/summon-and-case-tracking",
   },
   {
     title: "GAD",
     subItems: true,
     url: "/",
     items: [
-      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-      { title: "Project Proposals", url: "/gad-project-proposal"},
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
-      { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
+      { title: "Budget Tracker", url: "/gad-budget-tracker-main" },
+      { title: "Project Proposals", url: "/gad-project-proposal" },
+      { title: "Review Project Proposal", url: "/gad-review-project-proposal" },
+      { title: "Annual Development Plan", url: "/gad-annual-development-plan" },
     ],
   },
   {
@@ -344,7 +343,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Waste Personnel & Collection Vehicle",
-    url: "/waste-personnel"
+    url: "/waste-personnel",
   },
   {
     title: "Announcement",
@@ -356,38 +355,57 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       { title: "Administration", url: "/health-administration" },
+
+      { title: "Patients Record", url: "/patients-record-main" },
       {
-        title: "Doctor",
-        url: "/pending-medical-con",
+        title: "Forwarded Records",
+        url: "/",
         anotherItems: [
-          { title: "Forwarded records", url: "/pending-medical-con" },
+          {
+            title: "Child Immunization",
+            url: "/forwarded-child-health-immunization",
+          },
+          { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
+          { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
+          {
+            title: "Medical Consultaion",
+            url: "/forwarded-medical-consultation",
+          },
         ],
       },
-      { title: "Patients Record", url: "/patients-record-main" },
-
+      {
+        title: "Manage Request",
+        url: "/",
+        anotherItems: [
+          {
+            title: "Medicine Request ",
+            url: "/medicine-requests",
+          },
+          { title: "Medical Consultation", url: "/" },
+         
+        ],
+      },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Child Services", url: "/all-child-health-records" },
-      { title: "Maternal Services", url: "/maternalrecords" },
-      { title: "Family Planning", url: "/FamPlanning_table" },
-      { title: "Medical Consultation Services", url: "/allMedRecords" },
-      { title: "Vaccination Services", url: "/VaccinationManagement" },
       { title: "Family Profiling", url: "/family-profiling-main" },
-      {title: "Medicine Request", url:"/all-medicine-records"},
-      { title: "Firstaid Request ", url: "/all-firstaid-records" },
-      {title:"Forwarded Records", url: "/main-forwarded-records"},
-      {title:"Archive", url: "/archiveMainInventoryStocks"},
-      {title: "Schedules", url: "/health-schedules"},
-      {title: "Service Scheduler", url: "/health-services/scheduler"},
-      {title:"Reports", url: "/healthcare-reports" }, 
+      { title: "Medical Consultation Record", url: "/allMedRecords" },
+      { title: "Family Planning Record", url: "/FamPlanning_table" },
+      { title: "Maternal Record", url: "/maternalrecords" },
+      { title: "Child Health Record", url: "/all-child-health-records" },
+      { title: "Vaccination Record", url: "/VaccinationManagement" },
+      { title: "Medicine Record", url: "/all-medicine-records" },
+      { title: "Firstaid Record ", url: "/all-firstaid-records" },
+      { title: "Archive", url: "/archiveMainInventoryStocks" },
+      { title: "Schedules", url: "/health-schedules" },
+      { title: "Service Scheduler", url: "/health-services/scheduler" },
+      { title: "Reports", url: "/healthcare-reports" },
 
-      
       {
         title: "Inventory",
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          {title: "Transactions List", url: "/transactionMainInventoryList" },
+          { title: "Transactions List", url: "/transactionMainInventoryList" },
         ],
       },
       {

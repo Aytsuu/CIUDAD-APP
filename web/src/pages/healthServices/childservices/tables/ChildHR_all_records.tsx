@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -14,16 +14,19 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
 import { ChildHealthRecord } from "../forms/muti-step-form/types";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
-import { useQueryClient } from "@tanstack/react-query";
+import { useLoading } from "@/context/LoadingContext";
+import { filterOptions } from "./types";
+import { childColumns } from "./columns/all_col";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function AllChildHealthRecords() {
   const { data: childHealthRecords, isLoading } = useChildHealthRecords();
+  const { showLoading, hideLoading } = useLoading();
 
-  const formatChildHealthData = React.useCallback((): ChildHealthRecord[] => {
+  const formatChildHealthData = useCallback((): ChildHealthRecord[] => {
     if (!childHealthRecords) return [];
 
     return childHealthRecords.map((record: any) => {
@@ -49,6 +52,7 @@ export default function AllChildHealthRecords() {
           record.patrec_details?.pat_details?.households?.[0]?.hh_id || "",
         address:
           [
+            addressInfo.add_sitio,
             addressInfo.add_street,
             addressInfo.add_barangay,
             addressInfo.add_city,
@@ -93,14 +97,14 @@ export default function AllChildHealthRecords() {
   const [currentData, setCurrentData] = useState<ChildHealthRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState("all");
- 
 
-  const filterOptions = [
-    { id: "all", name: "All Records" },
-
-    { id: "resident", name: "Resident" },
-    { id: "transient", name: "Transient" },
-  ];
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     const formattedData = formatChildHealthData();
@@ -140,210 +144,12 @@ export default function AllChildHealthRecords() {
     setCurrentData(filteredData.slice(startIndex, endIndex));
   }, [currentPage, pageSize, filteredData]);
 
-  const columns: ColumnDef<ChildHealthRecord>[] = [
-    {
-      accessorKey: "child",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Child <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName =
-          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age} old
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "mother",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Mother <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName =
-          `${row.original.mother_lname}, ${row.original.mother_fname} ${row.original.mother_mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-            </div>
-          </div>
-        );
-      },
-    },
-    // {
-    //   accessorKey: "father",
-    //   header: ({ column }) => (
-    //     <div
-    //       className="flex w-full justify-center items-center gap-2 cursor-pointer"
-    //       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    //     >
-    //       Father <ArrowUpDown size={15} />
-    //     </div>
-    //   ),
-    //   cell: ({ row }) => {
-    //     const fullName = `${row.original.father_lname}, ${row.original.father_fname} ${row.original.father_mname}`.trim();
-    //     return (
-    //       <div className="flex justify-start min-w-[200px] px-2">
-    //         <div className="flex flex-col w-full">
-    //           <div className="font-medium truncate">{fullName}</div>
-    //           <div className="text-sm text-darkGray truncate">
-    //             Occupation: {row.original.father_occupation}
-    //           </div>
-    //         </div>
-    //       </div>
-    //     );
-    //   },
-    // },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start px-2">
-          <div className="w-[250px] break-words">{row.original.address}</div>
-        </div>
-      ),
-    },
-    // {
-    //   accessorKey: "sitio",
-    //   header: "Sitio",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
-    //       <div className="text-center w-full">{row.original.sitio}</div>
-    //     </div>
-    //   ),
-    // },
-    // {
-    //   accessorKey: "landmarks",
-    //   header: "Landmarks",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
-    //       <div className="text-center w-full">{row.original.landmarks}</div>
-    //     </div>
-    //   ),
-    // },
-    {
-      accessorKey: "family_no",
-      header: "Family No.",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.family_no}</div>
-        </div>
-      ),
-    },
-
-    {
-      accessorKey: "sitio",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Sitio <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
-      ),
-    },
-    // {
-    //   accessorKey: "delivery_type",
-    //   header: "Delivery Type",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
-    //       <div className="text-center w-full">{row.original.delivery_type}</div>
-    //     </div>
-    //   ),
-    // },
-    // {
-    //   accessorKey: "feeding_type",
-    //   header: "Feeding Type",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[100px] px-2">
-    //       <div className="text-center w-full capitalize">{row.original.feeding_type.toLowerCase()}</div>
-    //     </div>
-    //   ),
-    // },
-    {
-      accessorKey: "pat_type",
-      header: "Patient Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full capitalize">
-            {row.original.pat_type.toLowerCase()}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
-            <Link
-              to={`/child-health-records`}
-              state={{
-                ChildHealthRecord: row.original,
-                mode: "addnewchildhealthrecord",
-              }}
-            >
-              View{" "}
-            </Link>
-          </div>
-        </div>
-      ),
-    },
-  ];
-
-  // const navigate = useNavigate();
-  // function toChildHealthForm() {
-  //   navigate("/newAddChildHRForm", {
-  //     state: { recordType: "nonexistingPatient" },
-  //   });
-  // }
-
   return (
     <>
-      <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-col items-center">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Child Health Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view child's information
-            </p>
-          </div>
-        </div>
-        <hr className="border-gray-300 mb-4" />
-
+      <MainLayoutComponent
+        title="Child Health Record"
+        description="Manage and View Child's Record"
+      >
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
@@ -421,9 +227,9 @@ export default function AllChildHealthRecords() {
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
+              <TableSkeleton columns={childColumns} rowCount={5} />
             ) : (
-              <DataTable columns={columns} data={currentData} />
+              <DataTable columns={childColumns} data={currentData} />
             )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
@@ -443,7 +249,7 @@ export default function AllChildHealthRecords() {
             </div>
           </div>
         </div>
-      </div>
+      </MainLayoutComponent>
     </>
   );
 }

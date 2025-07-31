@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select/select";
 import { Accordion } from "@/components/ui/accordion";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
+import { getSupplementStatusesFields } from "../../childservices/viewrecords/Config";
 import { PatientSummarySection } from "../../childservices/viewrecords/CurrentHistoryView";
 import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";

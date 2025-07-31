@@ -25,3 +25,11 @@ export type NutritionStatus = {
     rawCreatedAt: string;
     status: string;
   };
+
+
+   export const filterOptions = [
+      { id: "all", name: "All Records" },
+      { id: "resident", name: "Resident" },
+      { id: "transient", name: "Transient" },
+    ];
+  

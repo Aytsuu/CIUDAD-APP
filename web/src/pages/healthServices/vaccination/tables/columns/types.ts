@@ -1,7 +1,10 @@
+import { VaccineDetails } from "@/pages/healthServices/childservices/viewrecords/types";
+
 export interface VaccinationRecord {
   patrec_id?: number;
   vachist_id?: number;
   vachist_doseNo?: string;
+  date_administered?: string;
   vachist_status?: string;
   vachist_age?: number;
   assigned_to?: number | null;
@@ -60,6 +63,8 @@ export interface VaccinationRecord {
     updated_at?: string;
   };
 
+
+  vac_details?:VaccineDetails
   vaccine_name?: string;
   batch_number?: string;
   updated_at?: string;
@@ -85,6 +90,8 @@ export interface VaccinationRecord {
     patrec_id?: string
   },
 }
+
+
 
 
 

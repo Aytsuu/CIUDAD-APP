@@ -47,15 +47,6 @@ class ChildHealthNotesSerializer(serializers.ModelSerializer):
         model = ChildHealthNotes
         fields = '__all__'
 
-# class ChildHealthVitalSignsSerializer(serializers.ModelSerializer):
-#     # vital_details = VitalSignsSerializer(source='vital', read_only=True)
-#     find_details = FindingSerializer(source='find', read_only=True)
-#     bm_details = BodyMeasurementSerializer(source='bm', read_only=True)
-    
-#     class Meta:
-#         model = ChildHealthVitalSigns
-#         fields = '__all__'
-   
 
 class ChildHealthSupplementsSerializer(serializers.ModelSerializer):
     medrec_details = MedicineRecordSerializerMinimal(source='medrec', read_only=True)

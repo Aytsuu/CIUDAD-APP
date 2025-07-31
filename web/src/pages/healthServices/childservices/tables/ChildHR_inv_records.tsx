@@ -19,19 +19,43 @@ import { api2 } from "@/api/api";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { getChildHealthColumns } from "./columns/indiv_col";
-
+import CardLayout from "@/components/ui/card/card-layout";
+import { useUnvaccinatedVaccines } from "../../vaccination/queries/fetch";
+import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
+import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
+import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
+import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
+import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function InvChildHealthRecords() {
+  const { showLoading, hideLoading } = useLoading();
+
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
-  const mode = location.state.mode as "addnewchildhealthrecord" | undefined;
-
   const [childData, setChildData] = useState(ChildHealthRecord);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
+    useUnvaccinatedVaccines(ChildHealthRecord?.pat_id, ChildHealthRecord.dob);
+  const { data: followUps = [], isLoading: followupLoading } =
+    useFollowupChildHealthandVaccines(ChildHealthRecord?.pat_id);
+  const {
+    data: historyData = [],
+    isLoading: childHistoryLoading,
+    isError,
+    error,
+  } = useChildHealthHistory(childData.chrec_id);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =
+    usePatientVaccinationDetails(ChildHealthRecord?.pat_id);
+  const isLoading =
+    followupLoading ||
+    isUnvaccinatedLoading ||
+    isCompleteVaccineLoading ||
+    childHistoryLoading;
 
   useEffect(() => {
     if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
@@ -41,6 +65,14 @@ export default function InvChildHealthRecords() {
     }
   }, [ChildHealthRecord, navigate]);
 
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
+
   if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
     return (
       <div className="w-full h-full flex items-center justify-center text-red-500">
@@ -49,27 +81,17 @@ export default function InvChildHealthRecords() {
     );
   }
 
-  const {
-    data: historyData = [],
-    isLoading,
-    isError,
-    error,
-  } = useChildHealthHistory(childData.chrec_id);
-  
   // Process the raw history data into our desired format
   const processedHistoryData = useMemo(() => {
     if (!historyData || historyData.length === 0) return [];
-
     const mainRecord = historyData[0];
     if (!mainRecord || !mainRecord.child_health_histories) {
       return [];
     }
-
     const sortedHistories = [...mainRecord.child_health_histories].sort(
       (a: any, b: any) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-
     return sortedHistories.map((record: any, index: number) => {
       let bmi = "N/A";
       if (record.child_health_vital_signs?.length > 0) {
@@ -95,9 +117,10 @@ export default function InvChildHealthRecords() {
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         latestNoteContent = sortedNotes[0].chn_notes || null;
-        
+
         if (sortedNotes[0].followv_details) {
-          followUpDescription = sortedNotes[0].followv_details.followv_description || "";
+          followUpDescription =
+            sortedNotes[0].followv_details.followv_description || "";
           followUpDate = sortedNotes[0].followv_details.followv_date || "";
           followUpStatus = sortedNotes[0].followv_details.followv_status || "";
         }
@@ -114,7 +137,7 @@ export default function InvChildHealthRecords() {
       return {
         chrec_id: mainRecord.chrec_id,
         patrec: mainRecord.patrec_id,
-        status: record.status || "N/A",  
+        status: record.status || "N/A",
         chhist_id: record.chhist_id,
         id: index + 1,
         temp: record.child_health_vital_signs?.[0]?.temp || 0,
@@ -140,9 +163,6 @@ export default function InvChildHealthRecords() {
     });
   }, [historyData]);
 
-  const today = new Date().toISOString().split("T")[0];
-
-
   const latestRecord = useMemo(() => {
     if (processedHistoryData.length === 0) return null;
     return processedHistoryData[0];
@@ -150,7 +170,10 @@ export default function InvChildHealthRecords() {
 
   const isLatestRecordImmunizationOrCheckup = useMemo(() => {
     if (!latestRecord) return false;
-    return latestRecord.status === "immunization" || latestRecord.status === "check-up";
+    return (
+      latestRecord.status === "immunization" ||
+      latestRecord.status === "check-up"
+    );
   }, [latestRecord]);
 
   const filteredData = useMemo(() => {
@@ -164,7 +187,7 @@ export default function InvChildHealthRecords() {
       }`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
-  }, [searchQuery, processedHistoryData, mode]);
+  }, [searchQuery, processedHistoryData]);
 
   const currentData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -183,26 +206,25 @@ export default function InvChildHealthRecords() {
             originalRecord: latestRecord,
             patientData: childData,
             chrecId: childData?.chrec_id,
-            mode: mode,
+            mode: "addnewchildhealthrecord",
           },
         },
       });
     }
   };
 
-
-
   const columns = useMemo(() => getChildHealthColumns(childData), [childData]);
-
-
 
   if (isError) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-red-500">
+      <div className="w-full h-full flex flex-col items-center justify-center">
+        <div className="text-red-500 mb-4">
           Error loading data:{" "}
           {error instanceof Error ? error.message : "Unknown error"}
         </div>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Refresh
+        </Button>
       </div>
     );
   }
@@ -232,21 +254,36 @@ export default function InvChildHealthRecords() {
         <ChildHealthRecordCard child={childData} />
       </div>
 
+      {isLoading ? (
+        <VaccinationStatusCardsSkeleton />
+      ) : (
+        <div className="flex flex-col lg:flex-row gap-6 mb-4">
+          <div className="w-full">
+            <VaccinationStatusCards
+              unvaccinatedVaccines={unvaccinatedVaccines}
+              vaccinations={vaccinations}
+            />
+          </div>
+
+          <div className="w-full">
+            <FollowUpsCard childHealthFollowups={followUps} />
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
         {latestRecord && (
           <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
             {isLatestRecordImmunizationOrCheckup ? (
               <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
                 <span className="text-sm font-medium">
-                  {latestRecord.status === "immunization" 
-                    ? "Child recently underwent immunization" 
-                    : "Child recently had a check-up"}
+                  {latestRecord.status === "immunization"
+                    ? "This child is currently receiving an immunization."
+                    : "This child is currently undergoing a health check-up."}
                 </span>
               </div>
             ) : (
-              <Button onClick={navigateToUpdateLatest}>
-                New record
-              </Button>
+              <Button onClick={navigateToUpdateLatest}>New record</Button>
             )}
           </div>
         )}
@@ -295,7 +332,7 @@ export default function InvChildHealthRecords() {
             </DropdownMenu>
           </div>
         </div>
-      
+
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
             <TableSkeleton columns={columns} rowCount={3} />

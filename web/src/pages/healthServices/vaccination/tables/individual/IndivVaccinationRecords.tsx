@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Syringe } from "lucide-react";
-import { IndivVaccineColumns } from "../columns/indiv-vac-col";
+import { IndivVaccineColumns } from "../columns/indiv_vac-col";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { PatientInfoCard } from "@/components/ui//patientInfoCard";
 import { Label } from "@/components/ui/label";
@@ -22,10 +22,12 @@ import {
   useIndivPatientVaccinationRecords,
   useFollowupVaccines,
   useUnvaccinatedVaccines,
+  usePatientVaccinationDetails,
 } from "../../queries/fetch";
-import CardLayout from "@/components/ui/card/card-layout";
-import { VaccinationStatusCards } from "./vaccinationstatus";
 import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
+import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
+import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
+import { VaccinationStatusCardsSkeleton } from "@/pages/healthServices/skeleton/vaccinationstatus-skeleton";
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();
@@ -36,7 +38,6 @@ export default function IndivVaccinationRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setfilter] = useState<filter>("all");
-  
 
   // Guard clause for missing patientData
   if (!patientData?.pat_id) {
@@ -63,11 +64,13 @@ export default function IndivVaccinationRecords() {
       patientData.personal_info.per_dob
     );
 
-  const { data: followupVaccines = [] } = useFollowupVaccines(
-    patientData?.pat_id
-  );
+  const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } =
+    useFollowupVaccines(patientData?.pat_id);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =
+    usePatientVaccinationDetails(patientData?.pat_id);
 
 
+   const  isLoading  =isCompleteVaccineLoading || isUnvaccinatedLoading || isFollowVaccineLoading || isVaccinationRecordsLoading;
   const filteredData = React.useMemo(() => {
     if (!vaccinationRecords) return [];
     return vaccinationRecords.filter((record) => {
@@ -75,15 +78,14 @@ export default function IndivVaccinationRecords() {
         `${record.vachist_id} ${record.vaccine_name} ${record.batch_number} ${record.vachist_doseNo} ${record.vachist_status}`.toLowerCase();
       const matchesSearch = searchText.includes(searchQuery.toLowerCase());
       let matchesFilter = true;
-
-      if (filter !== "all") {
-        const status = (record.vachist_status ?? "").toLowerCase();
-        if (filter === "partially_vaccinated") {
-          matchesFilter = status === "partially vaccinated";
-        } else if (filter === "completed") {
-          matchesFilter = status === "completed";
-        }
-      }
+      // if (filter !== "all") {
+      //   const status = (record.vachist_status ?? "").toLowerCase();
+      //   if (filter === "partially_vaccinated") {
+      //     matchesFilter = status === "partially vaccinated";
+      //   } else if (filter === "completed") {
+      //     matchesFilter = status === "completed";
+      //   }
+      // }
       return matchesSearch && matchesFilter;
     });
   }, [searchQuery, vaccinationRecords, filter]);
@@ -93,8 +95,8 @@ export default function IndivVaccinationRecords() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-// In your IndivVaccinationRecords component:
-const columns = IndivVaccineColumns(patientData, vaccinationRecords || []);
+  // In your IndivVaccinationRecords component:
+  const columns = IndivVaccineColumns(patientData, vaccinationRecords || []);
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4 ">
@@ -135,20 +137,32 @@ const columns = IndivVaccineColumns(patientData, vaccinationRecords || []);
           </div>
         )}
 
-        {isUnvaccinatedLoading || isVaccinationRecordsLoading ? (
+        {isLoading ? (
+          <VaccinationStatusCardsSkeleton />
+        ) : (
+          <>
+           
+                <div className="flex flex-col lg:flex-row gap-6 mb-4">
+                  <div className="w-full">
+                    <VaccinationStatusCards
+                      unvaccinatedVaccines={unvaccinatedVaccines}
+                      vaccinations={vaccinations}
+                    />
+                  </div>
+
+                  <div className="w-full">
+                    <FollowUpsCard followupVaccines={followupVaccines} />
+                  </div>
+                </div>
+              
+          
+          </>
+        )}
+
+        {isLoading ? (
           <TableSkeleton columns={columns} rowCount={5} />
         ) : (
           <>
-            <CardLayout
-              cardClassName="mb-6"
-              content={
-                <VaccinationStatusCards
-                  unvaccinatedVaccines={unvaccinatedVaccines}
-                  followupVaccines={followupVaccines}
-                />
-              }
-            />
-
             <div className="flex flex-col sm:flex-row w-full items-center mb-4 gap-4 sm:gap-2">
               <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div className="flex flex-col sm:flex-row gap-2 items-center justify-center ">
@@ -178,7 +192,7 @@ const columns = IndivVaccineColumns(patientData, vaccinationRecords || []);
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-2 w-full sm:w-auto">
-                <div className="w-full sm:w-auto">
+                {/* <div className="w-full sm:w-auto">
                   <SelectLayout
                     placeholder="Filter"
                     label=""
@@ -194,7 +208,7 @@ const columns = IndivVaccineColumns(patientData, vaccinationRecords || []);
                     value={filter}
                     onChange={(value) => setfilter(value as filter)}
                   />
-                </div>
+                </div> */}
                 <Button className="w-full sm:w-auto">
                   <Link
                     to="/vaccination-record-form"
@@ -241,9 +255,11 @@ const columns = IndivVaccineColumns(patientData, vaccinationRecords || []);
                   </DropdownMenu>
                 </div>
               </div>
+
               <div className="bg-white w-full overflow-x-auto">
                 <DataTable columns={columns} data={paginatedData} />
               </div>
+
               <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
                 <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
                   Showing{" "}

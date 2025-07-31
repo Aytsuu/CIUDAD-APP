@@ -104,10 +104,6 @@ class ChildHealthSupplementsStatus(models.Model):
     # status = models.CharField(max_length=100, blank=True, null=True)
     date_completed = models.DateField(blank=True, null=True)  # Date when the status was completed
     birthwt = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    # anemic_seen = models.CharField(max_length=100, blank=True, null=True)
-    # anemic_iron_given = models.CharField(max_length=100, blank=True, null=True)
-    # birthwt_seen = models.CharField(max_length=100, blank=True, null=True)
-    # birthwt_given_iron = models.CharField(max_length=100, blank=True, null=True)
     status_type = models.CharField(choices=[('birthwt', 'Birth Weight'), ('anemic', 'Anemic')])
     date_seen = models.CharField(max_length=100, blank=True, null=True)
     date_given_iron = models.CharField(max_length=100, blank=True, null=True)

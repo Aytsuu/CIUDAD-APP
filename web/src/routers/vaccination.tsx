@@ -8,7 +8,6 @@ import VaccinationManagement from "@/pages/healthServices/vaccination/tables/all
 import AgeGroupForm from "@/pages/healthServices/agegroup/AgeGroup";
 import { AddAgeGroupForm } from "@/pages/healthServices/agegroup/AddAgeGroupForm";
 import ScheduledVaccine from "@/pages/healthServices/vaccination/viewhistory/ScheduledVaccine";
-import ForwardedVaccinationRecords from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedVaccination";
 import ForwardedVaccinationForm from "@/pages/healthServices/vaccination/forms/Step2Vaccination";
 export const vaccination = [
   {
@@ -51,10 +50,7 @@ export const vaccination = [
     path: "scheduled-vaccine",
     element: <ScheduledVaccine />
   },
-  {
-    path: "forwarded-vaccination-records",
-    element: <ForwardedVaccinationRecords />
-  },
+ 
   {
     path: "forwarded-vaccination-form", 
     element: <ForwardedVaccinationForm />

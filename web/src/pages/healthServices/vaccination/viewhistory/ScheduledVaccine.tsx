@@ -9,17 +9,18 @@ import { VaccinationRecord } from "../tables/columns/types";
 import { useLocation } from "react-router-dom";
 import CardLayout from "@/components/ui/card/card-layout";
 import {
-  usePatientVaccinationRecords,
+  useIndivPatientVaccinationRecords,
   useUnvaccinatedVaccines,
   useFollowupVaccines,
 } from "../queries/fetch";
-import { VaccinationStatusCards } from "../tables/individual/vaccinationstatus";
 import { updateVaccinationHistory } from "../restful-api/update";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { api2 } from "@/api/api";
-import { createFollowUpVisit } from "../restful-api/post";
 import { updateFollowUpVisit } from "../restful-api/update";
+import { usePatientVaccinationDetails } from "../queries/fetch";
+import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
+import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
+import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
 
 export default function ScheduledVaccine() {
   const navigate = useNavigate();
@@ -36,14 +37,19 @@ export default function ScheduledVaccine() {
 
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
     useUnvaccinatedVaccines(patientId, patientData.personal_info.per_dob);
-
-  const { data: followupVaccines = [] } = useFollowupVaccines(patientId);
-
+  const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } =
+    useFollowupVaccines(patientId);
   const {
     data: vaccinationHistory = [],
-    isLoading,
+    isLoading: isVachistLoading,
     error,
-  } = usePatientVaccinationRecords(patientId);
+  } = useIndivPatientVaccinationRecords(patientId);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(patientData?.pat_id);
+  const isLoading =
+    isUnvaccinatedLoading ||
+    isFollowVaccineLoading ||
+    isVachistLoading ||
+    isCompleteVaccineLoading;
 
   const currentVaccination = useMemo(() => {
     return vaccinationHistory.find(
@@ -54,25 +60,30 @@ export default function ScheduledVaccine() {
 
   const previousVaccination = useMemo(() => {
     if (!vaccinationHistory.length || !Vaccination?.created_at) return null;
-  
+
     // For routine vaccinations, just get the most recent vaccination
-    if (Vaccination.vaccination_type?.toLowerCase() === 'routine') {
+    if (Vaccination.vaccination_type?.toLowerCase() === "routine") {
       const sortedHistory = [...vaccinationHistory].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       // Return the most recent one that's not the current vaccination
-      return sortedHistory.find(history => history.vachist_id !== Vaccination.vachist_id) || null;
+      return (
+        sortedHistory.find(
+          (history) => history.vachist_id !== Vaccination.vachist_id
+        ) || null
+      );
     }
-  
     // Original logic for non-routine vaccinations
     const sortedHistory = [...vaccinationHistory].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-  
+
     const currentIndex = sortedHistory.findIndex(
       (history) => history.vachist_id === Vaccination.vachist_id
     );
-  
+
     return currentIndex > 0 ? sortedHistory[currentIndex - 1] : null;
   }, [vaccinationHistory, Vaccination]);
 
@@ -86,7 +97,7 @@ export default function ScheduledVaccine() {
     );
   }, [vaccinationHistory, Vaccination]);
 
-  // 
+  //
   if (!patientData || !Vaccination) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -98,39 +109,19 @@ export default function ScheduledVaccine() {
   const submit = async () => {
     setIsSubmitting(true);
     try {
-      
       console.log("Previous Vaccination Data:", previousVaccination);
       if (previousVaccination?.follow_up_visit) {
-        if (
-          previousVaccination.follow_up_visit.followv_status?.toLowerCase() ===
-          "missed"
-        ) {
-          createFollowUpVisit(
-            String(previousVaccination.patrec_id ?? ""),
-            new Date().toISOString(),
-            `Vaccination for: ${previousVaccination.vaccine_name}`,
-            "completed",
-            String(previousVaccination.follow_up_visit.followv_id)
-          );
-          console.log(
-            "Created new follow-up visit for previous vaccination",
-            previousVaccination.follow_up_visit.followv_id
-          );
-        } else {
-          updateFollowUpVisit(
-           { followv_id:String(previousVaccination.follow_up_visit.followv_id),
-            followv_status:"completed",
-            completed_at: new Date().toISOString().split("T")[0], // Format to YYYY-MM-DD
-          }
-          );
+        updateFollowUpVisit({
+          followv_id: String(previousVaccination.follow_up_visit.followv_id),
+          followv_status: "completed",
+          completed_at: new Date().toISOString().split("T")[0], // Format to YYYY-MM-DD
+        });
 
-          console.log(
-            "Updated follow-up visit status to completed for previous vaccination",
-            previousVaccination.follow_up_visit.followv_id
-          );
-        }
+        console.log(
+          "Updated follow-up visit status to completed for previous vaccination",
+          previousVaccination.follow_up_visit.followv_id
+        );
       }
-
       await updateVaccinationHistory(Vaccination.vachist_id, "immunization");
 
       queryClient.invalidateQueries({
@@ -172,15 +163,27 @@ export default function ScheduledVaccine() {
         <PatientInfoCard patient={patientData} />
       </div>
 
-      <CardLayout
-        cardClassName="mb-6"
-        content={
-          <VaccinationStatusCards
-            unvaccinatedVaccines={unvaccinatedVaccines}
-            followupVaccines={followupVaccines}
-          />
-        }
-      />
+      {isLoading ? (
+        <VaccinationStatusCardsSkeleton />
+      ) : (
+        <CardLayout
+          cardClassName="mb-6"
+          content={
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="w-full">
+                <VaccinationStatusCards
+                  unvaccinatedVaccines={unvaccinatedVaccines}
+                  vaccinations={vaccinations}
+                />
+              </div>
+
+              <div className="w-full">
+                <FollowUpsCard followupVaccines={followupVaccines} />
+              </div>
+            </div>
+          }
+        />
+      )}
       <CardLayout
         content={
           <>

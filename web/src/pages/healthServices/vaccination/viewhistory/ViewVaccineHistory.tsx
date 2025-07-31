@@ -8,7 +8,7 @@ import {VaccinationHistoryRecord} from "@/components/ui/vaccination-history";
 import { VaccinationRecord } from "../tables/columns/types";
 import { useLocation } from "react-router-dom";
 import CardLayout from "@/components/ui/card/card-layout";
-import { usePatientVaccinationRecords } from "../queries/fetch";
+import { useIndivPatientVaccinationRecords } from "../queries/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function VaccinationView() {
@@ -28,7 +28,7 @@ export default function VaccinationView() {
     data: vaccinationHistory = [], 
     isLoading, 
     error 
-  } = usePatientVaccinationRecords(patientId);
+  } = useIndivPatientVaccinationRecords(patientId);
 
   const currentVaccination = useMemo(() => {
     return vaccinationHistory.find(

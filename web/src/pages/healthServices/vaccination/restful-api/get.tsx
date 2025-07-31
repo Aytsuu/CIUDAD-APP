@@ -50,6 +50,7 @@ export const getVaccinationRecords =  async () => {
   }
 };
 
+// id ani kay pat_id
 export const getVaccinationRecordById =  async (id: string) => {
   try {
     const response = await api2.get(`/vaccination/indiv-patient-record/${id}/`);

@@ -11,34 +11,8 @@ import { VaccinationRecord } from "../tables/columns/types";
 import { toast
 
  } from "sonner";
-export const usePatientVaccinationDetails = (patientId: string) => {
-  return useQuery({
-    queryKey: ["patientVaccinationDetails", patientId],
-    queryFn: () => getVaccinationRecordById(patientId),
-    refetchOnMount: true,
-    staleTime: 0,
-    enabled: !!patientId, // Only fetch if patientId exists
-  });
-};
 
-// Updated hook with parameters
-export const useVaccinationRecords = () => {
-  return useQuery<VaccinationRecord[]>({
-    queryKey: ["vaccinationRecords"],
-    queryFn: getVaccinationRecords,
-    refetchOnMount: true,
-    staleTime: 1 * 60 * 1000, // 1 minute
-  });
-};
 
-export const useUnvaccinatedResidents = () => {
-  return useQuery({
-    queryKey: ["unvaccinatedResidents"],
-    queryFn: getUnvaccinatedResidents,
-    refetchOnMount: true,
-    staleTime: 1 * 60 * 1000, // 1 minute
-  });
-};
 
 
 

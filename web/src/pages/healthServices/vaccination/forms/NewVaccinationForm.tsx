@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "../restful-api/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
-import {  useSubmitStep2 } from "../queries/AddVacrecord";
+import { useSubmitStep2 } from "../queries/AddVacrecord";
 import { ValidationAlert } from "../../../../components/ui/vac-required-alert";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { PatientSearch, type Patient } from "@/components/ui/patientSearch";
@@ -30,10 +30,16 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { useAuth } from "@/context/AuthContext";
 import CardLayout from "@/components/ui/card/card-layout";
 import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
-import { useUnvaccinatedVaccines, useFollowupVaccines } from "../queries/fetch";
-import { VaccinationStatusCards } from "../tables/individual/vaccinationstatus";
+import {
+  useUnvaccinatedVaccines,
+  useFollowupVaccines,
+  usePatientVaccinationDetails,
+} from "../queries/fetch";
 import { useIndivPatientVaccinationRecords } from "../queries/fetch";
 import { VaccinationRecord } from "../tables/columns/types";
+import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
+import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
+import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();
@@ -60,25 +66,30 @@ export default function VaccinationRecordForm() {
   );
   const [vaccineHistory, setVaccineHistory] = useState<VaccinationRecord[]>([]);
   const [isVaccineCompleted, setIsVaccineCompleted] = useState(false);
-
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
-
   const patientToUse = shouldShowPatientSearch
     ? selectedPatientData
     : patientDataFromLocation;
-
   const { data: patientVaccinationRecords } = useIndivPatientVaccinationRecords(
     patientToUse?.pat_id
   );
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =
+    usePatientVaccinationDetails(patientToUse?.pat_id);
   const { data: unvaccinatedVaccines = [] } = useUnvaccinatedVaccines(
     patientToUse?.pat_id,
     patientToUse?.personal_info?.per_dob
   );
-  const { data: followupVaccines = [] } = useFollowupVaccines(
-    patientToUse?.pat_id
-  );
-  const { data: vaccinesData, isLoading } = fetchVaccinesWithStock();
+  const { data: followupVaccines = [], isLoading: isFollowVacLoading } =
+    useFollowupVaccines(patientToUse?.pat_id);
+  const { data: vaccinesData, isLoading: isVacstckLoading } =
+    fetchVaccinesWithStock();
+
+  const isLoading =
+    isVacstckLoading ||
+    isCompleteVaccineLoading ||
+    patientVaccinationRecords ||
+    isFollowVacLoading;
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
@@ -168,9 +179,7 @@ export default function VaccinationRecordForm() {
 
         let doseNumber = 1;
 
-        if (
-          vaccinelist.vac_type_choices !== "routine"
-        ) {
+        if (vaccinelist.vac_type_choices !== "routine") {
           const latestDose =
             currentVaccineHistory.length > 0
               ? Math.max(
@@ -190,19 +199,20 @@ export default function VaccinationRecordForm() {
         }
 
         // Check if vaccine is already completed
-        const isCompleted = currentVaccineHistory.some((record) => {
-          const recordTotalDose = record.vacrec_details?.vacrec_totaldose
-            ? Number(record.vacrec_details.vacrec_totaldose)
-            : 0;
-          const currentDose = Number(doseNumber);
+        const isCompleted =
+          currentVaccineHistory.some((record) => {
+            const recordTotalDose = record.vacrec_details?.vacrec_totaldose
+              ? Number(record.vacrec_details.vacrec_totaldose)
+              : 0;
+            const currentDose = Number(doseNumber);
 
-          // Check if current dose is equal to or exceeds total doses
-          return currentDose > recordTotalDose && recordTotalDose > 0;
-        }) && vaccinelist.vac_type_choices !== "routine";
+            // Check if current dose is equal to or exceeds total doses
+            return currentDose > recordTotalDose && recordTotalDose > 0;
+          }) && vaccinelist.vac_type_choices !== "routine";
 
         setIsVaccineCompleted(isCompleted);
 
-        if (isCompleted &&  vaccinelist.vac_type_choices !== "routine") {
+        if (isCompleted && vaccinelist.vac_type_choices !== "routine") {
           toast.warning(
             `${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`
           );
@@ -244,78 +254,6 @@ export default function VaccinationRecordForm() {
       }
     }
   };
-
-  // const submitStep1 = useSubmitStep1();
-  // const onSubmitStep1 = async (data: VaccineSchemaType) => {
-  //   if (assignmentOption === "other" && !data.assignto) {
-  //     form.setError("assignto", { message: "Please select an assignee" });
-  //     toast.error("Please select an assignee");
-  //     return;
-  //   }
-  //   setSubmitting(true);
-  //   try {
-  //     if (!data.vaccinetype) {
-  //       form.setError("vaccinetype", { message: "Please select a vaccine" });
-  //       toast.error("Vaccine type is required");
-  //       return;
-  //     }
-  //     const vaccineParts = data.vaccinetype.split(",");
-  //     if (vaccineParts.length !== 4) {
-  //       form.setError("vaccinetype", {
-  //         message: "Invalid vaccine data format",
-  //       });
-  //       toast.error("Invalid vaccine data format");
-  //       return;
-  //     }
-  //     const [vacStck_id, vac_id, vac_name, expiry_date] = vaccineParts;
-
-  //     const followUpData = data.followv_date
-  //       ? {
-  //           followv_date: data.followv_date,
-  //           followv_status: "pending",
-  //           followv_description:
-  //             selectedVaccineType === "conditional"
-  //               ? `Vaccination follow-up for ${vac_name}`
-  //               : nextVisitDescription || `Follow-up for ${vac_name}`,
-  //         }
-  //       : undefined;
-
-  //     await submitStep1.mutateAsync({
-  //       data: {
-  //         ...data,
-  //       },
-  //       assignmentOption,
-  //       pat_id: data.pat_id || null,
-  //       vacStck_id: vacStck_id.trim(),
-  //       vac_id: vac_id.trim(),
-  //       vac_name: vac_name.trim(),
-  //       expiry_date: expiry_date.trim(),
-  //       staff_id: staff_id,
-  //       form: {
-  //         setError: form.setError,
-  //         getValues: form.getValues,
-  //         reset: form.reset,
-  //       },
-  //       followUpData,
-  //       vaccinationHistory: vaccineHistory,
-  //     });
-  //   } catch (error) {
-  //     toast.error(
-  //       "Failed to submit Step 1: " +
-  //         (error instanceof Error ? error.message : "Unknown error")
-  //     );
-  //   } finally {
-  //     setSubmitting(false);
-  //     setIsStep1ConfirmOpen(false);
-  //   }
-  // };
-
-
-
-
-
-
-
 
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
     setSubmitting(true);
@@ -363,8 +301,6 @@ export default function VaccinationRecordForm() {
       setIsStep2ConfirmOpen(false);
     }
   };
-
-
 
   const submitStep2 = useSubmitStep2();
   const onSubmitStep2 = async (data: VitalSignsType) => {
@@ -450,12 +386,8 @@ export default function VaccinationRecordForm() {
 
   const hasInvalidStep2Fields =
     assignmentOption === "self" &&
-    (!form2.watch("pr") ||
-      !form2.watch("temp") ||
-      !form2.watch("o2") ||
-      !form2.watch("bpsystolic") ||
-      !form2.watch("bpdiastolic") ||
-      (selectedVaccineType === "conditional" && !form.watch("followv_date")));
+    selectedVaccineType === "conditional" &&
+    !form.watch("followv_date");
 
   return (
     <>
@@ -494,15 +426,27 @@ export default function VaccinationRecordForm() {
               <PatientInfoCard patient={patientToUse} />
             </div>
 
-            <CardLayout
-              cardClassName="mb-6"
-              content={
-                <VaccinationStatusCards
-                  unvaccinatedVaccines={unvaccinatedVaccines}
-                  followupVaccines={followupVaccines}
-                />
-              }
-            />
+            {isLoading ? (
+              <VaccinationStatusCardsSkeleton />
+            ) : (
+              <CardLayout
+                cardClassName="mb-6"
+                content={
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="w-full">
+                      <VaccinationStatusCards
+                        unvaccinatedVaccines={unvaccinatedVaccines}
+                        vaccinations={vaccinations}
+                      />
+                    </div>
+
+                    <div className="w-full">
+                      <FollowUpsCard followupVaccines={followupVaccines} />
+                    </div>
+                  </div>
+                }
+              />
+            )}
 
             <div className="bg-white p-6 sm:p-8 rounded-sm shadow-sm border-gray-100">
               <Form {...form}>

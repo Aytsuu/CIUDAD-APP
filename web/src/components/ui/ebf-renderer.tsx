@@ -1,6 +1,6 @@
 import React from "react";
 import { FieldConfig, ChildHealthHistoryRecord, EBFCheck } from "../../pages/healthServices/childservices/viewrecords/types";
-import { getValueByPath } from "../../pages/healthServices/childservices/viewrecords/utils";
+import { getValueByPath } from "../../pages/healthServices/childservices/viewrecords/ChildHealthutils";
 import { format, isValid, isSameDay } from "date-fns";
 
 interface EbfRendererProps {

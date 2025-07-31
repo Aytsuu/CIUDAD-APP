@@ -124,6 +124,13 @@ class PatientVaccineFollowUpView(APIView):
         if data:
             return Response(data, status=status.HTTP_200_OK)
         return Response({"detail": "No vaccine or follow-up visit data found for this patient."}, status=status.HTTP_404_NOT_FOUND)
+
+class ChildHealthVaccineFollowUpView(APIView):
+    def get(self, request, pat_id):
+        data = get_child_followups(pat_id)
+        if data:
+            return Response(data, status=status.HTTP_200_OK)
+        return Response({"detail": "No vaccine or follow-up visit data found for this patient."}, status=status.HTTP_404_NOT_FOUND)
     
 
 class GetPatientInfoFromVaccinationRecord(APIView):

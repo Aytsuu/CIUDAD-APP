@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button/button";
 import { Accordion } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChildHealthHistoryRecord } from "./types";
-import { getSupplementStatusesFields } from "./config";
+import { getSupplementStatusesFields } from "./Config";
 import { api2 } from "@/api/api";
 import { PatientSummarySection } from "./CurrentHistoryView";
 import CardLayout from "@/components/ui/card/card-layout";

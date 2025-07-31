@@ -14,12 +14,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
-import {
-  createVitalSigns,
-} from "../../forwardedrecord/restful-api/vitalsignsAPI";
-import { updateVaccinationHistory } from "../restful-api/update";
-import { deleteVitalSigns } from "@/pages/healthServices/vaccination/restful-api/delete";
-import { getVaccineStock } from "@/pages/healthServices/vaccination/restful-api/get";
+
 import { format } from "date-fns";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import CardLayout from "@/components/ui/card/card-layout";

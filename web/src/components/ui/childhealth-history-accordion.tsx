@@ -23,7 +23,7 @@ import {
   supplementsFields,
   exclusiveBfCheckFields,
   immunizationTrackingFields,
-} from "@/pages/healthServices/childservices/viewrecords/config";
+} from "@/pages/healthServices/childservices/viewrecords/Config";
 import { AccordionSection } from "@/components/ui/accordion-section";
 
 interface HealthHistoryAccordionsProps {
