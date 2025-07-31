@@ -40,7 +40,7 @@
 //   return response.data;
 // };
 
-import {api} from '@/api/api';
+import { api } from "@/api/api";
 import { MediaUploadType } from '@/components/ui/media-upload';
 
 export type GADBudgetFile = {

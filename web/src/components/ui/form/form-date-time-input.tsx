@@ -7,6 +7,25 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 
+// Reusable Form Date/Time Input Component
+export const FormDateTimeInput = React.memo(
+  ({
+    control,
+    name,
+    label,
+    readOnly,
+    type,
+    min,
+    max,
+  }: {
+    control: any;
+    name: string;
+    label: string;
+    readOnly?: boolean;
+    type: "date" | "time";
+    min?: string;
+    max?: string;
+  }) => (
 // Reusable Form Date Input Component
 export const FormDateTimeInput = React.memo(
   ({
@@ -33,12 +52,13 @@ export const FormDateTimeInput = React.memo(
           <FormControl>
             <input
               type={type}
-              className="bg-white border w-full py-1.5 px-2 rounded-md text-[14px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="bg-white border w-full py-1.5 px-2 justify-between rounded-md text-[14px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               {...field}
               value={field.value ?? ""}
               onChange={(e) => field.onChange(e.target.value)}
               readOnly={readOnly}
-              disabled={disabled}
+              min={min}
+              max={max}
             />
           </FormControl>
           <FormMessage />

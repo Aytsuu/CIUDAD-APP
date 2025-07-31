@@ -1,134 +1,17 @@
+ import React from "react";
 import { Footer } from "./Footer";
+import { useBrgyCouncil } from "./queries/landingFetchQueries";
 
 export default function BarangayCouncil() {
-  const councilMembers = [
-    {
-      name: "Maria Santos-Cruz",
-      position: "Barangay Captain",
-      term: "2023-2026",
-      responsibilities: [
-        "Overall barangay administration",
-        "Policy implementation",
-        "Community leadership",
-        "Inter-agency coordination",
-      ],
-      contact: "captain@barangay.gov.ph",
-      schedule: "Mon-Fri 8:00 AM - 5:00 PM",
-      image: "👩‍💼",
-    },
-    {
-      name: "Juan dela Cruz",
-      position: "Barangay Kagawad - Health & Sanitation",
-      term: "2023-2026",
-      responsibilities: [
-        "Health programs oversight",
-        "Sanitation initiatives",
-        "Environmental health",
-        "Medical assistance coordination",
-      ],
-      contact: "health@barangay.gov.ph",
-      schedule: "Mon, Wed, Fri 9:00 AM - 4:00 PM",
-      image: "👨‍⚕️",
-    },
-    {
-      name: "Rosa Mendoza",
-      position: "Barangay Kagawad - Education & Youth",
-      term: "2023-2026",
-      responsibilities: [
-        "Educational programs",
-        "Youth development",
-        "Sports activities",
-        "Scholarship coordination",
-      ],
-      contact: "education@barangay.gov.ph",
-      schedule: "Tue, Thu, Sat 8:00 AM - 3:00 PM",
-      image: "👩‍🎓",
-    },
-    {
-      name: "Roberto Reyes",
-      position: "Barangay Kagawad - Peace & Order",
-      term: "2023-2026",
-      responsibilities: [
-        "Public safety programs",
-        "Barangay patrol coordination",
-        "Security initiatives",
-        "Emergency response",
-      ],
-      contact: "safety@barangay.gov.ph",
-      schedule: "24/7 Emergency Hotline",
-      image: "👮‍♂️",
-    },
-    {
-      name: "Carmen Flores",
-      position: "Barangay Kagawad - Social Services",
-      term: "2023-2026",
-      responsibilities: [
-        "Senior citizen programs",
-        "PWD assistance",
-        "Indigent support",
-        "Livelihood programs",
-      ],
-      contact: "social@barangay.gov.ph",
-      schedule: "Mon-Thu 8:00 AM - 4:00 PM",
-      image: "👩‍🤝‍👨",
-    },
-    {
-      name: "Antonio Garcia",
-      position: "Barangay Kagawad - Infrastructure",
-      term: "2023-2026",
-      responsibilities: [
-        "Infrastructure development",
-        "Public works",
-        "Road maintenance",
-        "Facilities management",
-      ],
-      contact: "infrastructure@barangay.gov.ph",
-      schedule: "Mon-Fri 7:00 AM - 4:00 PM",
-      image: "👷‍♂️",
-    },
-    {
-      name: "Elena Bautista",
-      position: "Barangay Kagawad - Agriculture & Livelihood",
-      term: "2023-2026",
-      responsibilities: [
-        "Agricultural programs",
-        "Livelihood training",
-        "Economic development",
-        "Cooperative coordination",
-      ],
-      contact: "agriculture@barangay.gov.ph",
-      schedule: "Tue, Thu, Sat 8:00 AM - 5:00 PM",
-      image: "👩‍🌾",
-    },
-    {
-      name: "Patricia Ramos",
-      position: "Barangay Secretary",
-      term: "2023-2026",
-      responsibilities: [
-        "Administrative support",
-        "Document management",
-        "Meeting coordination",
-        "Record keeping",
-      ],
-      contact: "secretary@barangay.gov.ph",
-      schedule: "Mon-Fri 8:00 AM - 5:00 PM",
-      image: "📋",
-    },
-    {
-      name: "Miguel Torres",
-      position: "Barangay Treasurer",
-      term: "2023-2026",
-      responsibilities: [
-        "Financial management",
-        "Budget oversight",
-        "Revenue collection",
-        "Financial reporting",
-      ],
-      contact: "treasurer@barangay.gov.ph",
-      schedule: "Mon-Fri 8:00 AM - 4:00 PM",
-      image: "💰",
-    },
-  ];
+  const { data: brgyCouncil, isLoading } = useBrgyCouncil();
+
+  const brgyCaptain = React.useMemo(() => brgyCouncil?.find((member: any) => 
+    member.position.toLowerCase() == 'barangay captain'
+  ), [brgyCouncil]);
+
+  const filteredMembers = React.useMemo(() => brgyCouncil?.filter((member: any) => 
+    member.position.toLowerCase() !== 'barangay captain'
+  ), [brgyCouncil]);
 
   const committees = [
     {
@@ -176,7 +59,7 @@ export default function BarangayCouncil() {
     <main className="flex-1 bg-white">
       {/* Hero Section */}
       <section className="relative w-full min-h-screen">
-        <div className="px-4 py-16 md:py-24">
+        <div className="py-16 md:py-24">
           {/* Header */}
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -215,48 +98,36 @@ export default function BarangayCouncil() {
           </div>
 
           {/* Barangay Captain - Featured */}
-          <div className="mb-16">
+          <div className="">
             <div className="bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-2xl p-8 md:p-12 border border-blue-400/30">
               <div className="flex flex-col lg:flex-row items-center gap-8">
                 <div className="text-8xl lg:text-9xl">
-                  {councilMembers[0].image}
+                  <img src={brgyCaptain?.photo_url} />
                 </div>
                 <div className="flex-1 text-center lg:text-left">
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    {councilMembers[0].name}
+                  <h2 className="text-3xl md:text-4xl font-bold text-black mb-2">
+                    {brgyCaptain?.name}
                   </h2>
-                  <p className="text-xl text-blue-300 mb-4">
-                    {councilMembers[0].position}
+                  <p className="text-xl text-black mb-4">
+                    {brgyCaptain?.position}
                   </p>
-                  <p className="text-blue-100 mb-6 leading-relaxed">
+                  <p className="text-black mb-6 leading-relaxed">
                     Leading our barangay with dedication and vision, ensuring
                     that every resident's voice is heard and every community
                     need is addressed with care and efficiency.
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <div className="bg-white/10 rounded-lg px-4 py-2 border border-white/20">
-                      <span className="text-blue-200 text-sm">
-                        📧 {councilMembers[0].contact}
-                      </span>
-                    </div>
-                    <div className="bg-white/10 rounded-lg px-4 py-2 border border-white/20">
-                      <span className="text-blue-200 text-sm">
-                        🕒 {councilMembers[0].schedule}
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Council Members Grid */}
-          <div className="mb-16">
+          <div className="grid justify-center items-center py-16">
             <h2 className="text-3xl font-bold text-white text-center mb-12">
               Council Members
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {councilMembers.slice(1).map((member, index) => (
+            <div className="container grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredMembers?.map((member: any, index:number) => (
                 <div
                   key={index}
                   className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:border-blue-400/50 transition-all duration-300"
@@ -280,9 +151,7 @@ export default function BarangayCouncil() {
                         Key Responsibilities:
                       </h4>
                       <ul className="text-blue-100 text-xs space-y-1">
-                        {member.responsibilities.slice(0, 2).map((resp, i) => (
-                          <li key={i}>• {resp}</li>
-                        ))}
+                        
                       </ul>
                     </div>
 

@@ -105,10 +105,10 @@ class GAD_Budget_Tracker(models.Model):
 
 class GAD_Budget_File(models.Model):
     gbf_id = models.BigAutoField(primary_key=True)
-    gbf_name = models.CharField(max_length=255)
-    gbf_type = models.CharField(max_length=100)
-    gbf_path = models.CharField(max_length=500)
-    gbf_url = models.CharField(max_length=500)
+    gbf_name = models.CharField()
+    gbf_type = models.CharField(max_length=50)
+    gbf_path = models.CharField()
+    gbf_url = models.CharField()
     
     gbud = models.ForeignKey(
         GAD_Budget_Tracker,
@@ -126,6 +126,7 @@ class ProjectProposal(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
+        ('Amend', 'Amend'),
     ]
 
     gpr_id = models.BigAutoField(primary_key=True)
@@ -141,19 +142,20 @@ class ProjectProposal(models.Model):
     gpr_budget_items = models.JSONField(default=list)
     gpr_signatories = models.JSONField(default=list)
 
-    # gpr_supp_docs = ArrayField(
-    #     models.TextField(blank=True),
-    #     blank=True,
-    #     null=True,
-    #     default=list
-    # )
-    
     staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         db_column='staff_id'
+    )
+    
+    gbud = models.ForeignKey(
+        GAD_Budget_Tracker,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='gbud_num'
     )
     
     gpr_created = models.DateField(default=date.today)
@@ -216,6 +218,10 @@ class ProjectProposalLog(models.Model):
 class ProposalSuppDoc(models.Model):
     psd_id = models.BigAutoField(primary_key=True)
     psd_is_archive = models.BooleanField(default=False)
+    psd_name = models.CharField(null=True)
+    psd_type = models.CharField(max_length=50, null=True)
+    psd_path = models.CharField(null=True)
+    psd_url = models.CharField(null=True)
 
     gpr = models.ForeignKey(
         ProjectProposal,
@@ -224,14 +230,5 @@ class ProposalSuppDoc(models.Model):
         db_column='gpr_id'
     )
 
-    file = models.ForeignKey(
-        'file.File',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='file_id'
-    )
-
     class Meta:
         db_table = 'proposal_supp_doc'
-

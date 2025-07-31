@@ -1,5 +1,5 @@
-import ComplaintForm from "@/screens/complaint/ComplaintForm";
+import Complaint from "@/screens/complaint"
 
 export default () => {
-  return <ComplaintForm />
+  return <Complaint />
 }

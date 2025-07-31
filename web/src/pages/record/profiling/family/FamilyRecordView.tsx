@@ -31,6 +31,8 @@ export default function FamilyRecordView() {
       }
     })
   }, [compositions]);
+
+  console.log(compositions)
   
   return (
     <LayoutWithBack

@@ -34,7 +34,7 @@ export function SelectLayout({ placeholder, label, className, options, value, on
               <SelectGroup>
                   <SelectLabel>{label}</SelectLabel>
                   {options.map((option) => {
-                      return <SelectItem key={option.id} value={option.id} className="cursor-pointer">{option.name}</SelectItem>
+                      return <SelectItem key={option?.id} value={option?.id} className="cursor-pointer">{option?.name}</SelectItem>
                   })}
               </SelectGroup>
           </SelectContent>

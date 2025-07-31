@@ -1,23 +1,22 @@
 import ComplaintRecord from "@/pages/record/complaint/complaint-record/ComplaintRecord";
 import { ComplaintReport } from "@/pages/record/complaint/ComplaintReport";
 import { ComplaintViewRecord } from "@/pages/record/complaint/ComplaintReportRecord";
-import ArchiveComplaints from "@/pages/record/complaint/ComplaintArchive";
-
+import ArchiveComplaints from "@/pages/record/complaint/complaint-archive/archive-complaints";
 export const complaint_router = [
   {
-    path: "/blotter-record",
+    path: "complaint/",
     element: <ComplaintRecord />,
   },
   {
-    path: "/complaint-record/:id",
+    path: "complaint/:id",
     element: <ComplaintViewRecord />,
   },
   {
-    path: "/complaint-report",
+    path: "complaint/report",
     element: <ComplaintReport />,
   },
   {
-    path: "/complaint-archive",
+    path: "complaint/archive",
     element: <ArchiveComplaints />,
   },
 ];

@@ -13,6 +13,14 @@ import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLa
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
 import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
+import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
+import { Navigate } from "react-router";
+import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
+import UpdateComparisonView from "@/pages/record/profiling/resident/form/UpdateComparisonView";
+import ActiveRecords from "@/pages/record/profiling/business/ActiveRecords";
+import PendingRecords from "@/pages/record/profiling/business/PendingRecords";
+import RespondentRecords from "@/pages/record/profiling/business/RespondentRecords";
+import RespondentDetails from "@/pages/record/profiling/business/RespondentDetails";
 
 export const profiling_router = [
   // Account
@@ -31,12 +39,38 @@ export const profiling_router = [
     element: <ResidentFormLayout />,
   },
   {
+    path: "resident/registration",
+    element: <RegistrationLayout />,
+  },
+  {
     path: "resident/view",
     element: <ResidentFormLayout />,
   },
   {
-    path: "resident/pending",
+    path: "resident/update/view",
+    element: <UpdateComparisonView />,
+  },
+  {
+    path: "request/pending",
     element: <RegistrationRequests />,
+    children: [
+      {
+        path: "individual",
+        element: <RegistrationRequests />,
+      },
+      {
+        path: "family",
+        element: <RegistrationRequests />,
+      },
+    ]
+  },
+  {
+    path: "request/pending/individual/registration",
+    element: <RegistrationLayout />,
+  },
+  {
+    path: "request/pending/family/registration",
+    element: <RequestFamilyReg />,
   },
   {
     path: "resident/additional-registration",
@@ -81,8 +115,26 @@ export const profiling_router = [
 
   // Business
   {
-    path: "business",
+    path: "business/record",
     element: <BusinessRecords />,
+    children: [
+      {
+        path: "active",
+        element: <ActiveRecords />,
+      },
+      {
+        path: "pending",
+        element: <PendingRecords />,
+      },
+      {
+        path: "respondent",
+        element: <RespondentRecords />,
+      },
+      {
+        path: "respondent/details",
+        element: <RespondentDetails />,
+      },
+    ]
   },
   {
     path: "business/form",

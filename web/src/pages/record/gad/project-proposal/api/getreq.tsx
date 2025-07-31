@@ -1,4 +1,4 @@
-import {api} from "@/api/api";
+import { api } from "@/api/api";
 
 export const getProjectProposals = async (status?: string) => {
   try {
@@ -69,15 +69,15 @@ export const getSupportDocs = async (proposalId: number) => {
     const res = await api.get(`gad/project-proposals/${proposalId}/support-docs/`, {
       params: { is_archive: false }
     });
+    console.log('Support Docs API Response:', res.data); // Debug log
     const data = res.data?.data ?? res.data ?? [];
     return data.map((doc: any) => ({
       psd_id: doc.psd_id ?? 0,
-      psd_is_archive: doc.psd_is_archive ?? false,
-      file: {
-        file_url: doc.file?.file_url ?? '',
-        file_name: doc.file?.file_name ?? 'Unknown',
-        file_type: doc.file?.file_type ?? 'application/octet-stream'
-      }
+      psd_url: doc.psd_url ?? '',
+      psd_name: doc.psd_name ?? 'Unknown',
+      psd_type: doc.psd_type ?? 'application/octet-stream',
+      psd_path: doc.psd_path ?? '',
+      psd_is_archive: doc.psd_is_archive ?? false
     }));
   } catch (err) {
     console.error(`Error fetching support docs for proposal ${proposalId}:`, err);
@@ -117,11 +117,11 @@ const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) 
     supportDocs: (suppDocs || []).map(doc => {
       console.log('Mapping Support Doc:', JSON.stringify(doc, null, 2)); // Debug
       return {
-        psdId: doc.psd_id ?? 0,
-        fileUrl: doc.file?.file_url ?? '',
-        fileName: doc.file?.file_name ?? 'Unknown',
-        fileType: doc.file?.file_type ?? 'application/octet-stream',
-        isArchive: doc.psd_is_archive ?? false
+        psd_id: doc.psd_id ?? 0,
+        psd_url: doc.psd_url ?? '',
+        psd_name: doc.psd_name ?? 'Unknown',
+        psd_type: doc.psd_type ?? 'application/octet-stream',
+        psd_is_archive: doc.psd_is_archive ?? false
       };
     }),
     paperSize: proposal.gprPageSize ?? proposal.gpr_page_size ?? 'letter',

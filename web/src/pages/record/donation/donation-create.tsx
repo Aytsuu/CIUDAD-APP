@@ -26,6 +26,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetPersonalList } from "./queries/donationFetchQueries";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface ClerkDonateCreateFormProps {
   onSuccess?: () => void;
@@ -83,7 +84,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
       <div className="grid gap-4">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(e) => e.preventDefault()} // Prevent default form submission
             className="flex flex-col gap-4"
           >
             <FormField
@@ -125,7 +126,21 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
                             }
                           }}
                         />
-                        <CommandList>
+                        <CommandList 
+                          className="max-h-64 overflow-auto"
+                          onWheel={(e) => {
+                            e.stopPropagation()
+                            const el = e.currentTarget
+                            if (e.deltaY > 0 && el.scrollTop >= el.scrollHeight - el.clientHeight) {
+                              return
+                            }
+                            if (e.deltaY < 0 && el.scrollTop <= 0) {
+                              return
+                            }
+                            e.preventDefault()
+                            el.scrollTop += e.deltaY
+                          }}
+                        >
                           <CommandEmpty>
                             No donor found. Enter name manually or select Anonymous.
                           </CommandEmpty>
@@ -206,7 +221,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
                 options={[
                   { id: "Cash", name: "Cash" },
                   { id: "Cheque", name: "Cheque" },
-                  { id: "E-Money", name: "E-Money" },
+                  { id: "E-money", name: "E-money" },
                 ]}
                 readOnly={false}
               />
@@ -249,13 +264,21 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
 
             {/* Submit Button */}
             <div className="mt-8 flex justify-end gap-3">
-              <Button
-                type="submit"
-                className=""
-                disabled={isPending}
-              >
-                {isPending ? "Saving..." : "Save"}
-              </Button>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className=""
+                    disabled={isPending}
+                  >
+                    {isPending ? "Saving..." : "Save"}
+                  </Button>
+                }
+                title="Confirm Donation"
+                description="Are you sure the details of this entry are accurate?"
+                actionLabel="Confirm"
+                onClick={form.handleSubmit(onSubmit)}
+              />
             </div>
           </form>
         </Form>

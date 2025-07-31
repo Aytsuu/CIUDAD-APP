@@ -14,6 +14,22 @@ export const deleteIncomeExpense = async (iet_num: number) => {
 };
 
 
+export const archiveOrRestoreExpense = async (iet_num: number, incomeExpenseInfo: Record<string, any>) => {
+
+    try{
+        const res = await api.put(`treasurer/update-income-expense-tracking/${iet_num}/`,{
+            iet_is_archive: incomeExpenseInfo.iet_is_archive
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
+}
+
+
+
 
 
 export const deleteIncome = async (inc_num: number) => {
@@ -29,3 +45,17 @@ export const deleteIncome = async (inc_num: number) => {
 };
 
 
+export const archiveOrRestoreIncome = async (inc_num: number, incomeInfo: Record<string, any>) => {
+
+    try{
+
+        const res = await api.put(`treasurer/update-income-tracking/${inc_num}/`,{
+            inc_is_archive: incomeInfo.inc_is_archive
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
+}
