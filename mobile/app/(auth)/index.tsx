@@ -10,5 +10,5 @@ import ReceiptPage from "@/screens/treasurer/receipt/receipt-main";
 import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
 
 export default () => {
-    return <ReceiptPage/>
+    return <PurposeAndRatesMain/>
 }

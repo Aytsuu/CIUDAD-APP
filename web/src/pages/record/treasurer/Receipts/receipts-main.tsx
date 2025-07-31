@@ -393,109 +393,109 @@ import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
 // import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
 
 function ReceiptPage() {
-  // const { data: fetchedData = [], isLoading } = useInvoiceQuery();
+  const { data: fetchedData = [], isLoading } = useInvoiceQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // const columns: ColumnDef<Receipt>[] = [
-  //   {
-  //     accessorKey: "inv_serial_num",
-  //     header: ({ column }) => (
-  //       <div
-  //         className="flex w-full justify-center items-center gap-2 cursor-pointer"
-  //         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-  //       >
-  //         Serial No.
-  //         <ArrowUpDown size={15} />
-  //       </div>
-  //     ),
-  //     cell: ({ row }) => (
-  //       <div className="capitalize">{row.getValue("inv_serial_num")}</div>
-  //     )
-  //   },
-  //   {
-  //     accessorKey: "inv_date",
-  //     header: ({ column }) => (
-  //       <div
-  //         className="flex w-full justify-center items-center gap-2 cursor-pointer"
-  //         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-  //       >
-  //         Date Issued
-  //         <ArrowUpDown size={15} />
-  //       </div>
-  //     ),
-  //     cell: ({ row }) => {
-  //       const date = new Date(row.getValue("inv_date"));
-  //       const formattedDate = date.toLocaleDateString('en-US', {
-  //         year: 'numeric',
-  //         month: '2-digit',
-  //         day: '2-digit',
-  //       });
-  //       const formattedTime = date.toLocaleTimeString('en-US', {
-  //         hour: 'numeric',
-  //         minute: '2-digit',
-  //         hour12: true,
-  //       });
-  //       return <div>{`${formattedDate} at ${formattedTime}`}</div>;
-  //     },
-  //   },
-  //   {
-  //     accessorKey: "inv_payor",
-  //     header: "Payor",
-  //   },
-  //   {
-  //     accessorKey: "inv_pay_method",
-  //     header: "Payment Method",
-  //   },       
-  //   {
-  //     accessorKey: "inv_nat_of_collection",
-  //     header: "Nature of Collection",
-  //   },
-  //   {
-  //     accessorKey: "inv_amount",
-  //     header: "Amount",
-  //   },
-  // ];
+  const columns: ColumnDef<Receipt>[] = [
+    {
+      accessorKey: "inv_serial_num",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Serial No.
+          <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("inv_serial_num")}</div>
+      )
+    },
+    {
+      accessorKey: "inv_date",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Issued
+          <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const date = new Date(row.getValue("inv_date"));
+        const formattedDate = date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+        const formattedTime = date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+        return <div>{`${formattedDate} at ${formattedTime}`}</div>;
+      },
+    },
+    {
+      accessorKey: "inv_payor",
+      header: "Payor",
+    },
+    {
+      accessorKey: "inv_pay_method",
+      header: "Payment Method",
+    },       
+    {
+      accessorKey: "inv_nat_of_collection",
+      header: "Nature of Collection",
+    },
+    {
+      accessorKey: "inv_amount",
+      header: "Amount",
+    },
+  ];
 
-  // const filterOptions = [
-  //   { id: "all", name: "All" },
-  //   { id: "Barangay Certification", name: "Barangay Certification" },
-  //   { id: "Business Permit", name: "Business Permit" },
-  // ];
+  const filterOptions = [
+    { id: "all", name: "All" },
+    { id: "Barangay Certification", name: "Barangay Certification" },
+    { id: "Business Permit", name: "Business Permit" },
+  ];
 
   const [selectedFilterId, setSelectedFilterId] = useState("all");
 
   // Filter data based on selected filter and search query
-  // const filteredData = fetchedData.filter(item => {
-  //   const matchesFilter = selectedFilterId === "all" || 
-  //     item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
+  const filteredData = fetchedData.filter(item => {
+    const matchesFilter = selectedFilterId === "all" || 
+      item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
     
-  //   const matchesSearch = !searchQuery || 
-  //     Object.values(item).some(val => 
-  //       String(val).toLowerCase().includes(searchQuery.toLowerCase())
-  //     );
+    const matchesSearch = !searchQuery || 
+      Object.values(item).some(val => 
+        String(val).toLowerCase().includes(searchQuery.toLowerCase())
+      );
     
-  //   return matchesFilter && matchesSearch;
-  // });
+    return matchesFilter && matchesSearch;
+  });
 
   // Pagination calculations
-  // const totalPages = Math.ceil(filteredData.length / pageSize);
-  // const paginatedData = filteredData.slice(
-  //   (currentPage - 1) * pageSize,
-  //   currentPage * pageSize
-  // );
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="w-full h-full">
-  //       <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-  //       <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-  //       <Skeleton className="h-10 w-full mb-4 opacity-30" />
-  //       <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-  //     </div>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+        <Skeleton className="h-10 w-full mb-4 opacity-30" />
+        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full p-4">
@@ -526,7 +526,7 @@ function ReceiptPage() {
               }}
             />
           </div>
-          {/* <SelectLayout
+          <SelectLayout
             className="w-full sm:w-[200px] bg-white"
             placeholder="Filter"
             options={filterOptions}
@@ -534,8 +534,8 @@ function ReceiptPage() {
             onChange={(id) => {
               setSelectedFilterId(id);
               setCurrentPage(1); // Reset to first page when changing filter
-            }} */}
-          {/* /> */}
+            }}
+          />
         </div>
       </div>
 
@@ -558,10 +558,10 @@ function ReceiptPage() {
           </div>
         </div>
 
-        {/* <DataTable columns={columns} data={paginatedData} /> */}
+        <DataTable columns={columns} data={paginatedData} />
       </div>
 
-      {/* <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
           Showing {(currentPage - 1) * pageSize + 1}-
           {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
@@ -574,7 +574,7 @@ function ReceiptPage() {
             onPageChange={setCurrentPage}
           />
         )}
-      </div> */}
+      </div>
     </div>
   );
 }
