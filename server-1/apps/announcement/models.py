@@ -13,8 +13,9 @@ class Announcement(models.Model):
         max_length=50,
         choices=[
             ('general', 'General'),
-            ('urgent', 'Urgent'),
+            ('public', 'Public'),
             ('event', 'Event'),
+            ('reminder', 'Reminder'),
         ]
     )
     staff = models.ForeignKey(
@@ -50,7 +51,6 @@ class AnnouncementRecipient(models.Model):
         choices=[
             ('email', 'Email'),
             ('sms', 'SMS'),
-            ('public', 'Public'),
         ]
     )
 

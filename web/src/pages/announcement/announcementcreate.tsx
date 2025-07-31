@@ -37,17 +37,16 @@ const AnnouncementCreate = () => {
   };
 
   const defaultValues = {
-  ann_title: "",
-  ann_details: "",
-  ann_start_at: "",
-  ann_end_at: "",
-  ann_type: "",
-  ar_mode: [],
-  positions: [],  
-  ar_age: [],     
-  staff: ""
-};
-
+    ann_title: "",
+    ann_details: "",
+    ann_start_at: "",
+    ann_end_at: "",
+    ann_type: "",
+    ar_mode: [],
+    positions: [],
+    ar_age: [],
+    staff: ""
+  };
 
   const form = useForm<AnnouncementCreateFormValues>({
     resolver: zodResolver(AnnouncementSchema),
@@ -57,6 +56,9 @@ const AnnouncementCreate = () => {
   const annType = form.watch("ann_type");
 
   React.useEffect(() => {
+    if (["general", "reminder", "public"].includes(annType)) {
+      form.setValue("ar_mode", ["sms", "email"]);
+    }
     if (annType === "general") {
       form.setValue("ann_start_at", "");
       form.setValue("ann_end_at", "");
@@ -81,33 +83,30 @@ const AnnouncementCreate = () => {
       staff: user?.staff?.staff_id
     };
 
-    console.log("Submitting payload to API:", cleanedValues);
-    console.log("User object:", user);
-
     try {
       const createdAnnouncement = await postAnnouncement(cleanedValues);
 
-      if (!values.positions?.length) {
-        console.warn("No positions selected. Skipping recipient submission.");
-        toast.warning("No positions selected. Recipients skipped.");
-      } else {
-        const positionRecipients = values.positions.flatMap((posId: string) =>
-          values.ar_mode.flatMap((mode: string) =>
-            (values.ar_age?.length ? values.ar_age : ["youth", "adult", "senior"]).map((age) => ({
-              position: posId,
-              ar_mode: mode,
-              ann: createdAnnouncement?.ann_id,
-              staff: user?.staff?.staff_id,
-              ar_age: age,
-            }))
-          )
-        );
+      if (!["general", "reminder", "public"].includes(annType)) {
+        if (!values.positions?.length) {
+          console.warn("No positions selected. Skipping recipient submission.");
+          toast.warning("No positions selected. Recipients skipped.");
+        } else {
+          const positionRecipients = values.positions.flatMap((posId: string) =>
+            values.ar_mode.flatMap((mode: string) =>
+              (values.ar_age?.length ? values.ar_age : ["youth", "adult", "senior"]).map((age) => ({
+                position: posId,
+                ar_mode: mode,
+                ann: createdAnnouncement?.ann_id,
+                staff: user?.staff?.staff_id,
+                ar_age: age,
+              }))
+            )
+          );
 
-        console.log("Recipients payload being sent:", positionRecipients);
-
-        await postAnnouncementRecipient({
-          recipients: positionRecipients,
-        });
+          await postAnnouncementRecipient({
+            recipients: positionRecipients,
+          });
+        }
       }
 
       const files = mediaFiles.map((media) => ({
@@ -163,7 +162,7 @@ const AnnouncementCreate = () => {
           }}
           className="space-y-6"
         >
-          {/* Basic Information */}
+          {/* Basic Info */}
           <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -183,7 +182,7 @@ const AnnouncementCreate = () => {
                 <label className="text-sm font-medium text-gray-700">Announcement Details</label>
                 <textarea
                   {...form.register("ann_details")}
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
                   placeholder="Provide detailed information about the announcement"
                 />
               </div>
@@ -193,119 +192,111 @@ const AnnouncementCreate = () => {
                 label="Announcement Type"
                 options={[
                   { id: "general", name: "General" },
-                  { id: "urgent", name: "Urgent" },
+                  { id: "public", name: "Public" },
                   { id: "event", name: "Event" },
+                  { id: "reminder", name: "Reminder" },
                 ]}
               />
             </CardContent>
           </Card>
 
           {/* Schedule */}
-          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-gray-600" />
-                <CardTitle className="text-lg">Schedule</CardTitle>
-              </div>
-              <CardDescription>Set when your announcement will be active</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div
-                className={`space-y-2 transition-all duration-300 ${!["event", "urgent"].includes(annType)
-                  ? "grayscale opacity-60 pointer-events-none"
-                  : ""
-                  }`}
-              >
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Clock className="h-4 w-4" />
-                  Start Date & Time
+          {["event", "urgent"].includes(annType) && (
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Schedule</CardTitle>
                 </div>
-                <FormDateTimeInput
-                  control={form.control}
-                  name="ann_start_at"
-                  label=""
-                  type="datetime-local"
-                  disabled={!["event", "urgent"].includes(annType)}
-                />
-              </div>
+                <CardDescription>Set when your announcement will be active</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    Start Date & Time
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_start_at"
+                    type="datetime-local"
+                  />
+                </div>
 
-              <div
-                className={`space-y-2 transition-all duration-300 ${!["event", "urgent"].includes(annType)
-                  ? "grayscale opacity-60 pointer-events-none"
-                  : ""
-                  }`}
-              >
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Clock className="h-4 w-4" />
-                  End Date & Time
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    End Date & Time
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_end_at"
+                    type="datetime-local"
+                  />
                 </div>
-                <FormDateTimeInput
-                  control={form.control}
-                  name="ann_end_at"
-                  label=""
-                  type="datetime-local"
-                  disabled={!["event", "urgent"].includes(annType)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Recipients & Delivery */}
-          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-gray-600" />
-                <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
-              </div>
-              <CardDescription>Choose which positions and delivery modes</CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Badge variant="outline" className="text-xs">
-                    Target Positions
-                  </Badge>
-                  <FormComboCheckbox
-                    control={form.control}
-                    name="positions"
-                    options={positionOptions}
-                  />
+          {["event", "urgent"].includes(annType) && (
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
                 </div>
+                <CardDescription>Choose which positions and delivery modes</CardDescription>
+              </CardHeader>
 
-                <div className="space-y-2">
-                  <Badge variant="outline" className="text-xs">
-                    Age Group
-                  </Badge>
-                  <FormComboCheckbox
-                    control={form.control}
-                    name="ar_age"
-                    options={[
-                      { id: "youth", name: "Youth" },
-                      { id: "adult", name: "Adult" },
-                      { id: "senior", name: "Senior Citizen" },
-                    ]}
-                  />
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="text-xs">
+                      Target Positions
+                    </Badge>
+                    <FormComboCheckbox
+                      control={form.control}
+                      name="positions"
+                      options={positionOptions}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="text-xs">
+                      Age Group
+                    </Badge>
+                    <FormComboCheckbox
+                      control={form.control}
+                      name="ar_age"
+                      options={[
+                        { id: "youth", name: "Youth" },
+                        { id: "adult", name: "Adult" },
+                        { id: "senior", name: "Senior Citizen" },
+                      ]}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="text-xs">
+                      Delivery Mode
+                    </Badge>
+                    <FormComboCheckbox
+                      control={form.control}
+                      name="ar_mode"
+                      options={[
+                        { id: "sms", name: "SMS" },
+                        { id: "email", name: "Email" },
+                      ]}
+                      disabled={["general", "reminder", "public"].includes(annType)}
+                    />
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
 
-                <div className="space-y-2">
-                  <Badge variant="outline" className="text-xs">
-                    Delivery Mode
-                  </Badge>
-                  <FormComboCheckbox
-                    control={form.control}
-                    name="ar_mode"
-                    options={[
-                      { id: "sms", name: "SMS" },
-                      { id: "email", name: "Email" },
-                      { id: "public", name: "Public" },
-                    ]}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+          {/* Upload */}
           <MediaUpload
             title="Upload Image"
             description="Upload images"

@@ -1,15 +1,14 @@
-"use client"
-
-import { useState } from "react"
+import { SetStateAction, useState } from "react"
 import { Footer } from "./Footer"
 import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"
+import type { Announcement } from "@/pages/announcement/queries/announcementFetchQueries"
 
 export default function Announcements() {
   const { data: announcements, isLoading } = useGetAnnouncement()
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const openModal = (announcement) => {
+  const openModal = (announcement: SetStateAction<Announcement | null>) => {
     setSelectedAnnouncement(announcement)
     setIsModalOpen(true)
   }
@@ -50,7 +49,7 @@ export default function Announcements() {
                 <div
                   key={announcement.ann_id}
                   onClick={() => openModal(announcement)}
-                  className="cursor-pointer bg-white/95 backdrop-blur-sm text-[#17294A] rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 hover:scale-[1.01] overflow-hidden h-48"
+                  className="cursor-pointer bg-white/95 backdrop-blur-sm text-[#17294A] rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 hover:scale-[1.01] overflow-hidden h-auto min-h-[12rem] md:min-h-[14rem]"
                 >
                   <div className="flex h-full">
                     {/* LEFT CONTENT */}
@@ -84,7 +83,7 @@ export default function Announcements() {
                       </div>
 
                       {/* Start / End Date */}
-                      <div className="space-y-1 pt-2">
+                      <div className="flex flex-col gap-2 pt-2">
                         {announcement.ann_start_at && (
                           <div className="flex items-center gap-2 p-1.5 bg-green-50 rounded border-l-2 border-green-400">
                             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -160,69 +159,66 @@ export default function Announcements() {
 
       {/* Modal */}
       {isModalOpen && selectedAnnouncement && (
-  <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 py-8">
-    <div className="relative bg-white text-[#17294A] rounded-xl shadow-2xl w-full max-w-6xl h-[80vh] flex flex-col md:flex-row overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 py-8">
+          <div className="relative bg-white text-[#17294A] rounded-xl shadow-2xl w-full max-w-6xl h-[80vh] flex flex-col md:flex-row overflow-hidden">
+            {/* Close Button */}
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-5 text-gray-500 hover:text-red-500 text-3xl font-bold z-10"
+            >
+              &times;
+            </button>
 
-      {/* Close Button */}
-      <button
-        onClick={closeModal}
-        className="absolute top-4 right-5 text-gray-500 hover:text-red-500 text-3xl font-bold z-10"
-      >
-        &times;
-      </button>
+            {/* DETAILS SECTION */}
+            <div className={`p-8 overflow-y-auto h-full flex flex-col justify-between ${(selectedAnnouncement.files && selectedAnnouncement.files.length > 0) ? "md:w-1/2" : "w-full"}`}>
+              <div>
+                <h2 className="text-4xl font-bold mb-2">{selectedAnnouncement.ann_title}</h2>
 
-      {/* DETAILS SECTION (left) */}
-      <div className={`p-8 overflow-y-auto h-full flex flex-col justify-between ${selectedAnnouncement.files?.length > 0 ? "md:w-1/2" : "w-full"}`}>
-        <div>
-          <h2 className="text-4xl font-bold mb-2">{selectedAnnouncement.ann_title}</h2>
+                {selectedAnnouncement.ann_created_at && (
+                  <p className="text-sm text-gray-500 mb-4">
+                    Posted on{" "}
+                    {new Date(selectedAnnouncement.ann_created_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
 
-          {selectedAnnouncement.ann_created_at && (
-            <p className="text-sm text-gray-500 mb-4">
-              Posted on{" "}
-              {new Date(selectedAnnouncement.ann_created_at).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          )}
+                <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">
+                  {selectedAnnouncement.ann_details}
+                </p>
+              </div>
 
-          <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">
-            {selectedAnnouncement.ann_details}
-          </p>
-        </div>
+              <div className="pt-6 space-y-2 text-sm">
+                {selectedAnnouncement.ann_start_at && (
+                  <p className="text-green-700 font-medium">
+                    <strong>Start:</strong>{" "}
+                    {new Date(selectedAnnouncement.ann_start_at).toLocaleDateString()}
+                  </p>
+                )}
+                {selectedAnnouncement.ann_end_at && (
+                  <p className="text-red-700 font-medium">
+                    <strong>End:</strong>{" "}
+                    {new Date(selectedAnnouncement.ann_end_at).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            </div>
 
-        <div className="pt-6 space-y-2 text-sm">
-          {selectedAnnouncement.ann_start_at && (
-            <p className="text-green-700 font-medium">
-              <strong>Start:</strong>{" "}
-              {new Date(selectedAnnouncement.ann_start_at).toLocaleDateString()}
-            </p>
-          )}
-          {selectedAnnouncement.ann_end_at && (
-            <p className="text-red-700 font-medium">
-              <strong>End:</strong>{" "}
-              {new Date(selectedAnnouncement.ann_end_at).toLocaleDateString()}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* IMAGE SECTION (right) */}
-      {selectedAnnouncement.files && selectedAnnouncement.files.length > 0 && (
-        <div className="hidden md:block md:w-1/2 h-full">
-          <img
-            src={selectedAnnouncement.files[0].af_url}
-            alt={selectedAnnouncement.files[0].af_name}
-            className="w-full h-full object-cover"
-          />
+            {/* IMAGE SECTION */}
+            {selectedAnnouncement.files && selectedAnnouncement.files.length > 0 && (
+              <div className="hidden md:block md:w-1/2 h-full">
+                <img
+                  src={selectedAnnouncement.files[0].af_url}
+                  alt={selectedAnnouncement.files[0].af_name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
-
-
 
       <Footer />
     </main>
