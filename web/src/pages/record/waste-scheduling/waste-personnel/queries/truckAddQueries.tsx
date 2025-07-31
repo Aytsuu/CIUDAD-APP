@@ -6,20 +6,6 @@ import { postWasteTruck } from "../request/truckPostReq";
 import { z } from "zod";
 import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
 
-// Type definitions
-export type WastePersonnelInput = {
-  wstp_id?: number;
-  // staff_id: number;
-};
-
-export type WasteTruckInput = {
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status?: string;
-  truck_last_maint: string;
-};
-
 export const useAddWasteTruck = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();

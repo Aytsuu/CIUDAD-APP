@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
 import { useUpdateWasteTruck } from "./queries/truckUpdate";
-import { useGetAllPersonnel, useGetTrucks, PersonnelData, TruckData } from "./queries/truckFetchQueries";
+import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
 import { useDeleteWasteTruck, useRestoreWasteTruck } from "./queries/truckDelQueries";
 import { useAddWasteTruck } from "./queries/truckAddQueries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,7 +32,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useQueryClient } from "@tanstack/react-query";
-import type { PersonnelCategory, TruckStatus } from "./queries/truckFetchQueries";
+import { PersonnelCategory, TruckStatus, PersonnelData, TruckData } from "./waste-personnel-types";
 
 const WastePersonnel = () => {
   const queryClient = useQueryClient();
