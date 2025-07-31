@@ -17,11 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   useGetIncomeImages,
-  useGetDisbursementImages,
-  IncomeImage,
-  DisbursementImage,
-  Album,
-  ImageItem,
+  useGetDisbursementImages
 } from "./queries/fetchqueries";
 import {
   useArchiveIncomeImage,
@@ -36,6 +32,7 @@ import {
   useRestoreDisbursementFolder,
 } from "./queries/delqueries";
 import { formatDate } from "@/helpers/dateFormatter";
+import { ImageItem, Album, IncomeImage, DisbursementImage } from "./inc-disb-types";
 
 function IncomeandDisbursementView() {
   const [currentPage, setCurrentPage] = useState(1);

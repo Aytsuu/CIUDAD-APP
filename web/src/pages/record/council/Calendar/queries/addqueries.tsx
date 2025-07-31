@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { postCouncilEvent, postAttendee, postAttendanceSheet } from "../api/postreq";
-import { CouncilEventInput, AttendeeInput, AttendanceSheetInput } from "./fetchqueries";
+import { CouncilEventInput, AttendeeInput, AttendanceSheetInput } from "../ce-att-types";
 
 export const useAddCouncilEvent = () => {
   const queryClient = useQueryClient();

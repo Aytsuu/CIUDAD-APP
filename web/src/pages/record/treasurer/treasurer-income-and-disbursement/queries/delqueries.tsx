@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { IncomeImage, DisbursementImage } from "./fetchqueries";
+import { IncomeImage, DisbursementImage, Album } from "../inc-disb-types";
 import { 
   archiveIncomeImage,
   restoreIncomeImage,
@@ -14,7 +14,6 @@ import {
   restoreIncomeFolder,
   permanentDeleteIncomeFolder,
 } from "../api/delreq";
-import { Album } from "./fetchqueries";
 import useToastControl from "./toastcontrol";
 
 export const useArchiveIncomeImage = () => {

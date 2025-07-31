@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { Staff } from "../queries/fetchqueries";
+import { Staff } from "../ce-att-types";
 
 export const getCouncilEvents = async () => {
     try {
