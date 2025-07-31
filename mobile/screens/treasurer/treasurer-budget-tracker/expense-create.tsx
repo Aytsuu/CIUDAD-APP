@@ -372,6 +372,10 @@ function ExpenseCreateForm() {
       return;
     }
 
+    if(!values.iet_additional_notes){
+        values.iet_additional_notes = "None";
+    }
+
     //proposed budget
     const proposedBudget = selectedParticular?.proposedBudget;
     const propBudget = Number(proposedBudget);
@@ -470,7 +474,7 @@ function ExpenseCreateForm() {
   return (
     <_ScreenLayout
       // Header Configuration
-      header={`${currentStep === 1 ? 'Step 1: Budget Details' : 'Step 2: Transaction Details'}`}
+      headerBetweenAction={currentStep === 1 ? <Text>Step 1: Budget Details</Text> : <Text>Step 2: Transaction Details</Text>}
       headerAlign="left"
       
       // Navigation Configuration
@@ -516,72 +520,76 @@ function ExpenseCreateForm() {
       stickyFooter={true}
     >
       {/* Main Content */}
-      {currentStep === 1 ? (
-        <>
-          {selectedParticular && (
-            <View className="bg-primaryBlue p-3 rounded-md mb-4 items-center">
-              <Text className="text-white text-base font-semibold">
-                Accumulated Budget: P{selectedParticular.proposedBudget.toFixed(2)}
-              </Text>
+      <View className="px-4">
+        {currentStep === 1 ? (
+          <View className="space-y-4">
+            <View className="pb-8">
+              {selectedParticular && (
+                <View className="bg-primaryBlue p-3 rounded-md items-center">
+                  <Text className="text-white text-base font-semibold">
+                    Accumulated Budget: P{selectedParticular.proposedBudget.toFixed(2)}
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
 
-          <FormSelect
-            control={form.control}
-            name="iet_particulars"
-            label="Particulars"
-            options={particularSelector}
-            placeholder="Select Particulars"
-          />
+            <FormSelect
+              control={form.control}
+              name="iet_particulars"
+              label="Particulars"
+              options={particularSelector}
+              placeholder="Select Particulars"
+            />
 
-          <FormInput
-            control={form.control}
-            name="iet_amount"
-            label="Proposed Amount"
-            keyboardType="numeric"
-            placeholder="Enter proposed amount"
-          />
+            <FormInput
+              control={form.control}
+              name="iet_amount"
+              label="Proposed Amount"
+              keyboardType="numeric"
+              placeholder="Enter proposed amount"
+            />
 
-          <FormInput
-            control={form.control}
-            name="iet_actual_amount"
-            label="Actual Amount"
-            keyboardType="numeric"
-            placeholder="Enter actual amount (optional)"
-          />
-        </>
-      ) : (
-        <>
-          <FormInput
-            control={form.control}
-            name="iet_serial_num"
-            label="Serial Number"
-            placeholder="Enter serial number"
-          />
-
-          <FormDateAndTimeInput
-            control={form.control}
-            name="iet_datetime"
-            label={`Date (${year} only)`}
-          />
-
-          <FormTextArea
-            control={form.control}
-            name="iet_additional_notes"
-            label="Additional Notes"
-            placeholder="Add more details (Optional)"
-          />
-
-          <View className="mb-6">
-            <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Document</Text>
-            <MultiImageUploader
-              mediaFiles={mediaFiles}
-              setMediaFiles={setMediaFiles}
-              maxFiles={5}
+            <FormInput
+              control={form.control}
+              name="iet_actual_amount"
+              label="Actual Amount"
+              keyboardType="numeric"
+              placeholder="Enter actual amount (optional)"
             />
           </View>
-        </>
-      )}
+        ) : (
+          <View className="space-y-4">
+            <FormInput
+              control={form.control}
+              name="iet_serial_num"
+              label="Serial Number"
+              placeholder="Enter serial number"
+            />
+
+            <FormDateAndTimeInput
+              control={form.control}
+              name="iet_datetime"
+              label={`Date (${year} only)`}
+            />
+
+            <FormTextArea
+              control={form.control}
+              name="iet_additional_notes"
+              label="Additional Notes"
+              placeholder="Add more details (Optional)"
+            />
+
+            <View className="mb-6">
+              <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Document</Text>
+              <MultiImageUploader
+                mediaFiles={mediaFiles}
+                setMediaFiles={setMediaFiles}
+                maxFiles={5}
+              />
+            </View>
+          </View>
+        )}
+      </View>
     </_ScreenLayout>
   );
 }

@@ -9,7 +9,7 @@ import BarangayCouncil from '@/pages/landing/BarangayCouncil';
 import MobileApp from '@/pages/landing/MobileApp';
 import { RouteObject } from 'react-router';
 import Health from '@/pages/landing/Health';
-import Announcements from '@/pages/landing/announcements';
+import ForgotPassword from '@/pages/landing/ForgotPass';
 
 
 export const landing_router: RouteObject[] = [
@@ -54,8 +54,13 @@ export const landing_router: RouteObject[] = [
         element: <SignIn />
       },
       {
+<<<<<<< HEAD
         path: "announcements",
         element: <Announcements/>
+=======
+        path: "forgot-password",
+        element: <ForgotPassword />
+>>>>>>> master
       }
     ]
   }

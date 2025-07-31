@@ -159,6 +159,7 @@ export default function ResidentCreateForm({
     }
   }, [form, residentsList, residentsListHealth, populateFields, addresses]);
 
+
   const submit = async () => {
     setIsSubmitting(true);
 
@@ -195,14 +196,17 @@ export default function ResidentCreateForm({
       const resident = await addResidentAndPersonal({
         personalInfo: personalInfo,
         staffId: staffId
-      })
+      });
 
       const new_addresses = await addAddress(addresses)
 
-      await addPersonalAddress(new_addresses?.map((address: any) => ({
-        add: address.add_id,
-        per: resident.per.per_id,
-      })))
+      await addPersonalAddress({
+        data: new_addresses?.map((address: any) => ({
+          add: address.add_id,
+          per: resident.per.per_id,
+        })),
+        history_id: resident.per.history
+      })
       
       showSuccessToast('Successfully registered new resident!')
       if (params?.isRegistrationTab) {

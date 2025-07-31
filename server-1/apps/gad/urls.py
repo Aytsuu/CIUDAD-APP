@@ -21,4 +21,5 @@ urlpatterns = [
     path('support-docs/<int:psd_id>/',ProposalSuppDocDetailView.as_view(),name='support-doc-detail'),
     path('project-proposals/<int:gpr_id>/archive/', ProjectProposalArchiveView.as_view(), name='project-proposal-archive'),
     path('project-proposals/<int:gpr_id>/restore/', ProjectProposalRestoreView.as_view(), name='project-proposal-restore'),
+    path('status-counts/', ProjectProposalStatusCountView.as_view(), name='project-proposal-status-counts'),
 ]

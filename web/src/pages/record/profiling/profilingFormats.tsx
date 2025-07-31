@@ -1,5 +1,7 @@
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { capitalize } from "@/helpers/capitalize";
+import { formatCurrency } from "@/helpers/currencyFormat";
 
 // Format residents for searching
 export const formatResidents = (residents: any) => {
@@ -98,5 +100,22 @@ export const formatRequestComposition = (compositions: any) => {
   return compositions.map((comp: any) => ({
     id: comp.per_id,
     name: <p>{`${comp.per_lname}, ${comp.per_fname}${comp.per_mname ? ` ${comp.per_mname}` : ""}`}</p>
+  }))
+}
+
+export const formatOwnedBusinesses = (businesses: any) => {
+  if(!businesses) return [];
+
+  return businesses.map((bus: any) => ({
+    id: bus.bus_id,
+    name: (
+      <div className="flex flex-col w-full items-start">
+        <p className="text-[15px]">{bus.bus_name}</p>
+        <div className="flex w-full justify-between items-center">
+          <p className="text-xs text-gray-700">Gross Sales: {formatCurrency(bus.bus_gross_sales)}</p>
+          <Badge className={`${bus.bus_status == 'Pending' ? "bg-orange-500" : ""}`}>{bus.bus_status}</Badge>
+        </div>
+      </div>
+    )
   }))
 }

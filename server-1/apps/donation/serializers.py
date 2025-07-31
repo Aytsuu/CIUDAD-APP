@@ -37,7 +37,8 @@ class DonationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'don_num': {'read_only': True},
             'per_id': {'required': False, 'write_only': True},
-            'staff': {'required': False, 'write_only': True}
+            'staff': {'required': False, 'write_only': True},
+            'don_description': {'required': False, 'allow_null': True, 'allow_blank': True}
         }
 
     def get_donor_name(self, obj):

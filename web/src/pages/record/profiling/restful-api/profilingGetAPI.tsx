@@ -207,9 +207,39 @@ export const getRequests = async (page: number, pageSize: number, searchQuery: s
 };
 
 // ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
-export const getBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
+export const getActiveBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
   try {
-    const res = await api.get("profiling/business/list/table/", {
+    const res = await api.get("profiling/business/active/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getPendingBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
+  try {
+    const res = await api.get("profiling/business/pending/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getBusinessRespondent = async (page: number, pageSize: number, searchQuery: string) => {
+  try {
+    const res = await api.get("profiling/business/respondent/list/table/", {
       params: {
         page,
         page_size: pageSize,

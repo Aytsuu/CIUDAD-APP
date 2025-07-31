@@ -1,9 +1,10 @@
 import z from "zod"
 import { toast } from "sonner"
-import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI"
+import { budget_plan, budget_plan_details, addBudgetPlanSuppDoc } from "../restful-API/budgetPlanPostAPI"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { BudgetPlan } from "../budgetPlanInterfaces"
 import { CircleCheck } from "lucide-react"
+
 
 const BudgetPlanDetailSchema = z.object({
     dtl_budget_item: z.string().min(1, "Budget item is required"),
@@ -21,7 +22,7 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             newBudgetHeader: BudgetPlan;
             newBudgetDetails: z.infer<typeof BudgetPlanDetailSchema>[];
         }) => {
-            toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
+            // toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
 
             try {
                 const validatedDetails = values.newBudgetDetails.map(detail => {
@@ -64,3 +65,40 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
     });
 };
 
+
+export const useAddBudgetPlanSuppDoc = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (files: Array<{
+            publicUrl: string;
+            storagePath: string;
+            type: "image" | "video" | "document";
+            name: string;
+            plan_id: number;
+        }>) => {
+            if (files.length === 0) {
+                throw new Error('No files to upload');
+            }
+            return addBudgetPlanSuppDoc(files);
+        },
+        onSuccess: () => {
+            toast.loading('Uploading documents...', { id: "uploadBudgetDocs" });
+            queryClient.invalidateQueries({ queryKey: ['budgetPlanFiles'] });
+            
+            toast.success('Documents uploaded successfully!', {
+                id: "uploadBudgetDocs",
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                duration: 2000
+            });
+            onSuccess?.();
+        },
+        onError: (err: Error) => {
+            console.error("Upload error:", err);
+            toast.error(
+                err.message || "Failed to upload documents. Please try again.",
+                { id: "uploadBudgetDocs", duration: 2000 }
+            );
+        }
+    });
+};

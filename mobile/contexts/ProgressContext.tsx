@@ -2,7 +2,7 @@ import React from 'react';
 
 const ProgressContext = React.createContext<Record<string, any> | null>(null);
 
-export const FamilyRegistrationProvider = ({ children } : {
+export const ProgressProvider = ({ children } : {
   children: React.ReactNode
 }) => {
   const [currentStep, setCurrentStep] = React.useState(1);

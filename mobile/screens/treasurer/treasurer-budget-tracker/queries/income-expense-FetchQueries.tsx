@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getIncomeExpenseMainCard } from "../request/income-expense-GetRequest";
 import { getIncomeExpense } from "../request/income-expense-GetRequest";
-import { getParticulars } from "../request/income-expense-GetRequest";
+import { getExpenseParticulars } from "../request/particular-GetRequest";
 import { getIncomeData } from "../request/income-expense-GetRequest";
 import { getIncomeParticulars } from "../request/particular-GetRequest";
 
@@ -30,8 +30,8 @@ export type IncomeExpense = {
     iet_num: number;
     iet_serial_num: string;
     iet_datetime: string;
-    dtl_budget_item: string;
-    dtl_id: number;
+    exp_budget_item: string;
+    exp_id: number;
     iet_amount: number;
     iet_actual_amount: number;
     iet_entryType: "Income" | "Expense";
@@ -68,7 +68,7 @@ export const useBudgetItems = (year?: number) => {
     return useQuery<BudgetItem[]>({
         queryKey: ['budgetItems', year],
         queryFn: async () => {
-            const response = await getParticulars(year);
+            const response = await getExpenseParticulars(year);
             const items = Array.isArray(response) ? response : response?.data;
             
             if (!items) {
@@ -77,15 +77,14 @@ export const useBudgetItems = (year?: number) => {
             }
             
             return items.map((item: any) => ({
-                id: item.dtl_id?.toString() || '',
-                name: item.dtl_budget_item || 'Unnamed',
-                proposedBudget: Number(item.dtl_proposed_budget) || 0
+                id: item.exp_id?.toString() || '',
+                name: item.exp_budget_item || 'Unnamed',
+                proposedBudget: Number(item.exp_proposed_budget) || 0
             }));
         },
         staleTime: 1000 * 60 * 30,
     });
 };
-
 
 
 // ============================================ INCOMEEE ==================================

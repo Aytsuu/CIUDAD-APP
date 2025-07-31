@@ -1,5 +1,5 @@
 import {api} from "@/api/api";
-import { formatDate } from '@/helpers/dateHelper';
+import { formatDate } from '@/helpers/dateFormatter';
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { capitalize } from "@/helpers/capitalize";
 import { useState } from "react";
@@ -60,7 +60,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_is_archive: false,
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
-            dtl_id:  parseInt(incomeExpenseInfo.iet_particulars)
+            exp_id:  parseInt(incomeExpenseInfo.iet_particulars)
         })
 
         const res = await api.post('treasurer/income-expense-tracking/',{
@@ -74,7 +74,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             inv_num: "urlforInvNum",
             iet_receipt_image: "nothing",
-            dtl_id:  parseInt(incomeExpenseInfo.iet_particulars)
+            exp_id:  parseInt(incomeExpenseInfo.iet_particulars)
 
         })
 
@@ -127,6 +127,29 @@ export const updateIncomeExpenseMain = async (ie_year_main: number, ExpenseInfo:
 
           ie_remaining_bal: parseFloatSafe(ExpenseInfo.totalBudget),
           ie_main_exp: parseFloatSafe(ExpenseInfo.totalExpense)
+
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
+}
+
+export const updateExpenseParticular = async (exp_id: number, ExpenseInfo: Record<string, any>) => {
+
+    try{
+        console.log({
+          exp_id: exp_id,
+          exp_year: ExpenseInfo.years,
+          exp_proposed_budget: ExpenseInfo.exp_proposed_budget,
+        })
+
+
+        const res = await api.put(`treasurer/update-expense-particular/${ExpenseInfo.years}/${exp_id}/`,{
+          
+          exp_proposed_budget: parseFloatSafe(ExpenseInfo.exp_proposed_budget)
 
         })
 

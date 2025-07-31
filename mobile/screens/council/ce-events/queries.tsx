@@ -376,15 +376,32 @@ export const useUpdateAttendees = (onSuccess?: () => void) => {
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: ({ ce_id, attendees }: { ce_id: number; attendees: AttendeeInput[] }) =>
-      updateAttendees(ce_id, attendees),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["attendees", ce_id] });
-      // toast.success('Attendees updated successfully');
+    mutationFn: ({ ce_id, attendees }: { ce_id: number; attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[] }) => {
+      console.log('Calling updateAttendees with:', { ce_id, attendees });
+      return updateAttendees(ce_id, attendees);
+    },
+    onSuccess: (updatedData, variables) => {
+      queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) =>
+        variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
+      );
+      queryClient.invalidateQueries({ queryKey: ["attendees", variables.ce_id] });
+      toast.success('Attendees updated successfully');
       onSuccess?.();
     },
-    onError: (error: Error) => {
-      // toast.error(error.message || 'Failed to update attendees');
+    onError: (error: any, variables) => {
+      console.error('updateAttendees error:', error.message, { ce_id: variables.ce_id, attendees: variables.attendees });
+      toast.error(error.message || 'Failed to update attendees');
+    },
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["attendees", variables.ce_id] });
+      const previousAttendees = queryClient.getQueryData(["attendees", variables.ce_id]);
+      queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) =>
+        variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
+      );
+      return { previousAttendees };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
     },
   });
 };

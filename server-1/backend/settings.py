@@ -507,14 +507,13 @@ REST_FRAMEWORK = {
 # ========================
 # CORS SETTINGS
 # ========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    config('FRONTEND_URL', default='http://localhost:3000'),
-]
+# CORS_ALLOWED_ORIGINS = [
+#     config('FRONTEND_URL', default='http://localhost:3000'), # replace this with the domain e.g 'https://ciudad-app.onrender.com'
+# ]
+
 ALLOWED_HOSTS = ['*'] 
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True # disable in production
+CORS_ALLOW_CREDENTIALS = True # false in production
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -581,3 +580,9 @@ LOGGING = {
 # ========================
 SCHEDULER_AUTOSTART = True
 # SCHEDULER_AUTOSTART = not DEBUG # for production
+
+
+# ========================
+# PAYMONGO
+# ========================
+PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')

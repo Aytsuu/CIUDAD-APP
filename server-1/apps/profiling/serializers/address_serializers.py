@@ -8,6 +8,7 @@ class AddressBaseSerializer(serializers.ModelSerializer):
     allow_null=True,
     pk_field=serializers.CharField()
   )
+  add_id = serializers.IntegerField(allow_null=True, required=False)
 
   class Meta:
     model = Address

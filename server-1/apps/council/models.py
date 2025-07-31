@@ -205,7 +205,6 @@ class MOMSuppDoc(models.Model):
     momsp_type = models.CharField(max_length=100)
     momsp_path = models.CharField(max_length=500)
     momsp_url = models.CharField(max_length=500)
-    momsp_is_archive = models.BooleanField(default=False)
     mom_id = models.ForeignKey(
         'council.MinutesOfMeeting',
         on_delete= models.CASCADE,

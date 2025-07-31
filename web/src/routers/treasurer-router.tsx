@@ -12,11 +12,10 @@ import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tr
 import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main"; 
 import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-main";
 import ReceiptPage from "@/pages/record/treasurer/Receipts/receipts-main";
-// import BudgetPlanParent from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanParent";
-// import ViewBudgetPlanHistory from "@/pages/record/treasurer/treasurer-budgetplan/viewAHistory";
+import BudgetPlanParent from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanParent";
 
 export const treasurer_router = [
-    {
+   {
         path: "treasurer-budget-plan",
         element: <BudgetPlan/>,
     },
@@ -24,14 +23,10 @@ export const treasurer_router = [
         path: 'treasurer-budgetplan-view',
         element: <ViewBudgetPlan/>,
     },
-    // {
-    //     path: 'budgetplan-forms',
-    //     element: <BudgetPlanParent/>
-    // },
-    // {
-    //     path: 'budget-plan-history',
-    //     element: <ViewBudgetPlanHistory/>
-    // },
+    {
+        path: 'budgetplan-forms',
+        element: <BudgetPlanParent/>
+    },
     {
         path: "treasurer-donation",
         element: <TreasurerDonationTable/>
@@ -71,6 +66,10 @@ export const treasurer_router = [
     {
         path: 'treasurer-rates',
         element: <RatesForm/>
+    },
+    {
+        path: 'treasurer-receipts',
+        element: <ReceiptPage/>
     },
     {
         path: 'treasurer-receipts',

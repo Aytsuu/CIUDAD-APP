@@ -1,6 +1,8 @@
 import {api} from '@/api/api'
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { BudgetHeaderUpdate, ProcessedOldBudgetDetail } from '../budgetPlanInterfaces';
+import { MediaUploadType } from '@/components/ui/media-upload';
+
 
 export const budget_plan = async (budgetInfo: Record<string, any>) => {
     try {
@@ -16,11 +18,6 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0], 
-            plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
-            plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
-            plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
-            plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
-            plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
         });
 
         const res = await api.post('treasurer/budget-plan/', {
@@ -34,12 +31,7 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_other_income: parseFloatSafe(budgetInfo.plan_other_income), 
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
-            plan_issue_date: new Date().toISOString().split('T')[0], 
-            plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
-            plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
-            plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
-            plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
-            plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
+            plan_issue_date: new Date().toISOString().split('T')[0],
             plan_is_archive: false,
         });
 
@@ -138,5 +130,30 @@ export const createBudgetPlanDetailHistory = async (bph_id: string, detailHistor
     } catch (err) {
         console.error(err);
         throw err;
+    }
+};
+
+export const addBudgetPlanSuppDoc = async (files: Array<{ publicUrl: string; storagePath: string; type: "image" | "video" | "document"; name: string; plan_id: number;
+}>) => {
+    try {
+        const uploadPromises = files.map(file => {
+            const formData = new FormData();
+            formData.append('bpf_url', file.publicUrl);
+            formData.append('bpf_path', file.storagePath);
+            formData.append('bpf_type', file.type);
+            formData.append('bpf_name', file.name);
+            formData.append('plan_id', file.plan_id.toString());
+            formData.append('bpf_upload_date', new Date().toISOString());
+            
+            return api.post('treasurer/budget-plan-file/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+        });
+
+        const responses = await Promise.all(uploadPromises);
+        return responses.map(r => r.data);
+    } catch (error: any) {
+        console.error('Upload failed:', error.response?.data || error);
+        throw error;
     }
 };

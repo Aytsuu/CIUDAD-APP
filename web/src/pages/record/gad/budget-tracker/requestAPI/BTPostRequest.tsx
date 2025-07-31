@@ -1,4 +1,4 @@
-// import api from '@/pages/api/api';
+// import {api} from '@/api/api';
 
 // export type GADBudgetFile = {
 //   gbf_id?: number;
@@ -40,7 +40,7 @@
 //   return response.data;
 // };
 
-import api from '@/pages/api/api';
+import { api } from "@/api/api";
 import { MediaUploadType } from '@/components/ui/media-upload';
 
 export type GADBudgetFile = {

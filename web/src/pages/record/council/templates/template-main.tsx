@@ -1298,13 +1298,17 @@ function TemplateMainPage() {
                           contentClassName="p-0"
                           content={
                             <div className="relative h-40 w-full flex items-center justify-center rounded-xl overflow-hidden">
-                              <div className="absolute inset-0 bg-gray-100" />
+                              {/* Grey background - now will fill entire card */}
+                              
+                              {/* File icon */}
                               <div className="z-10 text-gray-400 text-4xl">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-50" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                   <polyline points="14 2 14 8 20 8" />
                                 </svg>
                               </div>
+                              
+                              {/* Filename at bottom */}
                               <div className="absolute bottom-0 w-full bg-black bg-opacity-60 text-white text-xs sm:text-sm text-center py-1 px-2 z-20">
                                 {template.temp_filename}
                               </div>
@@ -1353,7 +1357,6 @@ function TemplateMainPage() {
                           contentClassName="p-0"
                           content={
                             <div className="relative h-40 w-full flex items-center justify-center rounded-xl overflow-hidden">
-                              <div className="absolute inset-0 bg-gray-100" />
                               <div className="z-10 text-gray-400 text-4xl">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />

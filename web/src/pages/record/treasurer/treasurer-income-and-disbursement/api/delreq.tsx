@@ -1,5 +1,4 @@
-import api from "@/pages/api/api";
-
+import { api } from "@/api/api";
 
 export const archiveIncomeImage = async (infi_num: number) => {
   const res = await api.patch(`treasurer/income-tab/images/${infi_num}/`, { infi_is_archive: true });
@@ -39,5 +38,26 @@ export const deleteDisbursementImage = async (disf_num: number) => {
 
 export const permanentDeleteDisbursementImage = async (disf_num: number) => {
   const res = await api.delete(`treasurer/disbursement-tab/images/${disf_num}/?permanent=true`);
+  return res.data;
+};
+
+// Folder Operations
+export const permanentDeleteIncomeFolder = async (inf_num: number) => {
+  const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/permanent-delete/`);
+  return res.data;
+};
+
+export const permanentDeleteDisbursementFolder = async (dis_num: number) => {
+  const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/permanent-delete/`);
+  return res.data;
+};
+
+export const restoreIncomeFolder = async (inf_num: number) => {
+  const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/restore/`);
+  return res.data;
+};
+
+export const restoreDisbursementFolder = async (dis_num: number) => {
+  const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/restore/`);
   return res.data;
 };

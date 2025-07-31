@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   Dimensions,
+  RefreshControl, ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetCouncilEvents, useDeleteCouncilEvent, useRestoreCouncilEvent } from '@/screens/council/ce-events/queries';
@@ -30,7 +31,14 @@ const CouncilCalendarPage = () => {
 
   // Queries
   const isArchived = eventViewMode === 'archive';
-  const { data: events = [], isLoading, error } = useGetCouncilEvents(isArchived);
+  const { data: events = [], isLoading, error, refetch } = useGetCouncilEvents(isArchived);
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   // Debug logging for events
   useEffect(() => {
@@ -116,7 +124,7 @@ const CouncilCalendarPage = () => {
         key={date}
         className={`items-center justify-center rounded-full m-1 ${
           isSelected 
-            ? 'bg-blue-600' 
+            ? 'bg-primaryBlue' 
             : hasEvent 
               ? 'bg-blue-100' 
               : isToday
@@ -130,13 +138,13 @@ const CouncilCalendarPage = () => {
           isSelected 
             ? 'text-white font-bold' 
             : isToday
-              ? 'text-blue-600 font-bold'
+              ? 'text-primaryBlue font-bold'
               : 'text-gray-800'
         }`}>
           {date}
         </Text>
         {hasEvent && !isSelected && (
-          <View className="w-1 h-1 rounded-full bg-blue-500 mt-1" />
+          <View className="w-1 h-1 rounded-full bg-primaryBlue mt-1" />
         )}
       </TouchableOpacity>
     );
@@ -145,7 +153,7 @@ const CouncilCalendarPage = () => {
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => router.push({
-        pathname: '/council/council-events/editEvent',
+        pathname: '/(council)/council-events/editEvent',
         params: { event: JSON.stringify(item), isReadOnly: 'true' },
       })}
       activeOpacity={0.7}
@@ -153,9 +161,9 @@ const CouncilCalendarPage = () => {
     >
       <View className={`bg-white shadow-sm rounded-lg p-4 mx-2 ${item.is_archive ? 'bg-gray-50' : ''}`}>
         <View className="flex-row justify-between items-start">
-          <Text className="text-blue-800 text-lg font-semibold flex-1">{item.title}</Text>
+          <Text className="text-primaryBlue text-lg font-semibold flex-1">{item.title}</Text>
           <View className="bg-blue-100 px-2 py-1 rounded">
-            <Text className="text-blue-600 text-xs font-medium">{item.type}</Text>
+            <Text className="text-primaryBlue text-xs font-medium">{item.type}</Text>
           </View>
         </View>
         <Text className="text-gray-600 mt-2">{item.description}</Text>
@@ -272,7 +280,6 @@ const CouncilCalendarPage = () => {
         contentPadding="medium"
       scrollable={false}
     >
-
       {/* View Mode Toggle */}
       <View className="flex-row justify-center my-3">
         <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
@@ -336,12 +343,12 @@ const CouncilCalendarPage = () => {
             {format(selectedDate, 'EEEE, MMMM d')}
           </Text>
           <View className="flex-row items-center gap-5 space-x-2">
-            <Text className="text-blue-600">
+            <Text className="text-primaryBlue">
               {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
             </Text>
             <TouchableOpacity
-              className="bg-blue-600 p-2 rounded-full"
-              onPress={() => router.push('/council/council-events/schedule?isAdding=true')}
+              className="bg-primaryBlue p-2 rounded-full"
+              onPress={() => router.push('/(council)/council-events/schedule?isAdding=true')}
             >
               <Plus size={20} color="#ffffff" />
             </TouchableOpacity>
@@ -355,7 +362,13 @@ const CouncilCalendarPage = () => {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
           />
+            }
+            />
         ) : (
           <View className="flex-1 justify-center items-center">
             <MaterialIcons name="event-busy" size={48} color="#d1d5db" />
