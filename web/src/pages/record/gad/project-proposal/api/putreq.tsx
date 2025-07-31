@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { ProjectProposal, ProjectProposalInput } from "../queries/fetchqueries";
+import { ProjectProposal, ProjectProposalInput } from "../projprop-types";
 
 export const putProjectProposal = async (
   gprId: number, 

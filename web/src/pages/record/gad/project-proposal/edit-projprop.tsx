@@ -29,14 +29,10 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import {
-  ProjectProposal,
-  ProjectProposalInput,
-  SupportDoc,
-} from "./queries/fetchqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
+import {  ProjectProposal, ProjectProposalInput} from "./projprop-types";
 import { Signatory } from "./create-projprop";
 
 export interface EditProjectProposalFormProps {

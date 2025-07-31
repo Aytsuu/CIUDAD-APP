@@ -5,13 +5,8 @@ import { useNavigate } from "react-router";
 import { updateGADBudget, createGADBudgetFile } from "../requestAPI/BTPutRequest";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { deleteGADBudgetFiles } from "../requestAPI/BTDelRequest";
+import { BudgetYear } from "../budget-tracker-types";
 
-type BudgetYear = {
-  gbudy_year: string;
-  gbudy_budget: number;
-  gbudy_expenses: number;
-  gbudy_income: number;
-};
 
 export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
   const queryClient = useQueryClient();

@@ -4,18 +4,11 @@ import {
     fetchGADBudgetEntry,
     fetchIncomeParticulars,
     fetchExpenseParticulars,
-    GADBudgetEntry,
-    DevelopmentBudgetItem,
     fetchGADBudgetFile,
     fetchGADBudgetFiles
 } from "../requestAPI/BTGetRequest";
 
-import { GADBudgetFile } from "../requestAPI/BTPostRequest";
-
-export type GADBudgetEntryUI = GADBudgetEntry & {
-    gbud_particulars?: string | null;
-    gbud_amount?: number | null;
-};
+import { GADBudgetEntryUI, GADBudgetEntry, DevelopmentBudgetItem, GADBudgetFile } from "../budget-tracker-types";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
 //   console.log("Transforming Entry:", entry);
@@ -29,7 +22,6 @@ const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
       : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
   };
 };
-
 
 // React Query hooks
 export const useGADBudgets = (year?: string) => {

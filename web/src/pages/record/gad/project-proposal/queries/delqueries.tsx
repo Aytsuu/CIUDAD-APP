@@ -4,7 +4,7 @@ import { CircleCheck, CircleX } from "lucide-react";
 import { archiveProjectProposal, 
   restoreProjectProposal,
   permanentDeleteProjectProposal, deleteSupportDocument, archiveSupportDocument, restoreSupportDocument } from "../api/delreq";
-import { ProjectProposal } from "./fetchqueries";
+import { ProjectProposal } from "../projprop-types";
 
 
 export const useArchiveProjectProposal = () => {

@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button/button";
 import {
   useGetProjectProposals,
   useGetProjectProposal,
-  ProjectProposal,
-  SupportDoc,
   useGetSupportDocs
 } from "./queries/fetchqueries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +20,7 @@ import {
 } from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "./view-projprop";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
-import type { ProposalStatus } from "./queries/updatequeries";
+import { ProposalStatus, SupportDoc, ProjectProposal } from "./projprop-types";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 function AdminGADProjectProposal() {

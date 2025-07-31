@@ -1,13 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getbudgetyearreq } from "../requestAPI/BTYearReq";
-
-export type GADBudgetYearEntry = {
-    gbudy_num: number;
-    gbudy_year: string;
-    gbudy_budget: number;
-    gbudy_expenses: number;
-    gbudy_income: number;
-  };
+import { GADBudgetYearEntry } from "../budget-tracker-types";
 
 export const useGetGADYearBudgets = () => {
   return useQuery<GADBudgetYearEntry[], Error>({

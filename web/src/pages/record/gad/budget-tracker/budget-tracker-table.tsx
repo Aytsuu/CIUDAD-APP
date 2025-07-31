@@ -31,7 +31,7 @@ import {
 } from "./queries/BTDeleteQueries";
 import { useGADBudgets } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
-import { GADBudgetEntry } from "./requestAPI/BTGetRequest";
+import { GADBudgetEntry } from "./budget-tracker-types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function BudgetTracker() {

@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import { useEffect, useState, useRef } from "react";
-import { ProjectProposal } from "./queries/fetchqueries";
+import { ProjectProposal } from "./projprop-types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
 
