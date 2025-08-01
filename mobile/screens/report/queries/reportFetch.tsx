@@ -17,16 +17,17 @@ export const useGetReportType = () => {
   })
 }
 
-export const useGetActiveIR = (page: number, pageSize: number, searchQuery: string) => {
+export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean) => {
   return useQuery({
-    queryKey: ['activeIRs', page, pageSize, searchQuery],
+    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive],
     queryFn: async () => {
       try {
-        const res = await api.get('report/ir/active/list/table/', {
+        const res = await api.get('report/ir/list/table/', {
           params: {
             page,
             page_size: pageSize,
-            search: searchQuery
+            search: searchQuery,
+            is_archive: isArchive
           }
         });
         return res.data;
@@ -37,28 +38,6 @@ export const useGetActiveIR = (page: number, pageSize: number, searchQuery: stri
     staleTime: 5000
   })
 }
-
-export const useGetArchiveIR = (page: number, pageSize: number, searchQuery: string) => {
-  return useQuery({
-    queryKey: ['archiveIRs', page, pageSize, searchQuery],
-    queryFn: async () => {
-      try {
-        const res = await api.get('report/ir/archive/list/table/', {
-          params: {
-            page,
-            page_size: pageSize,
-            search: searchQuery
-          }
-        });
-        return res.data;
-      } catch (err) {
-        throw err;
-      }
-    },
-    staleTime: 5000
-  }) 
-}
-
 export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ['arReports', page, pageSize, searchQuery],

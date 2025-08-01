@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router"
 import { ActivityIndicator, FlatList, RefreshControl, TouchableOpacity, View, Text } from "react-native"
-import { useGetActiveIR, useGetArchiveIR } from "../queries/reportFetch";
-import React from "react";
+import { useGetIncidentReport } from "../queries/reportFetch";
+import React, { act } from "react";
 import PageLayout from "@/screens/_PageLayout";
 import { Card } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";
@@ -10,6 +10,8 @@ import { ChevronLeft } from '@/lib/icons/ChevronLeft';
 import { Search } from '@/lib/icons/Search';
 import { FileText } from '@/lib/icons/FileText';
 import { Archive } from '@/lib/icons/Archive';
+import { useDebounce } from "@/hooks/use-debounce";
+import { formatDate } from "@/helpers/dateHelpers";
 
 export default () => {
   const router = useRouter();
@@ -20,38 +22,24 @@ export default () => {
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
   const [activeTab, setActiveTab] = React.useState<'active' | 'archive'>('active');
+  
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedPageSize = useDebounce(pageSize, 100);
 
-  const { data: activeIRs, isLoading: isLoadingActiveIRs, refetch: refetchActive } = useGetActiveIR(
+  const { data: IncidentReport, isLoading: isLoadingIR, refetch } = useGetIncidentReport(
     currentPage,
-    pageSize,
-    searchQuery
+    debouncedPageSize as number,
+    debouncedSearchQuery as string,
+    activeTab == 'archive'
   );
-  const activeList = activeIRs?.results || [];
-  const totalActiveCount = activeIRs?.count || 0;
-  const totalActivePages = Math.ceil(totalActiveCount / pageSize);
 
-  const { data: archiveIRs, isLoading: isLoadingArchiveIRs, refetch: refetchArchive } = useGetArchiveIR(
-    currentPage,
-    pageSize,
-    searchQuery
-  );
-  const archiveList = archiveIRs?.results || [];
-  const totalArchiveCount = archiveIRs?.count || 0;
-  const totalArchivePages = Math.ceil(totalArchiveCount / pageSize);
-
-  // Get current data based on active tab
-  const currentData = activeTab === 'active' ? activeList : archiveList;
-  const totalCount = activeTab === 'active' ? totalActiveCount : totalArchiveCount;
-  const totalPages = activeTab === 'active' ? totalActivePages : totalArchivePages;
-  const isLoading = activeTab === 'active' ? isLoadingActiveIRs : isLoadingArchiveIRs;
+  const IRList = IncidentReport?.results || [];
+  const totalCount = IncidentReport?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    if (activeTab === 'active') {
-      await refetchActive();
-    } else {
-      await refetchArchive();
-    }
+    await refetch();
     setIsRefreshing(false);
   };
 
@@ -67,15 +55,6 @@ export default () => {
 
   const handleItemPress = (item: any) => {
 
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
   };
 
   const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
@@ -107,7 +86,7 @@ export default () => {
                   📍 {item.ir_sitio}, {item.ir_street}
                 </Text>
                 <Text className="text-gray-600 text-sm mb-1">
-                  📅 {formatDate(item.ir_date)} at {item.ir_time}
+                  📅 {formatDate(item.ir_date, 'short')} at {item.ir_time}
                 </Text>
                 <Text className="text-gray-600 text-sm">
                   👤 Reported by: {item.ir_reported_by}
@@ -145,46 +124,6 @@ export default () => {
       <Text className="text-gray-500 mt-4">Loading reports...</Text>
     </View>
   );
-
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    return (
-      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4 mx-5">
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1 ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === 1 ? 'text-gray-400' : 'text-white'
-          }`}>
-            Previous
-          </Text>
-        </TouchableOpacity>
-        
-        <Text className="text-gray-600 font-medium">
-          Page {currentPage} of {totalPages}
-        </Text>
-        
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === totalPages ? 'text-gray-400' : 'text-white'
-          }`}>
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   const renderTabButtons = () => (
     <View className="flex-row mx-5 mb-4 justify-end">
@@ -284,14 +223,14 @@ export default () => {
 
           {/* Reports List */}
           <View className="flex-1">
-            {isLoading && !isRefreshing ? (
+            {isLoadingIR && !isRefreshing ? (
               renderLoadingState()
             ) : totalCount === 0 ? (
               renderEmptyState()
             ) : (
               <>
                 <FlatList
-                  data={currentData}
+                  data={IRList}
                   renderItem={({item, index}) => <RenderDataCard item={item} index={index} />}
                   keyExtractor={(item) => item.ir_id}
                   showsVerticalScrollIndicator={false}
@@ -299,12 +238,11 @@ export default () => {
                     <RefreshControl
                       refreshing={isRefreshing}
                       onRefresh={handleRefresh}
-                      colors={['#3B82F6']}
+                      colors={['#00a8f0']}
                     />
                   }
                   contentContainerStyle={{ paddingBottom: 20 }}
                 />
-                {renderPagination()}
               </>
             )}
           </View>
