@@ -166,56 +166,6 @@ function BudgetTracker() {
       return total;
     }, 0);
   };
-
-  // const getLatestRemainingBalance = (): number => {
-  //   // If no entries, return the initial budget
-  //   if (!budgetEntries || budgetEntries.length === 0) {
-  //     return currentYearBudget ? Number(currentYearBudget) : 0;
-  //   }
-
-  //   // Filter active entries if needed
-  //   const activeEntries = budgetEntries.filter(
-  //     (entry) => !entry.gbud_is_archive
-  //   );
-
-  //   // If no active entries, return initial budget
-  //   if (activeEntries.length === 0) {
-  //     return currentYearBudget ? Number(currentYearBudget) : 0;
-  //   }
-
-  //   // Find the most recent entry with an explicit remaining balance
-  //   const latestExpenseWithBalance = [...activeEntries]
-  //   .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())
-  //   .find(entry => 
-  //     entry.gbud_type === "Expense" && 
-  //     entry.gbud_remaining_bal !== undefined && 
-  //     entry.gbud_remaining_bal !== null
-  //   );
-
-  //   if (latestExpenseWithBalance) {
-  //   return latestExpenseWithBalance.gbud_remaining_bal || 0;
-  // }
-
-  //   // Fallback: Calculate balance from scratch
-  //   let balance = currentYearBudget ? Number(currentYearBudget) : 0;
-
-  //   // Process entries in chronological order
-  //   const sortedEntries = [...activeEntries].sort(
-  //     (a, b) =>
-  //       new Date(a.gbud_datetime).getTime() -
-  //       new Date(b.gbud_datetime).getTime()
-  //   );
-
-  //   sortedEntries.forEach((entry) => {
-  //   if (entry.gbud_type === "Expense") {
-  //     const amount =
-  //       entry.gbud_actual_expense ?? entry.gbud_proposed_budget ?? 0;
-  //     balance -= amount;
-  //   }
-  // });
-
-  //   return balance;
-  // };
   
 const getLatestRemainingBalance = (): number => {
   // If no entries, return the initial budget
@@ -288,14 +238,14 @@ const getLatestRemainingBalance = (): number => {
         const num = (val: any) =>
           val !== undefined && val !== null ? +val : undefined;
 
-        let amount;
+        let amount: number = 0;
+
         if (gbud_type === "Income") {
           amount = num(gbud_inc_amt) ?? 0;
         } else {
-          amount =
-            num(gbud_actual_expense) > 0
-              ? num(gbud_actual_expense)
-              : num(gbud_proposed_budget) ?? 0;
+          const actual = num(gbud_actual_expense);
+          const proposed = num(gbud_proposed_budget);
+          amount = actual && actual > 0 ? actual : proposed ?? 0;
         }
         return <div>Php {amount.toFixed(2)}</div>;
       },

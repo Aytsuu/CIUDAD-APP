@@ -7,7 +7,6 @@ export const updateGADBudget = async (gbud_num: number, payload: GADBudgetUpdate
     const response = await api.patch(`/gad/gad-budget-tracker-entry/${gbud_num}/`, payload);
     return response.data;
   } catch (err) {
-    console.error("API Error:", err);
     throw err;
   }
 };
@@ -29,7 +28,6 @@ export const createGADBudgetFile = async (media: MediaUploadType[number], gbud_n
        });
        return response.data;
      } catch (error: any) {
-       console.error('File upload failed:', error.response?.data || error);
        throw error;
      }
    };

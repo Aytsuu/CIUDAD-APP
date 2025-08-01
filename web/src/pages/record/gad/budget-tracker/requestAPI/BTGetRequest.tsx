@@ -3,14 +3,6 @@ import { GADBudgetEntry, DevelopmentBudgetItem, GADBudgetFile } from "../budget-
 
 export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
     const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
-    console.log('API Response with Remaining Balances:', 
-        response.data.map((entry: GADBudgetEntry) => ({
-            id: entry.gbud_num,
-            datetime: entry.gbud_datetime,
-            type: entry.gbud_type,
-            remaining: entry.gbud_remaining_bal
-        }))
-    );
     return response.data || [];
 };
 
@@ -32,21 +24,13 @@ export const fetchExpenseParticulars = async (): Promise<DevelopmentBudgetItem[]
 export const fetchIncomeParticulars = async (year: string): Promise<string[]> => {
     try {
         const budgets = await fetchGADBudgets(year);
-        
-        // Debug log to check the raw data
-        console.log('Raw income entries:', budgets.filter(entry => entry.gbud_type === 'Income'));
-        
         const particulars = budgets
             .filter(entry => entry.gbud_type === 'Income' && entry.gbud_inc_particulars)
             .map(entry => entry.gbud_inc_particulars as string)
             .filter((value, index, self) => value && self.indexOf(value) === index);
-        
-        // Debug log to check processed particulars
-        console.log('Processed income particulars:', particulars);
-        
+    
         return particulars;
     } catch (error) {
-        console.error('Error fetching income particulars:', error);
         return [];
     }
 };

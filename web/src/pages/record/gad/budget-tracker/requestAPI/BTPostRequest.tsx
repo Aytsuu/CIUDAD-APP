@@ -28,7 +28,6 @@ export const createGADBudgetFile = async (media: MediaUploadType[number], gbud_n
     });
     return response.data;
   } catch (error: any) {
-    console.error('File upload failed:', error.response?.data || error);
     throw error;
   }
 };

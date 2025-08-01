@@ -101,3 +101,7 @@ export type GADBudgetYearEntry = {
     gdb_id?: number | null;
   };
   
+export type GADEditEntryFormProps = {
+  gbud_num: number;
+  onSaveSuccess?: () => void;
+};
