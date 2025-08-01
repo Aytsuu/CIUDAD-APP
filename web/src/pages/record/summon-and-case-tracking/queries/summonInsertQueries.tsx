@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { addCaseActivity, addSuppDoc } from "../requestAPI/summonPostAPI";
+import { addCaseActivity, addSuppDoc, addSummonDate } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
 import { MediaUploadType } from "@/components/ui/media-upload";
@@ -59,4 +59,23 @@ export const useAddSuppDoc = (onSuccess?: () => void) => {
             );
         }
     });
+}
+
+export const useAddSummonDates = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: (values: { formattedDates: string[] }) => addSummonDate(values.formattedDates),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['summonDates'] });
+            onSuccess?.();
+        },
+        onError: (err) => {
+            console.error("Error updating dates:", err);
+            toast.error(
+                "Failed to update dates. Please try again.",
+                { duration: 2000 }
+            );
+        }
+    })
 }

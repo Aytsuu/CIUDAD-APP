@@ -27,7 +27,8 @@ export const addCaseActivity = async (caseInfo: Record<string, any>) => {
     }
 }
 
-export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    try{
+export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    
+    try{
 
         if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
             throw new Error('File upload incomplete: missing URL or path');
@@ -52,5 +53,22 @@ export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], d
         return res.data
     }catch(err){
         console.error(err)
+    }
+}
+
+export const addSummonDate = async (dates: string[]) => {
+    try {
+        const responses = await Promise.all(
+            dates.map(date => 
+                api.post('clerk/summon-date-availability/', {
+                    sd_date: date 
+                })
+            )
+        );
+        
+        return responses.map(res => res.data);
+    } catch (err) {
+        console.error(err);
+        throw err;
     }
 }

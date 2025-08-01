@@ -503,3 +503,8 @@ class FileActionRequestSerializer(serializers.ModelSerializer):
             'file_action_file',
             'comp'
         ]
+
+class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonDateAvailability
+        fields = '__all__'

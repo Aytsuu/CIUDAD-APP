@@ -255,6 +255,10 @@ class UpdateServiceChargeRequestView(generics.UpdateAPIView):
 class ServiceChargeRequestFileView(generics.ListCreateAPIView):
     serializer_class = ServiceChargeRequestFileSerializer
     queryset = ServiceChargeRequestFile.objects.all()
+
+class SummonDateAvailabilityView(generics.ListCreateAPIView):
+    serializer_class = SummonDateAvailabilitySerializer
+    queryset = SummonDateAvailability.objects.all()
     
 
 
