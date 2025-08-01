@@ -260,7 +260,7 @@ class ForSpecificOwnerSerializer(serializers.ModelSerializer):
   bus_street = serializers.CharField(source='add.add_street')
   class Meta:
     model = Business
-    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_street', 
+    fields = ['bus_id', 'bus_name', 'bus_status', 'bus_gross_sales', 'bus_street', 
               'sitio', 'bus_date_verified']
 
   

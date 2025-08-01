@@ -77,14 +77,3 @@ env/
 
 # Vite cache
 /web/.vite/
-
-
-# Android 
-/mobile/android/
-/mobile/ios/
-
-# Vite cache
-/web/.vite/
-
-# Vite cache
-/web/.vite/

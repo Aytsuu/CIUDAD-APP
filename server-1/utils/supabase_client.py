@@ -41,7 +41,7 @@ def upload_to_storage(file_data):
             }
         )
 
-        url = supabase.storage.from_('business-bucket').get_public_url(file_data['name'])
+        url = supabase.storage.from_('business-bucket').get_public_url(upload_path)
 
     except Exception as e:
         logger.error(f"Failed to upload file {file_data['name']}: {str(e)}")

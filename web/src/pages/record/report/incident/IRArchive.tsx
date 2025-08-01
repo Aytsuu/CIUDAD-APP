@@ -1,22 +1,17 @@
 import { DataTable } from "@/components/ui/table/data-table"
-import { Search, FileDown, Archive, CircleCheck } from "lucide-react"
+import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { IRColumns } from "../ReportColumns"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
-import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Separator } from "@/components/ui/separator"
 import React from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { useDebounce } from "@/hooks/use-debounce"
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { useGetIncidentReport } from "../queries/reportFetch"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { useNavigate } from "react-router"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 
-export default function IRRecords() {
-  const navigate = useNavigate();
+export default function IRArchive() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -24,12 +19,12 @@ export default function IRRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
 
-  // Fetch active reports
+  // Fetch archive reports
   const { data: IncidentReport, isLoading: isLoadingIR } = useGetIncidentReport(
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
-    false
+    true
   );
 
   const IRList = IncidentReport?.results || [];
@@ -37,9 +32,11 @@ export default function IRRecords() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
-    <MainLayoutComponent
-      title="Incident Reports"
-      description="Manage and view all incident reports in your system"
+    <LayoutWithBack
+      title={<>
+        Archive / <span className="text-gray-400">Incident Report</span>
+      </>}
+      description="View all archived incident reports in your system"
     >
       <div className="flex w-full h-full gap-4">
         <Card className="w-full">
@@ -56,34 +53,6 @@ export default function IRRecords() {
                   />
                 </div>
               </div> 
-
-              <div className="flex items-center gap-2">
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="gap-2">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
-                />
-                <TooltipLayout 
-                  trigger={
-                    <Button variant={"outline"}
-                      onClick={() => {
-                        navigate('archive');
-                      }}
-                    >
-                      <Archive className="text-gray-700" />
-                    </Button>
-                  }
-                  content="Archive"
-                />
-              </div>  
             </div>
           </CardHeader>
 
@@ -143,6 +112,6 @@ export default function IRRecords() {
           )}
         </Card>
       </div>
-    </MainLayoutComponent>
+    </LayoutWithBack>
   )
 }

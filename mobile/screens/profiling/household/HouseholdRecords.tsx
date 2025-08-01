@@ -210,10 +210,12 @@ export default function HouseholdRecords() {
                     <RefreshControl
                       refreshing={isRefreshing}
                       onRefresh={handleRefresh}
-                      colors={['#3B82F6']}
+                      colors={['#00a8f0']}
                     />
                   }
                   contentContainerStyle={{ paddingBottom: 20 }}
+                  windowSize={5}
+                  removeClippedSubviews={true} 
                 />
               </>
             )}

@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { useActiveBusinesses } from "../queries/profilingFetchQueries"
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 
 export default function ActiveRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -70,28 +71,21 @@ export default function ActiveRecords() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex-1 sm:flex-none">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleExport("csv")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("excel")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              <DropdownLayout
+                trigger={
+                  <Button variant="outline" className="gap-2 border">
+                    <FileDown className="h-4 w-4" />
+                    Export
+                  </Button>
+                }
+                options={[
+                  { id: "csv", name: "Export as CSV" },
+                  { id: "excel", name: "Export as Excel" },
+                  { id: "pdf", name: "Export as PDF" },
+                ]}
+              />
+            </div>  
 
             <Link
               to="/business/form"

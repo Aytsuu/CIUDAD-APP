@@ -8,8 +8,7 @@ from .views.analytics_views import *
 
 urlpatterns = [
   path('ir/create/', IRCreateView.as_view(), name="create-ir"),
-  path('ir/active/list/table/', IRActiveTableView.as_view(), name='ir-active-list'),
-  path('ir/archive/list/table/', IRArchiveTableView.as_view(), name='ir-archive-list'),
+  path('ir/list/table/', IRTableView.as_view(), name='ir-list-table'),
   path('rt/create/', ReportTypeCreateView.as_view(), name="create-rt"),
   path('rt/list/<str:rt_category>/', ReportTypeListView.as_view(), name='rt-list'),
   path('ar/list/table/', ARTableView.as_view(), name='ar-list'),

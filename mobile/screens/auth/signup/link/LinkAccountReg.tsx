@@ -16,11 +16,11 @@ export default function LinkAccountReg() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
   const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
-  const [status, setStatus] = React.useState<"success" | "failure" | "loading" | "message">("success");
+  const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">("success");
 
   const submit = () => {
     setIsSubmitting(true);
-    setStatus('loading');
+    setStatus('waiting');
     setShowFeedback(true)
     const values = getValues('accountFormSchema')
 

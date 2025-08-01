@@ -103,6 +103,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       setMediaFiles(businessInfo?.files)
     }
   }, [businessInfo])
+  
+  console.log(businessInfo)
 
   // --------------------- HANDLERS -----------------------
 
@@ -293,7 +295,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       "sitio"
     ])
 
-    if (validateRespondent !== "rp_id" && !validateAddresses(addresses)) {
+    if (validateRespondent !== "rp_id" && !validateAddresses(addresses) && formType == Type.Create) {
       setIsSubmitting(false);
       showErrorToast("Please fill out all required fields");
       return;

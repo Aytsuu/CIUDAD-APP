@@ -36,7 +36,7 @@ export const MediaUpload = ({
 
       return {
         id: `media-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
-        name: file.name,
+        name: `media_${file.name}_${Date.now()}.${file.type.split('/')[1]}${Math.random().toString(36).substring(2, 8)}`,
         type: file.type,
         file: base64,
         previewUrl,
