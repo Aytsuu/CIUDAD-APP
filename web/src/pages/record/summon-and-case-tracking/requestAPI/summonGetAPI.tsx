@@ -49,3 +49,13 @@ export const getSummonTemplate = async () => {
     }
 };
 
+
+export const getSummonDates = async() => {
+    try{
+        const res = await api.get('clerk/summon-date-availability')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+

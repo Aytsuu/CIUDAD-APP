@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc } from "../requestAPI/summonGetAPI";
+import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates} from "../requestAPI/summonGetAPI";
 
 export type ServiceChargeRequest = {
     sr_id: string;
@@ -79,36 +79,6 @@ export const useGetCaseDetails = (srId: string) => {
     });
 };
 
-// export type CaseDetails = {
-//     sr_id: string;
-//     sr_status: string;
-//     sr_decision_date: string;
-//     complainant: {
-//         cpnt_id: string;
-//         cpnt_name: string;
-//     };
-//     complaint: {
-//         comp_id: string;
-//         comp_incident_type: string;
-//         comp_allegation: string;
-//         comp_datetime: string;
-//         accused: {
-//             acsd_id: string;
-//             acsd_name: string;
-//         }[];
-//     };
-//     case_activities: CaseActivity[];
-// };
-
-// export const useGetCaseDetails = (srId: string) => {
-//     return useQuery<CaseDetails>({
-//         queryKey: ['caseDetails', srId],
-//         queryFn: () => getCaseDetails(srId),
-//         enabled: !!srId, 
-//         staleTime: 5000,
-//     });
-// };
-
 export type CaseSuppDoc = {
     csd_id: string;
     csd_name: string;
@@ -116,7 +86,6 @@ export type CaseSuppDoc = {
     csd_description: string;
     csd_upload_date: string;
 };
-
 
 export const useGetSuppDoc = (ca_id: string) => {
     return useQuery<CaseSuppDoc[]>({
@@ -151,3 +120,16 @@ export const useGetSummonTemplate = () => {
     })
 }
   
+
+export type SummonDates = {
+    sd_id: number;
+    sd_date: string;
+}
+
+export const useGetSummonDates = () => {
+    return useQuery<SummonDates[]>({
+        queryKey: ['summonDates'],
+        queryFn: getSummonDates,
+        staleTime: 5000
+    })
+}
