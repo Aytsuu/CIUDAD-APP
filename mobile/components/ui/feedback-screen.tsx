@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { View, Text, TouchableOpacity, Animated } from "react-native"
+import { View, Text, TouchableOpacity, Animated, Dimensions } from "react-native"
 import { CheckCircle, XCircle, RefreshCw, Loader } from "lucide-react-native"
 import DoneIcon from '@/assets/images/empty-state/Done.svg'
 import ErrorIcon from '@/assets/images/empty-state/Error.svg'
@@ -8,34 +8,129 @@ import NoTasksIcon from '@/assets/images/empty-state/NoTasks.svg'
 import NoMessagesIcon from '@/assets/images/empty-state/NoMessages.svg'
 import { Button } from "./button"
 
-type FeedbackStatus = "success" | "failure" | "loading" | "message"
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
+
+type FeedbackStatus = "success" | "failure" | "waiting" | "message"
+type AnimationType = "scale" | "slideLeft" | "slideRight" | "slideTop" | "slideBottom" | "fade"
 
 export const FeedbackScreen = ({
   status = "success",
   title,
   content,
+  animationType = "scale",
+  animationDuration = 600,
 }: {
   status: FeedbackStatus;
   title?: React.ReactNode;
   content?: React.ReactNode;
+  animationType?: AnimationType;
+  animationDuration?: number;
 }) => {
   const [feedbackStatus, setFeedbackStatus] = useState<FeedbackStatus>(status)
-  // Pop animation for entry
+  
+  // Animation values
   const scaleAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(0)).current
+  const fadeAnim = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
     setFeedbackStatus(status)
   }, [status])
 
   useEffect(() => {
+    // Reset all animation values
     scaleAnim.setValue(0)
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 100,
-      friction: 8,
-      useNativeDriver: true,
-    }).start()
-  }, [feedbackStatus])  
+    slideAnim.setValue(0)
+    fadeAnim.setValue(0)
+
+    // Set initial values based on animation type
+    switch (animationType) {
+      case "scale":
+        scaleAnim.setValue(0)
+        break
+      case "slideLeft":
+        slideAnim.setValue(-screenWidth)
+        break
+      case "slideRight":
+        slideAnim.setValue(screenWidth)
+        break
+      case "slideTop":
+        slideAnim.setValue(-screenHeight)
+        break
+      case "slideBottom":
+        slideAnim.setValue(screenHeight)
+        break
+      case "fade":
+        fadeAnim.setValue(0)
+        break
+    }
+
+    // Start animation
+    const animations = []
+    
+    switch (animationType) {
+      case "scale":
+        animations.push(
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            useNativeDriver: true,
+          })
+        )
+        break
+      case "slideLeft":
+      case "slideRight":
+      case "slideTop":
+      case "slideBottom":
+        animations.push(
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: animationDuration,
+            useNativeDriver: true,
+          })
+        )
+        break
+      case "fade":
+        animations.push(
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: animationDuration,
+            useNativeDriver: true,
+          })
+        )
+        break
+    }
+
+    if (animations.length > 0) {
+      Animated.parallel(animations).start()
+    }
+  }, [feedbackStatus, animationType, animationDuration])
+
+  const getAnimatedStyle = () => {
+    switch (animationType) {
+      case "scale":
+        return {
+          transform: [{ scale: scaleAnim }]
+        }
+      case "slideLeft":
+      case "slideRight":
+        return {
+          transform: [{ translateX: slideAnim }]
+        }
+      case "slideTop":
+      case "slideBottom":
+        return {
+          transform: [{ translateY: slideAnim }]
+        }
+      case "fade":
+        return {
+          opacity: fadeAnim
+        }
+      default:
+        return {}
+    }
+  }
 
   const getStatusConfig = () => {
     switch (feedbackStatus) {
@@ -73,7 +168,7 @@ export const FeedbackScreen = ({
             </View>
           )
         }
-      case "loading":
+      case "waiting":
         return {
           icon: <NoTasksIcon width={250} height={250} />,
           title: (
@@ -107,10 +202,9 @@ export const FeedbackScreen = ({
   const statusConfig = getStatusConfig()
 
   return (
-    <SafeAreaView className="flex-1 px-5 py-10">
+    <SafeAreaView className="flex-1 px-5 pb-10">
       <Animated.View 
-        style={{ transform: [{ scale: scaleAnim }] }}
-        className="flex-1"
+        style={[{ flex: 1 }, getAnimatedStyle()]}
       >
         <View className="items-center">
           {/* Icon Container */}

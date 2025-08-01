@@ -1,5 +1,6 @@
 export interface User {
   acc_id?: string;
+  br_id?: string;
   supabase_id: string;
   username: string;
   email: string;

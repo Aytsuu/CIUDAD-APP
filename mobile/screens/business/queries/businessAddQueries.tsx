@@ -3,14 +3,11 @@ import { useMutation } from "@tanstack/react-query";
 
 export const useAddBusiness = () => {
   return useMutation({
-    mutationFn: async ({data, signal} :  {
+    mutationFn: async ({data} :  {
       data: Record<string, any>
-      signal?: AbortSignal 
     }) => {
       try {
-        const res = await api.post('profiling/business/create/', data, {
-          signal
-        });
+        const res = await api.post('profiling/business/create/', data);
         return res.data;
       } catch (err) {
         throw err;
