@@ -8,10 +8,8 @@ import {
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
 import { useLocation, useNavigate } from "react-router-dom";
-import { api2 } from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
 

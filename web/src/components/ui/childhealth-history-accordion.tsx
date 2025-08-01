@@ -5,7 +5,6 @@ import { EbfRenderer } from "@/components/ui/ebf-renderer";
 import {
   ClipboardList,
   User,
-  Users,
   AlertTriangle,
   HeartPulse,
   Soup,
@@ -14,7 +13,6 @@ import {
 } from "lucide-react";
 import {
   recordOverviewFields,
-  childPersonalInfoFields,
   findingsFields,
   disabilitiesFields,
   vitalSignsFields,

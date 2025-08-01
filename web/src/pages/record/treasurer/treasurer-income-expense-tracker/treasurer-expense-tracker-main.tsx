@@ -385,11 +385,10 @@ import { useIncomeExpense, type IncomeExpense } from "./queries/treasurerIncomeE
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useDeleteIncomeExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { useArchiveOrRestoreExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { NavLink } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import { useParams } from 'react-router-dom';
 
 
 

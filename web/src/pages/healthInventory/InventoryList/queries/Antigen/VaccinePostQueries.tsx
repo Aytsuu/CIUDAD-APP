@@ -1,20 +1,16 @@
 import {
   useMutation,
   useQueryClient,
-  QueryClient,
 } from "@tanstack/react-query";
 import {
   addVaccine,
   addVaccineIntervals,
   addRoutineFrequency,
-  handlePrimaryVaccine,
-  handleRoutineVaccine,
   addconvaccine,
   VaccineType,
 } from "../../restful-api/Antigen/VaccinePostAPI";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
-import { getVaccineList } from "../../restful-api/Antigen/VaccineFetchAPI";
 import { useNavigate } from "react-router";
 
 export const useAddVaccine = () => {

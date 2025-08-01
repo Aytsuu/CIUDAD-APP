@@ -1,4 +1,4 @@
-import { format, isSameDay, parseISO, isValid } from "date-fns";
+import { isSameDay, parseISO, isValid } from "date-fns";
 // import { ChildHealthHistoryRecord, CHSupplement, CHSSupplementStat } from "./types";
 
 export const getValueByPath = (obj: any, path: string[]): any => {

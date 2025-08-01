@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function MainInventoryStocks() {
   // Initialize state with value from localStorage or default to "medicine"

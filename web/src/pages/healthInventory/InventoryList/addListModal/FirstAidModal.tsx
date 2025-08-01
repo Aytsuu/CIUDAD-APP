@@ -20,7 +20,6 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
 import { toast } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { CircleCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Link, useNavigate } from "react-router-dom";

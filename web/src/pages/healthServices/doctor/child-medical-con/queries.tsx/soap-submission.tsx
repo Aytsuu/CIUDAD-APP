@@ -9,7 +9,6 @@ import {
   createFindings,
   createFindingPlantreatment,
 } from "../../medical-con/restful-api/create";
-import { updateMedicalConsultation } from "../../medical-con/restful-api/update";
 import {
   deleteMedicalHistory,
   deleteMedicineRequest,
@@ -33,7 +32,6 @@ interface SoapFormSubmissionParams {
 }
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { string } from "zod";
 
 export const useSubmitSoapForm = () => {
   const navigate = useNavigate();

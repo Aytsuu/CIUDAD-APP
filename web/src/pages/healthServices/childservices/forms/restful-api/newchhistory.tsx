@@ -37,8 +37,8 @@ export async function updateChildHealthRecord({
   }
 
   // Declare variables that will be returned
-  let patrec_id = old_patrec_id;
-  let chrec_id = old_chrec_id;
+  const patrec_id = old_patrec_id;
+  const chrec_id = old_chrec_id;
   let current_chhist_id = old_chhist;
   let chvital_id: string | undefined;
   let followv_id: string | null = null;

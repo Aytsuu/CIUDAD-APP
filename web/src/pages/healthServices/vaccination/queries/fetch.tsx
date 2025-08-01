@@ -5,7 +5,6 @@ import { getUnvaccinatedVaccines } from '../restful-api/get';
 import { VaccinationRecord } from '../tables/columns/types';
 import { getAgeInUnit } from "@/helpers/ageCalculator";
 import {
-  getVaccintStocks,
   getUnvaccinatedResidents,
   getVaccinationRecords,
   getVaccinationRecordById,

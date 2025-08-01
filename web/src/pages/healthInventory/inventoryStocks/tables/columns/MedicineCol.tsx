@@ -1,7 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
-import { Archive , Plus } from "lucide-react";
-import { Link } from "react-router";
+import { Archive  } from "lucide-react";
 import { MedicineStocksRecord } from "../type";
 import { isNearExpiry, isExpired, isLowStock } from "@/helpers/StocksAlert";
 

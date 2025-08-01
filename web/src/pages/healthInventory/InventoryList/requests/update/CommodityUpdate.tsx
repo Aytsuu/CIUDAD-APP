@@ -1,5 +1,4 @@
 
-import {api2} from "@/api/api";
 // import { toTitleCase } from "@/helpers/ToTitleCase";
 
 // export const updateCommodity = async (com_id: string, comName: string) => {

@@ -1,6 +1,4 @@
 // src/services/medicineRequestService.ts
-import { api } from "@/api/api";
-import axios from "axios";
 import { getFirstAidStocks } from "@/pages/healthInventory/inventoryStocks/REQUEST/FirstAid/restful-api/FirstAidGetAPI";
 import {
   updateFirstAidStock,

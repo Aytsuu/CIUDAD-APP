@@ -29,12 +29,10 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import axios from "axios";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { Combobox } from "@/components/ui/combobox";
-import { calculateBMI, getBMICategory } from "../calculate-bmi";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { previousBMI } from "../restful-api/get";
 import CardLayout from "@/components/ui/card/card-layout";
 import { MdBloodtype } from "react-icons/md";
-import ComplaintRecord from "@/pages/record/complaint/complaint-record/ComplaintRecord";
 
 export default function MedicalConsultationForm() {
   const navigate = useNavigate();

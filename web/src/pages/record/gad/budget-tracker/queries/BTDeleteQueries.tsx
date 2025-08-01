@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
 import { archiveBudgetEntry, restoreBudgetEntry, permanentDeleteBudgetEntry } from "../requestAPI/BTDelRequest";
-import type { GADBudgetEntry } from "../requestAPI/BTGetRequest";
 
 export const useArchiveGADBudget = () => {
     const queryClient = useQueryClient();

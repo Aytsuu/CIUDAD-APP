@@ -7,7 +7,6 @@ import {
   ArrowUpDown,
   Search,
   ChevronLeft,
-  Plus,
   Pill,
   AlertCircle,
 } from "lucide-react";

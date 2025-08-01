@@ -1,8 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteAssignedFeature, deletePosition } from "../restful-api/administrationDeleteAPI";
 import { api } from "@/api/api";
-import { toast } from "sonner";
-import { CircleAlert, CircleCheck, X } from "lucide-react";
 
 // Deleting
 export const useDeletePosition = () => {

@@ -1,23 +1,15 @@
 // src/services/childHealthAPI.ts
 import {
   createFollowUpVisit,
-  createBodyMeasurement,
   createPatientDisability,
   createChildHealthNotes,
-  createChildVitalSign,
-  createNutritionalStatus,
 } from "./createAPI";
 import {
   createExclusiveBFCheck,
-  createSupplementStatus,
-  createChildHealthRecord,
-  createChildHealthHistory,
 } from "./chrecord";
-import { deleteFollowUpVisit } from "./deleteAPI";
 import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
 import { processMedicineRequest } from "./createAPI";
-import type { FormData } from "@/form-schema/chr-schema/chr-schema";
-import { AddRecordArgs, AddRecordResult } from "../muti-step-form/types";
+import { AddRecordArgs } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
 
 export async function updateChildHealthRecord({
@@ -40,9 +32,9 @@ export async function updateChildHealthRecord({
     throw new Error("Transient ID is required for transient residents");
   }
 
-  let patrec_id = old_patrec_id;
-  let chrec_id = old_chrec_id;
-  let current_chhist_id = old_chhist;
+  const patrec_id = old_patrec_id;
+  const chrec_id = old_chrec_id;
+  const current_chhist_id = old_chhist;
   let chvital_id: string | undefined;
   let followv_id: string | null = null;
 

@@ -1,10 +1,6 @@
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Archive , Plus, FileInput, Minus, Edit } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import UsedFAModal from "../../addstocksModal/UsedFAModal";
-import EditFirstAidStockForm from "../../editModal/EditFirstAidStockModal";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Archive , Plus, Minus } from "lucide-react";
 import { Link } from "react-router";
 import { FirstAidStocksRecord } from "../type";
 import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";

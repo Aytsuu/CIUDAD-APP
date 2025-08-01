@@ -32,7 +32,6 @@ import z from "zod";
 import {
   ProjectProposal,
   ProjectProposalInput,
-  SupportDoc,
 } from "./queries/fetchqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";

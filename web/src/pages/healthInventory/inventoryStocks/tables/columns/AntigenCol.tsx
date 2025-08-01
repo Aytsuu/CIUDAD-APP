@@ -1,10 +1,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { StockRecords } from "../type";
-import { Minus, Plus } from "lucide-react";
-import WastedDoseForm from "../../addstocksModal/WastedDoseModal";
+import { Minus } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Archive } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert"; // Import the alert functions
 
 export const getStockColumns = (
@@ -247,7 +246,7 @@ export const getStockColumns = (
       const record = row.original;
       let total_stocks = 0;
       let unit = "";
-      let availQty = Number(record.availableStock) || 0;
+      const availQty = Number(record.availableStock) || 0;
 
       if (record.type === "vaccine") {
         if (record.solvent === "diluent") {

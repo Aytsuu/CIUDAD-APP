@@ -6,7 +6,6 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FirstAidStocksRecord } from "../tables/type";
-import { useQueryClient } from "@tanstack/react-query";
 import { usedFaSchema } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { useDeductFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidUpdateQueries";
 import { Label } from "@/components/ui/label";

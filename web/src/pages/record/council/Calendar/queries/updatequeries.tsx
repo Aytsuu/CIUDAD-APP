@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useCallback, useRef } from 'react';
 import { CircleCheck } from "lucide-react";
 import { putCouncilEvent, putAttendee, putAttendanceSheet, updateAttendees } from "../api/putreq";
-import { CouncilEvent, CouncilEventInput, Attendee, AttendeeInput, AttendanceSheet, AttendanceSheetInput } from "./fetchqueries";
+import { CouncilEvent, CouncilEventInput, Attendee, AttendanceSheet, AttendanceSheetInput } from "./fetchqueries";
 
 export const useUpdateCouncilEvent = () => {
   const queryClient = useQueryClient();

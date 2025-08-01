@@ -10,11 +10,9 @@ import { Accordion } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChildHealthHistoryRecord } from "./types";
 import { getSupplementStatusesFields } from "./Config";
-import { api2 } from "@/api/api";
 import { PatientSummarySection } from "./CurrentHistoryView";
 import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
-import { getChildHealthHistory } from "../forms/restful-api/get";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 
 
