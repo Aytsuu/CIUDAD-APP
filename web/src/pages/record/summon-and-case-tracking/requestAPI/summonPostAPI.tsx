@@ -58,6 +58,9 @@ export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], d
 
 export const addSummonDate = async (dates: string[]) => {
     try {
+
+        const res = await api.delete('clerk/delete-summon-date/')
+        
         const responses = await Promise.all(
             dates.map(date => 
                 api.post('clerk/summon-date-availability/', {

@@ -104,12 +104,13 @@
 
 
 from rest_framework import generics
-from rest_framework.exceptions import NotFound
 from .models import ServiceChargeRequest
 from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Prefetch
+from rest_framework.views import APIView
+
 
 class ServiceChargeRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargeRequestSerializer
@@ -259,6 +260,14 @@ class ServiceChargeRequestFileView(generics.ListCreateAPIView):
 class SummonDateAvailabilityView(generics.ListCreateAPIView):
     serializer_class = SummonDateAvailabilitySerializer
     queryset = SummonDateAvailability.objects.all()
+
+
+class DeleteSummonDateAvailability(APIView):
+    def delete(self, request):
+        current_year = date.today().year
+        SummonDateAvailability.objects.filter(sd_date__year=current_year).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     
 
 

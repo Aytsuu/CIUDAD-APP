@@ -199,7 +199,6 @@ class ServiceChargeRequestFile(models.Model):
 class SummonDateAvailability(models.Model):
     sd_id = models.BigAutoField(primary_key=True)
     sd_date = models.DateField(default=date.today)
-    sd_is_available = models.BooleanField(default=False, null=True)
     sd_time = models.TimeField(null=True)
     
     class Meta:

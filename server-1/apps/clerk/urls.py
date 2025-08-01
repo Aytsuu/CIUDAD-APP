@@ -13,4 +13,5 @@ urlpatterns = [
     path('update-case-supp-doc/<int:csd_id>/', UpdateCaseSuppDocView.as_view(), name='update-case-supp-doc'),
     path('service-charge-request-file/', ServiceChargeRequestFileView.as_view(), name='service-charge-request-file'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
+    path('delete-summon-date/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date')
 ]
