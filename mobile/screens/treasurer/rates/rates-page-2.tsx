@@ -94,7 +94,7 @@ export default function RatesPage2() {
               </TouchableOpacity>
 
 
-              <ConfirmationModal
+              {/* <ConfirmationModal
                 trigger={ 
                   <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
                     <Trash2 size={16} color="#ef4444" />
@@ -104,7 +104,7 @@ export default function RatesPage2() {
                 description="Are you sure you want to delete this record? This action will set the record to inactive state and cannot be undone."
                 actionLabel='Confirm'
                 onPress={() => handleDelete(item.pr_id)}
-              />
+              /> */}
             </View>
           )}
         </View>
@@ -147,10 +147,10 @@ export default function RatesPage2() {
           <Input placeholder="Search..." value={searchQuery} onChangeText={setSearchQuery} className="bg-white text-black rounded-lg p-2 border border-gray-300 pl-10" />
         </View>
 
-        <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
+        {/* <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
           <Plus size={20} color="white" />
           <Text className="text-white ml-2 font-semibold">Add</Text>
-        </Button>
+        </Button> */}
       </View>
 
       {/* Tabs */}
