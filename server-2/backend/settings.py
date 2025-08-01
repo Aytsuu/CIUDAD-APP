@@ -42,8 +42,6 @@ SUPABASE_CONFIG = {
     'JWT_AUDIENCE': 'authenticated',
 }
 
-SUPABASE_JWT_SECRET = config('JWT_SECRET')
-
 # Application definition
 
 # ========================
