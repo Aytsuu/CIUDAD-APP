@@ -83,6 +83,7 @@ export default function ActiveRecords() {
                   { id: "excel", name: "Export as Excel" },
                   { id: "pdf", name: "Export as PDF" },
                 ]}
+                onSelect={(type: any) => handleExport(type)}
               />
             </div>  
 

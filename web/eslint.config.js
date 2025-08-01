@@ -26,10 +26,8 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
 
-       // ✅ Remove unused imports automatically
       'unused-imports/no-unused-imports': 'error',
 
-      // ✅ Warn (or error) on unused variables
       'unused-imports/no-unused-vars': [
         'warn',
         {

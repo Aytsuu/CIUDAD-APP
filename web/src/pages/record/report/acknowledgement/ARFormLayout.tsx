@@ -94,10 +94,8 @@ export default function ARFormLayout() {
     }, {
       onSuccess: (newAR) => {
         const files = mediaFiles.map((media) => ({
-          'arf_name': media.file.name,
-          'arf_type': media.file.type,
-          'arf_path': media.storagePath,
-          'arf_url': media.publicUrl,
+          'name': media.name,
+          'type': media.type,
           'ar': newAR.ar_id,
           'staff': user?.staff?.staff_id
         }))

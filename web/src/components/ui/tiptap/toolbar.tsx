@@ -664,7 +664,7 @@ import { Input } from "../input";
 import { Button } from "../button/button";
 
 type Props = {
-  editor: Editor | null;
+  editor: any | null;
   uploadImage: (imageUrl: string) => void;
   onMarginChange: (margin: string) => void;
   onPaperSizeChange: (size: "short" | "long") => void;
@@ -743,10 +743,6 @@ export function Toolbar({ editor, uploadImage, onMarginChange, onPaperSizeChange
       setImageSrc(selectedImage);
       setShowCropper(true);
     }
-  };
-
-  const setFontSize = (size: string) => {
-    editor.chain().focus().setMark("textStyle", { fontSize: size }).run();
   };
 
   const textAlign = (editor.getAttributes("textAlign")?.textAlign || "left") as

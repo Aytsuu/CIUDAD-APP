@@ -22,7 +22,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       }}
     >
       <div className="font-bold text-gray-700 sticky left-0 bg-white py-2 border-gray-100"></div>
-      {recordsToDisplay.map((record, idx) => {
+      {recordsToDisplay.map((record) => {
         const isCurrentRecord = record.chhist_id === chhistId;
         return (
           <div

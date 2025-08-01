@@ -18,7 +18,7 @@ import { renderActionButton } from "./administrationActionConfig";
 import { Type } from "./administrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { formatPositionGroups } from "./administrationFormats";
+import { formatPositionGroups } from "./AdministrationFormats";
 
 export default function NewPositionForm() {
   const { user } = useAuth();

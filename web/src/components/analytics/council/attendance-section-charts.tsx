@@ -131,7 +131,7 @@ export default function StaffAttendanceRankingChart() {
                   <ChartTooltipContent
                     className="w-[180px] border shadow-lg"
                     labelFormatter={(value: string) => value}
-                    formatter={(value: number, name: string, props: any) => [
+                    formatter={(props: any) => [
                       `Designation: ${props.payload?.atn_designation || 'N/A'}`
                     ]}
                   />

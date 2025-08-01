@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import {
   type ColumnDef,
@@ -61,7 +59,6 @@ export function DataTable<TData, TValue>({
   className = "",
   pageSize = 10,
   manualPagination,
-  title,
 }: DataTableProps<TData, TValue>) {
   const [sortingState, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
