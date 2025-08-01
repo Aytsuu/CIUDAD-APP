@@ -5,6 +5,7 @@ from apps.profiling.models import Address, Sitio
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 from ..serializers.incident_report_serializers import IRBaseSerializer
 import datetime
+from utils.supabase_client import upload_to_storage
 
 class ARBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -45,17 +46,23 @@ class ARTableSerializer(serializers.ModelSerializer):
     files = ARFile.objects.filter(ar=obj)
     return ARFileBaseSerializer(files, many=True).data
 
+class ARFileInput(serializers.Serializer):
+  name = serializers.CharField()
+  type = serializers.CharField()
+  file = serializers.CharField()
+
 class ARCreateSerializer(serializers.ModelSerializer):
   rt = serializers.CharField()
   ir_sitio = serializers.CharField(write_only=True, required=False)
   ir_street = serializers.CharField(write_only=True, required=False)
   ir = serializers.PrimaryKeyRelatedField(queryset=IncidentReport.objects.all(), write_only=True, required=False)
   rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), write_only=True, required=False)
+  files = ARFileInput(write_only=True, required=False, many=True)
 
   class Meta:
     model = AcknowledgementReport
     fields = ['ar_id', 'ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 'ar_created_at', 
-              'ar_time_completed', 'ar_action_taken', 'ir_sitio', 'ir_street', 'ir', 'rt', 'staff'] 
+              'ar_time_completed', 'ar_action_taken', 'ir_sitio', 'ir_street', 'ir', 'rt', 'staff', 'files'] 
     extra_kwargs = {
       'ar_id' : {'read_only': True}
     }
@@ -65,6 +72,7 @@ class ARCreateSerializer(serializers.ModelSerializer):
     sitio = validated_data.pop('ir_sitio', None)
     street = validated_data.pop('ir_street', None)
     incident_report = validated_data.get('ir', None)
+    files = validated_data.pop('files', [])
 
     if report_type:
       validated_data['rt'] = ReportType.objects.filter(rt_label=report_type).first()
@@ -97,4 +105,23 @@ class ARCreateSerializer(serializers.ModelSerializer):
     
     instance = AcknowledgementReport(**validated_data)
     instance.save()
+    
+    if files:
+      self._upload_files(instance, files)
+    
     return instance
+  
+  def _upload_files(self, ar_instance, files):
+      ar_files = []
+      for file_data in files:
+        url = upload_to_storage(file_data, 'report-bucket', 'ar')
+        ar_files.append(ARFile(
+            ar=ar_instance,
+            ar_name=file_data['name'],
+            ar_type=file_data['type'],
+            ar_path=f"uploads/{file_data['name']}",
+            ar_url=url
+        ))
+
+      if ar_files:
+          ARFile.objects.bulk_create(ar_files)

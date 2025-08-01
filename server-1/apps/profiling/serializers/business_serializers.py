@@ -217,7 +217,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   def _upload_files(self, business_instance, files):
       business_files = []
       for file_data in files:
-        url = upload_to_storage(file_data)
+        url = upload_to_storage(file_data, 'business-bucket', 'uploads')
         business_files.append(BusinessFile(
             bus=business_instance,
             bf_name=file_data['name'],
