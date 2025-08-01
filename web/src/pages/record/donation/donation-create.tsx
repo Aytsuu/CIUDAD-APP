@@ -27,10 +27,7 @@ import { cn } from "@/lib/utils";
 import { useGetPersonalList } from "./queries/donationFetchQueries";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-
-interface ClerkDonateCreateFormProps {
-  onSuccess?: () => void;
-}
+import { ClerkDonateCreateFormProps } from "./donation-types";
 
 function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
@@ -68,9 +65,6 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
     addDonation(payload, {
       onSuccess: () => {
         onSuccess?.();
-      },
-      onError: (error) => {
-        console.error("Error submitting donation", error);
       }
     });
   };

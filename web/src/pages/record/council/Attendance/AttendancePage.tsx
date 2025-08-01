@@ -182,11 +182,6 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
       const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
       const [isEditMode, setIsEditMode] = useState(false);
 
-      const handleDialogClose = () => {
-        setIsAttendeesDialogOpen(false);
-        setIsEditMode(false);
-      };
-
       const handleSaveSuccess = () => {
         setIsEditMode(false);
       };

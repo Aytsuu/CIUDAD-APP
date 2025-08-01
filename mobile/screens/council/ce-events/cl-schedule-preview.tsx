@@ -1,28 +1,23 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Loader2, ChevronLeft } from "lucide-react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import {  ChevronLeft } from "lucide-react-native";
 import { UpdateEventFormSchema } from "../../../form-schema/council-event-schema";
 import { useAddCouncilEvent, useUpdateCouncilEvent } from "./queries";
-import { useGetStaffList, useGetAttendees, Staff } from "./queries";
-import { useUpdateAttendees, Attendee } from "./queries";
+import { useGetStaffList, useGetAttendees} from "./queries";
+import { useUpdateAttendees } from "./queries";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input";
 import FormComboCheckbox from "@/components/ui/form/form-combo-checkbox";
-import z from "zod";
 import PageLayout from "@/screens/_PageLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-
-type UpdateEventFormValues = z.infer<typeof UpdateEventFormSchema>;
-type EventFormValues = UpdateEventFormValues;
-type EventCategory = "meeting" | "activity" | undefined;
+import { Attendee, Staff, EventFormValues, EventCategory } from "./ce-att-typeFile";
 
 const normalizeString = (str: string) => str.trim().toLowerCase();
 
@@ -38,7 +33,6 @@ const CLSchedulePreview = () => {
   const [isEditMode, setIsEditMode] = useState(isAdding);
   const [selectedAttendees, setSelectedAttendees] = useState<Attendee[]>([]);
   const [initialAttendees, setInitialAttendees] = useState<Attendee[]>([]);
-
   const ceId = useMemo(() => event?.ce_id, [event]);
   const {
     data: attendees = [],
@@ -63,12 +57,10 @@ const CLSchedulePreview = () => {
 
   const eventCategory = watch("eventCategory");
   const staffAttendees = watch("staffAttendees") || [];
-
   const addEventMutation = useAddCouncilEvent(() => router.back());
   const updateEventMutation = useUpdateCouncilEvent(() => setIsEditMode(false));
   const { mutate: updateAttendees } = useUpdateAttendees();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-
   const staffOptions = useMemo(() => {
     const options = staffList.map((staff: Staff, index: number) => {
       const attendee = attendees.find(
@@ -126,7 +118,6 @@ const CLSchedulePreview = () => {
 
   useEffect(() => {
     if (!isAttendeesLoading && !isAdding && ceId && attendees.length > 0) {
-      try {
         const attendeeIds = attendees
           .filter((a: any) => String(a.ce_id) === String(ceId))
           .map((a: any) => String(a.atn_id))
@@ -137,9 +128,6 @@ const CLSchedulePreview = () => {
         });
         setSelectedAttendees(selectedAttendeeDetails);
         setInitialAttendees(selectedAttendeeDetails);
-      } catch (error) {
-        console.error("Error initializing staffAttendees:", error);
-      }
     }
   }, [
     attendees,
@@ -162,7 +150,6 @@ const CLSchedulePreview = () => {
         .map((id: string) => {
           const staff = getStaffById(id);
           if (!staff) {
-            console.warn(`Skipping invalid staff id: ${id}`);
             return null;
           }
           const existingAttendee = selectedAttendeeDetails.find(
@@ -281,14 +268,10 @@ const CLSchedulePreview = () => {
               };
               updateAttendees(attendeePayload, {
                 onSuccess: () =>
-                  refetch().catch((err) =>
-                    console.error("Refetch error:", err.message)
-                  ),
+                  refetch()
               });
             } else {
-              refetch().catch((err) =>
-                console.error("Refetch error:", err.message)
-              );
+              refetch()
             }
             setIsEditMode(false);
           },
@@ -437,27 +420,6 @@ const CLSchedulePreview = () => {
                     readOnly={!isEditMode || isArchived}
                     placeholder="Select staff attendees"
                   />
-                  {/* <View className="mt-4">
-                    <Text className="text-sm font-medium text-gray-700 mb-2">
-                      Selected Attendees
-                    </Text>
-                    <View className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
-                      {selectedAttendees.length > 0 ? (
-                        selectedAttendees.map((attendee, index) => (
-                          <View key={index} className="flex-row items-center py-1">
-                            <MaterialIcons name="person" size={16} color="#4b5563" />
-                            <Text className="text-sm text-gray-900 ml-2">
-                              {attendee.atn_name} ({attendee.atn_designation})
-                            </Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text className="text-sm text-gray-500">
-                          No attendees selected
-                        </Text>
-                      )}
-                    </View>
-                  </View> */}
                 </>
               )}
             </View>

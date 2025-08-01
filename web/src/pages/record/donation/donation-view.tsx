@@ -30,11 +30,7 @@ import {
 } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type ClerkDonateViewProps = {
-  don_num: string;
-  onSaveSuccess?: () => void;
-};
+import { ClerkDonateViewProps } from "./donation-types";
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -54,7 +50,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
       don_donor: donation?.don_donor || "",
       per_id: donation?.per_id || null,
       don_item_name: donation?.don_item_name || "",
-      don_qty: donation?.don_qty || '',
+      don_qty: donation?.don_qty || "",
       don_description: donation?.don_description || "",
       don_category: donation?.don_category || "",
       don_date: donation?.don_date || new Date().toISOString().split("T")[0],
@@ -137,19 +133,22 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                             }
                           }}
                         />
-                        <CommandList 
+                        <CommandList
                           className="max-h-64 overflow-auto"
                           onWheel={(e) => {
-                            e.stopPropagation()
-                            const el = e.currentTarget
-                            if (e.deltaY > 0 && el.scrollTop >= el.scrollHeight - el.clientHeight) {
-                              return
+                            e.stopPropagation();
+                            const el = e.currentTarget;
+                            if (
+                              e.deltaY > 0 &&
+                              el.scrollTop >= el.scrollHeight - el.clientHeight
+                            ) {
+                              return;
                             }
                             if (e.deltaY < 0 && el.scrollTop <= 0) {
-                              return
+                              return;
                             }
-                            e.preventDefault()
-                            el.scrollTop += e.deltaY
+                            e.preventDefault();
+                            el.scrollTop += e.deltaY;
                           }}
                         >
                           <CommandEmpty>
@@ -264,7 +263,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             name="don_qty"
             label={isMonetary ? "Amount" : "Quantity"}
             placeholder={isMonetary ? "Enter amount" : "Enter quantity"}
-            readOnly={!isEditing} 
+            readOnly={!isEditing}
           />
 
           {/* Item Description */}
@@ -301,11 +300,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 </Button>
                 <ConfirmationModal
                   trigger={
-                    <Button
-                      type="button"
-                      className=""
-                      disabled={isPending}
-                    >
+                    <Button type="button" className="" disabled={isPending}>
                       {isPending ? "Saving..." : "Save Changes"}
                     </Button>
                   }
@@ -316,7 +311,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 />
               </>
             ) : (
-               moneyType !== "E-money" && ( // Only show Edit button if not E-Money
+              moneyType !== "E-money" && ( // Only show Edit button if not E-Money
                 <Button
                   type="button"
                   onClick={() => setIsEditing(true)}

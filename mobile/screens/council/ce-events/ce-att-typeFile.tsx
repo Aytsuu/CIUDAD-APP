@@ -1,3 +1,6 @@
+import { UpdateEventFormSchema } from "@/form-schema/council-event-schema";
+import z from "zod";
+
 export type CouncilEvent = {
   ce_id: number;
   ce_title: string;
@@ -8,6 +11,22 @@ export type CouncilEvent = {
   ce_description: string;
   ce_is_archive: boolean;
   staff_id: string | null;
+};
+
+export type FormattedCouncilEvent = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  day: string;
+  rawDate: Date;
+  place: string;
+  description: string;
+  type: string;
+  is_archive: boolean;
+  ce_id: number;
+  ce_date: string;
+  ce_time: string;
 };
 
 export type CouncilEventInput = {
@@ -22,7 +41,7 @@ export type CouncilEventInput = {
 };
 
 export type Attendance = {
-  ceId: number; 
+  ceId: number;
   att_id?: number;
   attMettingTitle: string;
   attMeetingDate: string;
@@ -32,13 +51,13 @@ export type Attendance = {
 };
 
 export type Attendee = {
-  atn_id: number;
+  atn_id?: number;
   atn_name: string;
   atn_designation: string;
   atn_present_or_absent?: string;
   ce_id: number;
-  staff_id: string | null;
-  composite_id: string;
+  ce_title: string;
+  staff_id?: string | null;
 };
 
 export type AttendeeInput = {
@@ -62,7 +81,10 @@ export type AttendanceSheet = {
 
 export type AttendanceSheetInput = {
   ce_id: number;
-  file_id?: number | null;
+  att_file_name: string;
+  att_file_path: string;
+  att_file_url: string | undefined;
+  att_file_type: string;
   staff_id?: string | null;
 };
 
@@ -76,53 +98,21 @@ export type AttendanceRecord = {
   sheets: AttendanceSheet[];
 };
 
-
 export type Staff = {
   staff_id: string;
   full_name: string;
   position_title: string;
 };
 
-export interface EditEventFormProps {
-  initialValues: {
-    ce_id: number;
-    ce_title: string;
-    ce_date: string;
-    ce_time: string;
-    ce_place: string;
-    ce_type: string;
-    ce_description: string;
-    ce_is_archive?: boolean;
-    staff_id?: string | null;
-    attendees?: { name: string; designation: string; present_or_absent?: string }[];
-  };
-  onClose: () => void;
-}
-
-export type EventCategory = "meeting" | "activity" | undefined;
-
-export interface AttendeesProps {
-  isEditMode: boolean;
-  onEditToggle: (value: boolean) => void;
-  onSave: () => void;
+export interface AttendanceRecords {
   ceId: number;
+  attMettingTitle: string;
+  attMeetingDate: string;
+  attMeetingDescription: string;
+  isArchived: boolean;
+  sheets: any[];
 }
 
-export interface AttendanceSheetViewProps {
-  selectedAttendees?: { name: string; designation: string }[];
-  activity?: string;
-  date?: string;
-  time?: string;
-  place?: string;
-  ce_id?: number | null;
-  category?: string;
-  description?: string;
-  onLoad?: () => void;
-  onError?: () => void;
-  onClose?: () => void;
-  onConfirm?: () => void;
-}
-
-export interface SchedEventFormProps {
-  onSuccess?: () => void;
-}
+export type UpdateEventFormValues = z.infer<typeof UpdateEventFormSchema>;
+export type EventFormValues = UpdateEventFormValues;
+export type EventCategory = "meeting" | "activity" | undefined;

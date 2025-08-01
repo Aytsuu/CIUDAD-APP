@@ -6,23 +6,11 @@ export const useGetCouncilEvents = () => {
   return useQuery<CouncilEvent[], Error>({
     queryKey: ["councilEvents"],
     queryFn: () => getCouncilEvents().catch((error) => {
-      console.error("Error fetching council events:", error);
       throw error;
     }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
-
-// export const useGetAttendees = () => {
-//   return useQuery<Attendee[], Error>({
-//     queryKey: ["attendees"],
-//     queryFn: () => getAttendees().catch((error) => {
-//       console.error("Error fetching attendees:", error);
-//       throw error;
-//     }),
-//     staleTime: 1000 * 60 * 5, // 5 minutes
-//   });
-// };
 
   export const useGetAttendees = (ceId?: number) => {
     return useQuery<Attendee[], Error>({
