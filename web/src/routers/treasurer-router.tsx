@@ -13,7 +13,6 @@ import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense
 import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-main";
 import ReceiptPage from "@/pages/record/treasurer/Receipts/receipts-main";
 import BudgetPlanParent from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanParent";
-import ViewBudgetPlanHistory from "@/pages/record/treasurer/treasurer-budgetplan/viewAHistory";
 
 export const treasurer_router = [
    {
@@ -27,10 +26,6 @@ export const treasurer_router = [
     {
         path: 'budgetplan-forms',
         element: <BudgetPlanParent/>
-    },
-    {
-        path: 'budget-plan-history',
-        element: <ViewBudgetPlanHistory/>
     },
     {
         path: "treasurer-donation",

@@ -76,6 +76,16 @@ class ResidentProfile(models.Model):
 
     def __str__(self):
         return f"{self.per} (ID: {self.rp_id})"
+    
+class RespondentsInfo(models.Model):
+    ri_id = models.BigAutoField(primary_key=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='respondents_info')
+ 
+    class Meta:
+        db_table = 'respondents_info'
+
+    def __str__(self):
+        return f"{self.per} (Respondent ID: {self.ri_id})"
 
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
@@ -166,13 +176,6 @@ class WaterSupply(models.Model):
 
     class Meta:
         db_table = 'water_supply'
-#     class Meta:
-#         db_table = 'water_supply'
-
-# class SanitaryFacility(models.Model):
-#     sf_id = models.CharField(max_length=50, primary_key=True)
-#     sf_type = models.CharField(max_length=50)
-#     sf_toilet_type = models.CharField(max_length=50)
 
 class SanitaryFacility(models.Model):
     sf_id = models.CharField(max_length=50, primary_key=True)
@@ -240,19 +243,6 @@ class RequestFile(models.Model):
         db_table = 'request_file'
 
 
-# class Patient(models.Model):
-#     pat_id = models.CharField(max_length=50, primary_key=True)
-    # per = models.ForeignKey(Personal, on_depete=models.CASCADE)
-
-#     class Meta:
-#         db_table = 'patient'
-
-# class PatientRecords(models.Model):
-#     pat_rec_id = models.CharField(max_length=50, primary_key=True)
-#     pat = models.ForeignKey(Patient, on_delete=models.CASCADE)
-
-#     class Meta:
-#         db_table = 'patient_records'
 
 
 # class RiskClassGroups(models.Model):

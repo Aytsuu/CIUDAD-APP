@@ -580,3 +580,9 @@ LOGGING = {
 # ========================
 SCHEDULER_AUTOSTART = True
 # SCHEDULER_AUTOSTART = not DEBUG # for production
+
+
+# ========================
+# PAYMONGO
+# ========================
+PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')

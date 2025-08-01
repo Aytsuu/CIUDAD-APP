@@ -4,19 +4,49 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import * 
 from datetime import datetime
- 
+from django.db.models import ProtectedError 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+from django.db.models import ProtectedError
+from apps.pagination import StandardResultsPagination
 
 
 # ----------------------CATEGORY---VIEW------------------------------------
-
+class AgeGroupView(generics.ListCreateAPIView):
+    serializer_class = AgegroupSerializer
+    queryset = Agegroup.objects.all()
+    
+class DeleteUpdateAgeGroupView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AgegroupSerializer
+    queryset = Agegroup.objects.all()
+    lookup_field = 'agegrp_id'
+    def get_object(self):
+        agegrp_id = self.kwargs.get('agegrp_id')
+        return get_object_or_404(Agegroup, agegrp_id=agegrp_id)  # ✅ Correct field
 class CategoryView(generics.ListCreateAPIView):
     serializer_class = CategorySerializers
-    queryset  =Category.objects.all()
+    queryset  = Category.objects.all()
     
     def create(self , request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
-
+    def delete(self, request, pk):
+        try:
+            category = Category.objects.get(pk=pk)
+            category.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response(
+                {"detail": "Cannot delete - this category has medicines assigned"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Category.DoesNotExist:
+            return Response(
+                {"detail": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 # ----------------------CATEGORY---DELETE------------------------------------
 class DeleteCategoryView(generics.DestroyAPIView):
     serializer_class = CategorySerializers    
@@ -49,28 +79,64 @@ class FirstAidListView(generics.ListCreateAPIView):
     
 # -------------------DELETE-----LIST------------------
 class DeleteMedicineListView(generics.DestroyAPIView):
-    serializer_class = MedicineListSerializers    
+    serializer_class = MedicineListSerializers
     queryset = Medicinelist.objects.all()
-    def get_object(self):
-        med_id = self.kwargs.get('med_id')
-        return get_object_or_404(Medicinelist, med_id=med_id) 
+    lookup_field = 'med_id'  # 🔴 This tells DRF to look for `med_id` in the URL
+
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy method to handle ProtectedError properly"""
+        try:
+            instance = self.get_object()
+            print(f"Attempting to delete instance: {instance}")
+            instance.delete()
+            print("Delete succeeded")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError as e:
+            print(f"ProtectedError caught: {e}")
+            return Response(
+                {"error": "Cannot delete. It is still in use by other records."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
 class DeleteFirstAidView(generics.DestroyAPIView):
     serializer_class = FirstAidListSerializers    
     queryset = FirstAidList.objects.all()
-    def get_object(self):
-        fa_id = self.kwargs.get('fa_id')
-        return get_object_or_404(FirstAidList, fa_id=fa_id)  
-
+    lookup_field = 'fa_id'
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy method to handle ProtectedError properly"""
+        try:
+            instance = self.get_object()
+            print(f"Attempting to delete instance: {instance}")
+            instance.delete()
+            print("Delete succeeded")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError as e:
+            print(f"ProtectedError caught: {e}")
+            return Response(
+                {"error": "Cannot delete. It is still in use by other records."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
 class DeleteCommodityView(generics.DestroyAPIView):
     serializer_class = CommodityListSerializers    
     queryset = CommodityList.objects.all()
-    def get_object(self):
-        com_id = self.kwargs.get('com_id')
-        return get_object_or_404(CommodityList, com_id=com_id) 
-    
-
-
-#--------------------UPDATE---LIST-----------------------
+    lookup_field = 'com_id'
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy method to handle ProtectedError properly"""
+        try:
+            instance = self.get_object()
+            print(f"Attempting to delete instance: {instance}")
+            instance.delete()
+            print("Delete succeeded")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError as e:
+            print(f"ProtectedError caught: {e}")
+            return Response(
+                {"error": "Cannot delete. It is still in use by other records."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+    #--------------------UPDATE---LIST-----------------------
 class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class=MedicineListSerializers
     queryset = Medicinelist.objects.all()
@@ -100,11 +166,7 @@ class CommodityListUpdateView(generics.RetrieveUpdateAPIView):
        com_id = self.kwargs.get('com_id')
        obj = get_object_or_404(CommodityList, com_id = com_id)
        return obj
-       
-       
-       
-
-
+                 
 # ----------------------INVENTORY---VIEW------------------------------------  
 class InventoryView(generics.ListCreateAPIView):
     serializer_class=InventorySerializers
@@ -299,14 +361,6 @@ class FirstAidTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
      
 
-
-class VaccineCategoryView(generics.ListCreateAPIView):
-    serializer_class=VaccineCategorySerializer
-    queryset=VaccineCategory.objects.all()
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
 class ImmunizationSuppliesView(generics.ListCreateAPIView):
     serializer_class=ImmunizationSuppliesSerializer
     queryset=ImmunizationSupplies.objects.all()
@@ -317,12 +371,20 @@ class ImmunizationSuppliesView(generics.ListCreateAPIView):
 # views.py
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class = VacccinationListSerializer
-    def get_queryset(self):
-        # Filter by vaccat_id = 1
-        return VaccineList.objects.filter(vaccat_id=1)   
+    queryset = VaccineList.objects.all()
+
     def create(self, request, *args, **kwargs):
+        vac_name = request.data.get('vac_name')
+        age_group_id = request.data.get('ageGroup')  # this must match the field name in your model
+
+        # Check if vaccine already exists for that age group
+        if VaccineList.objects.filter(vac_name__iexact=vac_name, ageGroup_id=age_group_id).exists():
+            return Response(
+                {"detail": "This vaccine alreasdsddy exists for the selected age group."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         return super().create(request, *args, **kwargs)
-    
 
 class VaccineIntervalView(generics.ListCreateAPIView):
     serializer_class=VaccineIntervalSerializer
@@ -341,15 +403,15 @@ class RoutineFrequencyView(generics.ListCreateAPIView):
      
     
 # Vaccine Category Views
-class VaccineCategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = VaccineCategorySerializer
-    queryset = VaccineCategory.objects.all()
-    lookup_field = 'vaccat_id'
+# class VaccineCategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = VaccineCategorySerializer
+#     queryset = AntigenCategory.objects.all()
+#     lookup_field = 'vaccat_id'
     
-    def get_object(self):
-        vaccat_id = self.kwargs.get('vaccat_id')
-        obj = get_object_or_404(VaccineCategory, vaccat_id=vaccat_id)
-        return obj
+#     def get_object(self):
+#         vaccat_id = self.kwargs.get('vaccat_id')
+#         obj = get_object_or_404(AntigenCategory, vaccat_id=vaccat_id)
+#         return obj
 
 
 # Immunization Supplies Views
@@ -358,19 +420,44 @@ class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestr
     queryset = ImmunizationSupplies.objects.all()
     lookup_field = 'imz_id'
     
-    # def get_object(self):
-    #     imz_id = self.kwargs.get('imz_id')
-    #     obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
-    #     return obj
-    
-    
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise ValidationError("Cannot delete medicine. It is still in use by other records.")
+        
+        
 # Vaccine List Views
 class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
     lookup_field = 'vac_id'
-    
-    
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy method to handle ProtectedError properly"""
+        try:
+            instance = self.get_object()
+            print(f"Attempting to delete instance: {instance}")
+            instance.delete()
+            print("Delete succeeded")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError as e:
+            print(f"ProtectedError caught: {e}")
+            return Response(
+                {"error": "Cannot delete. It is still in use by other records."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+class ConditionalVaccineListView(generics.ListCreateAPIView):
+    serializer_class = CondtionaleVaccineSerializer
+    queryset = ConditionalVaccine.objects.all()
+class ConditionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CondtionaleVaccineSerializer
+    queryset = ConditionalVaccine.objects.all()
+    lookup_field = 'vac_id'
+    def get_object(self):
+        vac_id = self.kwargs.get('vac_id')
+        obj = get_object_or_404(ConditionalVaccine, vac_id=vac_id)
+        return obj
 # Vaccine Interval Views
 class VaccineIntervalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccineIntervalSerializer
@@ -415,6 +502,15 @@ class VaccineStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVie
         obj = get_object_or_404(VaccineStock, vacStck_id=vacStck_id)
         return obj
     
+# class VaccineStockVacRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = VaccineStockSerializer
+#     queryset = VaccineStock.objects.all()
+#     lookup_field = 'vac_id'
+#     def get_object(self):
+#         vac_id = self.kwargs.get('vac_id')
+#         obj = get_object_or_404(VaccineStock, vac_id=vac_id)
+#         return obj
+    
     
     
 class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
@@ -425,17 +521,22 @@ class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
         return queryset
-
-class AntigenTransactionView(generics.ListCreateAPIView):
-    serializer_class=AntigenTransactionSerializer
-    queryset=AntigenTransaction.objects.all()
     
+class AntigenTransactionView(generics.ListCreateAPIView):
+    serializer_class = AntigenTransactionSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        return AntigenTransaction.objects.all().order_by('-created_at')  # or any logic
+
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
     
 class ImmunizationTransactionView(generics.ListCreateAPIView):
     serializer_class=ImmunizationSuppliesTransactionSerializer
-    queryset=ImmunizationTransaction.objects.all() 
+    # queryset=ImmunizationTransaction.objects.all() 
+    pagination_class = StandardResultsPagination
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -451,4 +552,53 @@ class ImmunizationSuppliesStockRetrieveUpdateDestroyView(generics.RetrieveUpdate
         imzStck_id = self.kwargs.get('imzStck_id')
         obj = get_object_or_404(ImmunizationStock, imzStck_id=imzStck_id)
         return obj
+    
+
+# Immunization Supplies Views
+class ArchiveImmunizationSuppliesStockListView(generics.ListAPIView):
+    serializer_class = ImmnunizationStockSuppliesSerializer
+    queryset = ImmunizationStock.objects.all()
+    
+    def get_queryset(self):
+        # Filter to only include records where inv_id__is_Archived is True
+        return ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+
+class ArchiveVaccineStocksView(generics.ListAPIView):
+    serializer_class=VaccineStockSerializer
+    queryset=VaccineStock.objects.all()
+   
+    def get_queryset(self):
+        # Filter out MedicineInventory entries where the related Inventory is archived
+        queryset = VaccineStock.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+        return queryset 
+
+
+class ArchiveMedicineInventoryView(generics.ListCreateAPIView):
+    serializer_class=MedicineInventorySerializer
+    queryset=MedicineInventory.objects.all()
+  
+    def get_queryset(self):
+        # Filter out MedicineInventory entries where the related Inventory is archived
+        queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+        return queryset
+    
+    
+class ArhiveCommodityInventoryVIew(generics.ListCreateAPIView):
+    serializer_class=CommodityInventorySerializer
+    queryset=CommodityInventory.objects.all()
+    
+    def get_queryset(self):
+        queryset = CommodityInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+        return queryset
+    
+class ArchiveFirstAidInventoryVIew(generics.ListCreateAPIView):
+    serializer_class=FirstAidInventorySerializer
+    queryset=FirstAidInventory.objects.all()
+   
+    def get_queryset(self):
+        # Filter out MedicineInventory entries where the related Inventory is archived
+        queryset = FirstAidInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+        return queryset
+    
+    
     

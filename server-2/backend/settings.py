@@ -90,8 +90,19 @@ INSTALLED_APPS = [
 
     'backend.firebase.notifications',
     'detection',
+    # 'apps.gad'
+    'apps.account',
+    'apps.medicalConsultation',
+    'apps.medicineservices',
+    'apps.firstaid',
+    'apps.childhealthservices',
 
 ]
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+#     'PAGE_SIZE': 10,  # default page size
+# }
 
 MIDDLEWARE = [
    'corsheaders.middleware.CorsMiddleware', 
@@ -104,6 +115,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.authentication.middleware.AccountMiddleware',
+    "django.middleware.gzip.GZipMiddleware",  
 ]
 
 AUTHENTICATION_BACKENDS = [

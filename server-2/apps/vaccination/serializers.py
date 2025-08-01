@@ -3,9 +3,10 @@ from .models import *
 from datetime import date
 from apps.inventory.serializers import VaccineStockSerializer,VacccinationListSerializer
 from apps.patientrecords.models import Patient,PatientRecord
-from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer,FollowUpVisitSerializer
-from apps.patientrecords.serializers import VitalSignsSerializer
-# serializers.py
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
+from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
+from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer
+# serializers. py
 
 class PartialUpdateMixin:
     def to_internal_value(self, data):
@@ -15,11 +16,6 @@ class PartialUpdateMixin:
                     self.fields[field].required = False
         return super().to_internal_value(data)
 
-# class VitalSignsSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = VitalSigns
-#         fields = '__all__'
-
 
 class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,44 +23,70 @@ class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
+class VaccinationHistorySerializerBase(PartialUpdateMixin,serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
-    vaccine_stock = VaccineStockSerializer(source='vacStck', read_only=True)
+    vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
     vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
+    vac_details = VacccinationListSerializer(source='vac', read_only=True)
 
     class Meta:
         model = VaccinationHistory
         fields = '__all__'
+        
+    
+class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
+    vital_signs = VitalSignsSerializer(source='vital', read_only=True)
+    vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
+    follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
+    vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
+    patient = serializers.SerializerMethodField()
+    vac_details = VacccinationListSerializer(source='vac', read_only=True)
+  
+    class Meta:
+        model = VaccinationHistory
+        fields = '__all__'
+        
+    def get_patient(self, obj):
+        try:
+            return PatientSerializer(obj.vacrec.patrec_id.pat_id).data
+        except Exception:
+            return None
+        
+        
+
 
 class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
+    patient_record = PatientRecordSerializer(source='patrec_id', read_only=True)
+
+    class Meta:
+        model = VaccinationRecord
+        fields = '__all__'
+        
+        
+class VaccinationRecordSerializerBase(PartialUpdateMixin,serializers.ModelSerializer):
+    vaccination_histories = VaccinationHistorySerializerBase(many=True, read_only=True)
     class Meta:
         model = VaccinationRecord
         fields = '__all__'
 
-
-# VACCCINATION RECORD 
-# VACCINATION RECORD 
+# ALL  VACCINATION RECORD 
 class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
-    # vaccination_records = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
-
+    
     class Meta:
         model = Patient
         fields = "__all__"
 
     def get_vaccination_count(self, obj):
-        return VaccinationHistory.objects.filter(
-            vacrec__patrec_id__pat_id=obj,
-            vacrec__patrec_id__patrec_type__iexact='Vaccination'
-        ).exclude(
-            vachist_status__iexact='forwarded'
+        count = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=obj.pat_id,
+            vachist_status__in=['completed', 'partially vaccinated']
         ).count()
-
-
+        print(f"Completed vaccination history count for patient {obj.pat_id}: {count}")
+        return count
 
     # def get_vaccination_records(self, obj):
     #     records = obj.patient_records.filter(
@@ -72,3 +94,6 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     #         vaccination_records__vacrec_status__iexact='complete'
     #     ).distinct()
     #     return PatientRecordSerializer(records, many=True).data
+
+
+

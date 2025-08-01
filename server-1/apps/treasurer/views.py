@@ -12,7 +12,6 @@ from rest_framework.permissions import AllowAny
 from .models import Budget_Plan_Detail, Budget_Plan
 from rest_framework.views import APIView
 
-
 class BudgetPlanView(generics.ListCreateAPIView):
     serializer_class = BudgetPlanSerializer
     queryset = Budget_Plan.objects.all()
@@ -30,6 +29,35 @@ class BudgetPlanDetailView(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         else:
             return super().create(request, *args, **kwargs) 
+        
+
+class BudgetPlanHistoryView(generics.ListCreateAPIView):
+    serializer_class = BudgetPlanHistorySerializer
+    queryset = Budget_Plan_History.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        plan_id = self.kwargs.get('plan_id')  
+        if plan_id:
+            queryset = queryset.filter(plan_id=plan_id)
+        return queryset.order_by('-bph_date_updated')  
+
+    def post(self, request, *args, **kwargs):
+        plan_id = self.kwargs.get('plan_id')
+        if plan_id:
+            if isinstance(request.data, list):
+                for item in request.data:
+                    item['plan'] = plan_id
+            else:
+                request.data['plan'] = plan_id
+        
+        serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         
 class BudgetPlanFileView(generics.ListCreateAPIView):
     serializer_class = BudgetPlanFileSerializer
@@ -112,31 +140,6 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-class BudgetPlanHistoryView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanHistorySerializer
-    queryset = Budget_Plan_History.objects.all()
-
-class BudgetPlanHistoryRetrieveView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanHistorySerializer
-
-    def get_queryset(self):
-        plan_id = self.kwargs.get('plan_id')
-        if plan_id:
-            return Budget_Plan_History.objects.filter(plan=plan_id)
-        return Budget_Plan_History.objects.all()
-
-
-class BudgetPlanDetailHistoryView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanDetailHistorySerializer
-    queryset = Budget_Plan_Detail_History.objects.all()
-
-
-class BudgetPlanAndDetailHistoryView(generics.RetrieveAPIView):
-    queryset = Budget_Plan_History.objects.all()
-    serializer_class = BudgetPlanHistorySerializer
-    lookup_field = 'bph_id'
 
 # -------------------------------- INCOME & DISBURSEMENT ------------------------------------
 class IncomeFolderListView(generics.ListCreateAPIView):

@@ -26,46 +26,12 @@ class BudgetPlanFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = BudgetPlan_File
         fields = '__all__'
-    
-class BudgetPlanDetailHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Budget_Plan_Detail_History
-        fields = [
-            'bpdh_id',
-            'bpdh_budget_item',
-            'bpdh_proposed_budget',
-            'bpdh_budget_category',
-            'bpdh_is_changed',
-            'bph'
-        ]
+
 
 class BudgetPlanHistorySerializer(serializers.ModelSerializer):
-    detail_history = BudgetPlanDetailHistorySerializer(source='history', many=True, read_only = True)
-
-    class Meta:
+    class Meta: 
         model = Budget_Plan_History
-        fields = [
-            'bph_id',
-            'plan',
-            'bph_year',
-            'bph_change_date',
-            'bph_actual_income',
-            'bph_rpt_income',
-            'bph_balance',
-            'bph_tax_share',
-            'bph_tax_allotment',
-            'bph_cert_fees',
-            'bph_other_income',
-            'bph_budgetaryObligations',
-            'bph_balUnappropriated',
-            'bph_personalService_limit',
-            'bph_miscExpense_limit',
-            'bph_localDev_limit',
-            'bph_skFund_limit',
-            'bph_calamityFund_limit',
-            'detail_history',
-        ]
-
+        fields = '__all__'
 
 class Income_Folder_Serializer(serializers.ModelSerializer):
     class Meta:

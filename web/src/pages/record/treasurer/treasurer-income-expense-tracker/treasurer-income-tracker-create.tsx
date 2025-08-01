@@ -256,6 +256,10 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
             });
             return; 
         }
+
+        if(!values.inc_additional_notes){
+            values.inc_additional_notes = "None";
+        }
         
         const AllValues = {
             ...values,
