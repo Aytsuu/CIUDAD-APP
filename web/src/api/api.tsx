@@ -1,15 +1,6 @@
 import axios from "axios";
 import supabase from "@/supabase/supabase";
 
-// export const api = axios.create({
-//   baseURL: "http://localhost:8000",
-//   withCredentials: true,
-//   headers: {
-//     "Content-Type": "application/json",
-//     "Accept": "application/json",
-//   },
-// });
-
 export const api = axios.create({
   baseURL: "http://localhost:8000",
   withCredentials: true,
@@ -21,6 +12,11 @@ export const api = axios.create({
 
 export const api2 = axios.create({
   baseURL: "http://localhost:8001",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
 });
 
 // // Request interceptor to add auth token
