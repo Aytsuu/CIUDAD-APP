@@ -222,12 +222,12 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://ciudad-app.onrender.com",
+    "https://ciudad-app-server-2.onrender.com",
     "http://127.0.0.1:5173",  # Add this for Vite sometimes
 ]
 
 ALLOWED_HOSTS = [
-    'ciudad-app.onrender.com',
+    'ciudad-app-server-2.onrender.com',
     'localhost',
     '127.0.0.1'
 ]
