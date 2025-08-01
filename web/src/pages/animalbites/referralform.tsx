@@ -62,7 +62,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
       pat_id: "",
-      receiver: "Cebu City Health Department",
+      receiver: "Cebu City Health Department Animal Bite Center",
       sender: "Brgy. San Roque Health Center",
       date: todayDate,
       p_lname: "",

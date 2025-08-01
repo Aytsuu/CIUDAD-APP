@@ -366,6 +366,7 @@ export default function FamilyPlanningPage() {
             updateFormData={updateFormData}
             formData={formData}
             mode={currentMode}
+            age={formData.age}
           />
         )}
         {currentPage === 6 && (

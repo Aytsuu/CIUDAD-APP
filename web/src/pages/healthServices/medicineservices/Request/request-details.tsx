@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { MedicineRequestDetailProps, MedicineRequestItem } from "./types";
 import { fetchRequestItems } from "./restful-api/get";
-import { createPatients } from "@/pages/record/health/patientsRecord/restful-api/patientsPostAPI";
+import { createPatients } from "@/pages/record/health/patientsRecord/restful-api/post";
 import {
   createPatientRecord,
   createMedicineRecord,

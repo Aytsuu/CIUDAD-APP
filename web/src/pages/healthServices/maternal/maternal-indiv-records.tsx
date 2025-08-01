@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw } from "lucide-react"
+import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
@@ -365,8 +365,10 @@ export default function MaternalIndivRecords() {
     try {
       setIsRefetching(true);
       await refetch();
+
     } catch (error){
       console.error("Error fetching records")
+
     } finally {
       setIsRefetching(false);
     }
@@ -429,7 +431,9 @@ export default function MaternalIndivRecords() {
           <div className="w-full sm:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="default">Add Record</Button>
+                <Button variant="default">
+                  <Plus size={15} /> Add Record
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>

@@ -83,11 +83,12 @@ const mapMethodFromPage1 = (methodFromPage1: string,otherMethod?: string): strin
 };
 
 interface AcknowledgementFormProps {
-  onPrevious4: () => void
-  onNext6: () => void
-  updateFormData: (data: Partial<FormData>) => void
-  formData: FormData
-  mode?: "create" | "edit" | "view"
+  onPrevious4: () => void;
+  onNext6: () => void;
+  updateFormData: (data: Partial<FormData>) => void;
+  formData: FormData;
+  mode?: "create" | "edit" | "view";
+  age?: number; // Pass age from parent component
 }
 
 export default function FamilyPlanningForm5({
@@ -96,6 +97,7 @@ export default function FamilyPlanningForm5({
   updateFormData,
   formData,
   mode = "create",
+  age
 }: AcknowledgementFormProps) {
   const isReadOnly = mode === "view"
 
@@ -106,6 +108,7 @@ export default function FamilyPlanningForm5({
     }
     return formData?.acknowledgement?.selectedMethod || ""
   }
+ 
 
   // Initialize with method from Page 1 if available
   const defaultValues = {
@@ -122,7 +125,7 @@ export default function FamilyPlanningForm5({
   const form = useForm({
     defaultValues,
     mode: "onChange",
-    // resolver: zodResolver(page5Schema),
+    resolver: zodResolver(page5Schema),
   })
   useEffect(() => {
     if (formData?.acknowledgement?.clientName) {
@@ -135,6 +138,11 @@ export default function FamilyPlanningForm5({
 
   let clientSignatureRef: SignatureCanvas | null = null
   let guardianSignatureRef: SignatureCanvas | null = null
+
+  const [signaturesSaved, setSignaturesSaved] = useState({
+    client: !!formData?.acknowledgement?.clientSignature,
+    guardian: !!formData?.acknowledgement?.guardianSignature,
+  });
 
   // Auto-populate the selected method when component mounts or formData changes
   useEffect(() => {
@@ -164,6 +172,7 @@ export default function FamilyPlanningForm5({
     if (clientSignatureRef) {
       clientSignatureRef.clear()
       setClientSignature("")
+      setSignaturesSaved((prev) => ({ ...prev, client: false })); 
 
       const updatedData = {
         ...formData,
@@ -181,7 +190,7 @@ export default function FamilyPlanningForm5({
     if (guardianSignatureRef) {
       guardianSignatureRef.clear()
       setGuardianSignature("")
-
+      setSignaturesSaved((prev) => ({ ...prev, guardian: false })); 
       const updatedData = {
         ...formData,
         acknowledgement: {
@@ -194,41 +203,60 @@ export default function FamilyPlanningForm5({
     }
   }
 
-  const saveClientSignature = () => {
+    const saveClientSignature = () => {
     if (clientSignatureRef) {
-      const signatureData = clientSignatureRef.toDataURL()
-      setClientSignature(signatureData)
-
+      const signatureData = clientSignatureRef.toDataURL();
+      setClientSignature(signatureData);
+      setSignaturesSaved(prev => ({...prev, client: true}));
+      
       const updatedData = {
         ...formData,
         acknowledgement: {
           ...formData?.acknowledgement,
           clientSignature: signatureData,
         },
-      }
-      updateFormData(updatedData)
-      form.setValue("acknowledgement.clientSignature", signatureData)
+      };
+      updateFormData(updatedData);
+      form.setValue("acknowledgement.clientSignature", signatureData);
     }
-  }
+  };
 
   const saveGuardianSignature = () => {
     if (guardianSignatureRef) {
-      const signatureData = guardianSignatureRef.toDataURL()
-      setGuardianSignature(signatureData)
-
+      const signatureData = guardianSignatureRef.toDataURL();
+      setGuardianSignature(signatureData);
+      setSignaturesSaved(prev => ({...prev, guardian: true}));
+      
       const updatedData = {
         ...formData,
         acknowledgement: {
           ...formData?.acknowledgement,
           guardianSignature: signatureData,
         },
-      }
-      updateFormData(updatedData)
-      form.setValue("acknowledgement.guardianSignature", signatureData)
+      };
+      updateFormData(updatedData);
+      form.setValue("acknowledgement.guardianSignature", signatureData);
     }
-  }
+  };
 
   const handleFormSubmit = (data: any) => {
+       // Check if signatures are saved
+    if (!signaturesSaved.client) {
+      form.setError("acknowledgement.clientSignature", {
+        type: "manual",
+        message: "Please save client signature"
+      });
+      return;
+    }
+
+    // Add check for guardian if under 18
+    if (age !== undefined && age < 18 && !signaturesSaved.guardian) {
+      form.setError("acknowledgement.guardianSignature", {
+        type: "manual",
+        message: "Please save guardian signature (required for clients under 18)"
+      });
+      return;
+    }
     const updatedData = {
       ...formData,
       acknowledgement: {
@@ -249,10 +277,9 @@ export default function FamilyPlanningForm5({
     }
   }
 
-  return (
+    return (
     <Card className="w-full">
       <CardHeader>
-        {/* <h5 className="text-lg text-right font-semibold mb-2">Page 5</h5> */}
         <CardTitle className="text-center text-xl font-bold">ACKNOWLEDGEMENT</CardTitle>
       </CardHeader>
       <CardContent>
@@ -268,17 +295,17 @@ export default function FamilyPlanningForm5({
                   <FormItem className="inline-block mx-2 mb-0 min-w-40">
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value)
+                        field.onChange(value);
                         const updatedData = {
                           ...formData,
                           acknowledgement: {
                             ...formData?.acknowledgement,
                             selectedMethod: value as FamilyPlanningMethod,
                           },
-                        }
-                        updateFormData(updatedData)
+                        };
+                        updateFormData(updatedData);
                       }}
-                      value={field.value} // Use value instead of defaultValue for controlled component
+                      value={field.value}
                       disabled={isReadOnly}
                     >
                       <FormControl>
@@ -301,20 +328,11 @@ export default function FamilyPlanningForm5({
               method.
             </div>
 
-            {/* Display info about auto-populated method */}
-            {/* {formData?.methodCurrentlyUsed && (
-              <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
-                <strong>Note:</strong> Method automatically selected based on your choice from Page 1:{" "}
-                {formData.methodCurrentlyUsed}
-              </div>
-            )} */}
-
-             {/* Display info about auto-populated method */}
             {formData?.methodCurrentlyUsed && (
               <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
                 <strong>Note:</strong> Method automatically selected based on your choice from Page 1:{" "}
-                {formData.methodCurrentlyUsed === "Others" && formData.otherMethod 
-                  ? formData.otherMethod 
+                {formData.methodCurrentlyUsed === "Others" && formData.otherMethod
+                  ? formData.otherMethod
                   : formData.methodCurrentlyUsed}
               </div>
             )}
@@ -353,6 +371,7 @@ export default function FamilyPlanningForm5({
                   </Button>
                 </div>
                 <div className="text-center border-t border-gray-300 pt-1 font-medium text-sm">Client Signature</div>
+                <FormMessage>{form.formState.errors.acknowledgement?.clientSignature?.message}</FormMessage>
               </div>
 
               <div>
@@ -369,15 +388,15 @@ export default function FamilyPlanningForm5({
                           type="date"
                           {...field}
                           onChange={(e) => {
-                            field.onChange(e)
+                            field.onChange(e);
                             const updatedData = {
                               ...formData,
                               acknowledgement: {
                                 ...formData?.acknowledgement,
                                 clientSignatureDate: e.target.value,
                               },
-                            }
-                            updateFormData(updatedData)
+                            };
+                            updateFormData(updatedData);
                           }}
                           disabled={isReadOnly}
                         />
@@ -389,100 +408,32 @@ export default function FamilyPlanningForm5({
               </div>
             </div>
 
-            <div className="mt-8">
-              <p className="text-sm mb-4">
-                For WEA below 18 yrs. Old: I hereby consent
-                <FormField
-                  control={form.control}
-                  name="acknowledgement.clientName"
-                  render={({ field }) => (
-                    <FormItem className="inline-block mx-2 mb-0 min-w-40">
-                      <FormControl>
-                        <Input
-                          placeholder="Client's name"
-                          className="border-b border-t-0 border-l-0 border-r-0 rounded-none px-2"
-                          {...field}
-                          readOnly
-                          onChange={(e) => {
-                            field.onChange(e)
-                            const updatedData = {
-                              ...formData,
-                              acknowledgement: {
-                                ...formData?.acknowledgement,
-                                clientName: e.target.value,
-                              },
-                            }
-                            updateFormData(updatedData)
-                          }}
-                          disabled={isReadOnly}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                to accept the Family Planning method.
-              </p>
-
-              <div className="grid grid-cols-2 gap-6 mt-4">
-                <div className="space-y-2">
-                  <div className="border border-gray-300 rounded p-2 h-32 bg-white">
-                    <SignatureCanvas
-                      ref={(ref) => (guardianSignatureRef = ref)}
-                      canvasProps={{
-                        className: "w-full h-full",
-                      }}
-                      penColor="black"
-                      backgroundColor="white"
-                      disabled={isReadOnly}
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={clearGuardianSignature}
-                      disabled={isReadOnly}
-                    >
-                      Clear
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={saveGuardianSignature}
-                      disabled={isReadOnly}
-                    >
-                      Save Signature
-                    </Button>
-                  </div>
-                  <div className="text-center border-t border-gray-300 pt-1 font-medium text-sm">
-                    Parent/Guardian Signature
-                  </div>
-                </div>
-
-                <div>
+            {/* Conditionally render guardian fields */}
+            {(age === undefined || age < 18) && ( // Show if age is not provided or less than 18
+              <div className="mt-8">
+                <p className="text-sm mb-4">
+                  For WEA below 18 yrs. Old: I hereby consent
                   <FormField
                     control={form.control}
-                    name="acknowledgement.guardianSignatureDate"
+                    name="acknowledgement.clientName"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date:</FormLabel>
+                      <FormItem className="inline-block mx-2 mb-0 min-w-40">
                         <FormControl>
                           <Input
-                            type="date"
+                            placeholder="Client's name"
+                            className="border-b border-t-0 border-l-0 border-r-0 rounded-none px-2"
                             {...field}
+                            readOnly
                             onChange={(e) => {
-                              field.onChange(e)
+                              field.onChange(e);
                               const updatedData = {
                                 ...formData,
                                 acknowledgement: {
                                   ...formData?.acknowledgement,
-                                  guardianSignatureDate: e.target.value,
+                                  clientName: e.target.value,
                                 },
-                              }
-                              updateFormData(updatedData)
+                              };
+                              updateFormData(updatedData);
                             }}
                             disabled={isReadOnly}
                           />
@@ -491,23 +442,126 @@ export default function FamilyPlanningForm5({
                       </FormItem>
                     )}
                   />
+                  to accept the Family Planning method.
+                </p>
+
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  <div className="space-y-2">
+                    <div className="border border-gray-300 rounded p-2 h-32 bg-white">
+                      <SignatureCanvas
+                        ref={(ref) => (guardianSignatureRef = ref)}
+                        canvasProps={{
+                          className: "w-full h-full",
+                        }}
+                        penColor="black"
+                        backgroundColor="white"
+                        disabled={isReadOnly}
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-between">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={clearGuardianSignature}
+                        disabled={isReadOnly}
+                      >
+                        Clear
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={saveGuardianSignature}
+                        disabled={isReadOnly}
+                      >
+                        Save Signature
+                      </Button>
+                    </div>
+                    <div className="text-center border-t border-gray-300 pt-1 font-medium text-sm">
+                      Parent/Guardian Signature
+                    </div>
+                    <FormMessage>{form.formState.errors.acknowledgement?.guardianSignature?.message}</FormMessage>
+                  </div>
+
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="acknowledgement.guardianName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Guardian's Name:
+                            {(age === undefined || age < 18) && <span className="text-red-500 ml-1">*</span>}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Guardian's Name"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                const updatedData = {
+                                  ...formData,
+                                  acknowledgement: {
+                                    ...formData?.acknowledgement,
+                                    guardianName: e.target.value,
+                                  },
+                                };
+                                updateFormData(updatedData);
+                              }}
+                              disabled={isReadOnly}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="acknowledgement.guardianSignatureDate"
+                      render={({ field }) => (
+                        <FormItem className="mt-4">
+                          <FormLabel>
+                            Date:
+                            {(age === undefined || age < 18) && <span className="text-red-500 ml-1">*</span>}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                const updatedData = {
+                                  ...formData,
+                                  acknowledgement: {
+                                    ...formData?.acknowledgement,
+                                    guardianSignatureDate: e.target.value,
+                                  },
+                                };
+                                updateFormData(updatedData);
+                              }}
+                              disabled={isReadOnly}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="flex justify-end mt-6 space-x-4">
               <Button variant="outline" type="button" onClick={onPrevious4} disabled={isReadOnly}>
                 Previous
               </Button>
-              <Button type="submit"
-              >
-                Next
-              
-              </Button>
+              <Button type="submit">Next</Button>
             </div>
           </form>
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }
+

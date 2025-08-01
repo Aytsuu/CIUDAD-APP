@@ -35,10 +35,6 @@ export const getFPRecordsList = async () => {
   try {
     const response = await api2.get("familyplanning/overall-records/")
     const fpRecords = response.data
-
-    // The backend now returns data in a format close to FPRecord interface
-    // but with additional fields like patient_id and record_count.
-    // We just ensure types are consistent.
     const transformedData = fpRecords.map((record: any) => {
       return {
         fprecord_id: record.fprecord,
@@ -46,6 +42,7 @@ export const getFPRecordsList = async () => {
         client_id: record.client_id || "N/A",
         patient_name: record.patient_name || "N/A",
         patient_age: record.patient_age || "N/A",
+        patient_type: record.patient_type || "N/A",
         client_type: record.client_type || "N/A",
         method_used: record.method_used || "N/A",
         created_at: record.created_at || "N/A",

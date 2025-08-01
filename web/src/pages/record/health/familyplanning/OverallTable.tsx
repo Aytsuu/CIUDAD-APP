@@ -135,7 +135,7 @@ interface FPRecord {
         },
       },
       {
-        accessorKey: "patient_type", // NEW: Column for Patient Type
+        accessorKey: "patient_type", 
         header: "Patient Type",
         cell: ({ row }) => (
           <span

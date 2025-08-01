@@ -13,10 +13,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import SignatureCanvas from "react-signature-canvas"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { page6Schema, type FormData, type ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
+import { page6Schema,ServiceProvisionRecordSchema, type FormData, type ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
 import { api2 } from "@/api/api" // Import your API instance
 import { toast } from "sonner"
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
+import { Trash2 } from "lucide-react"
+import z from "zod"
 
 const methods = [
   "COC", "POP", "Injectable", "Implant", "Condom",
@@ -121,7 +123,7 @@ export default function FamilyPlanningForm6({
   const navigate = useNavigate()
 
   const form = useForm<FormData>({
-    // resolver: zodResolver(page6Schema),
+    resolver: zodResolver(page6Schema),
     defaultValues: {
       serviceProvisionRecords: formData?.serviceProvisionRecords || [],
       pregnancyCheck: formData?.pregnancyCheck || Object.fromEntries(pregnancyQuestions.map((q) => [q.id, false])),
@@ -182,14 +184,17 @@ export default function FamilyPlanningForm6({
     setValidationError(null)
   }
 
-  const addRecord = () => {
-    // Optional: Add validation here to check if methodQuantity <= availableStock
+ const addRecord = () => {
+  try {
+    const validatedData = ServiceProvisionRecordSchema.parse(record);
+    
     if (availableStock !== null && Number(record.methodQuantity) > availableStock) {
       setValidationError(`Quantity cannot exceed available stock: ${availableStock}`);
       return;
     }
 
-    setRecords((prev) => [...prev, record])
+    setRecords((prev) => [...prev, validatedData]);
+    
     setRecord({
       dateOfVisit: new Date().toISOString().split("T")[0],
       methodAccepted: getMethodFromPage1(),
@@ -201,8 +206,25 @@ export default function FamilyPlanningForm6({
       weight: 0,
       bp_systolic: 0,
       bp_diastolic: 0,
-    })
-    setValidationError(null)
+    });
+    setValidationError(null);
+    
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const firstError = error.errors[0];
+      setValidationError(`${firstError.path.join('.')}: ${firstError.message}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setValidationError("An unexpected error occurred");
+      console.error(error);
+    }
+  }
+};
+
+
+  const removeRecord = (index: number) => {
+    setRecords((prev) => prev.filter((_, i) => i !== index))
+    updateFormData({ serviceProvisionRecords: records.filter((_, i) => i !== index) })
   }
 
   const saveSig = () => {
@@ -359,7 +381,7 @@ export default function FamilyPlanningForm6({
             <Table className="mt-6">
               <TableHeader>
                 <TableRow>
-                  {["Visit", "Vitals", "Method", "Qty", "Findings", "Provider", "Signed", "Follow-up"].map((h) => (
+                  {["Visit", "Vitals", "Method", "Qty", "Findings", "Provider", "Signed", "Follow-up", "Action"].map((h) => (
                     <TableHead key={h}>{h}</TableHead>
                   ))}
                 </TableRow>
@@ -367,7 +389,7 @@ export default function FamilyPlanningForm6({
               <TableBody>
                 {records.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8}>No records yet.</TableCell>
+                    <TableCell colSpan={9}>No records yet.</TableCell>
                   </TableRow>
                 ) : (
                   records.map((r, i) => (
@@ -384,6 +406,16 @@ export default function FamilyPlanningForm6({
                       <TableCell>{r.nameOfServiceProvider}</TableCell>
                       <TableCell>{r.serviceProviderSignature ? "✔" : "—"}</TableCell>
                       <TableCell>{r.dateOfFollowUp}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeRecord(i)}
+                          disabled={isReadOnly}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

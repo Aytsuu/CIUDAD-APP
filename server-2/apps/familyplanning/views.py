@@ -310,48 +310,6 @@ def get_physical_exam_display_values(data):
         "extremitiesExamination": display_map.get(data.get("extremitiesExamination")),
     }
         
-# @api_view(['POST'])
-# def create_or_get_illness(request):
-#     """
-#     Creates a new illness or returns an existing one based on its name.
-#     Useful for 'Other' or 'Disability' inputs where users can define new terms.
-#     """
-#     illname = request.data.get('illname')
-#     ill_description = request.data.get('ill_description', '')
-#     ill_code = request.data.get('ill_code', 'CUSTOM') # Default code for custom entries
-
-#     if not illname:
-#         return Response({'error': 'Illness name is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-#     try:
-#         # Try to find an existing illness with the same name (case-insensitive)
-#         illness, created = Illness.objects.get_or_create(
-#             illname__iexact=illname,
-#             defaults={
-#                 'illname': illname,
-#                 'ill_description': ill_description,
-#                 'ill_code': ill_code
-#             }
-#         )
-#         if not created:
-#             # If found, update description and code if they are provided and different
-#             if ill_description and illness.ill_description != ill_description:
-#                 illness.ill_description = ill_description
-#             if ill_code and illness.ill_code != ill_code:
-#                 illness.ill_code = ill_code
-#             illness.save()
-
-#         return Response({
-#             'ill_id': illness.ill_id,
-#             'illname': illness.illname,
-#             'ill_description': illness.ill_description,
-#             'ill_code': illness.ill_code,
-#             'created': created
-#         }, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
-
-#     except Exception as e:
-#         return Response({'error': f'Error creating or getting illness: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 @api_view(['GET'])
 def get_illnesses_by_ids(request):
     """
@@ -585,7 +543,8 @@ class PatientListForOverallTable(generics.ListAPIView):
 
         for record in all_fp_records:
             patient_id = record.pat.pat_id
-
+            patient_type = record.pat.pat_type
+            
             if patient_id not in patient_data_map:
                 patient_data_map[patient_id] = {
                     "patient_id": patient_id,
@@ -593,13 +552,13 @@ class PatientListForOverallTable(generics.ListAPIView):
                     "patient_age": None,
                     "sex": "",
                     "client_type": "N/A",
+                    "patient_type": patient_type,
                     "method_used": "N/A",
                     "created_at": (
                         record.created_at.isoformat() if record.created_at else None
                     ),
                     "fprecord": record.fprecord_id,
                     "record_count": 0,
-                    "patient_type": "",
                     "has_multiple_records": False,
                 }
 
@@ -893,35 +852,7 @@ def get_patient_details_data(request, patient_id):
             },
         }
 
-        # try:
-        #     body_measurement = (
-        #         BodyMeasurement.objects.filter(patrec=patient.patrec_id)
-        #         .order_by("-created_at")
-        #         .first()
-        #     )
-        #     if body_measurement:
-        #         fp_form_data.update(
-        #             {
-        #                 "weight": (
-        #                     (body_measurement.weight)
-        #                     if body_measurement.weight
-        #                     else 0
-        #                 ),
-        #                 "height": (
-        #                     (body_measurement.height)
-        #                     if body_measurement.height
-        #                     else 0
-        #                 ),
-        #                 "bodyMeasurementRecordedAt": ( # Add this line
-        #                     body_measurement.created_at.isoformat()
-        #                     if body_measurement.created_at
-        #                     else None
-        #                 ),
-        #             }
-        #         )
-        # except Exception as e:
-        #     print(f"Error fetching body measurements: {e}")
-
+   
         address_info = patient_data.get("address")
         if address_info:
             fp_form_data["address"] = {
@@ -2117,86 +2048,86 @@ def get_complete_fp_record_data(request, fprecord_id):
         raise e
 
 
-class FamilyPlanningCreateUpdateView(generics.ListCreateAPIView):
-    serializer_class = FamilyPlanningRecordCompositeSerializer
-    queryset = FP_Record.objects.all()
+# class FamilyPlanningCreateUpdateView(generics.ListCreateAPIView):
+#     serializer_class = FamilyPlanningRecordCompositeSerializer
+#     queryset = FP_Record.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        # Use transaction.atomic() for atomicity
-        with transaction.atomic():
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+#     def create(self, request, *args, **kwargs):
+#         # Use transaction.atomic() for atomicity
+#         with transaction.atomic():
+#             serializer = self.get_serializer(data=request.data)
+#             serializer.is_valid(raise_exception=True)
             
-            self.perform_create(serializer)
+#             self.perform_create(serializer)
             
-            # Get the created FP_Record instance
-            fp_record_instance = serializer.instance
-            service_provision_records = request.data.get('serviceProvisionRecords', [])
+#             # Get the created FP_Record instance
+#             fp_record_instance = serializer.instance
+#             service_provision_records = request.data.get('serviceProvisionRecords', [])
             
-            if service_provision_records:
-                # Get the last record, which should contain the method and quantity
-                latest_record = service_provision_records[-1]
-                method_accepted = latest_record.get('methodAccepted')
-                method_quantity_str = latest_record.get('methodQuantity')
+#             if service_provision_records:
+#                 # Get the last record, which should contain the method and quantity
+#                 latest_record = service_provision_records[-1]
+#                 method_accepted = latest_record.get('methodAccepted')
+#                 method_quantity_str = latest_record.get('methodQuantity')
 
-                print("Checking stock for:", method_accepted)
-                print("Requested quantity:", method_quantity)
-                print("Available stock items:", InventoryItem.objects.filter(commodity__name=method_accepted))
+#                 print("Checking stock for:", method_accepted)
+#                 print("Requested quantity:", method_quantity)
+#                 print("Available stock items:", InventoryItem.objects.filter(commodity__name=method_accepted))
 
-                try:
-                    method_quantity = int(method_quantity_str)
-                except (ValueError, TypeError):
-                    raise ValueError("Invalid quantity provided for method deduction.")
+#                 try:
+#                     method_quantity = int(method_quantity_str)
+#                 except (ValueError, TypeError):
+#                     raise ValueError("Invalid quantity provided for method deduction.")
 
-                if method_accepted and method_quantity > 0:
-                    try:
-                        # 1. Find the commodity
-                        commodity = CommodityList.objects.get(com_name=method_accepted)
+#                 if method_accepted and method_quantity > 0:
+#                     try:
+#                         # 1. Find the commodity
+#                         commodity = CommodityList.objects.get(com_name=method_accepted)
                      
 
-                        commodity_inventory_item = CommodityInventory.objects.filter(
-                            com_id=commodity,
-                            cinv_qty_avail__gte=method_quantity,
-                            inv_id__is_Archived=False # Ensure it's not archived
-                        ).order_by('inv_id__expiry_date').first() # Order by expiry date for FIFO
+#                         commodity_inventory_item = CommodityInventory.objects.filter(
+#                             com_id=commodity,
+#                             cinv_qty_avail__gte=method_quantity,
+#                             inv_id__is_Archived=False # Ensure it's not archived
+#                         ).order_by('inv_id__expiry_date').first() # Order by expiry date for FIFO
                         
-                        if not commodity_inventory_item:
-                            raise ValueError(f"Insufficient stock for {method_accepted} or no suitable inventory item found.")
+#                         if not commodity_inventory_item:
+#                             raise ValueError(f"Insufficient stock for {method_accepted} or no suitable inventory item found.")
 
-                        # 3. Deduct stock from CommodityInventory
-                        commodity_inventory_item.cinv_qty_avail -= method_quantity
-                        commodity_inventory_item.save()
+#                         # 3. Deduct stock from CommodityInventory
+#                         commodity_inventory_item.cinv_qty_avail -= method_quantity
+#                         commodity_inventory_item.save()
                         
-                        staff_id_from_request = request.user.id if request.user.is_authenticated else None # Example
+#                         staff_id_from_request = request.user.id if request.user.is_authenticated else None # Example
                         
-                        CommodityTransaction.objects.create(
-                            cinv_id=commodity_inventory_item,
-                            comt_qty=str(method_quantity), # Store quantity as string, as per your model
-                            comt_action="Deducted for Family Planning Service",
-                            staff = staff_id_from_request or None
-                        )
+#                         CommodityTransaction.objects.create(
+#                             cinv_id=commodity_inventory_item,
+#                             comt_qty=str(method_quantity), # Store quantity as string, as per your model
+#                             comt_action="Deducted for Family Planning Service",
+#                             staff = staff_id_from_request or None
+#                         )
                         
-                        print(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
+#                         print(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
 
-                    except CommodityList.DoesNotExist:
-                        print(f"Warning: Commodity '{method_accepted}' not found in CommodityList. Stock not deducted.")
-                    except ValueError as ve:
-                        # Re-raise for HTTP 400 response
-                        raise ValueError(f"Stock deduction error: {ve}")
-                    except Exception as e:
-                        import traceback
-                        traceback.print_exc()
-                        raise Exception(f"An unexpected error occurred during stock deduction: {str(e)}")
+#                     except CommodityList.DoesNotExist:
+#                         print(f"Warning: Commodity '{method_accepted}' not found in CommodityList. Stock not deducted.")
+#                     except ValueError as ve:
+#                         # Re-raise for HTTP 400 response
+#                         raise ValueError(f"Stock deduction error: {ve}")
+#                     except Exception as e:
+#                         import traceback
+#                         traceback.print_exc()
+#                         raise Exception(f"An unexpected error occurred during stock deduction: {str(e)}")
 
-            headers = self.get_success_headers(serializer.data)
-            return Response(
-                {
-                    "message": "Family Planning record created successfully and stock updated",
-                    "fprecord": fp_record_instance.fprecord_id,
-                },
-                status=status.HTTP_201_CREATED,
-                headers=headers,
-            )
+#             headers = self.get_success_headers(serializer.data)
+#             return Response(
+#                 {
+#                     "message": "Family Planning record created successfully and stock updated",
+#                     "fprecord": fp_record_instance.fprecord_id,
+#                 },
+#                 status=status.HTTP_201_CREATED,
+#                 headers=headers,
+#             )
             
 @api_view(["GET"])
 def get_last_previous_pregnancy(request, patient_id):

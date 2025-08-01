@@ -27,7 +27,7 @@ const referralOptions = {
 const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData, mode="create" }: Page3Props) => {
   const isReadOnly = mode === "view"
   const form = useForm<FormData>({
-    //  resolver: zodResolver(page3Schema),
+     resolver: zodResolver(page3Schema),
     defaultValues: formData,
     values: formData,
   })

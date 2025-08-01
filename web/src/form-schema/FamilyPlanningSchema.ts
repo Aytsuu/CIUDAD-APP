@@ -1,17 +1,27 @@
 import { z } from "zod";
 
-const ServiceProvisionRecordSchema = z.object({
-  dateOfVisit: z.string().nonempty("Date of visit is required"),
+export const ServiceProvisionRecordSchema = z.object({
+  dateOfVisit: z.string().min(1, "Date of visit is required"),
   methodAccepted: z.string().optional(),
-  nameOfServiceProvider: z.string().nonempty("Service provider name is required"),
-  dateOfFollowUp: z.string().nonempty("Follow-up date is required"),
+  nameOfServiceProvider: z.string().nonempty("Provider name is required"),
+  dateOfFollowUp: z.string().optional(),
   methodQuantity: z.string().optional(),
-  serviceProviderSignature: z.string().optional(),
-  medicalFindings: z.string().optional(),
-  weight: z.coerce.number().min(1, "Weight must be at least 1 kg"),
-  bp_systolic: z.coerce.number().min(1, "Systolic BP must be at least 1"),
-  bp_diastolic: z.coerce.number().min(1, "Diastolic BP must be at least 1"),
+  serviceProviderSignature: z.string().nonempty("Please sign and save first"),
+  medicalFindings: z.string().nonempty("Findings are required"),
+  weight: z.coerce
+    .number()
+    .min(1, "Weight is required")
+    .max(300, "Weight must be realistic (1-300kg)"),
+  bp_systolic: z.coerce
+    .number()
+    .min(60, "Systolic BP must be 60-250")
+    .max(250, "Systolic BP must be 60-250"),
+  bp_diastolic: z.coerce
+    .number()
+    .min(40, "Diastolic BP must be 40-150")
+    .max(150, "Diastolic BP must be 40-150"),
 });
+
 
 const PregnancyCheckSchema = z.object({
   breastfeeding: z.boolean().default(false),
@@ -34,7 +44,7 @@ const FamilyPlanningBaseSchema = z.object({
   givenName: z.string().nonempty("Given name is required"),
   middleInitial: z.string().max(1, "Middle Initial must be 1 character only").optional(),
   dateOfBirth: z.string().nonempty("Birthdate is required"),
-  age: z.coerce.number().min(1, "Age is required and must be a positive number"),
+  age: z.coerce.number().min(1),
   educationalAttainment: z.string().optional(),
   occupation: z.string().optional(),
 
@@ -63,14 +73,14 @@ const FamilyPlanningBaseSchema = z.object({
   subTypeOfClient: z.string().optional(), 
   
   // for new acceptor
-  reasonForFP: z.string().optional(), 
-  otherReasonForFP: z.string().optional(),
+  reasonForFP: z.string().nonempty(), 
+  otherReasonForFP: z.string(),
   // For "Current User" reasons
   reason: z.string().optional(), 
   otherReason: z.string().optional(),
   otherMethod: z.string().optional(),
   
-  methodCurrentlyUsed: z.string().optional(),
+  methodCurrentlyUsed: z.string().nonempty(),
 
   medicalHistory: z.object({
     severeHeadaches: z.boolean(),
@@ -118,14 +128,14 @@ const FamilyPlanningBaseSchema = z.object({
     unpleasantRelationship: z.boolean(),
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
-    referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]).optional(),
+    referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]),
     otherReferral: z.string().optional()
   }),
 
   weight: z.coerce.number().min(1),
   height: z.coerce.number().min(1),
   bloodPressure: z.string().nonempty("Blood pressure is required (e.g., 120/80)"),
-  pulseRate: z.coerce.number().min(1).optional(),
+  pulseRate: z.coerce.number().min(1),
   bodyMeasurementRecordedAt: z.string().optional(),
 
   skinExamination: z.enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"]),
@@ -135,18 +145,19 @@ const FamilyPlanningBaseSchema = z.object({
   abdomenExamination: z.enum(["normal", "abdominal_mass", "varicosities", "not_applicable"]),
   extremitiesExamination: z.enum(["normal", "edema", "varicosities", "not_applicable"]),
 
- pelvicExamination: z.object({
-  exam: z.enum([
-    "normal",
-    "mass",
-    "abnormal_discharge",
-    "cervical_abnormalities",
-    "warts",
-    "polyp_or_cyst",
-    "inflammation_or_erosion",
-    "bloody_discharge",
-    "not_applicable",
-  ]).optional(),
+
+
+  pelvicExamination: z.enum([
+  "normal",
+  "mass",
+  "abnormal_discharge",
+  "cervical_abnormalities",
+  "warts",
+  "polyp_or_cyst",
+  "inflammation_or_erosion",
+  "bloody_discharge",
+  "not_applicable",
+]).optional(),
 
   cervicalConsistency: z.enum([
     "firm",
@@ -161,22 +172,17 @@ const FamilyPlanningBaseSchema = z.object({
   uterinePosition: z.string().optional(),
 
   uterineDepth: z.string().optional(),
+  
+ acknowledgement: z.object({
+  selectedMethod: z.string().nonempty("Please select a family planning method"),
+  clientSignature: z.string().nonempty("Please sign and save first"),
+  clientSignatureDate: z.string().nonempty("Client signature date is required"),
+  clientName: z.string().nonempty("Client name is required"),
+  guardianName: z.string().optional(),
+  guardianSignature: z.string().optional(),
+  guardianSignatureDate: z.string().optional(),
+  methodQuantity: z.coerce.number().optional(),
 }),
-
-  
-
-  
-  
-  acknowledgement: z.object({
-    selectedMethod: z.string().optional(),
-    clientSignature: z.string().optional(),
-    clientSignatureDate: z.string().nonempty("Client signature date is required"),
-    guardianName: z.string().optional(),
-    guardianSignature: z.string().optional(),
-    guardianSignatureDate: z.string().optional(),
-    clientName: z.string(),
-    methodQuantity: z.coerce.number().optional(),
-  }),
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
   pregnancyCheck: PregnancyCheckSchema.optional(),
 });
@@ -251,6 +257,29 @@ export const page6Schema = FamilyPlanningBaseSchema.pick({
 });
 
 export const FamilyPlanningSchema = FamilyPlanningBaseSchema.superRefine((data, ctx) => {
+ if (data.age < 18) {
+    if (!data.acknowledgement?.guardianName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Guardian name is required for clients under 18",
+        path: ["acknowledgement", "guardianName"]
+      });
+    }
+    if (!data.acknowledgement?.guardianSignature) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Guardian signature is required for clients under 18",
+        path: ["acknowledgement", "guardianSignature"]
+      });
+    }
+    if (!data.acknowledgement?.guardianSignatureDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Guardian signature date is required for clients under 18",
+        path: ["acknowledgement", "guardianSignatureDate"]
+      });
+    }
+  }
 
 
   if (data.medicalHistory?.disability && !data.medicalHistory.disabilityDetails) {
@@ -260,10 +289,10 @@ export const FamilyPlanningSchema = FamilyPlanningBaseSchema.superRefine((data, 
   // Common validation for IUD
   const isIUD = data.methodCurrentlyUsed?.includes("IUD");
   if (isIUD) {
-    if (!data.pelvicExamination || !data.cervicalConsistency || !data.uterinePosition) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Pelvic exam details (Pelvic Examination, Cervical Consistency, Uterine Position) are required for IUD method", path: ["pelvicExamination"] });
-    }
+  if (!data.pelvicExamination || !data.cervicalConsistency || !data.uterinePosition) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Pelvic exam details (Pelvic Examination, Cervical Consistency, Uterine Position) are required for IUD method", path: ["pelvicExamination"] });
   }
+}
 
 
   // --- Conditional Logic for Type of Client ---
@@ -335,6 +364,6 @@ export const FamilyPlanningSchema = FamilyPlanningBaseSchema.superRefine((data, 
 
 export type FormData = z.infer<typeof FamilyPlanningSchema>;
 export type ServiceProvisionRecord = z.infer<typeof ServiceProvisionRecordSchema>;
-export type PregnancyCheck = z.infer<typeof PregnancyCheckSchema>;
+export type PregnancyCheck = z.infer<typeof PregnancyCheckSchema>;  
 
 export default FamilyPlanningSchema;

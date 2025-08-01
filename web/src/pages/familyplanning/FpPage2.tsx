@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { FormData,page2Schema } from "@/form-schema/FamilyPlanningSchema"
 import { api2 } from "@/api/api"
 
 // NEW: Interface for illness data
@@ -56,7 +57,7 @@ export default function FamilyPlanningForm2({
   })
 
   const form = useForm<FormData>({
-    // resolver: zodResolver(page2Schema),
+    resolver: zodResolver(page2Schema),
     defaultValues: formData,
     values: formData,
     mode: "onChange",
@@ -105,7 +106,7 @@ export default function FamilyPlanningForm2({
         abnormalVaginalDischarge: "Abnormal vaginal discharge",
         phenobarbitalOrRifampicin: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
         smoker: "Is this client a SMOKER?",
-        // disability: "With Disability/Others",
+        // disability: "Others",
       }
 
       Object.entries(formData.medicalHistory).forEach(([key, value]) => {
@@ -145,7 +146,7 @@ export default function FamilyPlanningForm2({
     { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
     { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
     { name: "smoker", label: "Is this client a SMOKER?" },
-    // { name: "disability", label: "With Disability/Others" },
+    // { name: "disability", label: "Others" },
   ]
 
   const onSubmit = async (data: FormData) => {
@@ -156,13 +157,13 @@ export default function FamilyPlanningForm2({
     // The backend will handle checking if it exists or creating it.
     // We'll add a new field to the formData for this.
     // For now, ensure the 'disability' checkbox is treated as selected if details are provided.
-    const disabilityIllness = illnesses.find((ill) => ill.illname === "With Disability/Others");
+    const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
     if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
         selectedIllnesses.push(disabilityIllness.ill_id);
     }
   } else {
-    // If disability is unchecked or details are empty, ensure the "With Disability/Others" illness is not selected
-    const disabilityIllness = illnesses.find((ill) => ill.illname === "With Disability/Others");
+    // If disability is unchecked or details are empty, ensure the "Others" illness is not selected
+    const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
     if (disabilityIllness) {
         setSelectedIllnesses(prev => prev.filter(id => id !== disabilityIllness.ill_id));
     }
@@ -221,7 +222,7 @@ export default function FamilyPlanningForm2({
           case "Is this client a SMOKER?":
             medicalHistory.smoker = true
             break
-          case "With Disability/Others":
+          case "Others":
             medicalHistory.disability = true
             break
         }
@@ -334,7 +335,7 @@ export default function FamilyPlanningForm2({
                   ))}
 
                 <div className="flex justify-between items-center mb-4">
-                  <Label className="flex-1">■ With Disability/Others</Label>
+                  <Label className="flex-1">■ Others</Label>
                   <div className="flex space-x-7">
                     <div className="flex items-center space-x-2">
                       <Checkbox

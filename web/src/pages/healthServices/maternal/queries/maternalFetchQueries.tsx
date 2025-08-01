@@ -8,7 +8,13 @@ import { getPatients,
 			getPrenatalPatientMedHistory,
 			getPrenatalPatientObsHistory,
 			getPrenatalPatientBodyMeasurement,
+			getPatientPrenatalCount,
+			getActivePregnanciesCount,
+			getPrenatalPatientFollowUpVisits,
+			getPrenatalPatientPrevHospitalization,
+			getPrenatalPatientPrevPregnancy,
 } from "../restful-api/maternalGetAPI";
+
 
 // for getPatients
 export const usePatients = () => {
@@ -30,6 +36,16 @@ export const useMaternalRecords = () => {
 	});
 }
 
+// for getActivePregnanciesCount
+export const useActivepregnanciesCount = () => {
+	return useQuery({
+		queryKey: ["activePregnanciesCount"],
+		queryFn: getActivePregnanciesCount,
+		staleTime: 60 * 1, 
+		retry: 2,
+	})
+}
+
 // for getPatientPostpartumCount
 export const usePatientPostpartumCount = (patientId: string) => {
   return useQuery({
@@ -40,6 +56,18 @@ export const usePatientPostpartumCount = (patientId: string) => {
 	 retry: 1, 
 	 refetchOnWindowFocus: true,
   })
+}
+
+// for getPatientPrenatalCount
+export const usePatientPrenatalCount = (patientId: string) => {
+	return useQuery({
+		queryKey: ["patientPrenatalCount", patientId],
+		queryFn: () => getPatientPrenatalCount(patientId),
+		enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+		staleTime: 60 * 1,
+		retry: 1,
+		refetchOnWindowFocus: true,
+	})
 }
 
 // for getPregnancyDetails
@@ -67,6 +95,7 @@ export const usePrenatalPatientMedHistory = (patientId: string) => {
 	})
 }
 
+// for getPrenatalPatientObsHistory
 export const usePrenatalPatientObsHistory = (patientId: string) => {
 	return useQuery({
 		queryKey: ["prenatalPatientObsHistory", patientId],
@@ -78,6 +107,7 @@ export const usePrenatalPatientObsHistory = (patientId: string) => {
 	})
 }
 
+// for getPrenatalPatientBodyMeasurement
 export const usePrenatalPatientBodyMeasurement = (patientId: string) => {
 	return useQuery({
 		queryKey: ["prenatalPatientBodyMeasurement", patientId],
@@ -85,5 +115,38 @@ export const usePrenatalPatientBodyMeasurement = (patientId: string) => {
 		enabled: !!patientId,
 		staleTime: 30 * 1,
 		retry: 3,
+	})
+}
+
+// for getPrenatalPatientFollowUpVisits
+export const  usePrenatalPatientFollowUpVisits = (patientId: string) => {
+	return useQuery({
+		queryKey: ["prenatalPatientFollowUpVisits", patientId],
+		queryFn: () => getPrenatalPatientFollowUpVisits(patientId),
+		enabled: !!patientId,
+		staleTime: 30 * 1,
+		retry: 3
+	})
+}
+
+// for getPrenatalPatientPrevHospitalization
+export const usePrenatalPatientPrevHospitalization = (patientid: string) => {
+	return useQuery({
+		queryKey: ["prenatalPatientPrevHospitalization", patientid],
+		queryFn: () => getPrenatalPatientPrevHospitalization(patientid),
+		enabled: !!patientid,
+		staleTime: 30 * 1,
+		retry: 3
+	})
+}
+
+// for getPrenatalPatientPrevPregnancy
+export const usePrenatalPatientPrevPregnancy = (patientId: string) => {
+	return useQuery({
+		queryKey: ["prenatalPatientPrevPregnancy", patientId],
+		queryFn: () => getPrenatalPatientPrevPregnancy(patientId),
+		enabled: !!patientId,
+		staleTime: 30 * 1,
+		retry: 3
 	})
 }

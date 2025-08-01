@@ -21,10 +21,8 @@ type Page4Props = {
 const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, mode = "create" }: Page4Props) => {
   const isReadOnly = mode === "view"
 
-
-  // Initialize form with formData values
   const form = useForm<FormData>({
-    // resolver: zodResolver(page4Schema),
+    resolver: zodResolver(page4Schema),
     defaultValues: formData,
     values: formData,
     mode: "onChange",
@@ -49,18 +47,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
     (formData.typeOfClient === "New Acceptor" &&
       (formData.acknowledgement?.selectedMethod === "IUD-Interval" ||
         formData.acknowledgement?.selectedMethod === "IUD-Post Partum"))
- useEffect(() => {
-    if (isIUDSelected) {
-      console.log("=== PELVIC EXAMINATION DEBUG ===")
-      console.log("Pelvic Examination:", form.pelvicExamination)
-      console.log("Cervical Consistency:", formData.cervicalConsistency)
-      console.log("Cervical Tenderness:", formData.cervicalTenderness)
-      console.log("Cervical Adnexal:", formData.cervicalAdnexal)
-      console.log("Uterine Position:", formData.uterinePosition)
-      console.log("Uterine Depth:", formData.uterineDepth)
-      console.log("=== END PELVIC EXAMINATION DEBUG ===")
-    }
-  }, [FormData, isIUDSelected])
+
 
   // Add form submission handler to update parent form data
   const onSubmit = async (data: FormData) => {
@@ -101,22 +88,9 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
     </div>
   )
 
-  // Reset pelvic examination fields when IUD is not selected
-  useEffect(() => {
-    if (!isIUDSelected) {
-      form.setValue("pelvicExamination", "not_applicable")
-      form.setValue("cervicalConsistency", "not_applicable")
-      form.setValue("cervicalTenderness", false)
-      form.setValue("cervicalAdnexal", false)
-      form.setValue("uterinePosition", "not_applicable")
-      form.setValue("uterineDepth", "")
-    }
-  }, [isIUDSelected, form])
-
   return (
     <Card className="w-full">
       <CardHeader>
-        {/* <h5 className="text-lg text-right font-semibold mb-2 ">Page 4</h5> */}
         <CardTitle className="text-lg font-bold">V. PHYSICAL EXAMINATION</CardTitle>
       </CardHeader>
       <CardContent>
@@ -185,11 +159,11 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                 )}
               />
             </div>
-            {/* <span className="text-xs italic mt-5 m">
+            <span className="text-xs italic mt-5 m">
               {(formData.weight > 0 || formData.height > 0) && (
                 `Weight & height last recorded (y/m/d): ${formatDate(formData.bodyMeasurementRecordedAt)}`
               )}
-            </span> */}
+            </span>
 
             <div className="grid md:grid-cols-3 gap-6 mt-6">
               {/* Skin Examination */}

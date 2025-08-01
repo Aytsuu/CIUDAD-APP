@@ -83,13 +83,13 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
       label: "Clinical Notes",
       accessor: (visit) => (
         <div className="text-s leading-relaxed space-y-2">
-          <div className="p-2 rounded border-l-2 border-red-400">
-            <div className="font-medium text-red-800 mb-1">Complaint:</div>
-            <div className="text-red-700">{visit.notes.complaint}</div>
+          <div className="p-2 rounded  border-red-400">
+            <div className="font-medium mb-1">Complaints:</div>
+            <div className="">{visit.notes.complaint}</div>
           </div>
-          <div className="p-2 rounded border-l-2 border-green-400">
-            <div className="font-medium text-green-800 mb-1">Advice:</div>
-            <div className="text-green-700">{visit.notes.advice}</div>
+          <div className="p-2 rounded border-green-400">
+            <div className="font-medium mb-1">Advises:</div>
+            <div className="">{visit.notes.advice}</div>
           </div>
         </div>
       ),
@@ -115,7 +115,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
                     className={`font-semibold text-slate-700 p-5 text-xs uppercase tracking-wide text-center ${hasMoreVisits ? 'min-w-48' : 'w-auto'}`}
                   >
                     Visit {sortedData.length - index}
-                    {index === 0 && <span className="text-blue ml-1">[CURRENT]</span>}
+                    {index === 0 && <span className="text-blue-500 ml-1">[CURRENT]</span>}
                   </TableHead>
                 ))}
               </TableRow>

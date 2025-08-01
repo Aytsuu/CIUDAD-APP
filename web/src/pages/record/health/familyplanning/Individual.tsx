@@ -8,9 +8,9 @@ import { ArrowLeft, FileText, LayoutList, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
 import { PatientInfoCard } from "@/components/ui/patientInfoCard"
-import { getPatientDetails } from "../patientsRecord/restful-api/patientsGetAPI"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
+import { getPatientDetails } from "../patientsRecord/restful-api/get"
 
 interface IndividualFPRecordDetail {
   otherMethod: any
@@ -197,14 +197,26 @@ const IndividualFamPlanningTable: React.FC = () => {
           return method === "Others" && otherMethod ? otherMethod : method || "N/A"
         },
       },
-      {
-        accessorKey: "dateOfFollowUp",
-        header: "Date of Follow-Up",
-        cell: ({ row }) => {
-          const date = row.original.dateOfFollowUp
-          return date && date !== "N/A" ? new Date(date).toLocaleDateString() : "N/A"
-        },
-      },
+    {
+  accessorKey: "dateOfFollowUp",
+  header: "Date of Follow-Up",
+  cell: ({ row }) => {
+    const date = row.original.dateOfFollowUp;
+    
+    // Check if the date is valid before rendering
+    if (date && date !== "N/A") {
+      const formattedDate = new Date(date).toLocaleDateString();
+      return (
+        <span className='bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium'>
+          {formattedDate}
+        </span>
+      );
+    }
+    
+    // Return "N/A" without the background color
+    return "N/A";
+  },
+},
       {
         id: "actions",
         header: "Actions",
