@@ -48,7 +48,6 @@ export const getScheduler = async (): Promise<SchedulerGetData[]> => {
   try {
     const res = await api2.get("servicescheduler/service-scheduler/");
     
-    console.log("Services fetched:", res.data);
     return res.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -60,16 +59,3 @@ export const getScheduler = async (): Promise<SchedulerGetData[]> => {
   }
 };
 
-
-// export const getUniqueServices = async (): Promise<string[]> => {
-//   try {
-//     const services = await getServices();
-//     // Extract unique service names
-//     const uniqueServices = [...new Set(services.map(service => service.service))];
-//     console.log("Unique services:", uniqueServices);
-//     return uniqueServices;
-//   } catch (error) {
-//     console.error("Error getting unique services:", error);
-//     throw error;
-//   }
-// };

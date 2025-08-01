@@ -94,7 +94,7 @@ class DayDeleteView(generics.DestroyAPIView):
          
          return Response({
             'message': f'Day {day_name} deleted successfully',
-            'deleted_schedules': deleted_day[0] if deleted_schedules[0] else 0
+            'deleted_schedules': deleted_schedules[0] if deleted_schedules[0] else 0
          }, status=status.HTTP_200_OK)
 
       except Exception as e:

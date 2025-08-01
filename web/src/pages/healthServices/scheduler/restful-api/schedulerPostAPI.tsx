@@ -54,7 +54,6 @@ export const addDay = async (data: DayPostData) => {
 
 export const addScheduler= async (data: SchedulerPostData) => {
 	try {
-		console.log("Sending scheduler data to API: ", data);
 		const res = await api2.post("servicescheduler/service-scheduler/create/", data);
 
 		return res.data.ss_id
