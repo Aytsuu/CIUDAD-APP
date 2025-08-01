@@ -334,7 +334,6 @@ LOGGING = {
 #     'JWT_AUDIENCE': 'authenticated',
 # }
 
-# SUPABASE_JWT_SECRET = SUPABASE_CONFIG['JWT_SECRET']
 
 # # Application definition
 
