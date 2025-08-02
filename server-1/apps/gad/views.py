@@ -7,6 +7,9 @@ from .serializers import *
 from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
+from rest_framework.views import APIView
+from datetime import datetime
+from django.db.models.functions import ExtractYear
 
 class DevelopmentBudgetItemsView(generics.ListAPIView):
     queryset = DevelopmentBudget.objects.all()
@@ -351,3 +354,27 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             'approved': status_counts['approved'] or 0,
             'rejected': status_counts['rejected'] or 0
         })
+
+
+# ===========================================================================================================
+
+class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
+    serializer_class = GADDevelopmentPlanSerializer
+
+    def get_queryset(self):
+        year = self.request.query_params.get('year')
+        qs = DevelopmentPlan.objects.all()
+        if year:
+            qs = qs.filter(dev_date__year=year)
+        return qs
+
+# GET years with data
+class GADDevelopmentPlanYears(APIView):
+    def get(self, request, *args, **kwargs):
+        years = DevelopmentPlan.objects.annotate(year=ExtractYear('dev_date')).values_list('year', flat=True).distinct()
+        return Response(sorted(years))
+
+class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
+    queryset = DevelopmentPlan.objects.all()
+    serializer_class = GADDevelopmentPlanSerializer
+    lookup_field = 'dev_id'

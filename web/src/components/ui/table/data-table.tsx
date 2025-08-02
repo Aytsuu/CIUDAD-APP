@@ -7,6 +7,7 @@ import {
     SortingState,
     VisibilityState,
     getFilteredRowModel,
+    getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
   } from "@tanstack/react-table"
@@ -19,85 +20,53 @@ import {
     TableHeader,
     TableRow,
   } from "./table"
-import { Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
    
   interface DataTableProps<TData, TValue> {
-    header?: boolean;
-    headerClassName?: string;
-    cellClassName?: string;
-    isLoading?: boolean;
-    columns: ColumnDef<TData, TValue>[];
-    data: TData[];
-    reset?: boolean;
-    setReset?: React.Dispatch<React.SetStateAction<boolean>>
-    onSelectedRowsChange?: (rows: TData[]) => void;
-    rowSelection?: Record<string, boolean>;
-    setRowSelection?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+    columns: ColumnDef<TData, TValue>[]
+    data: TData[]
+    header?: boolean
+    onRowClick?: (row: TData) => void
   }
    
-  export function DataTable<TData, TValue>({
-    isLoading=false, 
-    headerClassName, 
-    cellClassName,
-    header=true, 
+  export function DataTable<TData, TValue>({ 
     columns, 
-    data,
-    reset,
-    setReset,
-    onSelectedRowsChange,
-    rowSelection: externalRowSelection,
-    setRowSelection: externalSetRowSelection
+    data, 
+    onRowClick, 
+    header = false 
   }: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-    const [internalRowSelection, setInternalRowSelection] = React.useState({});
-    const rowSelectionState = externalRowSelection ?? internalRowSelection;
-    const setRowSelectionState = externalSetRowSelection ?? setInternalRowSelection;
+    const [rowSelection, setRowSelection] = React.useState({})
 
     const table = useReactTable({
-      data,
-      columns,
-      onSortingChange: setSorting,
-      onColumnFiltersChange: setColumnFilters,
-      getCoreRowModel: getCoreRowModel(),
-      getSortedRowModel: getSortedRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      onColumnVisibilityChange: setColumnVisibility,
-      onRowSelectionChange: setRowSelectionState,
-      enableRowSelection: true,
-      state: {
-        sorting,
-        columnFilters,
-        columnVisibility,
-        rowSelection: rowSelectionState,
-      },
+        data,
+        columns,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnVisibilityChange: setColumnVisibility,
+        onRowSelectionChange: setRowSelection,
+        state: {
+            sorting,
+            columnFilters,
+            columnVisibility,
+            rowSelection,
+        },
     })
-
-     React.useEffect(() => {
-      if (onSelectedRowsChange) {
-        const selectedRows = table.getSelectedRowModel().rows.map(row => row.original)
-        onSelectedRowsChange(selectedRows)
-      }
-    }, [onSelectedRowsChange, rowSelectionState]);
-
-    React.useEffect(() => {
-      if(reset) {
-        table.resetRowSelection();
-        setReset && setReset(false);
-      }
-    }, [reset])
    
     return (
         <Table>
           {header && (<TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-lightBlue hover:bg-lightBlue h-10">
+              <TableRow key={headerGroup.id} className="border-none bg-lightBlue hover:bg-lightBlue h-12">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className={cn("text-center", headerClassName)}>
+                    <TableHead key={header.id} className="text-center">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -111,16 +80,17 @@ import { cn } from "@/lib/utils"
             ))}
           </TableHeader>)
           }
-          <TableBody className="overflow-auto">
-            {!isLoading ? (table.getRowModel().rows?.length ? (
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={!header ? "border-none hover:bg-white" : ""}
+                  onClick={() => onRowClick?.(row.original)}
+                  className={onRowClick ? "cursor-pointer" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className={cn("text-center", cellClassName)}>
+                    <TableCell key={cell.id} className="text-center">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -130,14 +100,6 @@ import { cn } from "@/lib/utils"
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
                   No results.
-                </TableCell>
-              </TableRow>
-            )) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Loader2 className="animate-spin opacity-50"/>
-                  </div>
                 </TableCell>
               </TableRow>
             )}
