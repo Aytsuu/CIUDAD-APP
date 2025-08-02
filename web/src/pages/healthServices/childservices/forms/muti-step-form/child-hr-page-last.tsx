@@ -541,7 +541,6 @@ export default function LastPage({
                       type="text"
                       placeholder="Current age"
                       readOnly
-                      className="bg-gray-100"
                     />
                     <FormInput
                       control={vitalSignForm.control}
@@ -643,7 +642,7 @@ export default function LastPage({
                 </h3>
               </div>
               <div className="space-y-6 p-6">
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
+                <div className="rounded-lg border border-gray-100  p-5">
                   <div className="mb-4 flex items-center">
                     <h4 className="flex items-center gap-2 text-base font-medium text-gray-700">
                       <HeartPulse className="h-5 w-5 text-red-600" />
@@ -722,7 +721,7 @@ export default function LastPage({
           )}
 
           {shouldShowNutritionalStatusCalculator && (
-            <div className="mb-10 rounded-lg border bg-green-50 p-4">
+            <div className="mb-10 rounded-lg border  p-4">
               <h3 className="mb-4 text-lg font-bold">Nutritional Status</h3>
               <NutritionalStatusCalculator
                 weight={

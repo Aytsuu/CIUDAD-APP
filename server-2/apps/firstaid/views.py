@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .utils import *
+from apps.reports.models import MonthlyRecipientListReport
+from apps.reports.serializers import *
 class PatientFirstaidRecordsView(generics.ListAPIView):
     serializer_class = PatientFirstaidRecordSerializer
 
@@ -54,57 +56,137 @@ class GetFirstaidRecordCountView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+        
+        
+# class MonthlyFirstAidRecordsAPIView(APIView):
+#     def get(self, request):
+#         try:
+#             # Get base queryset with proper relationships
+#             queryset = FirstAidRecord.objects.select_related(
+#                 'finv',  # ForeignKey to FirstAidInventory
+#                 'finv__inv_id',  # OneToOne to Inventory
+#                 'finv__fa_id',  # ForeignKey to FirstAidList
+#                 'patrec'
+#             ).order_by('-created_at')
+            
+#             # Filter by year if provided
+#             year = request.GET.get('year')
+#             if year and year != 'all':
+#                 queryset = queryset.filter(created_at__year=year)
+            
+#             # Group by month and get counts
+#             monthly_data = queryset.annotate(
+#                 month=TruncMonth('created_at')
+#             ).values('month').annotate(
+#                 record_count=Count('farec_id')
+#             ).order_by('-month')
+            
+#             # Format the response
+#             formatted_data = []
+#             for item in monthly_data:
+#                 month_str = item['month'].strftime('%Y-%m')
+#                 month_records = queryset.filter(
+#                     created_at__year=item['month'].year,
+#                     created_at__month=item['month'].month
+#                 )
+                
+#                 # Serialize records
+#                 serialized_records = []
+#                 for record in month_records:
+#                     # Serialize record
+#                     serialized_record = FirstaidRecordSerializer(record).data
+#                     serialized_records.append(serialized_record)
+                
+#                 formatted_data.append({
+#                     'month': month_str,
+#                     'record_count': item['record_count'],
+#                     'records': serialized_records
+#                 })
+            
+#             return Response({
+#                 'success': True,
+#                 'data': formatted_data,
+#                 'total_records': len(formatted_data)
+#             }, status=status.HTTP_200_OK)
+            
+#         except Exception as e:
+#             return Response({
+#                 'success': False,
+#                 'error': str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class MonthlyFirstAidRecordsAPIView(APIView):
     def get(self, request):
         try:
-            # Get base queryset with proper relationships
             queryset = FirstAidRecord.objects.select_related(
-                'finv',  # ForeignKey to FirstAidInventory
-                'finv__inv_id',  # OneToOne to Inventory
-                'finv__fa_id',  # ForeignKey to FirstAidList
-                'patrec'
+                'finv', 'finv__inv_id', 'finv__fa_id', 'patrec'
             ).order_by('-created_at')
-            
-            # Filter by year if provided
-            year = request.GET.get('year')
-            if year and year != 'all':
-                queryset = queryset.filter(created_at__year=year)
-            
-            # Group by month and get counts
+
+            year_param = request.GET.get('year')  # '2025' or '2025-07'
+
+            if year_param and year_param != 'all':
+                try:
+                    if '-' in year_param:
+                        year, month = map(int, year_param.split('-'))
+                        queryset = queryset.filter(
+                            created_at__year=year,
+                            created_at__month=month
+                        )
+                    else:
+                        year = int(year_param)
+                        queryset = queryset.filter(
+                            created_at__year=year
+                        )
+                except ValueError:
+                    return Response({
+                        'success': False,
+                        'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Annotate and count records by month
             monthly_data = queryset.annotate(
                 month=TruncMonth('created_at')
             ).values('month').annotate(
                 record_count=Count('farec_id')
             ).order_by('-month')
-            
-            # Format the response
+
             formatted_data = []
+
             for item in monthly_data:
                 month_str = item['month'].strftime('%Y-%m')
+
+                # Get or create report record for this month
+                report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
+                    month_year=month_str
+                )
+
+                report_data = MonthlyRCPReportSerializer(report_obj).data
+
+                # Get all records for that month
                 month_records = queryset.filter(
                     created_at__year=item['month'].year,
                     created_at__month=item['month'].month
                 )
-                
-                # Serialize records
-                serialized_records = []
-                for record in month_records:
-                    # Serialize record
-                    serialized_record = FirstaidRecordSerializer(record).data
-                    serialized_records.append(serialized_record)
-                
+
+                serialized_records = [
+                    FirstaidRecordSerializer(record).data for record in month_records
+                ]
+
                 formatted_data.append({
                     'month': month_str,
                     'record_count': item['record_count'],
+                    'monthlyrcplist_id': report_obj.monthlyrcplist_id,
+                    'report': report_data,
                     'records': serialized_records
                 })
-            
+
             return Response({
                 'success': True,
                 'data': formatted_data,
                 'total_records': len(formatted_data)
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             return Response({
                 'success': False,

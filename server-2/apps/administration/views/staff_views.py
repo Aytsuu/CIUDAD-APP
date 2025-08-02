@@ -68,9 +68,12 @@ class StaffDeleteView(generics.DestroyAPIView):
 
 
 
-class HealthStaffListView(generics.ListCreateAPIView):
-    serializer_class = StaffFullSerializer
-    queryset = Staff.objects.all()
+class HealthStaffListView(generics.ListAPIView):
+  serializer_class = StaffFullSerializer
+
+  def get_queryset(self):
+    return Staff.objects.filter(staff_type="Health Staff")
+
 
    
 class StaffDataByTitleView(APIView):

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, FileInput, ChevronLeft } from "lucide-react";
+import { Search, FileInput, ChevronLeft, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -335,7 +335,10 @@ export default function InvChildHealthRecords() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <TableSkeleton columns={columns} rowCount={3} />
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
+            </div>
           ) : (
             <DataTable columns={columns} data={currentData} />
           )}

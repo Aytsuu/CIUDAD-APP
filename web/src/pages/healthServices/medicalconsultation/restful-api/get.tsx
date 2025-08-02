@@ -18,7 +18,6 @@ export const previousBMI = async (pat_id: string) => {
 };
 
 
-
 export const getPatient =  async () => {
   try {
     const response = await api2.get(`/patient`);
@@ -30,7 +29,6 @@ export const getPatient =  async () => {
 
 
 
-
 export const getMedicalRecord =  async () => {
   try {
     const response = await api2.get(`/medical-consultation/all-medical-consultation-record/`);
@@ -39,7 +37,6 @@ export const getMedicalRecord =  async () => {
     console.error(err); 
   }
 };
-
 
 
 export const getMedconRecordById = async (id: string) => {

@@ -1,18 +1,12 @@
 import { api2 } from "@/api/api";
 
 export const updateVaccinationHistory = async (
-  vachist_id: string,
-  vachist_status:string,
-  vital_id?: number | null,
+data:Record<string,any>
 ) => {
   try {
     const response = await api2.put(
-      `vaccination/vaccination-history/${vachist_id}/`,
-      {
-        vachist_status,
-        updated_at: new Date().toISOString(),
-        vital: vital_id , // Ensure vital_id is parsed as an integer
-      }
+      `vaccination/vaccination-history/${data.vachist_id}/`,
+     data
     );
     return response.data;
     

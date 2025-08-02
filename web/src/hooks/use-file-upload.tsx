@@ -18,8 +18,8 @@ export const useInstantFileUpload = ({
   const generateFileName = (file: File) => {
     const fileExt = file.name.split('.').pop();
     return `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}.${fileExt}`;
+      .toString(36) 
+       .substring(2, 9)}.${fileExt}`;
   };
 
   const uploadFile = async (file: File) => {

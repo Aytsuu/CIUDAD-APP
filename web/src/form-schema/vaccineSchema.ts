@@ -53,6 +53,8 @@ export const VaccineSchema = z
   
 
 export const VitalSignsSchema = z.object({
+staff_id: z.string().optional(),
+  patrec_id: z.string().optional(),
   pr: z.string().optional(),
   temp: z.string().optional(),
   o2: z.string().optional(),

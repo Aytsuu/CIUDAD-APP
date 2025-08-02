@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, Search, ChevronLeft } from "lucide-react";
+import { ArrowUpDown, Loader2, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,8 +19,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { MedicalConsultationHistory } from "../../medicalconsultation/types";
+import { useLoading } from "@/context/LoadingContext";
 
-// Common Patient Interface
 export interface PatientRecord {
   pat_id: string;
   fname: string;
@@ -65,28 +66,6 @@ export interface ChildHealthCheckupRecord {
   child_health_vital_signs?: Array<{ chvital_id?: string }>;
 }
 
-// Medical Consultation Interfaces
-export interface MedicalConsultationHistory {
-  patrec: string;
-  medrec_id: string;
-  medrec_status: string;
-  medrec_chief_complaint: string;
-  medrec_age: string;
-  created_at: string;
-  vital_signs: {
-    vital_bp_systolic: string;
-    vital_bp_diastolic: string;
-    vital_temp: string;
-    vital_pulse: string;
-    vital_RR: string;
-  };
-  bmi_details: {
-    height: string;
-    weight: string;
-  };
-  find_details: any;
-}
-
 export type CombinedRecord = {
   recordType: "child-health" | "medical-consultation";
   patient: PatientRecord;
@@ -107,12 +86,13 @@ export default function CombinedHealthRecordsTable() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordTypeFilter, setRecordTypeFilter] = useState("all");
+  const { showLoading, hideLoading } = useLoading();
 
   // Fetch both types of records
   const { data: childHealthData, isLoading: childHealthLoading } = useQuery({
-    queryKey: ["ChildHealthCheckupHistory"],
+    queryKey: ["ChildHealthCheckuprecord"],
     queryFn: async () => {
-      const response = await api2.get("/child-health/history/checkup/");
+      const response = await api2.get("/child-health/record/checkup/");
       return response.data || [];
     },
   });
@@ -137,7 +117,6 @@ export default function CombinedHealthRecordsTable() {
       const address = details.address || {};
 
       const addressParts = [
-        address.add_sitio ? `Sitio ${address.add_sitio}` : "",
         address.add_street,
         address.add_barangay,
         address.add_city,
@@ -252,6 +231,22 @@ export default function CombinedHealthRecordsTable() {
         vital_signs: record.vital_signs,
         bmi_details: record.bmi_details,
         find_details: record.find_details || null,
+        staff_details: record.staff_details
+          ? {
+              rp: {
+                per: {
+                  per_fname: record.staff_details.rp?.per?.per_fname || "",
+                  per_lname: record.staff_details.rp?.per?.per_lname || "",
+                  per_mname: record.staff_details.rp?.per?.per_mname || "",
+                  per_suffix: record.staff_details.rp?.per?.per_suffix || "",
+                  per_dob: record.staff_details.rp?.per?.per_dob || "",
+                },
+              },
+            }
+          : null,
+        patrec_details: {
+          pat_id: record.patrec_details?.pat_id || "",
+        },
       };
 
       return {
@@ -412,14 +407,14 @@ export default function CombinedHealthRecordsTable() {
             <div className="text-sm min-w-[150px]">
               <div>
                 HT:{" "}
-                {bmi.height.endsWith(".00")
+                {bmi?.height?.endsWith(".00")
                   ? bmi.height.slice(0, -3)
                   : bmi.height}{" "}
                 cm
               </div>
               <div>
                 WT:{" "}
-                {bmi.weight.endsWith(".00")
+                {bmi?.weight?.endsWith(".00")
                   ? bmi.weight.slice(0, -3)
                   : bmi.weight}{" "}
                 kg
@@ -489,7 +484,13 @@ export default function CombinedHealthRecordsTable() {
 
   const isLoading = childHealthLoading || medConsultLoading;
 
-  
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   return (
     <>
@@ -575,35 +576,15 @@ export default function CombinedHealthRecordsTable() {
             </div>
           </div>
           <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <div className="bg-white rounded-md border border-gray-200">
-              {/* Skeleton for table header */}
-              <div className="w-full h-16 bg-gray-50 flex items-center p-4">
-                {columns.map((_, i) => (
-                  <Skeleton key={`header-${i}`} className="h-6 flex-1 mx-2" />
-                ))}
+            {isLoading ? (
+              <div className="w-full h-[100px] flex items-center text-gray-500 justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
               </div>
-              {/* Skeleton for table rows */}
-              <div className="p-4 space-y-4">
-                {[...Array(5)].map((_, rowIndex) => (
-                  <div 
-                    key={`row-${rowIndex}`} 
-                    className="flex items-center justify-between space-x-4"
-                  >
-                    {columns.map((_, colIndex) => (
-                      <Skeleton 
-                        key={`cell-${rowIndex}-${colIndex}`} 
-                        className="h-12 flex-1 mx-2" 
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={paginatedData} />
-          )}
-        </div>
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}

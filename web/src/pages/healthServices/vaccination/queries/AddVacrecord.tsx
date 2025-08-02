@@ -88,7 +88,17 @@ export const useSubmitStep2 = () => {
         if (assignmentOption == "other") {
           vital_id == null;
         } else {
-          const vitalSigns = await createVitalSigns(data);
+          const vitalSigns = await createVitalSigns(
+            
+            {
+              vital_bp_systolic: form.getValues("bpsystolic"),
+              vital_bp_diastolic: form.getValues("bpdiastolic"),
+              vital_temp: form.getValues("temp"),
+              vital_o2: form.getValues("o2"),
+              vital_pulse: form.getValues("pr"),
+              staff: staff_id , 
+              patrec: patrec_id, 
+            });
           vital_id = vitalSigns.vital_id;
         }
 

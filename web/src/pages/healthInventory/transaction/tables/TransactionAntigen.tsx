@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getAntigenTransactions } from "../restful-api/GetRequest"
 import { ExportButton } from "@/components/ui/export"
 import { columns, exportColumns } from "../tables/columns/AntigenCol"
+import Loading from "@/components/ui/loading"
 
 export default function AntigenTransactionsTable() {
   const [searchQuery, setSearchQuery] = React.useState("")

@@ -4,6 +4,9 @@ import MonthlyMedicineRecords from "@/pages/healthServices/Reports/medicine-repo
 import MonthlyMedicineDetails from "@/pages/healthServices/Reports/medicine-report/records";
 import MonthlyFirstAidRecords from "@/pages/healthServices/Reports/firstaid-report/monthly";
 import MonthlyFirstAidDetails from "@/pages/healthServices/Reports/firstaid-report/records";
+import EditMonthlyRecipientList from "@/pages/healthServices/Reports/firstaid-report/edit-report";
+
+
 export const reports_router = [
   {
     path: "/bhwmonthlyreport",
@@ -26,5 +29,9 @@ export const reports_router = [
   { path: "/monthly-firstaid-details",
      element: <MonthlyFirstAidDetails /> 
    },
+   {
+    path: "/edit-monthly-recipient-list",
+    element: <EditMonthlyRecipientList />
+   }
 
 ];

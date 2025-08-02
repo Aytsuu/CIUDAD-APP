@@ -11,14 +11,15 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";
-import {
-  MedicalConsultationHistory,
-  ConsultationHistoryTable,
-} from "./table-history";
+import { ConsultationHistoryTable } from "./table-history";
+import { MedicalConsultationHistory } from "../types";
 import CurrentConsultationCard from "./current-medrec";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLoading } from "@/context/LoadingContext";
+import { is } from "date-fns/locale";
 
 export default function DisplayMedicalConsultation() {
+  const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
   const location = useLocation();
   const { params } = location.state || {};
@@ -26,11 +27,18 @@ export default function DisplayMedicalConsultation() {
   const [consultationHistory, setConsultationHistory] = useState<
     MedicalConsultationHistory[]
   >([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-
   const patientId = useMemo(() => patientData?.pat_id, [patientData]);
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   const fetchConsultationHistory = useCallback(async () => {
     if (!patientId) return;
@@ -69,6 +77,18 @@ export default function DisplayMedicalConsultation() {
           height: history.bmi_details?.height || "N/A",
           weight: history.bmi_details?.weight || "N/A",
         },
+        staff_details: history.staff_details
+          ? {
+              rp: {
+                per: {
+                  per_fname: history.staff_details?.rp?.per?.per_fname || "",
+                  per_lname: history.staff_details?.rp?.per?.per_lname || "",
+                  per_mname: history.staff_details?.rp?.per?.per_mname || "",
+                },
+              },
+            }
+          : null,
+
         find_details: history.find_details
           ? {
               assessment_summary:
@@ -84,7 +104,8 @@ export default function DisplayMedicalConsultation() {
 
       const sortedHistories = formattedHistories.sort(
         (a: MedicalConsultationHistory, b: MedicalConsultationHistory) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
       );
 
       setConsultationHistory(sortedHistories);
@@ -111,7 +132,8 @@ export default function DisplayMedicalConsultation() {
     if (!MedicalConsultation?.created_at) return [];
     return consultationHistory.filter(
       (history) =>
-        new Date(history.created_at) <= new Date(MedicalConsultation.created_at)
+        new Date(history.created_at ?? 0) <=
+        new Date(MedicalConsultation.created_at ?? 0)
     );
   }, [consultationHistory, MedicalConsultation]);
 
@@ -157,20 +179,18 @@ export default function DisplayMedicalConsultation() {
       </div>
       <hr className="border-gray mb-4 sm:mb-6" />
 
-      {loading ? (
+      {isLoading ? (
         <Card className="w-full p-4 sm:p-6 md:p-8">
           <CardContent>
             {/* Current Consultation Skeleton */}
             <div className="space-y-6">
-             
-              
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <Skeleton className="h-4 w-1/3" />
                   <Skeleton className="h-4 w-1/3" />
                   <Skeleton className="h-4 w-1/3" />
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="space-y-2">
@@ -180,7 +200,7 @@ export default function DisplayMedicalConsultation() {
                   ))}
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <Skeleton className="h-5 w-1/3" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -200,8 +220,6 @@ export default function DisplayMedicalConsultation() {
                 <Skeleton className="h-5 w-5 rounded-full" />
                 <Skeleton className="h-6 w-48" />
               </div>
-
-            
 
               <div className="flex justify-center gap-2">
                 {[...Array(3)].map((_, i) => (
@@ -233,7 +251,7 @@ export default function DisplayMedicalConsultation() {
 
             <div className="mt-10">
               <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                <Stethoscope className="text-blue"/>  
+                <Stethoscope className="text-blue" />
                 <h2 className="font-bold text-base sm:text-lg">
                   Consultation History
                 </h2>

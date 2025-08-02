@@ -198,7 +198,7 @@ export function NutritionalStatusCalculator({
     <Card className="w-full">
       <CardContent className="space-y-4">
         {/* Input Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 ">
           <div>
             <Label className="text-sm font-medium">Current Measurements</Label>
             <div className="mt-2 space-y-1 text-sm text-gray-600">

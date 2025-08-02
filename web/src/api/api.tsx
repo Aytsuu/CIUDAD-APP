@@ -19,9 +19,19 @@ export const api = axios.create({
   },
 });
 
+
+
 export const api2 = axios.create({
   baseURL: "http://localhost:8001",
 });
+// export const api2 = axios.create({
+//   baseURL: "https://ciudad-app-server-2.onrender.com",
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
 
 // // Request interceptor to add auth token
 // api.interceptors.request.use(async (config) => {

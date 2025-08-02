@@ -1,5 +1,6 @@
 // getAPI.ts
 import { api2 } from "@/api/api";
+import { StaffDetails } from "@/pages/healthServices/childservices/viewrecords/types";
 
 export interface InventoryDetail {
   inv_id: string;
@@ -55,17 +56,28 @@ export interface FirstAidRecord {
   };
 }
 
+
+
 export interface MonthlyRecord {
   month: string;
   record_count: number;
   total_qty: number;
   records: FirstAidRecord[];
+  monthlyrcplist_id:string;
+  report:{
+    staff_details: StaffDetails;
+    signature: string;
+    control_no: string;
+    office
+  }
+
 }
 
 export interface FirstAidRecordsResponse {
   success: boolean;
   data: MonthlyRecord[];
   total_records: number;
+
 }
 
 export const getFirstaidRecords = async (year?: string): Promise<FirstAidRecordsResponse> => {
@@ -81,3 +93,13 @@ export const getFirstaidRecords = async (year?: string): Promise<FirstAidRecords
   }
 };
 
+
+export const getStaffList =async()=>{
+  try {
+    const response = await api2.get("/reports/healthstaff/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching staff list:", error);
+    throw error;
+  }
+}

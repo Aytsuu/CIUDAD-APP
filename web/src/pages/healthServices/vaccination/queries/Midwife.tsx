@@ -170,7 +170,15 @@ export const useSubmitStep2 = () => {
         const vaccinationRecord = await createVaccinationRecord({patrec_id:patrec_id,staff:staff_id,vacrec_totaldose:maxDoses});
         vacrec_id = vaccinationRecord.vacrec_id;
 
-        const vitalSigns = await createVitalSigns(data);
+        const vitalSigns = await createVitalSigns({
+          vital_bp_systolic: data.bpsystolic,
+          vital_bp_diastolic: data.bpdiastolic,
+          vital_temp: data.temp,
+          vital_o2: data.o2,
+          vital_pulse: data.pr,
+          staff: staff_id ?? null, // Optional staff_id
+          patrec: patrec_id, // Link to patient record
+        });
         vital_id = vitalSigns.vital_id;
 
         await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck_id)}/`, {

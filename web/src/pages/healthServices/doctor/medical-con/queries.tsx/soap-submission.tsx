@@ -126,13 +126,13 @@ export const useSubmitSoapForm = () => {
         }
 
         // Update loading toast to success
-        toast.success("Project proposal restored successfully", {
+        toast.success("Successfully submitted", {
           icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
           duration: 2000
         });
         navigate(-1);
         queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] }); // Update with your query key
-        queryClient.invalidateQueries({ queryKey: ["patientMedicalDetails"] }); // Update with your query key
+        queryClient.invalidateQueries({ queryKey: ["patientMedicalDetails",MedicalConsultation?.patrec_details?.pat_id] }); // Update with your query key
 
         return {
           success: true,

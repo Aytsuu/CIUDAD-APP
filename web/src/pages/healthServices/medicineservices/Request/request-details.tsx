@@ -380,7 +380,7 @@ export default function MedicineRequestDetail() {
   const age = calculateAge(request.personal_info.per_dob);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <div className=" w-full p-6">
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -399,13 +399,7 @@ export default function MedicineRequestDetail() {
           {/* Patient Information Card */}
           <div className="xl:col-span-2">
             <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 h-full">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">Patient Information</h2>
-              </div>
-
+              
               <div className="space-y-6">
                 {/* Main Patient Info */}
                 <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
@@ -427,7 +421,7 @@ export default function MedicineRequestDetail() {
 
                 {/* Compact Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date of Birth</p>
@@ -441,7 +435,7 @@ export default function MedicineRequestDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact Number</p>
@@ -451,7 +445,7 @@ export default function MedicineRequestDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <HeartPulse className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Patient Status</p>
@@ -472,7 +466,7 @@ export default function MedicineRequestDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <Mail className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Civil Status</p>
@@ -482,10 +476,10 @@ export default function MedicineRequestDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                      <Home className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start p-3  gap-3">
+                      <Home className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">Complete Address</p>
+                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Complete Address</p>
                         <p className="text-sm font-semibold text-gray-900 leading-relaxed">
                           {request.address?.full_address || "No Address Provided"}
                         </p>

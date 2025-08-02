@@ -192,7 +192,6 @@
 //   }
 
 import { api2 } from "@/api/api";
-import { createMedicineRecord } from "@/pages/healthServices/medicineservices/restful-api/postAPI";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 
 
@@ -264,16 +263,7 @@ export async function createExclusiveBFCheck(data: Record<string, any>) {
 
 // --- Nutritional Status Operations ---
 export const createNutritionalStatus = async (
-  //   payload: {
-  //   wfa: string
-  //   lhfa: string
-  //   wfl: string // maps to wfh in frontend
-  //   muac: string
-  //   muac_status: string
-  //   created_at: string
-  //   chvital: number
-  //   edemaSeverity: string
-  // }
+ 
 
   data: Record<string, any>
 ) => {
