@@ -6,8 +6,8 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import BudgetPlanHistory from "./budget-plan-history";
+import BudgetPlanSuppDocs from "./budget-plan-suppdocs";
 import PageLayout from "@/screens/_PageLayout";
 
 export default function BudgetPlanView() {
@@ -96,11 +96,7 @@ export default function BudgetPlanView() {
                 )}
 
                 {activeTab === "documents" && (
-                    <ScrollView className="flex-1">
-                        <Card className="bg-white rounded-lg overflow-hidden m-2">
-                            {/* <BudgetPlanSuppDocs plan_id={Number(plan_id)} /> */}
-                        </Card>
-                    </ScrollView>
+                    <BudgetPlanSuppDocs plan_id = {plan_id as string}/>
                 )}
             </View>
           </View>

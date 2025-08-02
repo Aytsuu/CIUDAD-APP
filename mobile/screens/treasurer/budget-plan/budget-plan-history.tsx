@@ -1,13 +1,11 @@
-import { SafeAreaView, Text, ScrollView, View, TextInput, ActivityIndicator } from "react-native";
+import { SafeAreaView, Text, ScrollView, View, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Search } from 'lucide-react-native';
 import { useGetBudgetPlanHistory, type BudgetPlanHistory } from "./queries/budgetPlanFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useRouter } from "expo-router";
 
 export default function BudgetPlanHistory({ planId }: { planId: string }) {
-  const router = useRouter();
   const { data: fetchedData = [], isLoading } = useGetBudgetPlanHistory(planId);
   const [searchTerm, setSearchTerm] = useState("");
 
