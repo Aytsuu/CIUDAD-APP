@@ -15,26 +15,11 @@ import {
   useGetDonations,
   useGetPersonalList,
 } from "./queries/donationFetchQueries";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ComboboxInput } from "@/components/ui/form/form-combo-box";
 import { ClerkDonateViewProps } from "./donation-types";
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [openCombobox, setOpenCombobox] = useState<boolean>(false);
   const [isMonetary, setIsMonetary] = useState<boolean>(false);
   const { data: donations } = useGetDonations();
   const { data: personalList = [], isLoading: isPersonalLoading } =
@@ -97,119 +82,28 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             control={form.control}
             name="don_donor"
             render={({ field }) => (
-              <div className="flex flex-col gap-2">
-                {isEditing ? (
-                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openCombobox}
-                        className="w-full h-10 justify-between truncate"
-                        disabled={isPersonalLoading || !isEditing}
-                      >
-                        <span className="truncate">
-                          {isPersonalLoading
-                            ? "Loading donors..."
-                            : field.value || "Select donor..."}
-                        </span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
-                      <Command>
-                        <CommandInput
-                          placeholder="Search donor..."
-                          onValueChange={(value) => {
-                            if (
-                              !personalList.some((person) =>
-                                person.full_name
-                                  .toLowerCase()
-                                  .includes(value.toLowerCase())
-                              ) &&
-                              value !== "Anonymous"
-                            ) {
-                              form.setValue("don_donor", value);
-                              form.setValue("per_id", null);
-                            }
-                          }}
-                        />
-                        <CommandList
-                          className="max-h-64 overflow-auto"
-                          onWheel={(e) => {
-                            e.stopPropagation();
-                            const el = e.currentTarget;
-                            if (
-                              e.deltaY > 0 &&
-                              el.scrollTop >= el.scrollHeight - el.clientHeight
-                            ) {
-                              return;
-                            }
-                            if (e.deltaY < 0 && el.scrollTop <= 0) {
-                              return;
-                            }
-                            e.preventDefault();
-                            el.scrollTop += e.deltaY;
-                          }}
-                        >
-                          <CommandEmpty>
-                            No donor found. Enter name manually or select
-                            Anonymous.
-                          </CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              value="Anonymous"
-                              onSelect={() => {
-                                form.setValue("don_donor", "Anonymous");
-                                form.setValue("per_id", null);
-                                setOpenCombobox(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  field.value === "Anonymous"
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              Anonymous
-                            </CommandItem>
-                            {personalList.map((person) => (
-                              <CommandItem
-                                key={person.per_id}
-                                value={person.full_name}
-                                onSelect={() => {
-                                  form.setValue("don_donor", person.full_name);
-                                  form.setValue("per_id", person.per_id);
-                                  setOpenCombobox(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === person.full_name
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {person.full_name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                ) : (
-                  <FormInput
-                    control={form.control}
-                    name="don_donor"
-                    label="Donor"
-                    placeholder=""
-                    readOnly={true}
-                  />
-                )}
-              </div>
+              <ComboboxInput
+                value={field.value}
+                options={[
+                  { full_name: "Anonymous", per_id: null },
+                  ...personalList,
+                ]}
+                isLoading={isPersonalLoading}
+                label="Donor Name"
+                placeholder="Select donor..."
+                emptyText="No donor found. Enter name manually."
+                onSelect={(value, item) => {
+                  field.onChange(value);
+                  form.setValue("per_id", item?.per_id || null);
+                }}
+                onCustomInput={(value) => {
+                  field.onChange(value);
+                  form.setValue("per_id", null);
+                }}
+                displayKey="full_name"
+                valueKey="per_id"
+                readOnly={!isEditing}
+              />
             )}
           />
 

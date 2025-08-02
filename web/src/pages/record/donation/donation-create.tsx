@@ -7,27 +7,12 @@ import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { FormField } from "@/components/ui/form/form";
 import { useAddDonation } from "./queries/donationAddQueries";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useGetPersonalList } from "./queries/donationFetchQueries";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ClerkDonateCreateFormProps } from "./donation-types";
+import { ComboboxInput } from "@/components/ui/form/form-combo-box";
 
 function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
@@ -36,7 +21,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
       don_donor: "",
       per_id: null,
       don_item_name: "",
-      don_qty: '',
+      don_qty: "",
       don_description: "",
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
@@ -44,8 +29,8 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
   });
 
   const { mutate: addDonation, isPending } = useAddDonation();
-  const { data: personalList = [], isLoading: isPersonalLoading } = useGetPersonalList();
-  const [openCombobox, setOpenCombobox] = useState<boolean>(false);
+  const { data: personalList = [], isLoading: isPersonalLoading } =
+    useGetPersonalList();
   const [isMonetary, setIsMonetary] = useState<boolean>(false);
 
   const categoryWatch = form.watch("don_category");
@@ -65,7 +50,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
     addDonation(payload, {
       onSuccess: () => {
         onSuccess?.();
-      }
+      },
     });
   };
 
@@ -81,110 +66,23 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
             onSubmit={(e) => e.preventDefault()} // Prevent default form submission
             className="flex flex-col gap-4"
           >
-            <FormField
-              control={form.control}
-              name="don_donor"
-              render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Donor Name</label>
-                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openCombobox}
-                        className="w-full h-10 justify-between truncate"
-                        disabled={isPersonalLoading}
-                      >
-                        <span className="truncate">
-                          {isPersonalLoading
-                            ? "Loading donors..."
-                            : field.value || "Select donor..."}
-                        </span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
-                      <Command>
-                        <CommandInput
-                          placeholder="Search donor..."
-                          onValueChange={(value) => {
-                            if (
-                              !personalList.some((person) =>
-                                person.full_name
-                                  .toLowerCase()
-                                  .includes(value.toLowerCase())
-                              ) && value !== "Anonymous"
-                            ) {
-                              form.setValue("don_donor", value);
-                              form.setValue("per_id", null);
-                            }
-                          }}
-                        />
-                        <CommandList 
-                          className="max-h-64 overflow-auto"
-                          onWheel={(e) => {
-                            e.stopPropagation()
-                            const el = e.currentTarget
-                            if (e.deltaY > 0 && el.scrollTop >= el.scrollHeight - el.clientHeight) {
-                              return
-                            }
-                            if (e.deltaY < 0 && el.scrollTop <= 0) {
-                              return
-                            }
-                            e.preventDefault()
-                            el.scrollTop += e.deltaY
-                          }}
-                        >
-                          <CommandEmpty>
-                            No donor found. Enter name manually or select Anonymous.
-                          </CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              value="Anonymous"
-                              onSelect={() => {
-                                form.setValue("don_donor", "Anonymous");
-                                form.setValue("per_id", null);
-                                setOpenCombobox(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  field.value === "Anonymous"
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              Anonymous
-                            </CommandItem>
-                            {personalList.map((person) => (
-                              <CommandItem
-                                key={person.per_id}
-                                value={person.full_name}
-                                onSelect={() => {
-                                  form.setValue("don_donor", person.full_name);
-                                  form.setValue("per_id", person.per_id);
-                                  setOpenCombobox(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === person.full_name
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {person.full_name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
+            <ComboboxInput
+              value={form.watch("don_donor")}
+              options={personalList}
+              isLoading={isPersonalLoading}
+              label="Donor Name"
+              placeholder="Select donor..."
+              emptyText="No donor found. Enter name manually or select Anonymous."
+              onSelect={(value, item) => {
+                form.setValue("don_donor", value);
+                form.setValue("per_id", item?.per_id || null);
+              }}
+              onCustomInput={(value) => {
+                form.setValue("don_donor", value);
+                form.setValue("per_id", null);
+              }}
+              displayKey="full_name"
+              valueKey="per_id"
             />
 
             {/* Category */}
@@ -198,14 +96,23 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
                 { id: "Medical Supplies", name: "Medical Supplies" },
                 { id: "Household Items", name: "Household Items" },
                 { id: "Educational Supplies", name: "Educational Supplies" },
-                { id: "Baby & Childcare Items", name: "Baby & Childcare Items" },
+                {
+                  id: "Baby & Childcare Items",
+                  name: "Baby & Childcare Items",
+                },
                 { id: "Animal Welfare Items", name: "Animal Welfare Items" },
-                { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid" },
-                { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies" },
+                {
+                  id: "Shelter & Homeless Aid",
+                  name: "Shelter & Homeless Aid",
+                },
+                {
+                  id: "Disaster Relief Supplies",
+                  name: "Disaster Relief Supplies",
+                },
               ]}
               readOnly={false}
             />
-            
+
             {/* Item Name - Changes to select when category is Monetary Donations */}
             {isMonetary ? (
               <FormSelect
@@ -260,11 +167,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
             <div className="mt-8 flex justify-end gap-3">
               <ConfirmationModal
                 trigger={
-                  <Button
-                    type="button"
-                    className=""
-                    disabled={isPending}
-                  >
+                  <Button type="button" className="" disabled={isPending}>
                     {isPending ? "Saving..." : "Save"}
                   </Button>
                 }

@@ -67,3 +67,29 @@ export type Staff = {
   full_name: string;
   position: string;
 };
+
+export interface EditProjectProposalFormProps {
+  onSuccess: (data: ProjectProposal) => void;
+  initialValues?: ProjectProposal;
+  isEditMode?: boolean;
+  isSubmitting?: boolean;
+}
+
+export interface ProjectProposalFormProps {
+  onSuccess: () => void;
+  existingProposal?: any;
+}
+
+export interface Signatory {
+  name: string;
+  position: string;
+  type: "prepared" | "approved";
+}
+
+export interface ViewProjectProposalProps {
+  project: ProjectProposal;
+  onLoad?: () => void;
+  onError?: () => void;
+  onClose?: () => void;
+  projectSource?: string;
+}
