@@ -1,13 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, ScrollView,} from 'react-native';
-import { Plus, Edit3, Trash2,  History, CheckCircle, XCircle, Search,} from 'lucide-react-native';
+import { Edit3,  History, CheckCircle, XCircle} from 'lucide-react-native';
 import { useGetPurposeAndRate, type PurposeAndRate } from './queries/ratesFetchQueries';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useRouter } from 'expo-router';
-import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useDeletePurposeAndRate } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export default function RatesPage5() {
@@ -86,7 +84,7 @@ const renderRateCard = (item: PurposeAndRate, showStatus: boolean = false, showA
               <Edit3 size={16} color="#3b82f6" />
             </TouchableOpacity>
             
-            <ConfirmationModal
+            {/* <ConfirmationModal
               trigger={ 
                 <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
                   <Trash2 size={16} color="#ef4444" />
@@ -96,7 +94,7 @@ const renderRateCard = (item: PurposeAndRate, showStatus: boolean = false, showA
               description="Are you sure you want to delete this record? This action will set the record to inactive state and cannot be undone."
               actionLabel='Confirm'
               onPress={() => handleDelete(item.pr_id)}
-            />
+            /> */}
           </View>
         )}
       </View>
@@ -139,10 +137,10 @@ const renderRateCard = (item: PurposeAndRate, showStatus: boolean = false, showA
             <Input placeholder="Search..." value={searchQuery} onChangeText={setSearchQuery} className="bg-white text-black rounded-lg p-2 border border-gray-300 pl-10"/>
           </View>
   
-          <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
+          {/* <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
             <Plus size={20} color="white" />
             <Text className="text-white ml-2 font-semibold">Add</Text>
-          </Button>
+          </Button> */}
       </View>
 
       {/* Tabs */}
