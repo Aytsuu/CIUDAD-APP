@@ -2,21 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
-import { GADBudgetEntry } from "../requestAPI/BTGetRequest";
-import { GADBudgetCreatePayload, createGADBudget, createGADBudgetFile, GADBudgetFile } from "../requestAPI/BTPostRequest";
+import { createGADBudget, createGADBudgetFile } from "../requestAPI/BTPostRequest";
 import { MediaUploadType } from "@/components/ui/media-upload";
-
-type BudgetYear = {
-  gbudy_year: string;
-  gbudy_budget: number;
-  gbudy_expenses: number;
-  gbudy_income: number;
-};
-
-type BudgetEntry = {
-  gbud_type: string;
-  gbud_actual_expense?: number;
-};
+import { BudgetYear, BudgetEntry, GADBudgetCreatePayload } from "../budget-tracker-types";
 
 export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: BudgetEntry[]) => {
   const queryClient = useQueryClient();

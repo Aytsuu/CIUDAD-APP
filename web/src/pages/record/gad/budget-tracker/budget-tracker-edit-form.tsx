@@ -36,11 +36,7 @@ import {
   GADEditEntrySchema,
   FormValues,
 } from "@/form-schema/gad-budget-tracker-edit-form-schema";
-
-type GADEditEntryFormProps = {
-  gbud_num: number;
-  onSaveSuccess?: () => void;
-};
+import { GADEditEntryFormProps } from "./budget-tracker-types";
 
 function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   const { year } = useParams<{ year: string }>();
@@ -108,16 +104,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   // Watch form values
   const typeWatch = form.watch("gbud_type");
 
-  // Debug typeWatch and form state
-  useEffect(() => {
-    console.log("typeWatch:", typeWatch);
-    console.log("Form gbud_type:", form.getValues("gbud_type"));
-  }, [typeWatch, form]);
-
   // Sync gbud_type
   useEffect(() => {
     if (budgetEntry?.gbud_type) {
-      console.log("Syncing gbud_type:", budgetEntry.gbud_type);
       form.setValue("gbud_type", budgetEntry.gbud_type as "Income" | "Expense");
     }
   }, [budgetEntry, form]);
@@ -152,7 +141,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gdb_id: budgetEntry.gdb?.gdb_id || null,
       };
 
-      console.log("Form Values:", formValues);
       form.reset(formValues);
 
       if (budgetEntry.files?.length) {
@@ -174,11 +162,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         });
         setMediaFiles(files);
         setRemovedFiles([]); // Clear removed files on initial load
-        console.log("Set Media Files:", files);
       } else {
         setMediaFiles([]);
         setRemovedFiles([]); // Clear removed files if no initial files
-        console.log("No Files Found");
       }
     }
   }, [budgetEntry, yearBudgets, year, form]);
@@ -285,14 +271,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       .filter((id) => id.startsWith("receipt-")) // Only include receipt- IDs
       .map((id) => id.replace("receipt-", "")); // Strip prefix to get numeric gbf_id
 
-    console.log("Update Payload:", {
-      gbud_num,
-      budgetData,
-      files: mediaFiles,
-      filesToDelete: removedFiles,
-      remainingBalance,
-    });
-
     updateBudget(
       {
         gbud_num,
@@ -314,7 +292,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
             error.message ||
             "Failed to update entry";
           setApiError(errorMessage);
-          console.error("Full Error:", error.response?.data);
         },
       }
     );
@@ -628,8 +605,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                             <span className="font-medium">After This Entry:</span>
                             <span
                               className={
-                                form.watch("gbud_actual_expense") &&
-                                form.watch("gbud_actual_expense") >
+                                (form.watch("gbud_actual_expense") ?? 0) >
                                   remainingBalance
                                   ? "text-red-500"
                                   : ""
@@ -642,8 +618,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                               ).toLocaleString()}
                             </span>
                           </div>
-                          {form.watch("gbud_actual_expense") &&
-                            form.watch("gbud_actual_expense") >
+                          {(form.watch("gbud_actual_expense") ?? 0) >
                               remainingBalance && (
                               <div className="mt-2 text-red-500 font-medium">
                                 Warning: This expense will exceed your remaining

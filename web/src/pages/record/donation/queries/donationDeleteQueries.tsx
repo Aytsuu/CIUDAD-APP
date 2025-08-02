@@ -2,19 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { deldonationreq } from "../request-db/donationDelRequest";
-
-export type Donation = {
-  don_num: string;
-  don_donorfname: string; 
-  don_donorlname: string;
-  don_item_name: string;
-  don_qty: number;
-  don_category: string;
-  don_receiver: string;
-  don_description?: string;
-  don_date: string;
-};
-
+import { Donation } from "../donation-types";
 
 export const useDeleteDonation = () => {
   const queryClient = useQueryClient();

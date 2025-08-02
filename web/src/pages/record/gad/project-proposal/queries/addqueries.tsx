@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { postProjectProposal, addSupportDocument } from "../api/postreq";
-import { ProjectProposalInput } from "./fetchqueries";
+import { ProjectProposalInput } from "../projprop-types";
 
 export const useAddProjectProposal = () => {
   const queryClient = useQueryClient();

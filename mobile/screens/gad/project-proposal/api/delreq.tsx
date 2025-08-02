@@ -1,6 +1,5 @@
 import { api } from "@/api/api"
 
-
 export const archiveProjectProposal = async (gprId: number) => {
   try {
     const res = await api.patch(`gad/project-proposals/${gprId}/archive/`)
