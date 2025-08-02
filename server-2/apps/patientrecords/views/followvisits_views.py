@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from datetime import datetime
 from django.db.models import Count, Prefetch
 from django.http import Http404
+from apps.pagination import StandardResultsPagination
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
