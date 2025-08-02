@@ -778,7 +778,6 @@ class FamilyPlanningRecordCompositeSerializer(serializers.ModelSerializer):
                 as_provider_signature=service_provider_signature, # Assuming signature is passed
             )
             
-            # FP_pregnancy_check
             FP_pregnancy_check.objects.create(
                 fprecord=fp_record,
                 breastfeeding=validated_data.pop('breastfeeding', False),
@@ -793,7 +792,5 @@ class FamilyPlanningRecordCompositeSerializer(serializers.ModelSerializer):
             return fp_record
 
     def update(self, instance, validated_data):
-        # This update method needs to be fully implemented for all nested models
-        # For now, it's a placeholder.
         raise NotImplementedError("Update method for composite serializer is not fully implemented. Please implement updates for all nested models.")
 

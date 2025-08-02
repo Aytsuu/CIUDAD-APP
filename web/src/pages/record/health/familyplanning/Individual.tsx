@@ -1,6 +1,6 @@
 import type React from "react"
 import { useMemo, useState } from "react"
-import { useParams, Link, useNavigate } from "react-router-dom"
+import { useNavigate, useLocation, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { getFPRecordsForPatient } from "@/pages/familyplanning/request-db/GetRequest"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -11,10 +11,11 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { getPatientDetails } from "../patientsRecord/restful-api/get"
+import ViewButton from "@/components/ui/view-button"
 
 interface IndividualFPRecordDetail {
+  fprecord: any
   otherMethod: any
-  fprecord_id: number
   client_id: string
   patient_name: string
   patient_age: number
@@ -81,9 +82,9 @@ interface IndividualFPRecordDetail {
 }
 
 const IndividualFamPlanningTable: React.FC = () => {
-  const { patientId } = useParams<{ patientId: string }>()
   const navigate = useNavigate()
-
+  const location = useLocation() 
+  const { patientId } = location.state || {} // CORRECTED: Get patientId from state
   const [selectedRecords, setSelectedRecords] = useState<IndividualFPRecordDetail[]>([])
 
   const {
@@ -91,9 +92,9 @@ const IndividualFamPlanningTable: React.FC = () => {
     isLoading: isLoadingFPRecords,
     isError: isErrorFPRecords,
     error: errorFPRecords,
-  } = useQuery<IndividualFPRecordDetail[]>({
-    queryKey: ["fpRecordsForPatient", patientId],
-    queryFn: () => getFPRecordsForPatient(patientId!),
+  } = useQuery({
+    queryKey: ["individualFPRecordsList", patientId],
+    queryFn: () => getFPRecordsForPatient(patientId),
     enabled: !!patientId,
   })
 
@@ -110,9 +111,8 @@ const IndividualFamPlanningTable: React.FC = () => {
 
   const displayPatientName = useMemo(() => {
     if (patientInfoForCard) {
-      return `${patientInfoForCard.personal_info.per_fname} ${
-        patientInfoForCard.personal_info.per_mname ? patientInfoForCard.personal_info.per_mname + " " : ""
-      }${patientInfoForCard.personal_info.per_lname}`
+      return `${patientInfoForCard.personal_info.per_fname} ${patientInfoForCard.personal_info.per_mname ? patientInfoForCard.personal_info.per_mname + " " : ""
+        }${patientInfoForCard.personal_info.per_lname}`
     }
     return "Loading patient name..."
   }, [patientInfoForCard])
@@ -126,7 +126,7 @@ const IndividualFamPlanningTable: React.FC = () => {
         }
         return [...prevSelected, record]
       } else {
-        return prevSelected.filter((r) => r.fprecord_id !== record.fprecord_id)
+        return prevSelected.filter((r) => r.fprecord !== record.fprecord)
       }
     })
   }
@@ -197,41 +197,41 @@ const IndividualFamPlanningTable: React.FC = () => {
           return method === "Others" && otherMethod ? otherMethod : method || "N/A"
         },
       },
-    {
-  accessorKey: "dateOfFollowUp",
-  header: "Date of Follow-Up",
-  cell: ({ row }) => {
-    const date = row.original.dateOfFollowUp;
-    
-    // Check if the date is valid before rendering
-    if (date && date !== "N/A") {
-      const formattedDate = new Date(date).toLocaleDateString();
-      return (
-        <span className='bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium'>
-          {formattedDate}
-        </span>
-      );
-    }
-    
-    // Return "N/A" without the background color
-    return "N/A";
-  },
-},
+      {
+        accessorKey: "dateOfFollowUp",
+        header: "Date of Follow-Up",
+        cell: ({ row }) => {
+          const date = row.original.dateOfFollowUp;
+
+          // Check if the date is valid before rendering
+          if (date && date !== "N/A") {
+            const formattedDate = new Date(date).toLocaleDateString();
+            return (
+              <span className='bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium'>
+                {formattedDate}
+              </span>
+            );
+          }
+
+          // Return "N/A" without the background color
+          return "N/A";
+        },
+      },
       {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <div className="space-x-2">
-            <Link to={`/familyplanning/view/${row.original.fprecord}`}>
-              <Button variant="outline" size="sm">
-                View
-              </Button>
-            </Link>
-          </div>
+          <ViewButton
+            onClick={() =>
+              navigate("/familyplanning/view", {
+                state: { fprecordId: row.original.fprecord},
+              })
+            }
+          />
         ),
       },
     ],
-    [patientId],
+    [navigate],
   )
 
   if (isLoadingFPRecords || isLoadingPatientInfo) {
@@ -260,7 +260,7 @@ const IndividualFamPlanningTable: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Family Planning History</h1>
             <p className="text-gray-600">
-              {displayPatientName} (ID: {patientId}) 
+              {displayPatientName} (ID: {patientId})
             </p>
           </div>
         </div>

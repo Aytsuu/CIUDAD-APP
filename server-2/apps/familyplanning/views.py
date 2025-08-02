@@ -32,8 +32,6 @@ def get_fp_patient_counts(request):
     API view to get counts of total, resident, and transient Family Planning patients.
     """
     try:
-        # Get all unique patients who have at least one FP record
-        # We use distinct() on pat_id to count unique patients, not unique records
         all_fp_patients = FP_Record.objects.select_related('pat').values('pat__pat_id', 'pat__pat_type').distinct()
         
         total_fp_patients = all_fp_patients.count()
@@ -2048,86 +2046,6 @@ def get_complete_fp_record_data(request, fprecord_id):
         raise e
 
 
-# class FamilyPlanningCreateUpdateView(generics.ListCreateAPIView):
-#     serializer_class = FamilyPlanningRecordCompositeSerializer
-#     queryset = FP_Record.objects.all()
-
-#     def create(self, request, *args, **kwargs):
-#         # Use transaction.atomic() for atomicity
-#         with transaction.atomic():
-#             serializer = self.get_serializer(data=request.data)
-#             serializer.is_valid(raise_exception=True)
-            
-#             self.perform_create(serializer)
-            
-#             # Get the created FP_Record instance
-#             fp_record_instance = serializer.instance
-#             service_provision_records = request.data.get('serviceProvisionRecords', [])
-            
-#             if service_provision_records:
-#                 # Get the last record, which should contain the method and quantity
-#                 latest_record = service_provision_records[-1]
-#                 method_accepted = latest_record.get('methodAccepted')
-#                 method_quantity_str = latest_record.get('methodQuantity')
-
-#                 print("Checking stock for:", method_accepted)
-#                 print("Requested quantity:", method_quantity)
-#                 print("Available stock items:", InventoryItem.objects.filter(commodity__name=method_accepted))
-
-#                 try:
-#                     method_quantity = int(method_quantity_str)
-#                 except (ValueError, TypeError):
-#                     raise ValueError("Invalid quantity provided for method deduction.")
-
-#                 if method_accepted and method_quantity > 0:
-#                     try:
-#                         # 1. Find the commodity
-#                         commodity = CommodityList.objects.get(com_name=method_accepted)
-                     
-
-#                         commodity_inventory_item = CommodityInventory.objects.filter(
-#                             com_id=commodity,
-#                             cinv_qty_avail__gte=method_quantity,
-#                             inv_id__is_Archived=False # Ensure it's not archived
-#                         ).order_by('inv_id__expiry_date').first() # Order by expiry date for FIFO
-                        
-#                         if not commodity_inventory_item:
-#                             raise ValueError(f"Insufficient stock for {method_accepted} or no suitable inventory item found.")
-
-#                         # 3. Deduct stock from CommodityInventory
-#                         commodity_inventory_item.cinv_qty_avail -= method_quantity
-#                         commodity_inventory_item.save()
-                        
-#                         staff_id_from_request = request.user.id if request.user.is_authenticated else None # Example
-                        
-#                         CommodityTransaction.objects.create(
-#                             cinv_id=commodity_inventory_item,
-#                             comt_qty=str(method_quantity), # Store quantity as string, as per your model
-#                             comt_action="Deducted for Family Planning Service",
-#                             staff = staff_id_from_request or None
-#                         )
-                        
-#                         print(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
-
-#                     except CommodityList.DoesNotExist:
-#                         print(f"Warning: Commodity '{method_accepted}' not found in CommodityList. Stock not deducted.")
-#                     except ValueError as ve:
-#                         # Re-raise for HTTP 400 response
-#                         raise ValueError(f"Stock deduction error: {ve}")
-#                     except Exception as e:
-#                         import traceback
-#                         traceback.print_exc()
-#                         raise Exception(f"An unexpected error occurred during stock deduction: {str(e)}")
-
-#             headers = self.get_success_headers(serializer.data)
-#             return Response(
-#                 {
-#                     "message": "Family Planning record created successfully and stock updated",
-#                     "fprecord": fp_record_instance.fprecord_id,
-#                 },
-#                 status=status.HTTP_201_CREATED,
-#                 headers=headers,
-#             )
             
 @api_view(["GET"])
 def get_last_previous_pregnancy(request, patient_id):

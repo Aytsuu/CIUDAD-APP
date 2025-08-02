@@ -1,4 +1,3 @@
-"use client"
 
 import type React from "react"
 import { Input } from "@/components/ui/input"
@@ -6,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useParams, useNavigate } from "react-router-dom" // Use react-router-dom for Link and useParams
+import { useNavigate, useLocation } from "react-router-dom" // Use react-router-dom for Link and useParams
 import { useQuery } from "@tanstack/react-query"
 import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest" // Adjust path if needed
 import type { FormData } from "@/form-schema/FamilyPlanningSchema" // Import your FormData type
@@ -50,9 +49,10 @@ const getIncomeName = (incomeId) => {
 };
 
 const FamilyPlanningView: React.FC = () => {
-  const { fprecordId } = useParams<{ fprecordId: string }>()
   const navigate = useNavigate()
-
+  const location = useLocation()
+  const { fprecordId } = location.state || {} 
+ 
   const {
     data: recordData,
     isLoading,
@@ -468,7 +468,7 @@ const FamilyPlanningView: React.FC = () => {
 
         {/* Navigation Button */}
         <div className="flex justify-end mt-6">
-          <Button onClick={() => navigate(`/familyplanning/view2/${fprecordId}`)}>Next</Button>
+           <Button onClick={() => navigate("/familyplanning/view2", { state: { fprecordId: fprecordId } })}>Next</Button> 
         </div>
       </div>
     </div>

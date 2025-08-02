@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest"; // Adjust path if needed
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"; // Import your FormData type
@@ -62,10 +62,11 @@ const pregnancyQuestions = [
 
 export default function FamilyPlanningView2() {
   const navigate = useNavigate();
-  const { fprecordId } = useParams<{ fprecordId: string }>();
+  const location = useLocation() // Get the location object
+  const { fprecordId } = location.state || {} // Get fprecordId from state
 
   const { data: recordData, isLoading, isError, error } = useQuery<FormData, Error>({
-    queryKey: ['fpCompleteRecordView', fprecordId], // Use the same query key if data is shared
+    queryKey: ['fpCompleteRecordView', fprecordId], 
     queryFn: () => getFPCompleteRecord(Number(fprecordId)),
     enabled: !!fprecordId,
   });
@@ -101,7 +102,7 @@ export default function FamilyPlanningView2() {
       <Button
         className="text-black p-2 self-start"
         variant={"outline"}
-        onClick={() => navigate(`/familyplanning/view/${fprecordId}`)} // Navigate back to ViewPage1
+         onClick={() => navigate(-1)} 
       >
         <ChevronLeft />
       </Button>
@@ -352,7 +353,7 @@ export default function FamilyPlanningView2() {
       <div className="flex justify-between mt-6">
         <Button
           variant="outline"
-          onClick={() => navigate(`/familyplanning/view/${fprecordId}`)} // Back to ViewPage1
+          onClick={() => navigate(-1)} // Back to ViewPage1
         >
           Previous
         </Button>

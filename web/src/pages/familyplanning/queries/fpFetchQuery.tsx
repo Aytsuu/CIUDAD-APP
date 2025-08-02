@@ -10,7 +10,7 @@ export const useRiskStiData = (patientId: string | number | undefined) => {
             return data;
         },
         enabled: !!patientId,
-        staleTime: 60 * 30
+        staleTime: 5000
     });
 }
 
@@ -30,8 +30,7 @@ export const useObstetricalHistoryData = (patientId: string | undefined) => {
 interface Commodity {
   com_id: string;
   com_name: string;
-  user_type: string; // "New acceptor" or "Current user"
-  // ... other fields you might have
+  user_type: string;
 }
 const fetchCommodityList = async (): Promise<Commodity[]> => {
   const response = await api2.get<Commodity[]>('inventory/commoditylist/');
@@ -42,8 +41,8 @@ export const useCommodityList = () => {
   return useQuery<Commodity[], Error>({
     queryKey: ['commodityList'],
     queryFn: fetchCommodityList,
-    staleTime: 1 * 60 * 1000, // 5 minutes cache
-  });
+    staleTime: 5000,
+    });
 };
 
 

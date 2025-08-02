@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowDown, ArrowUp, Home, Loader2, RefreshCw, Search, UserCog, Users } from "lucide-react"
+import { ArrowDown, ArrowUp, Home, Loader2, Search, UserCog, Users } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { FPPatientsCount, getFPPatientsCounts, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
 import CardLayout from "@/components/ui/card/card-layout"
+import { useNavigate } from "react-router-dom"
+import ViewButton from "@/components/ui/view-button"
 
 interface FPRecord {
   fprecord_id: number
@@ -28,6 +30,7 @@ interface FPRecord {
 }
 
  export default function FamPlanningTable() {
+  const navigate = useNavigate() 
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const [searchQuery, setSearchQuery] = useState("")
@@ -179,22 +182,21 @@ interface FPRecord {
         ),
       },
       {
-        id: "actions",
-        header: "Actions",
+        id: "action",
+        header: "Action",
         cell: ({ row }) => (
-          <div className="flex gap-2">
-            <Link to={`/familyplanning/patient/${row.original.patient_id}`}>
-              <Button variant="outline" size="sm">
-                View
-              </Button>
-            </Link>
-          </div>
-        ),
+          <ViewButton
+            onClick={() =>
+              navigate("/familyplanning/individual", {
+                state: { patientId: row.original.patient_id },
+              })
+            }
+            />
+          )
       },
-    ],
-    []
+    
+    ], [navigate]
   )
-  // Use a combined loading state for both data fetches
   if (isLoading || isLoadingCounts) {
     return <div className="p-8 text-center flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading records...</div>;
   }
