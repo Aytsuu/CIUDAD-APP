@@ -125,7 +125,7 @@ export default function PrenatalFormFirstPg({
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
     setSelectedPatient(patient)
-    // console.log(selectedPatient)
+    console.log(selectedPatient)
 
     if (!patient) {
       setSelectedPatientId("")

@@ -27,7 +27,7 @@ class FollowUpVisitView(generics.ListCreateAPIView):
         def create(self, request, *args, **kwargs):
             return super().create(request, *args, **kwargs)
 
-class AllFollowUpVisitsView(APIView):
+class AllFollowUpVisitsView(generics.ListAPIView):
     """
     API endpoint to get all follow-up visits with patient details
     """

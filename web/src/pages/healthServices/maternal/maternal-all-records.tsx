@@ -16,7 +16,7 @@ import {
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { ArrowUpDown, Loader2, Search, RefreshCw } from "lucide-react";
+import { ArrowUpDown, Search, RefreshCw } from "lucide-react";
 import { FileInput } from "lucide-react";
 import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
 import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";

@@ -1,15 +1,15 @@
 // pages/PrenatalIndivHistory.tsx
-import { useNavigate } from "react-router";
-import { Card, CardContent } from "@/components/ui/card/card";
-import { Button } from "@/components/ui/button/button";
+// import { useNavigate } from "react-router";
+// import { Card, CardContent } from "@/components/ui/card/card";
+// import { Button } from "@/components/ui/button/button";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";
 
 
-import { FileText } from "lucide-react";
-import { MdOutlinePregnantWoman } from "react-icons/md";
+// import { FileText } from "lucide-react";
+// import { MdOutlinePregnantWoman } from "react-icons/md";
 import { PrenatalHistoryTable } from "../../maternal-components/prenatal-history";
-import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";
+// import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";
 import PrenatalFormHistory from "./prenatal-form-history";
 
 interface PrenatalVisit {
