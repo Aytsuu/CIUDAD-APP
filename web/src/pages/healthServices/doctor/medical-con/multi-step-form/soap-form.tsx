@@ -35,10 +35,8 @@ export default function SoapForm({
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || null;
 
-  const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [showReceipt, setShowReceipt] = useState(false);
   const { mutate: submitSoapForm, isPending: isSubmitting } =
     useSubmitSoapForm();
 

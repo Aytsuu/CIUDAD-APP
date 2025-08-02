@@ -35,7 +35,6 @@ export const useSubmitSoapForm = () => {
   return useMutation({
     mutationFn: async ({
       formData,
-      patientData,
       MedicalConsultation,
       staffId,
     }: SoapFormSubmissionParams) => {

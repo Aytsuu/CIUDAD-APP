@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import {
   FormField,
   FormItem,
@@ -27,7 +27,6 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 export default function FirstAidModal() {
-  const navigate = useNavigate();
 
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id;
@@ -49,7 +48,6 @@ export default function FirstAidModal() {
   const { mutate: addFirstAidMutation, isPending } = useAddFirstAid();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newFirstAidName, setNewFirstAidName] = useState<string>("");
-  const queryClient = useQueryClient();
 
   const getCurrentCategoryName = () => {
     const currentId = form.watch("cat_id");

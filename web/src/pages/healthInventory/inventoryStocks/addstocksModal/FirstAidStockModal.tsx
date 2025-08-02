@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+
 export default function () {
   const {user}=useAuth()
   const staff_id = user?.staff?.staff_id
@@ -32,7 +33,6 @@ export default function () {
       expiryDate: new Date().toISOString().split("T")[0],
     },
   });
-  const navigate = useNavigate();
   const firstaid = fetchFirstAid();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setformData] = useState<FirstAidStockType | null>(null);

@@ -13,7 +13,6 @@ export function FirstAidRequestError({
   mode,
   selectedPatientData,
   selectedPatientId,
-  selectedFirstAidsLength,
 }: FirstAidRequestErrorProps) {
   return (
     <div className="mb-4">

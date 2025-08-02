@@ -1,44 +1,35 @@
-// MonthlyFirstAidRecords.tsx
-import { useState, useMemo, useEffect } from "react";
+// MonthlyMedicineRecords.tsx
+import React, { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Loader2, Search, ChevronLeft } from "lucide-react";
-import {  useNavigate } from "react-router-dom";
+import { Search, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { useLoading } from "@/context/LoadingContext";
-import { MonthlyRecord } from "./types";
-import { useFirstAidRecords } from "./queries/fetchQueries";
+import { useVaccineRecords } from "./queries/fetchQueries";
+import {MonthlyVaccineRecord } from "./types";
 
-
-export default function MonthlyFirstAidRecords() {
-  const { showLoading, hideLoading } = useLoading();
+export default function MonthlyVaccineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter] = useState<string>("all");
   const navigate = useNavigate();
+  const { data: apiResponse, isLoading, error } = useVaccineRecords(yearFilter);
+  const monthlyData = apiResponse?.data || [];
 
-  const {data: apiResponse, isLoading, error} = useFirstAidRecords(yearFilter);
+
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch first aid records");
+      toast.error("Failed to fetch medicine records");
     }
   }, [error]);
 
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading]);
-
-  const monthlyData = apiResponse?.data || [];
   const filteredData = useMemo(() => {
     return monthlyData.filter((monthData) => {
       const monthName = new Date(monthData.month + "-01").toLocaleString(
@@ -53,7 +44,6 @@ export default function MonthlyFirstAidRecords() {
     });
   }, [searchQuery, monthlyData]);
 
-  
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
@@ -64,7 +54,7 @@ export default function MonthlyFirstAidRecords() {
     setCurrentPage(1);
   }, [searchQuery, yearFilter]);
 
-  const columns: ColumnDef<MonthlyRecord>[] = [
+  const columns: ColumnDef<MonthlyVaccineRecord>[] = [
     {
       accessorKey: "month",
       header: "Month",
@@ -84,13 +74,12 @@ export default function MonthlyFirstAidRecords() {
         <div className="text-center">{row.original.record_count}</div>
       ),
     },
-
     {
       id: "actions",
       cell: ({ row }) => (
         <Button
           onClick={() =>
-            navigate("/monthly-firstaid-details", {
+            navigate("/monthly-vaccination-details", {
               state: {
                 month: row.original.month,
                 monthName: new Date(row.original.month + "-01").toLocaleString(
@@ -98,15 +87,12 @@ export default function MonthlyFirstAidRecords() {
                   {
                     month: "long",
                     year: "numeric",
+                    
                   }
                 ),
-                year: row.original.month.split("-")[0],
                 records: row.original.records,
                 recordCount: row.original.record_count,
-                monthlyrcplist_id: row.original.monthlyrcplist_id,
-                report: row.original.report,
               },
-              
             })
           }
         >
@@ -115,6 +101,17 @@ export default function MonthlyFirstAidRecords() {
       ),
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -129,10 +126,10 @@ export default function MonthlyFirstAidRecords() {
           </Button>
           <div className="flex-col items-center ">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Monthly First Aid Records
+              Monthly Vaccination Records
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              View first aid records grouped by month ({monthlyData.length}{" "}
+              View vaccination records grouped by month ({monthlyData.length}{" "}
               months found)
             </p>
           </div>
@@ -172,14 +169,7 @@ export default function MonthlyFirstAidRecords() {
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
-            {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">loading....</span>
-              </div>
-            ) : (
-              <DataTable columns={columns} data={paginatedData} />
-            )}
+            <DataTable columns={columns} data={paginatedData} />
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

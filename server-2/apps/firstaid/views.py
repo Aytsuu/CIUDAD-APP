@@ -137,7 +137,7 @@ class MonthlyFirstAidRecordsAPIView(APIView):
                         year = int(year_param)
                         queryset = queryset.filter(
                             created_at__year=year
-                        )
+                        )  
                 except ValueError:
                     return Response({
                         'success': False,

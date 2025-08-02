@@ -16,7 +16,7 @@ export default function MonthlyMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [yearFilter] = useState<string>("all");
   const navigate = useNavigate();
   const { data: apiResponse, isLoading, error } = useMedicineRecords(yearFilter);
   const monthlyData = apiResponse?.data || [];
@@ -87,10 +87,12 @@ export default function MonthlyMedicineRecords() {
                   {
                     month: "long",
                     year: "numeric",
+                    
                   }
                 ),
                 records: row.original.records,
                 recordCount: row.original.record_count,
+                monthlyrcplist_id: row.original.monthlyrcplist_id,
               },
             })
           }

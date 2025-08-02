@@ -57,15 +57,15 @@ interface VaccinationSectionProps {
 }
 
 export function VaccinationSection({
-  showVaccineList,
-  handleShowVaccineListChange,
+  // showVaccineList,
+  // handleShowVaccineListChange,
   vaccineListOptions,
   selectedVaccineListId,
   handleExistingVaccineChange,
   setSelectedVaccineListId,
   existingVaccineErrors,
   form,
-  existingVaccineTotalDoses,
+  // existingVaccineTotalDoses,
   addExistingVac,
   vaccinesData,
   formWatch,
@@ -73,7 +73,7 @@ export function VaccinationSection({
   setSelectedVaccineId,
   isLoading,
   newVaccineErrors,
-  currentVaccineTotalDoses,
+  // currentVaccineTotalDoses,
   selectedVaccineId,
   addVac,
   isVaccineCompleted,

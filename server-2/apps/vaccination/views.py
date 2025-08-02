@@ -195,18 +195,37 @@ class MonthlyVaccinationRecordsAPIView(APIView):
         try:
             # Get base queryset with proper relationships
             queryset = VaccinationHistory.objects.select_related(
-                'vachist',  # ForeignKey to FirstAidInventory
-                'vacStck_id__inv_id',  # OneToOne to Inventory
-                'vacStck_id__vac_id',  # ForeignKey to FirstAidList
-                'vital__vital_id'
-                'vacrec__patrec_id'  
+                'staff',         
+                'vital',          
+                'vacrec',        
+                'vacrec__patrec_id',
+                'vacStck_id',      
+                'vacStck_id__inv_id',  
+                'vacStck_id__vac_id',   
+                'vac',             
+                'followv'          
             ).order_by('-created_at')
             
             # Filter by year if provided
-            year = request.GET.get('year')
-            if year and year != 'all':
-                queryset = queryset.filter(created_at__year=year)
-            
+            year_param = request.GET.get('year')  # '2025' or '2025-07'
+            if year_param and year_param != 'all':
+                try:
+                    if '-' in year_param:
+                        year, month = map(int, year_param.split('-'))
+                        queryset = queryset.filter(
+                            created_at__year=year,
+                            created_at__month=month
+                        )
+                    else:
+                        year = int(year_param)
+                        queryset = queryset.filter(
+                            created_at__year=year
+                        )
+                except ValueError:
+                    return Response({
+                        'success': False,
+                        'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
             # Group by month and get counts
             monthly_data = queryset.annotate(
                 month=TruncMonth('created_at')
@@ -227,7 +246,7 @@ class MonthlyVaccinationRecordsAPIView(APIView):
                 serialized_records = []
                 for record in month_records:
                     # Serialize record
-                    serialized_record = VaccinationRecordSerializer(record).data
+                    serialized_record = VaccinationHistorySerializer(record).data
                     serialized_records.append(serialized_record)
                 
                 formatted_data.append({

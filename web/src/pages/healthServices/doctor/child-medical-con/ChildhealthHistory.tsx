@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { Accordion } from "@/components/ui/accordion";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import { getSupplementStatusesFields } from "../../childservices/viewrecords/Config";
+import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
 import { PatientSummarySection } from "../../childservices/viewrecords/CurrentHistoryView";
 import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -22,11 +22,9 @@ interface PendingDisplayMedicalConsultationProps {
 }
 
 export default function PendingDisplayMedicalConsultation({
-  patientData,
   checkupData,
   onNext,
 }: PendingDisplayMedicalConsultationProps) {
-  const navigate = useNavigate();
   const patId = checkupData.pat_details.pat_id;
   const chrecId = checkupData.chrec_id;
   const chhistId = checkupData.chhist_id;

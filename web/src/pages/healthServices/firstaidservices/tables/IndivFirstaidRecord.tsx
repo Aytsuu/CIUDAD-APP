@@ -95,7 +95,6 @@ export default function IndivFirstAidRecords() {
   const {
     data: firstAidRecords,
     isLoading,
-    refetch,
   } = useQuery({
     queryKey: ["patientFirstAidDetails"],
     queryFn: async () => {

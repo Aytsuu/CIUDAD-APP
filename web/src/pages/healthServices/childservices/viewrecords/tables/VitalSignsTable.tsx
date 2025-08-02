@@ -62,7 +62,7 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                 const isCurrentRecord = record.chhist_id === chhistId;
                 const vitalSigns = record.child_health_vital_signs?.[0] || {};
                 const bmDetails = vitalSigns.bm_details || {};
-                const nutritionStatus = record.nutrition_statuses?.[0] || {};
+                // const nutritionStatus = record.nutrition_statuses?.[0] || {};
 
                 // Get the latest note and follow-up details
                 let latestNoteContent: string | null = null;

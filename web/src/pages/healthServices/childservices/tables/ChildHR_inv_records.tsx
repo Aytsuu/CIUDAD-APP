@@ -30,11 +30,10 @@ export default function InvChildHealthRecords() {
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
-  const [childData, setChildData] = useState(ChildHealthRecord);
+  const [childData] = useState(ChildHealthRecord);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const queryClient = useQueryClient();
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
     useUnvaccinatedVaccines(ChildHealthRecord?.pat_id, ChildHealthRecord.dob);
   const { data: followUps = [], isLoading: followupLoading } =

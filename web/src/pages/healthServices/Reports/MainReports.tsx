@@ -197,7 +197,7 @@ export default function HealthcareReports() {
                   </div>
                 </div>
                 <div className="mt-6">
-                  <Link to="/monthly-firstaid-records">
+                  <Link to="/monthly-vaccine-records">
                     <Button size="sm" className="w-full">
                       <Eye className="w-4 h-4 mr-2" />
                       View Report

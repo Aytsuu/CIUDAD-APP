@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Form,
@@ -30,7 +30,6 @@ export interface CommodityData {
 export default function CommodityListEdit() {
   const location = useLocation();
   const initialData = location.state?.params?.initialData as CommodityData;
-  const navigate = useNavigate();
 
   // Initialize form with default values
   const form = useForm<CommodityType>({
