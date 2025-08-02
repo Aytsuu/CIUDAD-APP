@@ -21,7 +21,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { BriefcaseMedical, ChevronLeft, FilesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormInput } from "@/components/ui/form/form-input";
-import { api2 } from "@/api/api";
 import { toast } from "sonner";
 import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 import { PatientSearch } from "@/components/ui/patientSearch";

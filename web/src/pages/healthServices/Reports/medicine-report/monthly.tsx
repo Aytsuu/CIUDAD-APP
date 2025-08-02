@@ -7,7 +7,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Search, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useMedicineRecords } from "./queries/fetchQueries";

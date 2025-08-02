@@ -3,7 +3,6 @@ import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { MedicineRequest } from "./types";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 
 const getPatientDisplayInfo = (request: MedicineRequest) => {

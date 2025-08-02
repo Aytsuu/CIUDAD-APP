@@ -1,6 +1,5 @@
 
 
-import { Printer } from "lucide-react";
 import {useRef} from "react";
 
 

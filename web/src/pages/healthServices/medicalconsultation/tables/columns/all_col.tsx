@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { MedicalRecord } from "../../types";
-import { format } from "path";
 
 export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
   {

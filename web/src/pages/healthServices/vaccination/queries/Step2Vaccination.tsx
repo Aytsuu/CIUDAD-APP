@@ -1,9 +1,7 @@
 // Create a new file, e.g., useVaccinationMutation.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api2 } from "@/api/api";
 import { createVitalSigns } from "../restful-api/post";
 import { updateVaccinationHistory } from "../restful-api/update";
-import { getVaccineStock } from "@/pages/healthServices/vaccination/restful-api/get";
 import { deleteVitalSigns } from "@/pages/healthServices/vaccination/restful-api/delete";
 import { toast } from "sonner";
 

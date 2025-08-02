@@ -2,9 +2,8 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, FileInput, Loader2 } from "lucide-react";
+import { Search, FileInput, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -14,7 +13,6 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { api2 } from "@/api/api";
 import { useState } from "react";

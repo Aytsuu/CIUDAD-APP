@@ -4,8 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Search, FileInput, ChevronLeft, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -15,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { getChildHealthColumns } from "./columns/indiv_col";
 import { useUnvaccinatedVaccines } from "../../vaccination/queries/fetch";

@@ -18,10 +18,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
 import { api2 } from "@/api/api";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { useLoading } from "@/context/LoadingContext";

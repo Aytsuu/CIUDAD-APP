@@ -12,7 +12,6 @@ import { MedicalConsultationHistory } from "../types";
 import CurrentConsultationCard from "./current-medrec";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoading } from "@/context/LoadingContext";
-import { is } from "date-fns/locale";
 
 export default function DisplayMedicalConsultation() {
   const { showLoading, hideLoading } = useLoading();

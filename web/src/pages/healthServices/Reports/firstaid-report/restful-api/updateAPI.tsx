@@ -1,5 +1,4 @@
 import { api2 } from "@/api/api";
-import { data } from "react-router";
 
 
 export const update_monthly_recipient_list_report = async (data: Record<string, any>) => {

@@ -2,9 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Loader2, Eye, ArrowUpDown, FileInput } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, Loader2, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,

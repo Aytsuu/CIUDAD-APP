@@ -1,5 +1,4 @@
 import { api2 } from "@/api/api";
-import { AxiosError } from 'axios';
 
 
 

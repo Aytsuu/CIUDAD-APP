@@ -19,8 +19,8 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../table/table"
 import { Button } from "@/components/ui/button/button"
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ChevronLeft, ChevronRight, Search, ListFilter } from "lucide-react" // Added ArrowUpDown
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { ChevronLeft, ChevronRight } from "lucide-react" // Added ArrowUpDown
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select" // Added Select components
 
 interface DataTableProps<TData, TValue> {

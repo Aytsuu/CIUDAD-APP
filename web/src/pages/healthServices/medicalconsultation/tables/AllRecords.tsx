@@ -2,21 +2,13 @@ import React, { useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Loader2, Search, FileInput } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { Link } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+
+
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQueryClient } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { useMedicalRecord } from "../queries/fetchQueries";
 import { MedicalRecord } from "../types";
 import { getAllMedicalRecordsColumns,exportColumns } from "./columns/all_col";
