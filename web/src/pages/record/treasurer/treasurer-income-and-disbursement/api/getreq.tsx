@@ -8,7 +8,6 @@ export const getIncomeImages = async (archive: boolean = false, folderId?: numbe
     const data = res.data?.data ?? res.data ?? []
     return Array.isArray(data) ? data : []
   } catch (err) {
-    console.error("API Error:", err)
     return []
   }
 }
@@ -21,7 +20,6 @@ export const getDisbursementImages = async (archive: boolean = false, folderId?:
     const data = res.data?.data ?? res.data ?? []
     return Array.isArray(data) ? data : []
   } catch (err) {
-    console.error("API Error:", err)
     return []
   }
 }

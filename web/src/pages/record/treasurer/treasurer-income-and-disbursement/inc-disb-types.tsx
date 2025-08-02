@@ -5,7 +5,7 @@ export type Album = {
   year: string;
   images: ImageItem[];
   staff_names: string[];
-  is_archive: boolean; // Derived from all images
+  is_archive: boolean; 
   inf_name?: string;
   dis_name?: string;
   inf_desc?: string;
@@ -45,21 +45,5 @@ export type DisbursementImage = {
   dis_year: string;
   disf_is_archive: boolean;
   dis_name: string;
-  dis_desc?: string;
-};
-
-export type IncomeFolder = {
-  inf_num: number;           
-  inf_year: string;   
-  inf_name: string;       
-  inf_is_archive: boolean;   
-  inf_desc?: string;
-};
-
-export type DisbursementFolder = {
-  dis_num: number;      
-  dis_year: string;       
-  dis_name: string;  
-  dis_is_archive: boolean;  
   dis_desc?: string;
 };
