@@ -6,15 +6,12 @@ import {
   updateTruck,
   deleteTruck,
   restoreTruck,
-  TruckData,
-  PersonnelItem,
-  TruckFormValues,
   getTruckById,
-  Truck
 } from './requests';
 import { useToastContext } from '@/components/ui/toast';
+import { Truck, TruckData, PersonnelItem, TruckFormValues } from "./waste-personnel-types";
 
-export const useGetTruckById = (truck_id: number, options = {}) => {
+export const useGetTruckById = (truck_id: string, options = {}) => {
   return useQuery<Truck, Error>({
     queryKey: ["trucks", truck_id],
     queryFn: () => getTruckById(truck_id),
