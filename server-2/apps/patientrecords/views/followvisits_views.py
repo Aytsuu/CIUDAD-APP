@@ -30,28 +30,42 @@ class AllFollowUpVisitsView(APIView):
     """
     API endpoint to get all follow-up visits with patient details
     """
-    def get(self, request):
-        try:
-            # Use the existing serializer to avoid custom logic
-            visits = FollowUpVisit.objects.all().order_by('-followv_date')
-            serializer = FollowUpVisitWithPatientSerializer(visits, many=True, context={'request': request})
-            
-            response_data = {
-                'count': len(serializer.data),
-                'results': serializer.data
-            }
-            
-            return Response(response_data, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            print(f"Error in AllFollowUpVisitsView: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            
-            return Response({
-                'error': str(e),
-                'message': 'An error occurred while fetching follow-up visits'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    serializer_class = FollowUpVisitWithPatientSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = FollowUpVisit.objects.select_related('patrec').all()
+
+        # filtering options 
+        status = self.request.query_params.get('status')
+        search = self.request.query_params.get('search')
+        time_frame = self.request.query_params.get('time_frame')
+
+        if status and status != 'All':
+            queryset = queryset.filter(followv_status=status)
+        
+        if search:
+            queryset = queryset.filter(
+                Q(patient__per_fname__icontains=search) |
+                Q(patient__per_lname__icontains=search) |
+                Q(followv_description__icontains=search)
+            )
+        
+        if time_frame:
+            today = timezone.now()
+
+            if time_frame == 'today':
+                queryset =queryset.filter(followv_date__date=today)
+            elif time_frame == 'thisWeek':
+                start_week = today -timedelta(days=today.weekday())
+                end_week = start_week + timedelta(days=6)
+                queryset =queryset.filter(followv_date__range=[start_week, end_week])
+            elif time_frame == 'thisMonth':
+                queryset = queryset.filter(
+                    followv_date__year=today.year,
+                    followv_date__month=today.month
+                )
+        return queryset.order_by('-followv_date')
 
 
 
