@@ -2,7 +2,7 @@
 
 
 # ---------------------------------------------------
-# DEVELOPMENT SERVER
+# PRODUCTION SERVER
 # ---------------------------------------------------
 
 from pathlib import Path
@@ -93,6 +93,8 @@ INSTALLED_APPS = [
     'apps.medicineservices',
     'apps.firstaid',
     'apps.childhealthservices',
+    'apps.reports',
+    'apps.file',
 
 ]
 
@@ -262,6 +264,7 @@ CORS_ALLOW_METHODS = [
 
 CORS_PREFLIGHT_MAX_AGE = 86400
 
+
 # ========================
 # SECURITY HEADERS
 # ========================
@@ -295,9 +298,13 @@ LOGGING = {
 }
 
 
-# # ---------------------------------------------------
-# # DEVELOPMENT SERVER
-# # ---------------------------------------------------
+
+
+
+
+# ---------------------------------------------------
+# DEVELOPMENT SERVER
+# ---------------------------------------------------
 
 # from pathlib import Path
 # from datetime import timedelta
@@ -333,6 +340,8 @@ LOGGING = {
 #     'JWT_ALGORITHM': 'HS256',
 #     'JWT_AUDIENCE': 'authenticated',
 # }
+
+
 
 
 # # Application definition
@@ -383,6 +392,8 @@ LOGGING = {
 #     'apps.medicineservices',
 #     'apps.firstaid',
 #     'apps.childhealthservices',
+#     'apps.reports',
+#     'apps.file',
 
 # ]
 

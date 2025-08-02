@@ -2,7 +2,7 @@ from django.db import models
 from apps.patientrecords.models import PatientRecord,VitalSigns,BodyMeasurement,Finding
 from apps.medicineservices.models import MedicineRequest
 from apps.patientrecords.models import FollowUpVisit
-
+from apps.administration.models import Staff
 # Create your models here.
 
 
@@ -21,6 +21,7 @@ class MedicalConsultation_Record(models.Model):
      find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='medical_consultation_record',null=True)
      medreq =models.ForeignKey(MedicineRequest,on_delete=models.CASCADE,related_name='medical_consultation_record',null=True )
      followv = models.ForeignKey(FollowUpVisit,on_delete=models.CASCADE,related_name='medical_consultation_record',null=True)
+     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record',null=True)
      
      
      class Meta:

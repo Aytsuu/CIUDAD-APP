@@ -267,7 +267,9 @@ export async function updateChildHealthRecord({
     const bmi_id = newBMI.bm_id;
 
     const vitalsigns = await createVitalSigns({
-      temp: submittedData.vitalSigns?.[0]?.temp || "",
+      vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
+      staff: staff || null,
+      patrec_id: patrec_id,
     });
     const vital_id = vitalsigns.vital_id;
 

@@ -13,3 +13,4 @@ class FirstAidRecord(models.Model):
     reason = models.TextField(default="", blank=True, null=True)
     class Meta:
         db_table = 'firstaid_record'
+        

@@ -73,7 +73,6 @@ export const ChildInfoSection = ({ control, isAddNewMode, selectedPatient, isTra
         label="Age"
         type="text"
         readOnly
-        className="bg-gray-100"
       />
       <FormInput
         control={control}

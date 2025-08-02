@@ -234,11 +234,12 @@ export const useImmunizationMutations = () => {
     // Update child health history status
     await updateCHHistory({
       chhist_id: Number(chist_id),
-      status: "immunization",
+      status: "recorded",
     });
 
     return createdRecords;
   };
+
 
   const rollbackChanges = async (createdRecords: CreatedRecords) => {
     try {
@@ -307,9 +308,7 @@ export const useImmunizationMutations = () => {
         data,
         vaccines,
         existingVaccines,
-        ChildHealthRecord,
-        staff_id,
-        pat_id,
+      
       } = params;
 
       // Validate if there are any changes
@@ -335,7 +334,7 @@ export const useImmunizationMutations = () => {
       queryClient.invalidateQueries({
         queryKey: ["childHealthRecords", chrec_id],
       });
-
+      
       toast.success("Immunization data saved successfully!");
     },
     onError: (error, variables, context) => {

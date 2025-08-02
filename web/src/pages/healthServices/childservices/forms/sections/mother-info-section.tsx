@@ -54,7 +54,6 @@ export const MotherInfoSection = ({ control, isAddNewMode, selectedPatient, isTr
         label="Age"
         type="text"
         readOnly
-        className="bg-gray-100"
       />
       <FormInput
         control={control}
