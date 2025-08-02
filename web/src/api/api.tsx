@@ -17,7 +17,7 @@ import supabase from "@/supabase/supabase";
 //     },
 // });
 export const api = axios.create({
-  baseURL: "https://ciudad-app.onrender.com",
+  baseURL: "https://ciudad-app-server-1.onrender.com",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
