@@ -10,7 +10,6 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@/components/ui/label";
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 
 const styles = {

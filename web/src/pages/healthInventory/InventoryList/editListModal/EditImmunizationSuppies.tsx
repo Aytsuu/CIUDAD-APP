@@ -12,7 +12,6 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { getImzSup } from "../restful-api/Antigen/ImzFetchAPI";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
 import { Package, CircleCheck } from "lucide-react";
 import { useUpdateImzSupply } from "../queries/Antigen/ImzPutQueries";
 import CardLayout from "@/components/ui/card/card-layout";

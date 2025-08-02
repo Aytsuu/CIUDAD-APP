@@ -1,6 +1,5 @@
 import {api2} from "@/api/api";
 import { toTitleCase } from "@/helpers/ToTitleCase";
-import { ca } from "date-fns/locale";
 
 
 export const updateMedicine = async (med_id: string, data : Record<string,any>) => {

@@ -29,13 +29,14 @@ import {
   useArchiveProjectProposal,
   useRestoreProjectProposal,
 } from "./queries/delqueries";
+import { QueryProvider } from "./api/query-provider";
 import { ProjectProposalView } from "./view-projprop";
 import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { SelectLayout } from "@/components/ui/select-layout";
 
-const ProjectProposalList: React.FC = () => {
+const ProjectProposalListContent: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
@@ -410,6 +411,14 @@ const ProjectProposalList: React.FC = () => {
         )}
       </ScrollView>
     </ScreenLayout>
+  );
+};
+
+const ProjectProposalList: React.FC = () => {
+  return (
+    <QueryProvider>
+      <ProjectProposalListContent />
+    </QueryProvider>
   );
 };
 

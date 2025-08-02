@@ -1,8 +1,6 @@
 import {api} from "@/api/api";
-import { formatDate } from '@/helpers/dateFormatter';
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { capitalize } from "@/helpers/capitalize";
-import { useState } from "react";
 
 
 
@@ -50,7 +48,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
     try{
 
-        let entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
+        const entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
 
         console.log({
             iet_datetime: incomeExpenseInfo.iet_datetime,

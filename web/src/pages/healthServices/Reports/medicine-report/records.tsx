@@ -1,10 +1,8 @@
 // MonthlyMedicineDetails.tsx
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft } from "lucide-react";
 import { MedicineRecord } from "../medicine-report/restful-api/getAPI";
 
 export default function MonthlyMedicineDetails() {

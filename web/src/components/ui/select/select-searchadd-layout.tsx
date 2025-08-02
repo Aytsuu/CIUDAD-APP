@@ -50,7 +50,7 @@ export function SelectLayoutWithAdd({
     option.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
   );
 
-  const handleSelect = (selectedValue: string, optionName?: string) => {
+  const handleSelect = (selectedValue: string) => {
     // Check if this is adding a new item
     const existingOption = options.find((opt) => opt.id === selectedValue);
     

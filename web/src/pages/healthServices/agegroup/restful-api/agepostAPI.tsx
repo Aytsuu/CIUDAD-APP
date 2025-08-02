@@ -1,6 +1,5 @@
 import { api2 } from "@/api/api";
-import { useNavigate } from "react-router";
-import { AgeGroupType } from "../types"; // Adjust the import path as necessary
+// Adjust the import path as necessary
 import { useQuery } from "@tanstack/react-query";
 import {AgeGroupRecord} from "../AgeGroup"
 

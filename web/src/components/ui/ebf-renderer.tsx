@@ -1,7 +1,7 @@
 import React from "react";
 import { FieldConfig, ChildHealthHistoryRecord, EBFCheck } from "../../pages/healthServices/childservices/viewrecords/types";
 import { getValueByPath } from "../../pages/healthServices/childservices/viewrecords/ChildHealthutils";
-import { format, isValid, isSameDay } from "date-fns";
+import { format, isSameDay } from "date-fns";
 
 interface EbfRendererProps {
   field: FieldConfig;
@@ -23,7 +23,7 @@ export const EbfRenderer: React.FC<EbfRendererProps> = ({
       }}
     >
       <div className="font-bold text-gray-700 left-0 bg-white py-2 border-gray-100"></div>
-      {recordsToDisplay.map((record, idx) => {
+      {recordsToDisplay.map((record) => {
         const isCurrentRecord = record.chhist_id === chhistId;
         return (
           <div

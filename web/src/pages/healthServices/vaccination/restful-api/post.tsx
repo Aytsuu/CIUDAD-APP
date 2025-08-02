@@ -1,5 +1,5 @@
 import { api2 } from "@/api/api";
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 
 
 

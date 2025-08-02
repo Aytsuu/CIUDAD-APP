@@ -1,5 +1,4 @@
 import { api2 } from "@/api/api";
-import { MedicineRequestItem } from "../types";
 export const getMedicineRequest = async () => {
   try {
     const response = await api2.get("/medicine/medicine-request/");

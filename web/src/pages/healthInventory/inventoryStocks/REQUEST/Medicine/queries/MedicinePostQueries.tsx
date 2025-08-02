@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { addMedicineInventory, addMedicineTransaction } from "../restful-api/MedicinePostAPI"; // Update the import path
-import { MedicineStockType } from "@/form-schema/inventory/stocks/inventoryStocksSchema"; // Update with your actual type
+// Update with your actual type
 
 
 export interface MedicineTransactionType {

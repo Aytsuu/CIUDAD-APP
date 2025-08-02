@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearError();
 
     try {
-      const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+      const { data: _supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });

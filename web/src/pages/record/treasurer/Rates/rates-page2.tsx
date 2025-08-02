@@ -1,17 +1,14 @@
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import RatesFormPage2 from "./forms/rates-form-page2"
 import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { Pen, Trash, History, Search, ArrowUpDown } from 'lucide-react';
+import { Pen, History, Search, ArrowUpDown } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useState } from "react"
 import { useGetPurposeAndRate, type PurposeAndRate } from "./queries/RatesFetchQueries"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDeletePurposeAndRate } from "./queries/RatesDeleteQueries"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import RatesEditFormPage2 from "./edit-forms/rates-edit-form-2"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"

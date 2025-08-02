@@ -1,4 +1,3 @@
-import path from "path";
 import IndivVaccinationRecords from "@/pages/healthServices/vaccination/tables/individual/IndivVaccinationRecords";
 import AllVaccinationRecords from "@/pages/healthServices/vaccination/tables/all/AllVaccinationRecord";
 import PatNewVacRecForm from "@/pages/healthServices/vaccination/forms/NewVaccinationForm";

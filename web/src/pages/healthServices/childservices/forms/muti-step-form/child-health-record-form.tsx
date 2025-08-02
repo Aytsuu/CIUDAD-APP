@@ -7,7 +7,6 @@ import ChildHRPage1 from "./child-hr-page1";
 import ChildHRPage2 from "./child-hr-page2";
 import ChildHRPage3 from "./child-hr-page3";
 import LastPage from "./child-hr-page-last";
-import { api2 } from "@/api/api";
 import { useAuth } from "@/context/AuthContext";
 import {
   FormData,
@@ -20,7 +19,6 @@ import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { useChildHealthRecordMutation } from "../restful-api/newchrecord";
 import { useUpdateChildHealthRecordMutation } from "../restful-api/newchhistory";
 import type { Patient } from "@/components/ui/patientSearch";
-import { useQuery } from "@tanstack/react-query";
 import { Medicine } from "./types";
 import { initialFormData, ImmunizationTracking } from "./types";
 import CardLayout from "@/components/ui/card/card-layout";

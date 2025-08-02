@@ -636,7 +636,6 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -647,9 +646,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { SetStateAction } from "react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useUpdateIncomeExpense } from "./queries/treasurerIncomeExpenseUpdateQueries";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 

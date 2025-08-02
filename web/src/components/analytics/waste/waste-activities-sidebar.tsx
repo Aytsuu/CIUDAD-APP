@@ -195,7 +195,7 @@ import { useGetUpcomingHotspots, type UpcomingHotspots } from "./waste-sidebar-a
 // import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "./your-waste-collection-query-path";
 import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "@/pages/record/waste-scheduling/waste-colllection/queries/wasteColFetchQueries";
 import { Card } from "@/components/ui/card/card";
-import { Clock, ChevronRight, Calendar, Info, Trash2 } from "lucide-react";
+import { Clock, ChevronRight, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { format, isSameDay, isWithinInterval, addDays } from "date-fns";
@@ -210,7 +210,7 @@ type ActivityItem = {
 
 export const WasteActivitySidebar = () => {
   const [period, setPeriod] = React.useState<string>("today");
-  const [selectedActivity, setSelectedActivity] = React.useState<ActivityItem | null>(null);
+  const [_, setSelectedActivity] = React.useState<ActivityItem | null>(null);
   const { data: upcomingHotspots, isLoading: isLoadingHotspots } = useGetUpcomingHotspots();
   const { data: wasteCollections, isLoading: isLoadingCollections } = useGetWasteCollectionSchedFull();
   const navigate = useNavigate();

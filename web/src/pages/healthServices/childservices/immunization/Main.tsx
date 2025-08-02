@@ -1,16 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import PendingDisplayChildHealthRecord from "./Step1";
 import Immunization from "./Step2";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import { ChevronLeft } from "lucide-react";
-import { api2 } from "@/api/api";
-import z from "zod";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import { VitalSignType, FormData, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
+import { VitalSignType, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
 import { useVaccinesListImmunization } from "./queries/fetchQueries";
 import { fetchVaccinesWithStock } from "../../vaccination/restful-api/fetch";
 import { getVaccinationRecordById } from "../../vaccination/restful-api/get";

@@ -8,7 +8,6 @@ import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
-import { DependentRecord } from "../../profilingTypes";
 
 export default function HouseholdHeadForm({ residents, form, selectedResidentId, onSelect, prefix, title }: {
   residents: any;

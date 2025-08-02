@@ -1,5 +1,4 @@
 import React from 'react';
-import supabase from '@/supabase/supabase';
 import { MediaUploadType } from '@/components/ui/media-upload';
 
 export const useInstantFileUpload = ({
@@ -14,43 +13,6 @@ export const useInstantFileUpload = ({
     setActiveVideoId?: React.Dispatch<React.SetStateAction<string>>
   }
 ) => {
-
-  const generateFileName = (file: File) => {
-    const fileExt = file.name.split('.').pop();
-    return `${Date.now()}-${Math.random()
-      .toString(36) 
-       .substring(2, 9)}.${fileExt}`;
-  };
-
-  const uploadFile = async (file: File) => {
-    const fileName = generateFileName(file);
-    const filePath = `uploads/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from("image-bucket")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from("image-bucket")
-      .getPublicUrl(filePath);
-
-    return { publicUrl, storagePath: filePath };
-  };
-
-  const deleteFile = async (path: string) => {
-    const { error } = await supabase.storage
-      .from("image-bucket")
-      .remove([path]);
-    
-    if (error) throw error;
-    return true;
-  };
-
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -73,26 +35,7 @@ export const useInstantFileUpload = ({
       };
     });
 
-    setMediaFiles!((prev) => [...prev, ...newMediaFiles]);
-
-    // Upload files and update state with URLs
-    for (const media of newMediaFiles) {
-      try {
-        const { publicUrl, storagePath } = await uploadFile(media.file);
-        if (publicUrl) {
-          setMediaFiles!((prev) =>
-            prev.map((m) =>
-              m.id === media.id 
-                ? { ...m, publicUrl, storagePath, status: "uploaded" } 
-                : m
-            )
-          );
-        }
-      } catch (error) {
-        console.error("Upload failed:", error);
-      }
-    }
-
+    setMediaFiles!((prev: any) => [...prev, ...newMediaFiles]);
     e.target.value = "";
   };
 
@@ -101,10 +44,6 @@ export const useInstantFileUpload = ({
     if (!mediaToRemove) return;
 
     try {
-      // Remove from Supabase if already uploaded
-      if (mediaToRemove.storagePath) {
-        await deleteFile(mediaToRemove.storagePath);
-      }
 
       // Remove from local state
       setMediaFiles!((prev) => prev.filter((media) => media.id !== id));
@@ -122,8 +61,6 @@ export const useInstantFileUpload = ({
   };
 
   return {
-    uploadFile,
-    deleteFile,
     handleFileChange,
     handleRemoveFile,
   };

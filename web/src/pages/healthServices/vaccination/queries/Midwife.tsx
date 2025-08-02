@@ -12,16 +12,12 @@ import { deleteVaccinationRecord,
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
-  deleteVaccinationHistory,
 } from "../restful-api/delete";
 
 import   {getVaccineStock} from "../restful-api/get";
 import { api2 } from "@/api/api";
-import {useNavigation} from "react-router"
-import {
-  getVaccinationHistory,
-  getVaccinationRecords,
-} from "../restful-api/get";
+
+
 import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "../../../../helpers/Calculatenextvisit";
@@ -70,7 +66,7 @@ export const useSubmitStep1 = () => {
           const vaccinationRecord = await createVaccinationRecord({patrec_id:patrec_id, vacrec_totaldose:1});
 
           vacrec_id = vaccinationRecord.vacrec_id;
-          let age = data.age;
+          const age = data.age;
           console.log("age", data.age);
           if (vacrec_id) {
             await createVaccinationHistory(
@@ -188,7 +184,7 @@ export const useSubmitStep2 = () => {
         
         await createAntigenStockTransaction(parseInt(vacStck_id), staff_id ?? "");
 
-        let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
+        const vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
 
         if (vac_type_choices === "routine") {
           const { interval, time_unit } =

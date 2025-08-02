@@ -23,7 +23,7 @@ export default function IndividualScan() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
   const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
-  const [status, setStatus] = React.useState<"success" | "failure" | "loading" | "message">("success");
+  const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">("success");
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
@@ -84,7 +84,6 @@ export default function IndividualScan() {
   ) => {
     try {
       const personal = await addPersonal({ ...capitalizeAllFields(per) });
-      console.log(personal);
       const new_addresses = await addAddress(per_addresses.list);
       await addPersonalAddress({
         data: new_addresses?.map((address: any) => ({
@@ -125,7 +124,7 @@ export default function IndividualScan() {
 
   const submit = async () => {
     setIsSubmitting(true)
-    setStatus('loading');
+    setStatus('waiting');
     setShowFeedback(true);
 
     const { accountFormSchema, personalInfoSchema } = getValues();

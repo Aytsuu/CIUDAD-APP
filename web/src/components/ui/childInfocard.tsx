@@ -1,13 +1,9 @@
 import {
   Calendar,
   MapPin,
-  User,
   Heart,
-  Shield,
   Baby,
   Cross,
-  Activity,
-  PercentSquareIcon,
 } from "lucide-react";
 import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 import { BsPerson, BsPersonFill } from "react-icons/bs";

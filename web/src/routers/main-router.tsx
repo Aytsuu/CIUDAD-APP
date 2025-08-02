@@ -122,9 +122,7 @@ import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
 import { firstaid_router } from "./firstaid-router";
 import { health_schedule_routes } from "./health-schedules-router";
 import { summon_router } from "./summon-router";
-import { RouteWithTransition } from '@/components/route-transition/route-with-transition';
 import { withTransition } from '@/helpers/withTransition';
-import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
   {

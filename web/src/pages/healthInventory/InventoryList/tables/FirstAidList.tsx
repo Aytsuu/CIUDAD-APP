@@ -3,17 +3,12 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { FirstAidColumns, FirstAidRecords } from "./columns/FirstAidCol";
 import { useFirstAid } from "../queries/firstAid/FirstAidFetchQueries";
-import { handleDeleteFirstAidList } from "../restful-api/firstAid/FirstAidDeleteAPI";
-import { toast } from "sonner";
-import { CircleCheck, CircleX } from "lucide-react";
 import { Link } from "react-router";
 import {useDeleteFirstAid} from "../queries/firstAid/FirstAidDeleteQueries";
 export default function FirstAidList() {

@@ -3,14 +3,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pill, CircleCheck } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 // Components
 import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Label } from "@/components/ui/label";
 import CardLayout from "@/components/ui/card/card-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 

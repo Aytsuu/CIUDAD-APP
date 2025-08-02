@@ -23,7 +23,6 @@ import {
   CardTitle,
 } from "@/components/ui/card/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useNavigate } from "react-router";
 import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 
@@ -52,7 +51,6 @@ function SignIn({ onShowForgotPassword }: { onShowForgotPassword: () => void }) 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
@@ -255,7 +253,7 @@ function ForgotPassword({
     }
   };
 
-  const handleVerifyCode = async (data: z.infer<typeof VerificationSchema>) => {
+  const handleVerifyCode = async () => {
     setLoading(true);
     setErrorMessage("");
 
@@ -279,7 +277,7 @@ function ForgotPassword({
     }
   };
 
-  const handleResetPassword = async (data: z.infer<typeof ResetPasswordSchema>) => {
+  const handleResetPassword = async () => {
     setLoading(true);
     setErrorMessage("");
 

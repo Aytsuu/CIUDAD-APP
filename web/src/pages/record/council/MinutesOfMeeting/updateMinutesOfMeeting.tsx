@@ -32,7 +32,7 @@ function UpdateMinutesOfMeeting() {
         },
     });
 
-    let meetingAreaOfFocus = [
+    const meetingAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];

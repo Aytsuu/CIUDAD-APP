@@ -73,7 +73,7 @@ const handleVerifyCode = async (data: VerifyCodeData) => {
     
     // Store the reset token for the password reset step
     if (result.reset_token) {
-      setResetToken(result.reset_token);
+      setResetToken(result.reset_token as any);
       setCurrentStep('reset');
     } else {
       throw new Error("No reset token received");
@@ -241,7 +241,7 @@ export {
 // Additional state variables you might need:
 const [email, setEmail] = useState('');
 const [resetToken, setResetToken] = useState(null);
-const [currentStep, setCurrentStep] = useState('email'); // 'email' | 'verification' | 'reset' | 'success'
-const [loading, setLoading] = useState(false);
-const [errorMessage, setErrorMessage] = useState('');
-const [successMessage, setSuccessMessage] = useState(''); // Optional for success notifications
+const [_currentStep, setCurrentStep] = useState('email'); // 'email' | 'verification' | 'reset' | 'success'
+const [_loading, setLoading] = useState(false);
+const [_errorMessage, setErrorMessage] = useState('');
+const [_successMessage, setSuccessMessage] = useState(''); // Optional for success notifications

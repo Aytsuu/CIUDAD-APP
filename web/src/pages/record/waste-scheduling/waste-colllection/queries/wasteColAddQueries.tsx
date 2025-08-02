@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { wasteColData } from "../request/wasteColPostRequest";
-import { wasteAssData } from "../request/wasteColPostRequest";
 import WasteColSchedSchema from "@/form-schema/waste-col-form-schema";
 import { addAssCollector } from "../request/wasteColPostRequest";
 

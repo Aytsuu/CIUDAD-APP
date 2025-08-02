@@ -1,8 +1,4 @@
 "use client"
-import { useState } from 'react';
-import {Input} from '../../../../components/ui/input.tsx';
-import {Label} from '../../../../components/ui/label.tsx';
-import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form";
@@ -40,7 +36,7 @@ function AddOrdinancePage() {
         },
     });
 
-    let ordAreaOfFocus = ["Council", "GAD", "Waste Committee", "Finance"];
+    const ordAreaOfFocus = ["Council", "GAD", "Waste Committee", "Finance"];
 
     // pdfMake.vfs = pdfFonts.vfs;
 

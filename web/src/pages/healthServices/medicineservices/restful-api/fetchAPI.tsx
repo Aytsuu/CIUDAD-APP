@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { getMedicineStocks } from "./getAPI"; // Your API function
 import { useQuery } from '@tanstack/react-query';
 

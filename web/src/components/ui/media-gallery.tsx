@@ -1,5 +1,4 @@
 import React from "react"
-import { type MediaUploadType } from "@/components/ui/media-upload"
 import { ImageModal } from "@/components/ui/image-modal"
 import {
   ExternalLink,
@@ -9,8 +8,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 // Media Gallery Component
-export const MediaGallery = ({ mediaFiles } : { mediaFiles: MediaUploadType}) => {
-  const [selectedImage, setSelectedImage] = React.useState<MediaUploadType[number] | null>();
+export const MediaGallery = ({ mediaFiles } : { mediaFiles: any}) => {
+  const [selectedImage, setSelectedImage] = React.useState<any>();
 
   const handleOpenDocument = (url: string) => { 
     // Open document in new tab

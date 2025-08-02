@@ -8,10 +8,8 @@ import {
   createFollowUpVisit,
 } from "../../forms/restful-api/createAPI";
 import { updateCHHistory } from "../../forms/restful-api/updateAPI";
-import { useNavigate } from "react-router";
 import { createPatientRecord } from "../../../restful-api-patient/createPatientRecord";
 import { getVaccineStock } from "../../../vaccination/restful-api/get";
-import { getVaccineList } from "@/pages/healthInventory/InventoryList/restful-api/Antigen/VaccineFetchAPI";
 import { createAntigenStockTransaction } from "../../../vaccination/restful-api/post";
 import { updateFollowUpVisit } from "../../../vaccination/restful-api/update";
 import {

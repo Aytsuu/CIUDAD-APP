@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card/card";
 import { Button } from "@/components/ui/button/button";
 import { BsChevronLeft } from "react-icons/bs";
 import { useNavigate } from "react-router";
-import { Stethoscope, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { MdOutlinePregnantWoman } from "react-icons/md";
 import { PrenatalHistoryTable } from "../maternal-components/prenatal-history";
 

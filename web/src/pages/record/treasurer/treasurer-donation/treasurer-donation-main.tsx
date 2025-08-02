@@ -72,7 +72,7 @@ export const TreasurerDonationRecords: TreasurerDonation[]=[
 
 function TreasurerDonationTable(){
 
-    let accumulatedCash = 0.00
+    const accumulatedCash = 0.00
     const data = TreasurerDonationRecords;
     const filter = [
         {id: "0", name: "All Donation Category"},

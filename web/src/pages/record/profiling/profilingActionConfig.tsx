@@ -3,7 +3,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import AssignPosition from "../administration/AssignPosition";
-import { Check, Pen, X } from "lucide-react";
+import { Check, Pen } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Configuration Object
