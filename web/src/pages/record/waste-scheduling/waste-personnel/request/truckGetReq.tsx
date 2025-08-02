@@ -4,7 +4,6 @@ import { Personal, Position, ResidentProfile, Staff, WastePersonnel, Truck } fro
 function isPersonal(data: any): data is Personal {
   const isValid = data && (typeof data.per_id === "number" || typeof data.per_id === "string");
   if (!isValid) {
-    console.log('Rejected personal: Invalid per_id', data);
   }
   return isValid;
 }
@@ -12,7 +11,6 @@ function isPersonal(data: any): data is Personal {
 function isPosition(data: any): data is Position {
   const isValid = data && (typeof data.pos_id === "number" || typeof data.pos_id === "string");
   if (!isValid) {
-    console.log('Rejected position: Invalid pos_id', data);
   }
   return isValid;
 }
@@ -20,26 +18,21 @@ function isPosition(data: any): data is Position {
 function isResidentProfile(data: any): data is ResidentProfile {
   const isValid = data && isPersonal(data.personal);
   if (!isValid) {
-    console.log('Rejected profile: Invalid personal', data);
   }
   return isValid;
 }
 
 function isStaff(data: any): data is Staff {
   if (!data) {
-    console.log('Rejected staff: No data');
     return false;
   }
   if (typeof data.staff_id !== "string") {
-    console.log('Rejected staff: Invalid staff_id', data.staff_id);
     return false;
   }
   if (!isResidentProfile(data.profile)) {
-    console.log('Rejected staff: Invalid profile', data.profile);
     return false;
   }
   if (!isPosition(data.position)) {
-    console.log('Rejected staff: Invalid position', data.position);
     return false;
   }
   return true;
@@ -47,15 +40,12 @@ function isStaff(data: any): data is Staff {
 
 function isWastePersonnel(data: any): data is WastePersonnel {
   if (!data) {
-    console.log('Rejected: No data');
     return false;
   }
   if (typeof data.wstp_id !== "number") {
-    console.log('Rejected: Invalid wstp_id', data.wstp_id);
     return false;
   }
   if (!isStaff(data.staff)) {
-    console.log('Rejected: Invalid staff', data.staff);
     return false;
   }
   return true;
@@ -69,9 +59,6 @@ function isTruck(data: any): data is Truck {
     (typeof data.truck_capacity === "string" || typeof data.truck_capacity === "number") &&
     typeof data.truck_status === "string" &&
     typeof data.truck_last_maint === "string";
-  if (!isValid) {
-    console.log('Rejected truck:', data);
-  }
   return isValid;
 }
 
@@ -81,14 +68,10 @@ export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
       "waste/waste-personnel/?expand=staff.profile.personal,staff.position,staff.manager.profile.personal/"
     );
     const personnelData = response.data;
-    console.log('Raw personnel data:', JSON.stringify(personnelData, null, 2));
-    console.log('Raw position titles:', personnelData.map((p: WastePersonnel) => p.staff?.position?.title || 'Missing'));
     if (!Array.isArray(personnelData)) {
       throw new Error(`Expected array of personnel, got: ${JSON.stringify(personnelData)}`);
     }
     const filteredData = personnelData.filter(isWastePersonnel);
-    console.log('Filtered personnel:', filteredData);
-    console.log('Rejected personnel:', personnelData.filter(item => !isWastePersonnel(item)));
     return filteredData.map(person => ({
       ...person,
       wstp_id: person.wstp_id,
@@ -104,7 +87,6 @@ export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
       }
     }));
   } catch (error) {
-    console.error('Error fetching personnel:', error);
     throw error;
   }
 };
@@ -168,31 +150,9 @@ export const getPersonnelById = async (wstp_id: number): Promise<WastePersonnel>
   }
 };
 
-// export const getAllTrucks = async (): Promise<Truck[]> => {
-//   try {
-//     const response = await api.get("waste/waste-trucks/")
-//     const trucksData = response.data?.data || response.data;
-//     console.log('Raw personnel response:', response); // Add this
-//     console.log('Processed personnel data:', trucksData); // Add this
-
-//     if (!Array.isArray(trucksData)) {
-//       throw new Error("Expected array of trucks");
-//     }
-
-//     return trucksData
-//       .filter(isTruck)
-//       .map(truck => ({
-//         ...truck,
-//         truck_last_maint: formatDate(truck.truck_last_maint)
-//       }));
-//   } catch (error) {
-//     throw new Error("Failed to fetch trucks");
-//   }
-// };
-
 export const getAllTrucks = async (): Promise<Truck[]> => {
   try {
-    const response = await api.get("waste/waste-trucks/"); // Use a custom value or remove the parameter
+    const response = await api.get("waste/waste-trucks/");
     const trucksData = response.data?.data || response.data;
     if (!Array.isArray(trucksData)) {
       throw new Error("Expected array of trucks");

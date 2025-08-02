@@ -21,7 +21,7 @@ export interface PersonnelData {
   Watchman: PersonnelItem[];
   "Waste Driver": PersonnelItem[];
   "Waste Collector": PersonnelItem[];
-  Trucks: TruckData[];
+  Trucks?: TruckData[];
 }
 
 export type TruckStatus = "Operational" | "Maintenance";
