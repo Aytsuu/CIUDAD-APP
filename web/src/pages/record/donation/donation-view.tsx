@@ -32,7 +32,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ClerkDonateViewProps = {
-  don_num: number;
+  don_num: string;
   onSaveSuccess?: () => void;
 };
 
@@ -62,6 +62,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
   });
 
   const categoryWatch = form.watch("don_category");
+  const moneyType = form.watch("don_item_name");
 
   useEffect(() => {
     setIsMonetary(categoryWatch === "Monetary Donations");
@@ -136,7 +137,21 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                             }
                           }}
                         />
-                        <CommandList>
+                        <CommandList 
+                          className="max-h-64 overflow-auto"
+                          onWheel={(e) => {
+                            e.stopPropagation()
+                            const el = e.currentTarget
+                            if (e.deltaY > 0 && el.scrollTop >= el.scrollHeight - el.clientHeight) {
+                              return
+                            }
+                            if (e.deltaY < 0 && el.scrollTop <= 0) {
+                              return
+                            }
+                            e.preventDefault()
+                            el.scrollTop += e.deltaY
+                          }}
+                        >
                           <CommandEmpty>
                             No donor found. Enter name manually or select
                             Anonymous.
@@ -218,10 +233,9 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 name: "Disaster Relief Supplies",
               },
             ]}
-            readOnly={!isEditing}
+            readOnly={true}
           />
 
-          {/* Item Name - Changes to select when category is Monetary Donations */}
           {isMonetary ? (
             <FormSelect
               control={form.control}
@@ -230,9 +244,9 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
               options={[
                 { id: "Cash", name: "Cash" },
                 { id: "Cheque", name: "Cheque" },
-                { id: "E-Money", name: "E-Money" },
+                { id: "E-money", name: "E-money" },
               ]}
-              readOnly={!isEditing}
+              readOnly={true}
             />
           ) : (
             <FormInput
@@ -250,7 +264,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             name="don_qty"
             label={isMonetary ? "Amount" : "Quantity"}
             placeholder={isMonetary ? "Enter amount" : "Enter quantity"}
-            readOnly={!isEditing}
+            readOnly={!isEditing} 
           />
 
           {/* Item Description */}
@@ -302,13 +316,15 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 />
               </>
             ) : (
-              <Button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className=""
-              >
-                Edit
-              </Button>
+               moneyType !== "E-money" && ( // Only show Edit button if not E-Money
+                <Button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className=""
+                >
+                  Edit
+                </Button>
+              )
             )}
           </div>
         </form>

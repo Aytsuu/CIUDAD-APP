@@ -36,7 +36,7 @@ export const useAntigenTransaction = () => {
       vacStck_id: number;
       string_qty: string;
       action: string;
-      staffId: number;
+      staffId: string;
     }) => AntigenTransaction(vacStck_id, string_qty, action, staffId),
     onError: (error: Error) => {
       console.error("Error during antigen transaction:", error.message);
@@ -49,10 +49,11 @@ export const useSubmitVaccineStock = () => {
   const navigate = useNavigate();
   const { mutateAsync: addInventoryRecord } = useAddInventory();
   return useMutation({
-    mutationFn: async (data: Record<string, any>) => {
+    mutationFn: async ({ data, staff_id }: { data: Record<string, any>; staff_id: string }) => {
       const inventoryResponse = await addInventoryRecord({
         data: data,
         inv_type: "Antigen",
+        staff:staff_id
       });
 
       if (!inventoryResponse?.inv_id) {
@@ -71,7 +72,7 @@ export const useSubmitVaccineStock = () => {
       // 3) Add Transaction
       const unit = data.solvent === "doses" ? "vial/s" : "container/s";
       const string_qty = `${data.qty} ${unit}`;
-      const staffId = 1; // Replace with actual staff id from auth system
+      const staffId = staff_id; // Replace with actual staff id from auth system
 
       await AntigenTransaction(
         addedStock.vacStck_id,

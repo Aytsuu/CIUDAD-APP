@@ -80,7 +80,6 @@ module.exports = {
 				darkBlue1: '#263D67',
 				darkBlue2: '#2D4A72',
 				darkBlue3: '#3D4C77',
-				gray: '#CECECE',
 				ashGray: '#D7DDE5',
 				darkGray: '#575757',
 				teal: '#129073'

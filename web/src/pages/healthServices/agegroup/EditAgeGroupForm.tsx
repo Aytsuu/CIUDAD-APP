@@ -45,6 +45,7 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
 
     return existingAgeGroups.some(
       (group: AgeGroupType & { id?: string }) =>
+        group.agegroup_name === data.agegroup_name &&
         group.min_age === data.min_age &&
         group.max_age === data.max_age &&
         group.time_unit === data.time_unit &&
@@ -132,29 +133,11 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-blue text-white"
               aria-label="Update age group"
             >
               {isLoading ? (
                 <span className="flex items-center">
-                  <svg
-                    className="animate-spin h-5 w-5 mr-2"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
+                
                   Updating...
                 </span>
               ) : (

@@ -149,10 +149,9 @@ export default function AssignPosition({
 
   if (isLoadingPositions) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 rounded-2xl border border-buttonBlue">
+      <div className="flex flex-col items-center justify-center p-12">
         <div className="relative">
-          <Loader2 className="h-12 w-12 animate-spin text-buttonBlue/60" />
-          <div className="absolute inset-0 h-12 w-12 rounded-full border-2 border-buttonBlue animate-pulse"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-buttonBlue" />
         </div>
         <p className="mt-4 text-sm font-medium text-gray-700">Loading positions...</p>
       </div>
@@ -160,7 +159,7 @@ export default function AssignPosition({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
         <div className="flex items-center space-x-3">

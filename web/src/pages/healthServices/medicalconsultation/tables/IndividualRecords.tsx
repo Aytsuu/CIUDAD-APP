@@ -14,18 +14,16 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMedconRecordById } from "../restful-api/GetMedicalRecord";
+import { getMedconRecordById } from "../restful-api/get";
 import { Toaster } from "sonner";
-import {
-  
-  Syringe,
-  AlertCircle,
-} from "lucide-react";
+import { Syringe, AlertCircle } from "lucide-react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
+import { TableSkeleton } from "../../skeleton/table-skeleton";
 
 export interface MedicalRecord {
   medrec_id: number;
+  medrec_chief_complaint: string;
   created_at: string;
   vital_signs: {
     vital_id: number;
@@ -46,7 +44,13 @@ export interface MedicalRecord {
     created_at: string;
     pat: number | null;
   };
-  find_details: any | null;
+  find_details: {
+    find_id: string;
+    assessment_summary: string;
+    obj_summary: string;
+    subj_summary: string;
+    plantreatment_summary: string;
+  };
   patrec_details: {
     pat_id: string | number;
     medicalrec_count: number;
@@ -96,6 +100,7 @@ export default function InvMedicalConRecords() {
       const patrecDetails = record.patrec_details || {};
 
       return {
+        medrec_chief_complaint: record.medrec_chief_complaint || "N/A",
         medrec_id: record.medrec_id,
         created_at: record.created_at || "N/A",
         vital_signs: {
@@ -145,6 +150,17 @@ export default function InvMedicalConRecords() {
 
   const columns: ColumnDef<MedicalRecord>[] = [
     {
+      accessorKey: "created_at",
+      header: "Created at",
+      cell: ({ row }) => {
+        const createdAt = new Date(row.original.created_at);
+        const formattedDate = createdAt.toLocaleDateString();
+        const formattedTime = createdAt.toLocaleTimeString();
+
+        return <div className="text-sm text-gray-600">{formattedDate}</div>;
+      },
+    },
+    {
       accessorKey: "vital_signs",
       header: "Vital Signs",
       cell: ({ row }) => {
@@ -191,18 +207,16 @@ export default function InvMedicalConRecords() {
         );
       },
     },
-    {
-      accessorKey: "created_at",
-      header: "Date",
-      cell: ({ row }) => {
-        const createdAt = new Date(row.original.created_at);
-        const formattedDate = createdAt.toLocaleDateString();
-        const formattedTime = createdAt.toLocaleTimeString();
 
+    {
+      accessorKey: "chiefcomplaint",
+      header: "ChiefComplaint",
+      cell: ({ row }) => {
         return (
-          <div className="text-sm text-gray-600">
-            {formattedDate}
-            <div className="text-xs text-gray-400">{formattedTime}</div>
+          <div className="flex flex-col">
+            <div className="text-sm font-medium">
+              {row.original.medrec_chief_complaint || "N/A"}
+            </div>
           </div>
         );
       },
@@ -214,7 +228,9 @@ export default function InvMedicalConRecords() {
         <div className="flex justify-center gap-2">
           <Link
             to="/DisplayMedicalConsultation"
-            state={{ params: { MedicalConsultation: row.original, patientData } }}
+            state={{
+              params: { MedicalConsultation: row.original, patientData },
+            }}
           >
             <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
               View
@@ -241,20 +257,8 @@ export default function InvMedicalConRecords() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
-
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <Button
@@ -281,43 +285,44 @@ export default function InvMedicalConRecords() {
           </div>
         )}
 
-        <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 border rounded-md flex items-center justify-center shadow-sm">
-              <Syringe className="h-5 w-5 text-blue-600" />
+        <div className="w-full  lg:flex justify-between items-center mb-4 gap-6">
+          {/* Total Medical Consultations */}
+          <div className=" flex  gap-2 items-center p-2 ">
+            <div className=" flex items-center justify-center ">
+              <Syringe className="h-6 w-6 text-blue" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800">
+              <p className="text-sm font-medium text-gray-800 pr-2">
                 Total Medical Consultations
               </p>
-              <p className="text-3xl font-bold text-gray-900">
-                {formatMedicalData().length}
-              </p>
             </div>
-          </div>
-        </div>
-
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="flex gap-x-2">
-              <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                  size={17}
-                />
-                <Input
-                  placeholder="Search records..."
-                  className="pl-10 w-72 bg-white"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+            <p className="text-2xl font-bold text-gray-900">
+              {formatMedicalData().length}
+            </p>
           </div>
 
-          <div>
+          {/* Search and Actions */}
+          <div className="flex flex-1 justify-between items-center gap-2">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search records..."
+                className="pl-10 w-full bg-white"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* New Consultation Button */}
             <Button className="w-full sm:w-auto">
-              <Link to="/IndivMedicalForm" state={{ params: { patientData } }}>
+              <Link
+                to="/medical-consultation-form"
+                state={{ params: { patientData, mode: "fromindivrecord" } }}
+              >
                 New Consultation Record
               </Link>
             </Button>
@@ -325,7 +330,7 @@ export default function InvMedicalConRecords() {
         </div>
 
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="w-full  sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
@@ -356,8 +361,13 @@ export default function InvMedicalConRecords() {
               </DropdownMenu>
             </div>
           </div>
+
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+            {isLoading ? (
+              <TableSkeleton columns={columns} rowCount={3} />
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">

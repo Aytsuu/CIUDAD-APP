@@ -32,5 +32,5 @@ export const isLowStock = (availQty: number, unit: string, pcs: number) => {
       const boxCount = Math.ceil(availQty / pcs);
       return boxCount <= 2 && pcs > 0;
     }
-    return availQty <= 10; 
+    return availQty <= 20; 
   };

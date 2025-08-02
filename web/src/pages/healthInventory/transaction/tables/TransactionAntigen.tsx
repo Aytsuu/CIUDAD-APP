@@ -1,140 +1,69 @@
-import React from "react";
-import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/input";
-import { Search, FileInput } from "lucide-react";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { getAntigenTransactions } from "../restful-api/GetRequest";
-import { AntigenTransaction } from "./type";
+"use client"
+
+import React from "react"
+import { DataTable } from "@/components/ui/table/data-table"
+import { Input } from "@/components/ui/input"
+import { Search, Loader2 } from "lucide-react"
+import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { useQuery } from "@tanstack/react-query"
+import { getAntigenTransactions } from "../restful-api/GetRequest"
+import { ExportButton } from "@/components/ui/export"
+import { columns, exportColumns } from "../tables/columns/AntigenCol"
 
 export default function AntigenTransactionsTable() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [searchQuery, setSearchQuery] = React.useState("")
+  const [pageSize, setPageSize] = React.useState(10)
+  const [currentPage, setCurrentPage] = React.useState(1)
 
-  // Fetch data using React Query
-  const { data: antigenData, isLoading: isLoadingAntigen } = useQuery({
-    queryKey: ["antigenTransactions"],
-    queryFn: getAntigenTransactions,
-  });
+  const { data, isLoading } = useQuery({
+    queryKey: ["antigenTransactions", currentPage, pageSize, searchQuery],
+    queryFn: () => getAntigenTransactions(currentPage, pageSize, searchQuery),
+    staleTime: 1000 * 60 * 5,
+  })
 
-  const columns = [
-    // {
-    //   accessorKey: "antt_id",
-    //   header: "#",
-    //   cell: ({ row }: { row: { original: AntigenTransaction } }) => (
-    //     <div className="flex justify-center">
-    //       <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-    //         {row.original.antt_id}
-    //       </div>
-    //     </div>
-    //   ),
-    // },
-    {
-      accessorKey: "item",
-      header: "Item Name",
-      cell: ({ row }: { row: { original: AntigenTransaction } }) => (
-        <div className="capitalize">
-          {row.original.vac_stock?.vaccinelist?.vac_name ||
-           row.original.imz_stock?.imz_detail?.imz_name ||
-           "N/A"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "antt_qty",
-      header: "Quantity",
-      cell: ({ row }: { row: { original: AntigenTransaction } }) => (
-        <div className="text-center">{row.original.antt_qty}</div>
-      ),
-    },
-    {
-      accessorKey: "antt_action",
-      header: "Action",
-      cell: ({ row }: { row: { original: AntigenTransaction } }) => (
-        <div className="capitalize">
-          {row.original.antt_action.toLowerCase()}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "staff",
-      header: "Staff ID",
-      cell: ({ row }: { row: { original: AntigenTransaction } }) => (
-        <div className="text-center">{row.original.staff}</div>
-      ),
-    },
-    {
-      accessorKey: "created_at",
-      header: "Date",
-      cell: ({ row }: { row: { original: AntigenTransaction } }) => (
-        <div>{new Date(row.original.created_at).toLocaleDateString()}</div>
-      ),
-    },
-  ];
+  const formattedAntigenData = React.useMemo(() => {
+    if (!data?.results) return []
 
-  // Format antigen data
-  const formatAntigenData = React.useCallback(() => {
-    if (!antigenData) return [];
-    return antigenData;
-  }, [antigenData]);
+    return data.results.map((transaction: any) => {
+      const staffFirstName = transaction.staff_detail?.rp?.per?.per_fname || ""
+      const staffLastName = transaction.staff_detail?.rp?.per?.per_lname || ""
+      const staffFullName = `${staffFirstName} ${staffLastName}`.trim()
 
-  // Filter data based on search query
-  const filteredAntigen = React.useMemo(() => {
-    return formatAntigenData().filter((record: AntigenTransaction) => {
-      const searchText = `
-        ${record.vac_stock?.vaccinelist?.vac_name || ""}
-        ${record.imz_stock?.imz_detail?.imz_name || ""}
-        ${record.antt_action}
-        ${record.staff}
-      `.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [searchQuery, formatAntigenData]);
+      return {
+        ...transaction,
+        staff: staffFullName || transaction.staff,
+        itemName:
+          transaction.vac_stock?.vaccinelist?.vac_name ||
+          transaction.imz_stock?.imz_detail?.imz_name ||
+          "N/A",
+      }
+    })
+  }, [data])
 
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredAntigen.length / pageSize);
-
-  // Slice the data for the current page
-  const paginatedAntigen = filteredAntigen.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  // Loading state
-  if (isLoadingAntigen) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
+  const totalCount = data?.count || 0
+  const totalPages = Math.ceil(totalCount / pageSize)
 
   return (
     <div>
+      {/* Search Input */}
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-              size={17}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
               placeholder="Search by item name, action, or staff..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setCurrentPage(1)
+                setSearchQuery(e.target.value)
+              }}
             />
           </div>
         </div>
       </div>
 
+      {/* Table + Top Controls */}
       <div className="bg-white rounded-md">
         <div className="flex justify-between p-3">
           <div className="flex items-center gap-2">
@@ -144,39 +73,39 @@ export default function AntigenTransactionsTable() {
               className="w-14 h-6"
               value={pageSize}
               onChange={(e) => {
-                const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
+                const value = +e.target.value
+                setPageSize(value >= 1 ? value : 1)
+                setCurrentPage(1)
               }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
+          <ExportButton
+            data={formattedAntigenData}
+            filename="antigen-transactions"
+            columns={exportColumns}
           />
         </div>
-        <div className="overflow-x-auto">
-          <DataTable 
-            columns={columns} 
-            data={paginatedAntigen} 
-          />
+
+        {/* Table Display */}
+        <div className="overflow-x-auto min-h-[300px]">
+          {isLoading ? (
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="ml-2">loading....</span>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={formattedAntigenData} />
+          )}
         </div>
+
+        {/* Pagination + Info */}
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          {filteredAntigen.length > 0 ? (
+          {formattedAntigenData.length > 0 ? (
             <>
               <p className="text-xs sm:text-sm text-darkGray">
-                Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, filteredAntigen.length)} of{" "}
-                {filteredAntigen.length} rows
+                Showing {(currentPage - 1) * pageSize + 1}–
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
               </p>
               <PaginationLayout
                 currentPage={currentPage}
@@ -185,12 +114,10 @@ export default function AntigenTransactionsTable() {
               />
             </>
           ) : (
-            <p className="text-xs sm:text-sm text-darkGray">
-              No results found
-            </p>
+            <p className="text-xs sm:text-sm text-darkGray">No results found</p>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }

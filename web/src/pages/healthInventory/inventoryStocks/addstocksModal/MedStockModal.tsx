@@ -19,8 +19,12 @@ import { formOptions, unitOptions, dosageUnitOptions } from "./options";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AddMedicineStock() {
+
+  const {user} =useAuth()
+  const staff_id = user?.staff?.staff_id
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
@@ -79,7 +83,7 @@ export default function AddMedicineStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit(formData);
+    submit({ data: formData, staff_id });
   };
 
   return (

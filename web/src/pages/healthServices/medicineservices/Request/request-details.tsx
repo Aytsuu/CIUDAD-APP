@@ -326,7 +326,7 @@ export default function MedicineRequestDetail() {
 
       if (effectivePatId) {
         try {
-          const patientRecordResponse = await createPatientRecord(effectivePatId);
+          const patientRecordResponse = await createPatientRecord(effectivePatId, "Medicine Record");
           patientRecordId = patientRecordResponse.patrec_id;
         } catch (error) {
           console.error("Error creating patient record:", error);

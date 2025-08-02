@@ -40,7 +40,7 @@ export const RequestSummary = ({
               <div>
                 <p className="font-medium">{faInfo?.name ?? "Unknown Item"}</p>
                 <p className="text-sm text-gray-600">
-                  {faInfo?.dosage ?? "N/A"} • {faInfo?.form ?? "N/A"}
+                  {/* {faInfo?.dosage ?? "N/A"} • {faInfo?.form ?? "N/A"} */}
                 </p>
               </div>
               <div className="text-right">

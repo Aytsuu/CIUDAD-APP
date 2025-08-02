@@ -22,26 +22,27 @@ import {
 } from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "./view-projprop";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
-
-// Define the allowed status values as a type
-type ProposalStatus = "Pending" | "Approved" | "Rejected" | "Viewed";
+import type { ProposalStatus } from "./queries/updatequeries";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 function AdminGADProjectProposal() {
   const style = {
     projStat: {
       pending: "text-blue",
+      amend: "text-yellow-500",
       approved: "text-green-500",
-      rejected: "text-red",
+      rejected: "text-red-500",
       viewed: "text-darkGray",
     },
   };
 
   const filter = [
     { id: "All", name: "All" },
-    { id: "Approved", name: "Approved" },
     { id: "Pending", name: "Pending" },
-    { id: "Rejected", name: "Rejected" },
     { id: "Viewed", name: "Viewed" },
+    { id: "Amend", name: "Amend" },
+    { id: "Approved", name: "Approved" },
+    { id: "Rejected", name: "Rejected" },
   ];
 
   const {
@@ -61,6 +62,8 @@ function AdminGADProjectProposal() {
   const [reason, setReason] = useState<string | null>(null);
   const updateStatusMutation = useUpdateProjectProposalStatus();
   const [isPdfLoading, setIsPdfLoading] = useState(true);
+  const [pageSize, setPageSize] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -103,19 +106,52 @@ function AdminGADProjectProposal() {
       return title.includes(search) || background.includes(search);
     });
 
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredProjects.length / pageSize);
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const handleViewProject = (project: ProjectProposal) => {
-    if (selectedProject?.gprId === project.gprId && isViewDialogOpen) return;
+  if (selectedProject?.gprId === project.gprId && isViewDialogOpen) return;
 
-    setIsViewDialogOpen(false);
-    setSelectedProject(null);
-    setNewStatus(null);
-    setReason(null);
+  setIsViewDialogOpen(false);
+  setSelectedProject(null);
 
+  // Automatically set to "Viewed" if current status is "Pending"
+  if (project.status === "Pending") {
+    updateStatusMutation.mutate(
+      { 
+        gprId: project.gprId, 
+        status: "Viewed", // This is now type-safe
+        reason: "Project viewed by admin" 
+      },
+      {
+        onSuccess: () => {
+          // Create a new object with the correct type
+          const updatedProject: ProjectProposal = {
+            ...project,
+            status: "Viewed", // Explicitly typed
+            statusReason: "Project viewed by admin"
+          };
+          setSelectedProject(updatedProject);
+          setIsViewDialogOpen(true);
+        },
+        onError: (error) => {
+          console.error("Failed to update status to Viewed:", error);
+          setSelectedProject(project); // Original project has correct types
+          setIsViewDialogOpen(true);
+        }
+      }
+    );
+  } else {
     setTimeout(() => {
-      setSelectedProject(project);
+      setSelectedProject(project); // Original project has correct types
       setIsViewDialogOpen(true);
     }, 50);
-  };
+  }
+};
 
   const closePreview = () => {
     setIsViewDialogOpen(false);
@@ -146,7 +182,7 @@ function AdminGADProjectProposal() {
     }
   };
 
-const handleUpdateStatus = () => {
+  const handleUpdateStatus = () => {
     if (!selectedProject?.gprId || !newStatus || newStatus === selectedProject.status) return;
 
     updateStatusMutation.mutate(
@@ -170,6 +206,19 @@ const handleUpdateStatus = () => {
 
   const isReasonRequired = newStatus === "Approved" || newStatus === "Rejected";
   const isUpdateDisabled = !newStatus || newStatus === selectedProject?.status || (isReasonRequired && !reason?.trim());
+
+  // Calculate total budget of all displayed projects
+  const totalBudget = filteredProjects.reduce((sum, project) => {
+    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
+
+    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
+      const amount = item.amount || 0;
+      const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
+      return projectSum + (paxCount * amount);
+    }, 0);
+
+    return sum + projectTotal;
+  }, 0);
 
   if (isLoading) {
     return (
@@ -246,15 +295,32 @@ const handleUpdateStatus = () => {
             />
           </div>
         </div>
+      
+
+      {/* Dynamic Total Budget Display */}
+      <div className="flex justify-end mt-2 mb-2">
+        <div className="bg-white border px-4 py-2 rounded-lg">
+          <span className="font-medium text-black">
+            Grand Total:{" "}
+            <span className="font-bold text-green-700">
+              ₱{new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2 
+              }).format(totalBudget)}
+            </span>
+          </span>
+        </div>
       </div>
+    </div>
 
       <div className="flex flex-col mt-4 gap-4">
-        {filteredProjects.length === 0 && (
+
+        {paginatedProjects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No project proposals found.
           </div>
         )}
-        {filteredProjects.map((project: ProjectProposal, index: number) => {
+        {paginatedProjects.map((project: ProjectProposal, index: number) => {
           const status = project.status.toLowerCase() as keyof typeof style.projStat;
           const reason = project.statusReason || "No reason provided";
 
@@ -285,6 +351,26 @@ const handleUpdateStatus = () => {
                       Date: {project.date || "No date provided"}
                     </span>
                   </div>
+                  <span className="text-xs text-gray-500 underline">
+                    Total Budget: ₱{
+                      project.budgetItems && project.budgetItems.length > 0
+                        ? new Intl.NumberFormat('en-US', { 
+                            style: 'decimal', 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          }).format(
+                            project.budgetItems.reduce((grandTotal, item) => {
+                              const amount = item.amount || 0;
+                              const paxCount = 
+                                item.pax?.includes("pax") 
+                                  ? parseInt(item.pax) || 1 
+                                  : 1;
+                              return grandTotal + (paxCount * amount);
+                            }, 0)
+                          )
+                        : "N/A"
+                    }
+                  </span>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex flex-col gap-1">
                       <span
@@ -293,7 +379,7 @@ const handleUpdateStatus = () => {
                         {project.status || "Pending"}
                       </span>
                       <span className="text-xs text-gray-400">
-                        Reason: {reason}
+                        Remark(s): {reason}
                       </span>
                     </div>
                     <div>
@@ -316,6 +402,24 @@ const handleUpdateStatus = () => {
             />
           );
         })}
+
+        {/* Pagination Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+          <p className="text-xs sm:text-sm text-darkGray">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
+            {filteredProjects.length} rows
+          </p>
+          {filteredProjects.length > 0 && (
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
@@ -365,18 +469,18 @@ const handleUpdateStatus = () => {
               <SelectLayout
                 className="bg-white mt-1 w-full"
                 placeholder="Select Status"
-                options={filter.filter(f => f.id !== "All")}
+                options={filter.filter(f => f.id !== "All" && f.id !== "Viewed")}
                 value={newStatus || ""}
                 onChange={(value: string) => {
                   setNewStatus(value as ProposalStatus);
-                  if (value !== "Approved" && value !== "Rejected") {
+                  if (value !== "Approved" && value !== "Rejected" && value !== "Amend") {
                     setReason(null);
                   }
                 }}
               />
             </div>
 
-            {(newStatus === "Approved" || newStatus === "Rejected") && (
+            {(newStatus === "Approved" || newStatus === "Rejected" || newStatus === "Amend") && (
               <div>
                 <Label className="text-sm font-medium">Reason for {newStatus}</Label>
                 <textarea
@@ -387,7 +491,7 @@ const handleUpdateStatus = () => {
                 />
                 {isReasonRequired && !reason?.trim() && (
                   <p className="text-red-500 text-xs mt-1">
-                    Reason is required for {newStatus} status.
+                    Remarks is required for {newStatus} status.
                   </p>
                 )}
               </div>
@@ -430,25 +534,27 @@ const handleUpdateStatus = () => {
             {isSupportDocsLoading ? (
               <p className="text-gray-500 text-center py-8">Loading documents...</p>
             ) : selectedSuppDocs.length > 0 ? (
-              selectedSuppDocs.map((doc) => (
-                <div key={doc.psdId || Math.random()} className="flex flex-col items-center">
+              selectedSuppDocs
+              .filter(doc => doc.psd_is_archive === false)
+              .map((doc) => (
+                <div key={doc.psd_id || Math.random()} className="flex flex-col items-center">
                   <div className="relative w-full max-w-4xl">
-                    {doc.fileType?.startsWith('image/') && doc.fileUrl ? (
+                    {doc.psd_type?.startsWith('image/') && doc.psd_url ? (
                       <img
-                        src={doc.fileUrl}
-                        alt={`Supporting Document ${doc.fileName || 'Unknown'}`}
+                        src={doc.psd_url}
+                        alt={`Supporting Document ${doc.psd_name || 'Unknown'}`}
                         className="w-full max-h-[70vh] object-contain"
                         onError={(e) => {
-                          console.error(`Failed to load image: ${doc.fileUrl}`);
+                          console.error(`Failed to load image: ${doc.psd_url}`);
                           (e.target as HTMLImageElement).src = '/placeholder-image.png';
                         }}
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg">
-                        <p className="mt-2 text-sm text-gray-600">{doc.fileName || 'No file name'}</p>
-                        {doc.fileUrl ? (
+                        <p className="mt-2 text-sm text-gray-600">{doc.psd_name || 'No file name'}</p>
+                        {doc.psd_url ? (
                           <a
-                            href={doc.fileUrl}
+                            href={doc.psd_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-2 text-blue-600 hover:underline"
@@ -461,7 +567,7 @@ const handleUpdateStatus = () => {
                       </div>
                     )}
                   </div>
-                  <p className="mt-2 text-sm text-gray-500">{doc.fileName || 'Unknown'}</p>
+                  <p className="mt-2 text-sm text-gray-500">{doc.psd_name || 'Unknown'}</p>
                 </div>
               ))
             ) : (

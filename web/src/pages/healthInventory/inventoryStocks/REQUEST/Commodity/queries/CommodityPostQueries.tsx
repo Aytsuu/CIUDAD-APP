@@ -27,7 +27,7 @@ export const useAddCommodityTransaction = () => {
       action,
     }: {
       string_qty: string;
-      staffId: number;
+      staffId: string;
       cinv_id: number;
       action: string;
     }) => addCommodityTransaction(string_qty, staffId, cinv_id, action),
@@ -45,11 +45,13 @@ export const useSubmitCommodityStock = () => {
   const { mutateAsync: addInventory } = useAddInventory();
 
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async ({ data, staff }: { data: any; staff: string }) => {
       // Step 1: Create inventory record
       const inventoryResponse = await addInventory({
         data,
         inv_type: "Commodity",
+        staff
+        
       });
 
       if (!inventoryResponse?.inv_id) {
@@ -93,7 +95,7 @@ export const useSubmitCommodityStock = () => {
           : `${data.cinv_qty} ${data.cinv_qty_unit}`;
 
       const action = "Added";
-      const staffId = 1; // You may later replace this with dynamic auth-based value
+      const staffId = staff; // You may later replace this with dynamic auth-based value
 
       const commodityTransactionResponse = await addTransaction({
         string_qty,

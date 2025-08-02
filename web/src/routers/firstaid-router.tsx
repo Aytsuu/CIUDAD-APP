@@ -1,14 +1,8 @@
-import PatNewFirstaidRecForm from "@/pages/healthServices/firstaidservices/PatnewFirstaid";
 import path from "path";
 import AllFirstAidRecords from "@/pages/healthServices/firstaidservices/tables/AllFirstaidRecords";
-import IndivPatNewFirstAidRecForm from "@/pages/healthServices/firstaidservices/IndivnewFirstaidRecord";
 import IndivFirstAidRecords from "@/pages/healthServices/firstaidservices/tables/IndivFirstaidRecord";
-
+import FirstAidRequestForm from "@/pages/healthServices/firstaidservices/FirstAidRequestForm";
 export const firstaid_router = [
-  {
-    path: "/patnew-firstaid-form",
-    element: <PatNewFirstaidRecForm />,
-  },
   {
     path: "/all-firstaid-records",
     element: <AllFirstAidRecords />,
@@ -19,9 +13,7 @@ export const firstaid_router = [
   },
 
   {
-    path: "/indiv-firstaid-form",
-    element: <IndivPatNewFirstAidRecForm />,
+    path: "/firstaid-request-form",
+    element: <FirstAidRequestForm />,
   },
- 
-
 ];

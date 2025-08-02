@@ -5,13 +5,16 @@
     "strict": true,
     "paths": {
       "@/*": ["./*"],
-    }
+    },
+    "types": ["@types/eslint"],
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts"
-  ]
+    "nativewind-env.d.ts",
+    "types/svg.d.ts"
+  ],
+  "exclude": ["node_modules"]
 }

@@ -904,7 +904,7 @@ def get_patient_details_data(request, patient_id):
 
         # Fetch body measurements
         try:
-            body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by("-created_at").first()
+            body_measurement = BodyMeasurement.objects.filter(patrec=patient).order_by("-created_at").first()
             if body_measurement:
                 fp_form_data.update({
                     "weight": body_measurement.weight or 0,

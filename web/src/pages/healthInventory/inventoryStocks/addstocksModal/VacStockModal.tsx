@@ -18,8 +18,11 @@ import { toast } from "sonner";
 import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQueries";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/VaccineFetchAPI";
-
+import { useAuth } from "@/context/AuthContext";
 export default function AddVaccineStock() {
+
+  const{user}=useAuth()
+  const staff_id = user?.staff?.staff_id
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
     defaultValues: {
@@ -86,7 +89,7 @@ export default function AddVaccineStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit(formData);
+    submit({ data: formData, staff_id });
   };
 
   return (

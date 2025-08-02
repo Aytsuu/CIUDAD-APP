@@ -143,7 +143,7 @@ git fetch origin
 git checkout main
 git pull
 git checkout branchname_nimo
-git merge main
+git merge --no-commit main
 ```
 <br></br>
 

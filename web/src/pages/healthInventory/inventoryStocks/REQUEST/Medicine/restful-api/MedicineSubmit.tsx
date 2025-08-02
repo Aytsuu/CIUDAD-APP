@@ -27,10 +27,10 @@ export const useSubmitMedicineStock = () => {
     useAddMedicineTransaction();
 
   return useMutation({
-    mutationFn: async (data: MedicineStockType) => {
+    mutationFn: async ({ data, staff_id }: { data: MedicineStockType; staff_id: string }) => {
       try {
         const inv_type = "Medicine";
-        const inventoryResponse = await addInventory(data, inv_type);
+        const inventoryResponse = await addInventory(data, inv_type, staff_id);
         console.log("Inventory Response:", inventoryResponse);
         if (!inventoryResponse?.inv_id) {
           throw new Error("Failed to create inventory record");
@@ -46,6 +46,7 @@ export const useSubmitMedicineStock = () => {
         const medicineInventoryResponse = await addMedicineInventoryMutation({
           data,
           inv_id,
+          staff: staff_id
         });
 
         const quantityString = formatQuantityString(
@@ -57,7 +58,7 @@ export const useSubmitMedicineStock = () => {
         const transactionPayload: MedicineTransactionType = {
           mdt_qty: quantityString,
           mdt_action: "Added",
-          mdt_staff: 1, // You might want to get this from auth/session
+          staff: staff_id, // You might want to get this from auth/session
           minv_id: medicineInventoryResponse.minv_id,
         };
 
@@ -100,9 +101,11 @@ export const useUpdateMedicineStock = () => {
     mutationFn: async ({
       initialData,
       data,
+      staff_id
     }: {
       initialData: { id: number };
       data: any;
+      staff_id:string
     }) => {
       try {
         // Fetch existing medicine data
@@ -155,7 +158,7 @@ export const useUpdateMedicineStock = () => {
         const transactionPayload: MedicineTransactionType = {
           mdt_qty: quantityString,
           mdt_action: "Added",
-          mdt_staff: 1, // You might want to get this from auth/session
+          staff: staff_id, // You might want to get this from auth/session
           minv_id: initialData.id,
         };
 

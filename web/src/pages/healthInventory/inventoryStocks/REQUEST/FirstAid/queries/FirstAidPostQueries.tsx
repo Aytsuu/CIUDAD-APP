@@ -17,11 +17,13 @@ export const useAddFirstAidInventory = () => {
       data,
       inv_id,
       fa_id,
+      staff_id
     }: {
       data: Record<string, any>;
       inv_id: string;
       fa_id: string;
-    }) => addFirstAidInventory(data, inv_id, fa_id),
+      staff_id:string
+    }) => addFirstAidInventory(data, inv_id, fa_id,staff_id),
     onError: (error: Error) => {
       console.error(error.message);
     },
@@ -39,7 +41,7 @@ export const useAddFirstAidTransaction = () => {
       finv_id: number;
       string_qty: string;
       action: string;
-      staffId: number;
+      staffId: string;
     }) => addFirstAidTransaction(finv_id, string_qty, action, staffId),
     onError: (error: Error) => {
       console.error(error.message);
@@ -55,10 +57,11 @@ export const useSubmitFirstAidStock = () => {
   const { mutateAsync: addInventory } = useAddInventory();
 
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async ({ data, staff_id }: { data: any; staff_id: string }) => {
       const inventoryResponse = await addInventory({
         data,
         inv_type: "First Aid",
+        staff:staff_id
       });
       if (!inventoryResponse?.inv_id) {
         throw new Error("Failed to generate inventory ID.");
@@ -76,6 +79,7 @@ export const useSubmitFirstAidStock = () => {
         data: data,
         inv_id,
         fa_id,
+        staff_id
       });
 
       if (!firstAidInventoryResponse) {
@@ -88,7 +92,7 @@ export const useSubmitFirstAidStock = () => {
         : `${data.finv_qty} ${data.finv_qty_unit}`;
 
 
-      const staffId = 1; // Replace with actual staff ID from your auth system
+      const staffId = staff_id; // Replace with actual staff ID from your auth system
 
       await addFirstAidTransaction({
         finv_id: firstAidInventoryResponse.finv_id,

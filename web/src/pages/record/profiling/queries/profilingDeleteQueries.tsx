@@ -1,9 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { deleteFamilyComposition, deleteRequest } from "../restful-api/profilingDeleteAPI"
+import { deleteFamilyComposition } from "../restful-api/profilingDeleteAPI"
+import { api } from "@/api/api";
 
 export const useDeleteRequest = () => {
   return useMutation({
-    mutationFn: (requestId: string) => deleteRequest(requestId)
+    mutationFn: async (requestId: string) => {
+      try {
+        const res = await api.delete(`profiling/request/delete/${requestId}/`);
+        return res;
+      } catch (err) {
+        console.error(err);
+      }
+    }
   })
 }
 

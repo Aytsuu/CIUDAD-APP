@@ -11,11 +11,15 @@ export const getPerAddressesList = async () => {
 }
 
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
-export const getResidentsList = async (is_staff: boolean = false) => {
+export const getResidentsList = async (
+  is_staff: boolean = false, 
+  exclude_independent: boolean = false
+) => {
   try {
     const res = await api.get("profiling/resident/", {
       params: {
-        is_staff: is_staff
+        is_staff,
+        exclude_independent
       }
     });
     return res.data;
@@ -186,9 +190,26 @@ export const getSitioList = async () => {
 };
 
 // ==================== FETCH REGISTRATION REQUEST ==================== (Status: Optimizing....)
-export const getRequests = async (page: number, pageSize: number, searchQuery: string) => {
+export const getRequests = async (page: number, pageSize: number, searchQuery: string, selectedRequestType: string) => {
   try {
     const res = await api.get("profiling/request/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery,
+        request_type: selectedRequestType
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
+export const getActiveBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
+  try {
+    const res = await api.get("profiling/business/active/list/table/", {
       params: {
         page,
         page_size: pageSize,
@@ -201,10 +222,24 @@ export const getRequests = async (page: number, pageSize: number, searchQuery: s
   }
 };
 
-// ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
-export const getBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
+export const getPendingBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
   try {
-    const res = await api.get("profiling/business/list/table/", {
+    const res = await api.get("profiling/business/pending/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getBusinessRespondent = async (page: number, pageSize: number, searchQuery: string) => {
+  try {
+    const res = await api.get("profiling/business/respondent/list/table/", {
       params: {
         page,
         page_size: pageSize,

@@ -79,8 +79,8 @@ export const optionalDateSchema = z.preprocess(
 export const PrenatalCareEntrySchema = z.object({
   date: dateSchema,
   aog: z.object({
-    aogWeeks: positiveNumberSchema, 
-    aogDays: positiveNumberSchema, // Keep as string for form input, transform later if needed
+    aogWeeks: positiveNumberSchema.optional(), 
+    aogDays: positiveNumberSchema.optional(), // Keep as string for form input, transform later if needed
   }),
   wt: positiveNumberSchema, // Keep as string for form input, transform later if needed
   bp: z.object({
@@ -175,10 +175,10 @@ export const PrenatalFormSchema = z.object({
 
     // present pregnancy
     presentPregnancy: z.object({
-        gravida: z.number().optional(),
-        para: z.number().optional(),
-        fullterm: z.number().optional(),
-        preterm: z.number().optional(),
+        gravida: positiveNumberSchema.optional(),
+        para: positiveNumberSchema.optional(),
+        fullterm: positiveNumberSchema.optional(),
+        preterm: positiveNumberSchema.optional(),
         pf_lmp: dateSchema.optional(),
         pf_edc: dateSchema.optional(),
     }),

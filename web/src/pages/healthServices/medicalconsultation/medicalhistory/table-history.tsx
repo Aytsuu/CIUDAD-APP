@@ -33,11 +33,6 @@ export type MedicalConsultationHistory = {
   } | null;
 };
 
-export const medicalConsultationCache: Record<
-  string,
-  MedicalConsultationHistory[]
-> = {};
-
 export function ConsultationHistoryTable({
   relevantHistory,
   currentConsultationId,
@@ -151,9 +146,9 @@ export function ConsultationHistoryTable({
             return (
               <div className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
                 {isCurrent ? (
-                  <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
-                    Current
-                  </span>
+                    <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
+                      {format(new Date(), "MMM d, yyyy")} (Today)
+                    </span>
                 ) : (
                   format(new Date(record.created_at), "MMM d, yyyy")
                 )}

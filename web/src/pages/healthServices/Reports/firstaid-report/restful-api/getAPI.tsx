@@ -41,6 +41,18 @@ export interface FirstAidRecord {
   reason: string;
   finv: number;
   patrec: number | null;
+  patrec_details: {
+    pat_details: {
+      personal_info: {
+        per_fname: string;
+        per_mname?: string;
+        per_lname: string;
+        per_sex: string;
+        per_dob: string;
+      };
+      pat_id: string;
+    };
+  };
 }
 
 export interface MonthlyRecord {

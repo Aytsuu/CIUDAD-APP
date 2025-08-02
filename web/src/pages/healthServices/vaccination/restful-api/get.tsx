@@ -4,6 +4,15 @@
 import {api2} from "@/api/api";
 
 
+
+// Helper function to get vaccine stock info
+export const getVaccineStock = async (vaccineTypeId: string) => {
+  const vacStck_id = parseInt(vaccineTypeId, 10);
+  const response = await api2.get(`inventory/vaccine_stocks/${vacStck_id}/`);
+  return response.data;
+};
+
+
 export interface VaccinationPatientRecord {
   pat_id: number;
   fname: string;
@@ -41,6 +50,7 @@ export const getVaccinationRecords =  async () => {
   }
 };
 
+// id ani kay pat_id
 export const getVaccinationRecordById =  async (id: string) => {
   try {
     const response = await api2.get(`/vaccination/indiv-patient-record/${id}/`);

@@ -6,7 +6,7 @@ export const ServiceProvisionRecordSchema = z.object({
   nameOfServiceProvider: z.string().nonempty("Provider name is required"),
   dateOfFollowUp: z.string().optional(),
   methodQuantity: z.string().optional(),
-  serviceProviderSignature: z.string().nonempty("Please sign and save first"),
+  serviceProviderSignature: z.string().nonempty("Please sign and save the signature first"),
   medicalFindings: z.string().nonempty("Findings are required"),
   weight: z.coerce
     .number()
@@ -175,7 +175,7 @@ const FamilyPlanningBaseSchema = z.object({
   
  acknowledgement: z.object({
   selectedMethod: z.string().nonempty("Please select a family planning method"),
-  clientSignature: z.string().nonempty("Please sign and save first"),
+  clientSignature: z.string().nonempty("Please sign and save the signature first"),
   clientSignatureDate: z.string().nonempty("Client signature date is required"),
   clientName: z.string().nonempty("Client name is required"),
   guardianName: z.string().optional(),
@@ -243,7 +243,7 @@ export const page4Schema = FamilyPlanningBaseSchema.pick({
   cervicalAdnexal: true,
   uterinePosition: true,
   uterineDepth: true,
-  // bodyMeasurementRecordedAt?: t; 
+  bodyMeasurementRecordedAt: true 
 });
 
 export const page5Schema = FamilyPlanningBaseSchema.pick({

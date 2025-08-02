@@ -1,34 +1,24 @@
 
-// import NonPHMedicalForm from "@/pages/Doctor/MedicalConNoPH";
-import PendingMedicalConsultationRecords from "@/pages/healthServices/doctor/medical-con/tables/forwarded-record";
-import PendingDisplayMedicalConsultation from "@/pages/healthServices/doctor/medical-con/medcon-form";
-// import PrescriptionMedicineStocks from "@/pages/healthServices/doctor/medical-con/med-presciption";
-import SoapForm from "@/pages/healthServices/doctor/medical-con/soap-form";
-// import PhysicalExamForm from "@/pages/healthServices/doctor/medical-con/physical-exam";
+// import PendingDisplayMedicalConsultation from "@/pages/healthServices/doctor/medical-con/medcon-form";
+// import SoapForm from "@/pages/healthServices/doctor/medical-con/soap-form";
+
+import MedicalConsultationFlow from "@/pages/healthServices/doctor/medical-con/multi-step-form/Main";
 import path from "path";
-// import IllnessManager from "@/pages/healthServices/doctor/medical-con/illness";
 export const doctorRouting = [
-  // 
-  {
-    path: "/pending-medical-con",
-    element : <PendingMedicalConsultationRecords/>
-  } ,  {
-    path: "/pending-medical-con-form",
-    element : <PendingDisplayMedicalConsultation/>
-  } ,
+
+  //   {
+  //   path: "/pending-medical-con-form",
+  //   element : <PendingDisplayMedicalConsultation/>
+  // } ,
+
   // {
-  //   path:"/prescription-medicinestocks",
-  //   element:<PrescriptionMedicineStocks/>
+  //   path:"/soap-form",
+  //   element:<SoapForm/>
   // },
-  {
-    path:"/soap-form",
-    element:<SoapForm/>
-  },
-  // {
-  //   path:"/physical-examform",
-  //   element:<PhysicalExamForm/>
-  // }
-// {path: "/illness-manager",
-// element: <IllnessManager />
-// }
+
+{
+  path:"/medical-consultation-flow",
+  element:<MedicalConsultationFlow/>
+}
+
 ];

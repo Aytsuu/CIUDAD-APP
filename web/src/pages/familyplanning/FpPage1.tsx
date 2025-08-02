@@ -213,12 +213,12 @@ export default function FamilyPlanningForm({
       obstetricalHistory: obsHistoryData,
       height: bodyMeasurementsData.height || 0,
       weight: bodyMeasurementsData.weight || 0,
+      bodyMeasurementRecordedAt: bodyMeasurementsData.recorded_at || "",
       philhealthNo: personalResponseData.philhealthNo || "",
       nhts_status: personalResponseData.nhts_status || false,
       pantawid_4ps: personalResponseData.pantawid_4ps || false,
       educationalAttainment: personalResponseData.educationalAttainment || "",
       occupation: personalResponseData.ocupation,
-      bodyMeasurementRecordedAt: bodyMeasurementsData.recorded_at || null,
       acknowledgement: {
         ...formData.acknowledgement,
         clientName: fullName,

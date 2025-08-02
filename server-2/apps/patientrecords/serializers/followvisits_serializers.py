@@ -33,7 +33,7 @@ class FollowUpVisitWithPatientSerializer(serializers.ModelSerializer):
             'followv_status',
             'patrec_id',
             'created_at',
-            'updated_at',
+            'completed_at',
             'patient_details',
         ]
     
@@ -53,3 +53,12 @@ class FollowUpVisitWithPatientSerializer(serializers.ModelSerializer):
             print(f"Error getting patient details: {str(e)}")
             return None
 
+class FollowUpVisitSerializerBase(serializers.ModelSerializer):
+    """
+    Minimal serializer for FollowUpVisit that includes only essential fields
+    """
+    class Meta:
+        model = FollowUpVisit
+        fields = '__all__'
+    
+   

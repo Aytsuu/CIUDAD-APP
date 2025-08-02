@@ -12,30 +12,15 @@ from apps.patientrecords.serializers.patients_serializers import PatientSerializ
 from apps.patientrecords.models import VitalSigns
 from rest_framework.views import APIView
 from .utils import *
- 
+from apps.childhealthservices.models import ChildHealthImmunizationHistory
+from apps.childhealthservices.serializers import ChildHealthImmunizationHistorySerializer
+from rest_framework.decorators import api_view
 
 
 class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
     queryset  =VaccinationRecord.objects.all()
     
-    
-
-# class VaccineRecordView(generics.RetrieveUpdateAPIView):
-#     serializer_class = VaccinationRecordSerializer
-#     queryset  =VaccinationRecord.objects.all()
-#     lookup_field = 'vacrec_id'
-    
-#     def get_object(self):
-#         try:
-#             return super().get_object()
-#         except NotFound:
-#             return Response({"error": "Vaccination Record record not found."}, status=status.HTTP_404_NOT_FOUND)
-
-    
-    
-    
-   
    
 class VitalSignsView(generics.ListCreateAPIView):
     serializer_class = VitalSignsSerializer
@@ -52,23 +37,27 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Patient.objects.filter(
-            Q(patient_records__patrec_type__iexact='Vaccination'),
+            Q(patient_records__patrec_type='Vaccination Record'),
             Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
         ).distinct()
 
 
-
-# class PatientRecordWithVaccinationSerializer(PatientRecordSerializer):
-#     vaccination_records = VaccinationRecordSerializer(
-#         source='vaccination_records', 
-#         many=True, 
-#         read_only=True
-#     )
-    
-#     class Meta:
-#         model = PatientRecord
-#         fields = '__all__'
-
+class TobeAdministeredVaccinationView(generics.ListAPIView):
+    serializer_class = VaccinationHistorySerializer
+    def get_queryset(self):
+        return VaccinationHistory.objects.filter(
+            vachist_status='in queue',
+        ).order_by('-created_at')
+        
+class CountScheduledVaccinationView(APIView):
+    def get(self, request):
+        try:
+            count = VaccinationHistory.objects.filter(
+                vachist_status='in queue'
+            ).count()
+            return Response({"count": count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # INDIVIDUAL RECORDS VIEW
 class VaccinationHistorRecordView(generics.ListAPIView):
@@ -104,17 +93,6 @@ class DeleteUpdateVaccinationRecordView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "Vaccination record not found."}, status=status.HTTP_404_NOT_FOUND)
     
     
-# class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = VitalSignsSerializer
-#     queryset = VitalSigns.objects.all()
-#     lookup_field = 'vital_id'
-    
-#     def get_object(self):
-#         try:
-#             return super().get_object()
-#         except NotFound:
-#             return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 class DeleteUpdateVaccinationHistoryView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccinationHistorySerializer
@@ -143,6 +121,13 @@ class CheckVaccineExistsView(APIView):
 class PatientVaccineFollowUpView(APIView):
     def get(self, request, pat_id):
         data = get_patient_vaccines_with_followups(pat_id)
+        if data:
+            return Response(data, status=status.HTTP_200_OK)
+        return Response({"detail": "No vaccine or follow-up visit data found for this patient."}, status=status.HTTP_404_NOT_FOUND)
+
+class ChildHealthVaccineFollowUpView(APIView):
+    def get(self, request, pat_id):
+        data = get_child_followups(pat_id)
         if data:
             return Response(data, status=status.HTTP_200_OK)
         return Response({"detail": "No vaccine or follow-up visit data found for this patient."}, status=status.HTTP_404_NOT_FOUND)
@@ -191,6 +176,17 @@ class ForwardedVaccinationHistoryView(generics.ListAPIView):
         return VaccinationHistory.objects.filter(
             vachist_status__iexact='forwarded'
         ).order_by('-created_at')
+
+
+
+class ForwardedVaccinationCountView(APIView):
+    def get(self, request, *args, **kwargs):
+        count = (
+            VaccinationHistory.objects
+            .filter(vachist_status__iexact='forwarded')
+            .count()
+        )
+        return Response({"count": count})
 
 
 
@@ -251,5 +247,77 @@ class MonthlyVaccinationRecordsAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+ 
+class BulkVaccinationCreateView(APIView):
+    def post(self, request):
+        data = request.data
+        try:
+            with transaction.atomic():
+                # Step 1: Create VaccinationRecord
+                patient_id = data.get("patrec_id")
+                total_dose = data.get("vacrec_totaldose", 0)
 
-        
+                vac_record = VaccinationRecord.objects.create(
+                    patrec_id_id=patient_id,
+                    vacrec_totaldose=total_dose
+                )
+
+                vac_histories_data = data.get("vaccination_histories", [])
+                chhist_id = data.get("chhist_id")
+
+                response_data = {
+                    "vacrec_id": vac_record.vacrec_id,
+                    "vaccination_histories": [],
+                    "immunization_links": []
+                }
+
+                for hist_data in vac_histories_data:
+                    hist_data['vacrec'] = vac_record.vacrec_id  # Link to VaccinationRecord
+                    serializer = VaccinationHistorySerializerBase(data=hist_data)
+                    serializer.is_valid(raise_exception=True)
+                    vac_hist = serializer.save()
+
+                    # Step 3: Create ChildHealthImmunizationHistory for each history
+                    child_imm = ChildHealthImmunizationHistory.objects.create(
+                        vachist=vac_hist,
+                        chhist_id=chhist_id,
+                        hasExistingVaccination=False
+                    )
+
+                    response_data["vaccination_histories"].append(serializer.data)
+                    response_data["immunization_links"].append({
+                        "imt_id": child_imm.imt_id,
+                        "vachist_id": vac_hist.vachist_id
+                    })
+
+                return Response(response_data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def bulk_create_vaccination_records(request):
+    serializer = VaccinationRecordSerializer(data=request.data, many=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def bulk_create_vaccination_histories(request):
+    serializer = VaccinationHistorySerializer(data=request.data, many=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def bulk_create_immunization_histories(request):
+    serializer = ChildHealthImmunizationHistorySerializer(data=request.data, many=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

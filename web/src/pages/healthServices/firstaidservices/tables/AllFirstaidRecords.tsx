@@ -14,12 +14,10 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getFirstaidRecords } from "../restful-api/getAPI";
 import { useNavigate } from "react-router";
+import { TableSkeleton } from "../../skeleton/table-skeleton";
 
 export interface FirstAidRecord {
   pat_id: string;
@@ -66,28 +64,30 @@ export default function AllFirstAidRecords() {
       // Construct address string
       const addressParts = [
         address.add_street,
-        address.add_barangay, 
+        address.add_barangay,
         address.add_city,
-        address.add_province
-      ].filter(Boolean).join(", ");
-      
+        address.add_province,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
       const fullAddress = addressParts || "";
 
       return {
         pat_id: record.pat_id,
-        fname: info.per_fname || '',
-        lname: info.per_lname || '',
-        mname: info.per_mname || '',
-        sex: info.per_sex || '',
+        fname: info.per_fname || "",
+        lname: info.per_lname || "",
+        mname: info.per_mname || "",
+        sex: info.per_sex || "",
         age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob || '',
+        dob: info.per_dob || "",
         householdno: record.patient_details?.households?.[0]?.hh_id || "",
-        street: address.add_street || '',
-        sitio: address.sitio || '',
-        barangay: address.add_barangay || '',
-        city: address.add_city || '',
-        province: address.add_province || '',
-        pat_type: record.patient_details.pat_type || '',
+        street: address.add_street || "",
+        sitio: address.add_sitio || "",
+        barangay: address.add_barangay || "",
+        city: address.add_city || "",
+        province: address.add_province || "",
+        pat_type: record.patient_details.pat_type || "",
         firstaid_count: record.firstaid_count || 0,
         address: fullAddress,
       };
@@ -212,7 +212,7 @@ export default function AllFirstAidRecords() {
                       add_barangay: row.original.barangay,
                       add_city: row.original.city,
                       add_province: row.original.province,
-                      sitio: row.original.sitio,
+                      add_sitio: row.original.sitio,
                     },
                     households: [{ hh_id: row.original.householdno }],
                     personal_info: {
@@ -234,20 +234,8 @@ export default function AllFirstAidRecords() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
-
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-col items-center ">
@@ -291,7 +279,16 @@ export default function AllFirstAidRecords() {
 
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Link to={`/patnew-firstaid-form`}>New Record</Link>
+              <Link
+                to="/firstaid-request-form"
+                state={{
+                  params: {
+                    mode: "fromallrecordtable",
+                  },
+                }}
+              >
+                New Request
+              </Link>
             </Button>
           </div>
         </div>
@@ -335,7 +332,11 @@ export default function AllFirstAidRecords() {
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+            {isLoading ? (
+              <TableSkeleton columns={columns} rowCount={5} />
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">

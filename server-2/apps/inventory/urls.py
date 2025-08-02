@@ -69,7 +69,8 @@ urlpatterns = [
     path("antigens_stocks/transaction/", AntigenTransactionView.as_view(), name="antigens_stocks"), 
     
     path("immunization_stock/", ImmunizationStockSuppliesView.as_view(), name="immunization_stocksn"),
-    path("imz_transaction/", ImmunizationTransactionView.as_view(), name="imz_transaction"),
+    
+    # path("imz_transaction/", ImmunizationTransactionView.as_view(), name="imz_transaction"),
     
 
     path("vaccine_stocks/<int:vacStck_id>/", VaccineStockRetrieveUpdateDestroyView.as_view(), name="vaccine_stocks-detail"),

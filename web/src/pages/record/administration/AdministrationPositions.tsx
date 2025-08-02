@@ -134,7 +134,7 @@ export default function AdministrationPositions({
             },
             {
               id: 'group',
-              name: 'Group Position',
+              name: 'New Group',
               variant: 'default'
             },
           ]}  

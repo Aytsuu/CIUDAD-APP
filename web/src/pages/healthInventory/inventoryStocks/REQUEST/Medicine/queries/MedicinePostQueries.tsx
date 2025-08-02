@@ -7,15 +7,21 @@ import { MedicineStockType } from "@/form-schema/inventory/stocks/inventoryStock
 export interface MedicineTransactionType {
     mdt_qty: string;
     mdt_action: string;
-    mdt_staff: number;
+    staff: string;
     minv_id: number;
   }
   
 export const useAddMedicineInventory = () => {
   const queryClient = useQueryClient();
+  interface AddMedicineInventoryMutationVariables {
+    data: Record<string, any>;
+    inv_id: string;
+    staff: string;
+  }
+
   return useMutation({
-    mutationFn: ({ data, inv_id }: { data: Record<string, any>, inv_id: string }) => 
-      addMedicineInventory(data, inv_id),
+    mutationFn: ({ data, inv_id, staff }: AddMedicineInventoryMutationVariables) => 
+      addMedicineInventory(data, inv_id, staff),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] }); // Update with your query key
     },
@@ -28,7 +34,7 @@ export const useAddMedicineInventory = () => {
 export const useAddMedicineTransaction = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: MedicineTransactionType) => addMedicineTransaction(data),
+    mutationFn: (data: MedicineTransactionType,) => addMedicineTransaction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicinetransactions"] }); // Update with your query key
     },

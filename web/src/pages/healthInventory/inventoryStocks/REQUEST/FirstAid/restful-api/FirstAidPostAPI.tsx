@@ -5,7 +5,8 @@ import {api2} from "@/api/api";
 export const addFirstAidInventory = async (
   data: Record<string, any>,
   inv_id: string,
-  fa_id: string
+  fa_id: string,
+  staff_id:string
 ) => {
   try {
     // Calculate values directly
@@ -23,7 +24,9 @@ export const addFirstAidInventory = async (
       finv_qty_avail: finv_qty_avail,
       inv_id,
       expiryDate: data.expiryDate,
+      staff:staff_id||null
     });
+    console.log(data.expiryDate)
     return res.data;
   } catch (err) {
     console.error(err);
@@ -32,7 +35,7 @@ export const addFirstAidInventory = async (
 };
 
 // POST request for firstaidtransaction model
-export const addFirstAidTransaction = async ( finv_id: number, string_qty: string, action: string, staffId: number) => {
+export const addFirstAidTransaction = async ( finv_id: number, string_qty: string, action: string, staffId: string) => {
   try {
     const res = await api2.post("inventory/firstaidtransaction/", {
       fat_qty: string_qty,

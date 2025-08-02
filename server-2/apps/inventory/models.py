@@ -329,12 +329,10 @@ class VaccineStock(models.Model):
     volume = models.PositiveIntegerField(default=0)
     qty = models.PositiveIntegerField(default=0)
     dose_ml = models.PositiveIntegerField(default=0)
-    vacStck_used = models.PositiveIntegerField(default=0)
     vacStck_qty_avail = models.PositiveIntegerField(default=0)
     wasted_dose =models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # ageGroup = models.ForeignKey(Agegroup, on_delete=models.PROTECT, db_column='ageGroup', related_name='vaccine_stock', null=True, blank=True)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
     vac_id = models.ForeignKey('VaccineList',on_delete=models.PROTECT,related_name='vaccine_stock',db_column='vac_id')
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`

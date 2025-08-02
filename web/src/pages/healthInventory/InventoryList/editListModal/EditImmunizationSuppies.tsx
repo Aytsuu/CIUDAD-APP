@@ -13,10 +13,9 @@ import { getImzSup } from "../restful-api/Antigen/ImzFetchAPI";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { Package } from "lucide-react";
-import { Link } from "react-router-dom";
-import { CircleCheck } from "lucide-react";
-import { useUpdateImzSupply } from "../queries/Antigen/ImzPutQueries"; // Make sure this path is correct
+import { Package, CircleCheck } from "lucide-react";
+import { useUpdateImzSupply } from "../queries/Antigen/ImzPutQueries";
+import CardLayout from "@/components/ui/card/card-layout";
 
 interface ImmunizationData {
   id: number;
@@ -64,7 +63,7 @@ export default function EditImmunizationSupplies() {
             ),
             duration: 2000,
           });
-          navigate("/mainInventoryList");
+          navigate(-1); // Changed to navigate(-1) to go back
         },
         onError: () => {
           toast.error("Failed to update immunization supply");
@@ -112,7 +111,7 @@ export default function EditImmunizationSupplies() {
     return (
       <div className="p-4 text-center">
         <p>No immunization supply data found</p>
-        <Button onClick={() => navigate("/mainInventoryList")}>
+        <Button onClick={() => navigate(-1)}> {/* Changed to navigate(-1) */}
           Back to List
         </Button>
       </div>
@@ -120,51 +119,60 @@ export default function EditImmunizationSupplies() {
   }
 
   return (
-    <div className="w-full flex items-center justify-center p-2 sm:p-4">
-      <Form {...form}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="bg-white p-4 w-full max-w-[500px] rounded-sm"
-        >
-          <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
-            <Package className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-            Edit Commodity
-          </Label>
+    <div className="flex items-center justify-center">
+      <CardLayout
+        cardClassName="max-w-md w-full"
+        content={
+          <div className="px-4 py-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-4">
+                    <Package className="h-6 w-6 text-blue-600 mr-2" />
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Edit Immunization Supply
+                    </h2>
+                  </div>
+                </div>
 
-          <div className="py-4">
-            <FormInput
-              control={form.control}
-              name="imz_name"
-              label="Immunization Supply Name"
-              placeholder="Enter immunization supply name"
+                <div className="space-y-4 pt-6">
+                  <FormInput
+                    control={form.control}
+                    name="imz_name"
+                    label="Item Name"
+                    placeholder="Enter item name"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => navigate(-1)} // Changed to navigate(-1)
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full sm:w-auto"
+                    disabled={isPending}
+                  >
+                    {isPending ? "Updating..." : "Update"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+
+            <ConfirmationDialog
+              isOpen={isUpdateConfirmationOpen}
+              onOpenChange={setIsUpdateConfirmationOpen}
+              onConfirm={confirmUpdate}
+              title="Update Immunization Supply"
+              description={`Are you sure you want to update this item to "${updatedName}"?`}
             />
           </div>
-
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              type="button"
-            >
-              <Link to="/mainInventoryList">Cancel</Link>
-            </Button>
-            <Button
-              className="w-full sm:w-auto"
-              disabled={isPending}
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              {isPending ? "Updating..." : "Update"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-
-      <ConfirmationDialog
-        isOpen={isUpdateConfirmationOpen}
-        onOpenChange={setIsUpdateConfirmationOpen}
-        onConfirm={confirmUpdate}
-        title="Update Immunization Supply"
-        description={`Are you sure you want to update this supply to "${updatedName}"?`}
+        }
       />
     </div>
   );

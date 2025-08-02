@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Card, CardContent } from "@/components/ui/card/card"
@@ -11,6 +9,7 @@ import { getAllWeeksInMonth, getMonthName, getMonths, getRangeOfDaysInWeek, getW
 import { useNavigate } from "react-router"
 import RecentWeeklyAR from "./RecentWeeklyAR"
 import MissedWeeklyAR from "./MissedWeeklyAR"
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 
 export default function WeeklyAR() {
   const navigate = useNavigate()
@@ -20,7 +19,6 @@ export default function WeeklyAR() {
   const currentYear = new Date().getFullYear()
   const [selectedYear, setSelectedYear] = useState(currentYear)
 
-  // Generate year options based on actual data range
   const getYearOptions = () => {
     if (!weeklyAR || weeklyAR.length === 0) {
       // If no data, only show current year
@@ -111,6 +109,7 @@ export default function WeeklyAR() {
     )
   }
 
+
   if (error) {
     return (
       <Card className="border-destructive">
@@ -124,170 +123,166 @@ export default function WeeklyAR() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-darkBlue2">Weekly Accomplishment Report</h1>
-            <p className="text-xs sm:text-sm text-darkGray">Manage and view weekly accomplishment reports</p>
+    <MainLayoutComponent
+      title="Weekly Accomplishment Report"
+      description="Manage and view weekly accomplishment reports"
+    >
+      <div className="flex flex-col sm:flex-row items-start justify-end sm:items-center gap-4 mb-6">
+        {/* Year Selector */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                {yearOptions.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Year Selector */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              <Select
-                value={selectedYear.toString()}
-                onValueChange={(value) => setSelectedYear(Number.parseInt(value))}
-              >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {yearOptions.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Badge variant="secondary">
-              {organizedData.length} {organizedData.length === 1 ? "Month" : "Months"}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Accordion Section */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardContent className="p-0">
-                {organizedData.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Reports Found</h3>
-                    <p className="text-muted-foreground">No weekly accomplishment reports found for {selectedYear}.</p>
-                  </div>
-                ) : (
-                  <Accordion type="single" collapsible className="w-full">
-                    {organizedData.map(({ month, weeks }) => (
-                      <AccordionItem key={month} value={month} className="border-b last:border-b-0">
-                        <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 hover:no-underline ">
-                          <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4" />
-                            <span className="font-medium">
-                              {month} {selectedYear}
-                            </span>
-                            <Badge variant="outline" className="ml-2">
-                              {weeks.length} {weeks.length === 1 ? "Week" : "Weeks"}
-                            </Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-6 pb-4">
-                          <Accordion type="single" collapsible className="w-full">
-                            {weeks.map(({ weekNo, data }) => (
-                              <AccordionItem
-                                key={`week-${weekNo}`}
-                                value={`week-${weekNo}`}
-                                className="border-b last:border-b-0"
-                              >
-                                <AccordionTrigger className="py-3 hover:bg-muted/30 hover:no-underline">
-                                  <div className="flex items-center justify-between w-full mr-4">
-                                    <div className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4" />
-                                      <span className="font-medium">Week {weekNo}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      {data.map((war, index) => (
-                                        <Badge
-                                          key={index}
-                                          variant={"outline"}
-                                          className={`text-white border-none ${
-                                            war.status === "Signed" ? "bg-green-500" : "bg-orange-500"
-                                          }`}
-                                        >
-                                          {war.status}
-                                        </Badge>
-                                      ))}
-                                      <Badge variant="secondary">
-                                        {data.reduce((total, war) => total + war.war_composition.length, 0)} Reports
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                </AccordionTrigger>
-                                <AccordionContent className="pt-2 pb-3">
-                                  <div className="space-y-2">
-                                    {data.map((war, arIndex) => (
-                                      <>
-                                        <div key={`${month}-week-${weekNo}-ar-${arIndex}`} className="space-y-1">
-                                          {war.war_composition.map((comp: any, compIndex: number) => (
-                                            <div
-                                              key={`${month}-week-${weekNo}-ar-${arIndex}-comp-${compIndex}`}
-                                              className="flex items-center justify-between p-3 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors"
-                                            >
-                                              <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 bg-primary rounded-full" />
-                                                <span className="font-mono text-sm">Report No. {comp.ar.id}</span>
-                                                {comp.ar.ar_title && (
-                                                  <span className="text-sm text-muted-foreground">
-                                                    - {comp.ar.ar_title}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                        {arIndex + 1 == data.length && (
-                                          <div className="w-full flex justify-end">
-                                            <label
-                                              className="flex gap-2 cursor-pointer"
-                                              onClick={() => {
-                                                navigate("/report/acknowledgement/document", {
-                                                  state: {
-                                                    params: {
-                                                      type: "WAR",
-                                                      data: {
-                                                       ...war,
-                                                       reportPeriod: getRangeOfDaysInWeek(weekNo, month, selectedYear)
-                                                      },
-                                                    },
-                                                  },
-                                                })
-                                              }}
-                                            >
-                                              <span>View</span>
-                                              <MoveRight />
-                                            </label>
-                                          </div>
-                                        )}
-                                      </>
-                                    ))}
-                                  </div>
-                                </AccordionContent>
-                              </AccordionItem>
-                            ))}
-                          </Accordion>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {/* Recent Reports */}
-            <RecentWeeklyAR recentReports={recentReports} />
-
-            {/* Missed Weekly Reports */}
-            <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} />
-          </div>
+          <Badge variant="secondary">
+            {organizedData.length} {organizedData.length === 1 ? "Month" : "Months"}
+          </Badge>
         </div>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Accordion Section */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardContent className="p-0">
+              {organizedData.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Reports Found</h3>
+                  <p className="text-muted-foreground">No weekly accomplishment reports found for {selectedYear}.</p>
+                </div>
+              ) : (
+                <Accordion type="single" collapsible className="w-full">
+                  {organizedData.map(({ month, weeks }) => (
+                    <AccordionItem key={month} value={month} className="border-b last:border-b-0">
+                      <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 hover:no-underline ">
+                        <div className="flex items-center gap-3">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-medium">
+                            {month} {selectedYear}
+                          </span>
+                          <Badge variant="outline" className="ml-2">
+                            {weeks.length} {weeks.length === 1 ? "Week" : "Weeks"}
+                          </Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-4">
+                        <Accordion type="single" collapsible className="w-full">
+                          {weeks.map(({ weekNo, data }) => (
+                            <AccordionItem
+                              key={`week-${weekNo}`}
+                              value={`week-${weekNo}`}
+                              className="border-b last:border-b-0"
+                            >
+                              <AccordionTrigger className="py-3 hover:bg-muted/30 hover:no-underline">
+                                <div className="flex items-center justify-between w-full mr-4">
+                                  <div className="flex items-center gap-2">
+                                    <FileText className="h-4 w-4" />
+                                    <span className="font-medium">Week {weekNo}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {data.map((war, index) => (
+                                      <Badge
+                                        key={index}
+                                        variant={"outline"}
+                                        className={`text-white border-none ${
+                                          war.status === "Signed" ? "bg-green-500" : "bg-orange-500"
+                                        }`}
+                                      >
+                                        {war.status}
+                                      </Badge>
+                                    ))}
+                                    <Badge variant="secondary">
+                                      {data.reduce((total, war) => total + war.war_composition.length, 0)} Reports
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="pt-2 pb-3">
+                                <div className="space-y-2">
+                                  {data.map((war, arIndex) => (
+                                    <>
+                                      <div key={`${month}-week-${weekNo}-ar-${arIndex}`} className="space-y-1">
+                                        {war.war_composition.map((comp: any, compIndex: number) => (
+                                          <div
+                                            key={`${month}-week-${weekNo}-ar-${arIndex}-comp-${compIndex}`}
+                                            className="flex items-center justify-between p-3 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors"
+                                          >
+                                            <div className="flex items-center gap-2">
+                                              <div className="w-2 h-2 bg-primary rounded-full" />
+                                              <span className="font-mono text-sm">Report No. {comp.ar.id}</span>
+                                              {comp.ar.ar_title && (
+                                                <span className="text-sm text-muted-foreground">
+                                                  - {comp.ar.ar_title}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {arIndex + 1 == data.length && (
+                                        <div className="w-full flex justify-end">
+                                          <label
+                                            className="flex gap-2 cursor-pointer"
+                                            onClick={() => {
+                                              navigate("/report/acknowledgement/document", {
+                                                state: {
+                                                  params: {
+                                                    type: "WAR",
+                                                    data: {
+                                                    ...war,
+                                                    reportPeriod: getRangeOfDaysInWeek(weekNo, month, selectedYear)
+                                                    },
+                                                  },
+                                                },
+                                              })
+                                            }}
+                                          >
+                                            <span>View</span>
+                                            <MoveRight />
+                                          </label>
+                                        </div>
+                                      )}
+                                    </>
+                                  ))}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Recent Reports */}
+          <RecentWeeklyAR recentReports={recentReports} />
+
+          {/* Missed Weekly Reports */}
+          <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} />
+        </div>
+      </div>
+    </MainLayoutComponent>
   )
 }

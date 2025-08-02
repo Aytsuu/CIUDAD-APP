@@ -4,7 +4,8 @@ import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/invento
 
 export const addImmunizationStock = async (
   data: Record<string, any>,
-  inv_id: string
+  inv_id: string,
+  staff_id:string
 ) => {
   try {
     // Update the quantity calculation in useSubmitImmunizationStock:
@@ -29,6 +30,7 @@ export const addImmunizationStock = async (
       imzStck_pcs,
       imzStck_avail,
       inv_id,
+      staff :staff_id
     });
 
     return response?.data;
@@ -40,7 +42,7 @@ export const addImmunizationStock = async (
 
 export const addImzTransaction = async (
   string_qty: string,
-  staffId: number,
+  staffId: string,
   imzStck_id: number,
   action: string
 ) => {
@@ -49,7 +51,7 @@ export const addImzTransaction = async (
       antt_qty: string_qty,
       antt_action: action,
       imzStck_id: imzStck_id,
-      staff: staffId,
+      staff: staffId || null,
     });
     return res.data;
   } catch (err) {

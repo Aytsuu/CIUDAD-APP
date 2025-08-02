@@ -7,6 +7,9 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { FormProvider } from "@/contexts/RegistrationFormContext";
 import { RegistationFormProvider } from "@/contexts/RegistrationFormContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProgressProvider } from "@/contexts/ProgressContext";
+import { RegistrationTypeProvider } from "@/contexts/RegistrationTypeContext";
+import { ToastProvider } from "@/components/ui/toast";
 
 type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
 const defaultValues = generateDefaultValues(RegistrationFormSchema)
@@ -20,19 +23,32 @@ export default () => {
 
   return (
     <AuthProvider>
-      <RegistationFormProvider methods={methods}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="verify-age" options={{ headerShown: false }} />
-          <Stack.Screen name="validate-resident-id" options={{ headerShown: false }} />
-          <Stack.Screen name="personal-information" options={{ headerShown: false }} />
-          <Stack.Screen name="upload-id" options={{ headerShown: false }} />
-          <Stack.Screen name="take-a-photo" options={{ headerShown: false }} />
-          <Stack.Screen name="account-details" options={{ headerShown: false }} />
-          <Stack.Screen name="forgot-password" options={{ headerShown: false }}  />
-          <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
-        </Stack>
-      </RegistationFormProvider>
+      <ProgressProvider>
+        <RegistrationTypeProvider>
+          <RegistationFormProvider methods={methods}>
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/register-new" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/respondent" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/father" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/mother" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/guardian" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/dependent" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/family/scan" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/link/verification" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/link/account-registration" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/individual/information" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/individual/scan" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false }} />
+
+              {/* STACKS THAT ARE NOT BEING USED, MIGHT REMOVE THEM LATER. */}
+              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false }} />
+            </Stack>
+          </RegistationFormProvider>
+        </RegistrationTypeProvider>
+      </ProgressProvider>
     </AuthProvider>
   );
 };

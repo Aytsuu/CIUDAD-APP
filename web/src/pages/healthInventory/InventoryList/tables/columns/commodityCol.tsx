@@ -22,7 +22,7 @@ export const CommodityColumns = (
     header: "#",
     cell: ({ row }) => (
       <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
           {row.original.id}
         </div>
       </div>

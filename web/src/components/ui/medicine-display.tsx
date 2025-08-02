@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button/button"
 import { isNearExpiry, isLowStock } from "@/helpers/StocksAlert"
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
 
-interface Medicine {
+export interface Medicine {
   id: string
   name: string
   dosage: string

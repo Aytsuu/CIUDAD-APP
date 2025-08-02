@@ -19,7 +19,7 @@ export const useAddImzTransaction = () => {
       action,
     }: {
       string_qty: string;
-      staffId: number;
+      staffId: string;
       imzStck_id: number;
       action: string;
     }) => addImzTransaction(string_qty, staffId, imzStck_id, action),
@@ -36,10 +36,12 @@ export const useAddImmunizationStock = () => {
     mutationFn: ({
       data,
       inv_id,
+      staff_id
     }: {
       data: Record<string, any>;
       inv_id: string;
-    }) => addImmunizationStock(data, inv_id),
+      staff_id:string
+    }) => addImmunizationStock(data, inv_id,staff_id),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["immunizationStockList"] });
@@ -60,11 +62,12 @@ export const useSubmitImmunizationStock = () => {
   const { mutateAsync: addImzTransactionRecord } = useAddImzTransaction();
 
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async ({ data, staff_id }: { data: any; staff_id: string }) => {
       // Step 1: Create Inventory record
       const inventoryResponse = await addInventoryRecord({
         data: data,
         inv_type: "Antigen",
+        staff: staff_id
       });
 
       if (!inventoryResponse?.inv_id) {
@@ -95,6 +98,7 @@ export const useSubmitImmunizationStock = () => {
           imzStck_avail,
         },
         inv_id,
+        staff_id
       });
 
       if (!stockResponse?.imzStck_id) {
@@ -106,7 +110,7 @@ export const useSubmitImmunizationStock = () => {
         data.imzStck_unit === "boxes"
           ? `${data.imzStck_qty} boxes (${data.imzStck_pcs} pcs per box)`
           : `${data.imzStck_qty} ${data.imzStck_unit}`;
-      const staffId = 1;
+      const staffId = staff_id;
       const imzStck_id = stockResponse.imzStck_id;
 
       const transactionResponse = await addImzTransactionRecord({

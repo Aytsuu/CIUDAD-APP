@@ -16,6 +16,7 @@ export const getIncomeExpense = async (year?: number) => {
     try {
         const params = year ? { params: { year } } : {};
         const res = await api.get('treasurer/income-expense-tracking/', params);
+        console.log("EXPENSE W/ URL: ", res)
         return res.data;
     } catch (err) {
         console.error(err);

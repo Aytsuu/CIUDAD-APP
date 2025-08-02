@@ -26,10 +26,7 @@ export default function AccountDetails({ submit } : {
 
   const handleSubmit = async () => {
     const formIsValid = await trigger([
-      'accountFormSchema.username',
-      'accountFormSchema.email',
-      'accountFormSchema.password',
-      'accountFormSchema.confirmPassword',
+      'accountFormSchema'
     ]);
 
     if(!formIsValid) {

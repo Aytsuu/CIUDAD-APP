@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card/card";
-import { ChevronLeft, ClipboardList, Scale } from "lucide-react";
+import { ChevronLeft, ClipboardList, Stethoscope } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -14,9 +14,9 @@ import { api2 } from "@/api/api";
 import {
   MedicalConsultationHistory,
   ConsultationHistoryTable,
-  medicalConsultationCache,
 } from "./table-history";
-import CurrentConsultationCard from "./current-medrec"; // Import the new component
+import CurrentConsultationCard from "./current-medrec";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DisplayMedicalConsultation() {
   const navigate = useNavigate();
@@ -34,12 +34,6 @@ export default function DisplayMedicalConsultation() {
 
   const fetchConsultationHistory = useCallback(async () => {
     if (!patientId) return;
-
-    if (medicalConsultationCache[patientId]) {
-      setConsultationHistory(medicalConsultationCache[patientId]);
-      setLoading(false);
-      return;
-    }
 
     try {
       setLoading(true);
@@ -93,7 +87,6 @@ export default function DisplayMedicalConsultation() {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      medicalConsultationCache[patientId] = sortedHistories;
       setConsultationHistory(sortedHistories);
     } catch (err) {
       console.error("Error fetching medical consultation history:", err);
@@ -142,41 +135,9 @@ export default function DisplayMedicalConsultation() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="w-full min-h-screen flex flex-col p-4 sm:p-6">
-        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Button
-            className="text-darkGray p-2"
-            variant="outline"
-            onClick={() => navigate(-1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
-              Medical Consultation Record
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              View consultation details and patient information
-            </p>
-          </div>
-        </div>
-        <hr className="border-gray mb-4 sm:mb-6" />
-
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center p-4 sm:p-8">
-            <p className="text-base sm:text-lg md:text-xl text-gray-600">
-              Loading consultation data...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
+      {/* Always visible header section */}
       <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <Button
           className="text-darkGray p-2"
@@ -196,39 +157,88 @@ export default function DisplayMedicalConsultation() {
       </div>
       <hr className="border-gray mb-4 sm:mb-6" />
 
-      {/* Single Comprehensive Card */}
-      <Card className="w-full p-4 sm:p-6 md:p-8">
-        <CardContent>
-          {/* Use the new CurrentConsultationCard component */}
-          {currentConsultation && (
-            <CurrentConsultationCard
-              consultation={currentConsultation}
-              patientData={patientData}
-            />
-          )}
-
-
-          {/* Consultation History Section */}
-          <div className="mt-8">
-            <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <h2 className="font-bold text-base sm:text-lg ">
-                Consultation History
-              </h2>
+      {loading ? (
+        <Card className="w-full p-4 sm:p-6 md:p-8">
+          <CardContent>
+            {/* Current Consultation Skeleton */}
+            <div className="space-y-6">
+             
+              
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-5 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <Skeleton className="h-5 w-1/3" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-16 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {loading ? (
-              <div className="text-center p-4 sm:p-6 bg-gray-50 rounded-lg">
-                <p className="text-base sm:text-lg text-gray-600">
-                  Loading consultation history...
-                </p>
+            {/* Consultation History Skeleton */}
+            <div className="mt-10 space-y-6">
+              <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                <Skeleton className="h-5 w-5 rounded-full" />
+                <Skeleton className="h-6 w-48" />
               </div>
-            ) : error ? (
-              <div className="text-center p-4 sm:p-6 bg-red-50 rounded-lg border border-red-200">
-                <p className="text-base sm:text-lg text-red-600 font-medium">
-                  {error}
-                </p>
+
+            
+
+              <div className="flex justify-center gap-2">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-8 rounded-md" />
+                ))}
               </div>
-            ) : (
+            </div>
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <Card className="w-full p-4 sm:p-6 md:p-8">
+          <CardContent>
+            <div className="text-center p-4 sm:p-6 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-base sm:text-lg text-red-600 font-medium">
+                {error}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="w-full p-4 sm:p-6 md:p-8">
+          <CardContent>
+            {currentConsultation && (
+              <CurrentConsultationCard
+                consultation={currentConsultation}
+                patientData={patientData}
+              />
+            )}
+
+            <div className="mt-10">
+              <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                <Stethoscope className="text-blue"/>  
+                <h2 className="font-bold text-base sm:text-lg">
+                  Consultation History
+                </h2>
+              </div>
+
               <ConsultationHistoryTable
                 relevantHistory={relevantHistory}
                 currentConsultationId={MedicalConsultation?.medrec_id}
@@ -236,10 +246,10 @@ export default function DisplayMedicalConsultation() {
                 totalPages={totalPages}
                 onPaginate={paginate}
               />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
