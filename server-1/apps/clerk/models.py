@@ -139,78 +139,9 @@ class Address(models.Model):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
 
 # Complaint Models
-class Complainant(models.Model):
-    cpnt_id = models.BigAutoField(primary_key=True)
-    cpnt_name = models.CharField(max_length=100)
-    cpnt_gender = models.CharField(max_length=20)
-    cpnt_age = models.CharField(max_length=2)
-    cpnt_number = models.CharField(max_length=11)
-    cpnt_relation_to_respondent = models.CharField(max_length=20)
-    add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='complainant')
 
-    class Meta:
-        db_table = 'complainant'
 
-class Accused(models.Model):
-    acsd_id = models.BigAutoField(primary_key=True)
-    acsd_name = models.CharField(max_length=100)
-    acsd_age = models.CharField(max_length=2)
-    acsd_gender = models.CharField(max_length=20)
-    acsd_description = models.TextField()
-    add = models.ForeignKey('clerk.Address', on_delete=models.CASCADE, related_name='accused')
 
-    class Meta:
-        db_table = 'accused'
-
-class Complaint(models.Model):
-    comp_id = models.BigAutoField(primary_key=True)
-    comp_location = models.CharField(max_length=255)
-    comp_incident_type = models.CharField(max_length=100)
-    comp_datetime = models.CharField(max_length=100)
-    comp_allegation = models.TextField()
-    comp_created_at = models.DateTimeField(auto_now_add=True)
-    comp_is_archive = models.BooleanField(default=False)
-
-    complainant = models.ManyToManyField(
-        Complainant,
-        through='ComplaintComplainant',
-        related_name='complaint'
-    )
-    accused = models.ManyToManyField(
-        Accused,
-        through='ComplaintAccused',
-        related_name='complaint'
-    )
-
-    class Meta:
-        db_table = 'complaint'
-
-class ComplaintComplainant(models.Model):
-    cc_id = models.BigAutoField(primary_key=True)
-    comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
-    cpnt = models.ForeignKey(Complainant, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'complaint_complainant'
-        unique_together = ('comp', 'cpnt')  
-
-class ComplaintAccused(models.Model):
-    ca_id = models.BigAutoField(primary_key=True)
-    comp = models.ForeignKey(Complaint, on_delete=models.CASCADE)
-    acsd = models.ForeignKey(Accused, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'complaint_accused'
-        unique_together = ('comp', 'acsd')
-
-class Complaint_File(models.Model):
-    cf_id = models.BigAutoField(primary_key=True)
-    comp = models.ForeignKey(Complaint, related_name='complaint_file', on_delete=models.CASCADE)
-    file = models.ForeignKey('file.File', related_name='complaint_file', on_delete=models.CASCADE)
-    
-    class Meta:
-        db_table = 'complaint_file'
-        managed = False
 
 # Service Charge Request Models
 class ServiceChargeRequest(models.Model):

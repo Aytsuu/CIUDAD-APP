@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'rest_framework',
-    'simple_history',
     
     # Local apps
     'apps.administration',
@@ -82,8 +81,6 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.gad',
     'apps.clerk',
-    'apps.secretary',
-    'apps.act_log',
     'backend.firebase.notifications',
 ]
 
@@ -98,7 +95,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.authentication.middleware.AuthCheckingMiddleware',
-    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -515,21 +511,17 @@ ASGI_APPLICATION = 'backend.asgi.application'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://ciudad-app.onrender.com",
     "https://ciudad-app-server-1.onrender.com",
-    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5173",  # Add this for Vite sometimes
 ]
 
 ALLOWED_HOSTS = [
-    'ciudad-app.onrender.com',
     'ciudad-app-server-1.onrender.com',
     'localhost',
-    '127.0.0.1',
-    '*'
+    '127.0.0.1'
 ]
 
-
-CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [

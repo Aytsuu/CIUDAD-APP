@@ -1,10 +1,7 @@
 from rest_framework import serializers
-from .models import (
-    ClerkCertificate, IssuedCertificate, BusinessPermitRequest, IssuedBusinessPermit, 
-    Business, Invoice, Address, Sitio, Complainant, Accused, Complaint, 
-    ComplaintComplainant, ComplaintAccused, Complaint_File, ServiceChargeRequest, 
-    ServiceChargeRequestFile, CaseActivity, CaseSuppDoc
-)
+from .models import *
+from apps.complaint.models import Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, Complainant, Accused
+from apps.complaint.serializers import ComplaintSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
 from apps.file.models import File
 from datetime import datetime
@@ -269,82 +266,7 @@ class AccusedDetailsSerializer(serializers.ModelSerializer):
             'address'
         ]
 
-class ComplaintAccusedSerializer(serializers.ModelSerializer):
-    acsd = AccusedDetailsSerializer()
-    
-    class Meta:
-        model = ComplaintAccused
-        fields = ['acsd']
 
-class ComplainantDetailsSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
-    
-    class Meta:
-        model = Complainant
-        fields = [
-            'cpnt_id',
-            'cpnt_name',
-            'cpnt_gender',
-            'cpnt_age',
-            'cpnt_number',
-            'cpnt_relation_to_respondent',
-            'address'
-        ]
-
-class ComplaintComplainantSerializer(serializers.ModelSerializer):
-    cpnt = ComplainantDetailsSerializer()
-    
-    class Meta:
-        model = ComplaintComplainant
-        fields = ['cpnt']
-
-class ComplaintFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Complaint_File
-        fields = [
-            'comp_file_id',
-            'comp_file_name',
-            'comp_file_type',
-            'comp_file_path',
-            'file_size'
-        ]
-
-class ComplaintSerializer(serializers.ModelSerializer):
-    complainants = serializers.SerializerMethodField()
-    accused = serializers.SerializerMethodField()
-    files = ComplaintFileSerializer(source='complaint_file', many=True, read_only=True)
-    formatted_incident_datetime = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Complaint
-        fields = [
-            'comp_id',
-            'comp_incident_type',
-            'comp_allegation',
-            'comp_datetime',
-            'formatted_incident_datetime',
-            'comp_location',
-            'comp_created_at',
-            'complainants',
-            'accused',
-            'files'
-        ]
-    
-    def get_complainants(self, obj):
-        complainant_links = ComplaintComplainant.objects.filter(comp=obj)
-        serializer = ComplaintComplainantSerializer(complainant_links, many=True)
-        return [item['cpnt'] for item in serializer.data]
-    
-    def get_accused(self, obj):
-        accused_links = ComplaintAccused.objects.filter(comp=obj)
-        serializer = ComplaintAccusedSerializer(accused_links, many=True)
-        return [item['acsd'] for item in serializer.data]
-    
-    def get_formatted_incident_datetime(self, obj):
-        try:
-            return datetime.strptime(obj.comp_datetime, "%Y-%m-%d %H:%M:%S").strftime("%B %d, %Y at %I:%M %p")
-        except:
-            return obj.comp_datetime
 
 # Service Charge Request Serializers
 class ServiceChargeRequestSerializer(serializers.ModelSerializer):

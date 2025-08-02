@@ -1,6 +1,7 @@
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
-from .models import ServiceChargeRequest, Complainant, Accused, CaseActivity, CaseSuppDoc, ServiceChargeRequestFile
+from .models import ServiceChargeRequest, CaseActivity, CaseSuppDoc, ServiceChargeRequestFile
+from apps.complaint.models import Complainant, Accused
 from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
