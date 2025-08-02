@@ -32,10 +32,10 @@ export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: string }) {
         setViewImagesModalVisible(true);
     };
 
-    // const handleAddDocument = () => {
-    //     // Navigate to add document screen
-    //     router.push(`/(council)/budget-plans/add-document?plan_id=${plan_id}`);
-    // };
+    const handleAddDocument = () => {
+        // Navigate to add document screen
+        router.push('/(treasurer)/budgetPlan/budget-plan-suppdoc-create');
+    };
 
     if (isLoading) {
         return (
@@ -57,7 +57,7 @@ export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: string }) {
                         </Text>
                     </View>
                     <Button 
-                        // onPress={handleAddDocument}
+                        onPress={handleAddDocument}
                         className="bg-primaryBlue px-3 py-2 rounded-lg flex-row items-center"
                     >
                         <Plus size={16} color="white" />

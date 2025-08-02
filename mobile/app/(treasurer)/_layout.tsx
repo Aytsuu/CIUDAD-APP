@@ -22,6 +22,8 @@ export default () => {
                 <Stack.Screen name="inc-disbursement/inc-disb-create" options={{ headerShown: false }} />
                 <Stack.Screen name="inc-disbursement/inc-disb-edit" options={{ headerShown: false }} />        
                 <Stack.Screen name="budgetPlan/budget-plan-view" options={{ headerShown: false }} />
+                <Stack.Screen name="budgetPlan/budget-plan-suppdoc-create" options={{ headerShown: false }} />
+
             </Stack>
         </ToastProvider>
     );
