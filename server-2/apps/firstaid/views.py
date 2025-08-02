@@ -158,7 +158,9 @@ class MonthlyFirstAidRecordsAPIView(APIView):
 
                 # Get or create report record for this month
                 report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
-                    month_year=month_str
+                    month_year=month_str,
+                    rcp_type='FirstAid'
+
                 )
 
                 report_data = MonthlyRCPReportSerializer(report_obj).data

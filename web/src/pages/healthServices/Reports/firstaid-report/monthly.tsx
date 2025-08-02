@@ -1,21 +1,17 @@
 // MonthlyFirstAidRecords.tsx
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2, Search, ChevronLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
-import {
-  getFirstaidRecords,
-  MonthlyRecord,
-} from "../firstaid-report/restful-api/getAPI";
 import { useLoading } from "@/context/LoadingContext";
+import { MonthlyRecord } from "./types";
+import { useFirstAidRecords } from "./queries/fetchQueries";
+
 
 export default function MonthlyFirstAidRecords() {
   const { showLoading, hideLoading } = useLoading();
@@ -25,21 +21,14 @@ export default function MonthlyFirstAidRecords() {
   const [yearFilter, setYearFilter] = useState<string>("all");
   const navigate = useNavigate();
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["firstAidRecords", yearFilter],
-    queryFn: () =>
-      getFirstaidRecords(yearFilter === "all" ? undefined : yearFilter),
-  });
+  const {data: apiResponse, isLoading, error} = useFirstAidRecords(yearFilter);
 
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch first aid records");
     }
   }, [error]);
+
 
   useEffect(() => {
     if (isLoading) {
@@ -49,48 +38,7 @@ export default function MonthlyFirstAidRecords() {
     }
   }, [isLoading]);
 
-  const monthlyData = useMemo(() => {
-    if (!apiResponse?.data) return [];
-
-    return apiResponse.data.map((month) => {
-    
-      return {
-        ...month,
-        report: {
-          ...month.report,
-        },
-        records: month.records.map((record) => ({
-          ...record,
-          created_at: new Date(record.created_at).toISOString(),
-          finv_details: {
-            ...record.finv_details,
-            inv_detail: {
-              ...record.finv_details.inv_detail,
-              expiry_date: new Date(
-                record.finv_details.inv_detail.expiry_date
-              ).toISOString(),
-              created_at: new Date(
-                record.finv_details.inv_detail.created_at
-              ).toISOString(),
-              updated_at: new Date(
-                record.finv_details.inv_detail.updated_at
-              ).toISOString(),
-            },
-            fa_detail: {
-              ...record.finv_details.fa_detail,
-              created_at: new Date(
-                record.finv_details.fa_detail.created_at
-              ).toISOString(),
-              updated_at: new Date(
-                record.finv_details.fa_detail.updated_at
-              ).toISOString(),
-            },
-          },
-        })),
-      };
-    });
-  }, [apiResponse]);
-
+  const monthlyData = apiResponse?.data || [];
   const filteredData = useMemo(() => {
     return monthlyData.filter((monthData) => {
       const monthName = new Date(monthData.month + "-01").toLocaleString(
@@ -105,6 +53,7 @@ export default function MonthlyFirstAidRecords() {
     });
   }, [searchQuery, monthlyData]);
 
+  
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,

@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2, Edit } from "lucide-react";
 import { SignatureField, SignatureFieldRef } from "./signature";
 import { Combobox } from "@/components/ui/combobox";
 import { fetchStaffWithPositions } from "./queries/fetchQueries";
@@ -13,6 +13,14 @@ import { toast } from "sonner";
 
 export default function EditMonthlyRecipientList() {
   const location = useLocation();
+  const {
+    reports,
+    monthlyrcplist_id,
+    recordCount,
+    state_office,
+    state_control,
+    year,
+  } = location.state || {};
   const navigate = useNavigate();
   const signatureRef = useRef<SignatureFieldRef>(null);
   const [signature, setSignature] = useState<string | null>(null);
@@ -22,12 +30,9 @@ export default function EditMonthlyRecipientList() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: staffOptions, isLoading } = fetchStaffWithPositions();
   const queryClient = useQueryClient();
-
-  // Get passed data with proper typing
-  const { reports, monthlyrcplist_id, recordCount, state_office, state_control, year } = location.state || {};
   const passedStaffId = reports?.staff_details?.staff_id || "";
+  const signatureBase64 = reports?.signature || null;
 
-  // Auto-select the passed staff member when data loads
   useEffect(() => {
     if (passedStaffId && staffOptions?.formatted) {
       const staffExists = staffOptions.formatted.some(
@@ -43,12 +48,8 @@ export default function EditMonthlyRecipientList() {
     }
   }, [passedStaffId, staffOptions]);
 
-  const signatureBase64 = reports?.signature || null;
-
-  // Initialize signature when component mounts or signature data changes
   useEffect(() => {
     if (signatureBase64 && signatureRef.current) {
-      // Set signature in the component
       signatureRef.current.setSignature(signatureBase64);
       setSignature(signatureBase64);
     }
@@ -59,21 +60,18 @@ export default function EditMonthlyRecipientList() {
   }, []);
 
   const handleSubmit = async () => {
-    // Get the current signature from the component
     const currentSignature = signatureRef.current?.getSignature();
-
     if (!currentSignature) {
       toast.error("Please provide your signature!");
       return;
     }
-
     if (!selectedStaffId && !passedStaffId) {
       toast.error("Please select a staff member!");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const submissionPromise = update_monthly_recipient_list_report({
         monthlyrcplist_id,
@@ -84,55 +82,56 @@ export default function EditMonthlyRecipientList() {
       });
 
       toast.promise(submissionPromise, {
-        loading: 'Saving changes...',
+        loading: "Saving changes...",
         success: () => {
           queryClient.invalidateQueries({
             queryKey: ["firstAidRecords", year],
           });
-          return 'Recipient list updated successfully!';
+          return "Recipient list updated successfully!";
         },
-        error: 'Failed to update recipient list',
+        error: "Failed to update recipient list",
       });
-
       await submissionPromise;
-      navigate(-1); // Navigate back after successful submission
+      navigate(-1);
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
-    <div>
-      <div className="pb-10">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-            onClick={() => navigate(-1)}
-            disabled={isSubmitting}
-          >
-            <ChevronLeft />
-          </Button>
-          <div className="flex-col items-center ">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Edit recipients ledger/list
-            </h1>
-          </div>
+    <>
+      {/* Navigation Header */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <Button
+          className="text-black p-2 mb-2 self-start"
+          variant={"outline"}
+          onClick={() => navigate(-1)}
+          disabled={isSubmitting}
+        >
+          <ChevronLeft />
+        </Button>
+        <div className="flex-col items-center">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Edit recipients ledger/list
+          </h1>
         </div>
-        <hr className="border-gray mb-5 sm:mb-8" />
+      </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="bg-white py-4 px-8">
-          <div className="">
+      <div className="flex justify-center">
+        <div className="w-[816px] min-h-[1320px] bg-white shadow-lg p-8">
+          {" "}
+          {/* Long bond paper size */}
+          <div className="space-y-6">
             {/* Header Section */}
-            <div className="p-6 border-black flex items-center">
+            <div className="flex items-center justify-between">
               {/* Logo */}
-              <div className="left-0 top-0 flex items-center justify-center w-32 h-32 bg-gray-200 rounded-full">
+              <div className="w-24 h-24 bg-gray-200 rounded-full relative flex items-center justify-center">
                 <input
                   type="file"
                   accept="image/*"
-                  className=" opacity-0 w-full h-full cursor-pointer"
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
@@ -152,15 +151,15 @@ export default function EditMonthlyRecipientList() {
                     }
                   }}
                 />
-                <div className="text-xs text-gray-500">Upload Logo</div>
+                <span className="text-xs text-gray-500">Upload Logo</span>
               </div>
 
               {/* Header Text */}
-              <div className="flex-1 text-center mr-20">
+              <div className="flex-1 text-center px-4">
                 <h1 className="text-sm font-bold uppercase mb-1">
                   Republic of the Philippines
                 </h1>
-                <h2 className="text-lg font-bold uppercase mb-2">
+                <h2 className="text-lg font-bold uppercase mb-1">
                   CEBU CITY HEALTH DEPARTMENT
                 </h2>
                 <p className="text-xs mb-1">
@@ -168,133 +167,115 @@ export default function EditMonthlyRecipientList() {
                 </p>
                 <p className="text-xs">(032) 232-6820; 232-6863</p>
               </div>
+
+              {/* Empty space for balance */}
+              <div className="w-24"></div>
             </div>
+
             {/* Title Section */}
-            <div className="text-center py-8">
-              <h3 className="text-xl font-bold uppercase tracking-widest underline">
+            <div className="text-center py-4 border-b border-t border-gray-300 my-4">
+              <h3 className="text-xl font-bold uppercase tracking-widest">
                 RECIPIENTS LEDGER / LIST
               </h3>
             </div>
-          </div>
 
-          <div className="pb-4 order-b sm:items-center gap-4">
-            <div className="flex flex-col space-y-2 mt-6">
-              {/* First Row */}
-              <div className="flex justify-between items-end">
-                <div className="flex items-end gap-2 flex-1 mr-8">
-                  <Label className="font-medium whitespace-nowrap">
-                    Office:
-                  </Label>
-                  <div className="border-b border-black bg-transparent min-w-0 flex-1 ">
-                    <input
-                      className="bg-transparent focus:outline-none"
-                      placeholder="Enter office name"
-                      value={office}
-                      onChange={(e) => setOffice(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-end gap-2 flex-1">
-                  <Label className="font-medium whitespace-nowrap">
-                    Control No:
-                  </Label>
-                  <div className="min-w-0 flex-1 border-b border-black ">
-                    <input
-                      className="bg-transparent focus:outline-none"
-                      placeholder="Enter Control No"
-                      value={control_no}
-                      onChange={(e) => setcontrol_no(e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
+            {/* Form Fields */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="space-y-1">
+                <Label className="font-medium">Office:</Label>
+                <div className="border-b border-black relative">
+                  <input
+                    className="w-full bg-transparent focus:outline-none py-1"
+                    value={office}
+                    onChange={(e) => setOffice(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                  <Edit className="absolute right-2 bottom-2 h-4 w-4 text-gray-500" />
                 </div>
               </div>
 
-              {/* Second Row */}
-              <div className="flex justify-between items-end">
-                <div className="flex items-end gap-2 flex-1 mr-8">
-                  <Label className="font-medium whitespace-nowrap">
-                    Item Description:
-                  </Label>
-                  <div className="border-b border-black bg-transparent min-w-0 flex-1 "></div>
-                </div>
-
-                <div className="flex items-end gap-2 flex-1">
-                  <Label className="font-medium whitespace-nowrap">
-                    Total:
-                  </Label>
-                  <div className="border-b border-black bg-transparent min-w-0 flex-1">
-                    {recordCount || 0}
-                  </div>
+              <div className="space-y-1">
+                <Label className="font-medium">Control No:</Label>
+                <div className="border-b border-black relative">
+                  <input
+                    className="w-full bg-transparent focus:outline-none py-1"
+                    value={control_no}
+                    onChange={(e) => setcontrol_no(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                  <Edit className="absolute right-2 bottom-2 h-4 w-4 text-gray-500" />
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-4 flex items-center justify-center h-64 border border-gray-300 bg-gray-50">
-            <p>This is where the report content would appear.</p>
-          </div>
+            {/* Report Content Area */}
+            <div className="border border-gray-300 bg-gray-50 h-96 p-4">
+              <p className="text-center text-gray-500">
+                Report content will appear here
+              </p>
+            </div>
 
-          <div className="py-5">
-            <span>
+            {/* Certification Text */}
+            <div className="py-4 text-sm italic">
               Hereby certify that the names listed above are recipients of the
               item as indicated below
-            </span>
-          </div>
-
-          {/* Signature Field */}
-          <SignatureField
-            ref={signatureRef}
-            title="Authorized Signature"
-            onSignatureChange={handleSignatureChange}
-            initialSignature={signatureBase64}
-            required={true}
-          />
-
-          <div className="space-y-4 mt-6">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Combobox
-                options={staffOptions?.formatted || []}
-                value={selectedStaffId}
-                onChange={setSelectedStaffId}
-                placeholder={
-                  isLoading ? "Loading staff..." : "Select staff member"
-                }
-                emptyMessage="No available staff members"
-                triggerClassName="w-full"
-              />
             </div>
-          </div>
 
-          <div className="flex justify-end gap-2 mt-8">
-            <Button
-              onClick={() => navigate(-1)}
-              variant="outline"
-              className="px-6 py-2"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700"
-              disabled={isSubmitting || isLoading}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
+            {/* Signature Field */}
+            <SignatureField
+              ref={signatureRef}
+              title="Authorized Signature"
+              onSignatureChange={handleSignatureChange}
+              initialSignature={signatureBase64}
+              required={true}
+            />
+
+            {/* Staff Selection */}
+            <div className="mt-6">
+              <Label className="block mb-2">Name</Label>
+              <div className="relative">
+                <Combobox
+                  options={staffOptions?.formatted || []}
+                  value={selectedStaffId}
+                  onChange={setSelectedStaffId}
+                  placeholder={
+                    isLoading ? "Loading staff..." : "Select staff member"
+                  }
+                  emptyMessage="No available staff members"
+                  triggerClassName="w-full"
+                />
+                <Edit className="absolute right-3 top-3 h-4 w-4 text-gray-500" />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="outline"
+                className="px-8"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                className="px-8 bg-blue-600 hover:bg-blue-700"
+                disabled={isSubmitting || isLoading}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

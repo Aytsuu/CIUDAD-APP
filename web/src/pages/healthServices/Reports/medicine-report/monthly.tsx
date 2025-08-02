@@ -10,10 +10,8 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import {
-  getMedicineRecords,
-  MonthlyMedicineRecord,
-} from "../medicine-report/restful-api/getAPI";
+import { useMedicineRecords } from "./queries/fetchQueries";
+import { MonthlyMedicineRecord } from "./types";
 
 export default function MonthlyMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,16 +19,10 @@ export default function MonthlyMedicineRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter, setYearFilter] = useState<string>("all");
   const navigate = useNavigate();
+  const { data: apiResponse, isLoading, error } = useMedicineRecords(yearFilter);
+  const monthlyData = apiResponse?.data || [];
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["medicineRecords", yearFilter],
-    queryFn: () =>
-      getMedicineRecords(yearFilter === "all" ? undefined : yearFilter),
-  });
+
 
   useEffect(() => {
     if (error) {
@@ -38,21 +30,6 @@ export default function MonthlyMedicineRecords() {
     }
   }, [error]);
 
-  const monthlyData = useMemo(() => {
-    if (!apiResponse?.data) return [];
-    return apiResponse.data.map((month) => ({
-      ...month,
-      records: month.records.map((record) => ({
-        ...record,
-        requested_at: record.requested_at
-          ? new Date(record.requested_at).toISOString()
-          : null,
-        fulfilled_at: record.fulfilled_at
-          ? new Date(record.fulfilled_at).toISOString()
-          : null,
-      })),
-    }));
-  }, [apiResponse]);
 
   const filteredData = useMemo(() => {
     return monthlyData.filter((monthData) => {

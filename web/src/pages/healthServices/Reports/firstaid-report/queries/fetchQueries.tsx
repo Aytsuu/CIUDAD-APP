@@ -1,8 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { getStaffList } from "../restful-api/getAPI";
 import { toast } from "sonner";
+import { getFirstaidRecords } from "../restful-api/getAPI";
 
-
+export const useFirstAidRecords = (yearFilter: string) => {
+  return useQuery({
+    queryKey: ["firstAidRecords", yearFilter],
+    queryFn: () =>
+      getFirstaidRecords(yearFilter === "all" ? undefined : yearFilter),
+  });
+};
 
 export const fetchStaffWithPositions = () => {
   return useQuery({

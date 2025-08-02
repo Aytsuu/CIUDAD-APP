@@ -23,6 +23,15 @@ class MonthlyRecipientListReport(models.Model):
     office = models.CharField(max_length=255, null=True, blank=True)
     control_no = models.CharField(max_length=100, null=True, blank=True)
     total_records = models.IntegerField(default=0)
+    rcp_type = models.CharField(
+        max_length=20,
+        choices=[
+            
+            ('FirstAid', 'FirstAid'),
+            ('Medicine', 'Medicine'),
+        ]
+    )
+    unique_together = ('month_year', 'rcp_type')  # Prevent duplicates per month+type
 
     def __str__(self):
         return f"Recipient Report {self.rcplist_id} - {self.staff}"
@@ -30,13 +39,3 @@ class MonthlyRecipientListReport(models.Model):
     class Meta:
         db_table = 'monthly_recipient_list_report'
 
-# class HeaderRecipientListReporFile(models.Model):
-#   rcpf_id = models.BigAutoField(primary_key=True)
-#   rcpf_name = models.CharField(max_length=500)
-#   rcpf_type = models.CharField(max_length=50)
-#   rcpf_path = models.CharField(max_length=500)
-#   rcpf_url = models.URLField()
-
-#   class Meta:
-#     db_table = 'ar_file'
-    
