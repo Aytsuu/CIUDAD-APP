@@ -150,7 +150,7 @@ export default function BudgetPlanHistory({ planId }: { planId: string }) {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-gray-50 px-4">
       {/* Fixed Search Bar (outside ScrollView) */}
       <View className="pt-2 pb-2 bg-white">
         <View className="relative">

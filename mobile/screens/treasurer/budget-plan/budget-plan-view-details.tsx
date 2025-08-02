@@ -115,6 +115,7 @@ import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import BudgetPlanHistory from "./budget-plan-history";
+import PageLayout from "@/screens/_PageLayout";
 
 export default function BudgetPlanView() {
     const router = useRouter();
@@ -139,15 +140,17 @@ export default function BudgetPlanView() {
     }
 
     return (
-        <_ScreenLayout
-            customLeftAction={
-              <TouchableOpacity onPress={() => router.back()}>
-                <ChevronLeft size={30} className="text-black" />
+        <PageLayout
+            leftAction={
+              <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+                <ChevronLeft size={24} className="text-gray-700" />
               </TouchableOpacity>
             }
-            headerBetweenAction={<Text className="text-[13px]">Budget Plan {fetchedData.plan_year}</Text>}
-            showExitButton={false}
-          >
+            
+            headerTitle={<Text className="text-gray-900 text-[13px]">Budget Plan {fetchedData.plan_year}</Text>}
+            rightAction={
+                <Text className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center" > </Text>
+            }          >
           <View className="flex-1 bg-gray-50">
             {/* Fixed Tab Headers (won't scroll) */}
             <View className="bg-white border-b border-gray-200">
@@ -190,15 +193,13 @@ export default function BudgetPlanView() {
             {/* Scrollable Content Area */}
             <View className="flex-1">
                 {activeTab === "plan" && (
-                    <ScrollView className="flex-1 pt-2">
+                    <ScrollView className="flex-1 pt-2 px-4">
                         <MobileBudgetPlanView budgetData={fetchedData} />
                     </ScrollView>
                 )}
 
                 {activeTab === "history" && (
-                    // <ScrollView className="flex-1">
-                        <BudgetPlanHistory planId={plan_id as string} />
-                    // </ScrollView>
+                    <BudgetPlanHistory planId={plan_id as string} />
                 )}
 
                 {activeTab === "documents" && (
@@ -210,6 +211,6 @@ export default function BudgetPlanView() {
                 )}
             </View>
           </View>
-       </_ScreenLayout>
+       </PageLayout>
     );
 }
