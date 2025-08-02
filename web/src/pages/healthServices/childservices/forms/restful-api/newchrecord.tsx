@@ -18,7 +18,7 @@ import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 import { api2 } from "@/api/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 export interface AddRecordArgs {
   submittedData: FormData;
   staff: string | null;

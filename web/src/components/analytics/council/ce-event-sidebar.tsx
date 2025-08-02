@@ -15,7 +15,7 @@ const capitalize = (str: string) =>
 export const CouncilEventsSidebar = () => {
   const navigate = useNavigate();
   const { data: events, isLoading } = useGetCouncilEvents();
-  const [selectedEvent, setSelectedEvent] = useState<CouncilEvent | null>(null);
+  const [_, setSelectedEvent] = useState<CouncilEvent | null>(null);
 
   // Filter events for the next 5 days (upcoming, non-archived)
   const filteredEvents = events?.filter((event) => {

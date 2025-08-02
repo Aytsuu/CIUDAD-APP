@@ -1,20 +1,19 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useInstantFileUpload } from "@/hooks/use-file-upload";
 import { CircleAlert, Loader2, Pen, Printer, Upload, X } from "lucide-react";
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { cn } from "@/lib/utils";
-import { pdf, PDFViewer } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { WARTemplatePDF } from "./WARTemplatePDF";
 import { useUpdateTemplate } from "../queries/reportUpdate";
 import { useGetSpecificTemplate } from "../queries/reportFetch";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Card, CardContent } from "@/components/ui/card/card";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
-import { formatStaffs } from "../../administration/administrationFormats";
 import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
+import { formatStaffs } from "../../administration/AdministrationFormats";
 
 const header = [
   {
@@ -46,7 +45,6 @@ export const WARDocTemplate = ({
   data: any;
   reportPeriod: string;
 }) => {
-  const { uploadFile } = useInstantFileUpload({});
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { data: reportTemplate, isLoading: isLoadingTemplate } = useGetSpecificTemplate('WAR');  
   const { data: staffByTitle, isLoading: isLoadingStaffByTitle } = useGetStaffByTitle('all');
@@ -143,21 +141,17 @@ export const WARDocTemplate = ({
   const handleImageUpload = React.useCallback(async (files: any[]) => {
     if (files.length === 0) return;
 
-    const newFile = {
-      type: files[0].type.startsWith("image/")
-        ? "image"
-        : files[0].type.startsWith("video/")
-        ? "video"
-        : ("document" as "image" | "video" | "document"),
-      file: files[0],
-      status: "uploading" as const,
-      previewUrl: URL.createObjectURL(files[0]),
-    };
+    // const newFile = {
+    //   type: files[0].type.startsWith("image/")
+    //     ? "image"
+    //     : files[0].type.startsWith("video/")
+    //     ? "video"
+    //     : ("document" as "image" | "video" | "document"),
+    //   file: files[0],
+    //   status: "uploading" as const,
+    //   previewUrl: URL.createObjectURL(files[0]),
+    // };
 
-    const { publicUrl } = await uploadFile(newFile.file);
-    if (publicUrl) {
-      return publicUrl
-    }
     return null;
   }, []);
 

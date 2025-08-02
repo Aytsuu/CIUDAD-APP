@@ -44,7 +44,7 @@ export const MedicineDisplay = ({
   const [searchQuery, setSearchQuery] = useState("")
 
   // Move the medicine fetching logic inside the component
-  const { medicineStocksOptions, isLoading } = fetchMedicinesWithStock()
+  const { data: medicineStocksOptions, isLoading } = fetchMedicinesWithStock()
   const medicines = propMedicines || medicineStocksOptions || []
 
   // Sync internal state with props

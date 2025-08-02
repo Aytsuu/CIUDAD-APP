@@ -2,8 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
-import { GADBudgetEntry } from "../requestAPI/BTGetRequest";
-import { GADBudgetCreatePayload, createGADBudget, createGADBudgetFile, GADBudgetFile } from "../requestAPI/BTPostRequest";
+import { GADBudgetCreatePayload, createGADBudget, createGADBudgetFile } from "../requestAPI/BTPostRequest";
 import { MediaUploadType } from "@/components/ui/media-upload";
 
 type BudgetYear = {

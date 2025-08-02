@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, Trash, Search, ChevronLeft } from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -12,10 +12,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
 import { getMedconRecordById } from "../restful-api/get";
-import { Toaster } from "sonner";
 import { Syringe, AlertCircle } from "lucide-react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";

@@ -7,13 +7,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
-import { Check, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 // Define the feedback schema

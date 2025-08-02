@@ -8,7 +8,6 @@ import type {
   VitalSignType,
   NutritionalStatusType,
 } from "@/form-schema/chr-schema/chr-schema";
-import type { CHSSupplementStat } from "./types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -31,7 +30,6 @@ import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices
 import { NutritionalStatusCalculator } from "../../../../../components/ui/nutritional-status-calculator";
 import { calculateCurrentAge } from "@/helpers/ageCalculator";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
-import type { Medicine } from "./types";
 import { DataTable } from "@/components/ui/table/data-table";
 import {
   Salad,

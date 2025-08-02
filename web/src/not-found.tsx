@@ -1,5 +1,4 @@
 
-import { MapPin } from "lucide-react"
 
 export function NotFound() {
   return (

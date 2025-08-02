@@ -81,7 +81,7 @@ export const useAddFamilyComposition = () => {
     
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addFamilyComposition(data),
-    onSuccess: (newData, variables) => {
+    onSuccess: () => {
       // const {familyId, role, residentId} = variables;
 
       // // Update family compositions list

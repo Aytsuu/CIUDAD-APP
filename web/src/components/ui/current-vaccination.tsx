@@ -39,9 +39,6 @@ import {
       return date ? format(date, "MMMM d, yyyy") : fallback;
     };
   
-    const createdDate = parseDate(currentVaccination.created_at);
-    const followUpDate = parseDate(currentVaccination.follow_up_visit?.followv_date);
-  
     return (
       <CardLayout
         content={

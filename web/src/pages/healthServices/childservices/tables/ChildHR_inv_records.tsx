@@ -1,11 +1,10 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Search, FileInput, ChevronLeft } from "lucide-react";
 import {
   DropdownMenu,
@@ -15,11 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
-import { api2 } from "@/api/api";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { getChildHealthColumns } from "./columns/indiv_col";
-import CardLayout from "@/components/ui/card/card-layout";
 import { useUnvaccinatedVaccines } from "../../vaccination/queries/fetch";
 import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";

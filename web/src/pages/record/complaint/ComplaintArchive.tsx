@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { BsChevronLeft } from "react-icons/bs";
 
 type Complaint = {

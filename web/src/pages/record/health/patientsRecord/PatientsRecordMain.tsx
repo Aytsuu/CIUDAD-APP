@@ -14,7 +14,6 @@ import {
   UserCog,
   ArrowUp,
   ArrowDown,
-  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,

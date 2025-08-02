@@ -1,4 +1,4 @@
-import React, { Dispatch, MouseEvent, SetStateAction, ChangeEvent } from "react";
+import { Dispatch, MouseEvent, SetStateAction, ChangeEvent } from "react";
 import {
   TextField,
   Dialog,
@@ -13,13 +13,12 @@ import {
 } from "@mui/material";
 import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { DatePickerEventFormData } from "./EventCalendar";
 
 interface IProps {
   open: boolean;
   handleClose: Dispatch<SetStateAction<void>>;
-  datePickerEventFormData: DatePickerEventFormData;
-  setDatePickerEventFormData: Dispatch<SetStateAction<DatePickerEventFormData>>;
+  datePickerEventFormData: any;
+  setDatePickerEventFormData: Dispatch<SetStateAction<any>>;
   onAddEvent: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -37,14 +36,14 @@ const AddDatePickerEventModal = ({
   };
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setDatePickerEventFormData((prevState) => ({
+    setDatePickerEventFormData((prevState: any) => ({
       ...prevState,
       [event.target.name]: event.target.value,
     }));
   };
 
   const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setDatePickerEventFormData((prevState) => ({
+    setDatePickerEventFormData((prevState: any) => ({
       ...prevState,
       allDay: event.target.checked,
     }));
@@ -79,7 +78,7 @@ const AddDatePickerEventModal = ({
             variant="outlined"
             onChange={onChange}
           />
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <LocalizationProvider dateAdapter={AdapterDateFns as any}>
             <Box mb={2} mt={5}>
               <DateTimePicker
                 label="Start date"
@@ -87,7 +86,7 @@ const AddDatePickerEventModal = ({
                 ampm={true}
                 minutesStep={30}
                 onChange={(newValue) =>
-                  setDatePickerEventFormData((prevState) => ({
+                  setDatePickerEventFormData((prevState: any) => ({
                     ...prevState,
                     start: new Date(newValue!),
                   }))
@@ -111,7 +110,7 @@ const AddDatePickerEventModal = ({
               ampm={true}
               value={allDay ? null : end}
               onChange={(newValue) =>
-                setDatePickerEventFormData((prevState) => ({
+                setDatePickerEventFormData((prevState: any) => ({
                   ...prevState,
                   end: new Date(newValue!),
                 }))

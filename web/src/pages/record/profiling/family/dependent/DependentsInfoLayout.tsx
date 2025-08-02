@@ -143,7 +143,7 @@ export default function DependentsInfoLayout({
         staffId: user?.staff?.staff_id || ""
       }, {
         onSuccess: (family) => {
-          let bulk_composition: {
+          const bulk_composition: {
           fam: string, 
           fc_role: string, 
           rp: string}[] = [];

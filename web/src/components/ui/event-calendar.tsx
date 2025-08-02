@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -23,15 +23,7 @@ interface CalendarCompProps {
 
 
 // function CalendarComp({ events, setEvents, className}: CalendarCompProps) {
-function CalendarComp({className}: CalendarCompProps) {
-
-    const [events, setEvents] = useState<Event[]>([
-        {
-            start: new Date(), // Set the start time to now
-            end: new Date(new Date().getTime() + 60 * 60 * 1000), // Set the end time to one hour later
-            title: 'Hello', // Event title
-        }
-    ]);
+function CalendarComp({className, events}: CalendarCompProps) {
 
     const handleEventClick = (event: Event) => {
         alert(`Event: ${event.title}\nStart: ${event.start}\nEnd: ${event.end}`);

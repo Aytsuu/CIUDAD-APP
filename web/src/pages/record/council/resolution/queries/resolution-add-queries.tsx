@@ -1,7 +1,5 @@
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import IncomeExpenseFormSchema from "@/form-schema/treasurer/expense-tracker-schema";
-import IncomeFormSchema from "@/form-schema/treasurer/income-tracker-schema";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { resolution_create } from "../request/resolution-post-request";

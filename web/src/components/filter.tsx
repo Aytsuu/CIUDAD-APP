@@ -335,7 +335,7 @@ export const DynamicFilter: React.FC<DynamicFilterProps> = ({
 
 // Example usage component
 const FilterExample: React.FC = () => {
-  const [filters, setFilters] = useState({});
+  const [_, setFilters] = useState({});
 
   const handleFilterChange = (newFilters: FilterValue) => {
     setFilters(newFilters);

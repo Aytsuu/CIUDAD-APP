@@ -1,15 +1,11 @@
 import {api} from "@/api/api";
-import { formatDate } from '@/helpers/dateHelper';
-import { parseFloatSafe } from '@/helpers/floatformatter';
-import { capitalize } from "@/helpers/capitalize";
-import { useState } from "react";
 
 
 
 
 export const resolution_create = async (resolutionInfo: Record<string, any>) => {
     try{
-        let staff = "00004250624";
+        const staff = "00004250624";
 
         console.log({
             res_title: resolutionInfo.res_title,

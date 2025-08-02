@@ -10,11 +10,10 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
-import { CircleCheck, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { formatResidents } from "../profilingFormats";
 import { useAddFamilyComposition } from "../queries/profilingAddQueries";
-import { toast } from "sonner";
 import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
 

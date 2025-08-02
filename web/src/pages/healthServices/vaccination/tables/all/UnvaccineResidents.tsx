@@ -8,7 +8,7 @@ import { calculateAge, getAgeInUnit } from "@/helpers/ageCalculator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Link } from "react-router-dom"
 import { useUnvaccinatedResidents } from "../../queries/fetch"
-import type { Resident, UnvaccinatedResident, VaccineCounts, GroupedResidents } from "../columns/types"
+import type { Resident, UnvaccinatedResident, GroupedResidents } from "../columns/types"
 import { ResidentListPanel } from "./ResidentListDialog"
 
 export default function UnvaccinatedResidents() {

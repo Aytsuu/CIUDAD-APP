@@ -13,7 +13,6 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useVaccinationRecords } from "../../queries/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
 import CardLayout from "@/components/ui/card/card-layout";

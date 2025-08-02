@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import {
   Form,
-  FormControl,
-  FormField,
   FormItem,
   FormLabel,
 } from "@/components/ui/form/form";
@@ -14,17 +12,15 @@ import {
   CommodityStocksSchema,
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { fetchCommodity } from "../REQUEST/Commodity/restful-api/CommodityFetchAPI";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitCommodityStock } from "../REQUEST/Commodity/queries/CommodityPostQueries";
-import { toast } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AddCommodityStock() {

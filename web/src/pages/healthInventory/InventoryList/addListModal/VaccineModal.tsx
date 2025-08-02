@@ -11,7 +11,7 @@ import {
 } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Label } from "@/components/ui/label";
-import { Pill, CircleCheck, Loader2 } from "lucide-react";
+import { Pill, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSubmitVaccine } from "../queries/Antigen/VaccinePostQueries";
 import { getVaccineList } from "../restful-api/Antigen/VaccineFetchAPI";

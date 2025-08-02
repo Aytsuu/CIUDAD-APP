@@ -9,7 +9,6 @@ import { z } from "zod";
 import MarkAttendeesSchema from "@/form-schema/council/markAttendees";
 import { useGetAttendees } from "../Calendar/queries/fetchqueries";
 import { useAddAttendee } from "../Calendar/queries/addqueries";
-import { Attendee } from "../Calendar/queries/fetchqueries";
 import { useUpdateAttendee } from "../Calendar/queries/updatequeries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 

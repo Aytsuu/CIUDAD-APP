@@ -177,10 +177,7 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from "@/components/ui/button/button";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import { useUpdateWasteReport } from "./queries/waste-ReportUpdateQueries";
 import WasteReportResolved from "./waste-illegal-dumping-update";
 
 interface WasteReportDetailsProps {

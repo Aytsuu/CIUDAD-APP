@@ -156,7 +156,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     if (!businessInfo) return
 
     // If respondent is a resident
-    const resident = formattedResidents?.find((res: any) => res.id.split(" "[0] == params?.rpId));
+    // const resident = formattedResidents?.find((res: any) => res.id.split(" "[0] == params?.rpId));
 
     const fields = [
       // ...(businessInfo.rp

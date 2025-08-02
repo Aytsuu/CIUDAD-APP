@@ -11,7 +11,6 @@ import {
   Calendar,
   User,
   Phone,
-  MapPin,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -22,9 +21,7 @@ import {
   Trash2,
   Mail,
   HeartPulse,
-  Home,
-  Landmark,
-  Navigation
+  Home
 } from "lucide-react";
 import { MedicineRequestDetailProps, MedicineRequestItem } from "./types";
 import { fetchRequestItems } from "./restful-api/get";

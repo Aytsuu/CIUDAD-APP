@@ -1,4 +1,4 @@
-import { Syringe, Calendar, CheckCircle, Clock, AlertCircle, Calendar1 } from "lucide-react";
+import { Calendar, CheckCircle, Clock, AlertCircle, Calendar1 } from "lucide-react";
 import { useState } from "react";
 
 interface FollowUps {

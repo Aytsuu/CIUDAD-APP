@@ -1,4 +1,3 @@
-import React from "react";
 import { Header } from "@/pages/menubar/Header";
 import {
   SidebarProvider,
@@ -9,11 +8,9 @@ import { Outlet } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { useAuth } from "@/context/AuthContext";
 
 export default function MainLayout() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = React.useRef(useAuth()).current;
 
   return (
     <div className="fixed inset-0 flex flex-col bg-none">
@@ -24,7 +21,7 @@ export default function MainLayout() {
         <div className="flex-shrink-0 h-full relative z-0">
           <SidebarProvider>
             {/* <AppSidebar assignedFeatures={user?.resident_profile?.staff?.assignments ?? []}/> */}
-            <AppSidebar />
+            <AppSidebar assignedFeatures={[]} />
             <div className="bg-snow">
               <TooltipLayout
                 trigger={<SidebarTrigger onClick={() => setIsOpen(!isOpen)} />}

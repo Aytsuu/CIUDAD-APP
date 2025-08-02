@@ -14,7 +14,6 @@ import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLay
 import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
 import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
-import { Navigate } from "react-router";
 import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
 import UpdateComparisonView from "@/pages/record/profiling/resident/form/UpdateComparisonView";
 import ActiveRecords from "@/pages/record/profiling/business/ActiveRecords";

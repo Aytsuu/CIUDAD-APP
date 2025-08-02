@@ -3,11 +3,9 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 // import { Button } from "@/components/ui/button/button";
 // import TableLayout from '@/components/ui/table/table-layout.tsx';
 // import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from "@/components/ui/button/button";
+import { Plus, Search } from 'lucide-react';
 // import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
 import { DataTable } from "@/components/ui/table/data-table"
