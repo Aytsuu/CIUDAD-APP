@@ -22,83 +22,25 @@ import {
   } from "./table"
    
   interface DataTableProps<TData, TValue> {
-<<<<<<< HEAD
-    header?: boolean;
-    headerClassName?: string;
-    cellClassName?: string;
-    isLoading?: boolean;
-    columns: ColumnDef<TData, TValue>[];
-    data: TData[];
-    reset?: boolean;
-    setReset?: React.Dispatch<React.SetStateAction<boolean>>
-    onSelectedRowsChange?: (rows: TData[]) => void;
-    rowSelection?: Record<string, boolean>;
-    setRowSelection?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
-=======
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     header?: boolean
     onRowClick?: (row: TData) => void
->>>>>>> 08e94eb06 (bulk commit)
   }
    
   export function DataTable<TData, TValue>({ 
     columns, 
-<<<<<<< HEAD
-    data,
-    reset,
-    setReset,
-    onSelectedRowsChange,
-    rowSelection: externalRowSelection,
-    setRowSelection: externalSetRowSelection
-=======
     data, 
     onRowClick, 
     header = false 
->>>>>>> 08e94eb06 (bulk commit)
   }: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-    const [internalRowSelection, setInternalRowSelection] = React.useState({});
-    const rowSelectionState = externalRowSelection ?? internalRowSelection;
-    const setRowSelectionState = externalSetRowSelection ?? setInternalRowSelection;
+    const [rowSelection, setRowSelection] = React.useState({})
 
     const table = useReactTable({
-<<<<<<< HEAD
-      data,
-      columns,
-      onSortingChange: setSorting,
-      onColumnFiltersChange: setColumnFilters,
-      getCoreRowModel: getCoreRowModel(),
-      getSortedRowModel: getSortedRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      onColumnVisibilityChange: setColumnVisibility,
-      onRowSelectionChange: setRowSelectionState,
-      enableRowSelection: true,
-      state: {
-        sorting,
-        columnFilters,
-        columnVisibility,
-        rowSelection: rowSelectionState,
-      },
-    })
-
-     React.useEffect(() => {
-      if (onSelectedRowsChange) {
-        const selectedRows = table.getSelectedRowModel().rows.map(row => row.original)
-        onSelectedRowsChange(selectedRows)
-      }
-    }, [onSelectedRowsChange, rowSelectionState]);
-
-    React.useEffect(() => {
-      if(reset) {
-        table.resetRowSelection();
-        setReset && setReset(false);
-      }
-    }, [reset])
-=======
         data,
         columns,
         onSortingChange: setSorting,
@@ -116,7 +58,6 @@ import {
             rowSelection,
         },
     })
->>>>>>> 08e94eb06 (bulk commit)
    
     return (
         <Table>

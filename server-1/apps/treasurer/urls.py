@@ -1,16 +1,13 @@
 from django.urls import path
 from .views import *
 
-
 urlpatterns=[
-
     # Budget Plan and Budget Details URL
     path('budget-plan/', BudgetPlanView.as_view(), name = 'treasurer-budget-plan'),
     path('budget-plan-detail/', BudgetPlanDetailView.as_view(), name='treasurer-budget-plan-details'),
     path('budget-plan/<int:plan_id>/', DeleteRetrieveBudgetPlanAndDetails.as_view(), name='treasurer-manage-budget-plan'),
     path('update-budget-plan/<int:plan_id>/', UpdateBudgetPlan.as_view(), name='treasurer-update-budget-plan'),
     path('update-budget-details/<int:dtl_id>/', UpdateBudgetDetails.as_view(), name='treasurer-update-budget-details'),
-<<<<<<< HEAD
     path('budget-plan-file/', BudgetPlanFileView.as_view(), name = 'budget-plan-file'),
     path('budget-plan-file/<int:plan_id>/', BudgetPlanFileRetrieveView.as_view(), name = 'budget-plan-file-records'),
     path('delete-budget-plan-file/<int:bpf_id>/', DeleteBudgetPlanFile.as_view(), name = 'delete-budget-plan-file'),
@@ -18,10 +15,6 @@ urlpatterns=[
     path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryView.as_view(), name='budget-plan-history-record'),
     path('previous-budget-plan/', PreviousYearBudgetPlanView.as_view(), name='previous-budget-plan'),
     path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
-=======
-    path('budget-plan/history/<int:plan_id>/', BudgetPlanHistoryView.as_view(), name='budget-plan-history'),
-    path('budget-plan-and-detail/history/<int:plan_id>/', RetrieveBudgetPlanAndDetailHistoryView.as_view(), name='budget-plan-and-detail-history'),
->>>>>>> c1ea12edf (working personal clerance request)
 
     #Income and Disbursement URL
         # Income Folder URLs
@@ -60,7 +53,6 @@ urlpatterns=[
     path('income-expense-main/', Income_Expense_MainView.as_view(), name='income-expense-main-card'),
     path('update-income-expense-main/<int:ie_main_year>/', UpdateIncome_Expense_MainView.as_view(), name='income-expense-file-detail'),
 
-
     #INCOME EXPENSE FILE FOLDER
     path('inc-exp-file/', Income_Expense_FileView.as_view(), name='income-expense-main-file'),
     path('income-expense-files/', Income_Expense_FileView.as_view(), name='income-expense-files-list'),
@@ -75,10 +67,9 @@ urlpatterns=[
     path('update-annual-gross-sales/<int:ags_id>/', DeleteUpdate_Annual_Gross_SalesView.as_view(), name = 'annual-gross-sales-update'),
     path('update-purpose-and-rate/<int:pr_id>/', DeleteUpdate_Purpose_And_RatesView.as_view(), name='update-purpose-and-rate'),
 
-
     #RECEIPTS
     path('invoice/', InvoiceView.as_view(), name='invoice_tracking'),
-    
+
     #CLEARANCE REQUESTS
     path('clearance-request/', ClearanceRequestListView.as_view(), name='clearance-request-list'),
     path('clearance-request/<str:cr_id>/', ClearanceRequestDetailView.as_view(), name='clearance-request-detail'),

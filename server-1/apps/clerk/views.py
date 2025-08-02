@@ -1,117 +1,9 @@
-# from rest_framework import generics
-# from rest_framework.exceptions import NotFound
-# from .models import ServiceChargeRequest
-# from .serializers import *
-# from rest_framework.response import Response
-# from rest_framework import status
-# from django.db.models import Prefetch
-
-# class ServiceChargeRequestView(generics.ListCreateAPIView):
-#     serializer_class = ServiceChargeRequestSerializer
-
-#     def get_queryset(self):
-#         return ServiceChargeRequest.objects.filter(sr_payment_status="Paid", sr_type = "Summon").select_related(
-#             'comp'  
-#         ).prefetch_related(
-#             'comp__complaintaccused_set__acsd'  
-#         )
-
-# class FileActionrequestView(generics.ListCreateAPIView):
-#     serializer_class = FileActionRequestSerializer
-#     queryset = ServiceChargeRequest.objects.all()
-
-# # class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
-# #     serializer_class = ServiceChargeRequestDetailSerializer
-# #     lookup_field = 'sr_id'
-    
-# #     def get_queryset(self):
-# #         return ServiceChargeRequest.objects.filter(
-# #             sr_payment_status="Paid",
-# #             sr_type="Summon"
-# #         ).select_related(
-# #             'comp__cpnt__add',  # Include complainant's address
-# #             'comp'  # Include complaint
-# #         ).prefetch_related(
-# #             'comp__complaintaccused_set__acsd__add',  # Include accused's address
-# #             Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
-# #         )
-
-# class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
-#     serializer_class = ServiceChargeRequestDetailSerializer
-#     lookup_field = 'sr_id'
-    
-#     def get_queryset(self):
-#         return ServiceChargeRequest.objects.filter(
-#             sr_payment_status="Paid",
-#             sr_type="Summon"
-#         ).select_related(
-#             'comp'
-#         ).prefetch_related(
-#             'comp__complainant', 
-#             'comp__complaintaccused_set__acsd',
-#             Prefetch('case', queryset=CaseActivity.objects.prefetch_related('supporting_docs'))
-#         )
-            
-# class CaseActivityView(generics.ListCreateAPIView):
-#     serializer_class = CaseActivitySerializer
-#     queryset = CaseActivity.objects.all()
-
-# class CaseSuppDocView(generics.ListCreateAPIView):
-#     serializer_class = CaseSuppDocSerializer
-    
-#     def get_queryset(self):
-#         queryset = CaseSuppDoc.objects.all()
-#         ca_id = self.kwargs.get('ca_id')
-#         if ca_id is not None:
-#             queryset = queryset.filter(ca_id=ca_id)
-#         return queryset
-    
-# class DeleteCaseSuppDocView(generics.RetrieveDestroyAPIView):
-#     queryset = CaseSuppDoc.objects.all()
-#     serializer_class = CaseSuppDocSerializer
-#     lookup_field = 'csd_id'
-
-# class UpdateCaseSuppDocView(generics.UpdateAPIView):
-#     serializer_class = CaseSuppDocSerializer
-#     queryset = CaseSuppDoc.objects.all()
-#     lookup_field = 'csd_id'
-
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# class UpdateServiceChargeRequestView(generics.UpdateAPIView):
-#     serializer_class = ServiceChargeRequestSerializer
-#     queryset = ServiceChargeRequest.objects.all()
-#     lookup_field = 'sr_id'
-
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-# class ServiceChargeRequestFileView(generics.ListCreateAPIView):
-#     serializer_class = ServiceChargeRequestFileSerializer
-#     queryset = ServiceChargeRequestFile.objects.all()
-    
-
-
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
-from .models import ServiceChargeRequest
+from .models import ServiceChargeRequest, Complainant, Accused, CaseActivity, CaseSuppDoc, ServiceChargeRequestFile
 from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
-<<<<<<< HEAD
-from django.db.models import Prefetch
-=======
 from .models import ClerkCertificate, IssuedCertificate, BusinessPermitRequest, IssuedBusinessPermit, Business, Invoice
 from apps.file.models import File
 from .serializers import (
@@ -121,24 +13,6 @@ from .serializers import (
     IssuedBusinessPermitSerializer
 )
 from supabase import create_client, Client 
->>>>>>> e82204304 (update)
-
-class ServiceChargeRequestView(generics.ListCreateAPIView):
-    serializer_class = ServiceChargeRequestSerializer
-
-<<<<<<< HEAD
-    def get_queryset(self):
-        return ServiceChargeRequest.objects.filter(
-            sr_payment_status="Paid", 
-            sr_type="Summon"
-        ).select_related(
-            'comp'
-        ).prefetch_related(
-            Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add')),
-            'file_action_file'
-        ).order_by('-sr_req_date')
-=======
 import tempfile
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -150,32 +24,21 @@ from django.db.models import F, Prefetch
 import uuid
 from django.utils import timezone
 from rest_framework.decorators import api_view
->>>>>>> e82204304 (update)
 
-# class FileActionrequestView(generics.ListCreateAPIView):
-#     serializer_class = FileActionRequestSerializer
-#     queryset = ServiceChargeRequest.objects.all()
+# Service Charge Request Views
+class ServiceChargeRequestView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargeRequestSerializer
 
-<<<<<<< HEAD
-class FileActionrequestView(generics.ListCreateAPIView):
-    serializer_class = FileActionRequestSerializer
-    
     def get_queryset(self):
-        return ServiceChargeRequest.objects.select_related(
-            'comp',
-            'file_action_file'
+        return ServiceChargeRequest.objects.filter(
+            sr_payment_status="Paid", 
+            sr_type="Summon"
+        ).select_related(
+            'comp'
         ).prefetch_related(
             Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add'))
-        ).order_by('-sr_req_date')
-    
-    def get_queryset(self):
-        return ServiceChargeRequest.objects.select_related(
-            'comp',
+            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add')),
             'file_action_file'
-        ).prefetch_related(
-            Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add'))
         ).order_by('-sr_req_date')
 
 class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
@@ -190,9 +53,6 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
             'comp',
             'file_action_file',
             'parent_summon'
-            'comp',
-            'file_action_file',
-            'parent_summon'
         ).prefetch_related(
             Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
             Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add')),
@@ -200,23 +60,38 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
                 'supporting_docs',
                 'srf'
             ))
-            Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add')),
-            Prefetch('case', queryset=CaseActivity.objects.prefetch_related(
-                'supporting_docs',
-                'srf'
-            ))
         )
-            
-# class CaseActivityView(generics.ListCreateAPIView):
-#     serializer_class = CaseActivitySerializer
-#     queryset = CaseActivity.objects.all()
 
-            
-# class CaseActivityView(generics.ListCreateAPIView):
-#     serializer_class = CaseActivitySerializer
-#     queryset = CaseActivity.objects.all()
+class UpdateServiceChargeRequestView(generics.UpdateAPIView):
+    serializer_class = ServiceChargeRequestSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id'
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class FileActionrequestView(generics.ListCreateAPIView):
+    serializer_class = FileActionRequestSerializer
+    
+    def get_queryset(self):
+        return ServiceChargeRequest.objects.select_related(
+            'comp',
+            'file_action_file'
+        ).prefetch_related(
+            Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
+            Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add'))
+        ).order_by('-sr_req_date')
+
+class ServiceChargeRequestFileView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargeRequestFileSerializer
+    queryset = ServiceChargeRequestFile.objects.all()
+
+# Case Activity Views
 class CaseActivityView(generics.ListCreateAPIView):
     serializer_class = CaseActivitySerializer
     
@@ -255,95 +130,13 @@ class UpdateCaseSuppDocView(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def get_queryset(self):
-        return CaseActivity.objects.select_related(
-            'sr',
-            'srf'
-        ).prefetch_related(
-            'supporting_docs'
-        ).order_by('-ca_date_of_issuance')
 
-class CaseSuppDocView(generics.ListCreateAPIView):
-    serializer_class = CaseSuppDocSerializer
-    
-    def get_queryset(self):
-        queryset = CaseSuppDoc.objects.all()
-        ca_id = self.kwargs.get('ca_id')
-        if ca_id is not None:
-            queryset = queryset.filter(ca_id=ca_id)
-        return queryset
-    
-class DeleteCaseSuppDocView(generics.RetrieveDestroyAPIView):
-    queryset = CaseSuppDoc.objects.all()
-    serializer_class = CaseSuppDocSerializer
-    lookup_field = 'csd_id'
-
-class UpdateCaseSuppDocView(generics.UpdateAPIView):
-    serializer_class = CaseSuppDocSerializer
-    queryset = CaseSuppDoc.objects.all()
-    lookup_field = 'csd_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-class CaseSuppDocView(generics.ListCreateAPIView):
-    serializer_class = CaseSuppDocSerializer
-    
-    def get_queryset(self):
-        queryset = CaseSuppDoc.objects.all()
-        ca_id = self.kwargs.get('ca_id')
-        if ca_id is not None:
-            queryset = queryset.filter(ca_id=ca_id)
-        return queryset
-    
-class DeleteCaseSuppDocView(generics.RetrieveDestroyAPIView):
-    queryset = CaseSuppDoc.objects.all()
-    serializer_class = CaseSuppDocSerializer
-    lookup_field = 'csd_id'
-
-class UpdateCaseSuppDocView(generics.UpdateAPIView):
-    serializer_class = CaseSuppDocSerializer
-    queryset = CaseSuppDoc.objects.all()
-    lookup_field = 'csd_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UpdateServiceChargeRequestView(generics.UpdateAPIView):
-    serializer_class = ServiceChargeRequestSerializer
-    queryset = ServiceChargeRequest.objects.all()
-    lookup_field = 'sr_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class ServiceChargeRequestFileView(generics.ListCreateAPIView):
-    serializer_class = ServiceChargeRequestFileSerializer
-    queryset = ServiceChargeRequestFile.objects.all()
-    
-
-
-=======
+# Certificate Views
 class CertificateListView(generics.ListCreateAPIView):
     serializer_class = ClerkCertificateSerializer
 
     def get_queryset(self):
-        queryset = ClerkCertificate.objects.select_related(
+        return ClerkCertificate.objects.select_related(
             'rp__per'
         ).prefetch_related(
             Prefetch(
@@ -356,17 +149,9 @@ class CertificateListView(generics.ListCreateAPIView):
             'req_request_date',
             'req_claim_date',
             'req_type',
-            'req_payment_status',
             'rp__per__per_fname',
             'rp__per__per_lname'
         )
-        
-        # Filter for paid certificates only
-        payment_status = self.request.query_params.get('payment_status', None)
-        if payment_status:
-            queryset = queryset.filter(req_payment_status__iexact=payment_status)
-        
-        return queryset
 
     def list(self, request, *args, **kwargs):
         try:
@@ -449,6 +234,7 @@ class IssuedCertificateListView(generics.ListAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+# Business Permit Views
 class BusinessPermitListView(generics.ListCreateAPIView):
     serializer_class = BusinessPermitSerializer
 
@@ -471,8 +257,19 @@ class BusinessPermitListView(generics.ListCreateAPIView):
             'req_transac_id',
             'business__bus_id',
             'business__bus_name',
-            'business__bus_gross_sales'
-            # Removed all problematic fields that don't exist in database
+            'business__bus_gross_sales',
+            'business__bus_province',
+            'business__bus_city',
+            'business__bus_barangay',
+            'business__bus_street',
+            'business__bus_respondentLname',
+            'business__bus_respondentFname',
+            'business__bus_respondentMname',
+            'business__bus_respondentSex',
+            'business__bus_respondentDob',
+            'business__bus_date_registered',
+            'business__sitio_id',
+            'business__staff_id'
         )
 
     def list(self, request, *args, **kwargs):
@@ -527,6 +324,7 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+# API Views for Personal Clearances and Payments
 @api_view(['GET'])
 def get_personal_clearances(request):
     try:
@@ -566,20 +364,8 @@ def get_permit_clearances(request):
             'business'
         ).prefetch_related(
             Prefetch('issuedbusinesspermit_set', queryset=IssuedBusinessPermit.objects.select_related('file'))
-        ).only(
-            'bpr_id',
-            'req_pay_method',
-            'req_request_date',
-            'req_claim_date',
-            'req_sales_proof',
-            'req_status',
-            'req_payment_status',
-            'req_transac_id',
-            'business__bus_id',
-            'business__bus_name',
-            'business__bus_gross_sales'
-            # Removed problematic fields that don't exist in database
         ).all()
+        
         serializer = BusinessPermitSerializer(permits, many=True)
         return Response(serializer.data)
     except Exception as e:
@@ -660,46 +446,3 @@ def webhook_payment_status(request):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-<<<<<<< HEAD
->>>>>>> e82204304 (update)
-=======
-class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
-    serializer_class = ServiceChargeRequestDetailSerializer
-    lookup_field = 'sr_id'
-    
-    def get_queryset(self):
-        return ServiceChargeRequest.objects.filter(
-            sr_payment_status="Paid",
-            sr_type="Summon"
-        ).select_related(
-            'comp__cpnt'
-        ).prefetch_related(
-            'comp__complaintaccused_set__acsd',
-            'case__srf'
-        )
-    
-    def get_object(self):
-        try:
-            return super().get_object()
-        except ServiceChargeRequest.DoesNotExist:
-            raise NotFound("Service charge request not found")
-        
-
-class CaseActivityView(generics.ListCreateAPIView):
-    serializer_class = CaseActivitySerializer
-    queryset = CaseActivity.objects.all()
-
-
-class UpdateServiceChargeRequestView(generics.UpdateAPIView):
-    serializer_class = ServiceChargeRequestSerializer
-    queryset = ServiceChargeRequest.objects.all()
-    lookup_field = 'sr_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> cf00d9390 (update)

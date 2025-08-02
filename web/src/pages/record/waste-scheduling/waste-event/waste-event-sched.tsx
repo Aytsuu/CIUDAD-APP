@@ -49,11 +49,15 @@ function WasteEventSched() {
 
     const onSubmit = async (values: z.infer<typeof WasteEventSchedSchema>) => {
         try {
+            // Format date and time properly for Django
+            const formattedDate = values.date ? new Date(values.date).toISOString().split('T')[0] : null;
+            const formattedTime = values.time || null;
+
             const eventData = {
                 we_name: values.eventName,
                 we_location: values.location,
-                we_date: values.date,
-                we_time: values.time,
+                we_date: formattedDate,
+                we_time: formattedTime,
                 we_description: values.eventDescription || '',
                 we_organizer: values.organizer,
                 we_invitees: values.invitees,
@@ -71,6 +75,7 @@ function WasteEventSched() {
             // Reset form
             form.reset();
         } catch (error) {
+            console.error('Error creating waste event:', error);
             toast.error("Failed to schedule event. Please try again.");
         }
     };
@@ -296,13 +301,13 @@ function WasteEventSched() {
                                     type="button" 
                                     variant="outline" 
                                     onClick={() => form.reset()}
-                                    className="w-full sm:w-auto"
+                                    className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-white border-yellow-400 hover:border-yellow-500"
                                 >
                                     Reset
                                 </Button>
                                 <Button 
                                     type="submit" 
-                                    className="bg-blue hover:bg-blue/90 text-white w-full sm:w-auto"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                                 >
                                     Schedule Event
                                 </Button>

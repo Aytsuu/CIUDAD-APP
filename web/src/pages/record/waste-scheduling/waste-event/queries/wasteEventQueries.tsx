@@ -4,8 +4,8 @@ export interface WasteEvent {
     we_num: number;
     we_name: string;
     we_location: string;
-    we_date: string;
-    we_time: string;
+    we_date: string | null;
+    we_time: string | null;
     we_description: string;
     we_organizer: string;
     we_invitees: string;

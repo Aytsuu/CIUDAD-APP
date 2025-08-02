@@ -5,11 +5,20 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters
-from .models import WasteTruck
+from .models import (
+    WasteTruck, WasteEvent, WasteCollectionStaff, WasteCollectionSched,
+    WasteCollector, WasteHotspot, WasteReport, WasteReport_File,
+    WasteReportResolve_File, WastePersonnel, Garbage_Pickup_Request,
+    Pickup_Request_Decision, Pickup_Assignment, Assignment_Collector,
+    Pickup_Confirmation
+)
 from apps.profiling.models import Sitio
 from rest_framework import generics
 from .signals import archive_completed_hotspots
 from datetime import date, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 #KANI 3RD
@@ -17,6 +26,16 @@ from datetime import date, timedelta
 class WasteEventView(generics.ListCreateAPIView):
     serializer_class = WasteEventSerializer
     queryset = WasteEvent.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error creating waste event: {e}")
+            return Response(
+                {"error": "Failed to create waste event", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class WasteCollectionStaffView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionStaffSerializer

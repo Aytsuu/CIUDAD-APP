@@ -1,4 +1,4 @@
-# from django.db import models
+from django.db import models
 
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)
