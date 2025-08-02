@@ -116,6 +116,10 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, wc_is_archi
             const [hour, minute] = values.time.split(":");
             const formattedTime = `${hour}:${minute}:00`;
 
+            if(!values.additionalInstructions){
+                values.additionalInstructions = "None";
+            }
+
             await new Promise<void>((resolve, reject) => {
                 updateSchedule({
                     wc_num,

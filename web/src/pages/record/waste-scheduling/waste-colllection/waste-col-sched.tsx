@@ -93,6 +93,10 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
         const [hour, minute] = values.time.split(":");
         const formattedTime = `${hour}:${minute}:00`;
 
+        if(!values.additionalInstructions){
+            values.additionalInstructions = "None";
+        }
+
         createSchedule({
             ...values,
             time: formattedTime
