@@ -160,10 +160,16 @@ export default function OverallFpRecordsScreen() {
         <View className="flex-row justify-between">
           <View className="flex-1 mr-3">
             <Text className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-              Type
+              Client Type
             </Text>
             <Text className="text-sm text-gray-700 font-medium">
               {item.client_type || "N/A"}
+            </Text>
+            <Text className="text-xs text-gray-400 uppercase tracking-wide mb-1 mt-3">
+              Patient Type
+            </Text>
+             <Text className="text-sm text-gray-700 font-medium">
+              {item.patient_type || "N/A"}
             </Text>
           </View>
           <View className="flex-1 ml-3">

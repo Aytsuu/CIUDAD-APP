@@ -36,7 +36,6 @@ export default function ScheduleDialog({
         onPress={() => setModalVisible(true)}
         className="flex-row items-center gap-2 px-4 py-2 bg-blue-600 rounded-md" // Mimics Button styling
       >
-        <Edit className="h-4 w-4 text-white" />
         <Text className="text-white font-semibold text-base">Edit Schedule</Text>
       </TouchableOpacity>
 

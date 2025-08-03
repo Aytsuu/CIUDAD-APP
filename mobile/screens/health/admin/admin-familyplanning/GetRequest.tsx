@@ -49,6 +49,7 @@ export const getFPRecordsList = async () => {
         client_type: record.client_type || "N/A",
         method_used: record.method_used || "N/A",
         created_at: record.created_at || "N/A",
+        patient_type: record.patient_type || "N/A",
         sex: record.sex || "Unknown",
         record_count: record.record_count || 0, // Ensure record_count is mapped
       }
