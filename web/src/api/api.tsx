@@ -10,8 +10,6 @@ export const api = axios.create({
   },
 });
 
-
-
 export const api2 = axios.create({
   baseURL: import.meta.env.VITE_API_URL2,
   withCredentials: true,
@@ -20,7 +18,6 @@ export const api2 = axios.create({
     "Accept": "application/json",
   },
 });
-
 
 // // Request interceptor to add auth token
 // api.interceptors.request.use(async (config) => {
