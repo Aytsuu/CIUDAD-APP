@@ -21,93 +21,7 @@ import {
   restoreCouncilEvent
 } from "./requests";
 import { useToastContext } from "@/components/ui/toast";
-
-export type CouncilEvent = {
-  ce_id: number;
-  ce_title: string;
-  ce_place: string;
-  ce_date: string;
-  ce_time: string;
-  ce_type: string;
-  ce_description: string;
-  ce_is_archive: boolean;
-  staff_id: string | null;
-};
-
-export type CouncilEventInput = {
-  ce_title: string;
-  ce_place: string;
-  ce_date: string;
-  ce_time: string;
-  ce_type: string;
-  ce_description: string;
-  ce_is_archive?: boolean;
-  staff_id?: string | null;
-};
-
-export type Attendance = {
-  ceId: number;
-  att_id?: number;
-  attMettingTitle: string;
-  attMeetingDate: string;
-  attMeetingDescription: string;
-  attAreaOfFocus?: string[];
-  isArchived?: boolean;
-};
-
-export type Attendee = {
-  atn_id?: number;
-  atn_name: string;
-  atn_designation: string;
-  atn_present_or_absent?: string;
-  ce_id: number;
-  ce_title: string;
-  staff_id?: string | null;
-};
-
-export type AttendeeInput = {
-  atn_name: string;
-  atn_designation: string;
-  atn_present_or_absent: string;
-  ce_id: number;
-  staff_id?: string | null;
-};
-
-export type AttendanceSheet = {
-  att_id: number;
-  ce_id: number;
-  att_file_name: string;
-  att_file_path: string;
-  att_file_url: string;
-  att_file_type: string;
-  att_is_archive: boolean;
-  staff_id: string | null;
-};
-
-export type AttendanceSheetInput = {
-  ce_id: number;
-  att_file_name: string;
-  att_file_path: string;
-  att_file_url: string;
-  att_file_type: string;
-  staff_id?: string | null;
-};
-
-export type AttendanceRecord = {
-  ceId: number;
-  attMettingTitle: string;
-  attMeetingDate: string;
-  attMeetingDescription: string;
-  attAreaOfFocus?: string[];
-  isArchived: boolean;
-  sheets: AttendanceSheet[];
-};
-
-export type Staff = {
-  staff_id: string;
-  full_name: string;
-  position_title: string;
-};
+import { CouncilEventInput, AttendeeInput, AttendanceSheetInput, CouncilEvent, AttendanceSheet, Attendee, Staff } from "./ce-att-typeFile";
 
 export const useAddCouncilEvent = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
@@ -297,7 +211,8 @@ export const useRestoreAttendanceSheet = () => {
 export const useGetCouncilEvents = (isArchived?: boolean) => {
   return useQuery<CouncilEvent[], Error>({
     queryKey: ["councilEvents", isArchived],
-    queryFn: () => getCouncilEvents(isArchived),
+    // queryFn: () => getCouncilEvents(isArchived),
+    queryFn: () => getCouncilEvents(),
     staleTime: 1000 * 60 * 5,
   });
 };
@@ -307,11 +222,7 @@ export const useGetAttendees = (ceId?: number) => {
     queryKey: ["attendees", ceId],
     queryFn: async () => {
       if (!ceId) throw new Error("ceId is required to fetch attendees");
-      const attendees = await getAttendees(ceId);
-      
-      // Add debug logging
-      console.log(`Fetched attendees for ceId ${ceId}:`, attendees);
-      
+      const attendees = await getAttendees(ceId);  
       return attendees;
     },
     staleTime: 1000 * 60 * 5,
@@ -377,7 +288,6 @@ export const useUpdateAttendees = (onSuccess?: () => void) => {
 
   return useMutation({
     mutationFn: ({ ce_id, attendees }: { ce_id: number; attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[] }) => {
-      console.log('Calling updateAttendees with:', { ce_id, attendees });
       return updateAttendees(ce_id, attendees);
     },
     onSuccess: (updatedData, variables) => {
@@ -388,8 +298,7 @@ export const useUpdateAttendees = (onSuccess?: () => void) => {
       toast.success('Attendees updated successfully');
       onSuccess?.();
     },
-    onError: (error: any, variables) => {
-      console.error('updateAttendees error:', error.message, { ce_id: variables.ce_id, attendees: variables.attendees });
+    onError: (error: any) => {
       toast.error(error.message || 'Failed to update attendees');
     },
     onMutate: async (variables) => {

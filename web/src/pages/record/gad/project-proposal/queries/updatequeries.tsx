@@ -2,9 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { putProjectProposal, patchProjectProposalStatus } from "../api/putreq";
-import { ProjectProposal, ProjectProposalInput } from "./fetchqueries";
-
-export type ProposalStatus = "Pending" | "Amend" |"Approved" | "Rejected" | "Viewed";
+import { ProjectProposal, ProjectProposalInput, ProposalStatus } from "../projprop-types";
 
 export const useUpdateProjectProposal = () => {
   const queryClient = useQueryClient();

@@ -1,7 +1,6 @@
 import { api } from '@/api/api';
 
 api.interceptors.request.use(config => {
-  console.log('Request:', config.method, config.url);
   return config;
 });
 

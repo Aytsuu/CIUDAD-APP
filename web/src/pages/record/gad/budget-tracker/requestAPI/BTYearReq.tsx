@@ -9,7 +9,6 @@ export const getbudgetyearreq = async () => {
             : [];
         return filteredData;
     } catch (err) {
-        console.error("API Error:", err);
         return [];  // Always return an array
     }
 };
