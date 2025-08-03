@@ -11,7 +11,7 @@ import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import { Button } from "@/components/ui/button/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card";
 import { Badge } from "@/components/ui/badge";
-import { Megaphone, FileText, Calendar, Users, Clock, Send } from "lucide-react";
+import { FileText, Calendar, Users, Clock, Send } from "lucide-react";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import React from "react";
 import { postAnnouncementFile as postAnnouncementFileApi } from "./restful-api/announcementPostRequest";
@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "../record/administration/queries/administrationFetchQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 const AnnouncementCreate = () => {
   const queryClient = useQueryClient();
@@ -83,6 +84,8 @@ const AnnouncementCreate = () => {
       staff: user?.staff?.staff_id
     };
 
+    console.log("📤 Payload to backend:", cleanedValues);
+
     try {
       const createdAnnouncement = await postAnnouncement(cleanedValues);
 
@@ -139,182 +142,173 @@ const AnnouncementCreate = () => {
   }));
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Megaphone className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Create Announcement</h1>
-            <p className="text-sm text-gray-600">
-              Fill in the details below to create and distribute your announcement
-            </p>
+    <LayoutWithBack title="Create Announcement " description="Fill in the details below to create and distribute your announcement">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
           </div>
         </div>
-      </div>
 
-      <Form {...form}>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit();
-          }}
-          className="space-y-6"
-        >
-          {/* Basic Info */}
-          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-gray-600" />
-                <CardTitle className="text-lg">Basic Information</CardTitle>
-              </div>
-              <CardDescription>Enter the main details of your announcement</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormInput
-                control={form.control}
-                name="ann_title"
-                label="Announcement Title"
-                placeholder="Enter a clear and descriptive title"
-              />
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Announcement Details</label>
-                <textarea
-                  {...form.register("ann_details")}
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                  placeholder="Provide detailed information about the announcement"
+        <Form {...form}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSubmit();
+            }}
+            className="space-y-6"
+          >
+            {/* Basic Info */}
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                </div>
+                <CardDescription>Enter the main details of your announcement</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormInput
+                  control={form.control}
+                  name="ann_title"
+                  label="Announcement Title"
+                  placeholder="Enter a clear and descriptive title"
                 />
-              </div>
-              <FormSelect
-                control={form.control}
-                name="ann_type"
-                label="Announcement Type"
-                options={[
-                  { id: "general", name: "General" },
-                  { id: "public", name: "Public" },
-                  { id: "event", name: "Event" },
-                  { id: "reminder", name: "Reminder" },
-                ]}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Schedule */}
-          {["event", "urgent"].includes(annType) && (
-            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Schedule</CardTitle>
-                </div>
-                <CardDescription>Set when your announcement will be active</CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    Start Date & Time
-                  </div>
-                  <FormDateTimeInput
-                    control={form.control}
-                    name="ann_start_at"
-                    type="datetime-local"
+                  <label className="text-sm font-medium text-gray-700">Announcement Details</label>
+                  <textarea
+                    {...form.register("ann_details")}
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
+                    placeholder="Provide detailed information about the announcement"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    End Date & Time
-                  </div>
-                  <FormDateTimeInput
-                    control={form.control}
-                    name="ann_end_at"
-                    type="datetime-local"
-                  />
-                </div>
+                <FormSelect
+                  control={form.control}
+                  name="ann_type"
+                  label="Announcement Type"
+                  options={[
+                    { id: "general", name: "General" },
+                    { id: "public", name: "Public" },
+                    { id: "event", name: "Event" },
+                    { id: "reminder", name: "Reminder" },
+                  ]}
+                />
               </CardContent>
             </Card>
-          )}
 
-          {/* Recipients & Delivery */}
-          {["event", "urgent"].includes(annType) && (
-            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
-                </div>
-                <CardDescription>Choose which positions and delivery modes</CardDescription>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
+            {/* Schedule */}
+            {["event", "urgent"].includes(annType) && (
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-gray-600" />
+                    <CardTitle className="text-lg">Schedule</CardTitle>
+                  </div>
+                  <CardDescription>Set when your announcement will be active</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Badge variant="outline" className="text-xs">
-                      Target Positions
-                    </Badge>
-                    <FormComboCheckbox
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Clock className="h-4 w-4" />
+                      Start Date & Time
+                    </div>
+                    <FormDateTimeInput
                       control={form.control}
-                      name="positions"
-                      options={positionOptions}
-                    />
+                      name="ann_start_at"
+                      type="datetime-local" label={""}                    />
                   </div>
 
                   <div className="space-y-2">
-                    <Badge variant="outline" className="text-xs">
-                      Age Group
-                    </Badge>
-                    <FormComboCheckbox
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Clock className="h-4 w-4" />
+                      End Date & Time
+                    </div>
+                    <FormDateTimeInput
                       control={form.control}
-                      name="ar_age"
-                      options={[
-                        { id: "youth", name: "Youth" },
-                        { id: "adult", name: "Adult" },
-                        { id: "senior", name: "Senior Citizen" },
-                      ]}
-                    />
+                      name="ann_end_at"
+                      type="datetime-local" label={""}                    />
                   </div>
+                </CardContent>
+              </Card>
+            )}
 
-                  <div className="space-y-2">
-                    <Badge variant="outline" className="text-xs">
-                      Delivery Mode
-                    </Badge>
-                    <FormComboCheckbox
-                      control={form.control}
-                      name="ar_mode"
-                      options={[
-                        { id: "sms", name: "SMS" },
-                        { id: "email", name: "Email" },
-                      ]}
-                      disabled={["general", "reminder", "public"].includes(annType)}
-                    />
+            {/* Recipients & Delivery */}
+            {["event", "urgent"].includes(annType) && (
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-600" />
+                    <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  <CardDescription>Choose which positions and delivery modes</CardDescription>
+                </CardHeader>
 
-          {/* Upload */}
-          <MediaUpload
-            title="Upload Image"
-            description="Upload images"
-            mediaFiles={mediaFiles}
-            activeVideoId={activeVideoId}
-            setActiveVideoId={setActiveVideoId}
-            setMediaFiles={setMediaFiles}
-          />
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">
+                        Target Positions
+                      </Badge>
+                      <FormComboCheckbox
+                        control={form.control}
+                        name="positions"
+                        options={positionOptions}
+                      />
+                    </div>
 
-          <div className="flex justify-end pt-4">
-            <Button>
-              <Send className="h-4 w-4 mr-2" />
-              Create Announcement
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">
+                        Age Group
+                      </Badge>
+                      <FormComboCheckbox
+                        control={form.control}
+                        name="ar_age"
+                        options={[
+                          { id: "youth", name: "Youth" },
+                          { id: "adult", name: "Adult" },
+                          { id: "senior", name: "Senior Citizen" },
+                        ]}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">
+                        Delivery Mode
+                      </Badge>
+                      <FormComboCheckbox
+                        control={form.control}
+                        name="ar_mode"
+                        options={[
+                          { id: "sms", name: "SMS" },
+                          { id: "email", name: "Email" },
+                        ]}
+                        readOnly={["general", "reminder", "public"].includes(annType)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Upload */}
+            <MediaUpload
+              title="Upload Image"
+              description="Upload images"
+              mediaFiles={mediaFiles}
+              activeVideoId={activeVideoId}
+              setActiveVideoId={setActiveVideoId}
+              setMediaFiles={setMediaFiles}
+            />
+
+            <div className="flex justify-end pt-4">
+              <Button>
+                <Send className="h-4 w-4 mr-2" />
+                Create Announcement
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </LayoutWithBack>
   );
 };
 

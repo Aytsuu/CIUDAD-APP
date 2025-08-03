@@ -1,63 +1,59 @@
-
-import { useState } from "react"
-import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { Trash, Plus, Search, Eye, Calendar, FileText, Tag } from "lucide-react"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import AnnouncementCreateForm from "./announcementcreate"
-import AnnouncementView from "./announcementview"
-import { Input } from "@/components/ui/input"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
-import { Badge } from "@/components/ui/badge"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { type Announcement, useDeleteAnnouncement } from "./queries/announcementDeleteQueries"
-import { useGetAnnouncement } from "./queries/announcementFetchQueries"
-import { Button } from "@/components/ui/button/button"
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Trash, Plus, Search, Eye, Calendar, FileText, Tag } from "lucide-react";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Input } from "@/components/ui/input";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Badge } from "@/components/ui/badge";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { type Announcement, useDeleteAnnouncement } from "./queries/announcementDeleteQueries";
+import { useGetAnnouncement } from "./queries/announcementFetchQueries";
+import { Button } from "@/components/ui/button/button";
 
 function AnnouncementTracker() {
-  const [data] = useState<Announcement[]>([])
-  const [error] = useState<string | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [pageSize, setPageSize] = useState(9)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [] = useState<Announcement[]>([]);
+  const [error] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(9);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: announcements = [], isLoading, refetch } = useGetAnnouncement()
-  const { mutate: deleteEntry } = useDeleteAnnouncement()
+  const { data: announcements = [], isLoading } = useGetAnnouncement();
+  const { mutate: deleteEntry } = useDeleteAnnouncement();
 
   const handleDelete = async (ann_id: number) => {
-    deleteEntry(ann_id)
-  }
+    deleteEntry(ann_id);
+  };
 
   const filteredData = announcements.filter((announcement) => {
-    const searchString = `${announcement.ann_id} ${announcement.ann_title} ${announcement.ann_details} ${announcement.ann_start_at} ${announcement.ann_end_at} ${announcement.ann_type}`.toLowerCase()
-    return searchString.includes(searchQuery.toLowerCase())
-  })
+    const searchString = `${announcement.ann_id} ${announcement.ann_title} ${announcement.ann_details} ${announcement.ann_start_at} ${announcement.ann_end_at} ${announcement.ann_type}`.toLowerCase();
+    return searchString.includes(searchQuery.toLowerCase());
+  });
 
-  const totalPages = Math.ceil(filteredData.length / pageSize)
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return isNaN(date.getTime())
       ? "Invalid Date"
-      : date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-  }
+      : date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  };
 
   const getTypeColor = (type: string) => {
     switch (type?.toLowerCase()) {
       case "urgent":
-        return "bg-red-100 text-red-800 border-red-200"
+        return "bg-red-100 text-red-800 border-red-200";
       case "important":
-        return "bg-orange-100 text-orange-800 border-orange-200"
+        return "bg-orange-100 text-orange-800 border-orange-200";
       case "general":
-        return "bg-blue-100 text-blue-800 border-blue-200"
+        return "bg-blue-100 text-blue-800 border-blue-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -74,16 +70,16 @@ function AnnouncementTracker() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>
+    return <div className="text-red-500">{error}</div>;
   }
 
   return (
     <TooltipProvider>
-      <div className="w-full h-full">
+      <div className="w-full h-full p-6">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Announcement Records</h1>
           <p className="text-xs sm:text-sm text-darkGray">Manage and view announcement records</p>
@@ -101,28 +97,11 @@ function AnnouncementTracker() {
             />
           </div>
 
-          <DialogLayout
-            trigger={
-              <Button>
-                <Plus size={16} /> Add Announcement
-              </Button>
-            }
-            className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-            title=""
-            description=""
-            mainContent={
-              <div className="w-full h-full">
-                <AnnouncementCreateForm
-                  onSuccess={() => {
-                    setIsDialogOpen(false)
-                    refetch()
-                  }}
-                />
-              </div>
-            }
-            isOpen={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-          />
+          <Link to="/announcement/create">
+            <Button>
+              <Plus size={16} /> Add Announcement
+            </Button>
+          </Link>
         </div>
 
         {paginatedData.length === 0 ? (
@@ -158,7 +137,6 @@ function AnnouncementTracker() {
 
                   <CardContent className="pt-0 flex flex-col justify-between flex-grow">
                     <div>
-                      {/* IMAGE DISPLAY */}
                       {announcement.files && announcement.files.length > 0 && (
                         <img
                           src={announcement.files[0].af_url}
@@ -191,45 +169,35 @@ function AnnouncementTracker() {
                     </div>
 
                     <div className="flex gap-2 pt-2 border-t">
-                      <TooltipLayout
-                        trigger={
-                          <DialogLayout
-                            trigger={
-                              <div className="flex-1 bg-white hover:bg-gray-50 border text-black px-3 py-2 rounded cursor-pointer flex items-center justify-center gap-2 text-sm">
-                                <Eye size={14} />
-                                View
-                              </div>
-                            }
-                            className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                            title=""
-                            description=""
-                            mainContent={
-                              <div className="w-full h-full">
-                                <AnnouncementView ann_id={announcement.ann_id!} onSaveSuccess={refetch} />
-                              </div>
-                            }
-                          />
-                        }
-                        content="View announcement details"
-                      />
+  <Link to={`/announcement/${announcement.ann_id}`} className="flex-1">
+    <TooltipLayout
+      trigger={
+        <div className="w-full bg-white hover:bg-gray-50 border text-black px-3 py-2 rounded cursor-pointer flex items-center justify-center gap-2 text-sm">
+          <Eye size={14} />
+          View
+        </div>
+      }
+      content="View announcement details"
+    />
+  </Link>
 
-                      <TooltipLayout
-                        trigger={
-                          <ConfirmationModal
-                            trigger={
-                              <div className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded cursor-pointer flex items-center justify-center">
-                                <Trash size={14} />
-                              </div>
-                            }
-                            title="Confirm Delete"
-                            description="Are you sure you want to delete this announcement?"
-                            actionLabel="Confirm"
-                            onClick={() => announcement.ann_id !== undefined && handleDelete(announcement.ann_id)}
-                          />
-                        }
-                        content="Delete announcement"
-                      />
-                    </div>
+  <TooltipLayout
+    trigger={
+      <ConfirmationModal
+        trigger={
+          <div className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded cursor-pointer flex items-center justify-center">
+            <Trash size={14} />
+          </div>
+        }
+        title="Confirm Delete"
+        description="Are you sure you want to delete this announcement?"
+        actionLabel="Confirm"
+        onClick={() => announcement.ann_id !== undefined && handleDelete(announcement.ann_id)}
+      />
+    }
+    content="Delete announcement"
+  />
+</div>
                   </CardContent>
                 </Card>
               ))}
@@ -244,9 +212,9 @@ function AnnouncementTracker() {
                     className="w-16 h-8 text-center"
                     value={pageSize}
                     onChange={(e) => {
-                      const value = +e.target.value
-                      setPageSize(value >= 1 ? value : 1)
-                      setCurrentPage(1)
+                      const value = +e.target.value;
+                      setPageSize(value >= 1 ? value : 1);
+                      setCurrentPage(1);
                     }}
                   />
                   <p className="text-xs sm:text-sm text-gray-600">per page</p>
@@ -262,7 +230,7 @@ function AnnouncementTracker() {
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={(page) => {
-                    setCurrentPage(page)
+                    setCurrentPage(page);
                   }}
                 />
               )}
@@ -271,7 +239,7 @@ function AnnouncementTracker() {
         )}
       </div>
     </TooltipProvider>
-  )
+  );
 }
 
-export default AnnouncementTracker
+export default AnnouncementTracker;

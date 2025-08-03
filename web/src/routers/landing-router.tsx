@@ -10,6 +10,7 @@ import MobileApp from '@/pages/landing/MobileApp';
 import { RouteObject } from 'react-router';
 import Health from '@/pages/landing/Health';
 import ForgotPassword from '@/pages/landing/ForgotPass';
+import Announcements from '@/pages/landing/Announcements';
 
 
 export const landing_router: RouteObject[] = [
@@ -56,6 +57,10 @@ export const landing_router: RouteObject[] = [
       {
         path: "forgot-password",
         element: <ForgotPassword />
+      },
+      {
+        path: "announcements",
+        element: <Announcements />
       }
     ]
   }

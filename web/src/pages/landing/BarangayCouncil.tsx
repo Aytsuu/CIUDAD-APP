@@ -1,8 +1,15 @@
  import React from "react";
 import { Footer } from "./Footer";
 import { useBrgyCouncil } from "./queries/landingFetchQueries";
+import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"; 
+import FloatingAnnouncement from "@/components/ui/floatingAnnouncement/FloatingAnnouncement";
 
 export default function BarangayCouncil() {
+
+  const { data: announcements } = useGetAnnouncement();
+  const latest = announcements?.[0];
+
+
   const { data: brgyCouncil, isLoading } = useBrgyCouncil();
 
   const brgyCaptain = React.useMemo(() => brgyCouncil?.find((member: any) => 
@@ -275,7 +282,10 @@ export default function BarangayCouncil() {
           </div>
         </div>
       </section>
-
+      
+                {/* Floating Announcement */}
+                <FloatingAnnouncement announcement={latest ?? null} />
+      
       <Footer />
     </main>
   );

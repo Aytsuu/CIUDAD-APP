@@ -1,7 +1,13 @@
 import { Footer } from "./Footer";
 import BackgroundPHMap from "@/assets/background/background-ph-map.svg";
+import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"; 
+import FloatingAnnouncement from "@/components/ui/floatingAnnouncement/FloatingAnnouncement";
+
+
 
 export default function About() {
+  const { data: announcements } = useGetAnnouncement();
+  const latest = announcements?.[0]; // or filter for active announcements
   return (
     <main className="w-screen h-screen bg-white">
       <section className="w-full h-full flex justify-center items-center">
@@ -142,6 +148,12 @@ export default function About() {
           </div>
         </div>
       </section>
+
+    
+          {/* Floating Announcement */}
+          <FloatingAnnouncement announcement={latest ?? null} />
+
+          
       <Footer />
     </main>
   );
