@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('treasurer', '0012_income_expense_main_alter_income_tracking_inv_num'),
+        ('treasurer', '0012_alter_income_tracking_inc_receipt_image'),
         ('treasurer', '0029_income_expense_main_ie_is_archive_and_more'),
     ]
 

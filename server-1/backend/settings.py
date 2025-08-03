@@ -80,8 +80,10 @@ INSTALLED_APPS = [
     'apps.announcement',
     'apps.authentication',
     'apps.gad',
+    'apps.secretary',
     'apps.clerk',
     'backend.firebase.notifications',
+    'apps.act_log',
 ]
 
 MIDDLEWARE = [

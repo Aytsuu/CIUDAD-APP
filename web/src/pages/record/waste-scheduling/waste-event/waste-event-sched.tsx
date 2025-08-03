@@ -2,7 +2,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -14,6 +13,7 @@ import { CalendarDays, Clock, MapPin, Users, User, FileText, Bell } from 'lucide
 import { createWasteEvent } from './queries/wasteEventQueries';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/context/AuthContext';
 
 const announcementOptions = [
     { id: "all", label: "All", checked: false },
@@ -27,6 +27,7 @@ const announcementOptions = [
 
 function WasteEventSched() {
     const queryClient = useQueryClient();
+    const { user } = useAuth();
     
     const form = useForm<z.infer<typeof WasteEventSchedSchema>>({
         resolver: zodResolver(WasteEventSchedSchema),
@@ -49,6 +50,14 @@ function WasteEventSched() {
 
     const onSubmit = async (values: z.infer<typeof WasteEventSchedSchema>) => {
         try {
+            // Get staff_id from current user using the correct pattern
+            const staffId = user?.staff?.staff_id;
+            
+            if (!staffId) {
+                toast.error("Staff information not available. Please log in again.");
+                return;
+            }
+
             // Format date and time properly for Django
             const formattedDate = values.date ? new Date(values.date).toISOString().split('T')[0] : null;
             const formattedTime = values.time || null;
@@ -62,7 +71,7 @@ function WasteEventSched() {
                 we_organizer: values.organizer,
                 we_invitees: values.invitees,
                 we_is_archive: false,
-                staff: null
+                staff: staffId  // Use the current user's staff_id
             };
 
             await createWasteEvent(eventData);

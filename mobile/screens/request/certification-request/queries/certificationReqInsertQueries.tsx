@@ -2,6 +2,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { addCertificationRequest, submitPermitCertificationWithBusiness } from "../restful-API/certificationReqPostAPI";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
+import { useAuth } from "@/contexts/AuthContext";
 import z from "zod";
 
 // Schema for personal certification request
@@ -35,10 +36,11 @@ export const useAddPersonalCertification = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
     const { toast } = useToastContext();
     const router = useRouter();
+    const { user } = useAuth();
 
     return useMutation({
         mutationFn: (values: z.infer<typeof personalCertificationSchema>) => 
-            addCertificationRequest(values),
+            addCertificationRequest(values, user?.staff?.staff_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
@@ -58,10 +60,11 @@ export const useAddBusinessPermit = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
     const { toast } = useToastContext();
     const router = useRouter();
+    const { user } = useAuth();
 
     return useMutation({
         mutationFn: (values: z.infer<typeof businessPermitSchema>) => 
-            submitPermitCertificationWithBusiness(values),
+            submitPermitCertificationWithBusiness(values, user?.staff?.staff_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
@@ -82,13 +85,14 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
     const { toast } = useToastContext();
     const router = useRouter();
+    const { user } = useAuth();
 
     return useMutation({
         mutationFn: (values: z.infer<typeof certificationRequestSchema>) => {
             if (values.cert_type === 'personal') {
-                return addCertificationRequest(values);
+                return addCertificationRequest(values, user?.staff?.staff_id);
             } else {
-                return submitPermitCertificationWithBusiness(values);
+                return submitPermitCertificationWithBusiness(values, user?.staff?.staff_id);
             }
         },
         onSuccess: (data, variables) => {

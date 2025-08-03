@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createAnnualDevPlan } from "./restful-api/annualPostAPI";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 interface BudgetItem {
   gdb_name: string;
@@ -13,6 +14,7 @@ interface BudgetItem {
 
 export default function AnnualDevelopmentPlanCreate() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     dev_date: "",
@@ -22,7 +24,7 @@ export default function AnnualDevelopmentPlanCreate() {
     dev_res_person: "",
     dev_indicator: "",
     dev_gad_budget: "0",
-    staff: "", // Optional staff ID - can be empty
+    staff: "", // Will be set dynamically from user context
   });
   const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_price: string}[]>([]);
   const [currentBudgetItem, setCurrentBudgetItem] = useState({
@@ -63,11 +65,20 @@ export default function AnnualDevelopmentPlanCreate() {
     setIsLoading(true);
 
     try {
+      // Get staff_id from current user using the correct pattern
+      const staffId = user?.staff?.staff_id;
+      
+      if (!staffId) {
+        toast.error("Staff information not available. Please log in again.");
+        setIsLoading(false);
+        return;
+      }
+
       // Filter out empty staff value to avoid validation errors
       const { staff, ...restFormData } = formData;
       const payload = { 
         ...restFormData, 
-        staff: staff || null, // Send null if staff is empty
+        staff: staffId, // Use the current user's staff_id
         budgets: budgetItems 
       };
       await createAnnualDevPlan(payload);
