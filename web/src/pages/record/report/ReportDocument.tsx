@@ -31,6 +31,7 @@ export default function ReportDocument() {
   const arDocs = React.useMemo(() => data?.ar_files?.filter((file: any) => 
     file.arf_type.startsWith('application/')), [data])
 
+
   // For Weekly Accomplishment Report Document
   const { mutateAsync: addWARFile } = useAddWARFile();
   const compositions = React.useMemo(() => data?.war_composition || [], [data])
@@ -84,6 +85,7 @@ export default function ReportDocument() {
     };
 
     const { publicUrl, storagePath } = await uploadFile(newFile.file);
+    
     if (publicUrl) {
       
       if (type === "AR") {

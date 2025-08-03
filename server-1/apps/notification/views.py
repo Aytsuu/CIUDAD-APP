@@ -5,10 +5,8 @@ from .models import Notification, Recipient
 from .serializers import NotificationSerializer
 from rest_framework.decorators import api_view
 from django.utils import timezone
-from supabase import create_client
+from utils.supabase_client import supabase
 from django.conf import settings
-
-supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
 class UserNotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer

@@ -3,10 +3,8 @@ import { CardContent } from "@/components/ui/card/card";
 import { ChevronRight, Stethoscope } from "lucide-react";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";
-import {
-  MedicalConsultationHistory,
-  ConsultationHistoryTable,
-} from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
+import { ConsultationHistoryTable } from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
+import { MedicalConsultationHistory } from "@/pages/healthServices/medicalconsultation/types";
 import CurrentConsultationCard from "@/pages/healthServices/medicalconsultation/medicalhistory/current-medrec";
 import { ConsultationHistorySkeleton } from "@/pages/healthServices/skeleton/doc-medform-skeleton";
 
@@ -30,8 +28,6 @@ export default function PendingDisplayMedicalConsultation({
 
   const patientId = useMemo(() => patientData?.pat_id, [patientData]);
 
-
-  
   const fetchConsultationHistory = useCallback(async () => {
     if (!patientId) return;
 
@@ -69,6 +65,19 @@ export default function PendingDisplayMedicalConsultation({
           height: history.bmi_details?.height || "",
           weight: history.bmi_details?.weight || "",
         },
+        staff_details: history.staff_details
+          ? {
+              rp: {
+                per: {
+                  per_fname: history.staff_details.rp?.per?.per_fname || "",
+                  per_lname: history.staff_details.rp?.per?.per_lname || "",
+                  per_mname: history.staff_details.rp?.per?.per_mname || "",
+                  per_suffix: history.staff_details.rp?.per?.per_suffix || "",
+                  per_dob: history.staff_details.rp?.per?.per_dob || "",
+                },
+              },
+            }
+          : null,
         find_details: history.find_details
           ? {
               assessment_summary:
@@ -84,7 +93,8 @@ export default function PendingDisplayMedicalConsultation({
 
       const sortedHistories = formattedHistories.sort(
         (a: MedicalConsultationHistory, b: MedicalConsultationHistory) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
       );
 
       setConsultationHistory(sortedHistories);
@@ -111,7 +121,8 @@ export default function PendingDisplayMedicalConsultation({
     if (!currentConsultation?.created_at) return consultationHistory;
     return consultationHistory.filter(
       (history) =>
-        new Date(history.created_at) <= new Date(currentConsultation.created_at)
+        new Date(history.created_at || "") <=
+        new Date(currentConsultation.created_at || "")
     );
   }, [consultationHistory, currentConsultation]);
 
@@ -167,11 +178,10 @@ export default function PendingDisplayMedicalConsultation({
 
           {/* Navigation Buttons */}
           <div className="flex justify-end mt-6 sm:mt-8">
-           
             <Button
               onClick={onNext}
               className={`w-[100px] flex items-center justify-center ${
-              loading ? "opacity-70 cursor-not-allowed" : ""
+                loading ? "opacity-70 cursor-not-allowed" : ""
               }`}
               disabled={loading}
             >

@@ -641,7 +641,6 @@
 
 // Toolbar.tsx
 import { useState } from "react";
-import { type Editor } from "@tiptap/react";
 import {
   Bold, Strikethrough, Italic, List, ListOrdered, Heading2, Image as ImageIcon,
   Scissors, AlignLeft, AlignCenter, AlignRight, AlignJustify, TableRowsSplit,

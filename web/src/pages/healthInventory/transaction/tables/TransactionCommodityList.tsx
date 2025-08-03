@@ -109,7 +109,7 @@ export default function CommodityList() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <ExportButton data={filteredCommodities} filename="commodity-transactions" columns={exportColumns} />
+          <ExportButton data={paginatedCommodities} filename="commodity-transactions" columns={exportColumns} />
         </div>
         <div className="overflow-x-auto">
           <DataTable columns={columns} data={paginatedCommodities} />

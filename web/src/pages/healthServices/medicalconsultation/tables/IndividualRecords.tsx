@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -12,56 +11,14 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
-import { getMedconRecordById } from "../restful-api/get";
 import { Syringe, AlertCircle } from "lucide-react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
-
-export interface MedicalRecord {
-  medrec_id: number;
-  medrec_chief_complaint: string;
-  created_at: string;
-  vital_signs: {
-    vital_id: number;
-    vital_bp_systolic: string;
-    vital_bp_diastolic: string;
-    vital_temp: string;
-    vital_RR: string;
-    vital_pulse: string;
-    created_at: string;
-  };
-  bmi_details: {
-    bm_id: number;
-    age: string;
-    height: number;
-    weight: number;
-    bmi: string;
-    bmi_category: string;
-    created_at: string;
-    pat: number | null;
-  };
-  find_details: {
-    find_id: string;
-    assessment_summary: string;
-    obj_summary: string;
-    subj_summary: string;
-    plantreatment_summary: string;
-  };
-  patrec_details: {
-    pat_id: string | number;
-    medicalrec_count: number;
-    patient_details?: any;
-  };
-}
-
-export interface Patient {
-  pat_id: string;
-  name: string;
-  pat_type: string;
-  [key: string]: any;
-}
+import { Patient } from "../../restful-api-patient/type";
+import { MedicalConsultationHistory } from "../types";
+import { usePatientMedicalRecords } from "../queries/fetchQueries";
+import { getMedicalConsultationColumns } from "./columns/indiv_col";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
@@ -81,15 +38,11 @@ export default function InvMedicalConRecords() {
     }
   }, [patientData]);
 
-  const { data: medicalRecords, isLoading } = useQuery({
-    queryKey: ["patientMedicalDetails"],
-    queryFn: () => getMedconRecordById(patientData?.pat_id),
-    refetchOnMount: true,
-    staleTime: 0,
-    enabled: !!patientData?.pat_id,
-  });
+  const { data: medicalRecords, isLoading } = usePatientMedicalRecords(
+    patientData?.pat_id
+  );
 
-  const formatMedicalData = React.useCallback((): MedicalRecord[] => {
+  const formatMedicalData = useCallback((): MedicalConsultationHistory[] => {
     if (!medicalRecords) return [];
 
     return medicalRecords.map((record: any) => {
@@ -126,6 +79,17 @@ export default function InvMedicalConRecords() {
           medicalrec_count: patrecDetails.medicalrec_count || 0,
           patient_details: patrecDetails.patient_details || null,
         },
+        staff_details: {
+          rp: {
+            per: {
+              per_fname: record.staff_details.rp?.per?.per_fname || "",
+              per_lname: record.staff_details.rp?.per?.per_lname || "",
+              per_mname: record.staff_details.rp?.per?.per_mname || "",
+              per_suffix: record.staff_details.rp?.per?.per_suffix || "",
+              per_dob: record.staff_details.rp?.per?.per_dob || "",
+            },
+          },
+        },
       };
     });
   }, [medicalRecords]);
@@ -146,98 +110,7 @@ export default function InvMedicalConRecords() {
     currentPage * pageSize
   );
 
-  const columns: ColumnDef<MedicalRecord>[] = [
-    {
-      accessorKey: "created_at",
-      header: "Created at",
-      cell: ({ row }) => {
-        const createdAt = new Date(row.original.created_at);
-        const formattedDate = createdAt.toLocaleDateString();
-        const formattedTime = createdAt.toLocaleTimeString();
-
-        return <div className="text-sm text-gray-600">{formattedDate}</div>;
-      },
-    },
-    {
-      accessorKey: "vital_signs",
-      header: "Vital Signs",
-      cell: ({ row }) => {
-        const vital = row.original.vital_signs;
-        return (
-          <div className="flex justify-center items-center gap-2 min-w-[150px] px-2 py-1 bg-gray-50 rounded-md shadow-sm">
-            <div className="flex flex-col justify-start text-sm min-w-[180px]">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <div className="flex items-center">
-                  <span className="font-medium mr-1">BP:</span>
-                  <span>
-                    {vital.vital_bp_systolic}/{vital.vital_bp_diastolic} mmHg
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <span className="font-medium mr-1">Temp:</span>
-                  <span>{vital.vital_temp}°C</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="font-medium mr-1">Pulse:</span>
-                  <span>{vital.vital_pulse} bpm</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="font-medium mr-1">RR:</span>
-                  <span>{vital.vital_RR} cpm</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "bmi_details",
-      header: "Height and Weight",
-      cell: ({ row }) => {
-        const bmi = row.original.bmi_details;
-        return (
-          <div className="flex flex-col">
-            <div className="text-sm">
-              Height: {bmi.height} cm | Weight: {bmi.weight} kg
-            </div>
-          </div>
-        );
-      },
-    },
-
-    {
-      accessorKey: "chiefcomplaint",
-      header: "ChiefComplaint",
-      cell: ({ row }) => {
-        return (
-          <div className="flex flex-col">
-            <div className="text-sm font-medium">
-              {row.original.medrec_chief_complaint || "N/A"}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "action",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <Link
-            to="/DisplayMedicalConsultation"
-            state={{
-              params: { MedicalConsultation: row.original, patientData },
-            }}
-          >
-            <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
-              View
-            </Button>
-          </Link>
-        </div>
-      ),
-    },
-  ];
+  const columns = getMedicalConsultationColumns(patientData);
 
   if (!patientData?.pat_id) {
     return (

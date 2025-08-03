@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import { useState,useEffect,useCallback,useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, ChevronLeft } from "lucide-react";
+import { ArrowUpDown, Loader2, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "sonner";
 import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
@@ -19,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useLoading } from "@/context/LoadingContext";
 
 export interface PatientRecord {
   pat_id: string;
@@ -75,7 +75,7 @@ export default function ScheduledVaccinations() {
     },
   });
 
-  const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
+  const formatVaccinationData = useCallback((): VaccinationRecord[] => {
     if (!ScheduledVaccinations) return [];
 
     return ScheduledVaccinations.map((record: any) => {
@@ -138,7 +138,7 @@ export default function ScheduledVaccinations() {
     });
   }, [ScheduledVaccinations]);
 
-  const filteredData = React.useMemo(() => {
+  const filteredData = useMemo(() => {
     return formatVaccinationData().filter((record: VaccinationRecord) => {
       const searchText =
         `${record.patient.pat_id} ${record.patient.lname} ${record.patient.fname} ${record.vaccine_name}`.toLowerCase();
@@ -294,18 +294,16 @@ export default function ScheduledVaccinations() {
       ),
     },
   ];
+    const { showLoading, hideLoading } = useLoading();
+  
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
-
+useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
   return (
     <>
       <div className="w-full h-full flex flex-col">
@@ -391,7 +389,14 @@ export default function ScheduledVaccinations() {
             </div>
           </div>
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+            {isLoading ? (
+              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
+              </div>
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">

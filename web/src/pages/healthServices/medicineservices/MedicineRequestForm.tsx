@@ -188,20 +188,6 @@ export default function MedicineRequestForm() {
             ) : (
               <div className="w-full py-6">
                 <div className="px-4">
-                  {!isMedicinesLoading &&
-                    ((mode === "fromindivrecord" && !selectedPatientData) ||
-                      (mode === "fromallrecordtable" && !selectedPatientId) ||
-                      selectedMedicines.length === 0 ||
-                      hasInvalidQuantities) && (
-                      <MedicineRequestError
-                        mode={mode}
-                        selectedPatientData={selectedPatientData}
-                        selectedPatientId={selectedPatientId}
-                        selectedMedicinesLength={selectedMedicines.length}
-                        hasExceededStock={hasExceededStock}
-                      />
-                    )}
-
                   {/* Patient Selection Section - only shown in fromallrecordtable mode */}
                   {mode === "fromallrecordtable" && (
                     <PatientSearch
@@ -253,6 +239,23 @@ export default function MedicineRequestForm() {
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
                     />
+
+                    <div className="px-3 pt-6">
+                      {!isMedicinesLoading &&
+                        ((mode === "fromindivrecord" && !selectedPatientData) ||
+                          (mode === "fromallrecordtable" &&
+                            !selectedPatientId) ||
+                          selectedMedicines.length === 0 ||
+                          hasInvalidQuantities) && (
+                          <MedicineRequestError
+                            mode={mode}
+                            selectedPatientData={selectedPatientData}
+                            selectedPatientId={selectedPatientId}
+                            selectedMedicinesLength={selectedMedicines.length}
+                            hasExceededStock={hasExceededStock}
+                          />
+                        )}
+                    </div>
                   </div>
                 )}
               </div>

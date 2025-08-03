@@ -11,6 +11,8 @@ from rest_framework.exceptions import ValidationError
 from django.db import transaction, IntegrityError
 from django.utils.timezone import now
 from apps.childhealthservices.models import ChildHealthSupplements,ChildHealth_History
+from apps.reports.models import *
+from apps.reports.serializers import *
 class PatientMedicineRecordsView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
     
@@ -46,62 +48,6 @@ class GetMedRecordCountView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class MonthlyFirstAidRecordsAPIView(APIView):
-    def get(self, request):
-        try:
-            # Get base queryset with proper relationships
-            queryset = MedicineRecord.objects.select_related(
-                'minv_id',  # ForeignKey to FirstAidInventory
-                'minv_id__inv_id',  # OneToOne to Inventory
-                'minv_id__med_id',  # ForeignKey to FirstAidList
-                'patrec_id'
-            ).order_by('-fulfilled_at')
-            
-            # Filter by year if provided
-            year = request.GET.get('year')
-            if year and year != 'all':
-                queryset = queryset.filter(fulfilled_at__year=year)
-            
-            # Group by month and get counts
-            monthly_data = queryset.annotate(
-                month=TruncMonth('fulfilled_at')
-            ).values('month').annotate(
-                record_count=Count('medrec_id')
-            ).order_by('-month')
-            
-            # Format the response
-            formatted_data = []
-            for item in monthly_data:
-                month_str = item['month'].strftime('%Y-%m')
-                month_records = queryset.filter(
-                    fulfilled_at__year=item['month'].year,
-                    fulfilled_at__month=item['month'].month
-                )
-                
-                # Serialize records
-                serialized_records = []
-                for record in month_records:
-                    # Serialize record
-                    serialized_record = MedicineRecordSerialzer(record).data
-                    serialized_records.append(serialized_record)
-                
-                formatted_data.append({
-                    'month': month_str,
-                    'record_count': item['record_count'],
-                    'records': serialized_records
-                })
-            
-            return Response({
-                'success': True,
-                'data': formatted_data,
-                'total_records': len(formatted_data)
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class MedicineRequestView(generics.ListCreateAPIView):
     serializer_class = MedicineRequestSerializer
@@ -282,5 +228,89 @@ class FindingPlanTreatmentView(generics.CreateAPIView):
   
     serializer_class = FindingPlanTreatmentSerializer
     queryset = FindingsPlanTreatment.objects.all()
+    
+    
+class MonthlyMedicineRecordsAPIView(APIView):
+    def get(self, request):
+        try:
+            queryset = MedicineRecord.objects.select_related(
+                'minv_id', 
+                'minv_id__inv_id', 
+                'minv_id__med_id',  
+                'patrec_id'
+            ).order_by('-fulfilled_at')
+            
+
+            year_param = request.GET.get('year')  # Supports '2025' or '2025-07'
+
+            if year_param and year_param != 'all':
+                try:
+                    if '-' in year_param:
+                        year, month = map(int, year_param.split('-'))
+                        queryset = queryset.filter(
+                            fulfilled_at__year=year,
+                            fulfilled_at__month=month
+                        )
+                    else:
+                        year = int(year_param)
+                        queryset = queryset.filter(
+                            fulfilled_at__year=year
+                        )
+                except ValueError:
+                    return Response({
+                        'success': False,
+                        'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Annotate and count records by month
+            monthly_data = queryset.annotate(
+                month=TruncMonth('fulfilled_at')
+            ).values('month').annotate(
+                record_count=Count('medrec_id')
+            ).order_by('-month')
+
+            formatted_data = []
+
+            for item in monthly_data:
+                month_str = item['month'].strftime('%Y-%m')
+
+                # Get or create monthly report for this month
+                report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
+                    month_year=month_str,
+                    rcp_type='Medicine'
+
+                )
+                report_data = MonthlyRCPReportSerializer(report_obj).data
+
+                # Get all records for that month
+                month_records = queryset.filter(
+                    fulfilled_at__year=item['month'].year,
+                    fulfilled_at__month=item['month'].month
+                )
+
+                serialized_records = [
+                    MedicineRecordSerialzer(record).data for record in month_records
+                ]
+
+                formatted_data.append({
+                    'month': month_str,
+                    'record_count': item['record_count'],
+                    'monthlyrcplist_id': report_obj.monthlyrcplist_id,
+                    'report': report_data,
+                    'records': serialized_records
+                })
+
+            return Response({
+                'success': True,
+                'data': formatted_data,
+                'total_records': len(formatted_data)
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
  
