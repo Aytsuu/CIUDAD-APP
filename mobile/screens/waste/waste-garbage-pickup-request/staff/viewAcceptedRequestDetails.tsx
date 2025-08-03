@@ -4,7 +4,6 @@ import { ChevronLeft, Edit } from "lucide-react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
-import { useUpdateGarbageRequestStatus } from "./queries/garbagePickupStaffUpdateQueries"
 import { useGetViewAccepted } from "./queries/garbagePickupStaffFetchQueries"
 
 export default function ViewRequestDetails() {
@@ -12,11 +11,7 @@ export default function ViewRequestDetails() {
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
   const { data: requestDetails, isPending, error } = useGetViewAccepted(garb_id)
-  const { mutate: updateRequestStatus } = useUpdateGarbageRequestStatus()
 
-  const handleConfirmRequest = () => {
-    updateRequestStatus(requestDetails?.garb_id || "")
-  }
 
   const handleEditAssignment = () => {
     router.push({
@@ -159,18 +154,6 @@ export default function ViewRequestDetails() {
           </View>
         )}
 
-        {/* Confirm Button */}
-        {/* <ConfirmationModal
-          trigger={
-            <Button className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-              <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm</Text>
-            </Button>
-          }
-          title="Confirm Pickup"
-          description="Would you like to confirm that the pickup has been done?"
-          actionLabel="Confirm"
-          onPress={handleConfirmRequest}
-        /> */}
       </ScrollView>
     </_ScreenLayout>
   )
