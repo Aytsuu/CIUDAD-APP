@@ -16,6 +16,8 @@ class Announcement(models.Model):
             ('public', 'Public'),
             ('event', 'Event'),
             ('reminder', 'Reminder'),
+            ('advisory', 'Advisory'),
+            ('weather alert', 'Weather Alert'),
         ]
     )
     staff = models.ForeignKey(

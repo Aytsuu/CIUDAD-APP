@@ -190,6 +190,8 @@ const AnnouncementCreate = () => {
                     { id: "public", name: "Public" },
                     { id: "event", name: "Event" },
                     { id: "reminder", name: "Reminder" },
+                    { id: "advisory", name: "Advisory" },
+                    { id: "weather alert", name: "Weather Alert" },
                   ]}
                 />
               </CardContent>
