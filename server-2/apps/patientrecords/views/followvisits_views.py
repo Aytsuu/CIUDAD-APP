@@ -1,12 +1,13 @@
 from django.shortcuts import render
-from django.db.models import OuterRef, Exists
+from django.db.models import OuterRef, Exists, Q
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
 from django.db.models import Count, Prefetch
 from django.http import Http404
 from apps.pagination import StandardResultsPagination
@@ -53,14 +54,16 @@ class AllFollowUpVisitsView(generics.ListAPIView):
             )
         
         if time_frame:
-            today = timezone.now()
+            today = timezone.now().date()
 
             if time_frame == 'today':
                 queryset =queryset.filter(followv_date__date=today)
+                
             elif time_frame == 'thisWeek':
-                start_week = today -timedelta(days=today.weekday())
-                end_week = start_week + timedelta(days=6)
-                queryset =queryset.filter(followv_date__range=[start_week, end_week])
+                start_week = today - timedelta(days=today.weekday()) # standard start of the week - Monday 
+                end_week = start_week + timedelta(days=6) # end of week - Sunday
+                queryset = queryset.filter(followv_date__date__gte=start_week, followv_date__date__lte=end_week)
+
             elif time_frame == 'thisMonth':
                 queryset = queryset.filter(
                     followv_date__year=today.year,

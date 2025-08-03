@@ -409,12 +409,9 @@ export default function ScheduleRecords() {
   // Loading state
   if (isLoading) {
     return (
-      <LayoutWithBack title="Schedule Records" description="Manage and view patient appointment schedules">
-        <div className="flex items-center justify-center h-64">
-          <LinearLoader/>
-          <span>Loading follow-up visits...</span>
-        </div>
-      </LayoutWithBack>
+      <div className="flex items-center justify-center h-64">
+        <LinearLoader />
+      </div>
     )
   }
 

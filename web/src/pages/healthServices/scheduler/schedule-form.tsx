@@ -18,8 +18,9 @@ import type {
 } from "../scheduler/schedule-types"
 
 import { useAddScheduler, useAddService, useAddDay } from "../scheduler/queries/schedulerAddQueries"
-import { useGetServices, useGetDays } from "./queries/schedulerFetchQueries"
-import { useDeleteService, useDeleteDay } from "./queries/schedulerDeleteQueries"
+import { useGetServices, useGetDays, useGetScheduler } from "./queries/schedulerFetchQueries"
+import { useDeleteService, useDeleteDay, useDeleteScheduler } from "./queries/schedulerDeleteQueries"
+import { useUpdateScheduler } from "./queries/schedulerUpdateQueries"
 
 
 // Define the ServiceScheduleForm component
@@ -35,6 +36,7 @@ export default function ServiceScheduleForm({
   // fetch services and days
   const { data: servicesData } = useGetServices()
   const { data: daysData } = useGetDays()
+  const { data: schedulerData } = useGetScheduler()
 
   const [currentWeeklySchedule, setCurrentWeeklySchedule] = useState<WeeklySchedule>(initialSchedule)
   const [days, setDays] = useState<string[]>([]);
@@ -42,6 +44,7 @@ export default function ServiceScheduleForm({
   const [newServiceName, setNewServiceName] = useState("")
   const [isAddingService, setIsAddingService] = useState(false)
   const [isAddingDay, setIsAddingDay] = useState(false)
+  const [schedulerIdMap, setSchedulerIdMap] = useState<{[key: string]: number}>({})
 
   // mutation hook
   const addServiceMutation = useAddService()
@@ -50,6 +53,9 @@ export default function ServiceScheduleForm({
 
   const deleteServiceMutation = useDeleteService()
   const deleteDayMutation = useDeleteDay()
+  const deleteSchedulerMutation = useDeleteScheduler()
+
+  const updateSchedulerMutation = useUpdateScheduler()
 
   const sortDaysInWeekOrder = (dayNames: string[]): string[] => {
     const weekDaysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -100,7 +106,38 @@ export default function ServiceScheduleForm({
     setCurrentWeeklySchedule(initialSchedule)
   }, [initialSchedule])
 
-  const handleServiceToggle = (
+  // update schedule state based on fetched scheduler data
+  useEffect(() => {
+    if (schedulerData && schedulerData.length > 0) {
+      const newSchedule: WeeklySchedule = {}
+      const idMap: {[key: string]: number} = {}
+      
+      schedulerData.forEach(entry => {
+        const { service_name, day, meridiem, ss_id } = entry
+        
+        if (!newSchedule[day]) {
+          newSchedule[day] = {}
+        }
+        
+        if (!newSchedule[day][service_name]) {
+          newSchedule[day][service_name] = { AM: false, PM: false }
+        }
+        
+        if (meridiem === 'AM') {
+          newSchedule[day][service_name].AM = true
+          idMap[`${day}-${service_name}-AM`] = ss_id
+        } else if (meridiem === 'PM') {
+          newSchedule[day][service_name].PM = true
+          idMap[`${day}-${service_name}-PM`] = ss_id
+        }
+      })
+      
+      setCurrentWeeklySchedule(newSchedule)
+      setSchedulerIdMap(idMap)
+    }
+  }, [schedulerData])
+
+  const handleServiceToggle = async (
     dayName: string,
     serviceName: string,
     timeSlot: keyof ServiceTimeSlots,
@@ -223,37 +260,103 @@ export default function ServiceScheduleForm({
     try {
       console.log("Saving weekly schedule: ", currentWeeklySchedule);
 
-      const schedulerEntries = [];
-      for (const dayName of days) {
-        const dailySchedule = currentWeeklySchedule[dayName] || {};
+    // Get current scheduler entries from UI state
+    const currentEntries = [];
+    for (const dayName of days) {
+      const dailySchedule = currentWeeklySchedule[dayName] || {};
 
-        for (const [serviceName, timeSlots] of Object.entries(dailySchedule)) {
-          if(timeSlots.AM) {
-            schedulerEntries.push({
-              service_name: serviceName,
-              day: dayName,
-              meridiem: "AM" as const,
-            })
-          }
-          if(timeSlots.PM) {
-            schedulerEntries.push({
-              service_name: serviceName,
-              day: dayName,
-              meridiem: "PM" as const,
-            })
-          }
+      for (const [serviceName, timeSlots] of Object.entries(dailySchedule)) {
+        if(timeSlots.AM) {
+          currentEntries.push({
+            service_name: serviceName,
+            day: dayName,
+            meridiem: "AM" as const,
+          })
+        }
+        if(timeSlots.PM) {
+          currentEntries.push({
+            service_name: serviceName,
+            day: dayName,
+            meridiem: "PM" as const,
+          })
         }
       }
-      console.log('Scheduler entries to create: ', schedulerEntries)
+    }
 
-      const createdEntries = []
-      for (const entry of schedulerEntries) {
-        const result = await addSchedulerMutation.mutateAsync(entry)
-        createdEntries.push(result)
+    // Get existing entries from schedulerIdMap
+    const existingEntries = Object.keys(schedulerIdMap).map(key => {
+      const [day, service_name, meridiem] = key.split('-')
+      return {
+        key,
+        ss_id: schedulerIdMap[key],
+        service_name,
+        day,
+        meridiem: meridiem as "AM" | "PM"
       }
-      console.log("Created scheduler entries: ", createdEntries);
+    })
 
-      onSave(currentWeeklySchedule)
+    const toCreate = []
+    const toUpdate = []
+    const toDelete = []
+
+    for (const currentEntry of currentEntries) {
+      const currentKey = `${currentEntry.day}-${currentEntry.service_name}-${currentEntry.meridiem}`
+      const existing = existingEntries.find(e => e.key === currentKey)
+      
+      if (!existing) {
+        toCreate.push(currentEntry)
+      }
+    }
+
+    for (const existingEntry of existingEntries) {
+      const stillExists = currentEntries.some(current => 
+        current.day === existingEntry.day && 
+        current.service_name === existingEntry.service_name && 
+        current.meridiem === existingEntry.meridiem
+      )
+      
+      if (!stillExists) {
+        const sameServiceDay = currentEntries.find(current => 
+          current.day === existingEntry.day && 
+          current.service_name === existingEntry.service_name &&
+          current.meridiem !== existingEntry.meridiem
+        )
+        
+        if (sameServiceDay) {
+          toUpdate.push({
+            ss_id: existingEntry.ss_id,
+            meridiem: sameServiceDay.meridiem
+          })
+        } else {
+          toDelete.push(existingEntry.ss_id)
+        }
+      }
+    }
+
+    console.log('Operations to perform:', { toCreate, toUpdate, toDelete })
+
+    const operations = []
+
+    // create new entries
+    for (const entry of toCreate) {
+      operations.push(addSchedulerMutation.mutateAsync(entry))
+    }
+
+    // update existing entries
+    for (const update of toUpdate) {
+      operations.push(updateSchedulerMutation.mutateAsync(update))
+    }
+
+    // delete removed entries
+    for (const deleteId of toDelete) {
+      operations.push(deleteSchedulerMutation.mutateAsync(deleteId))
+    }
+
+    // wait for all operations to complete
+    await Promise.all(operations)
+
+    console.log("All scheduler operations completed successfully")
+    onSave(currentWeeklySchedule)
     } catch (error){ 
       console.error("Error saving schedule: ", error)
     }
