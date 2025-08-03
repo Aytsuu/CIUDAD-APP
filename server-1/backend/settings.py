@@ -36,11 +36,6 @@ SUPABASE_CONFIG = {
     'JWT_AUDIENCE': 'authenticated',
 }
 
-SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
-SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
-SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
-SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
-
 # ========================
 # FIREBASE CONFIGURATION
 # ========================
