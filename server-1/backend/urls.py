@@ -49,6 +49,5 @@ urlpatterns = [
     path('gad/', include('apps.gad.urls')),
     path('council/', include('apps.council.urls')),
     path('clerk/', include("apps.clerk.urls")),
-    path('secretary/', include("apps.secretary.urls")),
     path('api/activity-log/', include('apps.act_log.urls')),
 ]
