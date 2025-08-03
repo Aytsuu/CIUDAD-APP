@@ -148,15 +148,13 @@ const items: MenuItem[] = [
       { title: "Vaccination", url: "/allRecordsForVaccine" },
       { title: "Patients Record", url: "/patients-record-main" },
       { title: "Family Profiling", url: "/family-profiling-main" },
-      
-      
       {
         title: "Inventory",
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          {title: "Transactions List", url: "/transactionMainInventoryList" },
+          { title: "Transactions List", url: "/transactionMainInventoryList" },
         ],
       },
       {
@@ -168,6 +166,21 @@ const items: MenuItem[] = [
         ],
       },
     ],
+  },
+  {
+    title: "Clerk",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Certifications", url: "record/clearances/certification" },
+      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
+    ],
+  },
+  {
+    title: "Activity Log",
+    url: "/record/activity-log",
+
   },
 ];
 
