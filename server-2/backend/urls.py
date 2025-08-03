@@ -30,11 +30,16 @@ urlpatterns = [
     path('vaccination/', include("apps.vaccination.urls")),
     path('family-planning/', include("apps.familyplanning.urls")),
     path('patientrecords/', include("apps.patientrecords.urls")),
+    path('medical-consultation/', include("apps.medicalConsultation.urls")),
+    path('medicine/', include("apps.medicineservices.urls")),
+    path('firstaid/',include("apps.firstaid.urls")),
+    path('child-health/',include("apps.childhealthservices.urls")),
+
     
     # path('user/', include('apps.account.urls')),
     # path('waste/', include('apps.waste.urls')),
     # path('profiling/', include("apps.profiling.urls")),
-    path('administration/', include("apps.administration.urls")),
+    # path('administration/', include("apps.administration.urls")),
     # path('file/', include('apps.file.urls')),
     # path('treasurer/', include('apps.treasurer.urls')),
     # path('donation/', include('apps.donation.urls')),

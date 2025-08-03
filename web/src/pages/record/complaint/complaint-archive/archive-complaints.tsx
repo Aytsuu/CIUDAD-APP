@@ -7,7 +7,6 @@ import type { Complaint } from "../complaint-type";
 import { archiveComplaintColumns } from "./archive-complaint-columns";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import { DynamicFilter } from "@/components/filter";
 
 const ArchiveComplaints = () => {
   const [data, setData] = useState<Complaint[]>([]);

@@ -3,16 +3,19 @@ import IRRecords from '@/pages/record/report/incident/IRRecords';
 import IRFormLayout from '@/pages/record/report/incident/IRFormLayout';
 import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';
 import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
-import ReportLayout from '@/pages/record/report/ReportLayout';
-import { Navigate } from 'react-router';
 import ReportDocument from '@/pages/record/report/ReportDocument';
 import CreateMissingWeeks from '@/pages/record/report/weekly/CreateMissingWeeks';
+import IRArchive from '@/pages/record/report/incident/IRArchive';
 
 // Creating routes
 export const report_router = [
   {
     path: '/report/incident',
-    element: <IRRecords/>
+    element: <IRRecords/>,
+  },
+  {
+    path: '/report/incident/archive',
+    element: <IRArchive/>,
   },
   {
     path: '/report/acknowledgement',

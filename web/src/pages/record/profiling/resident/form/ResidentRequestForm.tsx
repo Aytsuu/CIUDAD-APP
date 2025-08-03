@@ -26,7 +26,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: deleteRequest } = useDeleteRequest();
   const { mutateAsync: updateAccount } = useUpdateAccount();
-  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+  const { data: sitioList } = useSitioList();
   const { form } = useResidentForm(params.data);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { 

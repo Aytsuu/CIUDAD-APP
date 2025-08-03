@@ -1,36 +1,127 @@
 import { z } from "zod";
-import { positiveNumberSchema } from "@/helpers/PositiveNumber";
+
+
+
+const positiveNumberWith2Decimals = z.preprocess(
+  (val) => (val !== '' ? Number(val) : undefined),
+  z
+    .number()
+    .min(2, { message: "Value must be at least 2." })
+    .max(999, { message: "Value must not exceed 999." })
+    .refine((val) => {
+      return /^\d{1,3}(\.\d{1,2})?$/.test(val.toString());
+    }, {
+      message: "Value must be a number with up to 2 decimal places and a maximum of 3 digits.",
+    })
+);
+
+// Temperature-specific validation
+export const temperatureSchema = positiveNumberWith2Decimals
+  .refine((temp) => temp >= 25, {
+    message: "Temperature too low (critical hypothermia)",
+  })
+  .refine((temp) => temp <= 43, {
+    message: "Temperature too high (hyperthermia risk)",
+  })
+  .refine((temp) => temp >= 36.5 || temp <= 37.5, {
+    message: "Temperature outside normal range (36.5°C-37.5°C)",
+  });
+
+export const heightSchema = z.preprocess(
+  (val) => (val !== '' ? Number(val) : undefined),
+  z.number()
+    .min(45, { message: "Below minimum human height" })
+    .max(300, { message: "Exceeds medical maximum" })
+    .refine((h) => h <= 250 || h >= 200, {
+      message: "Abnormal height - verify measurement"
+    })
+    .refine((h) => h <= 200 || h >= 150, {
+      message: "Outside common adult range"
+    })
+);
+
+
+export const weightSchema = z.preprocess(
+  (val) => (val !== '' ? Number(val) : undefined),
+  z.number()
+    .min(0.5, { message: "Weight must be at least 0.5 kg" })
+    .max(300, { message: "Weight exceeds medical limits (300 kg max)" })
+    .refine((val) => /^\d{1,3}(\.\d{1,2})?$/.test(val.toString()), {
+      message: "Max 3 digits and 2 decimals"
+    })
+    // Additional medical checks
+    .refine((w) => w <= 200 || w >= 30, {
+      message: "Extremely high weight - verify measurement"
+    })
+    .refine((w) => w <= 150 || w >= 2, {
+      message: "Outside common weight range"
+    })
+);
+
+
+const heartRateSchema = z.preprocess(
+  (val) => (val !== '' ? Number(val) : undefined),
+  z.number()
+    .int({ message: "Must be a whole number" })
+    .min(20, { message: "Critical bradycardia (<20 bpm)" })
+    .max(250, { message: "Extreme tachycardia (>250 bpm)" })
+    // Age-agnostic safe range
+    .refine((hr) => hr >= 40 || hr <= 180, {
+      message: "Abnormal for any age - verify measurement"
+    })
+    // Common clinical thresholds
+    .refine((hr) => hr >= 60 || hr <= 100, {
+      message: "Outside normal adult range (60-100 bpm)"
+    })
+);
+
+
+const respiratoryRateSchema = z.preprocess(
+  (val) => (val !== '' ? Number(val) : undefined),
+  z.number()
+    .int({ message: "Must be a whole number" })
+    .min(6, { message: "Agonal breathing (<6) - emergency!" })
+    .max(60, { message: "Extreme tachypnea (>60)" })
+    // Age-agnostic safe range
+    .refine((rr) => rr >= 12 || rr <= 30, {
+      message: "Abnormal for any age - verify measurement"
+    })
+    // Adult-specific guidance
+    .refine((rr) => rr >= 12 || rr <= 20, {
+      message: "Outside normal adult range (12-20)"
+    })
+);
 
 export const nonPhilHealthSchema = z.object({
-  isTransient: z.string(),
-  fname: z.string().min(1, "First Name is required").default(""),
-  lname: z.string().min(1, "Last Name is required").default(""),
-  mname: z.string().default(""),
-  date: z.string().min(1, "Date is required").default(""),
-  age: z.string(),  //z.number().min(1, "Age is Required"),
-  sex: z.string().min(1, "Sex is Required").default(""),
-  dob: z.string().min(1, "Date of Birth is required").default(""),
+  pat_id: z.string().min(1, "Patient ID is required").default(""),
+  bhw_assignment: z.string().min(1, "BHW Assignment is Required").default(""),
+  vital_pulse: heartRateSchema,
+  vital_bp_systolic: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number()
+      .min(40, { message: "Systolic cannot be <40 mmHg (non-viable)" })
+      .max(300, { message: "Systolic cannot be >300 mmHg" })
+      .refine(val => val % 1 === 0, "Must be whole number")
+  ),
+  vital_bp_diastolic: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number()
+      .min(20, { message: "Diastolic cannot be <20 mmHg" })
+      .max(200, { message: "Diastolic cannot be >200 mmHg" })
+      .refine(val => val % 1 === 0, "Must be whole number")
+  ),
 
-  houseno: z.string().default(""),
-  street: z.string().default(""),
-  sitio: z.string().default(""),
-  barangay: z.string().min(1, "Barangay is required").default(""),
-  province: z.string().default(""),
-  city: z.string().default(""),
-  bhwAssign: z.string().min(1, "BHW Assignment is Required").default(""),
-  hr: positiveNumberSchema, //z.number().min(1, "Heart rate is required"),
-  bpsystolic: positiveNumberSchema, //z.number().min(1, "Blood pressure Systolic is required"),
-  bpdiastolic: positiveNumberSchema, //z.number().min(1, "Blood pressure Diastolic is required"),
-  rrc: positiveNumberSchema, //z.number().min(1, "Respiratory Rate Count is required"),
-  temp: positiveNumberSchema,           //z.number().min(1, "Temperature is required"),
-  ht: z.number(),
-  wt:positiveNumberSchema,
-  chiefComplaint: z.string().default(""),
-  doctor: z.string().min(1,"Doctor is required")
-
+  vital_RR: respiratoryRateSchema,
+  height: heightSchema,
+  weight: weightSchema,
+  vital_temp: temperatureSchema, // Using the specialized temperature validator
+  medrec_chief_complaint: z.string().default(""),
+  doctor: z.string().min(1, "Doctor is required")
 });
 
 
 
-
 export type nonPhilHealthType = z.infer<typeof nonPhilHealthSchema>;
+
+
+

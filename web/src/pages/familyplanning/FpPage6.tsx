@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import type React from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
@@ -17,7 +17,7 @@ import SignatureCanvas from "react-signature-canvas"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { page6Schema, type FormData, type ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 
 
 const methods = ["COC", "POP", "Injectable", "Implant", "IUD", "Interval", "Post Partum", "Condom", "BOM/CMM", "BBT", "STM", "SDM", "LAM", "Others"]
@@ -73,7 +73,7 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
 
   const addRecord = () => {
     const required = ["dateOfVisit", "methodAccepted", "nameOfServiceProvider", "dateOfFollowUp", "methodQuantity"]
-    for (let field of required) {
+    for (const field of required) {
       if (!record[field as keyof ServiceProvisionRecord]) {
         return setValidationError(`${field} is required`)
       }

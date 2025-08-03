@@ -1251,7 +1251,7 @@ export default function Tiptap({
     const blocks = Array.from(container.children);
     let lastBreak = 0;
 
-    blocks.forEach((block: any, index: number) => {
+    blocks.forEach((block: any) => {
       const rect = block.getBoundingClientRect();
       const isBreak = block.tagName === "HR" && block.dataset.type === "page-break";
 

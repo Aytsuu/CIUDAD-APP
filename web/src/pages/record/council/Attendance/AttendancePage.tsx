@@ -322,7 +322,7 @@ function AttendancePage() {
       eventMap.set(event.ce_id, event);
     });
 
-    let data: AttendanceRecord[] = [];
+    const data: AttendanceRecord[] = [];
 
     if (activeTab === "active") {
       councilEvents

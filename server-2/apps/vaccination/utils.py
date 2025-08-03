@@ -1,0 +1,269 @@
+from .models import *
+from apps.inventory.models import *
+from apps.inventory.serializers import VacccinationListSerializer
+from apps.patientrecords.serializers.patients_serializers import PatientSerializer
+from apps.patientrecords.models import *
+from django.db.models import Q
+from collections import defaultdict
+from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
+from .serializers import *
+from django.db.models import Count, Q
+from apps.childhealthservices.models import *
+from apps.childhealthservices.serializers import *
+from datetime import date
+
+
+
+def get_unvaccinated_vaccines_for_patient(pat_id):
+    today = timezone.now().date()
+
+    # Get all vaccine IDs already given to the patient
+    vaccinated_vac_ids = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id
+    ).values_list('vacStck_id__vac_id', flat=True).distinct()
+
+    # Get overdue follow-up vaccines of type "routine"
+    overdue_vac_ids = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id,
+        vacStck_id__vac_id__vac_type_choices="routine",
+        followv__followv_date__lt=today,
+    ).values_list('vacStck_id__vac_id', flat=True).distinct()
+
+    # Combine: all vaccines EXCEPT vaccinated ones MINUS those with overdue routine followups
+    unvaccinated_vaccines = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids).union(
+        VaccineList.objects.filter(vac_id__in=overdue_vac_ids)
+    )
+
+    return unvaccinated_vaccines
+
+def has_existing_vaccine_history(pat_id, vac_id):
+    return VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id,
+        vacStck_id__vac_id=vac_id
+    ).exists()
+    
+    
+
+
+def get_patient_vaccines_with_followups(pat_id):
+    history_records = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id
+    ).select_related('vacStck_id__vac_id', 'followv')
+
+    if not history_records.exists():
+        return [{"message": "No vaccine or pending follow-up visit data found for this patient."}]
+
+    results = []
+
+    for record in history_records:
+        vacStck = getattr(record, 'vacStck_id', None)
+        vac = getattr(vacStck, 'vac_id', None)
+
+        vac_name = getattr(vac, 'vac_name', None)
+        vac_type = getattr(vac, 'vac_type_choices', None)
+        followup = getattr(record, 'followv', None)
+
+        followup_date = getattr(followup, 'followv_date', None)
+        followup_status = getattr(followup, 'followv_status', None)
+        completed_at = getattr(followup, 'completed_at', None)  # Use correct field name
+
+        # Use today’s date if not completed
+        today = date.today()
+        reference_date = completed_at if completed_at else today
+
+        missed_status = None
+        days_missed = None
+
+        if followup_date and reference_date > followup_date:
+            missed_status = "missed"
+            days_missed = (reference_date - followup_date).days
+
+        results.append({
+            'vac_name': vac_name,
+            'vac_type_choices': vac_type,
+            'followup_date': followup_date,
+            'followup_status': followup_status,
+            'completed_at': completed_at,
+            'missed_status': missed_status,
+            'days_missed': days_missed,
+        })
+
+    return results
+
+
+
+
+
+
+def get_child_followups(pat_id):
+    # Get follow-ups from vaccination history
+    history_records = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id,
+        followv__isnull=False
+    ).select_related('followv')
+
+    # Get follow-ups from child health notes
+    child_history_records = ChildHealthNotes.objects.filter(
+        chhist__chrec__patrec__pat_id=pat_id,
+        followv__isnull=False
+    ).select_related('followv')
+
+    if not history_records.exists() and not child_history_records.exists():
+        return [{"message": "No follow ups or pending follow-up visit data found for this patient."}]
+
+    results = []
+
+    # Current date for comparison
+    today = date.today()
+
+    # Add from VaccinationHistory
+    for record in history_records:
+        followup = record.followv
+        followup_date = followup.followv_date
+        completed_at = getattr(followup, 'completed_at', None)
+
+        reference_date = completed_at if completed_at else today
+
+        missed_status = None
+        days_missed = 0
+        if followup_date and reference_date > followup_date:
+            missed_status = "missed"
+            days_missed = (reference_date - followup_date).days
+
+        results.append({
+            'source': 'VaccinationHistory',
+            'followup_description': followup.followv_description,
+            'followup_date': followup_date,
+            'followup_status': followup.followv_status,
+            'completed_at': completed_at,
+            'missed_status': missed_status,
+            'days_missed': days_missed if missed_status else None,
+        })
+
+    # Add from ChildHealthNotes
+    for note in child_history_records:
+        followup = note.followv
+        followup_date = followup.followv_date
+        completed_at = getattr(followup, 'completed_at', None)
+
+        reference_date = completed_at if completed_at else today
+
+        missed_status = None
+        days_missed = 0
+        if followup_date and reference_date > followup_date:
+            missed_status = "missed"
+            days_missed = (reference_date - followup_date).days
+
+        results.append({
+            'source': 'ChildHealthNotes',
+            'followup_description': followup.followv_description,
+            'followup_date': followup_date,
+            'followup_status': followup.followv_status,
+            'completed_at': completed_at,
+            'missed_status': missed_status,
+            'days_missed': days_missed if missed_status else None,
+        })
+
+    return results
+
+
+
+
+def get_patient_info_from_vaccination_record(patrec_pat_id):
+    try:
+        # Find the vaccination record using the PatientRecord's pat_id
+        vac_record = VaccinationRecord.objects.select_related('patrec_id__pat_id').get(
+            patrec_id__pat_id=patrec_pat_id
+        )
+
+        patient = vac_record.patrec_id
+        patient_serializer = PatientSerializer(patient)
+        patient_info = patient_serializer.data
+
+        return {"patient_info": patient_info}
+
+    except VaccinationRecord.DoesNotExist:
+        return {"message": "No vaccination record found for this patient."}
+    
+
+def get_vaccination_record_count(pat_id):
+    return VaccinationRecord.objects.filter(patrec_id__pat_id=pat_id).count()
+
+
+def get_all_residents_not_vaccinated():
+    result = defaultdict(list)
+
+    # 🧍 All ResidentProfiles
+    all_residents = ResidentProfile.objects.select_related('per').all()
+
+    # 📋 All Resident-type, Active Patients
+    patients = Patient.objects.filter(
+        pat_type="Resident", pat_status="Active"
+    ).select_related('rp_id', 'rp_id__per')
+
+    # Map rp_id -> patient
+    patient_map = {p.rp_id.rp_id: p for p in patients if p.rp_id}
+
+    # 📦 All vaccines
+    all_vaccines = VaccineList.objects.all()
+
+    for vaccine in all_vaccines:
+        # Serialize vaccine full data
+        vaccine_data = VacccinationListSerializer(vaccine).data
+
+        # 🧪 Get pat_id of patients who already got this vaccine
+        vaccinated_ids = VaccinationHistory.objects.filter(
+            vacStck_id__vac_id=vaccine.vac_id
+        ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
+
+        for resident in all_residents:
+            rp_id = resident.rp_id
+            personal_info = ResidentPersonalInfoSerializer(resident).data
+
+            patient = patient_map.get(rp_id)
+ 
+            if patient:
+                # Has patient — check if vaccinated
+                if patient.pat_id not in vaccinated_ids:
+                    result[vaccine.vac_name].append({
+                        "status": "Has patient, not vaccinated for this vaccine",
+                        "pat_id": patient.pat_id,
+                        "rp_id": rp_id,
+                        "personal_info": personal_info,
+                        "vaccine_not_received": vaccine_data
+                    })
+            else:
+                # No patient — definitely not vaccinated for this vaccine
+                result[vaccine.vac_name].append({
+                    "status": "No patient record",
+                    "pat_id": None,
+                    "rp_id": rp_id,
+                    "personal_info": personal_info,
+                    "vaccine_not_received": vaccine_data
+                })
+
+    return result
+
+
+def count_vaccinated_by_patient_type():
+    try:
+        counts = (
+            Patient.objects.filter(
+                patient_records__vaccination_records__vaccination_histories__vachist_status="completed"
+            )
+            .distinct()  # Ensure unique patients
+            .values('pat_type')
+            .annotate(total=Count('pat_id', distinct=True))
+        )
+
+        result = {"resident_vaccinated": 0, "transient_vaccinated": 0}
+        for entry in counts:
+            if entry["pat_type"] == "Resident":
+                result["resident_vaccinated"] = entry["total"]
+            elif entry["pat_type"] == "Transient":
+                result["transient_vaccinated"] = entry["total"]
+
+        return result
+    except Exception as e:
+        print(f"Error counting vaccinated patients: {str(e)}")
+        return {"resident_vaccinated": 0, "transient_vaccinated": 0}

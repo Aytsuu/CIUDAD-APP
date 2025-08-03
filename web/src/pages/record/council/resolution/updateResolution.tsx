@@ -1,9 +1,5 @@
 "use client"
-import { useState } from 'react';
-import {Input} from '../../../../components/ui/input.tsx';
-import {Label} from '../../../../components/ui/label.tsx';
 import { CardTitle } from '@/components/ui/card/card.tsx';
-import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";
@@ -16,7 +12,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowLeft } from 'lucide-react';
 
 import { Link } from 'react-router';
 
@@ -41,7 +36,7 @@ function UpdateResolution() {
         },
     });
 
-    let resAreaOfFocus = [
+    const resAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];

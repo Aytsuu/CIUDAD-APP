@@ -84,6 +84,10 @@ export const main_router: RouteObject[] = [
       ...health_administration_router,
       ...clearances_router,
       ...activity_log_router,
+      ...medicineRequest,
+      ...forwardedhealthrecord_router,
+      ...firstaid_router,
+      ...health_schedule_routes,
     ]
   }
 ];

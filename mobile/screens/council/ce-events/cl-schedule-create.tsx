@@ -185,6 +185,7 @@ const CLCreateEvent = () => {
                 {isStaffLoading ? (
                   <View className="flex-row justify-center">
                     <Text className="text-gray-500 mr-2">Loading staff...</Text>
+                    <Loader2 size={20} color="gray" className="animate-spin" />
                   </View>
                 ) : (
                   <FormComboCheckbox
@@ -207,7 +208,7 @@ const CLCreateEvent = () => {
                 <Text className="text-white text-base font-semibold text-center">
                   {isSubmitting ? 'Creating...' : 'Create'}
                 </Text>
-                {isSubmitting}
+                {isSubmitting && <Loader2 size={20} color="white" className="ml-2 animate-spin" />}
               </TouchableOpacity>
             </View>
           </View>

@@ -5,15 +5,6 @@ import {
   Camera,
   Loader2,
   Shield,
-  Calendar,
-  MapPin,
-  Edit,
-  ChevronRight,
-  Settings,
-  Phone,
-  Mail,
-  GraduationCap,
-  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -23,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card/card";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";

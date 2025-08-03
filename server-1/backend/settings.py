@@ -80,10 +80,8 @@ INSTALLED_APPS = [
     'apps.announcement',
     'apps.authentication',
     'apps.gad',
-    'apps.secretary',
     'apps.clerk',
     'backend.firebase.notifications',
-    'apps.act_log',
 ]
 
 MIDDLEWARE = [
@@ -295,15 +293,19 @@ LOGGING = {
 SCHEDULER_AUTOSTART = True
 # SCHEDULER_AUTOSTART = not DEBUG # for production
 
+# ========================
+# PAYMONGO
+# ========================
+PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 
 
 
 
 
-# ---------------------------------------------------
-# DEVELOPMENT SERVER (COMMENTED OUT FOR PRODUCTION)
-# ---------------------------------------------------
+# # ---------------------------------------------------
+# # DEVELOPMENT SERVER
+# # ---------------------------------------------------
 
 # from pathlib import Path
 # from decouple import config
@@ -371,7 +373,7 @@ SCHEDULER_AUTOSTART = True
     
 #     # Third-party apps
 #     'rest_framework',
-#     'simple_history', # --- NEW
+#     'simple_history',
     
 #     # Local apps
 #     'apps.administration',
@@ -401,12 +403,13 @@ SCHEDULER_AUTOSTART = True
 #     'django.middleware.security.SecurityMiddleware',
 #     'django.contrib.sessions.middleware.SessionMiddleware',
 #     'django.middleware.common.CommonMiddleware',
+#     'corsheaders.middleware.CorsMiddleware',
 #     'django.middleware.csrf.CsrfViewMiddleware',
 #     'django.contrib.auth.middleware.AuthenticationMiddleware',
 #     'django.contrib.messages.middleware.MessageMiddleware',
 #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 #     'apps.authentication.middleware.AuthCheckingMiddleware',
-#     'simple_history.middleware.HistoryRequestMiddleware',
+#     # 'simple_history.middleware.HistoryRequestMiddleware',
 # ]
 
 # AUTHENTICATION_BACKENDS = [
@@ -507,24 +510,16 @@ SCHEDULER_AUTOSTART = True
 # New User Model
 # AUTH_USER_MODEL = 'account.Account'
 
-# ========================
-# CORS SETTINGS
-# ========================
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://localhost:5173",
-#     "https://ciudad-app-server-1.onrender.com",
-#     "http://127.0.0.1:5173",  # Add this for Vite sometimes
-# ]
+# # ========================
+# # CORS SETTINGS
+# # ========================
+# # CORS_ALLOWED_ORIGINS = [
+# #     config('FRONTEND_URL', default='http://localhost:3000'), # replace this with the domain e.g 'https://ciudad-app.onrender.com'
+# # ]
 
-# ALLOWED_HOSTS = [
-#     'ciudad-app-server-1.onrender.com',
-#     'localhost',
-#     '127.0.0.1'
-# ]
-
-# CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOW_CREDENTIALS = True
+# ALLOWED_HOSTS = ['*'] 
+# CORS_ALLOW_ALL_ORIGINS = True # disable in production
+# CORS_ALLOW_CREDENTIALS = True # false in production
 
 # CORS_ALLOW_HEADERS = [
 #     'accept',

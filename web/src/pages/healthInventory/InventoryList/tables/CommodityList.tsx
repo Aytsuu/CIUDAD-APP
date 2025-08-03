@@ -1,51 +1,39 @@
-import React from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import CommodityModal from "../addListModal/CommodityModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCommodity } from "../requests/get/getCommodity";
-import { handleDeleteCommodityList } from "../requests/delete/DeleteCommodityList";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { CommodityRecords,CommodityColumns } from "./columns/commodityCol";
-
+import { CommodityRecords, CommodityColumns } from "./columns/commodityCol";
+import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
+import { Link } from "react-router";
+import { useDeleteCommodity } from "../queries/commodity/CommodityDeleteQueries";
 
 
 export default function CommodityList() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    React.useState(false);
-  const [comToDelete, setComToDelete] = React.useState<number | null>(null);
-  const [isDialog, setIsDialog] = React.useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [comToDelete, setComToDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { data: commodities, isLoading: isLoadingCommodities } = useCommodities();
 
-  // Fetch commodity data using useQuery
-  const { data: commodities, isLoading: isLoadingCommodities } = useQuery({
-    queryKey: ["commodities"],
-    queryFn: getCommodity,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  // Format commodity data
-  const formatCommodityData = React.useCallback((): CommodityRecords[] => {
+  const formatCommodityData = useCallback((): CommodityRecords[] => {
     if (!commodities) return [];
     return commodities.map((commodity: any) => ({
       id: commodity.com_id,
-      commodityName: commodity.com_name,
+      com_name: commodity.com_name,
+      user_type: commodity.user_type,
     }));
   }, [commodities]);
 
-  // Filter commodity data based on search query
-  const filteredCommodities = React.useMemo(() => {
-    return formatCommodityData().filter((record: CommodityRecords) =>
+  const filteredCommodities = useMemo(() => {
+    return formatCommodityData().filter((record) =>
       Object.values(record)
         .join(" ")
         .toLowerCase()
@@ -53,27 +41,15 @@ export default function CommodityList() {
     );
   }, [searchQuery, formatCommodityData]);
 
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredCommodities.length / pageSize);
+  const deleteCommodityMutation = useDeleteCommodity();
 
-  // Slice the data for the current page
-  const paginatedCommodities = filteredCommodities.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  // Handle delete operation
-  const handleDelete = async () => {
-    if (comToDelete !== null) {
-      await handleDeleteCommodityList(comToDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["commodities"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setComToDelete(null);
-    }
+  const handleDelete = () => {
+    if (comToDelete === null) return;
+    
+    deleteCommodityMutation.mutate(comToDelete);
+    setIsDeleteConfirmationOpen(false);
+    setComToDelete(null);
   };
-  // Generate columns using CommodityColumns
-  const columns = CommodityColumns(setIsDialog, setComToDelete, setIsDeleteConfirmationOpen);
   if (isLoadingCommodities) {
     return (
       <div className="w-full h-full">
@@ -84,6 +60,14 @@ export default function CommodityList() {
       </div>
     );
   }
+
+  const totalPages = Math.ceil(filteredCommodities.length / pageSize);
+  const paginatedCommodities = filteredCommodities.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const columns = CommodityColumns( setComToDelete, setIsDeleteConfirmationOpen);
 
   return (
     <div>
@@ -103,17 +87,15 @@ export default function CommodityList() {
           </div>
         </div>
         <div className="flex gap-2">
-          <DialogLayout
-            trigger={
-              <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
-                <Plus size={15} /> New
-              </Button>
-            }
-            title="Add New Commodity"
-            mainContent={<CommodityModal setIsDialog={setIsDialog} />}
-            isOpen={isDialog}
-            onOpenChange={setIsDialog}
-          />
+       
+            <Button>
+          <Link
+            to="/addCommodityList"
+            className="flex justify-center items-center gap-2 px-2"
+          >
+            <Plus size={15} /> New
+          </Link>
+        </Button>
         </div>
       </div>
 
@@ -130,7 +112,7 @@ export default function CommodityList() {
                 if (value >= 1) {
                   setPageSize(value);
                 } else {
-                  setPageSize(1); // Reset to 1 if invalid
+                  setPageSize(1);
                 }
               }}
               min="1"

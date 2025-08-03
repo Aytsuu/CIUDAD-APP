@@ -88,13 +88,27 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
             b.gbudy_year ===
             new Date(data.budgetData.gbud_datetime).getFullYear().toString()
         );
+        
         if (!currentYearBudget) {
           throw new Error("No budget found for the selected year");
         }
-        const remainingBalance = data.remainingBalance; // Use passed remainingBalance
-        if (data.budgetData.gbud_actual_expense > remainingBalance) {
+
+        const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
+        const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
+        const totalIncome = Number(currentYearBudget.gbudy_income) || 0;
+        
+        // Calculate current available balance
+        const currentAvailable = initialBudget - (totalExpenses - oldExpense);
+
+        // Determine new expense value (prioritize actual over proposed)
+        const newExpenseValue = data.budgetData.gbud_actual_expense != null 
+          ? Number(data.budgetData.gbud_actual_expense) || 0
+          : Number(data.budgetData.gbud_proposed_budget) || 0;
+
+        // Validate against available balance
+        if (newExpenseValue > currentAvailable) {
           throw new Error(
-            `Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`
+            `Expense cannot exceed available balance of ₱${currentAvailable.toLocaleString()}`
           );
         }
 
@@ -111,10 +125,13 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
             0.01
           ) {
             throw new Error(
-              `Remaining balance mismatch: expected ₱${expectedRemaining.toLocaleString()}, got ₱${data.budgetData.gbud_remaining_bal.toLocaleString()}`
+              `Remaining balance mismatch: expected ₱${expectedRemaining.toFixed(2)}, got ₱${Number(data.budgetData.gbud_remaining_bal).toFixed(2)}`
             );
           }
         }
+
+        // Auto-calculate remaining balance if not provided
+        data.budgetData.gbud_remaining_bal = Number(expectedRemaining.toFixed(2));
       }
 
       // Update budget entry

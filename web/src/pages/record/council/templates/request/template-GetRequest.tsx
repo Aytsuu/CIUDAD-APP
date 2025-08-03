@@ -1,7 +1,4 @@
 import {api} from "@/api/api";
-import { parseFloatSafe } from '@/helpers/floatformatter';
-import { capitalize } from "@/helpers/capitalize";
-import { useState } from "react";
 
 
 export const getTemplateRecord = async () => {

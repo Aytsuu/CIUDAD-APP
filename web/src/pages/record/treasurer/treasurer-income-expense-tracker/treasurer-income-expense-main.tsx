@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 function IncomeExpenseMain() {
     const { data: fetchedData = [], isLoading } = useIncomeExpenseMainCard();
     
-    let styles = {
+    const styles = {
         budgetLabel: "w-[12rem]",
     };
 

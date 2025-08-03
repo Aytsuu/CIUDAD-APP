@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, Loader2 } from "lucide-react-native";
+import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useExpenseParticulars, useIncomeParticulars } from "./queries/fetch";
 import { useGetGADYearBudgets } from "./queries/yearqueries";
 import { useCreateGADBudget } from "./queries/add";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
 import BudgetTrackerSchema from "@/form-schema/gad-budget-tracker-schema";
 import PageLayout from "@/screens/_PageLayout";
@@ -22,7 +23,6 @@ function GADAddEntryForm() {
   const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
   const [showIncomeParticularsModal, setShowIncomeParticularsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: yearBudgets = [] } = useGetGADYearBudgets();
   const { data: expenseItems = [] } = useExpenseParticulars();
@@ -33,9 +33,9 @@ function GADAddEntryForm() {
     return (
       <View className="flex-1 justify-center items-center">
         <Text>Error: Year parameter is required</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <Button onPress={() => router.back()}>
           <Text>Go Back</Text>
-        </TouchableOpacity>
+        </Button>
       </View>
     );
   }
@@ -46,9 +46,9 @@ function GADAddEntryForm() {
     return (
       <View className="flex-1 justify-center items-center">
         <Text>Error: No budget found for year {year}</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <Button onPress={() => router.back()}>
           <Text>Go Back</Text>
-        </TouchableOpacity>
+        </Button>
       </View>
     );
   }
@@ -107,7 +107,6 @@ function GADAddEntryForm() {
   };
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     const inputDate = new Date(values.gbud_datetime);
     const inputYear = inputDate.getFullYear().toString();
 
@@ -116,7 +115,6 @@ function GADAddEntryForm() {
         type: 'manual',
         message: `Date must be in ${year}`,
       });
-      setIsSubmitting(false);
       return;
     }
 
@@ -129,7 +127,6 @@ function GADAddEntryForm() {
           type: 'manual',
           message: `Exceeds remaining balance of ₱${remainingBalance.toLocaleString()}`,
         });
-        setIsSubmitting(false);
         return;
       }
     }
@@ -153,42 +150,63 @@ function GADAddEntryForm() {
           type: 'manual',
           message: 'All uploaded files must have valid name, type, and URI',
         });
-        setIsSubmitting(false);
         return;
       }
     }
 
     createBudget(payload, {
-      onSuccess: () => {
-        setIsSubmitting(false);
-        router.back();
-      },
+      onSuccess: () => router.back(),
       onError: (error) => {
         form.setError('root', {
           type: 'manual',
           message: 'Failed to save entry. Please check uploaded files and try again.',
         });
-        setIsSubmitting(false);
       },
     });
   };
 
   return (
-    <PageLayout
-      leftAction={
+    <_ScreenLayout
+      customLeftAction={
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" />
+          <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text>Create Budget Entry</Text>}
-      rightAction={
-        <View>
-          {/* Empty view as placeholder for right action */}
+      headerBetweenAction={<Text className="text-[13px]">Create Budget Entry</Text>}
+      showExitButton={false}
+      headerAlign="left"
+      scrollable={true}
+      keyboardAvoiding={true}
+      contentPadding="medium"
+      loading={isPending}
+      loadingMessage="Saving entry..."
+      footer={
+        <View className="px-4 pb-4">
+          <Button
+            onPress={form.handleSubmit(onSubmit)}
+            className="bg-primaryBlue py-3 rounded-lg"
+            disabled={isPending || !form.formState.isValid}
+          >
+            <Text className="text-white text-base font-semibold">
+              {isPending ? "Saving..." : "Save Entry"}
+            </Text>
+          </Button>
+          {!form.formState.isValid && (
+            <Text className="text-red-500 text-xs mt-2">
+              Please fill out all required fields correctly.
+            </Text>
+          )}
+          {form.formState.errors.root && (
+            <Text className="text-red-500 text-xs mt-2">
+              {form.formState.errors.root.message}
+            </Text>
+          )}
         </View>
       }
+      stickyFooter={true}
     >
-      <ScrollView className="flex-1 p-4">
-        <View className="space-y-4 pb-20">
+      <View className="flex-1 px-4">
+        <View className="space-y-4">
           <FormSelect
             control={form.control}
             name="gbud_type"
@@ -248,12 +266,12 @@ function GADAddEntryForm() {
                 <View className="p-4 flex-1">
                   <View className="flex-row justify-between items-center mb-4">
                     <Text className="text-lg font-bold">Select Income Particulars</Text>
-                    <TouchableOpacity 
+                    <Button 
                       onPress={() => setShowIncomeParticularsModal(false)}
                       className="bg-gray-200 px-3 py-1 rounded"
                     >
                       <Text>Close</Text>
-                    </TouchableOpacity>
+                    </Button>
                   </View>
 
                   <TextInput
@@ -402,34 +420,8 @@ function GADAddEntryForm() {
             </View>
           )}
         </View>
-      </ScrollView>
-
-      {/* Sticky submit button at the bottom */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
-        <TouchableOpacity
-          className="bg-primaryBlue py-3 rounded-lg"
-          onPress={form.handleSubmit(onSubmit)}
-          disabled={isSubmitting || !form.formState.isValid}
-        >
-          <View className="flex-row justify-center items-center">
-            <Text className="text-white text-base font-semibold text-center">
-              {isSubmitting ? 'Saving...' : 'Save Entry'}
-            </Text>
-            {isSubmitting && <Loader2 size={20} color="white" className="ml-2 animate-spin" />}
-          </View>
-        </TouchableOpacity>
-        {!form.formState.isValid && (
-          <Text className="text-red-500 text-xs mt-2 text-center">
-            Please fill out all required fields correctly.
-          </Text>
-        )}
-        {form.formState.errors.root && (
-          <Text className="text-red-500 text-xs mt-2 text-center">
-            {form.formState.errors.root.message}
-          </Text>
-        )}
       </View>
-    </PageLayout>
+    </_ScreenLayout>
   );
 }
 

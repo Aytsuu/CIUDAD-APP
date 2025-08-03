@@ -11,7 +11,6 @@ import { ArrowUpDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
 import { useQuery } from "@tanstack/react-query";

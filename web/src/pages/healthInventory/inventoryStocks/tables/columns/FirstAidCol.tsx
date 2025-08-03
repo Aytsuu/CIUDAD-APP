@@ -1,41 +1,35 @@
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import UsedFAModal from "../../addstocksModal/UsedFAModal";
-import EditFirstAidStockForm from "../../editModal/EditFirstAidStockModal";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-
-export type FirstAidStocksRecord = {
-  finv_id: number;
-  firstAidInfo: {
-    fa_name: string;
-  };
-  expiryDate: string;
-  category: string;
-  qty: {
-    finv_qty: number;
-    finv_pcs: number;
-  };
-  finv_qty_unit: string;
-  availQty: string;
-  used: string;
-  inv_id: number;
-};
+import { Archive , Plus, Minus } from "lucide-react";
+import { Link } from "react-router";
+import { FirstAidStocksRecord } from "../type";
+import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";
 
 export const getColumns = (
-  handleArchiveInventory: (inv_id: number) => void,
-  setIsDialog: (isOpen: boolean) => void
+  handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<FirstAidStocksRecord>[] => [
+
+  {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => (
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+        {row.original.inv_id}
+      </div>
+    )
+  },
   {
     accessorKey: "firstAidInfo",
     header: "Item Name",
     cell: ({ row }) => {
       const firstAid = row.original.firstAidInfo;
+      const expired = isExpired(row.original.expiryDate);
       return (
-        <div className="flex flex-col">
-          <span className="font-medium">{firstAid.fa_name}</span>
+        <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
+          <span className={`font-medium ${expired ? "line-through" : ""}`}>
+            {firstAid.fa_name}
+            {expired && " (Expired)"}
+          </span>
         </div>
       );
     },
@@ -43,11 +37,22 @@ export const getColumns = (
   {
     accessorKey: "category",
     header: "Category",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.category}</div>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const expired = isExpired(row.original.expiryDate);
+      return (
+        <div
+          className={`flex justify-center min-w-[100px] px-2 ${
+            expired ? "text-red-600" : ""
+          }`}
+        >
+          <div
+            className={`text-center w-full ${expired ? "line-through" : ""}`}
+          >
+            {row.original.category}
+          </div>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "qty",
@@ -55,47 +60,31 @@ export const getColumns = (
     cell: ({ row }) => {
       const { finv_qty, finv_pcs } = row.original.qty;
       const unit = row.original.finv_qty_unit;
-      
+      const expired = isExpired(row.original.expiryDate);
+
       return (
-        <div className="text-center">
-          {unit.toLowerCase() === 'boxes' && finv_pcs > 0 ? (
+        <div className={`text-center ${expired ? "text-red-600" : ""}`}>
+          {unit.toLowerCase() === "boxes" && finv_pcs > 0 ? (
             <div className="flex flex-col">
-              <span className="text-blue">{finv_qty} box/es</span>
-              <span className="text-blue-500">({finv_qty * finv_pcs} total pc/s)</span>
+              <span className={`${expired ? "line-through" : ""}`}>
+                {finv_qty} box/es
+                {expired && " (Expired)"}
+              </span>
+              <span className={expired ? "text-red-500" : "text-blue-500"}>
+                ({finv_qty * finv_pcs} total pc/s)
+              </span>
             </div>
           ) : (
-            <span className="text-blue">
+            <span className={`${expired ? "line-through" : ""}`}>
               {finv_qty} {unit}
+              {expired && " (Expired)"}
             </span>
           )}
         </div>
       );
     },
   },
-  {
-    accessorKey: "used",
-    header: "Used",
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center gap-2">
-        <span className="text-sm text-red-700">{row.original.used || 0}</span>
-        <TooltipLayout
-          trigger={
-            <DialogLayout
-              trigger={
-                <button className="flex items-center justify-center w-7 h-5 text-red-700 bg-red-200 rounded-md hover:bg-red-300 transition-colors">
-                  <Minus size={15} />
-                </button>
-              }
-              mainContent={
-                <UsedFAModal data={row.original} setIsDialog={setIsDialog} />
-              }
-            />
-          }
-          content="Used Items"
-        />
-      </div>
-    ),
-  },
+
   {
     accessorKey: "availQty",
     header: "Available",
@@ -103,67 +92,150 @@ export const getColumns = (
       const { finv_pcs } = row.original.qty;
       const unit = row.original.finv_qty_unit;
       const availQty = parseInt(row.original.availQty);
+      const expired = isExpired(row.original.expiryDate);
+      const isLow = !expired && isLowStock(availQty, unit, finv_pcs);
+      const isOutOfStock = availQty <= 0;
 
       if (unit.toLowerCase() === "boxes" && finv_pcs > 0) {
-        // Always count as at least 1 box if there are any pieces
         const boxCount = Math.ceil(availQty / finv_pcs);
         const remainingPieces = availQty;
 
         return (
-          <div className="flex flex-col">
-               <span className="text-blue">{boxCount} box/es</span>
-               <span className="text-blue-500">({remainingPieces} total pc/s)</span>
+          <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
+            <span
+              className={`${
+                expired
+                  ? "line-through"
+                  : isOutOfStock
+                  ? "text-red-600 font-bold"
+                  : isLow
+                  ? "text-yellow-600 font-medium"
+                  : "text-blue"
+              }`}
+            >
+              {boxCount} box/es
+              {expired && " (Expired)"}
+              {isOutOfStock && !expired && " (Out of Stock)"}
+              {isLow && " (Low Stock)"}
+            </span>
+            <span className={expired ? "text-red-500" : "text-blue-500"}>
+              ({remainingPieces} total pc/s)
+            </span>
           </div>
         );
       } else {
-        // For other units, just show the quantity with unit
         return (
-          <div className="text-center text-green-700">
+          <div
+            className={`text-center ${
+              expired
+                ? "text-red-600 line-through"
+                : isOutOfStock
+                ? "text-red-600 font-bold"
+                : isLow
+                ? "text-yellow-600 font-medium"
+                : "text-green-700"
+            }`}
+          >
             {availQty} {unit}
+            {expired && " (Expired)"}
+            {isOutOfStock && !expired && " (Out of Stock)"}
+            {isLow && " (Low Stock)"}
           </div>
         );
       }
     },
   },
   {
+    accessorKey: "used",
+    header: "Qty used",
+    cell: ({ row }) => {
+      const expired = isExpired(row.original.expiryDate);
+      return (
+        <div
+          className={`flex items-center justify-center gap-2 ${
+            expired ? "text-red-600 line-through" : "text-red-700"
+          }`}
+        >
+          <span className="text-sm">{row.original.used || 0}</span>
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "expiryDate",
     header: "Expiry Date",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.expiryDate}</div>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const expiryDate = row.original.expiryDate;
+      const isNear = isNearExpiry(expiryDate);
+      const expired = isExpired(expiryDate);
+
+      return (
+        <div
+          className={`flex justify-center min-w-[100px] px-2 ${
+            expired ? "text-red-600" : ""
+          }`}
+        >
+          <div
+            className={`text-center w-full ${
+              expired
+                ? "font-bold line-through"
+                : isNear
+                ? "text-orange-500 font-medium"
+                : ""
+            }`}
+          >
+            {expiryDate}
+            {expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}
+          </div>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "action",
-    header: "Action", 
+    header: "Action",
     cell: ({ row }) => {
+      const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                    <Edit size={16} />
-                  </div>
-                }
-                mainContent={
-                  <EditFirstAidStockForm
-                    initialData={row.original}
-                    setIsDialog={setIsDialog}
-                  />
-                }
-              />
-            }
-            content="Edit"
-          />
+          <Button
+            variant="outline"
+            className={`${
+              expired || parseInt(row.original.availQty) <= 0
+                ? " bg-red-100  border border-red-300 pointer-events-none opacity-50"
+                : "bg-red-100 border border-red-300 hover:bg-red-200"
+            }`}
+          >
+            <Link
+              to="/usedFirstAidStock"
+              state={{
+                params: {
+                  initialData: row.original,
+                },
+              }}
+            >
+              <Minus size={15} />
+            </Link>
+          </Button>
+
+          <Button variant="outline" disabled={expired}>
+            <Link
+              to="/editFirstAidStock"
+              state={{
+                params: {
+                  initialData: row.original,
+                },
+              }}
+            >
+              <Plus size={16} />
+            </Link>
+          </Button>
           <Button
             variant="destructive"
             size="sm"
             onClick={() => handleArchiveInventory(row.original.inv_id)}
           >
-            <Trash />
+            <Archive  />
           </Button>
         </div>
       );

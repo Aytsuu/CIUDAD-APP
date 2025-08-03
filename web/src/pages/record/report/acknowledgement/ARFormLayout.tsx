@@ -11,11 +11,10 @@ import { MediaUploadType } from "@/components/ui/media-upload";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { useLocation } from "react-router";
-import { toast } from "sonner";
-import { CircleAlert, CircleCheck, X } from "lucide-react";
-import { useAddAR, useAddARFile } from "../queries/reportAdd";
+import { useAddAR } from "../queries/reportAdd";
 import { useAuth } from "@/context/AuthContext";
 import { formatSitio } from "../../profiling/profilingFormats";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 // Main component for the DRR AR Form
 export default function ARFormLayout() {
@@ -30,7 +29,6 @@ export default function ARFormLayout() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   
   const { mutateAsync: addAR } = useAddAR(); 
-  const { mutateAsync: addARFile } = useAddARFile(); 
   const defaultValues = generateDefaultValues(getARFormSchema(selected))
   const form = useForm<z.infer<ReturnType<typeof getARFormSchema>>>({
     resolver: zodResolver(getARFormSchema(selected)),
@@ -46,90 +44,45 @@ export default function ARFormLayout() {
 
     if(!formIsValid){
       setIsSubmitting(false);
-      toast("Please fill out all required fields", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: '1px solid rgb(225, 193, 193)',
-          padding: '16px',
-          color: '#b91c1c',
-          background: '#fef2f2',
-        },
-        action: {
-          label: <X size={14} className="bg-transparent"/>,
-          onClick: () => toast.dismiss(),
-        },
-      });
+      showErrorToast("Please fill out all required fields")
       return;
     }
 
     if(mediaFiles.length === 0) {
       setIsSubmitting(false);
-      toast("Please upload an image", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: '1px solid rgb(225, 193, 193)',
-          padding: '16px',
-          color: '#b91c1c',
-          background: '#fef2f2',
-        },
-        action: {
-          label: <X size={14} className="bg-transparent"/>,
-          onClick: () => toast.dismiss(),
-        },
-      });
+      showErrorToast("Please upload an image")
       return;
     }
 
-    const values = form.getValues();
-    addAR(selected ? {
-      ...values,
-      'ir_sitio': data.ir_sitio,
-      'ir_street': data.ir_street,
-      'ir': data.ir_id,
-      'staff': user?.staff?.staff_id,
-      'rt': data.ir_type || null
-    } : {
-      ...values,
-      'staff': user?.staff?.staff_id,
-    }, {
-      onSuccess: (newAR) => {
-        const files = mediaFiles.map((media) => ({
-          'arf_name': media.file.name,
-          'arf_type': media.file.type,
-          'arf_path': media.storagePath,
-          'arf_url': media.publicUrl,
-          'ar': newAR.ar_id,
-          'staff': user?.staff?.staff_id
-        }))
+    try {
+      const values = form.getValues();
+      const files = mediaFiles.map((media) => ({
+        'name': media.name,
+        'type': media.type,
+        'file': media.file
+      }))
 
-        addARFile(files, {
-          onSuccess: () => {
-            toast("Record added successfully", {
-              icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-            });
-            setIsSubmitting(false);
-            setMediaFiles([])
-            form.reset(defaultValues);
-          }
-        });
-      },
-      onError: () => {
-        toast("Failed to create AR. Please try again.", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-          style: {
-            border: '1px solid rgb(225, 193, 193)',
-            padding: '16px',
-            color: '#b91c1c',
-            background: '#fef2f2',
-          },
-          action: {
-            label: <X size={14} className="bg-transparent"/>,
-            onClick: () => toast.dismiss(),
-          },
-        });
-        setIsSubmitting(false);
-      }
-    }) 
+      await addAR(selected ? {
+        ...values,
+        'ir_sitio': data.ir_sitio,
+        'ir_street': data.ir_street,
+        'ir': data.ir_id,
+        'staff': user?.staff?.staff_id,
+        'rt': data.ir_type || null
+      } : {
+        ...values,
+        'files': files,
+        'staff': user?.staff?.staff_id,
+      }) 
+      
+      showSuccessToast("Report Added Successfully!")
+      setIsSubmitting(false);
+      setMediaFiles([])
+      form.reset(defaultValues);
+    } catch (err) {
+      setIsSubmitting(false);
+      showErrorToast("Failed to create AR. Please try again.");
+    }
   };
 
   return (

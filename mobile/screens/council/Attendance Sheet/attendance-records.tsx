@@ -104,7 +104,7 @@ const AttendanceRecord = () => {
               key={record.ceId}
               onPress={() =>
                 router.push({
-                  pathname: '/(council)/attendance/attendance-info',
+                  pathname: '/council/attendance/attendance-info',
                   params: { ceId: record.ceId, sheets: JSON.stringify(record.sheets) },
                 })
               }

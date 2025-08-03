@@ -237,7 +237,7 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
                 })}
               </View>
             </ScrollView>
-            <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+            <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
               <ConfirmationModal
                 trigger={
                   <Button className="bg-primaryBlue py-3 rounded-lg">

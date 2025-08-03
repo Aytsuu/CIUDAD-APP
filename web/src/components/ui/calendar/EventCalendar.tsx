@@ -51,7 +51,7 @@ export const generateId = () => (Math.floor(Math.random() * 10000) + 1).toString
 const locales = { "en-US": enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
-const EventCalendar = <T extends Record<string, any>>({
+const EventCalendar = ({
   sources,
   legendItems: initialLegendItems = [],
   viewEditComponentSources = [],

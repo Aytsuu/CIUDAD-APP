@@ -1,14 +1,13 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from ..serializers.personal_serializers import *
 from ..models import *
 
 class PersonalCreateView(generics.CreateAPIView):
-  serializer_class = PersonalWithHistorySerializer
-  queryset=Personal.objects.all()
+    serializer_class = PersonalWithHistorySerializer
+    queryset = Personal.objects.all()
 
 class PersonalUpdateView(APIView):
   def patch(self, request, pk):

@@ -29,10 +29,10 @@ const items: MenuItem[] = [
   },
   {
     title: "Profiling",
-    subItems: true, 
+    subItems: true,
     url: "/",
     items: [
-      { title: "Resident", url: "/resident"},
+      { title: "Resident", url: "/resident" },
       { title: "Family", url: "/family" },
       { title: "Household", url: "/household" },
       { title: "Business", url: "/business/record/active" },
@@ -59,7 +59,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Summon & Case Tracker",
-    url: "/summon-and-case-tracking"
+    url: "/summon-and-case-tracking",
   },
   {
     title: "GAD",
@@ -127,7 +127,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Waste Personnel & Collection Vehicle",
-    url: "/waste-personnel"
+    url: "/waste-personnel",
   },
   {
     title: "Announcement",
@@ -138,16 +138,51 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Administrations", url: "/health-administration" },
-      { title: "Doctor", url: "/mainMedicalForm" },
-      { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Child Services", url: "/allChildHRTable" },
-      { title: "Maternal Services", url: "/maternalrecords" },
-      { title: "Family Planning", url: "/FamPlanning_table" },
-      { title: "Medical Consultation", url: "/allMedRecords" },
-      { title: "Vaccination", url: "/allRecordsForVaccine" },
+      { title: "Administration", url: "/health-administration" },
+
       { title: "Patients Record", url: "/patients-record-main" },
+      {
+        title: "Forwarded Records",
+        url: "/",
+        anotherItems: [
+          {
+            title: "Child Immunization",
+            url: "/forwarded-child-health-immunization",
+          },
+          { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
+          { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
+          {
+            title: "Medical Consultaion",
+            url: "/forwarded-medical-consultation",
+          },
+        ],
+      },
+      {
+        title: "Manage Request",
+        url: "/",
+        anotherItems: [
+          {
+            title: "Medicine Request ",
+            url: "/medicine-requests",
+          },
+          { title: "Medical Consultation", url: "/" },
+         
+        ],
+      },
+      { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Family Profiling", url: "/family-profiling-main" },
+      { title: "Medical Consultation Record", url: "/allMedRecords" },
+      { title: "Family Planning Record", url: "/FamPlanning_table" },
+      { title: "Maternal Record", url: "/maternalrecords" },
+      { title: "Child Health Record", url: "/all-child-health-records" },
+      { title: "Vaccination Record", url: "/VaccinationManagement" },
+      { title: "Medicine Record", url: "/all-medicine-records" },
+      { title: "Firstaid Record ", url: "/all-firstaid-records" },
+      { title: "Archive", url: "/archiveMainInventoryStocks" },
+      { title: "Schedules", url: "/health-schedules" },
+      { title: "Service Scheduler", url: "/health-services/scheduler" },
+      { title: "Reports", url: "/healthcare-reports" },
+
       {
         title: "Inventory",
         url: "/",

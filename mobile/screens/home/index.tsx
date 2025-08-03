@@ -24,7 +24,7 @@ export default function HomeScreen() {
     return <LoadingModal visible={true} />;
   }
 
-  console.log("Value",user);
+  console.log("User Data:",user);
 
   return (
     <ScreenLayout

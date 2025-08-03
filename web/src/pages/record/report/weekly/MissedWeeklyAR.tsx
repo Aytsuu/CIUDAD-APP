@@ -4,7 +4,7 @@ import { AlertTriangle, Calendar, Clock, Plus } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button/button"
 import { Link } from "react-router"
-import { hasWeekPassed, monthNameToNumber } from "@/helpers/dateHelper"
+import { hasWeekPassed } from "@/helpers/dateHelper"
 
 interface MissedWeeklyARProps {
   organizedData: Array<{

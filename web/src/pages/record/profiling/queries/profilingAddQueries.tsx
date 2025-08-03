@@ -9,9 +9,18 @@ import {
   addFamilyComposition,
   addFile,
   addHousehold,
+  addPersonal,
   addPersonalAddress,
   addResidentAndPersonal,
 } from "../restful-api/profiingPostAPI";
+import { api } from "@/api/api";
+
+export const useAddPersonal = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => addPersonal(data),
+    onSuccess: () => {}
+  })
+}
 
 export const useAddAddress = () => {
   return useMutation({
@@ -72,7 +81,7 @@ export const useAddFamilyComposition = () => {
     
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addFamilyComposition(data),
-    onSuccess: (newData, variables) => {
+    onSuccess: () => {
       // const {familyId, role, residentId} = variables;
 
       // // Update family compositions list
@@ -154,6 +163,19 @@ export const useAddHousehold = () => {
     },
   });
 };
+
+export const useAddBusinessRespondent = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post('profiling/business/create-respondent/', data);
+        return res.data;
+      } catch (err ) {
+        throw err;
+      }
+    }
+  })
+}
 
 export const useAddBusiness = () => {
   const queryClient = useQueryClient();

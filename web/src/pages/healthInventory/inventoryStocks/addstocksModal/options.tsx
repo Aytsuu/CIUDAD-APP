@@ -1,13 +1,13 @@
 export const formOptions = [
-  { id: "tablet", name: "Tablet" },
-  { id: "capsule", name: "Capsule" },
+  { id: "tablet", name: "tablet" },
+  { id: "capsule", name: "capsule" },
 ];
 
 export const unitOptions = [
-  { id: "boxes", name: "Boxes" },
-  { id: "bottles", name: "Bottles" },
-  { id: "packs", name: "Packs" },
-  { id: "pieces", name: "Pieces" },
+  { id: "boxes", name: "boxes" },
+  { id: "bottles", name: "bottles" },
+  { id: "packs", name: "packs" },
+  { id: "pc/s", name: "pc/s" },
 ];
 
 
