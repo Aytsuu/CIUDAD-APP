@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput, Platform, ScrollView, Image, Alert, ActivityIndicator } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+// import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
@@ -120,7 +120,7 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
         {/* Permit Type Dropdown */}
         <Text className="text-sm font-medium text-gray-700 mb-2">Type of Clearance</Text>
         <View className="rounded-lg bg-white px-3 mb-3 border border-gray-200">
-          <Picker
+          {/* <Picker
             selectedValue={permitType}
             onValueChange={setPermitType}
             style={{ color: "#222" }}
@@ -128,7 +128,7 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
           >
             <Picker.Item label="Clearance for permits" value="" color="#888" />
             <Picker.Item label="Business Permit" value="business-permit" />
-          </Picker>
+          </Picker> */}
         </View>
         {/* Business Name */}
         <Text className="text-sm font-medium text-gray-700 mb-2">Business Name</Text>
@@ -236,7 +236,7 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
         {/* Mode of Payment Dropdown */}
         <Text className="text-sm font-medium text-gray-700 mb-2">Mode of Payment</Text>
         <View className="rounded-lg bg-white px-3 mb-3 border border-gray-200">
-          <Picker
+          {/* <Picker
             selectedValue={paymentMode}
             onValueChange={setPaymentMode}
             style={{ color: "#222" }}
@@ -245,7 +245,7 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
             <Picker.Item label="Mode of Payment" value="" color="#888" />
             <Picker.Item label="Cash" value="cash" />
             <Picker.Item label="GCash" value="gcash" />
-          </Picker>
+          </Picker> */}
         </View>
         {/* Submit Button */}
         <TouchableOpacity

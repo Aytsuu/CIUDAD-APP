@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Platform, ActivityIndicator } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+// import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -103,7 +103,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-2">Type of Certification</Text>
           <View className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-200">
-            <Picker
+            {/* <Picker
               selectedValue={certType}
               onValueChange={setCertType}
               style={{ color: "#222", fontSize: 14 }}
@@ -113,7 +113,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
               <Picker.Item label="Barangay Clearance" value="clearance" />
               <Picker.Item label="Indigency" value="indigency" />
               <Picker.Item label="Residency" value="residency" />
-            </Picker>
+            </Picker> */}
           </View>
         </View>
 
@@ -121,7 +121,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-2">Purpose of Request</Text>
           <View className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-200">
-            <Picker
+            {/* <Picker
               selectedValue={purpose}
               onValueChange={setPurpose}
               style={{ color: "#222", fontSize: 14 }}
@@ -141,7 +141,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
               <Picker.Item label="Complaint" value="complaint" />
               <Picker.Item label="Filing Fee" value="filing-fee" />
               <Picker.Item label="Certificate to File Action" value="certificate-to-file-action" />
-            </Picker>
+            </Picker> */}
           </View>
         </View>
 
@@ -178,7 +178,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
         <View>
           <Text className="text-sm font-medium text-gray-700 mb-2">Mode of Payment</Text>
           <View className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-200">
-            <Picker
+            {/* <Picker
               selectedValue={paymentMode}
               onValueChange={setPaymentMode}
               style={{ color: "#222", fontSize: 14 }}
@@ -187,7 +187,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
               <Picker.Item label="Select payment mode" value="" color="#888" />
               <Picker.Item label="Cash" value="cash" />
               <Picker.Item label="GCash" value="gcash" />
-            </Picker>
+            </Picker> */}
           </View>
         </View>
       </View>
