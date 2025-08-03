@@ -6,6 +6,8 @@ import { z } from "zod"
 import PermitClearanceFormSchema from "@/form-schema/permitClearance-schema";
 import { useForm } from "react-hook-form";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const annualGrossSales = [
     { id: "0", name: "0000000" }
@@ -21,6 +23,8 @@ const purposeOptions = [
 ];
 
 function PermitClearanceForm() {
+    const { user } = useAuth();
+    
     const form = useForm<z.infer<typeof PermitClearanceFormSchema>>({
         resolver: zodResolver(PermitClearanceFormSchema),
         defaultValues: {
@@ -34,7 +38,26 @@ function PermitClearanceForm() {
     })
 
     const onSubmit = (values: z.infer<typeof PermitClearanceFormSchema>) => {
-        console.log(values)
+        try {
+            // Get staff_id from current user using the correct pattern
+            const staffId = user?.staff?.staff_id;
+            
+            if (!staffId) {
+                toast.error("Staff information not available. Please log in again.");
+                return;
+            }
+
+            const payload = {
+                ...values,
+                staff: staffId  // Use the current user's staff_id
+            };
+            
+            console.log("Permit Clearance Data:", payload);
+            // TODO: Add API call here
+        } catch (error) {
+            console.error('Error creating permit clearance:', error);
+            toast.error("Failed to create permit clearance. Please try again.");
+        }
     };
     
     return(

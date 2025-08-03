@@ -56,7 +56,7 @@ export const testServerConnection = async () => {
     }
 };
 
-export const addCertificationRequest = async (requestInfo: Record<string, any>) => {
+export const addCertificationRequest = async (requestInfo: Record<string, any>, staffId?: string) => {
     try {
         let businessExistenceFileId = null;
         let grossSalesFileId = null;
@@ -114,7 +114,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>) 
                 req_payment_status: 'Unpaid',
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
                 ra_id: null, // Resident assistant ID (optional)
-                staff_id: null, // Staff ID (optional)
+                staff_id: staffId || null, // Staff ID from user context or null if not provided
                 rp: '00003250722' // Resident profile ID - dynamically fetched
             };
 
@@ -146,7 +146,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>) 
                 ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
                 ra_id: null, // Resident assistant ID (optional)
-                staff_id: null // Staff ID (optional)
+                staff_id: staffId || null // Staff ID from user context or null if not provided
             };
 
             console.log("Business Permit Request Payload:", payload);
@@ -267,7 +267,7 @@ export const validateCertificationRequest = (requestInfo: Record<string, any>) =
 };
 
 // Complete workflow for permit certification with business creation
-export const submitPermitCertificationWithBusiness = async (requestInfo: Record<string, any>) => {
+export const submitPermitCertificationWithBusiness = async (requestInfo: Record<string, any>, staffId?: string) => {
     try {
         // First, create or update business record
         const businessResult = await createOrUpdateBusiness(requestInfo);
@@ -278,7 +278,7 @@ export const submitPermitCertificationWithBusiness = async (requestInfo: Record<
             business_id: businessResult.bus_id || businessResult.id
         };
         
-        return await addCertificationRequest(permitRequest);
+        return await addCertificationRequest(permitRequest, staffId);
     } catch (err) {
         console.error("Error in complete permit certification workflow:", err);
         throw err;
