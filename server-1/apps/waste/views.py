@@ -5,11 +5,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters
-from .models import WasteTruck
+from .models import *
 from apps.profiling.models import Sitio
 from rest_framework import generics
 from .signals import archive_completed_hotspots
 from datetime import date, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 #KANI 3RD
@@ -141,7 +144,7 @@ class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
-        archive_completed_hotspots()
+        # archive_completed_hotspots()
         return WasteHotspot.objects.select_related(
             'wstp_id__staff__rp__per', 
             'sitio_id'                   
@@ -405,7 +408,7 @@ class DriverPersonnelAPIView(APIView):
         allowed_positions = ["Waste Driver", "Truck Driver", "Driver"]  
         
         drivers = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title__in=allowed_positions
+            staff__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
             'staff__pos',
             'staff__rp__per'
@@ -420,7 +423,7 @@ class CollectorPersonnelAPIView(APIView):
         allowed_positions = ["Waste Collector", "Collector"]  
         
         collectors = WastePersonnel.objects.filter( 
-            staff_id__pos__pos_title__in=allowed_positions
+            staff__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
             'staff__pos',
             'staff__rp__per'
@@ -442,7 +445,7 @@ class WasteCollectorView(generics.ListCreateAPIView):
 class WatchmanView(generics.GenericAPIView): 
     def get(self, request, *args, **kwargs):
         watchmen = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title="Watchman"  
+            staff__pos__pos_title="Watchman"  
         ).select_related(
             'staff__pos',
             'staff__rp__per'

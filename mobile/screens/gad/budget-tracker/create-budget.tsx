@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -14,10 +13,8 @@ import { useCreateGADBudget } from "./queries/add";
 import _ScreenLayout from "@/screens/_ScreenLayout";
 import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
 import BudgetTrackerSchema from "@/form-schema/gad-budget-tracker-schema";
-import { ChevronLeft } from "lucide-react-native";
-import { Modal } from "react-native";
-
-type FormValues = z.infer<typeof BudgetTrackerSchema>;
+import PageLayout from "@/screens/_PageLayout";
+import { FormValues } from "./bt-types";
 
 function GADAddEntryForm() {
   const router = useRouter();
@@ -30,11 +27,7 @@ function GADAddEntryForm() {
   const { data: yearBudgets = [] } = useGetGADYearBudgets();
   const { data: expenseItems = [] } = useExpenseParticulars();
   const { data: incomeParticulars = [], isLoading: incomeParticularsLoading } = useIncomeParticulars(year);
-  const { mutate: createBudget, isPending } = useCreateGADBudget(yearBudgets, []);
-
-  useEffect(() => {
-    console.log('Form mounted with params:', params);
-  }, [params]);
+  const { mutate: createBudget } = useCreateGADBudget(yearBudgets, []);
 
   if (!year) {
     return (
@@ -103,13 +96,6 @@ function GADAddEntryForm() {
   const proposedBudgetWatch = form.watch("gbud_proposed_budget");
   const incomeParticularsWatch = form.watch("gbud_inc_particulars");
 
-  const normalizeNumericInput = (value: string | null) => {
-    if (!value) return "0.00";
-    const num = parseFloat(value);
-    if (isNaN(num)) return "0.00";
-    return num.toFixed(2);
-  };
-
   const filteredIncomeParticulars = incomeParticulars.filter(item =>
     item.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -148,16 +134,14 @@ function GADAddEntryForm() {
     const payload = {
       budgetData: {
         ...values,
-        gbud_proposed_budget: values.gbud_type === "Income" ? null : normalizeNumericInput(values.gbud_proposed_budget),
-        gbud_actual_expense: values.gbud_type === "Income" ? null : normalizeNumericInput(values.gbud_actual_expense),
-        gbud_inc_amt: values.gbud_type === "Income" ? normalizeNumericInput(values.gbud_inc_amt) : "0.00",
+        gbud_proposed_budget: values.gbud_type === "Income" ? null : values.gbud_proposed_budget,
+        gbud_actual_expense: values.gbud_type === "Income" ? null : values.gbud_actual_expense,
+        gbud_inc_amt: values.gbud_type === "Income" ? values.gbud_inc_amt : "0.00",
         gbudy: currentYearBudget.gbudy_num,
         gbud_files: undefined,
       },
       files: values.gbud_files || [],
     };
-
-    console.log('Submission payload:', JSON.stringify(payload, null, 2));
 
     if (values.gbud_files && values.gbud_files.length > 0) {
       const invalidFiles = values.gbud_files.filter(file => !file.uri || !file.name || !file.type);
@@ -173,7 +157,6 @@ function GADAddEntryForm() {
     createBudget(payload, {
       onSuccess: () => router.back(),
       onError: (error) => {
-        console.error('Error creating budget:', error.response?.data || error.message);
         form.setError('root', {
           type: 'manual',
           message: 'Failed to save entry. Please check uploaded files and try again.',
@@ -349,11 +332,6 @@ function GADAddEntryForm() {
                   label: item.gdb_name,
                   value: item.gdb_name,
                 }))}
-                onSelect={(value: string) => {
-                  const selected = expenseItems.find((i) => i.gdb_name === value);
-                  form.setValue("gdb_id", selected?.gdb_id || null);
-                  form.setValue("gbud_exp_particulars", value);
-                }}
               />
 
               <FormInput

@@ -11,19 +11,14 @@ import {
   SafeAreaView,
   StatusBar,
   RefreshControl,
-  Modal,
 } from "react-native";
 import {
-  ArrowLeft,
   Archive,
   ArchiveRestore,
   Trash,
   ChevronLeft,
 } from "lucide-react-native";
-import {
-  useGetProjectProposals,
-  type ProjectProposal,
-} from "./queries/fetchqueries";
+import { useGetProjectProposals } from "./queries/fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
   useArchiveProjectProposal,
@@ -35,6 +30,7 @@ import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { SelectLayout } from "@/components/ui/select-layout";
+import { ProjectProposal } from "./projprop-types";
 
 const ProjectProposalListContent: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
@@ -44,7 +40,6 @@ const ProjectProposalListContent: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedProject, setSelectedProject] =
     useState<ProjectProposal | null>(null);
-
   const {
     data: projects = [],
     isLoading,
@@ -74,14 +69,14 @@ const ProjectProposalListContent: React.FC = () => {
       return project.status === selectedFilter;
     });
 
- // Calculate total budget of all displayed projects
+  // Calculate total budget of all displayed projects
   const totalBudget = filteredProjects.reduce((sum, project) => {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
       const amount = item.amount || 0;
       const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
-      return projectSum + (paxCount * amount);
+      return projectSum + paxCount * amount;
     }, 0);
 
     return sum + projectTotal;
@@ -265,7 +260,7 @@ const ProjectProposalListContent: React.FC = () => {
           />
         </View>
 
-{/* Dynamic Total Budget Display */}
+        {/* Dynamic Total Budget Display */}
         <View className="flex-row justify-end mb-2">
           <View className=" px-4 py-2 rounded-lg">
             <Text className="font-medium">
@@ -313,7 +308,8 @@ const ProjectProposalListContent: React.FC = () => {
                 </Text>
                 <View className="flex-row">
                   {viewMode === "active" ? (
-                    project.status !== 'Viewed' && project.status !== 'Amend' && (
+                    project.status !== "Viewed" &&
+                    project.status !== "Amend" && (
                       <ConfirmationModal
                         trigger={
                           <TouchableOpacity className="p-1">
@@ -368,7 +364,7 @@ const ProjectProposalListContent: React.FC = () => {
                   Date: {project.date || "No date provided"}
                 </Text>
               </View>
-              
+
               <View className="mb-2">
                 <Text className="text-sm text-gray-600 underline">
                   Total Budget: ₱

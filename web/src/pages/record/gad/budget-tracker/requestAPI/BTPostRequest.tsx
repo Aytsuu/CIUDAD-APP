@@ -1,72 +1,6 @@
-// import {api} from '@/api/api';
-
-// export type GADBudgetFile = {
-//   gbf_id?: number;
-//   gbf_name: string;
-//   gbf_type: string;
-//   gbf_path: string;
-//   gbf_url: string;
-//   gbud_num: number;
-// };
-
-// export type GADBudgetCreatePayload = {
-//   gbud_type: 'Income' | 'Expense';
-//   gbud_datetime: string;
-//   gbud_add_notes?: string | null;
-  
-//   // Income fields
-//   gbud_inc_particulars?: string | null;
-//   gbud_inc_amt?: number | null;
-  
-//   // Expense fields
-//   gbud_exp_particulars?: string | null;
-//   gbud_proposed_budget?: number | null;
-//   gbud_actual_expense?: number | null;
-//   gbud_remaining_bal?: number | null;
-//   gbud_reference_num?: string | null;
-  
-//   // Relations
-//   gbudy: number;
-//   gdb_id?: number | null;
-// };
-
-// export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
-//   const response = await api.post('/gad/gad-budget-tracker-table/', payload);
-//   return response.data;
-// };
-
-// export const createGADBudgetFile = async (fileData: GADBudgetFile) => {
-//   const response = await api.post('/gad/gad-budget-files/', fileData);
-//   return response.data;
-// };
-
 import { api } from "@/api/api";
 import { MediaUploadType } from '@/components/ui/media-upload';
-
-export type GADBudgetFile = {
-  gbf_id?: number;
-  gbf_name: string;
-  gbf_type: string;
-  gbf_path: string;
-  gbf_url: string;
-  gbud_num: number;
-};
-
-export type GADBudgetCreatePayload = {
-  gbud_type: 'Income' | 'Expense';
-  gbud_datetime: string;
-  gbud_add_notes?: string | null;
-  gbud_inc_particulars?: string | null;
-  gbud_inc_amt?: number | null;
-  gbud_exp_particulars?: string | null;
-  gbud_proposed_budget?: number | null;
-  gbud_actual_expense?: number | null;
-  gbud_remaining_bal?: number | null;
-  gbud_reference_num?: string | null;
-  gbudy: number;
-  gdb_id?: number | null;
-  onChange?: string;
-};
+import { GADBudgetCreatePayload } from "../budget-tracker-types";
 
 export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
   const response = await api.post('/gad/gad-budget-tracker-table/', payload);
@@ -94,7 +28,6 @@ export const createGADBudgetFile = async (media: MediaUploadType[number], gbud_n
     });
     return response.data;
   } catch (error: any) {
-    console.error('File upload failed:', error.response?.data || error);
     throw error;
   }
 };

@@ -1,20 +1,32 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Image, Modal } from 'react-native';
-import { ChevronLeft, Download, Archive, ArchiveRestore, Trash, X } from 'lucide-react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  Image,
+  Modal,
+} from "react-native";
+import {
+  ChevronLeft,
+  Archive,
+  ArchiveRestore,
+  Trash,
+  X,
+} from "lucide-react-native";
 import { useGetSupportDocs } from "./queries/fetchqueries";
-import { useAddSupportDocument } from './queries/addqueries';
-import { useArchiveSupportDocument, useRestoreSupportDocument, useDeleteSupportDocument } from './queries/delqueries';
-import MultiImageUploader from '@/components/ui/multi-media-upload';
-import type { ProjectProposal, SupportDoc } from "./queries/fetchqueries";
+import { useAddSupportDocument } from "./queries/addqueries";
+import {
+  useArchiveSupportDocument,
+  useRestoreSupportDocument,
+  useDeleteSupportDocument,
+} from "./queries/delqueries";
+import MultiImageUploader from "@/components/ui/multi-media-upload";
+import { SupportDoc, ProjectProposalViewProps } from "./projprop-types";
 import { useRouter } from "expo-router";
-import { ConfirmationModal } from '@/components/ui/confirmationModal';
-
-export interface ProjectProposalViewProps {
-  project: ProjectProposal;
-  onBack?: () => void;
-  customHeaderActions?: React.ReactNode;
-  disableDocumentManagement?: boolean;
-}
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
 export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   project,
@@ -22,8 +34,10 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   customHeaderActions,
   disableDocumentManagement = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<'soft' | 'supporting'>('soft');
-  const [supportDocsViewMode, setSupportDocsViewMode] = useState<'active' | 'archived'>('active');
+  const [activeTab, setActiveTab] = useState<"soft" | "supporting">("soft");
+  const [supportDocsViewMode, setSupportDocsViewMode] = useState<
+    "active" | "archived"
+  >("active");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<any[]>([]);
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
@@ -31,7 +45,11 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const router = useRouter();
 
-  const { data: supportDocs = [], isLoading: isLoadingSupportDocs, refetch: refetchSupportDocs } = useGetSupportDocs(project.gprId || 0, {
+  const {
+    data: supportDocs = [],
+    isLoading: isLoadingSupportDocs,
+    refetch: refetchSupportDocs,
+  } = useGetSupportDocs(project.gprId || 0, {
     enabled: !!project.gprId,
   });
 
@@ -40,23 +58,25 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   const restoreSupportDocMutation = useRestoreSupportDocument();
   const deleteSupportDocMutation = useDeleteSupportDocument();
 
-  const activeSupportDocs = supportDocs.filter(doc => !doc.psd_is_archive);
-  const archivedSupportDocs = supportDocs.filter(doc => doc.psd_is_archive);
-  const imageDocs = (supportDocsViewMode === 'active' ? activeSupportDocs : archivedSupportDocs).filter(doc => doc.psd_type?.startsWith('image/'));
+  const activeSupportDocs = supportDocs.filter((doc) => !doc.psd_is_archive);
+  const archivedSupportDocs = supportDocs.filter((doc) => doc.psd_is_archive);
+  const imageDocs = (
+    supportDocsViewMode === "active" ? activeSupportDocs : archivedSupportDocs
+  ).filter((doc) => doc.psd_type?.startsWith("image/"));
 
   const handleUploadFiles = async () => {
     try {
       const uploadPromises = mediaFiles.map(async (file) => {
         if (!file.publicUrl) return;
-        
+
         await addSupportDocMutation.mutateAsync({
           gprId: project.gprId!,
           fileData: {
             psd_url: file.publicUrl,
             psd_path: file.path,
             psd_name: file.name,
-            psd_type: file.type
-          }
+            psd_type: file.type,
+          },
         });
       });
 
@@ -65,7 +85,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       setMediaFiles([]);
       refetchSupportDocs();
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error("Error uploading files:", error);
     }
   };
 
@@ -75,7 +95,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       {
         onSuccess: () => {
           refetchSupportDocs();
-        }
+        },
       }
     );
   };
@@ -86,7 +106,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       {
         onSuccess: () => {
           refetchSupportDocs();
-        }
+        },
       }
     );
   };
@@ -97,7 +117,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       {
         onSuccess: () => {
           refetchSupportDocs();
-        }
+        },
       }
     );
   };
@@ -113,27 +133,37 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       {!disableDocumentManagement && (
         <View className="flex-row justify-between items-center mb-4">
           {(project.status === "Pending" || project.status === "Amend") && (
-            <TouchableOpacity 
-              className={`px-4 py-2 rounded-lg ${project.gprIsArchive ? 'bg-gray-300' : 'bg-blue-500'}`}
+            <TouchableOpacity
+              className={`px-4 py-2 rounded-lg ${
+                project.gprIsArchive ? "bg-gray-300" : "bg-blue-500"
+              }`}
               onPress={() => !project.gprIsArchive && setShowUploadModal(true)}
               disabled={project.gprIsArchive}
             >
-              <Text className={`font-medium ${project.gprIsArchive ? 'text-gray-500' : 'text-white'}`}>
+              <Text
+                className={`font-medium ${
+                  project.gprIsArchive ? "text-gray-500" : "text-white"
+                }`}
+              >
                 Add Documents
               </Text>
             </TouchableOpacity>
           )}
-          
+
           <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
             <TouchableOpacity
-              className={`px-4 py-2 ${supportDocsViewMode === 'active' ? 'bg-white' : ''}`}
-              onPress={() => setSupportDocsViewMode('active')}
+              className={`px-4 py-2 ${
+                supportDocsViewMode === "active" ? "bg-white" : ""
+              }`}
+              onPress={() => setSupportDocsViewMode("active")}
             >
               <Text className="text-sm">Active</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className={`px-4 py-2 ${supportDocsViewMode === 'archived' ? 'bg-white' : ''}`}
-              onPress={() => setSupportDocsViewMode('archived')}
+              className={`px-4 py-2 ${
+                supportDocsViewMode === "archived" ? "bg-white" : ""
+              }`}
+              onPress={() => setSupportDocsViewMode("archived")}
             >
               <Text className="text-sm">Archived</Text>
             </TouchableOpacity>
@@ -149,71 +179,87 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
         </View>
       )}
 
-      {(supportDocsViewMode === 'active' ? activeSupportDocs : archivedSupportDocs).length === 0 ? (
+      {(supportDocsViewMode === "active"
+        ? activeSupportDocs
+        : archivedSupportDocs
+      ).length === 0 ? (
         <View className="flex-1 justify-center items-center py-12">
           <Text className="text-gray-500 text-center">
-            No {supportDocsViewMode === 'active' ? 'active' : 'archived'} supporting documents found.
+            No {supportDocsViewMode === "active" ? "active" : "archived"}{" "}
+            supporting documents found.
           </Text>
         </View>
       ) : (
-        (supportDocsViewMode === 'active' ? activeSupportDocs : archivedSupportDocs).map((doc, index) => (
-          <View key={doc.psd_id} className="mb-6 border border-gray-200 rounded-lg overflow-hidden">
-            {doc.psd_type?.startsWith('image/') && doc.psd_url ? (
+        (supportDocsViewMode === "active"
+          ? activeSupportDocs
+          : archivedSupportDocs
+        ).map((doc, index) => (
+          <View
+            key={doc.psd_id}
+            className="mb-6 border border-gray-200 rounded-lg overflow-hidden"
+          >
+            {doc.psd_type?.startsWith("image/") && doc.psd_url ? (
               <TouchableOpacity onPress={() => handleViewImage(doc, index)}>
-                <Image source={{ uri: doc.psd_url }} className="w-full h-96" resizeMode="contain" />
+                <Image
+                  source={{ uri: doc.psd_url }}
+                  className="w-full h-96"
+                  resizeMode="contain"
+                />
               </TouchableOpacity>
             ) : (
               <View className="bg-gray-100 p-8 items-center justify-center h-96">
-                <Text className="text-gray-600 text-center mb-2">{doc.psd_url || "Document"}</Text>
-                <Text className="text-gray-500 text-sm">Document preview not available</Text>
+                <Text className="text-gray-600 text-center mb-2">
+                  {doc.psd_url || "Document"}
+                </Text>
+                <Text className="text-gray-500 text-sm">
+                  Document preview not available
+                </Text>
               </View>
             )}
-            
+
             {!disableDocumentManagement && (
               <View className="p-4 bg-white border-t gap-2 border-gray-200 flex-row justify-end space-x-2">
-                {supportDocsViewMode === 'active' ? (
-                  !project.gprIsArchive && (
-                    <ConfirmationModal
-                      trigger={
-                        <TouchableOpacity className="p-2 rounded-lg">
-                          <Archive size={20} color="#ef4444" />
-                        </TouchableOpacity>
-                      }
-                      title="Archive Document"
-                      description="Are you sure you want to archive this document?"
-                      actionLabel="Archive"
-                      onPress={() => handleArchiveSupportDoc(doc.psd_id)}
-                    />
-                  )
-                ) : (
-                  !project.gprIsArchive && (
-                    <>
+                {supportDocsViewMode === "active"
+                  ? !project.gprIsArchive && (
                       <ConfirmationModal
                         trigger={
-                          <TouchableOpacity className="p-2 bg-green-100 rounded-lg">
-                            <ArchiveRestore size={20} color="#10b981" />
+                          <TouchableOpacity className="p-2 rounded-lg">
+                            <Archive size={20} color="#ef4444" />
                           </TouchableOpacity>
                         }
-                        title="Restore Document"
-                        description="Are you sure you want to restore this document?"
-                        actionLabel="Restore"
-                        onPress={() => handleRestoreSupportDoc(doc.psd_id)}
+                        title="Archive Document"
+                        description="Are you sure you want to archive this document?"
+                        actionLabel="Archive"
+                        onPress={() => handleArchiveSupportDoc(doc.psd_id)}
                       />
-                      <ConfirmationModal
-                        trigger={
-                          <TouchableOpacity className="p-2 bg-red-100 rounded-lg">
-                            <Trash size={20} color="#ef4444" />
-                          </TouchableOpacity>
-                        }
-                        title="Delete Document"
-                        description="Are you sure you want to permanently delete this document?"
-                        actionLabel="Delete"
-                        variant="destructive"
-                        onPress={() => handleDeleteSupportDoc(doc.psd_id)}
-                      />
-                    </>
-                  )
-                )}
+                    )
+                  : !project.gprIsArchive && (
+                      <>
+                        <ConfirmationModal
+                          trigger={
+                            <TouchableOpacity className="p-2 bg-green-100 rounded-lg">
+                              <ArchiveRestore size={20} color="#10b981" />
+                            </TouchableOpacity>
+                          }
+                          title="Restore Document"
+                          description="Are you sure you want to restore this document?"
+                          actionLabel="Restore"
+                          onPress={() => handleRestoreSupportDoc(doc.psd_id)}
+                        />
+                        <ConfirmationModal
+                          trigger={
+                            <TouchableOpacity className="p-2 bg-red-100 rounded-lg">
+                              <Trash size={20} color="#ef4444" />
+                            </TouchableOpacity>
+                          }
+                          title="Delete Document"
+                          description="Are you sure you want to permanently delete this document?"
+                          actionLabel="Delete"
+                          variant="destructive"
+                          onPress={() => handleDeleteSupportDoc(doc.psd_id)}
+                        />
+                      </>
+                    )}
               </View>
             )}
           </View>
@@ -226,30 +272,50 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     <ScrollView className="flex-1 bg-white">
       <View className="bg-gray-100 p-4 items-center border-b border-gray-300">
         {project.headerImage ? (
-          <Image source={{ uri: project.headerImage }} className="w-full h-16 mb-2" resizeMode="contain" />
+          <Image
+            source={{ uri: project.headerImage }}
+            className="w-full h-16 mb-2"
+            resizeMode="contain"
+          />
         ) : (
           <View className="w-full h-12 bg-gray-200 rounded mb-2 justify-center items-center">
             <Text className="text-gray-500 text-xs">📄</Text>
           </View>
         )}
-        <Text className="text-lg font-bold text-center text-gray-900">PROJECT PROPOSAL</Text>
+        <Text className="text-lg font-bold text-center text-gray-900">
+          PROJECT PROPOSAL
+        </Text>
       </View>
 
       <View className="p-4">
         <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">Project Title:</Text>
-          <Text className="text-base text-gray-900">{project.projectTitle}</Text>
+          <Text className="text-sm font-semibold text-gray-700 mb-1">
+            Project Title:
+          </Text>
+          <Text className="text-base text-gray-900">
+            {project.projectTitle}
+          </Text>
         </View>
 
         <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">Background:</Text>
-          <Text className="text-sm text-gray-800 leading-5">{project.background || "No background provided"}</Text>
+          <Text className="text-sm font-semibold text-gray-700 mb-1">
+            Background:
+          </Text>
+          <Text className="text-sm text-gray-800 leading-5">
+            {project.background || "No background provided"}
+          </Text>
         </View>
 
         <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">Objectives:</Text>
-          {!project.objectives || project.objectives.length === 0 || project.objectives.every((obj) => !obj || !obj.trim()) ? (
-            <Text className="text-sm text-gray-600 italic">No objectives provided</Text>
+          <Text className="text-sm font-semibold text-gray-700 mb-1">
+            Objectives:
+          </Text>
+          {!project.objectives ||
+          project.objectives.length === 0 ||
+          project.objectives.every((obj) => !obj || !obj.trim()) ? (
+            <Text className="text-sm text-gray-600 italic">
+              No objectives provided
+            </Text>
           ) : (
             <View>
               {project.objectives
@@ -265,11 +331,17 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
         </View>
 
         <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">Participants:</Text>
+          <Text className="text-sm font-semibold text-gray-700 mb-1">
+            Participants:
+          </Text>
           {!project.participants ||
           project.participants.length === 0 ||
-          project.participants.every((p) => !p.category || !p.category.trim()) ? (
-            <Text className="text-sm text-gray-600 italic">No participants provided</Text>
+          project.participants.every(
+            (p) => !p.category || !p.category.trim()
+          ) ? (
+            <Text className="text-sm text-gray-600 italic">
+              No participants provided
+            </Text>
           ) : (
             <View>
               {project.participants
@@ -284,8 +356,9 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
         </View>
 
         <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-2">Budgetary Requirements:</Text>
-
+          <Text className="text-sm font-semibold text-gray-700 mb-2">
+            Budgetary Requirements:
+          </Text>
           <View className="flex-row bg-gray-100 border border-gray-300">
             <View className="flex-1 p-2 border-r border-gray-300">
               <Text className="text-xs font-semibold text-gray-700">Item</Text>
@@ -294,17 +367,25 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               <Text className="text-xs font-semibold text-gray-700">Pax</Text>
             </View>
             <View className="w-20 p-2 border-r border-gray-300">
-              <Text className="text-xs font-semibold text-gray-700">Amount</Text>
+              <Text className="text-xs font-semibold text-gray-700">
+                Amount
+              </Text>
             </View>
             <View className="w-20 p-2">
               <Text className="text-xs font-semibold text-gray-700">Total</Text>
             </View>
           </View>
 
-          {!project.budgetItems || project.budgetItems.length === 0 || project.budgetItems.every((item) => !item.name || !item.name.trim()) ? (
+          {!project.budgetItems ||
+          project.budgetItems.length === 0 ||
+          project.budgetItems.every(
+            (item) => !item.name || !item.name.trim()
+          ) ? (
             <View className="flex-row border-l border-r border-b border-gray-300">
               <View className="flex-1 p-2">
-                <Text className="text-xs text-gray-600 italic">No budget items provided</Text>
+                <Text className="text-xs text-gray-600 italic">
+                  No budget items provided
+                </Text>
               </View>
             </View>
           ) : (
@@ -313,11 +394,16 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               .map((item, index) => {
                 const amount = Number.parseFloat(item.amount?.toString()) || 0;
                 const paxCount =
-                  item.pax && item.pax.trim() && item.pax.includes("pax") ? Number.parseInt(item.pax) || 1 : 1;
+                  item.pax && item.pax.trim() && item.pax.includes("pax")
+                    ? Number.parseInt(item.pax) || 1
+                    : 1;
                 const total = paxCount * amount;
 
                 return (
-                  <View key={index} className="flex-row border-l border-r border-b border-gray-300">
+                  <View
+                    key={index}
+                    className="flex-row border-l border-r border-b border-gray-300"
+                  >
                     <View className="flex-1 p-2 border-r border-gray-300">
                       <Text className="text-xs text-gray-800">{item.name}</Text>
                     </View>
@@ -325,10 +411,14 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                       <Text className="text-xs text-gray-800">{paxCount}</Text>
                     </View>
                     <View className="w-20 p-2 border-r border-gray-300">
-                      <Text className="text-xs text-gray-800">{amount.toFixed(2)}</Text>
+                      <Text className="text-xs text-gray-800">
+                        {amount.toFixed(2)}
+                      </Text>
                     </View>
                     <View className="w-20 p-2">
-                      <Text className="text-xs text-gray-800">{total.toFixed(2)}</Text>
+                      <Text className="text-xs text-gray-800">
+                        {total.toFixed(2)}
+                      </Text>
                     </View>
                   </View>
                 );
@@ -346,11 +436,19 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               <Text className="text-xs font-semibold text-gray-800">TOTAL</Text>
             </View>
             <View className="w-20 p-2">
-              <Text className="text-xs font-semibold text-gray-800">{project.budgetItems?.reduce((sum, item) => {
-                const amount = Number.parseFloat(item.amount?.toString()) || 0;
-                const paxCount = item.pax && item.pax.trim() && item.pax.includes("pax") ? Number.parseInt(item.pax) || 1 : 1;
-                return sum + (paxCount * amount);
-              }, 0).toFixed(2)}</Text>
+              <Text className="text-xs font-semibold text-gray-800">
+                {project.budgetItems
+                  ?.reduce((sum, item) => {
+                    const amount =
+                      Number.parseFloat(item.amount?.toString()) || 0;
+                    const paxCount =
+                      item.pax && item.pax.trim() && item.pax.includes("pax")
+                        ? Number.parseInt(item.pax) || 1
+                        : 1;
+                    return sum + paxCount * amount;
+                  }, 0)
+                  .toFixed(2)}
+              </Text>
             </View>
           </View>
         </View>
@@ -358,32 +456,50 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
         <View className="mb-4">
           <View className="flex-row justify-between">
             <View className="flex-1 mr-4">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">Prepared by:</Text>
-              {project.signatories?.filter((s) => s.type === "prepared").length === 0 ? (
-                <Text className="text-xs text-gray-600 italic">No preparers assigned</Text>
+              <Text className="text-sm font-semibold text-gray-700 mb-2">
+                Prepared by:
+              </Text>
+              {project.signatories?.filter((s) => s.type === "prepared")
+                .length === 0 ? (
+                <Text className="text-xs text-gray-600 italic">
+                  No preparers assigned
+                </Text>
               ) : (
                 project.signatories
                   ?.filter((s) => s.type === "prepared")
                   .map((sig, index) => (
                     <View key={index} className="mb-3 items-center">
-                      <Text className="text-sm text-gray-800 text-center mb-1">{sig.name}</Text>
-                      <Text className="text-xs font-semibold text-gray-700 text-center">{sig.position || "N/A"}</Text>
+                      <Text className="text-sm text-gray-800 text-center mb-1">
+                        {sig.name}
+                      </Text>
+                      <Text className="text-xs font-semibold text-gray-700 text-center">
+                        {sig.position || "N/A"}
+                      </Text>
                     </View>
                   ))
               )}
             </View>
 
             <View className="flex-1 ml-4">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">Approved by:</Text>
-              {project.signatories?.filter((s) => s.type === "approved").length === 0 ? (
-                <Text className="text-xs text-gray-600 italic">No approvers assigned</Text>
+              <Text className="text-sm font-semibold text-gray-700 mb-2">
+                Approved by:
+              </Text>
+              {project.signatories?.filter((s) => s.type === "approved")
+                .length === 0 ? (
+                <Text className="text-xs text-gray-600 italic">
+                  No approvers assigned
+                </Text>
               ) : (
                 project.signatories
                   ?.filter((s) => s.type === "approved")
                   .map((sig, index) => (
                     <View key={index} className="mb-3 items-center">
-                      <Text className="text-sm text-gray-800 text-center mb-1">{sig.name}</Text>
-                      <Text className="text-xs font-semibold text-gray-700 text-center">{sig.position || "N/A"}</Text>
+                      <Text className="text-sm text-gray-800 text-center mb-1">
+                        {sig.name}
+                      </Text>
+                      <Text className="text-xs font-semibold text-gray-700 text-center">
+                        {sig.position || "N/A"}
+                      </Text>
                     </View>
                   ))
               )}
@@ -399,9 +515,15 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <View className="mt-16 flex-row justify-between items-center p-4 border-b border-gray-200">
-        <TouchableOpacity onPress={onBack || (() => router.back())} className="flex-row items-center flex-1">
+        <TouchableOpacity
+          onPress={onBack || (() => router.back())}
+          className="flex-row items-center flex-1"
+        >
           <ChevronLeft color="#374151" size={20} />
-          <Text className="ml-2 text-blue-500 font-medium flex-1" numberOfLines={1}>
+          <Text
+            className="ml-2 text-blue-500 font-medium flex-1"
+            numberOfLines={1}
+          >
             {project.projectTitle}
           </Text>
         </TouchableOpacity>
@@ -410,30 +532,40 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
 
       <View className="flex-row p-4">
         <TouchableOpacity
-          onPress={() => setActiveTab('soft')}
+          onPress={() => setActiveTab("soft")}
           className={`flex-1 py-2 px-4 rounded-l-lg border ${
-            activeTab === 'soft' ? 'bg-gray-800 border-gray-800' : 'bg-white border-gray-300'
+            activeTab === "soft"
+              ? "bg-gray-800 border-gray-800"
+              : "bg-white border-gray-300"
           }`}
         >
-          <Text className={`text-center text-sm font-medium ${activeTab === 'soft' ? 'text-white' : 'text-gray-700'}`}>
+          <Text
+            className={`text-center text-sm font-medium ${
+              activeTab === "soft" ? "text-white" : "text-gray-700"
+            }`}
+          >
             Soft Copy
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => setActiveTab('supporting')}
+          onPress={() => setActiveTab("supporting")}
           className={`flex-1 py-2 px-4 rounded-r-lg border-t border-r border-b ${
-            activeTab === 'supporting' ? 'bg-gray-800 border-gray-800' : 'bg-white border-gray-300'
+            activeTab === "supporting"
+              ? "bg-gray-800 border-gray-800"
+              : "bg-white border-gray-300"
           }`}
         >
           <Text
-            className={`text-center text-sm font-medium ${activeTab === 'supporting' ? 'text-white' : 'text-gray-700'}`}
+            className={`text-center text-sm font-medium ${
+              activeTab === "supporting" ? "text-white" : "text-gray-700"
+            }`}
           >
             Supporting Document
           </Text>
         </TouchableOpacity>
       </View>
 
-      {activeTab === 'soft' ? renderSoftCopy() : renderSupportingDocument()}
+      {activeTab === "soft" ? renderSoftCopy() : renderSupportingDocument()}
 
       {!disableDocumentManagement && (
         <Modal
@@ -446,9 +578,20 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               <TouchableOpacity onPress={() => setShowUploadModal(false)}>
                 <Text className="text-blue-500">Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold">Add Supporting Documents</Text>
-              <TouchableOpacity onPress={handleUploadFiles} disabled={mediaFiles.length === 0}>
-                <Text className={`${mediaFiles.length === 0 ? 'text-gray-400' : 'text-blue-500'}`}>Upload</Text>
+              <Text className="text-lg font-semibold">
+                Add Supporting Documents
+              </Text>
+              <TouchableOpacity
+                onPress={handleUploadFiles}
+                disabled={mediaFiles.length === 0}
+              >
+                <Text
+                  className={`${
+                    mediaFiles.length === 0 ? "text-gray-400" : "text-blue-500"
+                  }`}
+                >
+                  Upload
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -467,13 +610,13 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
         onRequestClose={() => setViewImageModalVisible(false)}
       >
         <View className="flex-1 bg-black/90 justify-center items-center">
-          <TouchableOpacity 
+          <TouchableOpacity
             className="absolute top-4 right-4 z-10"
             onPress={() => setViewImageModalVisible(false)}
           >
             <X size={24} color="white" />
           </TouchableOpacity>
-          
+
           {selectedImageUrl && (
             <>
               <Image
@@ -482,7 +625,10 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 resizeMode="contain"
               />
               <Text className="text-white mt-2">
-                {(supportDocsViewMode === 'active' ? activeSupportDocs : archivedSupportDocs)[currentImageIndex]?.psd_name || 'Document'}
+                {(supportDocsViewMode === "active"
+                  ? activeSupportDocs
+                  : archivedSupportDocs)[currentImageIndex]?.psd_name ||
+                  "Document"}
               </Text>
             </>
           )}

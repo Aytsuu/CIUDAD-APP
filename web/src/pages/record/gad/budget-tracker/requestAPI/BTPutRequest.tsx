@@ -1,27 +1,12 @@
 import { api } from "@/api/api";
 import { MediaUploadType } from '@/components/ui/media-upload';
-
-export type GADBudgetUpdatePayload = {
-  gbud_type: 'Income' | 'Expense';
-  gbud_datetime: string;
-  gbud_add_notes?: string | null;
-  gbud_inc_particulars?: string | null;
-  gbud_inc_amt?: number | null;
-  gbud_exp_particulars?: string | null;
-  gbud_proposed_budget?: number | null;
-  gbud_actual_expense?: number | null;
-  gbud_remaining_bal?: number | null;
-  gbud_reference_num?: string | null;
-  gbudy: number;
-  gdb_id?: number | null;
-};
+import { GADBudgetUpdatePayload } from "../budget-tracker-types";
 
 export const updateGADBudget = async (gbud_num: number, payload: GADBudgetUpdatePayload) => {
   try {
     const response = await api.patch(`/gad/gad-budget-tracker-entry/${gbud_num}/`, payload);
     return response.data;
   } catch (err) {
-    console.error("API Error:", err);
     throw err;
   }
 };
@@ -43,7 +28,6 @@ export const createGADBudgetFile = async (media: MediaUploadType[number], gbud_n
        });
        return response.data;
      } catch (error: any) {
-       console.error('File upload failed:', error.response?.data || error);
        throw error;
      }
    };

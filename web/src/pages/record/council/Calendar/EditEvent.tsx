@@ -11,9 +11,12 @@ import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import AddEventFormSchema from "@/form-schema/council/addevent-schema";
 import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { useUpdateCouncilEvent, useUpdateAttendees } from "./queries/updatequeries";
-import { useGetStaffList, useGetAttendees, Staff, EditEventFormProps } from "./queries/fetchqueries";
-import type { EventCategory } from "./queries/fetchqueries";
+import {
+  useUpdateCouncilEvent,
+  useUpdateAttendees,
+} from "./queries/updatequeries";
+import { useGetStaffList, useGetAttendees } from "./queries/fetchqueries";
+import { EventCategory, Staff, EditEventFormProps } from "./ce-att-types";
 import { formatDate } from "@/helpers/dateHelper";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -25,39 +28,30 @@ const normalizeString = (str: string) => str.trim().toLowerCase();
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const isArchived = initialValues.ce_is_archive || false;
   const [isEditMode, setIsEditMode] = useState(false && !isArchived);
-  const [selectedAttendees, setSelectedAttendees] = useState<
-    { name: string; designation: string; present_or_absent?: string }[]
-  >(initialValues.attendees || []);
+  const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string; present_or_absent?: string }[]>(initialValues.attendees || []);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
   const ceId = useMemo(() => initialValues?.ce_id, [initialValues]);
-
-  const { mutate: updateEvent, isPending: isUpdating } = useUpdateCouncilEvent();
+  const { mutate: updateEvent, isPending: isUpdating } =useUpdateCouncilEvent();
   const { mutate: updateAttendees } = useUpdateAttendees();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-  const { data: attendees = [], isLoading: isAttendeesLoading } = useGetAttendees(ceId);
-  const { mutate: deleteCouncilEvent, isPending: isArchiving } = useDeleteCouncilEvent();
-
+  const { data: attendees = [], isLoading: isAttendeesLoading } =useGetAttendees(ceId);
+  const { mutate: deleteCouncilEvent, isPending: isArchiving } =useDeleteCouncilEvent();
   const initialStaffIds = useMemo(() => {
     if (!attendees.length || !staffList.length) return [];
     return attendees
       .map((attendee) => {
         const staff = staffList.find(
           (s) =>
-            normalizeString(s.full_name) === normalizeString(attendee.atn_name) &&
-            normalizeString(s.position_title) === normalizeString(attendee.atn_designation)
+            normalizeString(s.full_name) ===
+              normalizeString(attendee.atn_name) &&
+            normalizeString(s.position_title) ===
+              normalizeString(attendee.atn_designation)
         );
-        if (!staff) {
-          console.warn(`No staff found for attendee: ${attendee.atn_name} (${attendee.atn_designation})`);
-        }
         return staff?.staff_id;
       })
       .filter((id): id is string => id !== undefined);
   }, [attendees, staffList]);
-
-  console.log("Attendees from API:", attendees);
-  console.log("Staff list:", staffList);
-  console.log("Computed initialStaffIds:", initialStaffIds);
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -76,7 +70,6 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
 
   useEffect(() => {
     if (!isStaffLoading && !isAttendeesLoading) {
-      console.log("Updating form with initialStaffIds:", initialStaffIds);
       form.reset({
         ...form.getValues(),
         staffAttendees: initialStaffIds,
@@ -85,9 +78,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   }, [initialStaffIds, isStaffLoading, isAttendeesLoading, form]);
 
   const eventCategory = form.watch("eventCategory");
-  const staffAttendees = useWatch({ control: form.control, name: "staffAttendees" });
-
-  console.log("Form staffAttendees:", staffAttendees);
+  const staffAttendees = useWatch({control: form.control, name: "staffAttendees"});
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -112,18 +103,17 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
 
   useEffect(() => {
     if (isEditMode) {
-      console.log("staffAttendees in edit mode:", staffAttendees);
       const newAttendees = staffAttendees
         .map((id) => {
           const staff = getStaffById(id);
           if (!staff) {
-            console.warn(`Staff with ID ${id} not found`);
             return null;
           }
           const existingAttendee = selectedAttendeeDetails.find(
             (a) =>
               normalizeString(a.name) === normalizeString(staff.full_name) &&
-              normalizeString(a.designation) === normalizeString(staff.position_title)
+              normalizeString(a.designation) ===
+                normalizeString(staff.position_title)
           );
           return {
             name: staff.full_name,
@@ -131,7 +121,11 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
             present_or_absent: existingAttendee?.present_or_absent,
           };
         })
-        .filter((item): item is { name: string; designation: string; present_or_absent?: string } => item !== null);
+        .filter((item) => item !== null) as {
+        name: string;
+        designation: string;
+        present_or_absent: string | undefined;
+      }[];
 
       setSelectedAttendees(newAttendees);
     } else {
@@ -175,8 +169,10 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                   atn_present_or_absent:
                     selectedAttendees.find(
                       (a) =>
-                        normalizeString(a.name) === normalizeString(staff?.full_name || "") &&
-                        normalizeString(a.designation) === normalizeString(staff?.position_title || "")
+                        normalizeString(a.name) ===
+                          normalizeString(staff?.full_name || "") &&
+                        normalizeString(a.designation) ===
+                          normalizeString(staff?.position_title || "")
                     )?.present_or_absent || "Present",
                   ce_id: ceId,
                 };
@@ -257,7 +253,10 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col gap-4"
+        >
           <div className="grid gap-4">
             <FormInput
               control={form.control}
@@ -341,7 +340,9 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                       {selectedAttendees.length > 0 ? (
                         <ul className="list-disc pl-5">
                           {selectedAttendees.map((attendee, index) => (
-                            <li key={index}>{attendee.name} ({attendee.designation})</li>
+                            <li key={index}>
+                              {attendee.name} ({attendee.designation})
+                            </li>
                           ))}
                         </ul>
                       ) : (
@@ -366,14 +367,11 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                 </Button>
                 <ConfirmationModal
                   trigger={
-                    <Button
-                      type="button"
-                      className=""
-                      disabled={isUpdating}
-                    >
+                    <Button type="button" className="" disabled={isUpdating}>
                       {isUpdating ? (
                         <>
-                          Saving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                          Saving{" "}
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                         </>
                       ) : (
                         "Save"
@@ -398,7 +396,8 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                       >
                         {isArchiving ? (
                           <>
-                            Archiving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                            Archiving{" "}
+                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                           </>
                         ) : (
                           <Archive size={16} />
@@ -443,11 +442,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                   />
                 )}
                 {!isArchived && (
-                  <Button
-                    type="button"
-                    className=""
-                    onClick={handleEditClick}
-                  >
+                  <Button type="button" className="" onClick={handleEditClick}>
                     Edit
                   </Button>
                 )}
