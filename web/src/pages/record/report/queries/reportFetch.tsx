@@ -45,6 +45,23 @@ export const useGetAcknowledgementReport = (page: number, pageSize: number, sear
   })
 }
 
+export const useGetARInfo = (arId: string) => {
+  return useQuery({
+    queryKey: ['ARInfo'],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`report/ar/${arId}/info/`);
+        return res.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    },
+    staleTime: 5000,
+    enabled: !!arId
+  })
+}
+
 export const useGetWeeklyAR = () => {
   return useQuery({
     queryKey: ['weeklyAR'],
@@ -58,6 +75,23 @@ export const useGetWeeklyAR = () => {
       }
     },
     staleTime: 5000
+  })
+}
+
+export const useGetWARInfo = (warId: string) => {
+  return useQuery({
+    queryKey: ['WARInfo'],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`report/war/${warId}/info/`);
+        return res.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    },
+    staleTime: 5000,
+    enabled: !!warId
   })
 }
 

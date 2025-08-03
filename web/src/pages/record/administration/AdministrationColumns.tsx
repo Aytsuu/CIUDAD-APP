@@ -15,7 +15,7 @@ import { AdministrationRecord } from "./administrationTypes";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
-import { Action } from "./administrationEnums";
+import { Action } from "./AdministrationEnums";
 import { useUpdateStaff } from "./queries/administrationUpdateQueries";
 import { useDeleteStaff } from "./queries/administrationDeleteQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";

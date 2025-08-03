@@ -107,7 +107,7 @@ export const Combobox = React.memo(
                   onChange && onChange(currentValue === value ? "" : currentValue)
                   setOpen(false)
                 }}
-                className="flex items-center"
+                className="flex items-center cursor-pointer"
               >
                 <Check
                   className={cn("mr-2 h-4 w-4 flex-shrink-0", value === option.id ? "opacity-100" : "opacity-0")}
@@ -135,7 +135,6 @@ export const Combobox = React.memo(
           {triggerButton}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTitle>
-              
             </DialogTitle>
             <DialogContent 
               className={cn("sm:max-w-[425px] p-0", contentClassName)}

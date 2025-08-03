@@ -43,12 +43,7 @@ expo-env.d.ts
 *.pem
 
 # local env files
-.env
-.env*.local
-.env.local
-.env.development
-.env.production
-
+**/.env
 
 # typescript
 *.tsbuildinfo
@@ -63,7 +58,7 @@ __pycache__/
 
 # Ignore all migration files except __init__.py
 **/migrations/*.py
-!**/migrations/__init__.py
+**/migrations/__init__.py
 **/migrations/*.pyc
 
 # Virtual environments
