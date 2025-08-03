@@ -158,6 +158,7 @@ export const getAnimalBitePatientSummary = async () => {
   try {
     console.log("🔍 Fetching unique animal bite patient summary from /animalbites/patient-summary/...")
     const res = await api2.get("animalbites/patient-details/")
+     console.log("API Response:", res.data) // Add this line
     const uniquePatients = res.data
 
     console.log(`✅ Found ${uniquePatients.length} unique animal bite patients.`)

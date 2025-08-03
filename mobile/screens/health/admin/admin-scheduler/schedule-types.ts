@@ -1,3 +1,5 @@
+// MultipleFiles/schedule-types.ts
+
 // Define the structure for individual service time slots
 export interface ServiceTimeSlots {
 	AM: boolean
@@ -21,6 +23,9 @@ export interface ServiceTimeSlots {
 	services: string[]
 	onSave: (schedule: WeeklySchedule) => void
 	onAddService: (serviceName: string) => void
+    // Added onAddDay to the form props as it's passed down
+    onAddDay: (newDay: Date) => void; // This was missing in the original ServiceScheduleFormProps
+    onClose?: () => void; // Added for the modal to close from within the form
  }
  
  // Define props for the display component
@@ -36,4 +41,3 @@ export interface ServiceTimeSlots {
 	dailySchedule: DailySchedule
 	services: string[]
  }
- 

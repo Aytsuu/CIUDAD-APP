@@ -1,10 +1,11 @@
 import React, { useMemo } from "react"
 import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
-import { ChevronLeft, User, FileText, AlertCircle, Package, Clock, Shield, Activity } from "lucide-react-native"
+import { ChevronLeft, User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
-import { Link, useLocalSearchParams } from "expo-router"
-import { usePatientRecordsByPatId } from "../restful-api/animalbites/db-request/get-query"
+import { Link, router, useLocalSearchParams } from "expo-router"
 import { format } from "date-fns"
+import { usePatientRecordsByPatId } from "./db-request/get-query"
+
 
 type PatientRecordDetail = {
   bite_id: number
@@ -147,11 +148,9 @@ export default function AnimalBiteIndividualScreen() {
       {/* Header */}
       <View className="bg-white shadow-sm">
         <View className="flex-row items-center p-4 pt-12">
-          <Link href="/admin/animalbites" asChild>
-            <TouchableOpacity className="p-2 mr-3 bg-gray-100 rounded-full">
-              <ChevronLeft size={24} color="#374151" />
-            </TouchableOpacity>
-          </Link>
+           <TouchableOpacity onPress={() => router.back()} className="p-2">
+                               <ArrowLeft size={24} color="#333" />
+                             </TouchableOpacity>
           <View className="flex-1">
             <Text className="text-xl font-bold text-gray-800">Animal Bites Record</Text>
           </View>

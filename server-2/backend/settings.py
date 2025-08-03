@@ -88,7 +88,7 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.patientrecords',
     # 'apps.gad'
-    'apps.account',
+    # 'apps.account',
     'apps.medicalConsultation',
     'apps.medicineservices',
     'apps.firstaid',

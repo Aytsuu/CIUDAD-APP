@@ -16,12 +16,9 @@ class FP_Record(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     occupation = models.CharField(max_length=30, null=True, blank=True)
     
-    # Using explicit app.ModelName for ForeignKeys across apps
-    hrd = models.ForeignKey(HealthRelatedDetails, on_delete=models.CASCADE, related_name='fp_records',null=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='fp_records')
     spouse = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='fp_records',null=True, blank=True)
     pat = models.ForeignKey(Patient, to_field='pat_id',on_delete=models.CASCADE, related_name='fp_records', null=True)
-    medhist = models.ForeignKey(MedicalHistory, on_delete=models.SET_NULL, related_name='fp_records', null=True, blank=True)
     
     class Meta:
         db_table = "famplan_record"

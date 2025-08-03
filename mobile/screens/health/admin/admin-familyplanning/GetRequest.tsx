@@ -257,6 +257,7 @@ export const getLatestCompleteFPRecordForPatient = async (patientId: string): Pr
 export const getFPCompleteRecord = async (fprecord_id: number): Promise<any> => {
   try {
     const response = await api2.get(`familyplanning/complete-fp-record/${fprecord_id}/`)
+    console.log("Error",response.data);
     return response.data
   } catch (err) {
     console.error(`❌ Error fetching complete FP record ${fprecord_id}:`, err)

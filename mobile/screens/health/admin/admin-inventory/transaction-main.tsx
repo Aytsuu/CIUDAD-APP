@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // For persistence
-import { Pill, Syringe, Package, HeartPulse } from "lucide-react-native"; // Using lucide-react-native for icons
+import { Pill, Syringe, Package, HeartPulse, ArrowLeft, ChevronLeft } from "lucide-react-native"; // Using lucide-react-native for icons
 import AntigenListScreen from "./transaction-screens/antigen-screen";
 import CommodityListScreen from "./transaction-screens/commodity-screen";
 import FirstAidListScreen from "./transaction-screens/firstaid-screen";
 import MedicineListScreen from "./transaction-screens/medicine-screen";
+import { router } from "expo-router";
 
 export default function InventoryTransactionMainScreen() {
   // Retrieve the selected view from local storage, default to "medicine"
@@ -59,8 +60,16 @@ export default function InventoryTransactionMainScreen() {
 
   return (
     <View className="flex-1">
+            
       <View className="p-4 pb-0">
-        <View className="mb-4 mt-14">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="absolute top-12 bg-white/20 p-2 rounded-full z-10"
+        >
+          <ChevronLeft size={24} color="black" />
+        </TouchableOpacity>
+
+        <View className="mb-4 mt-20">
           <Text className="font-semibold text-lg text-blue-800">
             {getTitle()}
           </Text>
@@ -70,6 +79,7 @@ export default function InventoryTransactionMainScreen() {
         </View>
         <View className="border-b border-gray-300 mb-4" />
 
+        
         {/* Tabs Navigation - Horizontally scrollable only */}
         <View className="rounded-md shadow-sm mb-4 bg-gray-100">
           <View className="p-1">

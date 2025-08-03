@@ -10,8 +10,10 @@ const defaultWeeklySchedule: WeeklySchedule = {
 export default () => {
 
   return <ScheduleDialog weeklySchedule={defaultWeeklySchedule} weekDays={[]} services={[]} onSave={function (schedule: WeeklySchedule): void {
-    throw new Error("Function not implemented.")
+    throw new Error("Function not implemented.");
   } } onAddService={function (serviceName: string): void {
-    throw new Error("Function not implemented.")
+    throw new Error("Function not implemented.");
+  } } onAddDay={function (newDay: Date): void {
+    throw new Error("Function not implemented.");
   } }/>
 }

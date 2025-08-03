@@ -107,11 +107,11 @@ const RecordComparisonScreen: React.FC = () => {
       <View className="flex-row bg-blue-600 rounded-lg mb-4 py-3 items-center">
         <View className="w-2/5"></View> {/* Spacer for label column */}
         <View className="flex-1 items-center px-2">
-          <Text className="text-lg font-bold text-white">Record {record1.fprecord_id}</Text>
+          <Text className="text-lg font-bold text-white">Record {record1.fprecord}</Text>
           <Text className="text-xs text-blue-100 mt-1">{new Date(record1.created_at).toLocaleDateString()}</Text>
         </View>
         <View className="flex-1 items-center px-2">
-          <Text className="text-lg font-bold text-white">Record {record2.fprecord_id}</Text>
+          <Text className="text-lg font-bold text-white">Record {record2.fprecord}</Text>
           <Text className="text-xs text-blue-100 mt-1">{new Date(record2.created_at).toLocaleDateString()}</Text>
         </View>
       </View>
@@ -120,7 +120,6 @@ const RecordComparisonScreen: React.FC = () => {
         {/* Patient Information */}
         <Section title="Patient Information">
           <FieldRow label="Client ID" value1={record1.client_id} value2={record2.client_id} />
-
           <FieldRow label="Occupation" value1={record1.occupation} value2={record2.occupation} />
           <FieldRow label="Educational Attainment" value1={record1.educationalAttainment} value2={record2.educationalAttainment} />
           <FieldRow label="Philhealth No." value1={record1.philhealthNo} value2={record2.philhealthNo} />

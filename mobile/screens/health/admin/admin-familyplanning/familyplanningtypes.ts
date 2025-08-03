@@ -1,7 +1,3 @@
-// types/familyplanningtypes.ts
-
-// This type definition is based on the structure implied by your serializers.py
-// and the data you expect in the frontend.
 
 export type PatientInfo = {
   pat_id: string;

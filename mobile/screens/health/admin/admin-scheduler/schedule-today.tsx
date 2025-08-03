@@ -1,90 +1,144 @@
 // TodayScheduleWidget.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { format } from 'date-fns';
-import { useGetServices, useGetUniqueServices } from './queries/schedulerFetchQueries'; 
-import { DailySchedule, ServiceTimeSlots } from './schedule-types';
+import React, { useEffect, useState, useMemo } from "react";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { format } from "date-fns";
+
+// Define interfaces for type safety
+interface Service {
+  service_name: string;
+}
+
+interface SchedulerGetData {
+  day: string;
+  service_name: string;
+  meridiem: "AM" | "PM";
+}
+
+interface ServiceTimeSlots {
+  AM: boolean;
+  PM: boolean;
+}
+
+interface DailySchedule {
+  [serviceName: string]: ServiceTimeSlots;
+}
 
 interface TodayScheduleWidgetProps {
   onViewWeeklySchedule: () => void;
 }
 
+interface UseQueryResult<T> {
+  data: T;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+// Mock hooks (replace with actual implementations)
+const useGetServices = (): UseQueryResult<Service[]> => ({
+  data: [], // Replace with actual data fetching
+  isLoading: false,
+  error: null,
+});
+
+const useGetScheduler = (): UseQueryResult<SchedulerGetData[]> => ({
+  data: [], // Replace with actual data fetching
+  isLoading: false,
+  error: null,
+});
+
 export default function TodayScheduleWidget({ onViewWeeklySchedule }: TodayScheduleWidgetProps) {
-  const { data: servicesFromDB = [], isLoading: servicesLoading, error: servicesError } = useGetUniqueServices();
-  const { data: schedulersFromDB = [], isLoading: schedulersLoading } = useGetServices();
+  const { data: servicesData = [], isLoading: servicesLoading, error: servicesError } = useGetServices();
+  const { data: schedulersData = [], isLoading: schedulersLoading, error: schedulersError } = useGetScheduler();
 
   const [dailySchedule, setDailySchedule] = useState<DailySchedule>({});
   const [services, setServices] = useState<string[]>([]);
 
   useEffect(() => {
-    if (servicesFromDB.length > 0) {
-      setServices(servicesFromDB);
+    if (servicesData.length > 0) {
+      const serviceNames = servicesData.map((s) => s.service_name);
+      setServices(serviceNames);
     }
-  }, [servicesFromDB]);
+  }, [servicesData]);
 
   useEffect(() => {
-    if (schedulersFromDB.length > 0 && servicesFromDB.length > 0) {
+    if (servicesData.length > 0) {
       const today = new Date();
-      const formattedToday = format(today, "yyyy-MM-dd");
+      const todayDayName = format(today, "EEEE");
       const currentDaily: DailySchedule = {};
 
-      servicesFromDB.forEach(serviceName => {
-        currentDaily[serviceName] = { AM: false, PM: false };
+      // Initialize all services for today
+      servicesData.forEach((service) => {
+        currentDaily[service.service_name] = { AM: false, PM: false };
       });
 
-      schedulersFromDB.forEach(scheduler => {
-        if (currentDaily[scheduler.service]) {
-          currentDaily[scheduler.service][scheduler.meridiem] = true;
+      // Populate schedule based on today's entries
+      schedulersData.forEach((scheduler) => {
+        if (scheduler.day === todayDayName && currentDaily[scheduler.service_name]) {
+          currentDaily[scheduler.service_name][scheduler.meridiem] = true;
         }
       });
+
       setDailySchedule(currentDaily);
     }
-  }, [schedulersFromDB, servicesFromDB]);
+  }, [schedulersData, servicesData]);
+
+  const scheduledServices = useMemo(() => {
+    return services.filter((serviceName) => {
+      const serviceTimeSlots: ServiceTimeSlots = dailySchedule[serviceName] || { AM: false, PM: false };
+      return serviceTimeSlots.AM || serviceTimeSlots.PM;
+    });
+  }, [services, dailySchedule]);
 
   if (servicesLoading || schedulersLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={styles.loadingText}>Loading today's schedule...</Text>
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#3B82F6" />
+        <Text className="mt-2 text-base text-gray-700">Loading today's schedule...</Text>
       </View>
     );
   }
 
-  if (servicesError) {
+  if (servicesError || schedulersError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Error loading today's schedule.</Text>
+      <View className="flex-1 justify-center items-center p-4 bg-red-50 rounded-lg">
+        <Text className="text-base text-red-600 text-center">Unable to load today's schedule.</Text>
+        <TouchableOpacity
+          className="mt-4 bg-blue-600 py-2 px-4 rounded-lg"
+          onPress={() => {
+            // Trigger refetch (assuming hooks support refetch)
+            // Replace with actual refetch logic if available
+            alert("Retry functionality not implemented.");
+          }}
+          accessibilityLabel="Retry loading schedule"
+        >
+          <Text className="text-white text-base font-bold">Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
-
-  const scheduledServices = services.filter((service) => {
-    const serviceTimeSlots: ServiceTimeSlots = dailySchedule[service] || { AM: false, PM: false };
-    return serviceTimeSlots.AM || serviceTimeSlots.PM;
-  });
 
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Today's Schedule</Text>
-        <Text style={styles.cardSubtitle}>{format(new Date(), "EEEE, MMM d")}</Text>
+    <View className="bg-white rounded-lg mx-0.5 my-0.5 shadow-md shadow-black/20 elevation-3">
+      <View className="p-4 border-b border-gray-200">
+        <Text className="text-xl font-bold text-gray-800">Today's Schedule</Text>
+        <Text className="text-sm text-gray-600 mt-1">{format(new Date(), "EEEE, MMM d")}</Text>
       </View>
-      <View style={styles.cardContent}>
+      <View className="p-4">
         {scheduledServices.length > 0 ? (
-          <View style={styles.serviceList}>
-            {scheduledServices.map((service) => {
-              const serviceTimeSlots: ServiceTimeSlots = dailySchedule[service] || { AM: false, PM: false };
+          <View className="mb-2">
+            {scheduledServices.map((serviceName) => {
+              const serviceTimeSlots: ServiceTimeSlots = dailySchedule[serviceName] || { AM: false, PM: false };
               const activeSlots: string[] = [];
               if (serviceTimeSlots.AM) activeSlots.push("AM");
               if (serviceTimeSlots.PM) activeSlots.push("PM");
 
               return (
-                <View key={service} style={styles.serviceItem}>
-                  <Text style={styles.serviceName}>{service}</Text>
-                  <View style={styles.badgeContainer}>
+                <View key={serviceName} className="flex-col mb-2">
+                  <Text className="text-base font-medium text-gray-800">{serviceName}</Text>
+                  <View className="flex-row mt-1">
                     {activeSlots.map((slot) => (
-                      <View key={slot} style={styles.badge}>
-                        <Text style={styles.badgeText}>{slot}</Text>
+                      <View key={slot} className="bg-blue-100 rounded-full px-2 py-1 mr-1">
+                        <Text className="text-xs font-bold text-blue-600">{slot}</Text>
                       </View>
                     ))}
                   </View>
@@ -93,109 +147,16 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: TodaySched
             })}
           </View>
         ) : (
-          <Text style={styles.noServicesText}>No services scheduled for today.</Text>
+          <Text className="text-sm text-gray-600 text-center mb-2">No services scheduled for today.</Text>
         )}
-        <TouchableOpacity style={styles.button} onPress={onViewWeeklySchedule}>
-          <Text style={styles.buttonText}>View Weekly Schedule</Text>
+        <TouchableOpacity
+          className="bg-blue-600 py-3 px-5 rounded-lg items-center mt-2"
+          onPress={onViewWeeklySchedule}
+          accessibilityLabel="View weekly schedule"
+        >
+          <Text className="text-white text-base font-bold">View Weekly Schedule</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#333',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: 'red',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    margin: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  cardContent: {
-    padding: 16,
-  },
-  serviceList: {
-    marginBottom: 10,
-  },
-  serviceItem: {
-    flexDirection: 'column',
-    marginBottom: 8,
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-  },
-  badgeContainer: {
-    flexDirection: 'row',
-    marginTop: 4,
-  },
-  badge: {
-    backgroundColor: '#e0e7ff', // Equivalent to bg-blue-100
-    borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginRight: 4,
-  },
-  badgeText: {
-    fontSize: 12,
-    color: '#3b82f6', // Equivalent to text-blue-800
-    fontWeight: 'bold',
-  },
-  noServicesText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  button: {
-    backgroundColor: '#3b82f6', // A shade of blue for the button
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});

@@ -1,4 +1,3 @@
-// details.tsx
 import { useState, useEffect, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert, ScrollView } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
@@ -265,7 +264,7 @@ export default function MedicineDetailsScreen() {
 
         <View className="px-4 pt-6 pb-6">
           {/* Medicine Info Card */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6">
+          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
             {/* Medicine Header */}
             <View className="flex-row items-start justify-between mb-4">
               <View className="flex-1">
@@ -279,10 +278,12 @@ export default function MedicineDetailsScreen() {
                   </View>
                 </View>
 
-                <View className="flex-row items-center justify-between mt-3">
+                {/* <View className="flex-row items-center justify-between mt-3">
                   <Text className="text-sm font-medium">{medicine.category}</Text>
                   <Text className="text-sm font-medium text-gray-700">Type: {medicine.medicine_type}</Text>
-                </View>
+                </View> */}
+
+                
                 {/* <View className="flex-row items-center mt-2">
                     <View className={`w-2 h-2 rounded-full mr-2 ${medicine.minv_qty_avail > 0 ? "bg-green-500" : "bg-red-500"}`} />
                     <Text className={`text-sm font-medium ${medicine.minv_qty_avail > 0 ? "text-green-700" : "text-red-700"}`}>
@@ -315,7 +316,7 @@ export default function MedicineDetailsScreen() {
           </View>
 
           {/* Request Form Card */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-00">
+          <View className="bg-white rounded-2xl p-6 shadow-md">
             {/* Quantity Selector */}
             {/* <View className="mb-6">
                 <Text className="text-gray-700 font-semibold mb-3">Quantity</Text>
@@ -351,7 +352,7 @@ export default function MedicineDetailsScreen() {
             <View className="mb-6">
               <Text className="text-gray-700 font-semibold mb-3">Reason for Request</Text>
               <TextInput
-                className="border border-gray-200 rounded-xl p-4 min-h-[120px] text-gray-700 bg-gray-50"
+                className="border border-gray-100 rounded-xl p-4 min-h-[120px] text-gray-700 bg-gray-50"
                 placeholder="Please describe your symptoms or reason for requesting this medicine..."
                 multiline
                 textAlignVertical="top"

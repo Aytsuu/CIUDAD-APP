@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Card } from "@/components/ui/card";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
+
 
 
 
@@ -21,7 +22,7 @@ const Homepage = () => {
     { name: 'Animal Bites', route: '/admin/animalbites/overall', icon: Dog },
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
     { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },
-    { name: 'Medicine Requests', route: '/admin-medicinerequest/admin-medicinerequest', icon: Pill },
+    { name: 'Profiling', route: '/admin-medicinerequest/admin-medicinerequest', icon: UserRoundPlus },
     { name: 'Patients Records', route: '/admin/patientsrecord/patientsrecord', icon: Users },
     { name: 'Schedules', route: 'appointments/schedules', icon: Calendar },
     { name: 'Inventory', route: 'admin/inventory/medicine', icon: Archive },

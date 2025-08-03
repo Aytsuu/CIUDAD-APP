@@ -4,7 +4,7 @@ import { Search, ChevronLeft, AlertCircle, Package, User, Calendar, FileText, Us
 import { Text } from "@/components/ui/text"
 import { Link, router } from "expo-router"
 import { format } from "date-fns"
-import { useAnimalBitePatientSummary } from "../restful-api/animalbites/db-request/get-query"
+import { useAnimalBitePatientSummary } from "./db-request/get-query"
 
 type PatientSummary = {
   patient_id: string
@@ -64,11 +64,16 @@ export default function AnimalBiteOverallScreen() {
   const totalPages = Math.ceil(filteredPatients.length / patientsPerPage)
 
   const stats = useMemo(() => {
+    const totalRecords = patients.reduce((sum, p) => {
+    const count = Number(p.record_count) || 0 // Convert to number, default to 0 if invalid
+    return sum + count
+  }, 0)
+
     return {
       totalPatients: patients.length,
       residentPatients: patients.filter((p) => p.patient_type === "Resident").length,
       transientPatients: patients.filter((p) => p.patient_type === "Transient").length,
-      totalRecords: patients.reduce((sum, p) => sum + p.record_count, 0),
+      totalRecords: totalRecords,
       showingPatients: `${Math.min(page * patientsPerPage, filteredPatients.length)} of ${filteredPatients.length}`
     }
   }, [patients, page, filteredPatients])
@@ -211,14 +216,14 @@ export default function AnimalBiteOverallScreen() {
                 </View>
                 <Text className="text-3xl font-bold text-gray-800">{stats.totalPatients}</Text>
               </View>
-
+{/* 
               <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 min-w-[150px]">
-                <View className="flex-row items-center mb-2">
-                  <FileText size={20} color="#10B981" />
-                  <Text className="ml-2 text-gray-600 text-sm font-medium">Total Records</Text>
-                </View>
-                <Text className="text-3xl font-bold text-gray-800">{stats.totalRecords}</Text>
+              <View className="flex-row items-center mb-2">
+                <FileText size={20} color="#10B981" />
+                <Text className="ml-2 text-gray-600 text-sm font-medium">Total Records</Text>
               </View>
+              <Text className="text-3xl font-bold text-gray-800">{stats.totalRecords}</Text>
+            </View> */}
 
               <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 min-w-[150px]">
                 <View className="flex-row items-center mb-2">
@@ -306,11 +311,11 @@ export default function AnimalBiteOverallScreen() {
                         </View>
 
                         {/* Record Count Badge */}
-                        <View className="bg-blue-100 px-3 py-2 rounded-xl">
+                        {/* <View className="bg-blue-100 px-3 py-2 rounded-xl">
                           <Text className="text-blue-700 font-bold text-sm">
                             {patient.record_count} record{patient.record_count !== 1 ? "s" : ""}
                           </Text>
-                        </View>
+                        </View> */}
                       </View>
 
                       {/* Patient Details */}
