@@ -46,7 +46,6 @@ function ViewBudgetPlan(){
     const planId = location.state?.planId;
     const [activeTab, setActiveTab] = useState("current");
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
 
     // calculating net available resources
