@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'apps.gad',
     'apps.clerk',
     'apps.secretary',
+    'apps.act_log',
     'backend.firebase.notifications',
 ]
 
