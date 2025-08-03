@@ -55,6 +55,7 @@ export interface ChildHealthRecord {
       ageTime?: "yrs"
     }
     address: {
+      full_address?: string
       add_street?: string
       add_barangay?: string
       add_city?: string

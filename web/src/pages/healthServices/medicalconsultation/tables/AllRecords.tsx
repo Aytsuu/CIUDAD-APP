@@ -1,60 +1,38 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, FileInput } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { Link } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { calculateAge } from "@/helpers/ageCalculator";
-import { getMedicalRecord } from "../restful-api/get";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 
-export interface MedicalRecord {
-  pat_id: number;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  pat_type: string;
-  address: string;
-  medicalrec_count: number;
-  dob: string;
-}
+
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { useMedicalRecord } from "../queries/fetchQueries";
+import { MedicalRecord } from "../types";
+import { getAllMedicalRecordsColumns,exportColumns } from "./columns/all_col";
+import { useLoading } from "@/context/LoadingContext";
+import { ExportButton } from "@/components/ui/export";
 
 export default function AllMedicalConsRecord() {
-  const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [value, setValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
-  const queryClient = useQueryClient();
+  const { showLoading, hideLoading } = useLoading();
+  
 
-  const { data: MedicalRecord, isLoading } = useQuery<[MedicalRecord]>({
-    queryKey: ["MedicalRecord"],
-    queryFn: getMedicalRecord,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: MedicalRecord, isLoading } = useMedicalRecord();
 
+    useEffect(() => {
+      if (isLoading) {
+        showLoading();
+      } else {
+        hideLoading();
+      }
+    }, [isLoading]);
   const formatMedicalData = React.useCallback((): MedicalRecord[] => {
     if (!MedicalRecord) return [];
 
@@ -115,130 +93,7 @@ export default function AllMedicalConsRecord() {
     currentPage * pageSize
   );
 
-  const columns: ColumnDef<MedicalRecord>[] = [
-    {
-      accessorKey: "patient",
-      header: ({ column }: { column: any }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Patient <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName =
-          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age}
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">
-            {row.original.address
-              ? row.original.address
-              : "No address provided"}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">
-            {row.original.sitio || "N/A"}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "medicalrec_count",
-      header: "No of Records",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">
-            {row.original.medicalrec_count}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <TooltipLayout
-            content="View"
-            trigger={
-              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                <Link
-                  to="/invMedicalRecord"
-                  state={{
-                    params: {
-                      patientData: {
-                        pat_id: row.original.pat_id,
-                        pat_type: row.original.pat_type,
-                        age: row.original.age,
-                        addressFull:
-                          row.original.address || "No address provided",
-                        address: {
-                          add_street: row.original.street,
-                          add_barangay: row.original.barangay,
-                          add_city: row.original.city,
-                          add_province: row.original.province,
-                          add_sitio: row.original.sitio,
-                        },
-                        households: [{ hh_id: row.original.householdno }],
-                        personal_info: {
-                          per_fname: row.original.fname,
-                          per_mname: row.original.mname,
-                          per_lname: row.original.lname,
-                          per_dob: row.original.dob,
-                          per_sex: row.original.sex,
-                        },
-                      },
-                    },
-                  }}
-                >
-                  View{" "}
-                </Link>
-              </div>
-            }
-          />
-        </div>
-      ),
-    },
-  ];
+  const columns = getAllMedicalRecordsColumns();
 
   return (
     <>
@@ -291,7 +146,7 @@ export default function AllMedicalConsRecord() {
                   },
                 }}
               >
-                New Request
+                New Record
               </Link>{" "}
             </Button>
           </div>
@@ -313,26 +168,19 @@ export default function AllMedicalConsRecord() {
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+             <ExportButton
+                        data={paginatedData}
+                        filename="overall-child-health-records"
+                        columns={exportColumns}
+                      />
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
+              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
+              </div>
             ) : (
               <DataTable columns={columns} data={paginatedData} />
             )}

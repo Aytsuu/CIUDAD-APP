@@ -629,8 +629,6 @@ export default function ChildHealthRecordForm() {
               <ChildHRPage3
                 onPrevious={() => setCurrentPage(2)}
                 onNext={() => setCurrentPage(4)}
-                updateFormData={updateFormData}
-                formData={formData}
                 immunizationTracking={immunizationTracking}
               />
             )}

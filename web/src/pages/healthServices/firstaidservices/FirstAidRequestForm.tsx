@@ -168,17 +168,6 @@ export default function FirstAidRequestForm() {
               
                 <div className="px-4">
 
-                {!isFirstAidLoading &&
-                  ((mode === "fromindivrecord" && !selectedPatientData) ||
-                    (mode === "fromallrecordtable" && !selectedPatientId) ||
-                    selectedFirstAids.length === 0) && (
-                    <FirstAidRequestError
-                      mode={mode}
-                      selectedPatientData={selectedPatientData}
-                      selectedPatientId={selectedPatientId}
-                      selectedFirstAidsLength={selectedFirstAids.length}
-                    />
-                  )}
                   {/* Patient Selection Section - only shown in fromallrecordtable mode */}
                   {mode === "fromallrecordtable" && (
                     <PatientSearch
@@ -231,6 +220,21 @@ export default function FirstAidRequestForm() {
                     />
                   </div>
                 )}
+
+                <div className="px-3 py-6">
+                  
+                {!isFirstAidLoading &&
+                  ((mode === "fromindivrecord" && !selectedPatientData) ||
+                    (mode === "fromallrecordtable" && !selectedPatientId) ||
+                    selectedFirstAids.length === 0) && (
+                    <FirstAidRequestError
+                      mode={mode}
+                      selectedPatientData={selectedPatientData}
+                      selectedPatientId={selectedPatientId}
+                      selectedFirstAidsLength={selectedFirstAids.length}
+                    />
+                  )}
+                </div>
               </div>
             )}
 
