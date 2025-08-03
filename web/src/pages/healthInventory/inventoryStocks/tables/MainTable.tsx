@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MainInventoryStocks from "./StocksMain";
+import ArchiveMainInventoryStocks from "@/pages/healthServices/Archive/Inventory/tables/MainArchiveInventoryStocks";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import TransactionMainInventoryList from "../../transaction/tables/TransactionMainInventoryList";
 
-export default function MainInventoryStocks() {
+export default function MainInventory() {
   // Initialize state with value from localStorage or default to "medicine"
   const [selectedView, setSelectedView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -16,43 +20,45 @@ export default function MainInventoryStocks() {
   }, [selectedView]);
 
   return (
-    <>
-      {/* Title Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div className="mb-4">
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
-            Inventory
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray mt-1">
-            Manage and view inventory information
-          </p>
-        </div>
-
-        {/* Stocks and Archive Tabs */}
+    <MainLayoutComponent
+      title="Inventory"
+      description="Manage your inventory stocks efficiently."
+    >
+      <div className="bg-white p-4">
         <Tabs
-          defaultValue="stocks"
+          defaultValue={selectedView}
           className="mb-4"
           onValueChange={(value) =>
             setSelectedView(value as "stocks" | "archive")
           }
         >
-          <TabsList className="grid grid-cols-2 w-full sm:w-[200px]">
+          <TabsList className="grid grid-cols-3  w-full sm:w-[300px]">
             <TabsTrigger
               value="stocks"
-              className="py-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+              className=" text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               Stocks
             </TabsTrigger>
             <TabsTrigger
               value="archive"
-              className="py-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               Archive
             </TabsTrigger>
+            <TabsTrigger
+              value="transaction"
+              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+            >
+              Transaction
+            </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* Render the appropriate component based on selectedView */}
+        {selectedView === "stocks" && <MainInventoryStocks />}
+        {selectedView === "archive" && <ArchiveMainInventoryStocks />}
+        {selectedView === "transaction" && <TransactionMainInventoryList />}
       </div>
-      <hr className="border-gray mb-4 sm:mb-6 md:mb-8" />
-    </>
+    </MainLayoutComponent>
   );
 }

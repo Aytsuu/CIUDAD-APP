@@ -26,37 +26,9 @@ export default function MainInventoryStocks() {
     setSelectedView(value);
   };
 
-  const getTitle = () => {
-    switch (selectedView) {
-      case "medicine":
-        return "Medicine Stocks";
-      case "vaccine":
-        return "Vaccine Stocks";
-      case "commodity":
-        return "Commodity Stocks";
-      case "firstaid":
-        return "First Aid Stocks";
-      default:
-        return "Medicine Stocks";
-    }
-  };
 
   return (
-    <div className="w-full px-3 py-4 sm:px-6 md:px-8 bg-background">
-      {/* Title Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div className="mb-4">
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
-            {getTitle()}
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray mt-1">
-            Manage and view inventory information
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray mb-4 sm:mb-6 md:mb-8" />
-
-      {/* Tabs Navigation */}
+      
       <Card className="border shadow-sm">
         <CardHeader className="p-0">
           <Tabs
@@ -115,6 +87,5 @@ export default function MainInventoryStocks() {
           </Tabs>
         </CardHeader>
       </Card>
-    </div>
   );
 }
