@@ -15,12 +15,14 @@ export const useUpdateGarbageRequestStatus = (onSuccess?: () => void) => {
         queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] }),
         queryClient.invalidateQueries({ queryKey: ['garbageCompletedRequest'] }),
         queryClient.invalidateQueries({ queryKey: ['garbagePickupTasks'] }),
+        queryClient.invalidateQueries({ queryKey: ['garbageCompletedRequest'] }),
+
       ]);
 
       toast.success('Request marked as completed')
       
       onSuccess?.();
-      router.back()
+    //   router.back()
     },
     onError: (err) => {
       console.error("Error updating request status:", err);

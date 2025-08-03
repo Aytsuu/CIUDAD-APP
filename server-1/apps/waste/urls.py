@@ -67,5 +67,6 @@ urlpatterns = [
 
     # Driver
     path('driver-garbage-pickup-tasks/', GarbagePickupRequestsByDriverView.as_view(), name='garbage-pickup-tasks'),
+    path('driver-garbage-completed-tasks/', GarbagePickupCompletedByDriverView.as_view(), name='garbage-completed-tasks'),
 
 ]  

@@ -1,20 +1,16 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, Modal, Image, ScrollView, FlatList } from "react-native";
-import { CheckCircle, Info, X } from "lucide-react-native";
+import { Info, X } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useGetGarbagePickupTasks, type GarbagePickupTask } from "./queries/garbagePickupDriverFetchQueries";
+import { useGetGarbageCompletedTasks, type GarbageCompletedTasks } from "./queries/garbagePickupDriverFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { formatTime } from "@/helpers/timeFormatter";
-import { useUpdateGarbageRequestStatus } from "./queries/garbagePickupDriverUpdateQueries";
-import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
-export default function GarbagePickupTasks() {
+export default function GarbageCompletedTasks() {
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
-  const { mutate: confirmCompletion } = useUpdateGarbageRequestStatus();
-  const { data: pickupTasks = [], isLoading } = useGetGarbagePickupTasks();
+  const { data: completedTasks = [], isLoading } = useGetGarbageCompletedTasks();
 
   const handleViewImage = (imageUrl: string) => {
     setCurrentImage(imageUrl);
@@ -22,11 +18,7 @@ export default function GarbagePickupTasks() {
     setCurrentZoomScale(1);
   };
 
-  const handleCompleteTask = (garb_id: string) => {
-    confirmCompletion(garb_id);
-  };
-
-  const renderTaskCard = (task: GarbagePickupTask) => (
+  const renderTaskCard = (task: GarbageCompletedTasks) => (
     <Card className="border border-gray-200 rounded-lg bg-white mb-4">
       <CardHeader className="border-b border-gray-200 p-4">
         <View className="flex-row justify-between items-center">
@@ -38,7 +30,7 @@ export default function GarbagePickupTasks() {
           </View>
           <View className="flex-row gap-1 items-center">
             <Text className="text-xs text-gray-500">
-              {formatTimestamp(task.dec_date)}
+              {formatTimestamp(task.conf_staff_conf_date || task.conf_resident_conf_date || '')}
             </Text>
           </View>
         </View>
@@ -51,7 +43,15 @@ export default function GarbagePickupTasks() {
             <Text className="text-sm font-medium">{task.garb_waste_type}</Text>
           </View>
 
-          {/* Scheduled Pickup Date */}
+          {/* Completed Date */}
+          {task.conf_staff_conf_date && (
+            <View className="flex-row justify-between">
+              <Text className="text-sm text-gray-600">Completed Date:</Text>
+              <Text className="text-sm">{new Date(task.conf_staff_conf_date).toLocaleDateString()}</Text>
+            </View>
+          )}
+
+          {/* Pickup Date */}
           {task.assignment_info?.pick_date && (
             <View className="flex-row justify-between">
               <Text className="text-sm text-gray-600">Pickup Date:</Text>
@@ -59,7 +59,7 @@ export default function GarbagePickupTasks() {
             </View>
           )}
 
-          {/* Scheduled Pickup Time */}
+          {/* Pickup Time */}
           {task.assignment_info?.pick_time && (
             <View className="flex-row justify-between">
               <Text className="text-sm text-gray-600">Pickup Time:</Text>
@@ -95,21 +95,6 @@ export default function GarbagePickupTasks() {
               </TouchableOpacity>
             </View>
           )}
-
-          {/* Complete Task Button */}
-          <View className="flex-row justify-end mt-4">
-            <ConfirmationModal
-              trigger={
-                <Button className="bg-[#17AD00] p-2 w-12"> 
-                  <CheckCircle size={16} color="white" />
-                </Button>
-              }
-              actionLabel="Confirm"
-              title="Confirm Completion"
-              description="Would you like to confirm the completion of the task?"
-              onPress={() => handleCompleteTask(task.garb_id)}
-            />
-          </View>
         </View>
       </CardContent>
     </Card>
@@ -120,20 +105,20 @@ export default function GarbagePickupTasks() {
       {/* Task List */}
       {isLoading ? (
         <View className="justify-center items-center py-8">
-          <Text className="text-center text-gray-500">Loading pickup tasks...</Text>
+          <Text className="text-center text-gray-500">Loading completed tasks...</Text>
         </View>
-      ) : pickupTasks.length === 0 ? (
+      ) : completedTasks.length === 0 ? (
         <View className="justify-center items-center py-8">
           <View className="bg-blue-50 p-6 rounded-lg items-center">
             <Info size={24} color="#3b82f6" className="mb-2" />
             <Text className="text-center text-gray-600">
-              No pickup tasks assigned
+              No completed tasks found
             </Text>
           </View>
         </View>
       ) : (
         <FlatList
-          data={pickupTasks}
+          data={completedTasks}
           renderItem={({ item }) => renderTaskCard(item)}
           keyExtractor={(item) => item.garb_id}
           scrollEnabled={true}

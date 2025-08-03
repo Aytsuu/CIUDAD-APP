@@ -13,8 +13,8 @@ import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staf
 import WasteCollectionMain from "@/screens/waste/waste-collection/waste-collection-main";
 import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
 import Request from "../(request)";
-import GarbagePickupTasks from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks";
+import GarbagePickupTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
 
 export default () => {
-    return <GarbagePickupTasks/>
+    return <GarbagePickupTasksMain/>
 }
