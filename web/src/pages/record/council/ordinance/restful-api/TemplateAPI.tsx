@@ -17,7 +17,7 @@ export interface OrdinanceTemplate {
 // API Functions
 export const getAllTemplates = async () => {
     try {
-        const response = await api.get('/secretary/templates/');
+        const response = await api.get('/council/templates/');
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -29,7 +29,7 @@ export const getAllTemplates = async () => {
 
 export const getTemplateById = async (id: number) => {
     try {
-        const response = await api.get(`/secretary/templates/${id}/`);
+        const response = await api.get(`/council/templates/${id}/`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -41,7 +41,7 @@ export const getTemplateById = async (id: number) => {
 
 export const createTemplate = async (formData: FormData) => {
     try {
-        const response = await api.post('/secretary/templates/', formData, {
+        const response = await api.post('/council/templates/', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -57,7 +57,7 @@ export const createTemplate = async (formData: FormData) => {
 
 export const updateTemplate = async (id: number, formData: FormData) => {
     try {
-        const response = await api.put(`/secretary/templates/${id}/`, formData, {
+        const response = await api.put(`/council/templates/${id}/`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -73,7 +73,7 @@ export const updateTemplate = async (id: number, formData: FormData) => {
 
 export const deleteTemplate = async (id: number) => {
     try {
-        await api.delete(`/secretary/templates/${id}/`);
+        await api.delete(`/council/templates/${id}/`);
     } catch (error) {
         if (error instanceof AxiosError) {
             console.error(`Error deleting template ${id}:`, error.response?.data);
@@ -84,7 +84,7 @@ export const deleteTemplate = async (id: number) => {
 
 export const archiveTemplate = async (id: number) => {
     try {
-        const response = await api.post(`/secretary/templates/${id}/archive/`);
+        const response = await api.post(`/council/templates/${id}/archive/`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
