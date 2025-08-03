@@ -12,6 +12,4 @@ import ClearanceRequestList from "@/screens/treasurer/clearance-request";
 
 export default () => {
     return <ClearanceRequestList/>
-    // return <Request/>
-    // return <CertificatesMain/>
 }

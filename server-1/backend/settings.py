@@ -409,31 +409,31 @@ SCHEDULER_AUTOSTART = True
 #     'simple_history.middleware.HistoryRequestMiddleware',
 # ]
 
-AUTHENTICATION_BACKENDS = [
-    'apps.authentication.backends.SupabaseAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]
+# AUTHENTICATION_BACKENDS = [
+#     'apps.authentication.backends.SupabaseAuthBackend',
+#     'django.contrib.auth.backends.ModelBackend',
+# ]
 
-ROOT_URLCONF = 'backend.urls'
+# ROOT_URLCONF = 'backend.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
+# TEMPLATES = [
+#     {
+#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+#         'DIRS': [],
+#         'APP_DIRS': True,
+#         'OPTIONS': {
+#             'context_processors': [
+#                 'django.template.context_processors.debug',
+#                 'django.template.context_processors.request',
+#                 'django.contrib.auth.context_processors.auth',
+#                 'django.contrib.messages.context_processors.messages',
+#             ],
+#         },
+#     },
+# ]
 
-WSGI_APPLICATION = 'backend.wsgi.application'
-ASGI_APPLICATION = 'backend.asgi.application'
+# WSGI_APPLICATION = 'backend.wsgi.application'
+# ASGI_APPLICATION = 'backend.asgi.application'
 
 # # ========================
 # # EMAIL CONFIGURATION
@@ -510,90 +510,90 @@ ASGI_APPLICATION = 'backend.asgi.application'
 # ========================
 # CORS SETTINGS
 # ========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://ciudad-app-server-1.onrender.com",
-    "http://127.0.0.1:5173",  # Add this for Vite sometimes
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://localhost:5173",
+#     "https://ciudad-app-server-1.onrender.com",
+#     "http://127.0.0.1:5173",  # Add this for Vite sometimes
+# ]
 
-ALLOWED_HOSTS = [
-    'ciudad-app-server-1.onrender.com',
-    'localhost',
-    '127.0.0.1'
-]
+# ALLOWED_HOSTS = [
+#     'ciudad-app-server-1.onrender.com',
+#     'localhost',
+#     '127.0.0.1'
+# ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'cache-control',
-    'pragma',
-]
+# CORS_ALLOW_HEADERS = [
+#     'accept',
+#     'accept-encoding',
+#     'authorization',
+#     'content-type',
+#     'dnt',
+#     'origin',
+#     'user-agent',
+#     'x-csrftoken',
+#     'x-requested-with',
+#     'cache-control',
+#     'pragma',
+# ]
 
-CORS_EXPOSE_HEADERS = ['Authorization']
+# CORS_EXPOSE_HEADERS = ['Authorization']
 
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+# CORS_ALLOW_METHODS = [
+#     'DELETE',
+#     'GET',
+#     'OPTIONS',
+#     'PATCH',
+#     'POST',
+#     'PUT',
+# ]
 
-CORS_PREFLIGHT_MAX_AGE = 86400
+# CORS_PREFLIGHT_MAX_AGE = 86400
 
-# ========================
-# SECURITY HEADERS
-# ========================
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_BROWSER_XSS_FILTER = True
-    X_FRAME_OPTIONS = 'DENY'
+# # ========================
+# # SECURITY HEADERS
+# # ========================
+# if not DEBUG:
+#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#     SECURE_SSL_REDIRECT = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+#     SECURE_HSTS_SECONDS = 31536000  # 1 year
+#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+#     SECURE_HSTS_PRELOAD = True
+#     SECURE_CONTENT_TYPE_NOSNIFF = True
+#     SECURE_BROWSER_XSS_FILTER = True
+#     X_FRAME_OPTIONS = 'DENY'
 
-# ========================
-# LOGGING
-# ========================
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
-}
-
-
-# ========================
-# SCHEDULER
-# ========================
-SCHEDULER_AUTOSTART = True
-# SCHEDULER_AUTOSTART = not DEBUG # for production
+# # ========================
+# # LOGGING
+# # ========================
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'INFO',
+#     },
+# }
 
 
-# ========================
-# PAYMONGO
-# ========================
-PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
+# # ========================
+# # SCHEDULER
+# # ========================
+# SCHEDULER_AUTOSTART = True
+# # SCHEDULER_AUTOSTART = not DEBUG # for production
+
+
+# # ========================
+# # PAYMONGO
+# # ========================
+# PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
