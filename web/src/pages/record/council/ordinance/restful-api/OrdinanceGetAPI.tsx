@@ -25,7 +25,7 @@ export interface SupplementaryDoc {
 // API Functions
 export const getAllOrdinances = async () => {
     try {
-        const response = await api.get('/secretary/ordinance/');
+        const response = await api.get('/council/ordinance/');
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -37,7 +37,7 @@ export const getAllOrdinances = async () => {
 
 export const getOrdinanceById = async (id: string) => {
     try {
-        const response = await api.get(`/secretary/ordinance/${id}/`);
+        const response = await api.get(`/council/ordinance/${id}/`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -49,7 +49,7 @@ export const getOrdinanceById = async (id: string) => {
 
 export const createOrdinance = async (data: Partial<Ordinance>) => {
     try {
-        const response = await api.post('/secretary/ordinance/', data);
+        const response = await api.post('/council/ordinance/', data);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -61,7 +61,7 @@ export const createOrdinance = async (data: Partial<Ordinance>) => {
 
 export const updateOrdinance = async (id: string, data: Partial<Ordinance>) => {
     try {
-        const response = await api.put(`/secretary/ordinance/${id}/`, data);
+        const response = await api.put(`/council/ordinance/${id}/`, data);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -73,7 +73,7 @@ export const updateOrdinance = async (id: string, data: Partial<Ordinance>) => {
 
 export const deleteOrdinance = async (id: string) => {
     try {
-        await api.delete(`/secretary/ordinance/${id}/`);
+        await api.delete(`/council/ordinance/${id}/`);
     } catch (error) {
         if (error instanceof AxiosError) {
             console.error(`Error deleting ordinance ${id}:`, error.response?.data);
@@ -84,7 +84,7 @@ export const deleteOrdinance = async (id: string) => {
 
 export const archiveOrdinance = async (id: string) => {
     try {
-        const response = await api.post(`/secretary/ordinance/${id}/archive/`);
+        const response = await api.post(`/council/ordinance/${id}/archive/`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -97,7 +97,7 @@ export const archiveOrdinance = async (id: string) => {
 // Supplementary Document Functions
 export const getAllSupplementaryDocs = async () => {
     try {
-        const response = await api.get('/secretary/ordinance-docs/');
+        const response = await api.get('/council/ordinance-docs/');
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -109,7 +109,7 @@ export const getAllSupplementaryDocs = async () => {
 
 export const createSupplementaryDoc = async (data: Partial<SupplementaryDoc>) => {
     try {
-        const response = await api.post('/secretary/ordinance-docs/', data);
+        const response = await api.post('/council/ordinance-docs/', data);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -121,7 +121,7 @@ export const createSupplementaryDoc = async (data: Partial<SupplementaryDoc>) =>
 
 export const archiveSupplementaryDoc = async (id: string) => {
     try {
-        const response = await api.post(`/secretary/ordinance-docs/${id}/archive/`);
+        const response = await api.post(`/council/ordinance-docs/${id}/archive/`);
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError) {
