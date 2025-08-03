@@ -6,8 +6,8 @@ from django.utils.decorators import method_decorator
 from django.conf import settings
 from supabase import create_client
 from rest_framework.views import APIView
-from facenet_pytorch import MTCNN, InceptionResnetV1
-import torch
+# from facenet_pytorch import MTCNN, InceptionResnetV1
+# import torch
 import base64
 import io
 from PIL import Image
@@ -21,9 +21,9 @@ class FaceDetectionView(APIView):
             settings.SUPABASE_URL,
             settings.SUPABASE_ANON_KEY
         )
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        self.mtcnn = MTCNN(keep_all=True, device=self.device)
-        self.resnet = InceptionResnetV1(pretrained='vggface2').eval().to(self.device)
+        # self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        # self.mtcnn = MTCNN(keep_all=True, device=self.device)
+        # self.resnet = InceptionResnetV1(pretrained='vggface2').eval().to(self.device)
     
     def post(self, request):
         image_data = request.data.get('image')

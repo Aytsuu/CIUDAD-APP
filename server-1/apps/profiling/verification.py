@@ -63,7 +63,7 @@ class KYCVerificationProcessor:
                 .execute()
             
             return {
-                'name': f'{user_data['lname'].upper(), user_data['fname'].upper()}',
+                'name': f"{user_data['lname'].upper()}, {user_data['fname'].upper()}",
                 'id_has_face': True if id_face is not None else False,
                 'info_match': info_match['match'],
             }

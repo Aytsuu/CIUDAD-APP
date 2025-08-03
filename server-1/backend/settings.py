@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.gad',
     'apps.clerk',
+    'apps.act_log',
     'backend.firebase.notifications',
 ]
 
@@ -392,6 +393,8 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #     'apps.authentication',
 #     'apps.gad',
 #     'apps.clerk',
+#     'apps.secretary',
+#     'apps.act_log',
 #     'backend.firebase.notifications',
     
 # ]
@@ -505,8 +508,8 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #     ],
 # }
 
-# # New User Model
-# # AUTH_USER_MODEL = 'account.Account'
+# New User Model
+# AUTH_USER_MODEL = 'account.Account'
 
 # # ========================
 # # CORS SETTINGS

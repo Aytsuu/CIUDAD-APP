@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import ClerkCertificate, IssuedCertificate
 
-# Register your models here.
+admin.site.register(ClerkCertificate)
+admin.site.register(IssuedCertificate)

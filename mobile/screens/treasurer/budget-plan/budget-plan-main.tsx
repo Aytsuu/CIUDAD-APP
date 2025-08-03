@@ -1,4 +1,4 @@
-import { SafeAreaView, Text, ScrollView, View, FlatList, TextInput, Pressable, TouchableOpacity } from "react-native";
+import { SafeAreaView, Text, View, FlatList, Pressable, TouchableOpacity } from "react-native";
 import { Archive, Trash2, ArchiveRestore } from "lucide-react-native";
 import React from "react";
 import { usegetBudgetPlan } from "./queries/budgetPlanFetchQueries"

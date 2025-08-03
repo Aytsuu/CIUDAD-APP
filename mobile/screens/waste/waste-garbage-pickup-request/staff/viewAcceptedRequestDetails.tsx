@@ -1,13 +1,9 @@
-"use client"
-
 import _ScreenLayout from "@/screens/_ScreenLayout"
 import { View, TouchableOpacity, Text, ScrollView, Image } from "react-native"
 import { ChevronLeft, Edit } from "lucide-react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
-import { ConfirmationModal } from "@/components/ui/confirmationModal"
-import { Button } from "@/components/ui/button"
 import { useUpdateGarbageRequestStatus } from "./queries/garbagePickupStaffUpdateQueries"
 import { useGetViewAccepted } from "./queries/garbagePickupStaffFetchQueries"
 
@@ -164,7 +160,7 @@ export default function ViewRequestDetails() {
         )}
 
         {/* Confirm Button */}
-        <ConfirmationModal
+        {/* <ConfirmationModal
           trigger={
             <Button className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
               <Text className="text-white font-PoppinsSemiBold text-[16px]">Confirm</Text>
@@ -174,7 +170,7 @@ export default function ViewRequestDetails() {
           description="Would you like to confirm that the pickup has been done?"
           actionLabel="Confirm"
           onPress={handleConfirmRequest}
-        />
+        /> */}
       </ScrollView>
     </_ScreenLayout>
   )
