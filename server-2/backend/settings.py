@@ -1,6 +1,3 @@
-
-
-
 # ---------------------------------------------------
 # PRODUCTION SERVER
 # ---------------------------------------------------
@@ -33,11 +30,11 @@ DEBUG = False
 # SUPABASE CONFIGURATION
 # ========================
 SUPABASE_CONFIG = {
-    'URL': config('SUPABASE_URL'),
-    'ANON_KEY': config('SUPABASE_ANON_KEY'),
-    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
-    'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
-    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
+    'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
+    'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
+    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
+    'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
+    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
     'JWT_ALGORITHM': 'HS256',
     'JWT_AUDIENCE': 'authenticated',
 }
@@ -153,14 +150,16 @@ ASGI_APPLICATION = 'backend.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT')
-
-    },
-   
+        'OPTIONS': {
+            'connect_timeout': 5,
+            'sslmode': 'require',
+        },
+        'NAME': config('DB_NAME', default='my_default_db'),
+        'USER': config('DB_USER', default='my_default_user'),
+        'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
 }
 
 
@@ -444,21 +443,13 @@ LOGGING = {
 
 # # Database
 # # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASSWORD'),
-#         'HOST': config('DB_HOST'),
-#         'PORT': config('DB_PORT')
-
-#     },
-#     'brgyDB': {
-        
-#     }
-   
+# 'default': {
+#     'ENGINE': 'django.db.backends.postgresql',
+#     'NAME': config('DB_NAME', default='my_default_db'),
+#     'USER': config('DB_USER', default='my_default_user'),
+#     'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
+#     'HOST': config('DB_HOST', default='localhost'),
+#     'PORT': config('DB_PORT', default='5432'),
 # }
 
 
