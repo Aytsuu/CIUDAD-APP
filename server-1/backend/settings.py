@@ -41,7 +41,6 @@ SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
 SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
 SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
-
 # ========================
 # FIREBASE CONFIGURATION
 # ========================
@@ -135,7 +134,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default='my_default_email')
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default='my_default_password')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
 
 # ========================
 # DATABASE CONFIGURATION
@@ -305,6 +303,7 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 
 
 
+
 # # ---------------------------------------------------
 # # DEVELOPMENT SERVER
 # # ---------------------------------------------------
@@ -339,19 +338,19 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # # SUPABASE CONFIGURATION
 # # ========================
 # SUPABASE_CONFIG = {
-#     'SUPABASE_URL': config('SUPABASE_URL'),
-#     'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY'),
-#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
-#     'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
-#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
+#     'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
+#     'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
+#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
+#     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
+#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
 #     'JWT_ALGORITHM': 'HS256',
 #     'JWT_AUDIENCE': 'authenticated',
 # }
 
-# SUPABASE_URL = config('SUPABASE_URL')
-# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
-# SUPABASE_KEY = config('SUPABASE_ANON_KEY')
-# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
+# SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
 # # ========================
 # # FIREBASE CONFIGURATION
@@ -447,8 +446,8 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-# EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+# EMAIL_HOST_USER = config("EMAIL_HOST_USER", default='my_default_email')
+# EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default='my_default_password')
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # # ========================
@@ -457,11 +456,11 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASSWORD'),
-#         'HOST': config('DB_HOST'),
-#         'PORT': config('DB_PORT')
+#         'NAME': config('DB_NAME', default='my_default_db'),
+#         'USER': config('DB_USER', default='my_default_user'),
+#         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
+#         'HOST': config('DB_HOST', default='localhost'),
+#         'PORT': config('DB_PORT', default='5432'),
 #     }
 # }
 
@@ -593,4 +592,4 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # # ========================
 # # PAYMONGO
 # # ========================
-# PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
+# PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret')
