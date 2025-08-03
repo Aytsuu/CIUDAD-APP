@@ -89,7 +89,7 @@ function ViewBudgetPlan(){
     const sortedDetails = [...(fetchedData?.details || [])].sort((a, b) => {
         const idxA = orderedBudgetLabels.indexOf(a.dtl_budget_item ?? "");
         const idxB = orderedBudgetLabels.indexOf(b.dtl_budget_item ?? "");
-        return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
+        return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB); 
     });
 
     // 3. Build rows using the sorted details
