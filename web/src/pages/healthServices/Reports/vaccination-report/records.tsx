@@ -1,14 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report";
+import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
+import {
+  exportToCSV,
+  exportToExcel,
+  exportToPDF,
+} from "../firstaid-report/export-report";
 import { ExportDropdown } from "../firstaid-report/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import TableLayout from "@/components/ui/table/table-layout";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
 import {
   Select,
   SelectTrigger,
@@ -16,8 +19,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select/select";
-import { VaccinationRecord } from "../../vaccination/tables/columns/types";
-import { useVaccineRecords} from "./queries/fetchQueries";
+import { useVaccineReports } from "./queries/fetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { toast } from "sonner";
+import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
+import { MonthlyVaccineRecord } from "./types";
 
 export default function MonthlyVaccinationDetails() {
   const location = useLocation();
@@ -26,38 +32,48 @@ export default function MonthlyVaccinationDetails() {
     month: string;
     monthName: string;
     recordCount: number;
-    records: VaccinationRecord[];
-    report: any;
   };
 
   const navigate = useNavigate();
+  const { showLoading, hideLoading } = useLoading();
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  
-  const { monthlyrcplist_id, month, monthName, recordCount } = state || {};
 
-  const { data: apiResponse, isLoading, error } = useVaccineRecords(month);
-  const monthlyData = apiResponse?.data || [];
-  const currentMonthData =
-    monthlyData.find((m) => m.month === month) || monthlyData[0];
-  const records = currentMonthData?.records || [];
-  const report = currentMonthData?.report;
+  const { month, monthName} = state || {};
 
-  const staffDetails = report?.staff_details?.rp?.per;
+  const { data: apiResponse, isLoading, error } = useVaccineReports(month);
+   const monthlyData = apiResponse?.data as { records: MonthlyVaccineRecord[]; report: any } | undefined;
+ 
+   const records = monthlyData?.records || [];
+  const report = monthlyData?.report;
+
   const signatureBase64 = report?.signature;
-  const staffName = staffDetails
-    ? `${staffDetails.per_fname} ${staffDetails.per_mname || ""} ${
-        staffDetails.per_lname
-      }`.trim()
-    : "—";
-  const position = report?.staff_details?.pos?.pos_title || "—";
+  
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to fetch report");
+      toast("Retrying to fetch  report...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
+  }, [error]);
 
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return records;
 
     const searchLower = searchTerm.toLowerCase();
-    return records.filter((record: VaccinationRecord) => {
+    return records.filter((record: any) => {
       const patient = record.patient;
       const personalInfo = patient?.personal_info;
       const fullName = [
@@ -69,7 +85,8 @@ export default function MonthlyVaccinationDetails() {
         .join(" ")
         .toLowerCase();
 
-      const vaccineName = record.vaccine_stock?.vaccinelist?.vac_name?.toLowerCase() || "";
+      const vaccineName =
+        record.vaccine_stock?.vaccinelist?.vac_name?.toLowerCase() || "";
       const doseNumber = record.vachist_doseNo?.toString() || "";
       const date = record.date_administered
         ? new Date(record.date_administered).toLocaleDateString().toLowerCase()
@@ -95,7 +112,7 @@ export default function MonthlyVaccinationDetails() {
   }, [filteredRecords, currentPage, pageSize]);
 
   const prepareExportData = () => {
-    return filteredRecords.map((record: VaccinationRecord) => {
+    return filteredRecords.map((record: any) => {
       const patient = record.patient;
       const personalInfo = patient?.personal_info;
       const fullName = [
@@ -107,17 +124,22 @@ export default function MonthlyVaccinationDetails() {
         .join(" ");
 
       return {
-        "Date Administered": record.date_administered
+        "Date": record.date_administered
           ? new Date(record.date_administered).toLocaleDateString()
           : "N/A",
-        "Patient Name": fullName || "N/A",
+        "Name": fullName || "N/A",
+        "DOB": personalInfo?.per_dob
+          ? new Date(personalInfo.per_dob).toLocaleDateString()
+          : "N/A",
         "Vaccine Name": record.vaccine_stock?.vaccinelist?.vac_name ?? "N/A",
-        "Dose Number": record.vachist_doseNo ?? "N/A",
+        "Dose Number":  record.vachist_doseNo
+        ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
+        : "N/A",
         "Age at Vaccination": record.vachist_age || "N/A",
         "Status": record.vachist_status || "No status provided",
-        "Follow-up Date": record.follow_up_visit?.followv_date 
-          ? new Date(record.follow_up_visit.followv_date).toLocaleDateString() 
-          : "N/A"
+        "Follow-up Date": record.follow_up_visit?.followv_date
+          ? new Date(record.follow_up_visit.followv_date).toLocaleDateString()
+          : "N/A",
       };
     });
   };
@@ -126,7 +148,9 @@ export default function MonthlyVaccinationDetails() {
     const dataToExport = prepareExportData();
     exportToCSV(
       dataToExport,
-      `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      `vaccination_records_${monthName}_${new Date()
+        .toISOString()
+        .slice(0, 10)}`
     );
   };
 
@@ -134,7 +158,9 @@ export default function MonthlyVaccinationDetails() {
     const dataToExport = prepareExportData();
     exportToExcel(
       dataToExport,
-      `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      `vaccination_records_${monthName}_${new Date()
+        .toISOString()
+        .slice(0, 10)}`
     );
   };
 
@@ -142,7 +168,9 @@ export default function MonthlyVaccinationDetails() {
     const dataToExport = prepareExportData();
     exportToPDF(
       dataToExport,
-      `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      `vaccination_records_${monthName}_${new Date()
+        .toISOString()
+        .slice(0, 10)}`
     );
   };
 
@@ -155,24 +183,21 @@ export default function MonthlyVaccinationDetails() {
     window.print();
     document.body.innerHTML = originalContents;
   };
-
   const tableHeader = [
-    "Date Administered",
-    "Patient Name",
-    "Patient ID",
+    "Date",
+    "Name",
+    "DOB",
     "Vaccine Name",
     "Dose No.",
     "Age",
-    "Status",
-    "Follow-up Date"
   ];
 
-  const tableRows = paginatedRecords.map((record: VaccinationRecord) => {
+  const tableRows = paginatedRecords.map((record: any) => {
     const patient = record.patient;
     const personalInfo = patient?.personal_info;
     const fullName = [
       personalInfo?.per_fname,
-      personalInfo?.per_mname,  
+      personalInfo?.per_mname,
       personalInfo?.per_lname,
     ]
       .filter(Boolean)
@@ -180,208 +205,127 @@ export default function MonthlyVaccinationDetails() {
 
     return [
       record.date_administered
-        ? new Date(record.date_administered).toLocaleDateString()
-        : "N/A",
-      <div className="w-32">{fullName || "N/A"}</div>,
+      ? new Date(record.date_administered).toLocaleDateString()
+      : "N/A",
+      fullName || "N/A",
+      personalInfo?.per_dob
+      ? new Date(personalInfo.per_dob).toLocaleDateString()
+      : "N/A",
       record.vaccine_stock?.vaccinelist?.vac_name ?? "N/A",
-      record.vachist_doseNo ?? "N/A",
+      record.vachist_doseNo
+      ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
+      : "N/A",
       record.vachist_age || "N/A",
-      record.vachist_status || "No status provided",
-      record.follow_up_visit?.followv_date 
-        ? new Date(record.follow_up_visit.followv_date).toLocaleDateString() 
-        : "N/A"
     ];
   });
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
-      <div className="w-full md:w-80 bg-white rounded-md border border-gray-200 h-fit overflow-hidden">
-        <div className="flex flex-col">
-          {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2">
-            <div className="flex items-center justify-between mb-4">
-              <Button
-                className="hover:bg-transparent hover:text-blue-700 text-gray-600"
-                variant="ghost"
-                onClick={() => navigate(-1)}
-              >
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                <span className="font-medium text-sm">Back</span>
-              </Button>
-            </div>
+    <div>
+      <div className="flex flex-col">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <Button
+            className="text-black p-2 mb-2 self-start"
+            variant={"outline"}
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft />
+          </Button>
+          <div className="flex-col items-center ">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Monthly Vaccination Records
+            </h1>
+          
           </div>
+        </div>
+        <hr className="border-gray mb-5 sm:mb-8" />
 
-          <div className="p-6 space-y-6">
-            {/* Export Actions */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <h4 className="font-medium text-gray-800 text-sm">
-                  Export Options
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2">
-                <ExportDropdown
-                  onExportCSV={handleExportCSV}
-                  onExportExcel={handleExportExcel}
-                  onExportPDF={handleExportPDF}
-                  className="w-full border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
-                />
-                <Button
-                  variant="outline"
-                  onClick={handlePrint}
-                  className="w-full gap-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700 hover:text-blue-700 transition-all duration-200"
-                >
-                  <Printer className="h-4 w-4" />
-                  <span className="text-sm">Print Report</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Primary Action */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h4 className="font-medium text-gray-800 text-sm">Actions</h4>
-              </div>
-
-              <Button className="w-full" asChild>
-                <Link
-                  to={{
-                    pathname: "/edit-monthly-recipient-list",
-                  }}
-                  state={{
-                    reports: report,
-                    monthlyrcplist_id: monthlyrcplist_id,
-                    recordCount: recordCount,
-                    state_office: report?.office || "",
-                    state_control: report?.control_no || "",
-                    year:
-                      month?.split("-")[0] ||
-                      new Date().getFullYear().toString(),
-                  }}
-                >
-                  <span className="font-medium">Edit Monthly List</span>
-                </Link>
-              </Button>
-            </div>
-
-            {/* Search and Filters */}
-            <div className="space-y-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <h4 className="font-medium text-gray-800 text-sm">
-                  Search & Filter
-                </h4>
-              </div>
-
-              {/* Search Input */}
+        {/* Export Actions */}
+        {/* Action Bar */}
+        <div className="bg-white p-4  border">
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
+            <div className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  type="text"
                   placeholder="Search records..."
-                  className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200"
+                  className="pl-10 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                {searchTerm && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
-                    onClick={() => setSearchTerm("")}
-                  >
-                  </Button>
-                )}
-              </div>
-
-              {/* Page Size Selector */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 text-xs font-medium uppercase tracking-wide">
-                  Show Entries
-                </Label>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => {
-                    const numValue = parseInt(value);
-                    setPageSize(numValue >= 1 ? numValue : 1);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-full border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                    <SelectValue placeholder="Select page size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[5, 10, 20, 50].map((size) => (
-                      <SelectItem key={size} value={size.toString()}>
-                        {size} per page
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
-            {/* Pagination */}
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <h4 className="font-medium text-gray-800 text-sm">
-                    Navigation
-                  </h4>
-                </div>
-                <div className="text-xs text-gray-500">
-                  Page {currentPage} of {totalPages}
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <PaginationLayout
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  className="text-sm"
-                />
-              </div>
+            <div className="flex gap-2">
+              <ExportDropdown
+                onExportCSV={handleExportCSV}
+                onExportExcel={handleExportExcel}
+                onExportPDF={handleExportPDF}
+                className="border-gray-200 hover:bg-gray-50"
+              />
+              <Button
+                variant="outline"
+                onClick={handlePrint}
+                className="gap-2 border-gray-200 hover:bg-gray-50"
+              >
+                <Printer className="h-4 w-4" />
+                <span>Print</span>
+              </Button>
             </div>
+          </div>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className=" px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Show</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 5, 10, 15].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-700">entries</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              className="text-sm"
+            />
           </div>
         </div>
       </div>
 
-      <div className="flex-1 pb-10">
+      {/* PRINTTABLE REPORT */}
+      <div className="flex-1 mb-10 bg-white">
         <div
-          className="bg-white py-4 px-4"
+          className=" py-4 px-4"
           id="printable-area"
           style={{
-            width: "8.5in",
-            minHeight: "14in",
+            width: "11in", // Changed from 8.5in to 11in for landscape
+            minHeight: "8.5in", // Changed from 14in to 8.5in for landscape
             position: "relative",
             margin: "0 auto",
             paddingBottom: "120px",
           }}
         >
-          <div className="p-2 border-black flex items-center">
-            <div className="left-0 top-0 flex items-center justify-center w-28 h-28 bg-gray-200 rounded-full">
-              <div className="text-xs text-gray-500">Upload Logo</div>
-            </div>
-
-            <div className="flex-1 text-center mr-28">
-              <Label className="text-xs font-bold uppercase block">
-                Republic of the Philippines
-              </Label>
-              <Label className="text-sm font-bold uppercase block">
-                Cebu City Health Department
-              </Label>
-              <Label className="text-xs block">
-                General Maxilom Extension, Carreta, Cebu City
-              </Label>
-              <Label className="text-xs block">(032) 232-6820; 232-6863</Label>
-            </div>
-          </div>
-
           <div className="text-center py-2">
             <Label className="text-sm font-bold uppercase tracking-widest underline block">
               VACCINATION RECORDS
@@ -392,31 +336,11 @@ export default function MonthlyVaccinationDetails() {
           </div>
 
           <div className="pb-4 order-b sm:items-center gap-4">
-            <div className="flex flex-col space-y-2 mt-6">
+            <div className="flex flex-col space-y-2 mt-4">
               <div className="flex justify-between items-end">
                 <div className="flex items-end gap-2 flex-1 mr-8">
                   <Label className="font-medium whitespace-nowrap text-xs">
-                    Office:
-                  </Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">
-                    {report?.office || "N/A"}
-                  </div>
-                </div>
-
-                <div className="flex items-end gap-2 flex-1">
-                  <Label className="text-xs font-medium whitespace-nowrap">
-                    Control No:
-                  </Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">
-                    {report?.control_no || "N/A"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-end">
-                <div className="flex items-end gap-2 flex-1 mr-8">
-                  <Label className="font-medium whitespace-nowrap text-xs">
-                    Vaccine Description:
+                    Vaccine Name:
                   </Label>
                   <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">
                     {searchTerm || "All Vaccines"}
@@ -435,20 +359,20 @@ export default function MonthlyVaccinationDetails() {
             </div>
           </div>
 
-          <TableLayout
-            header={tableHeader}
-            rows={tableRows}
-            tableClassName="border rounded-lg"
-            bodyCellClassName="border border-gray-600 text-center text-xs p-1"
-            headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center"
-          />
-
-          <div className="mt-4">
-            <Label className="text-xs font-normal">
-              Hereby certify that the names listed above are recipients of the
-              vaccines as indicated
-            </Label>
-          </div>
+          {isLoading ? (
+            <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
+            </div>
+          ) : (
+            <TableLayout
+              header={tableHeader}
+              rows={tableRows}
+              tableClassName="border rounded-lg w-full"
+              bodyCellClassName="border border-gray-600 text-center text-xs p-2"
+              headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
+            />
+          )}
 
           <div
             style={{
@@ -459,36 +383,18 @@ export default function MonthlyVaccinationDetails() {
               padding: "0 32px",
             }}
           >
-            <div className="mt-8">
+            <div className="mt-6">
               {signatureBase64 && (
                 <div className="flex justify-center relative">
                   <div>
                     <img
                       src={`data:image/png;base64,${signatureBase64}`}
                       alt="Authorized Signature"
-                      className="h-10 w-auto object-contain"
+                      className="h-8 w-auto object-contain"
                     />
                   </div>
                 </div>
               )}
-
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex justify-center flex-col items-center">
-                  <div className="border-b border-b-black w-48 text-xs text-center pb-1">
-                    {staffName}
-                  </div>
-                  <Label className="text-xs font-medium">
-                    Printed Name and Signature
-                  </Label>
-                </div>
-
-                <div className="flex justify-center flex-col items-center">
-                  <div className="border-b border-b-black text-xs w-48 text-center pb-1">
-                    {position}
-                  </div>
-                  <Label className="text-xs font-medium">Position</Label>
-                </div>
-              </div>
             </div>
           </div>
         </div>

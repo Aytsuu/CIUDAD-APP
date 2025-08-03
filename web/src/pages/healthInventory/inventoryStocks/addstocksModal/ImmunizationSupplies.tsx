@@ -13,7 +13,7 @@ import {
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
-import { useNavigate, Link } from "react-router";
+import { Link } from "react-router";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";

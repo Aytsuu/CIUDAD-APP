@@ -22,7 +22,6 @@ import { BriefcaseMedical, ChevronLeft, FilesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { toast } from "sonner";
-import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import axios from "axios";

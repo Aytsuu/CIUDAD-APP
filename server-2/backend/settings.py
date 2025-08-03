@@ -94,6 +94,8 @@
 #     'apps.medicineservices',
 #     'apps.firstaid',
 #     'apps.childhealthservices',
+#         'apps.servicescheduler',
+
 #     'apps.reports',
 #     'apps.file',
 
@@ -306,6 +308,7 @@
 # ---------------------------------------------------
 # DEVELOPMENT SERVER
 # ---------------------------------------------------
+
 
 from pathlib import Path
 from datetime import timedelta

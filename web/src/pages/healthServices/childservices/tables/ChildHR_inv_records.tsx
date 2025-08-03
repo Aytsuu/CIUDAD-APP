@@ -1,6 +1,5 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";

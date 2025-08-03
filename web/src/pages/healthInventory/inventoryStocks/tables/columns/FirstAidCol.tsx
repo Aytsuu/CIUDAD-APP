@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { Archive , Plus, Minus } from "lucide-react";
+import { Archive , Minus } from "lucide-react";
 import { Link } from "react-router";
 import { FirstAidStocksRecord } from "../type";
 import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";
@@ -218,18 +218,7 @@ export const getColumns = (
             </Link>
           </Button>
 
-          <Button variant="outline" disabled={expired}>
-            <Link
-              to="/editFirstAidStock"
-              state={{
-                params: {
-                  initialData: row.original,
-                },
-              }}
-            >
-              <Plus size={16} />
-            </Link>
-          </Button>
+          
           <Button
             variant="destructive"
             size="sm"

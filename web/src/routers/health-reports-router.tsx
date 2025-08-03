@@ -7,7 +7,6 @@ import MonthlyFirstAidDetails from "@/pages/healthServices/Reports/firstaid-repo
 import EditMonthlyRecipientList from "@/pages/healthServices/Reports/firstaid-report/edit-report";
 import MonthlyVaccineRecords from "@/pages/healthServices/Reports/vaccination-report/monthly";
 import MonthlyVaccinationDetails from "@/pages/healthServices/Reports/vaccination-report/records";
-import path from "path";
 export const reports_router = [
   {
     path: "/bhwmonthlyreport",

@@ -16,7 +16,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function () {

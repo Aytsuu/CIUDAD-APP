@@ -13,3 +13,25 @@ export const getVaccineRecords = async (year?: string): Promise<VaccineRecordsRe
       throw error;
     }
   };
+
+export const getVaccineReports = async (month: string): Promise<VaccineRecordsResponse> => {
+  try {
+    const url = `/vaccination/vaccination-reports/${month}/`;
+    const response = await api2.get<VaccineRecordsResponse>(url);
+    console.log("Reports Response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching First Aid records:", error);
+    throw error;
+  }
+};
+
+export const getVaccinationMonthCount =async()=>{
+  try {
+    const response = await api2.get("/vaccination/month-count/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching  :", error);
+    throw error;
+  }
+}

@@ -1,34 +1,44 @@
 // MonthlyMedicineRecords.tsx
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, ChevronLeft } from "lucide-react";
+import { Search, ChevronLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { useVaccineRecords } from "./queries/fetchQueries";
-import {MonthlyVaccineRecord } from "./types";
+import { MonthlyVaccineRecord } from "./types";
+import { useLoading } from "@/context/LoadingContext";
+import {toast} from "sonner";
 
 export default function MonthlyVaccineRecords() {
+  const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter] = useState<string>("all");
   const navigate = useNavigate();
-  const { data: apiResponse, isLoading, error } = useVaccineRecords(yearFilter);
+  const { data: apiResponse, isLoading,error } = useVaccineRecords(yearFilter);
   const monthlyData = apiResponse?.data || [];
 
-
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch medicine records");
+      toast.error("Failed to fetch report");
+      toast("Retrying to fetch  report...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     }
   }, [error]);
-
 
   const filteredData = useMemo(() => {
     return monthlyData.filter((monthData) => {
@@ -87,7 +97,6 @@ export default function MonthlyVaccineRecords() {
                   {
                     month: "long",
                     year: "numeric",
-                    
                   }
                 ),
                 records: row.original.records,
@@ -101,17 +110,6 @@ export default function MonthlyVaccineRecords() {
       ),
     },
   ];
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
 
   return (
     <>
@@ -169,9 +167,15 @@ export default function MonthlyVaccineRecords() {
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+            {isLoading ? (
+              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
+              </div>
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
           </div>
-
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray">
               Showing{" "}

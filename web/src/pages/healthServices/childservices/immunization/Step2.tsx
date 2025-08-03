@@ -20,8 +20,6 @@ import { createImmunizationColumns } from "./columns";
 
 
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
 import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
 import { useAuth } from "@/context/AuthContext";
 import { NotesDialog } from "./NotesDialog";
