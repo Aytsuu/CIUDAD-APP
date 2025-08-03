@@ -10,8 +10,19 @@ export const api = axios.create({
   },
 });
 
+
+
+// export const api2 = axios.create({
+//   baseURL: import.meta.env.VITE_API_URL2,
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
+
 export const api2 = axios.create({
-  baseURL: import.meta.env.VITE_API_URL2,
+  baseURL: "https://ciudad-app-server-2.onrender.com",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

@@ -2,12 +2,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { AuthProvider } from "./context/AuthContext";
 import { AnimatePresence } from "framer-motion";
-import { ToastProvider } from "@/components/ui/use-toast"
 
 import { main_router } from "./routers/main-router";
 import { landing_router } from "./routers/landing-router";
 import { user_account } from "./routers/profile-router";
-import { clearances_router } from "./routers/clearances-router";
 import { LoadingProvider } from "./context/LoadingContext";
 import { LinearLoader } from "./components/ui/linear-loader";
 

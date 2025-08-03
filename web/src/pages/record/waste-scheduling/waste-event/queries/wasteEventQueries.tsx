@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { formatDate } from "@/helpers/dateFormatter";
 
 export interface WasteEvent {
     we_num: number;
