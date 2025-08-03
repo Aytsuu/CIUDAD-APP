@@ -27,11 +27,11 @@ DEBUG=False
 # SUPABASE CONFIGURATION
 # ========================
 SUPABASE_CONFIG = {
-    'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
-    'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
-    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
-    'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
-    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
+    'SUPABASE_URL': config('SUPABASE_URL'),
+    'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY'),
+    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
+    'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
+    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
     'JWT_ALGORITHM': 'HS256',
     'JWT_AUDIENCE': 'authenticated',
 }
