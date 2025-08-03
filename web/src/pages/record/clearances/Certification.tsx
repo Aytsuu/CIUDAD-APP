@@ -165,7 +165,7 @@ function CertificatePage() {
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
-            <DataTable columns={columns} data={certificates || []} onRowClick={handleRowClick} header={true} />
+            <DataTable columns={columns} data={certificates || []} />
           )}
         </div>
       </div>
