@@ -393,6 +393,7 @@ INSTALLED_APPS = [
     'apps.medicineservices',
     'apps.firstaid',
     'apps.childhealthservices',
+    'apps.servicescheduler',
     'apps.reports',
     'apps.file',
 

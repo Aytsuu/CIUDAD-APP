@@ -22,6 +22,18 @@ export interface PrenatalRecord {
     height: number | null
     bmi: number | null
   }
+  obstetrical_history?: {
+    obs_ch_born_alive: number | null
+    obs_living_ch: number | null
+    obs_abortion: number | null
+    obs_still_birth: number | null
+    obs_lg_babies: number | null
+    obs_gravida: number | null
+    obs_para: number | null
+    obs_fullterm: number | null
+    obs_preterm: number | null
+    obs_record_from: string | "Prenatal"
+  }
   previous_hospitalizations: Array<{
     prev_hospitalization: string
     prev_hospitalization_date: number | null

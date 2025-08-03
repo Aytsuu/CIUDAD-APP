@@ -1,14 +1,13 @@
 "use client"
 
-import type React from "react"
-
 import type { UseFormReturn } from "react-hook-form"
 import { useState, useEffect } from "react"
 import { CircleAlert } from "lucide-react"
 import type { z } from "zod"
 
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form" // Corrected import path
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form" 
+// import { Combobox } from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -23,9 +22,10 @@ import LaboratoryResults, {
   convertLabResultsToSchema,
   type LabResults,
 } from "@/pages/healthServices/maternal/maternal-components/lab-result"
-import { Combobox } from "@/components/ui/combobox"
 
-import { fetchVaccinesWithStock } from "../../vaccination/restful-api/fetch"
+// import { fetchVaccinesWithStock } from "../../../vaccination/restful-api/fetch"
+import { usePrenatalPatientPrevPregnancy } from "../../queries/maternalFetchQueries"
+
 
 export default function PrenatalFormSecPg({
   form,
@@ -39,7 +39,44 @@ export default function PrenatalFormSecPg({
   // Lab results state
   const [labResults, setLabResults] = useState<LabResults>(createInitialLabResults())
   const [labErrors, setLabErrors] = useState<Record<string, string>>({})
-  const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock()
+
+  const pat_id = form.watch("pat_id")
+
+  const { data: prevPregnancyData, isLoading: prevPregnancyLoading } = usePrenatalPatientPrevPregnancy(pat_id || "")
+  // const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock()
+
+
+  useEffect(() => {
+    const currPrevPregnancy = prevPregnancyData?.previous_pregnancy
+    console.log("Current Previous Pregnancy Data:", currPrevPregnancy)
+
+    if(prevPregnancyData && !prevPregnancyLoading){
+      form.setValue("previousPregnancy.dateOfDelivery", currPrevPregnancy.date_of_delivery || "")
+      form.setValue("previousPregnancy.outcome", currPrevPregnancy.outcome || "")
+      form.setValue("previousPregnancy.typeOfDelivery", currPrevPregnancy.type_of_delivery || "")
+      form.setValue("previousPregnancy.babysWt", currPrevPregnancy.babys_wt || undefined)
+      form.setValue("previousPregnancy.gender", currPrevPregnancy?.gender || "")
+      form.setValue("previousPregnancy.ballardScore", 
+        currPrevPregnancy.ballard_score !== null && currPrevPregnancy.ballard_score !== undefined 
+          ? Number(currPrevPregnancy.ballard_score) 
+          : undefined
+      )
+      form.setValue("previousPregnancy.apgarScore", 
+        currPrevPregnancy?.apgar_score !== null && currPrevPregnancy.apgar_score !== undefined
+          ? Number(currPrevPregnancy.apgar_score)
+          : undefined
+        )
+    } else {
+      form.setValue("previousPregnancy.dateOfDelivery", "")
+      form.setValue("previousPregnancy.outcome", "")
+      form.setValue("previousPregnancy.typeOfDelivery", "")
+      form.setValue("previousPregnancy.babysWt", 0)
+      form.setValue("previousPregnancy.gender", "")
+      form.setValue("previousPregnancy.ballardScore", undefined)
+      form.setValue("previousPregnancy.apgarScore", undefined)
+    }
+  }, [prevPregnancyData, form])
+
 
   useEffect(() => {
     // Convert lab results to the format expected by your form schema
@@ -63,8 +100,8 @@ export default function PrenatalFormSecPg({
     }
   }, [labResults, form])
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault() 
+  const handleNext = async () => {
+    // e.preventDefault() 
 
     window.scrollTo(0, 0) 
 
@@ -103,13 +140,12 @@ export default function PrenatalFormSecPg({
         firstError.scrollIntoView({ behavior: "smooth" })
       }
     }
-
-    window.scrollTo(0, 0)
   }
 
-  const handleVaccineChange = (value: string) => {
-    form.setValue("prenatalVaccineInfo.vaccineType", value)
-  }
+  // const handleVaccineChange = (value: string) => {
+  //   form.setValue("prenatalVaccineInfo.vaccineType", value)
+  // }
+
   //tt type
   type TetanusToxoidType = {
     vaccineType?: string
@@ -138,20 +174,12 @@ export default function PrenatalFormSecPg({
     form.setValue("prenatalVaccineInfo.ttDateGiven", "")
   }
 
-  // Helper function to get lab results for form submission
-  // const getLabResultsForSubmission = () => {
-  //   return {
-  //     labResults: convertLabResultsToSchema(labResults),
-  //     labSummary: getLabResultsSummary(labResults),
-  //     // labRemarks: form.getValues("laboratoryRemarks") || ""
-  //   }
-  // }
 
   return (
     <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
       <Label className="text-black text-opacity-50 italic mb-10">Page 2 of 4</Label>
       <Form {...form}>
-        <form onSubmit={submit}>
+        <form>
           <div className="border rounded-lg p-4 shadow-md mb-10">
             <h3 className="text-md font-semibold mt-2">PREVIOUS PREGNANCY</h3>
             <div className="grid grid-cols-4 gap-4 mt-5 px-5">
@@ -166,8 +194,8 @@ export default function PrenatalFormSecPg({
                 name="previousPregnancy.outcome"
                 label="OUTCOME"
                 options={[
-                  { id: "0", name: "FULLTERM" },
-                  { id: "1", name: "PRETERM" },
+                  { id: "Fullterm", name: "FULLTERM" },
+                  { id: "Preterm", name: "PRETERM" },
                 ]}
               />
               <FormSelect
@@ -175,8 +203,8 @@ export default function PrenatalFormSecPg({
                 name="previousPregnancy.typeOfDelivery"
                 label="TYPE OF DELIVERY"
                 options={[
-                  { id: "0", name: "Vaginal Delivery" },
-                  { id: "1", name: "C-Section" },
+                  { id: "Vaginal", name: "Vaginal Delivery" },
+                  { id: "Cesarean Section", name: "C-Section" },
                 ]}
               />
               <FormInput
@@ -190,8 +218,8 @@ export default function PrenatalFormSecPg({
                 name="previousPregnancy.gender"
                 label="GENDER"
                 options={[
-                  { id: "0", name: "Female" },
-                  { id: "1", name: "Male" },
+                  { id: "Female", name: "Female" },
+                  { id: "Male", name: "Male" },
                 ]}
               />
               <FormInput
@@ -227,9 +255,8 @@ export default function PrenatalFormSecPg({
                     <div className="mb-2">
                       <Label className="flex text-black/70 items-center">Vaccine Type</Label>
                     </div>
-
-                    <Combobox
-                      options={vaccineStocksOptions.map((vaccine) => ({
+                    {/* <Combobox
+                      options={vaccineStocksOptions.map((vaccine: any) => ({
                         id: vaccine.id,
                         name: `${vaccine.name} (Expiry: ${vaccine.expiry || "N/A"})`,
                       }))}
@@ -244,7 +271,7 @@ export default function PrenatalFormSecPg({
                         </div>
                       }
                       onChange={handleVaccineChange}
-                    />
+                    /> */}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-2 mb-5">
@@ -385,10 +412,10 @@ export default function PrenatalFormSecPg({
           <div className="border rounded-lg p-4 shadow-md mb-10">
             <h3 className="text-md font-semibold mt-2">PRESENT PREGNANCY</h3>
             <div className="grid grid-cols-6 gap-4 mt-2 px-4">
-              <FormInput control={form.control} name="presentPregnancy.gravida" label="GRAVIDA" placeholder="" />
-              <FormInput control={form.control} name="presentPregnancy.para" label="PARA" placeholder="" />
-              <FormInput control={form.control} name="presentPregnancy.fullterm" label="FULLTERM" placeholder="" />
-              <FormInput control={form.control} name="presentPregnancy.preterm" label="PRETERM" placeholder="" />
+              <FormInput control={form.control} name="presentPregnancy.gravida" label="GRAVIDA" placeholder="" type="number"/>
+              <FormInput control={form.control} name="presentPregnancy.para" label="PARA" placeholder="" type="number"/>
+              <FormInput control={form.control} name="presentPregnancy.fullterm" label="FULLTERM" placeholder="" type="number"/>
+              <FormInput control={form.control} name="presentPregnancy.preterm" label="PRETERM" placeholder="" type="number"/>
               <FormDateTimeInput control={form.control} name="presentPregnancy.pf_lmp" label="LMP" type="date" />
               <FormDateTimeInput control={form.control} name="presentPregnancy.pf_edc" label="EDC" type="date" />
             </div>
@@ -400,10 +427,10 @@ export default function PrenatalFormSecPg({
           </div>
 
           <div className="mt-8 sm:mt-12 flex justify-end">
-            <Button variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
+            <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
               Prev
             </Button>
-            <Button type="submit" className="mt-4 mr-4 w-[120px]">
+            <Button type="button" className="mt-4 mr-4 w-[120px]" onClick={handleNext}>
               Next
             </Button>
           </div>

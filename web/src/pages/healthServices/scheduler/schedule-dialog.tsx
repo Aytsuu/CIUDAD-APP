@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/dialog/dialog"
 import { Button } from "@/components/ui/button/button"
 import { Edit } from "lucide-react"
-import ServiceScheduleForm from "../schedules/schedule-form"
-import type { WeeklySchedule } from "../schedules/schedule-types"
+import ServiceScheduleForm from "../scheduler/schedule-form"
+import type { WeeklySchedule } from "../scheduler/schedule-types"
 
 interface ScheduleDialogProps {
   weeklySchedule: WeeklySchedule
@@ -19,6 +19,7 @@ interface ScheduleDialogProps {
   services: string[]
   onSave: (schedule: WeeklySchedule) => void
   onAddService: (serviceName: string) => void
+  onAddDay: (newDay: Date) => void
 }
 
 export default function ScheduleDialog({
@@ -27,6 +28,7 @@ export default function ScheduleDialog({
   services,
   onSave,
   onAddService,
+  onAddDay,
 }: ScheduleDialogProps) {
   const handleSave = (newSchedule: WeeklySchedule) => {
     onSave(newSchedule)
@@ -40,7 +42,7 @@ export default function ScheduleDialog({
           Edit Schedule
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Edit Weekly Schedule</DialogTitle>
           <DialogDescription>Update your service availability for the week.</DialogDescription>
@@ -51,6 +53,7 @@ export default function ScheduleDialog({
           services={services}
           onSave={handleSave}
           onAddService={onAddService}
+          onAddDay={onAddDay}
         />
       </DialogContent>
     </Dialog>

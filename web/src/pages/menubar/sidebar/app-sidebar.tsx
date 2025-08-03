@@ -179,7 +179,7 @@ const items: MenuItem[] = [
       { title: "Medicine Record", url: "/all-medicine-records" },
       { title: "Firstaid Record ", url: "/all-firstaid-records" },
       { title: "Archive", url: "/archiveMainInventoryStocks" },
-      { title: "Schedules", url: "/health-schedules" },
+      { title: "Schedules", url: "/health-appointments" },
       { title: "Service Scheduler", url: "/health-services/scheduler" },
       { title: "Reports", url: "/healthcare-reports" },
 

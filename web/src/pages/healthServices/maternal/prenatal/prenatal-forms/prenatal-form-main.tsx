@@ -5,6 +5,7 @@ import { FormProvider } from "react-hook-form"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useNavigate } from "react-router"
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import PrenatalFormFirstPg from "./prenatal-form-page1"
@@ -13,12 +14,13 @@ import PrenatalFormThirdPg from "./prenatal-form-page3"
 import PrenatalFormFourthPq from "./prenatal-form-page4"
 
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { useAddPrenatalRecord } from "../queries/maternalAddQueries" // Corrected import path for useAddPrenatalRecord
-import type { PrenatalRecord } from "../restful-api/maternalPOST" // Import the type
+import { useAddPrenatalRecord } from "../../queries/maternalAddQueries" // Corrected import path for useAddPrenatalRecord
+import type { PrenatalRecord } from "../../restful-api/maternalPOST" // Import the type
 
 export default function PrenatalForm() {
   const defaultValues = generateDefaultValues(PrenatalFormSchema)
   const [currentPage, setCurrentPage] = useState(1)
+  const navigate = useNavigate()
 
   const addPrenatalMutation = useAddPrenatalRecord()
 
@@ -71,7 +73,7 @@ export default function PrenatalForm() {
           babys_wt: data.previousPregnancy.babysWt ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
           gender: data.previousPregnancy.gender || null, // Ensure null if empty
           ballard_score: data.previousPregnancy.ballardScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
-          apgar_score: data.previousPregnancy.apgarScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
+          apgar_score: data.previousPregnancy.apgarScore ? parseFloat(data.previousPregnancy.apgarScore.toString()) : null,
         }
       : undefined
 
@@ -118,6 +120,19 @@ export default function PrenatalForm() {
         weight: data.motherPersonalInfo.motherWt || null,
         height: data.motherPersonalInfo.motherHt || null,
         bmi: data.motherPersonalInfo.motherBMI || null,
+      },
+
+      obstetrical_history: {
+        obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || null,
+        obs_living_ch: data.obstetricHistory?.noOfLivingCh || null,
+        obs_abortion: data.obstetricHistory?.noOfAbortion  || null,
+        obs_still_birth: data.obstetricHistory?.noOfStillBirths || null,
+        obs_lg_babies: data.obstetricHistory?.historyOfLBabies || null,
+        obs_gravida: data.presentPregnancy.gravida || null,
+        obs_para: data.presentPregnancy.para || null,
+        obs_fullterm: data.presentPregnancy.fullterm || null,
+        obs_preterm: data.presentPregnancy.preterm || null,
+        obs_record_from: "Prenatal", 
       },
 
       previous_hospitalizations:
@@ -248,6 +263,11 @@ export default function PrenatalForm() {
       if(isValid){
         const formData = form.getValues()
         await handleFinalSubmit(formData)
+        console.log("Page 4 validation passed, form submitted successfully.")
+
+        navigate(-1)
+        
+        return;
       }
     }
 

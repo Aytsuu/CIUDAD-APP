@@ -1,7 +1,6 @@
 "use client"
 
 import { useFormContext, type UseFormReturn } from "react-hook-form"
-import { useNavigate } from "react-router"
 import { Form } from "@/components/ui/form/form"
 import type { z } from "zod"
 
@@ -16,7 +15,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { useEffect, useState } from "react"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Card, CardContent } from "@/components/ui/card/card"
-import { useAddPrenatalRecord } from "../queries/maternalAddQueries"
+import { useAddPrenatalRecord } from "../../queries/maternalAddQueries"
 
 export default function PrenatalFormFourthPq({
   form,
@@ -27,10 +26,9 @@ export default function PrenatalFormFourthPq({
   onSubmit: () => void
   back: () => void
 }) {
-  const { control, trigger, setValue, getValues } = useFormContext()
+  const { control, setValue, getValues } = useFormContext()
   const addPrenatalRecordMutation = useAddPrenatalRecord()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const navigate = useNavigate()
 
   // Watch values from other parts of the form to auto-fill
   const momWt = form.watch("motherPersonalInfo.motherWt")
@@ -65,36 +63,16 @@ export default function PrenatalFormFourthPq({
   // date today for initial input value
   const today = new Date().toLocaleDateString("en-CA")
 
-  // DEBUG: Log form state changes
-  // useEffect(() => {
-  //   console.log("🔍 Form state changed:", {
-  //     momWt,
-  //     aogWks,
-  //     aogDays,
-  //     prenatalCareDataLength: prenatalCareData.length,
-  //     formErrors: form.formState.errors,
-  //     isSubmitting: form.formState.isSubmitting,
-  //     isValid: form.formState.isValid
-  //   })
-  // }, [momWt, aogWks, aogDays, prenatalCareData, form.formState])
-
   useEffect(() => {
-    // Set initial date for the current entry input field
     setValue("prenatalCare.date", today)
     console.log("🔍 Initial date set:", today)
   }, [setValue, today])
 
   useEffect(() => {
-    // Auto-fill Weight and AOG from other pages
     setValue("prenatalCare.wt", momWt !== undefined && momWt !== null ? String(momWt) : "")
     setValue("prenatalCare.aog.aogWeeks", aogWks !== undefined && aogWks !== null ? String(aogWks) : "")
     setValue("prenatalCare.aog.aogDays", aogDays !== undefined && aogDays !== null ? String(aogDays) : "")
-    
-    console.log("🔍 Auto-filled values:", {
-      weight: momWt !== undefined && momWt !== null ? String(momWt) : "",
-      aogWeeks: aogWks !== undefined && aogWks !== null ? String(aogWks) : "",
-      aogDays: aogDays !== undefined && aogDays !== null ? String(aogDays) : ""
-    })
+
   }, [momWt, aogWks, aogDays, setValue])
 
   const addPrenatalCare = () => {
@@ -265,13 +243,13 @@ export default function PrenatalFormFourthPq({
     },
   ]
 
-  const submitFinalForm = async (data: z.infer<typeof PrenatalFormSchema>) => {
-    console.log("Submit button clicked!")
-    console.log("Form data received:", data)
-    console.log("Prenatal care data to submit:", prenatalCareData)
+  
+
+   const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     
     setIsSubmitting(true)
-
+    
     try {
       // Check if there's any prenatal care data to submit
       if (prenatalCareData.length === 0) {
@@ -310,84 +288,25 @@ export default function PrenatalFormFourthPq({
 
       console.log("Transformed prenatal care data:", transformedPrenatalCare)
 
-      // IMPORTANT: Set the prenatal care data in the form BEFORE validation
+      // CRITICAL: Set the prenatal care data in the form BEFORE calling onSubmit
       setValue("prenatalCare", transformedPrenatalCare)
       console.log("Prenatal care data set in form as array")
 
-      // Create the final form data with prenatal care array
-      const finalFormData = {
-        ...data,
-        prenatalCare: transformedPrenatalCare
-      }
+      // Wait for the setValue to take effect
+      await new Promise(resolve => setTimeout(resolve, 100))
 
-      console.log("Final form data prepared:", finalFormData)
-
-      // Trigger validation on the entire form with the updated data
-      console.log("Triggering validation...")
-      const isValid = await trigger()
-      console.log("Validation result:", isValid)
-
-      if (isValid) {
-        console.log("Form is valid, submitting...")
-
-        // Get the latest form values after setting prenatalCare
-        const latestFormData = form.getValues()
-        console.log("Latest form data:", latestFormData)
-
-        addPrenatalRecordMutation.mutate(latestFormData as any, {
-          onSuccess: (result) => {
-            console.log("Mutation successful:", result)
-            onSubmit()
-          },
-          onError: (error) => {
-            console.error("Mutation error:", error)
-            alert(`Submission failed: ${error.message || 'Unknown error'}`)
-          },
-        })
-      } else {
-        console.error("Form validation failed")
-        console.error("Form errors:", form.formState.errors)
-        
-        // Show more detailed validation errors
-        const errors = form.formState.errors
-        if (errors.prenatalCare) {
-          console.error("🔍 Prenatal care validation errors:", errors.prenatalCare)
-        }
-        
-        alert("Form validation failed. Please check the form for errors.")
-      }
+      // Let the main form handle the actual submission
+      onSubmit()
+      
     } catch (error) {
-      console.error("Error in submitFinalForm:", error)
+      console.error("Error in handleFormSubmit:", error)
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // Alternative approach: Handle form submission differently
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    setValue("prenatalCare", prenatalCareData)
-    
-    const formData = form.getValues()
-    
-    await submitFinalForm(formData)
 
-    // navigate(-1)
-    
-    console.log("Form submitted:", formData)
-  }
-
-  // Debug: Log mutation state
-  useEffect(() => {
-    console.log("Mutation state:", {
-      isPending: addPrenatalRecordMutation.isPending,
-      isError: addPrenatalRecordMutation.isError,
-      error: addPrenatalRecordMutation.error,
-      isSuccess: addPrenatalRecordMutation.isSuccess,
-    })
-  }, [addPrenatalRecordMutation])
 
   return (
     <>
@@ -508,7 +427,7 @@ export default function PrenatalFormFourthPq({
               <DataTable columns={prenatalCareColumn} data={prenatalCareData} />
             </div>
             <div className="mt-8 sm:mt-10 flex justify-end">
-              <Button variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
+              <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
                 Prev
               </Button>
               <Button 
