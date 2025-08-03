@@ -1,234 +1,3 @@
-// import React, { useState, useMemo } from "react";
-// import { Link } from "react-router";
-// import { ChevronDown, ChevronRight } from "lucide-react";
-// import {
-//   Sidebar,
-//   SidebarContent,
-//   SidebarGroup,
-//   SidebarGroupContent,
-//   SidebarMenu,
-//   SidebarMenuButton,
-//   SidebarMenuItem,
-// } from "./sidebar";
-// import type { MenuItem, SubMenuItemProps, MenuItemProps } from "./sidebarTypes";
-
-// const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
-//   item,
-//   activeItem,
-//   setActiveItem,
-// }) => {
-//   const [isThirdLevelOpen, setIsThirdLevelOpen] = useState(false);
-//   const hasThirdLevel = item.anotherItems && item.anotherItems.length > 0;
-//   const isActive = activeItem === item.title;
-
-//   if (hasThirdLevel) {
-//     return (
-//       <div className="w-full">
-//         <div
-//           className={`flex items-center justify-between px-4 py-2 text-sm rounded-md cursor-pointer ${
-//             isActive
-//               ? "bg-[#1273B2]/10 text-[#1273B8]"
-//               : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//           }`}
-//           onClick={() => {
-//             setIsThirdLevelOpen(!isThirdLevelOpen);
-//             setActiveItem(item.title);
-//           }}
-//         >
-//           <span>{item.title}</span>
-//           {isThirdLevelOpen ? (
-//             <ChevronDown className="h-4 w-4" />
-//           ) : (
-//             <ChevronRight className="h-4 w-4" />
-//           )}
-//         </div>
-//         {isThirdLevelOpen && (
-//           <div className="ml-4 mt-1 space-y-1">
-//             {item.anotherItems?.map((thirdItem) => (
-//               <SidebarMenuButton
-//                 key={thirdItem.title}
-//                 asChild
-//                 className="w-full"
-//               >
-//                 <Link
-//                   to={thirdItem.url}
-//                   className={`flex items-center px-4 py-2 text-sm rounded-md ${
-//                     activeItem === thirdItem.title
-//                       ? "bg-[#1273B2]/10 text-[#1273B8]"
-//                       : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//                   }`}
-//                   onClick={() => setActiveItem(thirdItem.title)}
-//                 >
-//                   <span>{thirdItem.title}</span>
-//                 </Link>
-//               </SidebarMenuButton>
-//             ))}
-//           </div>
-//         )}
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <SidebarMenuButton asChild className="w-full">
-//       <Link
-//         to={item.url}
-//         className={`flex items-center px-4 py-2 text-sm rounded-md ${
-//           isActive
-//             ? "bg-[#1273B2]/10 text-[#1273B8]"
-//             : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//         }`}
-//         onClick={() => setActiveItem(item.title)}
-//       >
-//         <span>{item.title}</span>
-//       </Link>
-//     </SidebarMenuButton>
-//   );
-// };
-
-// const MenuItem: React.FC<MenuItemProps> = ({
-//   item,
-//   activeItem,
-//   setActiveItem,
-// }) => {
-//   const [isOpen, setIsOpen] = useState(false);
-//   const isActive = activeItem === item.title;
-
-//   if (item.subItems && item.items) {
-//     return (
-//       <SidebarMenuItem>
-//         <div
-//           className={`w-full cursor-pointer rounded-md ${
-//             isActive
-//               ? "bg-[#1273B2]/10 text-[#1273B8]"
-//               : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//           }`}
-//           onClick={() => {
-//             setIsOpen(!isOpen);
-//             setActiveItem(item.title);
-//           }}
-//         >
-//           <div className="flex items-center justify-between px-4 py-2 rounded-md">
-//             <span>{item.title}</span>
-//             {isOpen ? (
-//               <ChevronDown className="h-4 w-4" />
-//             ) : (
-//               <ChevronRight className="h-4 w-4" />
-//             )}
-//           </div>
-//         </div>
-//         {isOpen && (
-//           <div className="ml-4 mt-1 space-y-1">
-//             {item.items.map((subItem) => (
-//               <SubMenuItemComponent
-//                 key={subItem.title}
-//                 item={subItem}
-//                 activeItem={activeItem}
-//                 setActiveItem={setActiveItem}
-//               />
-//             ))}
-//           </div>
-//         )}
-//       </SidebarMenuItem>
-//     );
-//   }
-
-//   return (
-//     <SidebarMenuItem>
-//       <SidebarMenuButton asChild>
-//         {item.url && (
-//           <Link
-//             to={item.url}
-//             className={`flex items-center px-4 py-2 rounded-md ${
-//               isActive
-//                 ? "bg-[#1273B2]/10 text-[#1273B8]"
-//                 : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//             }`}
-//             onClick={() => setActiveItem(item.title)}
-//           >
-//             <span>{item.title}</span>
-//           </Link>
-//         )}
-//       </SidebarMenuButton>
-//     </SidebarMenuItem>
-//   );
-// };
-
-// export function AppSidebar({ assignedFeatures }: { assignedFeatures: any[] }) {
-//   const [activeItem, setActiveItem] = useState<string>("");
-
-//   // Group features by category and transform to MenuItem structure
-//   const items: MenuItem[] = useMemo(() => {
-//     if (!assignedFeatures || assignedFeatures.length === 0) {
-//       return [];
-//     }
-
-//     // Group features by feat_category
-//     const groupedFeatures = assignedFeatures.reduce((acc, item) => {
-//       const feature = item.feat;
-//       const category = feature.feat_category;
-      
-//       if (!acc[category]) {
-//         acc[category] = [];
-//       }
-      
-//       // Check if this feature already exists in the category to avoid duplicates
-//       const existingFeature = acc[category].find((f: { title: string; url: string }) => f.title === feature.feat_name && f.url === feature.feat_url);
-//       if (!existingFeature) {
-//         acc[category].push({
-//           title: feature.feat_name,
-//           url: feature.feat_url,
-//         });
-//       }
-      
-//       return acc;
-//     }, {} as Record<string, Array<{ title: string; url: string }>>);
-
-//     // Transform grouped features to MenuItem structure
-//     return (Object.entries(groupedFeatures) as [string, { title: string; url: string }[]][]).map(([category, features]) => {
-//       // If only one feature in category, make it a direct link
-//       if (features.length === 1) {
-//         return {
-//           title: category,
-//           url: features[0].url,
-//         };
-//       }
-      
-//       // If multiple features, make it a dropdown
-//       return {
-//         title: category,
-//         subItems: true,
-//         url: "/",
-//         items: features as import("./sidebarTypes").SubMenuItem[],
-//       };
-//     });
-//   }, [assignedFeatures]);
-
-//   return (
-//     <Sidebar className="border-none">
-//       <SidebarContent>
-//         <SidebarGroup>
-//           <SidebarGroupContent>
-//             <div className="w-full h-14"></div>
-//             <SidebarMenu>
-//               {items.map((item) => (
-//                 <MenuItem
-//                   key={item.title}
-//                   item={item}
-//                   activeItem={activeItem}
-//                   setActiveItem={setActiveItem}
-//                 />
-//               ))}
-//             </SidebarMenu>
-//           </SidebarGroupContent>
-//         </SidebarGroup>
-//       </SidebarContent>
-//     </Sidebar>
-//   );
-// }
-
-// export default AppSidebar;
-
 
 import React, { useState } from "react";
 import { Link } from "react-router";
@@ -266,7 +35,7 @@ const items: MenuItem[] = [
       { title: "Resident", url: "/resident"},
       { title: "Family", url: "/family" },
       { title: "Household", url: "/household" },
-      { title: "Business", url: "/business" },
+      { title: "Business", url: "/business/record/active" },
     ],
   },
   {
@@ -281,8 +50,8 @@ const items: MenuItem[] = [
     ],
   },
   {
-    title: "Blotter",
-    url: "/blotter-record",
+    title: "Complaint",
+    url: "/complaint",
   },
   {
     title: "Team",
@@ -298,7 +67,7 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-      { title: "Project Proposals", url: "/gad-project-proposal"},
+      { title: "Project Proposal", url: "/gad-project-proposal"},
       { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
     ],
@@ -341,10 +110,7 @@ const items: MenuItem[] = [
           { title: "Rates", url: "/treasurer-rates" },
         ],
       },
-      {
-        title: "Receipts",
-        url: "/treasurer-receipts",
-      },
+      { title: "Receipts", url: "/treasurer-receipts" },
     ],
   },
   {
@@ -581,3 +347,135 @@ export function AppSidebar({ assignedFeatures }: { assignedFeatures: any }) {
 }
 
 export default AppSidebar;
+
+// import React, { useState } from "react";
+// import { Link } from "react-router";
+// import { ChevronDown, ChevronRight } from "lucide-react";
+// import { useAuth } from "@/context/AuthContext";
+// import {
+//   Sidebar,
+//   SidebarContent,
+//   SidebarGroup,
+//   SidebarGroupContent,
+//   SidebarMenu,
+//   SidebarMenuButton,
+//   SidebarMenuItem,
+// } from "./sidebar";
+
+// interface Feature {
+//   feat_name: string;
+//   feat_url: string;
+//   feat_category: string;
+// }
+
+// interface Assignment {
+//   feat: Feature;
+// }
+
+// interface GroupedFeatures {
+//   [category: string]: Feature[];
+// }
+
+// export function AppSidebar() {
+//   const [activeItem, setActiveItem] = useState<string>("");
+//   const [openCategory, setOpenCategory] = useState<string | null>(null);
+//   const { user } = useAuth();
+
+//   const staticItems = [
+//     { label: "Dashboard", path: "/dashboard" },
+//     { label: "Announcement", path: "/announcement" },
+//   ];
+
+//   const assignments: Assignment[] = user?.staff?.assignments || [];
+
+//   const groupedFeatures: GroupedFeatures = assignments.reduce((acc, assignment) => {
+//     const feat = assignment.feat;
+//     if (!feat) return acc;
+
+//     const { feat_category } = feat;
+//     if (!acc[feat_category]) {
+//       acc[feat_category] = [];
+//     }
+
+//     acc[feat_category].push(feat);
+//     return acc;
+//   }, {} as GroupedFeatures);
+
+//   return (
+//     <Sidebar className="border-none">
+//       <SidebarContent>
+//         <SidebarGroup>
+//           <SidebarGroupContent>
+//             <div className="w-full h-14" />
+//             <SidebarMenu>
+//               {staticItems.map((item) => (
+//                 <SidebarMenuItem key={item.label}>
+//                   <SidebarMenuButton asChild className="w-full">
+//                     <Link
+//                       to={item.path}
+//                       className={`flex items-center px-4 py-2 text-sm rounded-md ${
+//                         activeItem === item.label
+//                           ? "bg-[#1273B2]/10 text-[#1273B8]"
+//                           : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+//                       }`}
+//                       onClick={() => setActiveItem(item.label)}
+//                     >
+//                       <span>{item.label}</span>
+//                     </Link>
+//                   </SidebarMenuButton>
+//                 </SidebarMenuItem>
+//               ))}
+
+//               {/* Dynamic Feature Groups */}
+//               {Object.entries(groupedFeatures).map(([category, features]) => (
+//                 <SidebarMenuItem key={category}>
+//                   <div
+//                     className={`w-full cursor-pointer rounded-md ${
+//                       openCategory === category
+//                         ? "bg-[#1273B2]/10 text-[#1273B8]"
+//                         : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+//                     }`}
+//                     onClick={() =>
+//                       setOpenCategory(openCategory === category ? null : category)
+//                     }
+//                   >
+//                     <div className="flex items-center justify-between px-4 py-2 rounded-md">
+//                       <span>{category}</span>
+//                       {openCategory === category ? (
+//                         <ChevronDown className="h-4 w-4" />
+//                       ) : (
+//                         <ChevronRight className="h-4 w-4" />
+//                       )}
+//                     </div>
+//                   </div>
+
+//                   {openCategory === category && (
+//                     <div className="ml-4 mt-1 space-y-1">
+//                       {features.map((feat) => (
+//                         <SidebarMenuButton key={feat.feat_name} asChild className="w-full">
+//                           <Link
+//                             to={feat.feat_url}
+//                             className={`flex items-center px-4 py-2 text-sm rounded-md ${
+//                               activeItem === feat.feat_name
+//                                 ? "bg-[#1273B2]/10 text-[#1273B8]"
+//                                 : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+//                             }`}
+//                             onClick={() => setActiveItem(feat.feat_name)}
+//                           >
+//                             <span>{feat.feat_name}</span>
+//                           </Link>
+//                         </SidebarMenuButton>
+//                       ))}
+//                     </div>
+//                   )}
+//                 </SidebarMenuItem>
+//               ))}
+//             </SidebarMenu>
+//           </SidebarGroupContent>
+//         </SidebarGroup>
+//       </SidebarContent>
+//     </Sidebar>
+//   );
+// }
+
+// export default AppSidebar;

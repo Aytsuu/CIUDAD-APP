@@ -23,7 +23,6 @@ import {
   CombinedType,
 } from "@/form-schema/doctor/doctorSchema";
 import { findings } from "@/form-schema/doctor/doctorSchema";
-import { Activity } from "lucide-react";
 import { useState } from "react";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { Trash2, CirclePlus } from "lucide-react";

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBudgetPlan } from "../restful-API/budgetplanGetAPI";
-import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanAndDetailHistory } from "../restful-API/budgetplanGetAPI";
+import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanAndDetailHistory, getBudgetPlanSuppDocs, getBudgetPlanFromPreviousYear, getBudgetPlanDetailFromPreviousYear } from "../restful-API/budgetplanGetAPI";
 import { BudgetPlanDetail } from "../budgetPlanInterfaces"; 
 import { BudgetPlan } from "../budgetPlanInterfaces";
 
@@ -25,6 +25,24 @@ export const usegetBudgetPlanDetail = (plan_id: string) => {
     })
 }
 
+export const useGetBudgetPlanFromPrev = () => {
+    return useQuery<BudgetPlan>({
+        queryKey: ["budgetPlanPrev"], 
+        queryFn: getBudgetPlanFromPreviousYear,
+        staleTime: 1000 * 60 * 30,
+        enabled: false 
+    });
+}
+
+export const useGetBudgetPlanDetailFromPrev = () => {
+    return useQuery<BudgetPlanDetail[]>({
+        queryKey: ['budgetDetailsPrev'],
+        queryFn: getBudgetPlanDetailFromPreviousYear,
+        staleTime: 1000 * 60 * 30,
+        enabled: false 
+    });
+}
+
 export type BudgetPlanHistory = {
   bph_id: string;
   bph_budgetaryObligations: number;
@@ -40,6 +58,7 @@ export const useGetBudgetPlanHistory = (planId: string) => {
     staleTime: 1000 * 60 * 30
   })
 }
+
 
 export type BudgetPlanDetailHistory = {
   bpdh_id: number;
@@ -80,3 +99,18 @@ export const useGetBudgetPlanAndDetailHistory = (bph_id: string) => {
     enabled: !!bph_id, 
   });
 };
+
+export type BudgetPlanSuppDoc = {
+  bpf_id: number;
+  bpf_url: string;
+  bpf_name: string;
+  bpf_upload_date: string;
+}
+
+export const useGetBudgetPlanSuppDoc = (plan_id: string) => {
+  return useQuery<BudgetPlanSuppDoc[]>({
+    queryKey: ["budgetPlanFiles", plan_id],
+    queryFn: () => getBudgetPlanSuppDocs(plan_id),
+    staleTime: 5000
+  })
+}

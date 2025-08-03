@@ -15,7 +15,6 @@ import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patien
 import { Form } from "@/components/ui/form/form";
 import { useLocation } from "react-router";
 import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues";
-import { personal } from "@/pages/record/health/patientsRecord/patientPostRequest";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 
 import { FormInput } from "@/components/ui/form/form-input";

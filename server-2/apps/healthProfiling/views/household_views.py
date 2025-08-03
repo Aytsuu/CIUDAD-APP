@@ -44,14 +44,16 @@ class HouseholdTableView(generics.ListAPIView):
         if search_query:
             queryset = queryset.filter(
                 Q(hh_id__icontains=search_query) |
-                Q(sitio__sitio_name__icontains=search_query) |
-                Q(hh_street__icontains=search_query) |
+                Q(add__sitio__sitio_name__icontains=search_query) |
+                Q(add__add_street__icontains=search_query) |
                 Q(hh_nhts__icontains=search_query) |
+                Q(hh_date_registered__icontains=search_query) |
                 Q(rp__per__per_lname__icontains=search_query) |
-                Q(rp__per__per_fname__icontains=search_query) | 
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |  
                 Q(family_count__icontains=search_query)
             ).distinct()
-
+            
         return queryset
 
 class HouseholdCreateView(generics.CreateAPIView):

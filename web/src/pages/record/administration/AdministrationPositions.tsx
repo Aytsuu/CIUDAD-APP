@@ -9,7 +9,6 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { useNavigate } from "react-router"
 import { Action, Type } from "./administrationEnums"
 import { useDeletePosition } from "./queries/administrationDeleteQueries"
-import { useDeletePositionHealth } from "./queries/administrationDeleteQueries" // Add this import
 import { ChevronRight, ChevronDown, Ellipsis, Trash, Loader2, Plus, Pen, Users, FolderOpen } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { getPositionFilterContext } from "./utils/staffFilterUtils"
@@ -26,14 +25,13 @@ export default function AdministrationPositions({
   const { user } = useAuth()
   const navigate = useNavigate()
   const { mutateAsync: deletePosition, isPending: isDeleting } = useDeletePosition()
-  const { mutateAsync: deletePositionHealth, isPending: isDeletingHealth } = useDeletePositionHealth()
   const [openCategories, setOpenCategories] = React.useState<Set<string>>(new Set())
 
   // Get filtering context based on logged-in user
   const filterContext = React.useMemo(() => getPositionFilterContext(user), [user])
 
   // Check if any deletion is in progress
-  const isDeletingAny = isDeleting || isDeletingHealth
+  const isDeletingAny = isDeleting
 
   // Group positions by category with filtering logic
   const groupedPositions = React.useMemo(() => {
@@ -92,11 +90,8 @@ export default function AdministrationPositions({
     if (!selectedPosition) return
     
     try {
-      // Execute both deletions in parallel
-      await Promise.all([
-        deletePosition(selectedPosition),
-        deletePositionHealth(selectedPosition)
-      ])
+      // Delete position (API handles dual database deletion)
+      await deletePosition(selectedPosition)
       
       // Clear selection after successful deletion
       setSelectedPosition("")
@@ -104,7 +99,7 @@ export default function AdministrationPositions({
       console.error("Error deleting position:", error)
       // Handle error appropriately - you might want to show a toast notification
     }
-  }, [selectedPosition, deletePosition, deletePositionHealth, setSelectedPosition])
+  }, [selectedPosition, deletePosition, setSelectedPosition])
 
   const handleEdit = React.useCallback(() => {
     navigate("position", {

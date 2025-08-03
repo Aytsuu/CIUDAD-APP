@@ -8,7 +8,6 @@ from apps.administration.models import Staff
 from datetime import datetime
 
 
-
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
@@ -151,7 +150,8 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_addresses', 'per_age', 'per_additional_details']
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_addresses', 'per_age', 
+                  'per_additional_details']
         read_only_fields = fields
     
     def get_per_age(self, obj):

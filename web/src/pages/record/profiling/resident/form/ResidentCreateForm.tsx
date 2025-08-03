@@ -159,6 +159,7 @@ export default function ResidentCreateForm({
     }
   }, [form, residentsList, residentsListHealth, populateFields, addresses]);
 
+
   const submit = async () => {
     setIsSubmitting(true);
 
@@ -202,16 +203,29 @@ export default function ResidentCreateForm({
       const resident = await addResidentAndPersonal({
         personalInfo: personalInfo,
         staffId: staffId
-      })
+      });
+
+      console.log("Created resident:", resident);
 
       const new_addresses = await addAddress(addresses)
 
+      console.log("Created addresses:", new_addresses);
+
+      const personalAddressData = new_addresses?.map((address: any) => ({
+        add: address.add_id,
+        per: resident.per.per_id,
+      }));
+
+      console.log("Personal Address payload:", {
+        data: personalAddressData,
+        staff_id: user?.staff?.staff_id,
+        history_id: resident.per.history
+      });
+
       await addPersonalAddress({
-        data: new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: resident.per.per_id,
-        })),
-        staff_id: staffId
+        data: personalAddressData,
+        staff_id: user?.staff?.staff_id,
+        history_id: resident.per.history
       })
       
       showSuccessToast('Successfully registered new resident!')

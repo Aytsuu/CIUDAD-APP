@@ -24,7 +24,7 @@ export default function MainLayout() {
         <div className="flex-shrink-0 h-full relative z-0">
           <SidebarProvider>
             {/* <AppSidebar assignedFeatures={user?.resident_profile?.staff?.assignments ?? []}/> */}
-            <AppSidebar assignedFeatures={user?.staff?.assignments ?? []}/>
+            <AppSidebar />
             <div className="bg-snow">
               <TooltipLayout
                 trigger={<SidebarTrigger onClick={() => setIsOpen(!isOpen)} />}

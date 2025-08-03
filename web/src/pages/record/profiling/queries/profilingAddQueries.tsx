@@ -9,9 +9,18 @@ import {
   addFamilyComposition,
   addFile,
   addHousehold,
+  addPersonal,
   addPersonalAddress,
   addResidentAndPersonal,
 } from "../restful-api/profiingPostAPI";
+import { api } from "@/api/api";
+
+export const useAddPersonal = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => addPersonal(data),
+    onSuccess: () => {}
+  })
+}
 
 export const useAddAddress = () => {
   return useMutation({
@@ -22,10 +31,11 @@ export const useAddAddress = () => {
 export const useAddPerAddress = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({data, staff_id} : {
+    mutationFn: ({data, staff_id, history_id} : {
       data: Record<string, any>[], 
-      staff_id: string
-    }) => addPersonalAddress(data, staff_id),
+      staff_id?: string,
+      history_id?: string
+    }) => addPersonalAddress(data, staff_id, history_id),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['personalInfo']})
       queryClient.invalidateQueries({queryKey: ['personalHistory']});
@@ -153,6 +163,19 @@ export const useAddHousehold = () => {
     },
   });
 };
+
+export const useAddBusinessRespondent = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post('profiling/business/create-respondent/', data);
+        return res.data;
+      } catch (err ) {
+        throw err;
+      }
+    }
+  })
+}
 
 export const useAddBusiness = () => {
   const queryClient = useQueryClient();

@@ -403,7 +403,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.authentication.middleware.AuthCheckingMiddleware',
-    'simple_history.middleware.HistoryRequestMiddleware',
+    # 'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -507,14 +507,13 @@ REST_FRAMEWORK = {
 # ========================
 # CORS SETTINGS
 # ========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    config('FRONTEND_URL', default='http://localhost:3000'),
-]
+# CORS_ALLOWED_ORIGINS = [
+#     config('FRONTEND_URL', default='http://localhost:3000'), # replace this with the domain e.g 'https://ciudad-app.onrender.com'
+# ]
+
 ALLOWED_HOSTS = ['*'] 
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True # disable in production
+CORS_ALLOW_CREDENTIALS = True # false in production
 
 CORS_ALLOW_HEADERS = [
     'accept',

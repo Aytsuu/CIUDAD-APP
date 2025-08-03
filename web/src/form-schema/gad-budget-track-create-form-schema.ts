@@ -40,8 +40,7 @@ const GADAddEntrySchema = z.object({
     }
     if (data.gbud_type === "Expense") {
       return (
-        !!data.gbud_exp_particulars &&
-        data.gbud_actual_expense != null
+        !!data.gbud_exp_particulars
       );
     }
     return false;

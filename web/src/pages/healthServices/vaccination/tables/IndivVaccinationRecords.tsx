@@ -3,9 +3,8 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, Trash, Search, ChevronLeft } from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,7 @@ import { getVaccinationRecordById } from "../restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
+import { UserRound, Syringe, MapPin } from "lucide-react";
 import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 
 export interface VaccinationRecord {
@@ -115,7 +114,7 @@ export default function IndivVaccinationRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
-  let currentAge = calculateAge(patientData.dob).toString()
+  const currentAge = calculateAge(patientData.dob).toString()
 
   const { data: vaccinationRecords, isLoading } = useQuery({
     queryKey: ["patientVaccinationDetails", patientData.pat_id],

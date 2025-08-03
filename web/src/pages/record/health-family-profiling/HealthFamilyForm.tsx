@@ -258,15 +258,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { formatHouseholds, formatResidents } from "./profilingFormats";
 import { DependentRecord } from "./profilingTypes";
-import { FaHome, FaUsers, FaBriefcaseMedical, FaClipboardCheck } from "react-icons/fa";
+import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser } from "react-icons/fa";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useHouseholdsListHealth, useResidentsListHealth } from "./family-profling/queries/profilingFetchQueries";
+import { useHouseholdsListHealth, useResidentsListHealth, useFamilyMembersWithResidentDetails } from "./family-profling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 // These imports are currently unused but may be needed when implementing step 4
-// import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
-// import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
-// import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
-// import { Separator } from "@/components/ui/separator";
+import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
+import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
+import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
+import { Separator } from "@/components/ui/separator";
 
 export default function HealthFamilyForm() {
   const { showLoading, hideLoading } = useLoading();
@@ -277,9 +277,8 @@ export default function HealthFamilyForm() {
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
   const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
-  // Commenting out unused state variables for now
-  // const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
-  const [famId] = React.useState<string>(""); // Add fam_id state
+  const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
+  const [famId, setFamId] = React.useState<string>(""); // Family ID from backend
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
@@ -290,15 +289,12 @@ export default function HealthFamilyForm() {
  
   const formattedResidents = React.useMemo(() => formatResidents(residentsListHealth), [residentsListHealth]);
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsListHealth), [householdsListHealth]);
-
-  // Fetch family members for household info step using famId
-  // Commented out since it's not being used in the current form implementation
-  // const familyMembersHealth = useFamilyMembersWithResidentDetails(famId);
+  const familyMembersHealth = useFamilyMembersWithResidentDetails(famId);
 
   // Debug logging
   React.useEffect(() => {
     console.log('Family ID:', famId);
-    // console.log('Family Members:', familyMembersHealth);
+    console.log('Family Members:', familyMembersHealth);
   }, [famId]);
 
   React.useEffect(() => {
@@ -340,7 +336,7 @@ export default function HealthFamilyForm() {
     { label: "Demographics", minProgress: 25, icon: FaHome },
     { label: "Family Members", minProgress: 50, icon: FaUsers },
     { label: "Dependents", minProgress: 75, icon: FaBriefcaseMedical },
-    { label: "Household Info", minProgress: 100, icon: FaClipboardCheck }
+    { label: "Household Info", minProgress: 100, icon: FaHouseUser }
   ], []);
 
   return (
@@ -388,76 +384,47 @@ export default function HealthFamilyForm() {
             />
           )}
           {currentStep === 3 && (
-            // <DependentsInfoLayout
-            //   form={form}
-            //   residents={{
-            //     default: residentsListHealth,
-            //     formatted: formattedResidents,
-            //   }}
-            //   selectedParents={[
-            //     selectedMotherId,
-            //     selectedFatherId,
-            //     selectedGuardianId,
-            //   ]}
-            //   dependentsList={dependentsList}
-            //   setDependentsList={setDependentsList}
-            //   defaultValues={defaultValues}
-            //   back={() => prevStep()}
-            //   nextStep={() => {
-            //     // After dependents registration, you should set famId from backend response here
-            //     // For now, just continue to next step
-            //     nextStep();
-            //   }}
-            //   setFamId={setFamId} // Pass setFamId to DependentsInfoLayout
-            // />
             <DependentsInfoLayout
               form={form}
-              residents={{
-                default: residentsListHealth,
-                formatted: formattedResidents,
-              }}
-              selectedParents={[
-                selectedMotherId,
-                selectedFatherId,
-                selectedGuardianId,
-              ]}
+              residents={{ default: residentsListHealth, formatted: formattedResidents }}
+              selectedParents={[selectedMotherId, selectedFatherId, selectedGuardianId]}
               dependentsList={dependentsList}
               setDependentsList={setDependentsList}
-              defaultValues={defaultValues}
-              back={() => prevStep()}
+              back={prevStep}
+              nextStep={nextStep}
+              setFamId={setFamId}
             />
           )}
-          {/* {currentStep === 4 && (
+          {currentStep === 4 && (
             <>
               <EnvironmentalFormLayout
                 form={form}
                 residents={{
-                  default: residentsListHealth,
-                  formatted: formattedResidents,
+                  default: familyMembersHealth,
+                  formatted: familyMembersHealth.map(mem => ({
+                    ...mem,
+                    id: `${mem.rp_id} - ${mem.per.per_fname} ${mem.per.per_lname}`
+                  }))
                 }}
                 selectedResidentId={selectedResidentId}
                 setSelectedResidentId={setSelectedResidentId}
               />
-              <div className="flex items-center justify-between px-10">
-                <Separator />
-              </div>
+              <Separator className="my-6" />
               <NoncomDiseaseFormLayout
                 form={form}
-                familyMembers={[]}
+                familyMembers={familyMembersHealth}
                 selectedResidentId={selectedResidentId}
                 setSelectedResidentId={setSelectedResidentId}
               />
-              <div className="flex items-center justify-between px-10">
-                <Separator />
-              </div>
+              <Separator className="my-6" />
               <TbSurveilanceInfoLayout
                 form={form}
-                residents={[]}
+                residents={familyMembersHealth}
                 selectedResidentId={selectedResidentId}
                 setSelectedResidentId={setSelectedResidentId}
               />
             </>
-          )} */}
+          )}
           
         </Card>
 

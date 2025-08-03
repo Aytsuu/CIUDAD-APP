@@ -1,4 +1,3 @@
-import { MedicineStockType, CommodityStockType } from "../REQUEST/type";
 import { ImmunizationSuppliesType } from "@/form-schema/inventory/inventoryStocksSchema";
 // export const MedicinePayload = (
 //   data: any, // Replace with the correct type if available

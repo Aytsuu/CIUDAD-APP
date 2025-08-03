@@ -1,7 +1,8 @@
 import React from "react";
-import { Film, Play, Image, Plus, X, FileText, Loader2 } from "lucide-react";
+import { Film, Play, Image, Plus, X, FileText } from "lucide-react";
 import { Label } from "./label";
-import supabase from "@/supabase/supabase";
+import { cn } from "@/lib/utils";
+import { fileToBase64 } from "@/helpers/fileHelpers";
 
 export const MediaUpload = ({
   title,
@@ -10,7 +11,8 @@ export const MediaUpload = ({
   activeVideoId,
   setMediaFiles,
   setActiveVideoId,
-  onFileRemoved, // Add optional prop
+  onFileRemoved, 
+  maxFiles,
 }: {
   title: string;
   description: string;
@@ -18,89 +20,37 @@ export const MediaUpload = ({
   activeVideoId: string;
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>;
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
-  onFileRemoved?: (id: string) => void; // Optional callback
+  onFileRemoved?: (id: string) => void;
+  maxFiles?: number;
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const generateFileName = (file: File) => {
-    const fileExt = file.name.split(".").pop();
-    return `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}.${fileExt}`;
-  };
-
-  const uploadFile = async (file: File) => {
-    const fileName = generateFileName(file);
-    const filePath = `uploads/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from("image-bucket")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from("image-bucket")
-      .getPublicUrl(filePath);
-
-    return { publicUrl, storagePath: filePath };
-  };
-
-  const deleteFile = async (path: string) => {
-    const { error } = await supabase.storage
-      .from("image-bucket")
-      .remove([path]);
-    
-    if (error) throw error;
-    return true;
-  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const newMediaFiles = files.map((file) => {
+    // Map files to promises that resolve to media objects
+    const newMediaFilesPromises = files.map(async (file) => {
       const previewUrl = URL.createObjectURL(file);
-      const type = file.type.startsWith("image/")
-        ? "image"
-        : file.type.startsWith("video/")
-        ? "video"
-        : "document" as "image" | "video" | "document";
+      const base64 = await fileToBase64(file);
 
       return {
         id: `media-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
-        type,
-        file,
-        status: "uploading" as const,
-        previewUrl: previewUrl
+        name: file.name,
+        type: file.type,
+        file: base64,
+        previewUrl,
       };
     });
 
+    // Wait for all promises to resolve
+    const newMediaFiles = await Promise.all(newMediaFilesPromises);
+
+    // Now update state with resolved media files
     setMediaFiles((prev) => [...prev, ...newMediaFiles]);
-
-    // Upload files and update state with URLs
-    for (const media of newMediaFiles) {
-      try {
-        const { publicUrl, storagePath } = await uploadFile(media.file);
-        if (publicUrl) {
-          setMediaFiles((prev) =>
-            prev.map((m) =>
-              m.id === media.id 
-                ? { ...m, publicUrl, storagePath, status: "uploaded" } 
-                : m
-            )
-          );
-        }
-      } catch (error) {
-        console.error("Upload failed:", error);
-      }
-    }
-
-    e.target.value = "";
   };
+  
+  const isMaxFilesReached = maxFiles ? mediaFiles.length >= maxFiles : false;
 
   const toggleVideoPlayback = (id: string) => {
     setActiveVideoId(activeVideoId === id ? "" : id);
@@ -110,26 +60,17 @@ export const MediaUpload = ({
     const mediaToRemove = mediaFiles.find((media) => media.id === id);
     if (!mediaToRemove) return;
 
-    try {
-      // Remove from Supabase if already uploaded
-      if (mediaToRemove.storagePath) {
-        await deleteFile(mediaToRemove.storagePath);
-      }
-
-      // Remove from local state
-      setMediaFiles((prev) => prev.filter((media) => media.id !== id));
-      
-      // Clean up video playback if needed
-      if (activeVideoId === id) setActiveVideoId("");
-      
-      // Clean up object URL
-      if (mediaToRemove.previewUrl) {
-        URL.revokeObjectURL(mediaToRemove.previewUrl);
-      }
-      onFileRemoved?.(id);
-    } catch (error) {
-      console.error("Failed to delete file:", error);
+    // Remove from local state
+    setMediaFiles((prev) => prev.filter((media) => media.id !== id));
+    
+    // Clean up video playback if needed
+    if (activeVideoId === id) setActiveVideoId("");
+    
+    // Clean up object URL
+    if (mediaToRemove.previewUrl) {
+      URL.revokeObjectURL(mediaToRemove.previewUrl);
     }
+    onFileRemoved?.(id);
   };
 
   const handleAddMediaClick = () => {
@@ -147,21 +88,16 @@ export const MediaUpload = ({
         {mediaFiles.map((media) => (
           <div key={media.id} className="relative group">
             <div className="aspect-square bg-gray-100 rounded-md overflow-hidden flex items-center justify-center relative">
-              {media.status === "uploading" && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                  <Loader2 className="animate-spin text-white h-8 w-8" />
-                </div>
-              )}
-              {media.type === "video" ? (
+              {media.type.split("/")[0] === "video" ? (
                 <div className="w-full h-full">
                   <video
                     src={media.previewUrl}
                     className="object-cover w-full h-full"
                     controls={activeVideoId === media.id}
                     muted={activeVideoId !== media.id}
-                    onClick={() => {media.status === "uploaded" && toggleVideoPlayback(media.id)}}
+                    onClick={() => toggleVideoPlayback(media.id)}
                   />
-                  {activeVideoId !== media.id && media.status === "uploaded" && (
+                  {activeVideoId !== media.id && (
                     <div
                       className="absolute inset-0 flex items-center justify-center cursor-pointer"
                       onClick={() => toggleVideoPlayback(media.id)}
@@ -172,7 +108,7 @@ export const MediaUpload = ({
                     </div>
                   )}
                 </div>
-              ) : media.type === "image" ? (
+              ) : media.type.split("/")[0] === "image" ? (
                 <img
                   src={media.previewUrl}
                   alt="Preview"
@@ -182,7 +118,7 @@ export const MediaUpload = ({
                 <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-black/5">
                   <FileText size={48} className="text-gray-400 mb-2 stroke-1" />
                   <p className="text-xs text-gray-500 truncate w-full">
-                    {media.file.name}
+                    {media.name}
                   </p>
                 </div>
               )}
@@ -212,12 +148,23 @@ export const MediaUpload = ({
   
         {/* Add media button remains the same */}
         <div
-          onClick={handleAddMediaClick}
-          className="aspect-square border-2 border-dashed border-gray-300 rounded-md flex 
-                    flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
+          onClick={!isMaxFilesReached ? handleAddMediaClick : undefined}
+          className={cn(
+            "aspect-square border-2 border-dashed rounded-md flex flex-col items-center justify-center",
+            isMaxFilesReached
+              ? "border-gray-200 bg-gray-50 cursor-not-allowed"
+              : "border-gray-300 cursor-pointer hover:bg-gray-50"
+          )}
+          aria-disabled={isMaxFilesReached}
         >
-          <Plus size={24} className="text-gray-400 mb-1" />
-          <p className="text-xs text-gray-500">Add Media</p>
+          <Plus size={24} className={isMaxFilesReached ? "text-gray-300" : "text-gray-400"}
+          />
+          <p className={cn(
+            "text-xs mt-1",
+            isMaxFilesReached ? "text-gray-300" : "text-gray-500"
+          )}>
+            {isMaxFilesReached ? "Maximum reached" : "Add Media"}
+          </p>
           <input
             type="file"
             ref={fileInputRef}
@@ -225,6 +172,7 @@ export const MediaUpload = ({
             accept="image/*,video/*,.pdf,.doc,.docx"
             multiple
             className="hidden"
+            disabled={isMaxFilesReached}
           />
         </div>
       </div>
@@ -235,10 +183,8 @@ export const MediaUpload = ({
 export type MediaUploadType = 
   Array<{
     id: string;
-    type: "image" | "video" | "document";
-    file: File;
-    publicUrl?: string;
-    storagePath?: string;
-    status: "uploading" | "uploaded" | "error";
+    name: string;
+    type: string;
+    file: string;
     previewUrl?: string;
   }>

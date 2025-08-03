@@ -5,8 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
 import { Origin } from "../../profilingEnums";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import isEqual from "lodash/isEqual";

@@ -1,7 +1,6 @@
 import api from "@/pages/api/api";
-import {MedicineStockType, InventoryType,MedicineTransactionType, VaccineStockType, AntigenTransactionType } from "../REQUEST/type";
+import { VaccineStockType, AntigenTransactionType } from "../REQUEST/type";
 
-import { log } from "console";
 
 
 // import { CommodityStockType } from "../REQUEST/type";

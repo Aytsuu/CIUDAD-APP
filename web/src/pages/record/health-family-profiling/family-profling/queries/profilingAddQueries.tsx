@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { useNavigate } from "react-router";
 import {
   addAddressHealth,
   addFamilyHealth,
@@ -14,7 +13,6 @@ import {
   addPerAdditionalDetailsHealth,
   addMotherHealthInfo
 } from "../restful-api/profiingPostAPI";
-import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 
 export const useAddAddressHealth = () => {

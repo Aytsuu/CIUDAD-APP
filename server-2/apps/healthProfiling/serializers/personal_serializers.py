@@ -65,6 +65,17 @@ class PersonalBaseSerializer(serializers.ModelSerializer):
         addresses = [pa.add for pa in per_addresses.select_related('add')]
         return AddressBaseSerializer(addresses, many=True).data
 
+class PersonalWithHistorySerializer(PersonalBaseSerializer):
+    history = serializers.SerializerMethodField()
+    
+    class Meta(PersonalBaseSerializer.Meta):
+        fields = PersonalBaseSerializer.Meta.fields + ['history']
+    
+    def get_history(self, obj):
+        history = obj.history.first()
+        if history:
+            return history.history_id
+        return None
 
 class PersonalUpdateSerializer(serializers.ModelSerializer):
     per_addresses = serializers.ListField(child=AddressBaseSerializer(), required=False)

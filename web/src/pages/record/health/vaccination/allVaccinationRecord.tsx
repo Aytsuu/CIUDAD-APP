@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
 // import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";

@@ -7,8 +7,6 @@ import { filterComplaints } from "./FilterComplaint";
 import ComplaintFilterBar from "./ComplaintFilterBar";
 import ComplaintTable from "./ComplaintTable";
 import ComplaintPagination from "./ComplaintPagination";
-import { useAuth } from "@/context/AuthContext";
-
 
 export default function ComplaintRecord() {
   const DEFAULT_PAGE_SIZE = 10;
@@ -35,7 +33,6 @@ export default function ComplaintRecord() {
     setCurrentPage(1);
   }, [searchQuery, pageSize]);
 
-  // if (isLoading) return <BlotterRecordSkeleton />;
   if (error) return <div>Error: {error.message}</div>;
 
   const columns = useMemo(() => complaintColumns(complaints), [complaints]);
@@ -60,7 +57,7 @@ export default function ComplaintRecord() {
         setPageSize={setPageSize}
       />
 
-      <ComplaintTable data={paginatedData} columns={columns} />
+      <ComplaintTable data={paginatedData} columns={columns} isLoading={isLoading} />
 
       <ComplaintPagination
         currentPage={currentPage}

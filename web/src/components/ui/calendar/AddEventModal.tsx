@@ -82,7 +82,7 @@
   
 //   export default AddEventModal
 
-import { ChangeEvent, Dispatch, MouseEvent, SetStateAction, useState } from "react";
+import { ChangeEvent, Dispatch, MouseEvent, SetStateAction } from "react";
 import {
   TextField,
   Dialog,

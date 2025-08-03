@@ -1,7 +1,6 @@
 import React from "react";
 import { Form } from "@/components/ui/form/form";
-import { FormInput } from "@/components/ui/form/form-input";
-import { familyFormSchema, environmentalFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";

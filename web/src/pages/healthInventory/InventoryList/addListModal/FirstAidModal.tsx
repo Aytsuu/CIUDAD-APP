@@ -1,23 +1,16 @@
 import React, { useState } from "react";
 import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
   Form,
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { Button } from "@/components/ui/button/button";
 import {
   FirstAidType,
   FirstAidSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { addFirstAid } from "../requests/post/firstaid";
 import { getFirstAid } from "../requests/get/getFirstAid";
 import { FormInput } from "@/components/ui/form/form-input";

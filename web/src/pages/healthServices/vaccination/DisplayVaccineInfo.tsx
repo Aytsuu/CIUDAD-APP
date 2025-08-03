@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   User,
   Syringe,
-  Activity,
   MapPin,
   Calendar,
 } from "lucide-react";

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  getBusinesses,
+  getActiveBusinesses,
+  getBusinessRespondent,
   getFamFilteredByHouse,
   getFamiliesTable,
   getFamilyComposition,
@@ -8,6 +9,7 @@ import {
   getFamilyMembers,
   getHouseholdList,
   getHouseholdTable,
+  getPendingBusinesses,
   getPerAddressesList,
   getPersonalInfo,
   getRequests,
@@ -183,14 +185,38 @@ export const useFamilyComposition = () => {
 };
 
 // ================ BUSINESS ================
-export const useBusinesses = (
+export const useActiveBusinesses = (
   page: number,
   pageSize: number,
-  searchQuery: string
+  searchQuery: string,
 ) => {
   return useQuery({
-    queryKey: ["businesses", page, pageSize, searchQuery],
-    queryFn: () => getBusinesses(page, pageSize, searchQuery),
+    queryKey: ["activeBusinesses", page, pageSize, searchQuery],
+    queryFn: () => getActiveBusinesses(page, pageSize, searchQuery),
+    staleTime: 5000,
+  });
+};
+
+export const usePendingBusinesses = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+) => {
+  return useQuery({
+    queryKey: ["pendingBusinesses", page, pageSize, searchQuery],
+    queryFn: () => getPendingBusinesses(page, pageSize, searchQuery),
+    staleTime: 5000,
+  });
+};
+
+export const useBusinessRespondent = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+) => {
+  return useQuery({
+    queryKey: ["businessesRespondent", page, pageSize, searchQuery],
+    queryFn: () => getBusinessRespondent(page, pageSize, searchQuery),
     staleTime: 5000,
   });
 };
@@ -225,9 +251,26 @@ export const useOwnedBusinesses = (data: Record<string, any>) => {
       } catch (err){
         throw err;
       }
-    }
+    },
+    staleTime: 5000
   })
 }
+
+export const useRespondentInfo = (respondentId: string) => {
+  return useQuery({
+    queryKey: ['respondentInfo', respondentId],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`profiling/business/respondent/${respondentId}/info/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
 export const useHouseholdsList = () => {

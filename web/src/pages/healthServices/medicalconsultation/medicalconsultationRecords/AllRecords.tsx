@@ -183,7 +183,7 @@ export default function AllMedicalConRecords() {
 
   const handleNewRecord = () => {
     // Assuming the type is passed as a prop or state
-    let recordType = "nophilhealth"; // Ensure this matches the comparison below
+    const recordType = "nophilhealth"; // Ensure this matches the comparison below
     if (recordType === "philhealth") {
       navigate("/PHmedicalForm", { state: { recordType: "nonExistingPatient" } });
     }else { // Ensure this matches the value above

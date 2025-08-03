@@ -120,7 +120,7 @@ export default function WastedDoseForm({ wasted, record }: WastedDoseFormProps) 
     const transactionUnit = record.imzStck_unit === "boxes" ? "pcs" : "pcs";
     
     let piecesToDeduct = wastedAmount;
-    let updatePayload: any = {
+    const updatePayload: any = {
       wasted_items: (record.wastedDose ? parseInt(record.wastedDose) : 0) + wastedAmount,
       imzStck_avail: record.availableStock - wastedAmount
     };

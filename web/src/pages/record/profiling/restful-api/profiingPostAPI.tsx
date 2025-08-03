@@ -4,6 +4,33 @@ import { capitalize } from "@/helpers/capitalize";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
+// POST request for personal
+export const addPersonal = async (data: Record<string, any>) => {
+  
+  try {
+    const new_data = {
+      per_lname: data.per_lname,
+      per_fname: data.per_fname,
+      per_mname: data.per_mname || null,
+      per_suffix: data.per_suffix || null,
+      per_dob: formatDate(data.per_dob),
+      per_sex: data.per_sex,
+      per_status: data.per_status,
+      per_edAttainment: data.per_edAttainment || null,
+      per_religion: data.per_religion,
+      per_contact: data.per_contact,
+    }
+    const res = await api.post("profiling/personal/create/", new_data);
+    // await api2.post("health-profiling/personal/create/", new_data);
+
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+// POST request for address
 // POST request for address
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
@@ -16,16 +43,25 @@ export const addAddress =  async (data: Record<string, any>[]) => {
 }
 
 // POST request for personal address
-export const addPersonalAddress = async (data: Record<string, any>[], staff_id: string) => {
+export const addPersonalAddress = async (data: Record<string, any>[], staff_id?: string, history_id?: string) => {
   try {
     const values = {
       per_add: data,
-      staff_id: staff_id
+      staff_id: staff_id,
+      history_id: history_id
     }
+    
+    console.log("API addPersonalAddress payload:", values);
+    console.log("First per_add item:", data[0]);
+    
     const res = await api.post("profiling/per_address/create/", values);
     await api2.post("health-profiling/per_address/create/", values)
     return res.data;
-  } catch (err) {
+  } catch (err: any) {
+    console.error("addPersonalAddress error:", err);
+    if (err.response) {
+      console.error("Error response:", err.response.data);
+    }
     throw err;
   }
 }
@@ -117,6 +153,7 @@ export const addBusiness = async (data: Record<string, any>) => {
     const res = await api.post("profiling/business/create/", data);
     return res.data;
   } catch (err) {
+    console.error(err)
     throw err;
   }
 };

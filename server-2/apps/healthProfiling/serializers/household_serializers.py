@@ -46,7 +46,6 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   date_registered = serializers.DateField(source='hh_date_registered')
   registered_by = serializers.SerializerMethodField()
 
-
   class Meta:
     model = Household
     fields = ['hh_id', 'sitio', 'total_families', 'street', 'nhts', 'head', 'head_id',

@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
+import { Trash, Minus, Edit } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import UsedFAModal from "../../addstocksModal/UsedFAModal";
 import EditFirstAidStockForm from "../../editModal/EditFirstAidStockModal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export type FirstAidStocksRecord = {
   finv_id: number;

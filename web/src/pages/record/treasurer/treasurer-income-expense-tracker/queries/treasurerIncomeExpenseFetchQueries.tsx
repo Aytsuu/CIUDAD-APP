@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getIncomeExpense } from "../request/income-ExpenseTrackingGetRequest";
-import { getParticulars } from "../request/particularsGetRequest";
+import { getExpenseParticulars } from "../request/particularsGetRequest";
 import { getIncomeData } from "../request/income-ExpenseTrackingGetRequest";
 import { getIncomeParticulars } from "../request/particularsGetRequest";
 import { getIncomeExpenseMainCard } from "../request/income-ExpenseTrackingGetRequest";
@@ -11,8 +11,8 @@ export type IncomeExpense = {
     iet_num: number;
     iet_serial_num: string;
     iet_datetime: string;
-    dtl_budget_item: string;
-    dtl_id: number;
+    exp_budget_item: string;
+    exp_id: number;
     iet_amount: number;
     iet_actual_amount: number;
     iet_entryType: "Income" | "Expense";
@@ -27,14 +27,6 @@ export type IncomeExpense = {
     }[];
 };
   
-// Retrieving income/expense data
-// export const useIncomeExpense = () => {
-//     return useQuery<IncomeExpense[]>({
-//         queryKey: ["incomeExpense"],
-//         queryFn: getIncomeExpense,
-//         staleTime: 1000 * 60 * 30, // 30 minutes stale time
-//     });
-// };
 
 export const useIncomeExpense = (year?: number) => {
     return useQuery<IncomeExpense[]>({
@@ -48,50 +40,46 @@ export const useIncomeExpense = (year?: number) => {
 
 
 //FETCHING EXPENSE PARTICULAR
-export interface BudgetItem {
-    id: string;
-    name: string;
-    proposedBudget: number;
-}
-
-
-// export const useBudgetItems = () => {
-//     return useQuery<BudgetItem[]>({
-//         queryKey: ['budgetItems'],
-//         queryFn: async () => {
-//         const data = await getParticulars();
-//         return data.map((item: any) => ({
-//             id: item.dtl_id.toString(),
-//             name: item.dtl_budget_item,
-//             proposedBudget: parseFloat(item.dtl_proposed_budget)
-//         }));
-//         },
-//         staleTime: 1000 * 60 * 30, // 30 minutes stale time
-//     });
-// };
-
+// export interface BudgetItem {
+//     id: string;
+//     name: string;
+//     proposedBudget: number;
+// }
 
 // export const useBudgetItems = (year?: number) => {
 //     return useQuery<BudgetItem[]>({
 //         queryKey: ['budgetItems', year],
 //         queryFn: async () => {
-//             const data = await getParticulars(year);
-//             console.log("QUERIES: ", data)
-//             return data.data.map((item: any) => ({
-//                 id: item.dtl_id.toString(),
-//                 name: item.dtl_budget_item,
-//                 proposedBudget: parseFloat(item.dtl_proposed_budget)
+//             const response = await getParticulars(year);
+//             const items = Array.isArray(response) ? response : response?.data;
+            
+//             if (!items) {
+//                 console.warn("No items found in response", response);
+//                 return [];
+//             }
+            
+//             return items.map((item: any) => ({
+//                 id: item.dtl_id?.toString() || '',
+//                 name: item.dtl_budget_item || 'Unnamed',
+//                 proposedBudget: Number(item.dtl_proposed_budget) || 0
 //             }));
 //         },
 //         staleTime: 1000 * 60 * 30,
 //     });
 // };
 
+
+export interface BudgetItem {
+    id: string;
+    name: string;
+    proposedBudget: number;
+}
+
 export const useBudgetItems = (year?: number) => {
     return useQuery<BudgetItem[]>({
         queryKey: ['budgetItems', year],
         queryFn: async () => {
-            const response = await getParticulars(year);
+            const response = await getExpenseParticulars(year);
             const items = Array.isArray(response) ? response : response?.data;
             
             if (!items) {
@@ -100,14 +88,17 @@ export const useBudgetItems = (year?: number) => {
             }
             
             return items.map((item: any) => ({
-                id: item.dtl_id?.toString() || '',
-                name: item.dtl_budget_item || 'Unnamed',
-                proposedBudget: Number(item.dtl_proposed_budget) || 0
+                id: item.exp_id?.toString() || '',
+                name: item.exp_budget_item || 'Unnamed',
+                proposedBudget: Number(item.exp_proposed_budget) || 0
             }));
         },
         staleTime: 1000 * 60 * 30,
     });
 };
+
+
+
 
 
 //FETCHIN INCOME PARTICULAR

@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router";
-import { ArrowUpDown, Building, CircleAlert, CircleUserRound, House, UserRoundPlus, UsersRound } from "lucide-react";
+import { useNavigate } from "react-router";
+import { ArrowUpDown, Building, CircleUserRound, House, UsersRound } from "lucide-react";
 import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -431,14 +431,17 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
   },
   {
     accessorKey: 'location',
-    header: 'Location'
+    header: 'Location',
+    cell: ({row}) => (
+      <p>{row.original.bus_street}, Sitio {row.original.sitio}</p>
+    )
   },
   {
     accessorKey: 'bus_gross_sales',
     header: 'Gross Sales'
   },
   {
-    accessorKey: 'bus_date_registered',
+    accessorKey: 'bus_date_verified',
     header: 'Date Registered'
   },
   {
@@ -447,7 +450,14 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        
+        navigate("/business/form", {
+          state: {
+            params: {
+              type: "viewing",
+              busId: row.original.bus_id,
+            }
+          }
+        })
       }
 
       return (

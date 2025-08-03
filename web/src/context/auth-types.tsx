@@ -1,3 +1,15 @@
+export type UserPosition =
+  | 'health_staff'
+  | 'medical_officer'
+  | 'treasurer'
+  | 'clerk'
+  | 'admin'
+  | 'supervisor'
+  | 'tanod'
+  | 'Emergency Response Head'
+  | 'Barangay Captain'
+  ;
+
 export interface User {
   acc_id?: string;
   supabase_id: string;
@@ -6,9 +18,8 @@ export interface User {
   profile_image?: string | null;
   resident?: Record<string, any>;
   staff?: Record<string, any>;
+  department?: string;
 }
-
-
 
 export interface AuthContextType {
   user: User | null;

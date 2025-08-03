@@ -13,15 +13,11 @@ import {
   nonPhilHealthType,
 } from "@/form-schema/medicalConsultation/nonPhilhealthSchema";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "react-router-dom";
-import { ArrowLeft, UserPlus, ChevronLeft, Search } from "lucide-react";
+import { UserPlus, ChevronLeft, Search } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FormSelect } from "@/components/ui/form/form-select";
 

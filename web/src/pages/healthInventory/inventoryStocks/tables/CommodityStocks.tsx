@@ -20,7 +20,6 @@ import { getCommodityStocks } from "../REQUEST/Get";
 import { archiveInventory } from "../REQUEST/archive";
 import {CommodityStocksColumns} from "./columns/CommodityCol";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { CircleCheck,Loader2 } from "lucide-react";
 
 export type CommodityStocksRecord = {

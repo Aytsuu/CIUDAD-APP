@@ -1,38 +1,34 @@
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import RatesFormPage2 from "./forms/rates-form-page2"
 import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { Pen, Trash, History, Search } from 'lucide-react';
+import { Pen, History, Search, ArrowUpDown } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useState } from "react"
 import { useGetPurposeAndRate, type PurposeAndRate } from "./queries/RatesFetchQueries"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDeletePurposeAndRate } from "./queries/RatesDeleteQueries"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import RatesEditFormPage2 from "./edit-forms/rates-edit-form-2"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import React from "react"
 
-function RatesPage2({ onNext3, onPrevious1 }: {
-    onNext3: () => void;
-    onPrevious1: () => void;
-}) {
+function RatesPage2() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
 
     // Search + Pagination
     const [searchQueryActive, setSearchQueryActive] = useState("")
-    const [pageSizeActive, setPageSizeActive] = useState(10)
+    const [pageSizeActive, setPageSizeActive] = React.useState<number>(10)
     const [currentPageActive, setCurrentPageActive] = useState(1)
 
     const [searchQueryHistory, setSearchQueryHistory] = useState("")
-    const [pageSizeHistory, setPageSizeHistory] = useState(10)
+    const [pageSizeHistory, setPageSizeHistory] = React.useState<number>(10)
     const [currentPageHistory, setCurrentPageHistory] = useState(1)
 
     const { data: fetchedData = [], isLoading } = useGetPurposeAndRate()
@@ -70,9 +66,20 @@ function RatesPage2({ onNext3, onPrevious1 }: {
             accessorKey: 'pr_rate', header: 'Amount',
             cell: ({ row }) => formatNumber(row.original.pr_rate.toString())
         },
-        {
-            accessorKey: "pr_date", header: "Date Added/Updated",
-            cell: ({ row }) => formatTimestamp(row.original.pr_date)
+        { 
+            accessorKey: "pr_date",
+            header: ({ column }) => (
+                <div
+                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Date Updated
+                    <ArrowUpDown size={14} />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatTimestamp(row.getValue("pr_date"))} </div>            
+            )
         },
         {
             accessorKey: "action", header: "Action",
@@ -82,31 +89,41 @@ function RatesPage2({ onNext3, onPrevious1 }: {
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
                             trigger={
-                                <DialogLayout
-                                    trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16} /></div>}
-                                    title="Edit Purpose And Rate"
-                                    description="Update purpose and rates to keep records accurate."
-                                    mainContent={
-                                        <RatesEditFormPage2
-                                            pr_id={row.original.pr_id}
-                                            pr_purpose={row.original.pr_purpose}
-                                            pr_rate={row.original.pr_rate}
-                                            onSuccess={() => setEditingRowId(null)}
-                                        />
-                                    }
-                                    isOpen={editingRowId === Number(row.original.pr_id)}
-                                    onOpenChange={(open) => setEditingRowId(open ? Number(row.original.pr_id) : null)}
-                                />
+                                <div>
+                                    <DialogLayout
+                                        trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16} /></div>}
+                                        title="Edit Purpose And Rate"
+                                        description="Update purpose and rates to keep records accurate."
+                                        mainContent={
+                                            <RatesEditFormPage2
+                                                pr_id={row.original.pr_id}
+                                                pr_purpose={row.original.pr_purpose}
+                                                pr_rate={row.original.pr_rate}
+                                                onSuccess={() => setEditingRowId(null)}
+                                            />
+                                        }
+                                        isOpen={editingRowId === Number(row.original.pr_id)}
+                                        onOpenChange={(open) => setEditingRowId(open ? Number(row.original.pr_id) : null)}
+                                    />
+                                </div>
                             }
                             content="Edit"
                         />
-                        <ConfirmationModal
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
-                            title="Confirm Delete"
-                            description="Are you sure you want to delete this record? This will permanently remove the record from active use."
-                            actionLabel="Confirm"
-                            onClick={() => handleDelete(Number(prId))}
-                        />
+
+                        {/* <TooltipLayout
+                            trigger={
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
+                                        title="Confirm Delete"
+                                        description="Are you sure you want to delete this record? This will permanently remove the record from active use."
+                                        actionLabel="Confirm"
+                                        onClick={() => handleDelete(Number(prId))}
+                                    />
+                                </div>
+                            }
+                            content="Delete"
+                        /> */}
                     </div>
                 )
             }
@@ -150,14 +167,14 @@ function RatesPage2({ onNext3, onPrevious1 }: {
 
     return (
         <div className='bg-snow w-full h-full'>
-            <div className='bg-white p-4 drop-shadow rounded-lg'>
+            <div className='bg-white drop-shadow rounded-lg'>
                 <div className='p-7 flex flex-col justify-end gap-7'>
                     <div className="flex flex-row items-center">
                         <div className='flex flex-col gap-4 w-3/4'>
                             <h2 className='font-bold'>BARANGAY CLEARANCE FOR PERSONAL AND OTHER PURPOSES:</h2>
                             <Label>- For non-residents</Label>
                         </div>
-                        <div className='flex justify-end w-[32rem]'>
+                        {/* <div className='flex justify-end w-[32rem]'>
                             <DialogLayout
                                 trigger={<Button>+ Add</Button>}
                                 title='Add New Purpose and Fee for Personal Clearance'
@@ -166,7 +183,7 @@ function RatesPage2({ onNext3, onPrevious1 }: {
                                 isOpen={isDialogOpen}
                                 onOpenChange={setIsDialogOpen}
                             />
-                        </div>
+                        </div> */}
                     </div>
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -196,17 +213,21 @@ function RatesPage2({ onNext3, onPrevious1 }: {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeActive}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeActive(value >= 1 ? value : 1)
+                                            <Select value={pageSizeActive.toString()} onValueChange={(value) => {
+                                                setPageSizeActive(Number.parseInt(value))
                                                 setCurrentPageActive(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
@@ -244,19 +265,23 @@ function RatesPage2({ onNext3, onPrevious1 }: {
                                             }}
                                         />
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Input
-                                            type="number"
-                                            className="w-14 h-8"
-                                            min="1"
-                                            value={pageSizeHistory}
-                                            onChange={(e) => {
-                                                const value = +e.target.value
-                                                setPageSizeHistory(value >= 1 ? value : 1)
+                                            <Select value={pageSizeHistory.toString()} onValueChange={(value) => {
+                                                setPageSizeHistory(Number.parseInt(value))
                                                 setCurrentPageHistory(1)
-                                            }}
-                                        />
+                                            }}>
+                                            <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                            <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5">5</SelectItem>
+                                                <SelectItem value="10">10</SelectItem>
+                                                <SelectItem value="25">25</SelectItem>
+                                                <SelectItem value="50">50</SelectItem>
+                                                <SelectItem value="100">100</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
                                 </div>
@@ -280,15 +305,6 @@ function RatesPage2({ onNext3, onPrevious1 }: {
                         </TabsContent>
                     </Tabs>
                 </div>
-            </div>
-
-            <div className="flex justify-between mt-[20px]">
-                <Button type="button" onClick={onPrevious1} className="w-[100px]">
-                    Previous
-                </Button>
-                <Button type="button" onClick={onNext3} className="w-[100px]">
-                    Next
-                </Button>
             </div>
         </div>
     )

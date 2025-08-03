@@ -1507,11 +1507,9 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Textarea } from '@/components/ui/textarea';
 import { TextareaTab } from "@/components/ui/textarea-tab";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import { FormSelect } from "@/components/ui/form/form-select";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -1854,7 +1852,7 @@ function TemplateCreateForm({ onSuccess }: { onSuccess?: () => void }) {
                       Preview
                     </Button>
                   }
-                  className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
+                  className="max-w-full h-full pt-11 flex flex-col overflow-auto scrollbar-custom"
                   title=""
                   description=""
                   mainContent={

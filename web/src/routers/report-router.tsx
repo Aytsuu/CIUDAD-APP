@@ -3,8 +3,6 @@ import IRRecords from '@/pages/record/report/incident/IRRecords';
 import IRFormLayout from '@/pages/record/report/incident/IRFormLayout';
 import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';
 import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
-import ReportLayout from '@/pages/record/report/ReportLayout';
-import { Navigate } from 'react-router';
 import ReportDocument from '@/pages/record/report/ReportDocument';
 import CreateMissingWeeks from '@/pages/record/report/weekly/CreateMissingWeeks';
 
@@ -35,7 +33,7 @@ export const report_router = [
     element: <ReportDocument/>
   },
   {
-    path: '/report/weekly/missing-report/create',
+    path: '/report/weekly-accomplishment/missing-report/create',
     element: <CreateMissingWeeks/>
   }
 ]

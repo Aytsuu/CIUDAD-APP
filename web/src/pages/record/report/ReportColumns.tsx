@@ -1,14 +1,12 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Bookmark, Check, CircleAlert, MoveRight } from "lucide-react";
+import { Bookmark, CircleAlert } from "lucide-react";
 import { IRReport, ARReport } from "./ReportTypes";
-import { Button } from "@/components/ui/button/button";
 import ViewButton from "@/components/ui/view-button";
 import { useNavigate } from "react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import React from "react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Badge } from "@/components/ui/badge";
 
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [

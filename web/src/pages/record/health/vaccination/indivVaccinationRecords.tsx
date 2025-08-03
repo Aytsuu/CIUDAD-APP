@@ -2,16 +2,12 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
 // import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import VaccinationForm from "./vaccinationModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import ReactECharts from "echarts-for-react";
-import VitalSignsChart from "./vitalSignGraph";
-import { Syringe, ArrowLeft, ArrowUpDown, Search } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Search } from "lucide-react";
 import { Link } from "react-router";
 import {
   DropdownMenu,

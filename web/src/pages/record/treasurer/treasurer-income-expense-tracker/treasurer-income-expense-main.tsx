@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from 'react-router';
 import CardLayout from "@/components/ui/card/card-layout";
-import { Calendar, Search, X } from 'lucide-react';
+import { Calendar, Search } from 'lucide-react';
 import { Progress } from "@/components/ui/progress"; 
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 function IncomeExpenseMain() {
     const { data: fetchedData = [], isLoading } = useIncomeExpenseMainCard();
     
-    let styles = {
+    const styles = {
         budgetLabel: "w-[12rem]",
     };
 
@@ -57,7 +57,10 @@ function IncomeExpenseMain() {
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
-                {fetchedData.map((tracker: any, index: any) => {
+                {[...fetchedData]
+                    .sort((a, b) => Number(b.ie_main_year) - Number(a.ie_main_year))
+                    .map((tracker: any, index: any) => {
+                        
                     const budget = Number(tracker.ie_main_tot_budget)
                     console.log("BUDGETTTTT SA MAINNNNNNNNNNNNNNNNNNNNNN: ", budget)
                     const income = Number(tracker.ie_main_inc)
@@ -90,7 +93,7 @@ function IncomeExpenseMain() {
                                                 <div>{tracker.ie_main_year} Budget Overview</div>
                                             </h1>
                                         </div>
-                                        <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
+                                        {/* <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} /> */}
                                     </div>
                                 }
                                 description=""

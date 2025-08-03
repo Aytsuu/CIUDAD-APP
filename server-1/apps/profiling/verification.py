@@ -9,7 +9,7 @@ import torch
 import base64
 from django.core.files.base import ContentFile
 from django.conf import settings
-from utils.supabase_client import create_client
+from utils.supabase_client import supabase
 from dateutil.parser import parse
 from datetime import datetime
 from facenet_pytorch import MTCNN, InceptionResnetV1
@@ -18,10 +18,6 @@ logger = logging.getLogger(__name__)
 
 class KYCVerificationProcessor:
     def __init__(self):
-        self.supabase = create_client(
-            settings.SUPABASE_URL,
-            settings.SUPABASE_ANON_KEY
-        )
         self.mtcnn = MTCNN(
             keep_all=True,
             thresholds=[0.5, 0.6, 0.7],  # detection thresholds
@@ -61,7 +57,7 @@ class KYCVerificationProcessor:
                 'id_face_embedding': self._tensor_to_storage(id_face) if id_face is not None else None
             }
 
-            self.supabase.table('kyc_record') \
+            supabase.table('kyc_record') \
                 .update(update_data) \
                 .eq('kyc_id', kyc_id) \
                 .execute()
@@ -73,7 +69,7 @@ class KYCVerificationProcessor:
             }
 
         except Exception as e:
-            self.supabase.table('kyc_record') \
+            supabase.table('kyc_record') \
                 .update({'document_info_match' : False}) \
                 .eq('kyc_id', kyc_id) \
                 .execute()
@@ -100,7 +96,7 @@ class KYCVerificationProcessor:
                 'is_verified': False
             }
 
-        self.supabase.table('kyc_record') \
+        supabase.table('kyc_record') \
             .update(update_data) \
             .eq('kyc_id', kyc_id) \
             .execute()

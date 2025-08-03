@@ -4,9 +4,9 @@ import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { FaFacebook, FaPhoneAlt } from "react-icons/fa";
 import { GoVerified } from "react-icons/go";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import SignIn from "@/pages/landing/Signin";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button/button";
+import AuthDialog from "@/components/AuthDialog";
 
 const NavItemList = [
   { path: "/home", title: "Home" },
@@ -72,7 +72,7 @@ export default function LandingLayout() {
                 trigger={<Button>Sign in</Button>}
                 className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
                 mainContent={
-                  <SignIn/>
+                  <AuthDialog/>
                 }
               />)}
             </nav>

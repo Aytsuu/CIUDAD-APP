@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 
 import MotherInfo from "./maternal-indiv-info";

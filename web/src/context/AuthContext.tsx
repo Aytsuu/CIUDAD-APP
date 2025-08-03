@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearError();
 
     try {
-      const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+      const { data: _supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(supabaseError.message);
       }
 
-      const response = await api.post('authentication/login/', {
+      const response = await api.post('authentication/web/login/', {
         email,
         password,
       });
@@ -104,7 +104,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Login successful:", response.data);
       setUser(response.data.user);
       setIsAuthenticated(true);
-      
+      console.log("position: ", response.data.user.staff.assignments[0].pos.pos_title)
+      console.log("position: ", response.data.user.staff.assignments[1].pos.pos_title)
     } catch (error: any) {
       console.error("Login error:", error);
       

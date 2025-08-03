@@ -8,20 +8,18 @@ import {
   Eye,
   Trash,
   Loader2,
-  Search,
   Archive,
   ArchiveRestore,
 } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
 import { useUpdateWasteTruck } from "./queries/truckUpdate";
-import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
+import { useGetAllPersonnel, useGetTrucks, PersonnelData, TruckData } from "./queries/truckFetchQueries";
 import { useDeleteWasteTruck, useRestoreWasteTruck } from "./queries/truckDelQueries";
 import { useAddWasteTruck } from "./queries/truckAddQueries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,34 +30,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useQueryClient } from "@tanstack/react-query";
-
-type PersonnelCategory = "Watchman" | "Waste Driver" | "Waste Collector" | "Trucks";
-
-interface PersonnelItem {
-  id: string;
-  name: string;
-  position: string;
-  contact?: string;
-}
-
-interface PersonnelData {
-  Watchman: PersonnelItem[];
-  "Waste Driver": PersonnelItem[];
-  "Waste Collector": PersonnelItem[];
-  Trucks: TruckData[];
-}
-
-type TruckStatus = "Operational" | "Maintenance";
-
-interface TruckData {
-  truck_id: string;
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: TruckStatus;
-  truck_last_maint: string;
-  truck_is_archive?: boolean;
-}
+import type { PersonnelCategory, TruckStatus } from "./queries/truckFetchQueries";
 
 const WastePersonnel = () => {
   const queryClient = useQueryClient();
@@ -315,7 +286,9 @@ const WastePersonnel = () => {
                       {getCategoryIcon(category)}
                     </div>
                     <span className="text-2xl font-semibold">
-                      {personnelData[category].length}
+                      {category === "Trucks"
+                        ? personnelData.Trucks.filter((t) => !t.truck_is_archive).length
+                        : personnelData[category].length}
                     </span>
                   </div>
                   <div>
@@ -333,7 +306,7 @@ const WastePersonnel = () => {
                       <span>
                         {category === "Trucks"
                           ? `Operational: ${
-                              trucks.filter((t) => t.truck_status === "Operational").length
+                              trucks.filter((t) => t.truck_status === "Operational" && t.truck_is_archive === false).length
                             }`
                           : "Active"}
                       </span>
@@ -397,7 +370,7 @@ const WastePersonnel = () => {
               </button>
             </div>
 
-            <div className="relative w-full flex gap-2 mr-2 max-w-md">
+            {/* <div className="relative w-full flex gap-2 mr-2 max-w-md">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
                 size={17}
@@ -408,7 +381,7 @@ const WastePersonnel = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+            </div> */}
 
             {truckViewMode === "active" && (
               <Button

@@ -83,6 +83,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
       
       if (resident) {
         const filteredAddresses = perAddressList.filter((per_add: any) => per_add?.per === resident.personal_info.per_id)
+        form.resetField('address')
         console.log('Filtered addresses:', filteredAddresses)
         console.log('Looking for per_id:', resident.personal_info.per_id)
         

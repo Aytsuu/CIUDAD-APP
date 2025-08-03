@@ -1,6 +1,4 @@
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -10,16 +8,14 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
-import { BasicInfoType, BasicInfoSchema } from "@/form-schema/chr-schema";
+import { BasicInfoType } from "@/form-schema/chr-schema";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@radix-ui/react-label";
 import { Button } from "@/components/ui/button/button";
 import { UserPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect } from "react";
-import { CardTitle, CardHeader } from "@/components/ui/card/card";
-import { ChevronLeft, Search } from "lucide-react";
-import { Link } from "react-router";
+import { Search } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 type Page1Props = {

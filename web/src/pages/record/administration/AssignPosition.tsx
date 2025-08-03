@@ -9,18 +9,14 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Loader2, UserPlus, Building2, CheckCircle2, XCircle } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { LoadButton } from "@/components/ui/button/load-button";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
-// Import hooks for both databases
+// Import hooks for dual database operations (handled by APIs)
 import { usePositions } from "./queries/administrationFetchQueries";
-import { usePositionsHealth } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddStaffHealth } from "./queries/administrationAddQueries";
 import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
-import { useAddResidentAndPersonalHealth } from "../health-family-profiling/family-profling/queries/profilingAddQueries";
 
 export default function AssignPosition({
   personalInfoform,
@@ -35,11 +31,9 @@ export default function AssignPosition({
   // Use regular database for positions (primary source)
   const {data: positions, isLoading: isLoadingPositions} = usePositions();
   
-  // Hooks for both databases
+  // Hooks for dual database operations (APIs handle both databases)
   const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
-  const {mutateAsync: addResidentAndPersonalHealth} = useAddResidentAndPersonalHealth();
   const {mutateAsync: addStaff} = useAddStaff();
-  const {mutateAsync: addStaffHealth} = useAddStaffHealth();
   
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const personalDefaults = generateDefaultValues(personalInfoSchema)
@@ -68,28 +62,21 @@ export default function AssignPosition({
       const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
       const positionId = form.getValues().assignPosition;
 
-      // If resident exists, assign position to both databases
+      // If resident exists, assign position (API handles dual database insertion)
       if (residentId) {
         console.log(residentId, positionId);
         
-        // Insert to both databases simultaneously
-        await Promise.all([
-          addStaff({
-            residentId: residentId, 
-            positionId: positionId,
-            staffId: user?.staff?.staff_id || ""
-          }),
-          addStaffHealth({
-            residentId: residentId, 
-            positionId: positionId,
-            staffId: user?.staff?.staff_id || ""
-          })
-        ]);
+        // Assign staff position (API handles both databases)
+        await addStaff({
+          residentId: residentId, 
+          positionId: positionId,
+          staffId: user?.staff?.staff_id || ""
+        });
 
         deliverFeedback();
 
       } else {
-        // Register resident to both databases before assignment
+        // Register resident first, then assign position (APIs handle dual database operations)
         const personalInfo = personalInfoform.getValues();
 
         if (!personalInfo) {
@@ -97,31 +84,18 @@ export default function AssignPosition({
           return;
         }
         
-        // Register resident in both databases
-        const [resident, residentHealth] = await Promise.all([
-          addResidentAndPersonal({
-            personalInfo: personalInfo,
-            staffId: user?.staff?.staff_id || ""
-          }),
-          addResidentAndPersonalHealth({
-            personalInfo: personalInfo,
-            staffId: user?.staff?.staff_id || ""
-          })
-        ]);
+        // Register resident (API handles both databases)
+        const resident = await addResidentAndPersonal({
+          personalInfo: personalInfo,
+          staffId: user?.staff?.staff_id || ""
+        });
 
-        // Then assign position to both databases
-        await Promise.all([
-          addStaff({
-            residentId: resident.rp_id, 
-            positionId: positionId,
-            staffId: user?.staff?.staff_id || ""
-          }),
-          addStaffHealth({
-            residentId: residentHealth.rp_id, 
-            positionId: positionId,
-            staffId: user?.staff?.staff_id || ""
-          })
-        ]);
+        // Then assign position (API handles both databases)
+        await addStaff({
+          residentId: resident.rp_id, 
+          positionId: positionId,
+          staffId: user?.staff?.staff_id || ""
+        });
 
         deliverFeedback();
       }
@@ -142,8 +116,8 @@ export default function AssignPosition({
     // Show success message
     toast.success(
       isExistingResident 
-        ? 'Position assigned successfully to both databases!' 
-        : 'Resident registered and position assigned successfully to both databases!'
+        ? 'Position assigned successfully!' 
+        : 'Resident registered and position assigned successfully!'
     );
   };
 

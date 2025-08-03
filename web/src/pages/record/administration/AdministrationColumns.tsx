@@ -6,7 +6,6 @@ import {
   Ellipsis,
   Info,
   Loader2,
-  Lock,
   Pen,
   Trash,
   User,
@@ -19,9 +18,6 @@ import { Button } from "@/components/ui/button/button";
 import { Action } from "./administrationEnums";
 import { useUpdateStaff } from "./queries/administrationUpdateQueries";
 import { useDeleteStaff } from "./queries/administrationDeleteQueries";
-import { useDeleteStaffHealth } from "./queries/administrationDeleteQueries";
-import { useUpdateStaffHealth } from "./queries/administrationUpdateQueries"; // Add health database imports
- // Add health database imports
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import React from "react";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -122,19 +118,15 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         React.useState<boolean>(false);
       const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
       
-      // Main database hooks
+      // Main database hooks (APIs handle dual database operations)
       const { mutateAsync: updateStaff, isPending: isUpdatingMain } = useUpdateStaff();
       const { mutateAsync: deleteStaff, isPending: isDeletingMain } = useDeleteStaff();
-      
-      // Health database hooks
-      const { mutateAsync: updateStaffHealth, isPending: isUpdatingHealth } = useUpdateStaffHealth();
-      const { mutateAsync: deleteStaffHealth, isPending: isDeletingHealth } = useDeleteStaffHealth();
       
       const { data: positions, isLoading: isLoadingPositions } = usePositions();
 
       // Combined loading states
-      const isUpdatingAny = isUpdatingMain || isUpdatingHealth;
-      const isDeletingAny = isDeletingMain || isDeletingHealth;
+      const isUpdatingAny = isUpdatingMain;
+      const isDeletingAny = isDeletingMain;
 
       const defaultValues = generateDefaultValues(positionAssignmentSchema);
       const form = useForm<z.infer<typeof positionAssignmentSchema>>({
@@ -234,17 +226,11 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
             pos: values.assignPosition,
           };
 
-          // Execute both updates in parallel
-          await Promise.all([
-            updateStaff({
-              data: updateData,
-              staffId: row.original.staff_id,
-            }),
-            updateStaffHealth({
-              data: updateData,
-              staffId: row.original.staff_id,
-            })
-          ]);
+          // Update staff position (API handles dual database update)
+          await updateStaff({
+            data: updateData,
+            staffId: row.original.staff_id,
+          });
 
           toast(`Staff position updated to ${selectedPosition?.pos_title}`, {
             icon: (
@@ -268,13 +254,10 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
 
       const handleDelete = async () => {
         try {
-          // Execute both deletions in parallel
-          await Promise.all([
-            deleteStaff(row.original.staff_id),
-            deleteStaffHealth(row.original.staff_id)
-          ]);
+          // Delete staff (API handles dual database deletion)
+          await deleteStaff(row.original.staff_id);
 
-          toast("Staff has been removed from both databases", {
+          toast("Staff has been removed successfully", {
             icon: (
               <CircleCheck
                 size={24}

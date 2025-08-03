@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import SignatureCanvas from "react-signature-canvas"
-import { page5Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { type FormData } from "@/form-schema/FamilyPlanningSchema"
 
 type FamilyPlanningMethod =
   | "coc"

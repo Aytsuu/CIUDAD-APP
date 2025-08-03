@@ -14,8 +14,7 @@ import {
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Combobox } from "@/components/ui/combobox";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -25,7 +24,6 @@ import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
-import { patient } from "@/pages/animalbites/postrequest";
 import { calculateNextVisitDate } from "./FunctionHelpers";
 
 export default function VaccinationForm() {
@@ -218,7 +216,7 @@ export default function VaccinationForm() {
     let patrec_id: string | null = null;
     let vacrec_id: string | null = null;
     let vital_id: string | null = null;
-    let vachist_id: string | null = null;
+    const vachist_id: string | null = null;
     let followv_id: string | null = null;
 
     try {
@@ -375,12 +373,12 @@ export default function VaccinationForm() {
 
 
       
-      let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
+      const vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
 
       if (vac_type_choices === "routine") {
         
-          let interval = vaccineData.vaccinelist.routine_frequency.interval
-          let time_unit = vaccineData.vaccinelist.routine_frequency.time_unit
+          const interval = vaccineData.vaccinelist.routine_frequency.interval
+          const time_unit = vaccineData.vaccinelist.routine_frequency.time_unit
 
           console.log("Interval:", interval);
           console.log("Time unit:", time_unit);

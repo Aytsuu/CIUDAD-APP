@@ -1,8 +1,3 @@
-"use client"
-import { useState } from 'react';
-import {Input} from '../../../../components/ui/input.tsx';
-import {Label} from '../../../../components/ui/label.tsx';
-import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";
@@ -16,10 +11,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ChevronLeft } from 'lucide-react';
-
 import { Link } from 'react-router';
-
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -40,7 +32,7 @@ function UpdateMinutesOfMeeting() {
         },
     });
 
-    let meetingAreaOfFocus = [
+    const meetingAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];

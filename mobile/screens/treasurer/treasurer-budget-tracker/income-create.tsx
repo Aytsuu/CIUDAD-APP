@@ -11,7 +11,7 @@ import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
-import { SelectLayoutWithAdd } from '@/components/ui/selec-searchadd-layout';
+import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
 import { Textarea } from '@/components/ui/textarea';
 import { useIncomeParticular } from './queries/income-expense-FetchQueries';
 import { useCreateIncome } from './queries/income-expense-AddQueries';
@@ -128,7 +128,7 @@ function IncomeCreateForm() {
       }
       stickyFooter={true}
     >
-        <View className="w-full">
+        <View className="w-full px-4">
 
             <FormDateAndTimeInput
               control={form.control}

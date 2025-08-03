@@ -3,10 +3,8 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "../NewVacRecForm";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
+import { ArrowUpDown, Eye, Trash, Search, FileInput } from "lucide-react";
 import { Link } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
@@ -21,7 +19,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getVaccinationRecords } from "../restful-api/GetVaccination"; // import { archiveVaccinationRecord } from "../REQUEST/archive"; // You'll need to create this
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 export interface VaccinationRecord {

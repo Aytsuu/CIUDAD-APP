@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   VaccineStockType,
   VaccineStocksSchema,
@@ -18,7 +16,6 @@ import { getVaccine } from "../REQUEST/Get";
 import { addVaccineStock } from "../REQUEST/Post";
 import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import { AntigenTransaction } from "../REQUEST/Post";
-import { InventoryAntigenPayload } from "../REQUEST/Payload";
 import { addInventory } from "../REQUEST/Inventory";
 import {FormDateTimeInput} from "@/components/ui/form/form-date-time-input";
 

@@ -23,7 +23,7 @@ export const RegistationFormProvider = ({
 export const useRegistrationFormContext = () => {
   const context = useContext(FormContext);
   if (!context) {
-    throw new Error('useFormContext must be used within a FormProvider');
+    throw new Error('useRegistrationFormContext must be used within a ContextProvider');
   }
   return context;
 };

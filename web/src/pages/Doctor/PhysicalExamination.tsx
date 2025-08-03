@@ -7,9 +7,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { UseFormReturn, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PEType, PESchema } from "@/form-schema/doctor/doctorSchema";
+import { UseFormReturn } from "react-hook-form";
+import { PEType } from "@/form-schema/doctor/doctorSchema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { Button } from "@/components/ui/button/button";

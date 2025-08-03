@@ -1,5 +1,5 @@
 
-import { FirstAidStockType, } from "./type"; // Adjust the import path as necessary
+// Adjust the import path as necessary
 
 
 // export const InventoryFirstAidPayload = (data: any) => {

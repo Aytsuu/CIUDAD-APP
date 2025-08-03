@@ -66,35 +66,38 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
   @transaction.atomic
   def create(self, request, *args, **kwargs):
     staff_id = request.data.get('staff_id', None)
+    history_id = request.data.get('history_id', None)
     per_add = request.data.get('per_add')
-
+    print(history_id)
     per_id = per_add[0].get('per') if per_add else None
     if per_id:
-      staff = Staff.objects.filter(staff_id=staff_id).first()
       personal = Personal.objects.filter(per_id=per_id).first()
+
+    if not history_id:
+      staff = Staff.objects.filter(staff_id=staff_id).first()
       personal._history_user = staff
       personal.save()
 
-    try:
+      try:
         latest_history = personal.history.latest()
         history_id = latest_history.history_id
-    except personal.history.model.DoesNotExist:
-        history_id = None  # Handle this case if needed
+      except personal.history.model.DoesNotExist:
+        history_id = None  
 
     for item in per_add:
-        address = Address.objects.filter(add_id=item['add']).first()
-        item['per'] = personal
-        item['add'] = address
+      address = Address.objects.filter(add_id=item['add']).first()
+      item['per'] = personal
+      item['add'] = address
 
-        if not 'initial' in item:
-          instance = PersonalAddress(**item)
-          instance.save()
-        else:
-          item.pop('initial', None)
+      if not 'initial' in item:
+        instance = PersonalAddress(**item)
+        instance.save()
+      else:
+        item.pop('initial', None)
 
-        history = PersonalAddressHistory(**item)
-        history.history_id = history_id
-        history.save()
+      history = PersonalAddressHistory(**item)
+      history.history_id = history_id
+      history.save()
 
     response_data = {
         "detail": "Bulk create successful",

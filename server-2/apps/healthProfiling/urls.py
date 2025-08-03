@@ -21,8 +21,9 @@ urlpatterns = [
 
     # Personal Urls
     # path("personal/", PersonalView.as_view(), name="personal-details-list"),
-    path("personal/update/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
+    path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
+    path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
 
     # Family Urls
     # path("family/", FamilyView.as_view(), name="family-details"),
@@ -48,12 +49,12 @@ urlpatterns = [
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 
     # Resident Urls
-    path("resident/", ResidentProfileListExcludeFamView.as_view(), name="resident-details"),
+    path("resident/", ResidentProfileListWithOptions.as_view(), name="resident-details"),
     path("resident/list/table/", ResidentProfileTableView.as_view(), name="residents-table"),
     path("resident/create/", ResidentProfileCreateView.as_view(), name="resident-create"),
     path("resident/create/combined/", ResidentPersonalCreateView.as_view(), name="resident-combined-create"),
     path("resident/personal/<str:rp_id>/", ResidentPersonalInfoView.as_view(), name="resident-personal-info"),
-    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListExcludeFamView.as_view(), name="resident-list-with exclusions"),
+    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListWithOptions.as_view(), name="resident-list-with exclusions"),
     path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
 
     path('respondents/create/', RespondentsInfoCreateView.as_view(), name='respondents-create'),

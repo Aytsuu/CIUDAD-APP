@@ -1,4 +1,3 @@
-import path from "path";
 import AllMedicalConRecords from "@/pages/healthServices/medicalconsultation/medicalconsultationRecords/AllRecords";
 import NonPHMedicalForm from "@/pages/healthServices/medicalconsultation/NoPHmedForm";
 import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/medicalconsultationRecords/IndividualRecords";

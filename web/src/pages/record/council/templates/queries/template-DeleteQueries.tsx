@@ -1,8 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
 import { updateTemplateRec } from "../request/template-DeleteRequest";
 import { deleteTemplate } from "../request/template-DeleteRequest";
 

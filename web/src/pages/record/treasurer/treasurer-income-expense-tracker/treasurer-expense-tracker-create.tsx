@@ -256,7 +256,6 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -267,8 +266,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { SetStateAction } from "react";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncomeExpense } from "./queries/treasurerIncomeExpenseAddQueries";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 
@@ -323,6 +321,8 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
     const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;
+
+    console.log("EXP REMAIN BAL CREATE: ", totBud)
 
     // const onSubmit = (values: z.infer<typeof IncomeExpenseFormSchema>) => {
 

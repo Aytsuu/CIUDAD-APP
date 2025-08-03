@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router";
-import { Search, Trash, Eye } from "lucide-react";
+import { Trash, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,11 +13,8 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Label } from "@/components/ui/label";
-import CardLayout from "@/components/ui/card/card-layout";
 import { ChevronLeft } from "lucide-react";
 import ChildInfo from "./ChildsInformation";
 
@@ -27,8 +24,8 @@ export default function InvChildHealthRecords() {
     age: string;
     wt: number;
     ht: number;
-    vaccineStat: String;
-    nutritionStat: String;
+    vaccineStat: string;
+    nutritionStat: string;
     updatedAt: string;
   };
 

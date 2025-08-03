@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import {
   DropdownMenu,
@@ -15,7 +14,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { FileInput, Search, Trash, Eye, ChevronLeft } from "lucide-react";
+import { FileInput, Trash, Eye, ChevronLeft } from "lucide-react";
 import { Label } from "@radix-ui/react-dropdown-menu";
 
 export default function InvMedicalConRecords() {

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeMain } from "../request/income-ExpenseTrackingPostRequest";
-import { updateBudgetPlanDetail } from "../request/income-ExpenseTrackingPostRequest";
+import { updateExpenseParticular } from "../request/income-ExpenseTrackingPostRequest";
 import IncomeExpenseEditFormSchema from "@/form-schema/treasurer/expense-tracker-edit-schema";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { z } from "zod";
@@ -84,9 +84,9 @@ export const useUpdateIncomeExpense = (
       });
   
       //handle particular
-      await updateBudgetPlanDetail(values.particularId, {
+      await updateExpenseParticular(values.particularId, {
         years: values.years,
-        dtl_proposed_budget: values.proposedBud,
+        exp_proposed_budget: values.proposedBud,
       });
       
       return iet_num;

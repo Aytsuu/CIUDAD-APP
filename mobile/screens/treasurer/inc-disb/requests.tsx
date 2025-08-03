@@ -42,30 +42,39 @@ export const permanentDeleteDisbursementImage = async (disf_num: number) => {
   return res.data;
 };
 
-// export const getIncomeImages = async (archive: boolean = false) => {
-//   try {
-//     const res = await api.get('treasurer/income-tab/images/', {
-//       params: { archive: archive.toString() }
-//     });
-//     const data = res.data?.data ?? res.data ?? [];
-//     return Array.isArray(data) ? data : [];
-//   } catch (err) {
-//     console.error("API Error:", err);
-//     return [];
-//   }
+// folder operations
+export const permanentDeleteIncomeFolder = async (inf_num: number) => {
+  const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/permanent-delete/`);
+  return res.data;
+};
+
+export const permanentDeleteDisbursementFolder = async (dis_num: number) => {
+  const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/permanent-delete/`);
+  return res.data;
+};
+
+export const restoreIncomeFolder = async (inf_num: number) => {
+  const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/restore/`);
+  return res.data;
+};
+
+export const restoreDisbursementFolder = async (dis_num: number) => {
+  const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/restore/`);
+  return res.data;
+};
+
+// export const deleteIncomeFolder = async (inf_num: number, permanent: boolean = false) => {
+//   const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/`, {
+//     params: { permanent: permanent.toString() }
+//   });
+//   return res.data;
 // };
 
-// export const getDisbursementImages = async (archive: boolean = false) => {
-//   try {
-//     const res = await api.get('treasurer/disbursement-tab/images/', {
-//       params: { archive: archive.toString() }
-//     });
-//     const data = res.data?.data ?? res.data ?? [];
-//     return Array.isArray(data) ? data : [];
-//   } catch (err) {
-//     console.error("API Error:", err);
-//     return [];
-//   }
+// export const deleteDisbursementFolder = async (dis_num: number, permanent: boolean = false) => {
+//   const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/`, {
+//     params: { permanent: permanent.toString() }
+//   });
+//   return res.data;
 // };
 
 export const getIncomeImages = async (archive: boolean = false, folderId?: number) => {
@@ -118,27 +127,39 @@ export const createDisbursementImage = async (data: {
   return res.data
 }
 
-export const createFolder = async (data: { type: "income" | "disbursement"; name: string; year: string }) => {
+export const createFolder = async (data: { type: "income" | "disbursement"; name: string; year: string, desc?: string }) => {
   const endpoint = data.type === "income" 
     ? "treasurer/income-tab/folders/" 
-    : "treasurer/disbursement-tab/folders/"
-  const payload = {
-    [data.type === "income" ? "inf_name" : "dis_name"]: data.name,
-    [data.type === "income" ? "inf_year" : "dis_year"]: data.year,
-    [data.type === "income" ? "inf_is_archive" : "dis_is_archive"]: false,
-  }
-  const res = await api.post(endpoint, payload)
-  const responseData = res.data
-  const mergedData = { ...data, ...responseData }
-  return mergedData
+    : "treasurer/disbursement-tab/folders/";
+  
+  // Construct payload explicitly
+  const payload = data.type === "income"
+    ? {
+        inf_name: data.name,
+        inf_year: data.year,
+        inf_desc: data.desc,
+        inf_is_archive: false,
+      }
+    : {
+        dis_name: data.name,
+        dis_year: data.year,
+        dis_desc: data.desc,
+        dis_is_archive: false,
+      };
+
+  console.log("Creating folder at endpoint:", endpoint);
+  console.log("Payload:", payload);
+
+  const res = await api.post(endpoint, payload);
+  return res.data;
 }
 
-export const updateIncomeFolder = async (inf_num: number, data: { inf_name: string; inf_year: string }) => {
+export const updateIncomeFolder = async (inf_num: number, data: { inf_name: string; inf_year: string , inf_desc?: string}) => {
   const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/`, data)
   return res.data
 }
 
-export const updateDisbursementFolder = async (dis_num: number, data: { dis_name: string; dis_year: string }) => {
+export const updateDisbursementFolder = async (dis_num: number, data: { dis_name: string; dis_year: string; dis_desc?: string }) => {
   const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/`, data)
   return res.data
 }

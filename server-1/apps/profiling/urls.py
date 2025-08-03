@@ -62,9 +62,13 @@ urlpatterns = [
     path("request/count/", RequestCountView.as_view(), name="total-request"),
 
     # Business Urls
-    path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),
+    path("business/active/list/table/", ActiveBusinessTableView.as_view(), name="business-active-list"),
+    path("business/pending/list/table/", PendingBusinessTableView.as_view(), name="business-pending-list"),
+    path("business/respondent/list/table/", BusinessRespondentTableView.as_view(), name="business-respondent-list"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
+    path("business/create-respondent/", BusRespondentCreateView.as_view(), name="business-create-respondent"),
     path("business/<int:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
+    path("business/respondent/<int:br_id>/info/", BusinessRespondentInfoView.as_view(), name="business-respondent-data"),
     path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
     path("business/specific/ownership/", SpecificOwnerView.as_view(), name="business-for-specific-owner"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),

@@ -59,14 +59,38 @@ class ResidentPersonalInfoView(generics.RetrieveAPIView):
     queryset=ResidentProfile.objects.all()
     lookup_field='rp_id'
 
-class ResidentProfileListExcludeFamView(generics.ListAPIView):
+class ResidentProfileListWithOptions(generics.ListAPIView):
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
         excluded_fam_id = self.kwargs.get('fam_id', None)
+        is_staff = self.request.query_params.get('is_staff', "false").lower() == "true"
+        exclude_independent = self.request.query_params.get('exclude_independent', "false").lower() == "true"
+
+        # When adding new member to a family, the list shoud not contain members of the family
         if excluded_fam_id:
             return ResidentProfile.objects.filter(~Q(family_compositions__fam_id=excluded_fam_id))
         
+        # For staff assignment, the list should not contain staff members
+        if is_staff:
+            from apps.administration.models import Staff
+            staffs = Staff.objects.all()
+            residents = ResidentProfile.objects.all()
+            
+            filtered_residents = [
+                res for res in residents 
+                if res.rp_id not in
+                [staff.staff_id for staff in staffs]
+            ]
+
+            return filtered_residents
+
+        # Family registration, living independently
+        # Exclude those that are already registered as independent from the list
+        if exclude_independent:
+            return ResidentProfile.objects.filter(~Q(family_compositions__fc_role='Independent'))
+        
+        # Returns all residents by default if no parameters were provided 
         return ResidentProfile.objects.all()
     
 class ResidentProfileFamSpecificListView(generics.ListAPIView):

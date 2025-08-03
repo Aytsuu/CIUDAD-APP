@@ -14,8 +14,7 @@ import {
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Combobox } from "@/components/ui/combobox";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -25,7 +24,6 @@ import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchSpecificVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
-import { patient } from "@/pages/animalbites/postrequest";
 import { calculateNextVisitDate } from "./FunctionHelpers";
 
 export default function UpdateVaccinationForm() {
@@ -63,7 +61,7 @@ export default function UpdateVaccinationForm() {
 
 
 
-  let displayDoses = Vaccination.vachist_doseNo + 1;
+  const displayDoses = Vaccination.vachist_doseNo + 1;
 
   const renderDoseLabel = (className?: string) => {
     if (Vaccination.vaccine_details.vac_type === "routine") {
@@ -256,16 +254,16 @@ console.log("Patrec",Vaccination.patrec_id);
       return;
     }
 
-    let patrec_id = Vaccination.patrec_id;
+    const patrec_id = Vaccination.patrec_id;
     // let vacrec_id;
     let vital_id;
     let vachist_id;
     let newfollowv_id;
     let newpatrec_id;
     let newVaccrec_id;
-    let oldVaccrec_id = Vaccination.vacrec;
-    let oldpatrec_id = Vaccination.patrec_id;
-    let oldFollowv_id = Vaccination.follow_up_visit.followv_id;
+    const oldVaccrec_id = Vaccination.vacrec;
+    const oldpatrec_id = Vaccination.patrec_id;
+    const oldFollowv_id = Vaccination.follow_up_visit.followv_id;
     console.log("old Vacine ID:", oldFollowv_id);
     console.log("oldvacrec_id:", oldVaccrec_id);
 
@@ -339,8 +337,8 @@ console.log("Patrec",Vaccination.patrec_id);
         newVaccrec_id = newvaccinationRecordResponse.data.vacrec_id;
 
         //NEW SCHEDULE
-        let interval = vaccineData.vaccinelist.routine_frequency.interval;
-        let time_unit = vaccineData.vaccinelist.routine_frequency.time_unit;
+        const interval = vaccineData.vaccinelist.routine_frequency.interval;
+        const time_unit = vaccineData.vaccinelist.routine_frequency.time_unit;
         const nextVisitDate = calculateNextVisitDate(
           interval,
           time_unit,

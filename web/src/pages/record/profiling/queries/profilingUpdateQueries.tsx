@@ -117,7 +117,8 @@ export const useUpdateBusiness = () => {
         ...newData
       }));
 
-      queryclient.invalidateQueries({queryKey: ['businesses']});
+      queryclient.invalidateQueries({queryKey: ['activeBusinesses']});
+      queryclient.invalidateQueries({queryKey: ['pendingBusinesses']});
       queryclient.invalidateQueries({queryKey: ['businessInfo']});
     }
   })

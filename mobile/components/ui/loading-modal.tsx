@@ -2,13 +2,12 @@ import React from 'react';
 import {
   Modal,
   View,
-  Text,
   ActivityIndicator,
 } from 'react-native';
 
 export const LoadingModal = ({ 
   visible, 
-  message = 'Loading...', 
+  message = '', 
   transparent = true,
   animationType = 'fade'
 } : {
@@ -25,16 +24,11 @@ export const LoadingModal = ({
       statusBarTranslucent={true}
     >
       <View className="flex-1 bg-black/50 justify-center items-center">
-        <View className="bg-white rounded-xl p-6 min-w-[120px] items-center shadow-2xl">
           <ActivityIndicator 
             size="large" 
-            color="#007AFF" 
+            color="#d0d0d0" 
             className="mb-4"
           />
-          <Text className="text-base text-gray-800 text-center font-medium">
-            {message}
-          </Text>
-        </View>
       </View>
     </Modal>
   );

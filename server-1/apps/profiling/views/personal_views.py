@@ -1,31 +1,13 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from ..serializers.personal_serializers import *
 from ..models import *
 
 class PersonalCreateView(generics.CreateAPIView):
-  serializer_class = PersonalBaseSerializer
-  queryset=Personal.objects.all()
-
-  def perform_create(self, serializer):
-    staff_id = self.request.data.pop('staff_id')
-    
-    if not staff_id:
-        raise ValidationError({"staff_id": "Staff ID is required for history tracking"})
-
-    try:
-        staff = Staff.objects.get(staff_id=staff_id)
-    except Staff.DoesNotExist:
-        raise ValidationError({"staff_id": "Invalid staff ID"})
-
-    # Save with history tracking
-    serializer.save(
-        _history_user=staff,
-        _history_change_reason=f"Created by staff {staff_id}"
-    )
+    serializer_class = PersonalWithHistorySerializer
+    queryset = Personal.objects.all()
 
 class PersonalUpdateView(APIView):
   def patch(self, request, pk):

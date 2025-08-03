@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ZodError } from "zod";
 import {
   VaccineSchema,
   type VaccineSchemaType,
@@ -295,7 +294,7 @@ export default function PatNewVacRecForm() {
     let patrec_id: string | null = null;
     let vacrec_id: string | null = null;
     let vital_id: string | null = null;
-    let vachist_id: string | null = null;
+    const vachist_id: string | null = null;
     let followv_id: string | null = null;
 
     try {
@@ -371,11 +370,11 @@ export default function PatNewVacRecForm() {
       // Step 4: Deduct vaccine from stock
       await deductVaccineStock(vacStck_id);
 
-      let vac_type_choices = vaccineData.vaccinelist.vac_type;
+      const vac_type_choices = vaccineData.vaccinelist.vac_type;
 
       if (vac_type_choices === "routine") {
-        let interval = vaccineData.vaccinelist.routine_frequency.interval;
-        let time_unit = vaccineData.vaccinelist.routine_frequency.time_unit;
+        const interval = vaccineData.vaccinelist.routine_frequency.interval;
+        const time_unit = vaccineData.vaccinelist.routine_frequency.time_unit;
 
         console.log("Interval:", interval);
         console.log("Time unit:", time_unit);
