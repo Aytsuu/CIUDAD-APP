@@ -18,7 +18,6 @@ export default function MOMSuppDoc() {
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Sample data - in a real app, this would come from an API
     const data: SuppDoc[] = [
@@ -102,21 +101,6 @@ export default function MOMSuppDoc() {
                                 }}
                             />
                         </div>
-
-                        {/* <div className="w-full sm:w-auto">
-                            <DialogLayout
-                                trigger={<Button className="w-full sm:w-auto">Add <Plus className="ml-2" /></Button>}
-                                title="Add Supporting Document"
-                                description="Upload supporting documents for meetings"
-                                mainContent={
-                                    <AddSuppDoc
-                                        onSuccess={() => setIsDialogOpen(false)}
-                                    />
-                                }
-                                isOpen={isDialogOpen}
-                                onOpenChange={setIsDialogOpen}
-                            />
-                        </div> */}
                     </div>
                 </div>
 
