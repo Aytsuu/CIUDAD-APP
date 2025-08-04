@@ -1,8 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report";
+import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
+import {
+  exportToCSV,
+  exportToExcel,
+  exportToPDF,
+} from "../firstaid-report/export-report";
 import { ExportDropdown } from "../firstaid-report/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
@@ -16,8 +20,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select/select";
+import { useMedicineReports } from "./queries/fetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { toast } from "sonner";
+import { MonthlyMedicineRecord } from "./types";
 import { MedicineRecord } from "./types";
-import { useMedicineRecords } from "./queries/fetchQueries";
 
 export default function MonthlyMedicineDetails() {
   const location = useLocation();
@@ -31,22 +38,18 @@ export default function MonthlyMedicineDetails() {
   };
 
   const navigate = useNavigate();
-  // const { showLoading, hideLoading } = useLoading();
+  const { showLoading, hideLoading } = useLoading();
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  
-  const { monthlyrcplist_id, month, monthName,recordCount } = state || {};
+  const { monthlyrcplist_id, month, monthName, recordCount } = state || {};
 
+  const { data: apiResponse, isLoading, error } = useMedicineReports(month);
+  const monthlyData = apiResponse?.data as { records: MonthlyMedicineRecord[]; report: any } | undefined;
 
-   const { data: apiResponse, isLoading, error } = useMedicineRecords(month);
-  const monthlyData = apiResponse?.data || [];
-  const currentMonthData =
-    monthlyData.find((m) => m.month === month) || monthlyData[0];
-  const records = currentMonthData?.records || [];
-  const report = currentMonthData?.report;
+  const records = monthlyData?.records || [];
+  const report = monthlyData?.report;
 
-  
   const staffDetails = report?.staff_details?.rp?.per;
   const signatureBase64 = report?.signature;
   const staffName = staffDetails
@@ -56,11 +59,29 @@ export default function MonthlyMedicineDetails() {
     : "—";
   const position = report?.staff_details?.pos?.pos_title || "—";
 
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to fetch report");
+      toast("Retrying to fetch  report...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
+  }, [error]);
+
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return records;
 
     const searchLower = searchTerm.toLowerCase();
-    return records.filter((record: MedicineRecord) => {
+    return records.filter((record: any) => {
       const patient = record.patrec_details;
       const personalInfo = patient?.pat_details?.personal_info;
       const fullName = [
@@ -72,7 +93,8 @@ export default function MonthlyMedicineDetails() {
         .join(" ")
         .toLowerCase();
 
-      const medicineName = record.minv_details?.med_detail?.med_name?.toLowerCase() || "";
+      const medicineName =
+        record.minv_details?.med_detail?.med_name?.toLowerCase() || "";
       const reason = record.reason?.toLowerCase() || "";
       const date = record.requested_at
         ? new Date(record.requested_at).toLocaleDateString().toLowerCase()
@@ -98,7 +120,7 @@ export default function MonthlyMedicineDetails() {
   }, [filteredRecords, currentPage, pageSize]);
 
   const prepareExportData = () => {
-    return filteredRecords.map((record: MedicineRecord) => {
+    return filteredRecords.map((record: any) => {
       const patient = record.patrec_details;
       const personalInfo = patient?.pat_details?.personal_info;
       const fullName = [
@@ -116,8 +138,8 @@ export default function MonthlyMedicineDetails() {
         "Patient Name": fullName || "N/A",
         "Patient ID": patient?.pat_details?.pat_id || "",
         "Medicine Name": record.minv_details?.med_detail?.med_name ?? "N/A",
-        "Quantity": record.medrec_qty ?? "N/A",
-        "Reason": record.reason || "No reason provided",
+        Quantity: record.medrec_qty ?? "N/A",
+        Reason: record.reason || "No reason provided",
       };
     });
   };
@@ -165,7 +187,7 @@ export default function MonthlyMedicineDetails() {
     "Reason",
   ];
 
-  const tableRows = paginatedRecords.map((record: MedicineRecord) => {
+  const tableRows = paginatedRecords.map((record: any) => {
     const patient = record.patrec_details;
     const personalInfo = patient?.pat_details?.personal_info;
     const fullName = [
@@ -287,8 +309,7 @@ export default function MonthlyMedicineDetails() {
                     size="sm"
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
                     onClick={() => setSearchTerm("")}
-                  >
-                  </Button>
+                  ></Button>
                 )}
               </div>
 
@@ -430,13 +451,20 @@ export default function MonthlyMedicineDetails() {
             </div>
           </div>
 
-          <TableLayout
-            header={tableHeader}
-            rows={tableRows}
-            tableClassName="border rounded-lg"
-            bodyCellClassName="border border-gray-600 text-center text-xs p-1"
-            headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center"
-          />
+          {isLoading ? (
+            <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
+            </div>
+          ) : (
+            <TableLayout
+              header={tableHeader}
+              rows={tableRows}
+              tableClassName="border rounded-lg"
+              bodyCellClassName="border border-gray-600 text-center text-xs p-1"
+              headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center"
+            />
+          )}
 
           <div className="mt-4">
             <Label className="text-xs font-normal">

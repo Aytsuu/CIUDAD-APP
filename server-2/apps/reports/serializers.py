@@ -9,7 +9,3 @@ class MonthlyRCPReportSerializer(serializers.ModelSerializer):
         model = MonthlyRecipientListReport
         fields = '__all__'
         
-class HeaderRCPReportSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HeaderRecipientListReporTemplate
-        fields = '__all__'

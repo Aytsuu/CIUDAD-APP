@@ -1,34 +1,40 @@
 // MonthlyFirstAidRecords.tsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2, Search, ChevronLeft } from "lucide-react";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { MonthlyRecord } from "./types";
 import { useFirstAidRecords } from "./queries/fetchQueries";
 
-
 export default function MonthlyFirstAidRecords() {
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [yearFilter] = useState<string>("all");
   const navigate = useNavigate();
 
-  const {data: apiResponse, isLoading, error} = useFirstAidRecords(yearFilter);
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+  } = useFirstAidRecords(currentPage, pageSize, searchQuery, yearFilter);
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch first aid records");
+      toast.error("Failed to fetch report");
+      toast("Retrying to fetch report...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     }
   }, [error]);
-
 
   useEffect(() => {
     if (isLoading) {
@@ -38,27 +44,10 @@ export default function MonthlyFirstAidRecords() {
     }
   }, [isLoading]);
 
-  const monthlyData = apiResponse?.data || [];
-  const filteredData = useMemo(() => {
-    return monthlyData.filter((monthData) => {
-      const monthName = new Date(monthData.month + "-01").toLocaleString(
-        "default",
-        {
-          month: "long",
-          year: "numeric",
-        }
-      );
-      const searchText = `${monthData.month} ${monthName}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [searchQuery, monthlyData]);
-
-  
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Corrected data access
+  const monthlyData = apiResponse?.results?.data || [];
+  const totalMonths = apiResponse?.results?.total_months || 0;
+  const totalPages = Math.ceil(totalMonths / pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -84,7 +73,6 @@ export default function MonthlyFirstAidRecords() {
         <div className="text-center">{row.original.record_count}</div>
       ),
     },
-
     {
       id: "actions",
       cell: ({ row }) => (
@@ -106,7 +94,6 @@ export default function MonthlyFirstAidRecords() {
                 monthlyrcplist_id: row.original.monthlyrcplist_id,
                 report: row.original.report,
               },
-              
             })
           }
         >
@@ -132,8 +119,8 @@ export default function MonthlyFirstAidRecords() {
               Monthly First Aid Records
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              View first aid records grouped by month ({monthlyData.length}{" "}
-              months found)
+              View first aid records grouped by month ({totalMonths} months
+              found)
             </p>
           </div>
         </div>
@@ -147,7 +134,7 @@ export default function MonthlyFirstAidRecords() {
                 size={17}
               />
               <Input
-                placeholder="Search by month..."
+                placeholder="Search by month (e.g. 'July 2025')..."
                 className="pl-10 bg-white w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -164,7 +151,11 @@ export default function MonthlyFirstAidRecords() {
                 type="number"
                 className="w-[70px] h-8"
                 value={pageSize}
-                onChange={(e) => setPageSize(Math.max(1, +e.target.value))}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  setPageSize(value > 0 ? value : 1);
+                  setCurrentPage(1); // Reset to first page when page size changes
+                }}
                 min="1"
               />
               <p className="text-xs sm:text-sm">Entries</p>
@@ -173,27 +164,29 @@ export default function MonthlyFirstAidRecords() {
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2">loading....</span>
               </div>
             ) : (
-              <DataTable columns={columns} data={paginatedData} />
+              <DataTable columns={columns} data={monthlyData} />
             )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray">
               Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} months
+              {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+              {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths}{" "}
+              months
             </p>
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            {totalPages > 1 && (
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </div>
         </div>
       </div>

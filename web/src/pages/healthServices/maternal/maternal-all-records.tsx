@@ -21,7 +21,10 @@ import { FileInput } from "lucide-react";
 import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
 import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";
 import { TableSkeleton } from "../skeleton/table-skeleton";
+
 import { useMaternalRecords } from "./queries/maternalFetchQueries";
+import { useActivepregnanciesCount } from "./queries/maternalFetchQueries";
+
 
 export default function MaternalAllRecords() {
   interface maternalRecords {
@@ -50,16 +53,17 @@ export default function MaternalAllRecords() {
     patrec_type?: string;
   }
 
-  const {
-    data: maternalRecordsData,
-    isLoading,
-    refetch,
-  } = useMaternalRecords();
+  
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesCount, setEntriesCount] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords();
+  const { data: activePregnancies } = useActivepregnanciesCount();
+  const activePregnanciesCount = activePregnancies || 0;
+
+  
   const calculateAge = (dob: string): number => {
     const birthDate = new Date(dob);
     const today = new Date();
@@ -259,6 +263,9 @@ export default function MaternalAllRecords() {
     { id: "Transient", name: "Transient" },
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
+  const activePregnancyPercentage = Math.round(
+    (activePregnanciesCount / data.length) * 100
+  ) || 0;
 
   const filteredData = data.filter((item) => {
     const matchesSearchTerm =
@@ -329,9 +336,9 @@ export default function MaternalAllRecords() {
               content={
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{}</span>
+                    <span className="text-2xl font-bold">{activePregnanciesCount}</span>
                     <div className="flex items-center text-xs text-muted-foreground">
-                      <span>{}% of total</span>
+                      <span>{activePregnancyPercentage}% of total {data.length}</span>
                     </div>
                   </div>
                   <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">

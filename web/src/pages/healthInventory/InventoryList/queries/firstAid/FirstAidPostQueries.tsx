@@ -37,6 +37,7 @@ export const useAddFirstAid = () => {
       navigate(-1);
     },
     onError: (error) => {
+      console.error("Error adding first aid:", error);
       toast.error("Failed to add first aid", {
         icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
         duration: 2000,
