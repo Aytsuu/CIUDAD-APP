@@ -13,7 +13,8 @@ import WasteCollectionMain from "@/screens/waste/waste-collection/waste-collecti
 import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
 import Request from "../(request)";
 import GarbagePickupTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
+import ResolutionPage from "@/screens/council/resolution/resolution-main";
 
 export default () => {
-    return <WasteIllegalDumping/>
+    return <ResolutionPage/>
 }
