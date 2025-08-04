@@ -8,7 +8,6 @@ from apps.administration.models import Staff
 class UserAccountSerializer(serializers.ModelSerializer):
     resident = ResidentProfileFullSerializer(source='rp', read_only=True)
     staff = serializers.SerializerMethodField()
-    
 
     class Meta:
         model = Account
