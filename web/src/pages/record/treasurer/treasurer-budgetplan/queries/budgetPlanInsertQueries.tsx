@@ -22,8 +22,6 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             newBudgetHeader: BudgetPlan;
             newBudgetDetails: z.infer<typeof BudgetPlanDetailSchema>[];
         }) => {
-            // toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
-
             try {
                 const validatedDetails = values.newBudgetDetails.map(detail => {
                     const parsed = BudgetPlanDetailSchema.parse(detail);

@@ -46,7 +46,6 @@ function ViewBudgetPlan(){
     const planId = location.state?.planId;
     const [activeTab, setActiveTab] = useState("current");
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
 
     // calculating net available resources
@@ -90,7 +89,7 @@ function ViewBudgetPlan(){
     const sortedDetails = [...(fetchedData?.details || [])].sort((a, b) => {
         const idxA = orderedBudgetLabels.indexOf(a.dtl_budget_item ?? "");
         const idxB = orderedBudgetLabels.indexOf(b.dtl_budget_item ?? "");
-        return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
+        return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB); 
     });
 
     // 3. Build rows using the sorted details

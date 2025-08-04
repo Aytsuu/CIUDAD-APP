@@ -318,7 +318,7 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 
 
 # # ---------------------------------------------------
-# # DEVELOPMENT SERVER
+# # PRODUCTION SERVER
 # # ---------------------------------------------------
 
 # from pathlib import Path
@@ -340,12 +340,7 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
 # # DEBUG = config('DEBUG', default=False, cast=bool)
-# DEBUG=True
-# # ALLOWED_HOSTS = config(
-# #     'ALLOWED_HOSTS',
-# #     default='localhost,127.0.0.1',
-# #     cast=lambda v: [s.strip() for s in v.split(',')]
-# # )
+# DEBUG=False
 
 # # ========================
 # # SUPABASE CONFIGURATION
@@ -387,7 +382,6 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
     
 #     # Third-party apps
 #     'rest_framework',
-#     'simple_history',
     
 #     # Local apps
 #     'apps.administration',
@@ -406,24 +400,21 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 #     'apps.authentication',
 #     'apps.gad',
 #     'apps.clerk',
-#     'apps.secretary',
 #     'apps.act_log',
 #     'backend.firebase.notifications',
-    
 # ]
 
 # MIDDLEWARE = [
 #     'corsheaders.middleware.CorsMiddleware', 
 #     'django.middleware.security.SecurityMiddleware',
+#     'whitenoise.middleware.WhiteNoiseMiddleware', 
 #     'django.contrib.sessions.middleware.SessionMiddleware',
 #     'django.middleware.common.CommonMiddleware',
-#     'corsheaders.middleware.CorsMiddleware',
 #     'django.middleware.csrf.CsrfViewMiddleware',
 #     'django.contrib.auth.middleware.AuthenticationMiddleware',
 #     'django.contrib.messages.middleware.MessageMiddleware',
 #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 #     'apps.authentication.middleware.AuthCheckingMiddleware',
-#     # 'simple_history.middleware.HistoryRequestMiddleware',
 # ]
 
 # AUTHENTICATION_BACKENDS = [
@@ -497,13 +488,22 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # # INTERNATIONALIZATION
 # # ========================
 # LANGUAGE_CODE = 'en-us'
-# TIME_ZONE = 'Asia/Manila'
+# TIME_ZONE = 'UTC'
 # USE_I18N = True
-# USE_L10N = True
-# USE_TZ = True 
+# USE_TZ = True
 
-# # Static files 
+# # ========================
+# # STATIC FILES
+# # ========================
 # STATIC_URL = 'static/'
+# if not DEBUG:
+#     # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
+#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+#     # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
+#     # and renames the files with unique names for each version to support long-term caching
+#     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # # Default primary key field type
@@ -521,19 +521,27 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 #     ],
 # }
 
-# New User Model
-# AUTH_USER_MODEL = 'account.Account'
+# # New User Model
+# # AUTH_USER_MODEL = 'account.Account'
 
 # # ========================
 # # CORS SETTINGS
 # # ========================
-# # CORS_ALLOWED_ORIGINS = [
-# #     config('FRONTEND_URL', default='http://localhost:3000'), # replace this with the domain e.g 'https://ciudad-app.onrender.com'
-# # ]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://localhost:5173",
+#     "https://ciudad-app-server-1.onrender.com",
+#     "http://127.0.0.1:5173",  # Add this for Vite sometimes
+# ]
 
-# ALLOWED_HOSTS = ['*'] 
-# CORS_ALLOW_ALL_ORIGINS = True # disable in production
-# CORS_ALLOW_CREDENTIALS = True # false in production
+# ALLOWED_HOSTS = [
+#     'ciudad-app-server-1.onrender.com',
+#     'localhost',
+#     '127.0.0.1'
+# ]
+
+# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_CREDENTIALS = True
 
 # CORS_ALLOW_HEADERS = [
 #     'accept',
@@ -600,7 +608,6 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # # ========================
 # SCHEDULER_AUTOSTART = True
 # # SCHEDULER_AUTOSTART = not DEBUG # for production
-
 
 # # ========================
 # # PAYMONGO

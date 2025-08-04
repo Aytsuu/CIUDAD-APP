@@ -510,6 +510,26 @@ class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
         obj = super().get_object()
         return obj
     
+
+class GarbagePickupRequestsByDriverView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestAcceptedSerializer
+
+    def get_queryset(self):
+        driver_id = self.request.query_params.get('wstp_id')
+
+        if not driver_id:
+            return Garbage_Pickup_Request.objects.none()
+
+        assigned_garb_ids = Pickup_Assignment.objects.filter(
+            wstp_id=driver_id
+        ).values_list('garb_id', flat=True)
+
+        return Garbage_Pickup_Request.objects.filter(
+            garb_id__in=assigned_garb_ids,
+            garb_req_status__iexact='accepted'  # Filter only accepted requests
+        )
+    
+    
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
     def get_queryset(self):
@@ -529,6 +549,27 @@ class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
     def get_object(self):
         obj = super().get_object()
         return obj
+    
+
+class GarbagePickupCompletedByDriverView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestCompletedSerializer
+
+    def get_queryset(self):
+        driver_id = self.request.query_params.get('wstp_id')
+
+        if not driver_id:
+            return Garbage_Pickup_Request.objects.none()
+
+        assigned_garb_ids = Pickup_Assignment.objects.filter(
+            wstp_id=driver_id
+        ).values_list('garb_id', flat=True)
+
+        confirmed_garb_ids = Pickup_Confirmation.objects.filter(
+            garb_id__in=assigned_garb_ids,
+            conf_staff_conf=True
+        ).values_list('garb_id', flat=True)
+
+        return Garbage_Pickup_Request.objects.filter(garb_id__in=confirmed_garb_ids)
     
 
 class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
