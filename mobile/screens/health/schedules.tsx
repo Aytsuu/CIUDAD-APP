@@ -233,7 +233,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onResche
             <View className="flex-row justify-between items-start mb-4">
               <View className="flex-1">
                 <View className="flex-row items-center mb-2">
-                  <View className="bg-[#ECF8FF] rounded-full p-2 mr-3">
+                  <View className="bg-white rounded-full p-2 mr-3">
                     <Calendar size={18} color="#263D67" />
                   </View>
                   <View className="flex-1">
@@ -372,10 +372,10 @@ export default function Schedules() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#ECF8FF" />
-      <View className="flex-1 bg-[#ECF8FF]">
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <View className="flex-1 bg-[#ffffff]">
         {/* Header */}
-        <View className="flex-row justify-between items-center px-4 pt-12 pb-4">
+        <View className="flex-row justify-between items-center px-4 pt-12 ">
           <TouchableOpacity onPress={() => router.back()} className="flex-row items-center rounded-full px-2 py-2">
             <ChevronLeft size={18} color="#263D67" />
             <Text className="text-[#263D67] text-[15px] font-PoppinsMedium ml-1">Back</Text>

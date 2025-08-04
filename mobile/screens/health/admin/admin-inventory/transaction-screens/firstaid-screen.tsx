@@ -128,11 +128,11 @@ export default function FirstAidListScreen() {
             <Text className="text-xs sm:text-sm">Show</Text>
             <TextInput
               keyboardType="numeric"
-              className="w-14 h-8 border border-gray-300 rounded-md text-center"
+              className="w-14 h-10 border border-gray-300 rounded-md text-center"
               value={String(pageSize)}
               onChangeText={(text) => {
                 const value = parseInt(text);
-                setPageSize(value >= 1 ? value : 1);
+                setPageSize(value >= 1 ? value : 0);
               }}
               // min="1"
             />

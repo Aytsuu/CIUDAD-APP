@@ -65,11 +65,12 @@ export default function AntigenListScreen() {
   // --- LOADING SKELETON LOGIC ---
   if (isLoading) {
     return (
-      <View className="w-full h-full p-4">
-        <Skeleton className="h-10 w-1/2 mb-3" />
-        <Skeleton className="h-7 w-3/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
+      <View className="w-full h-full p-4 ">
+        {/* <Skeleton className="h-10 w-1/2 mb-3 bg-black"  />
+        <Skeleton className="h-7 w-3/4 bg-black mb-6" />
+        <Skeleton className="h-10 w-full bg-black  mb-4" />
+        <Skeleton className="h-4/5 w-full bg-black mb-4" /> */}
+        <Text>Loading...</Text>
       </View>
     );
   }
@@ -127,11 +128,11 @@ export default function AntigenListScreen() {
             <Text className="text-xs sm:text-sm">Show</Text>
             <TextInput
               keyboardType="numeric"
-              className="w-14 h-8 border border-gray-300 rounded-md text-center"
+              className="w-14 h-10 border border-gray-300 rounded-md text-center"
               value={String(pageSize)}
               onChangeText={(text) => {
                 const value = parseInt(text);
-                setPageSize(value >= 1 ? value : 1);
+                setPageSize(value >= 1 ? value : 0);
               }}
               // min="1"
             />

@@ -51,13 +51,13 @@ export default function ScheduleDialog({
           {/* max-w-6xl max-h-[90vh] overflow-hidden */}
           <View className="w-[95%] max-w-6xl h-[90%] bg-white rounded-lg overflow-hidden">
             {/* DialogHeader */}
-            <View className="p-4 border-b border-gray-200">
-              {/* DialogTitle */}
+            
+            {/* <View className="p-4 border-b border-gray-200">
               <Text className="text-xl font-semibold text-gray-800 mb-1">Edit Weekly Schedule</Text>
-              {/* DialogDescription */}
               <Text className="text-sm text-gray-500">Update your service availability for the week.</Text>
             </View>
-            
+             */}
+             
             {/* ScrollView for content within the modal if it exceeds height */}
             <ScrollView className="flex-1">
               <ServiceScheduleForm

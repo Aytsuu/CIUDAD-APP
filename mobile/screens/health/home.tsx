@@ -79,7 +79,7 @@ const Homepage = () => {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Today's Schedule Widget */}
         <View className="px-6 mt-5">
-          <TodayScheduleWidget onViewWeeklySchedule={handleViewWeeklySchedule} />
+          {/* <TodayScheduleWidget onViewWeeklySchedule={handleViewWeeklySchedule} /> */}
         </View>
 
         <View className="mt-5">
