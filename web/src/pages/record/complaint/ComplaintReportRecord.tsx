@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { archiveComplaint, raiseIssue } from "./restful-api/complaint-api";
+import { archiveComplaint, raiseIssue } from "./api-operations/restful-api/complaint-api";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 
@@ -219,8 +219,8 @@ export function ComplaintViewRecord() {
   const statusDisplay = getStatusDisplay();
 
   return (
-     <div className="w-full min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-6">
+     <div className="w-full min-h-screen">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div className="flex flex-row mb-4 sm:mb-0">
@@ -233,10 +233,7 @@ export function ComplaintViewRecord() {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <FileText className="w-5 h-5 text-blue-600" />
-                </div>
-                <h1 className="font-bold text-xl sm:text-2xl text-slate-800">
+                <h1 className="flex flex-row font-semibold text-xl sm:text-2xl text-darkBlue2 items-center">
                   Complaint Record Details
                 </h1>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusDisplay.class}`}>

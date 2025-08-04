@@ -8,6 +8,7 @@ from apps.administration.models import Staff
 class UserAccountSerializer(serializers.ModelSerializer):
     resident = ResidentProfileFullSerializer(source='rp', read_only=True)
     staff = serializers.SerializerMethodField()
+    
 
     class Meta:
         model = Account
@@ -34,7 +35,6 @@ class UserAccountSerializer(serializers.ModelSerializer):
             return StaffFullSerializer(is_staff).data
             
         return None
-        
         
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()

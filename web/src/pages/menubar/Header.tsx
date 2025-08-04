@@ -1,6 +1,5 @@
 import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
 import AccountProfile from "./navItems/user/accountProfile";
-// import { NotificationDropdown } from "@/pages/menubar/sidebar/notification-dropdown";
 import { NotificationBell } from "./navItems/notification/notification_bell";
 
 export function Header() {

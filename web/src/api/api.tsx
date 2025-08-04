@@ -1,23 +1,23 @@
 import axios from "axios";
 import supabase from "@/supabase/supabase";
 
-// export const api = axios.create({
-//   baseURL: "http://localhost:8000",
-//   withCredentials: true,
-//   headers: {
-//     "Content-Type": "application/json",
-//     "Accept": "application/json",
-//   },
-// });
-
 export const api = axios.create({
-  baseURL: "http://192.168.1.9:8000",
+  baseURL: "http://localhost:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
 });
+
+// export const api = axios.create({
+//   baseURL: "http://192.168.211.121:8000",
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
 
 export const api2 = axios.create({
   baseURL: "http://localhost:8001",

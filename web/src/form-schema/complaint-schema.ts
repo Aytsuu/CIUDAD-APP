@@ -25,23 +25,24 @@ const genderEnum = z
 //  ✪ ADDRESS 
 // ------------------------------
 
-export const addressSchema = z.object({
-  street: z.string(),
-  barangay: z.string(),
-  city: z.string(),
-  province: z.string(),
-  sitio: z.string().optional(),
-}).refine((data)=>
-    data.street.trim() &&
-    data.barangay.trim() &&
-    data.city.trim() &&
-    data.province.trim(),
-    {
-      path: ["street"],
-      message: "All address fields (Street, Barangay, City, Province) are required",
-    }
-  );
 
+export const addressSchema = z.object({
+  street: z.string().optional(),
+  barangay: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  sitio: z.string().optional(),
+})
+// .refine((data)=>
+//     data.street.trim() &&
+//     data.barangay.trim() &&
+//     data.city.trim() &&
+//     data.province.trim(),
+//     {
+//       path: ["street"],
+//       message: "All address fields (Street, Barangay, City, Province) are required",
+//     }
+//   );
 
 // -------------------------------------
 //  ✪ PERSON ( COMPLAINANT / ACCUSED ) 

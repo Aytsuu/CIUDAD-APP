@@ -12,6 +12,7 @@ import {
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { RaiseIssueDialog } from "../RaiseIssueDialog";
 
 export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
@@ -193,11 +194,15 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
           ),
         },
         {
+          id: "raise",
+          name: <RaiseIssueDialog complaintId={complaint.comp_id} />,
+        },
+        {
           id: "archive",
           name: (
             <div className="flex items-center gap-2">
               <ArchiveIcon size={16} className="text-darkGray" />
-              Move to Archive
+              Archive
             </div>
           ),
         },

@@ -129,9 +129,9 @@ export default () => {
               </TouchableOpacity>
             </View> 
             <View className="ml-4 flex-1">
-              <Text className="text-xl font-bold text-gray-900">{user?.username}</Text>
+              <Text className="text-xl font-bold text-gray-900">{user?.resident?.per?.per_fname} {user?.resident?.per?.per_lname}</Text>
               <Text className="text-gray-500 text-sm mt-1">{user?.email}</Text>
-              <Text className="text-gray-400 text-xs mt-1">{user?.staff?.staff_type}</Text>
+              <Text className="text-gray-400 text-xs mt-1">{user?.staff?.staff_type || "Resident"}</Text>
             </View>
           </View>
           

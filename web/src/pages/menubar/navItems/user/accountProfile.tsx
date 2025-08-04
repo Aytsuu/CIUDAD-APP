@@ -39,7 +39,7 @@ export default function AccountProfile(): JSX.Element {
       id: "view-profile",
       name: "Manage your Account",
       icons: <User size={20} />,
-      action: () => navigate("/account-view-profile"),
+      action: () => navigate("/manage/profile"),
     },
     {
       id: "sign-out",
@@ -55,7 +55,7 @@ export default function AccountProfile(): JSX.Element {
       {profileOptions.map((item) => (
         <div
           key={item.id}
-          className="flex items-center gap-x-4 p-2 hover:bg-lightBlue hover:bg-gray-100 rounded-md cursor-pointer text-darkGray text-sm font-sans"
+          className="flex items-center gap-x-4 p-2 hover:bg-lightBlue rounded-md cursor-pointer text-darkGray text-sm font-sans"
           onClick={item.action}
         >
           {item.icons}

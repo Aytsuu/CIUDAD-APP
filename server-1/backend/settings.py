@@ -407,7 +407,7 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'apps.authentication.backends.SupabaseAuthBackend',
+    # 'apps.authentication.backends.SupabaseAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
@@ -573,7 +573,6 @@ LOGGING = {
         'level': 'INFO',
     },
 }
-
 
 # ========================
 # SCHEDULER

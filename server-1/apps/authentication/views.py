@@ -244,7 +244,7 @@ class WebLoginView(APIView):
             )
 
 class WebUserView(APIView):
-    permission_classes = [AllowAny]
+    # permission_classes = [AllowAny]
 
     def get(self, request):
         try:
@@ -413,7 +413,6 @@ class RefreshView(APIView):
                 {'error': 'Failed to refresh session'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
 class LogoutView(APIView):
     def post(self, request):

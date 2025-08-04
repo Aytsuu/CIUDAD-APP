@@ -120,6 +120,7 @@ import { reports_router } from "./reports-router";
 import { summon_router } from "./summon-router";
 import { RouteWithTransition } from '@/components/route-transition/route-with-transition';
 import { withTransition } from '@/helpers/withTransition';
+import { viewprofile_router } from "./Account-settings";
 
 import { ProtectedRoute } from "@/ProtectedRoutes";
 
@@ -186,6 +187,7 @@ export const main_router: RouteObject[] = [
       ...familyProfilingRoute,
       ...patientsRecordRouter,
       ...health_administration_router,
+      ...viewprofile_router,
     ]),
   },
 ];

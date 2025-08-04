@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const response = await api.get("authentication/user/");
+      const response = await api.get("authentication/web/user/");
       setUser(response.data.user);
       setIsAuthenticated(true);
       
