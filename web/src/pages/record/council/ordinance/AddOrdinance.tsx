@@ -1,8 +1,5 @@
 "use client"
 import { useState } from 'react';
-import {Input} from '../../../../components/ui/input.tsx';
-import {Label} from '../../../../components/ui/label.tsx';
-import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button/button.tsx';
@@ -16,7 +13,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -44,7 +40,7 @@ function AddOrdinancePage() {
         },
     });
 
-    let ordAreaOfFocus = [
+    const ordAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];

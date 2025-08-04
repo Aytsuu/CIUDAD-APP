@@ -90,6 +90,8 @@ INSTALLED_APPS = [
     'apps.medicineservices',
     'apps.firstaid',
     'apps.childhealthservices',
+    'apps.servicescheduler',
+
     'apps.reports',
     'apps.file',
 
@@ -303,7 +305,8 @@ LOGGING = {
 
 # ---------------------------------------------------
 # DEVELOPMENT SERVER
-# ---------------------------------------------------
+# ------------------------------------------------
+
 
 # from pathlib import Path
 # from datetime import timedelta
@@ -391,15 +394,13 @@ LOGGING = {
 #     'apps.medicineservices',
 #     'apps.firstaid',
 #     'apps.childhealthservices',
+#     'apps.servicescheduler',
 #     'apps.reports',
 #     'apps.file',
 
 # ]
 
-# # REST_FRAMEWORK = {
-# #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-# #     'PAGE_SIZE': 10,  # default page size
-# # }
+
 
 # MIDDLEWARE = [
 #    'corsheaders.middleware.CorsMiddleware', 
@@ -443,15 +444,16 @@ LOGGING = {
 
 # # Database
 # # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-# 'default': {
-#     'ENGINE': 'django.db.backends.postgresql',
-#     'NAME': config('DB_NAME', default='my_default_db'),
-#     'USER': config('DB_USER', default='my_default_user'),
-#     'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
-#     'HOST': config('DB_HOST', default='localhost'),
-#     'PORT': config('DB_PORT', default='5432'),
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': config('DB_NAME', default='my_default_db'),
+#         'USER': config('DB_USER', default='my_default_user'),
+#         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
+#         'HOST': config('DB_HOST', default='localhost'),
+#         'PORT': config('DB_PORT', default='5432'),
+#     }
 # }
-
 
 # # Password validation
 # # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

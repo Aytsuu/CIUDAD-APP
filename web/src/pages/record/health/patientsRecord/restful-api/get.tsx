@@ -48,14 +48,35 @@ export const getPatientDetails = async (patientId: string) => {
 }
 
 
+export interface AppointmentFilters {
+	page?: number;
+	page_size?: number;
+	status?: string;
+	search?: string;
+	time_frame?: string;
+}
+
 // fetch all follow-up visits
-export const getAllFollowUpVisits = async () => {
+export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => {
   try {
-    const res = await api2.get("patientrecords/follow-up-visits-all/")
-    return res.data || []
+	const params = new URLSearchParams();
+
+	if(filters.page) params.append('page', filters.page.toString());
+	if(filters.page_size) params.append('page_size', filters.page_size.toString());
+	if(filters.status && filters.status !== 'All') params.append('status', filters.status);
+	if(filters.search) params.append('search', filters.search);
+	if(filters.time_frame) params.append('time_frame', filters.time_frame);
+
+	const queryString = params.toString();
+	const url = queryString 
+		? `patientrecords/follow-up-visits-all/?${queryString}/` 
+		: "patientrecords/follow-up-visits-all/";
+
+    const res = await api2.get(url)
+    return res.data || {count: 0, next: null, previous: null, results: []}
   } catch (error) {
     console.error("Error fetching all follow-up visits:", error)
-    return []
+    return {count: 0, next: null, previous: null, results: []}
   }
 }
 

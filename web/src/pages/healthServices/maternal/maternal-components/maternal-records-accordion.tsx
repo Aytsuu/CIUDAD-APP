@@ -87,7 +87,7 @@ export function PregnancyAccordion({
   selectedPatient,
   getStatusBadge,
   getRecordTypeBadge,
-  onCompletePregnancy,
+  // onCompletePregnancy,
   onCompleteRecord,
 }: PregnancyAccordionProps) {
   if (pregnancyGroups.length === 0) {
@@ -98,13 +98,13 @@ export function PregnancyAccordion({
     )
   }
 
-  const handleCompletePregnancy = (pregnancyId: string) => {
-    if (onCompletePregnancy) {
-      onCompletePregnancy(pregnancyId)
-    } else {
-      console.log(`Completing pregnancy: ${pregnancyId} (no onCompletePregnancy prop provided)`)
-    }
-  }
+  // const handleCompletePregnancy = (pregnancyId: string) => {
+  //   if (onCompletePregnancy) {
+  //     onCompletePregnancy(pregnancyId)
+  //   } else {
+  //     console.log(`Completing pregnancy: ${pregnancyId} (no onCompletePregnancy prop provided)`)
+  //   }
+  // }
 
   const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
     if (onCompleteRecord) {
@@ -140,6 +140,7 @@ export function PregnancyAccordion({
     return false
   }
 
+  
   return (
     <TooltipProvider>
       <Accordion type="single" collapsible className="w-full p-4">
@@ -281,7 +282,7 @@ export function PregnancyAccordion({
                               )}
                               {record.notes && (
                                 <p className="text-gray-600">
-                                  <strong>Notes:</strong> {record.notes}
+                                  <strong>Visit:</strong> {record.notes}
                                 </p>
                               )}
                             </div>

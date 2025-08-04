@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router";
 
 import SoapFormFields from "@/components/ui/soap-form";
 
@@ -35,10 +34,8 @@ export default function SoapForm({
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || null;
 
-  const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [showReceipt, setShowReceipt] = useState(false);
   const { mutate: submitSoapForm, isPending: isSubmitting } =
     useSubmitSoapForm();
 

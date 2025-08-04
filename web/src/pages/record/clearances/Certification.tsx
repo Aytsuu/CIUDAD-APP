@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -10,7 +9,6 @@ import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { getCertificates } from "@/pages/record/clearances/restful-api/certificateGetAPI";
 

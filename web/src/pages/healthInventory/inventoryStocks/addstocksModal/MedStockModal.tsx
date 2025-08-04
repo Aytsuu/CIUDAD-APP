@@ -21,7 +21,6 @@ import { useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AddMedicineStock() {
-
   const {user} =useAuth()
   const staff_id = user?.staff?.staff_id
   const form = useForm<MedicineStockType>({
@@ -64,15 +63,7 @@ export default function AddMedicineStock() {
     return () => subscription.unsubscribe();
   }, [form, medicines]);
 
-  // Watch for unit changes and reset pcs when not boxes
-  // useEffect(() => {
-  //   const subscription = form.watch((value, { name }) => {
-  //     if (name === "unit" && value.unit !== "boxes") {
-  //       form.setValue("pcs", 0);
-  //     }
-  //   });
-  //   return () => subscription.unsubscribe();
-  // }, [form]);
+ 
 
   const onSubmit = (data: MedicineStockType) => {
     setformData(data);

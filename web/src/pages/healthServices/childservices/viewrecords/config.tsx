@@ -329,7 +329,7 @@ export const notesFields: FieldConfig[] = [
   {
     label: "Clinical Notes",
     path: ["child_health_notes"],
-    format: (val: CHNotes[], record?: ChildHealthHistoryRecord) => {
+    format: (val: CHNotes[]) => {
       if (!val || val.length === 0) {
         return [
           <div key="no-notes" className="text-center">
@@ -377,7 +377,7 @@ export const notesFields: FieldConfig[] = [
   {
     label: "Follow-ups",
     path: ["child_health_notes"],
-    format: (val: CHNotes[], record?: ChildHealthHistoryRecord) => {
+    format: (val: CHNotes[]) => {
       const followUps = val?.filter((note) => note.followv_details) || [];
       if (followUps.length === 0) {
         return [
@@ -492,7 +492,7 @@ export const immunizationTrackingFields: FieldConfig[] = [
   {
     label: "Immunizations",
     path: ["immunization_tracking"],
-    format: (val: any[], record?: any) => {
+    format: (val: any[]) => {
       if (!val || val.length === 0) {
         return [
           <div key="no-immunizations" className="text-center">
@@ -596,10 +596,10 @@ export const getSupplementStatusesFields = (
         return [<span key="no-status">No supplement statuses recorded</span>];
 
       return allStatuses.map((status: CHSSupplementStat, index: number) => {
-        const statusUpdatedAt =
-          status?.updated_at && isValid(new Date(status.updated_at))
-            ? format(new Date(status.updated_at), "PPP")
-            : "N/A";
+        // const statusUpdatedAt =
+        //   status?.updated_at && isValid(new Date(status.updated_at))
+        //     ? format(new Date(status.updated_at), "PPP")
+        //     : "N/A";
         const dateCompleted =
           status?.date_completed && isValid(new Date(status.date_completed))
             ? format(new Date(status.date_completed), "PPP")
@@ -616,7 +616,7 @@ export const getSupplementStatusesFields = (
         const hasBirthwt =
           status?.status_type?.toLowerCase().includes("birthwt") ||
           status?.status_type?.toLowerCase().includes("birth weight");
-        const hasAnemic = status?.status_type?.toLowerCase().includes("anemic");
+        // const hasAnemic = status?.status_type?.toLowerCase().includes("anemic");
 
         return (
           <div className="flex justify-center">

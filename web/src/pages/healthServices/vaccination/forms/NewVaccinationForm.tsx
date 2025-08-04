@@ -57,7 +57,7 @@ export default function VaccinationRecordForm() {
   const [submitting, setSubmitting] = useState(false);
   const [isStep1ConfirmOpen, setIsStep1ConfirmOpen] = useState(false);
   const [isStep2ConfirmOpen, setIsStep2ConfirmOpen] = useState(false);
-  const [nextVisitDate, setNextVisitDate] = useState<string | null>(null);
+  const [, setNextVisitDate] = useState<string | null>(null);
   const [nextVisitDescription, setNextVisitDescription] = useState<
     string | null
   >(null);
@@ -74,7 +74,7 @@ export default function VaccinationRecordForm() {
   const { data: patientVaccinationRecords } = useIndivPatientVaccinationRecords(
     patientToUse?.pat_id
   );
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =
+  const { data: vaccinations = [] } =
     usePatientVaccinationDetails(patientToUse?.pat_id);
   const { data: unvaccinatedVaccines = [] } = useUnvaccinatedVaccines(
     patientToUse?.pat_id,

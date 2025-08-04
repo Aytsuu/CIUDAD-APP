@@ -1,6 +1,3 @@
-import { useEffect, useState, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 // import { PDFDocument } from 'pdf-lib';
 import { createClient } from '@supabase/supabase-js';
 

@@ -13,13 +13,3 @@ class UpdateMonthlyRCPReportDetailView(generics.RetrieveUpdateAPIView):
     queryset = MonthlyRecipientListReport.objects.all()
     lookup_field = 'monthlyrcplist_id'
     
-class HeaderRCPReportView(generics.RetrieveUpdateAPIView):
-    serializer_class = HeaderRCPReportSerializer
-    queryset = HeaderRecipientListReporTemplate.objects.all()
-    lookup_field = 'type'
-    
-class HeaderRCPReportListView(generics.ListAPIView):
-    serializer_class = HeaderRCPReportSerializer
-    queryset = HeaderRecipientListReporTemplate.objects.all()
-    
-
