@@ -2,13 +2,12 @@ import axios from "axios";
 import { supabase } from "@/lib/supabase";
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.52:8000",
+  baseURL: "http://192.168.214.208:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-  timeout: 10000,
 });
 
 export const api2 = axios.create({
@@ -22,7 +21,8 @@ api.interceptors.request.use(async (config) => {
   // Define unprotected paths
   const unprotectedPaths = [
     "/authentication/mobile/login/",
-    "/authentication/signup/"
+    "/authentication/signup/",
+    "/profiling/kyc/match-document/"
   ];
 
   const requestPath = new URL(config.url!, api.defaults.baseURL).pathname;
