@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMedicineRecords } from "../restful-api/getAPI";
+import { getMedicineRecords,getMedicineMonthCount,getMedicineReports } from "../restful-api/getAPI";
 
 
 export const useMedicineRecords = (yearFilter: string) => {
@@ -10,4 +10,21 @@ export const useMedicineRecords = (yearFilter: string) => {
   });
 };
 
+export const useMedicineReports = (month: string) => {
+  return useQuery({
+    queryKey: ["fareport", month],
+ queryFn: () =>
+  getMedicineReports(month),
+  });   
 
+
+};
+
+export const MeduseMonthCount = () => {
+  return useQuery({
+    queryKey: ["medmonthCount"],
+    queryFn: getMedicineMonthCount,
+    retry: 3,
+    staleTime: 60 * 1000, // 1 minute
+  })
+}

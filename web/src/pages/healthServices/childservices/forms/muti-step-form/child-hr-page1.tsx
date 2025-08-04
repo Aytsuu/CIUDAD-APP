@@ -50,7 +50,7 @@ export default function ChildHRPage1({
     clearErrors,
   } = form;
 
-  const { errors, isValid, isSubmitting, isDirty } = formState;
+  const { isSubmitting } = formState;
   const residenceType = watch("residenceType");
   const isTransient = residenceType === "Transient";
   const childDob = watch("childDob");

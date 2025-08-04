@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form/form";
@@ -102,7 +102,6 @@ export default function AddVaccinationList() {
     setValue,
     control,
     handleSubmit,
-    reset,
     formState: { errors },
   } = form;
   const [type, ageGroup, noOfDoses] = watch(["type", "ageGroup", "noOfDoses"]);
@@ -123,7 +122,6 @@ export default function AddVaccinationList() {
   const isDuplicateVaccineList = (
     vaccinelist: any[],
     newVaccinelist: string,
-    age_group: string
   ) => {
     return vaccinelist.some(
       (vac) =>
@@ -133,7 +131,6 @@ export default function AddVaccinationList() {
   };
 
   const handleFormSubmit = async (data: VaccineType) => {
-    const age_id = data.ageGroup.split(",")[0];
     setIsCheckingDuplicate(true);
     try {
       if (!data.ageGroup) {
@@ -150,7 +147,6 @@ export default function AddVaccinationList() {
       const isDuplicate = isDuplicateVaccineList(
         existingVaccineList,
         data.vaccineName,
-        age_id
       );
       if (isDuplicate) {
         form.setError("vaccineName", {

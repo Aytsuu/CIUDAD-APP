@@ -22,7 +22,6 @@ export const useAddVaccine = () => {
       vac_name: string;
       no_of_doses: number;
       ageGroup: number;
-      // specify_age: string;
     }) => addVaccine(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines"] });

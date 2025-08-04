@@ -22,7 +22,6 @@ import { BriefcaseMedical, ChevronLeft, FilesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { toast } from "sonner";
-import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import axios from "axios";
@@ -50,12 +49,13 @@ export default function MedicalConsultationForm() {
     user?.resident?.per?.per_mname || ""
   } ${user?.resident?.per?.per_lname || ""}`.trim();
 
-  const [patients, setPatients] = useState({
-    default: [] as any[],
-    formatted: [] as { id: string; name: string }[],
-  });
+  // const [patients, setPatients] = useState({
+  //   default: [] as any[],
+  //   formatted: [] as { id: string; name: string }[],
+  // });
+  
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [selectedPatientData, setSelectedPatientData] = useState<any>(
     patientData || null
   );
@@ -83,22 +83,22 @@ export default function MedicalConsultationForm() {
     },
   });
 
-  useEffect(() => {
-    if (mode === "fromallrecordtable") {
-      const loadPatients = async () => {
-        setLoading(true);
-        try {
-          const data = await fetchPatientRecords();
-          setPatients(data);
-        } catch (error) {
-          toast.error("Failed to load patients");
-        } finally {
-          setLoading(false);
-        }
-      };
-      loadPatients();
-    }
-  }, [mode]);
+  // useEffect(() => {
+  //   if (mode === "fromallrecordtable") {
+  //     const loadPatients = async () => {
+  //       setLoading(true);
+  //       try {
+  //         const data = await fetchPatientRecords();
+  //         setPatients(data);
+  //       } catch (error) {
+  //         toast.error("Failed to load patients");
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
+  //     loadPatients();
+  //   }
+  // }, [mode]);
 
   useEffect(() => {
     const loadPreviousMeasurements = async () => {

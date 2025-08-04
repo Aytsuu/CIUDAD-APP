@@ -1,4 +1,4 @@
-  import React, { useState } from "react";
+  import  { useState } from "react";
   import {
     FormField,
     FormItem,
@@ -56,16 +56,7 @@
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
-    const getCurrentCategoryName = () => {
-      const currentId = form.watch("cat_id");
-
-      // If no category is selected (null, undefined, or empty string)
-      if (!currentId) return "Select category";
-
-      const foundCategory = categories.find((cat) => cat.id === currentId);
-
-      return foundCategory?.name ?? "Select category";
-    };
+   
 
     const confirmAdd = async () => {
       const formData = form.getValues();

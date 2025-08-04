@@ -39,7 +39,7 @@ import {
   HeartPulse,
   ChevronLeft,
 } from "lucide-react";
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { z } from "zod";
 import {
   createHistoricalNutritionalStatusColumns,
@@ -61,11 +61,11 @@ export default function LastPage({
   historicalNutritionalStatus = [],
   historicalSupplementStatuses: historicalSupplementStatusesProp = [],
   onUpdateHistoricalSupplementStatus,
-  latestHistoricalNoteContent = "",
-  latestHistoricalFollowUpDescription = "",
-  latestHistoricalFollowUpDate = "",
+  // latestHistoricalNoteContent = "",
+  // latestHistoricalFollowUpDescription = "",
+  // latestHistoricalFollowUpDate = "",
   historicalMedicines = [],
-  mode,
+  // mode,
   isSubmitting,
   newVitalSigns,
   setNewVitalSigns,
@@ -82,11 +82,8 @@ export default function LastPage({
   const {
     data: medicineStocksOptions,
     isLoading: isMedicinesLoading,
-    isError: isMedicinesError,
-    error: medicinesError,
   } = fetchMedicinesWithStock();
 
-  const [isTodaysEntry, setIsTodaysEntry] = useState(false);
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
     const todaysHistoricalRecord = historicalVitalSigns.find((vital) =>
       isToday(vital.date)
@@ -222,9 +219,9 @@ export default function LastPage({
   } = form;
   const {
     control: editVitalSignFormControl,
-    setValue: editVitalSignFormSetValue,
+    // setValue: editVitalSignFormSetValue,
     handleSubmit: editVitalSignFormHandleSubmit,
-    formState: { errors: editVitalSignFormErrors },
+    // formState: { errors: editVitalSignFormErrors },
   } = editVitalSignForm;
 
   const selectedMedicines = watch("medicines");
@@ -233,20 +230,20 @@ export default function LastPage({
   const anemicData = watch("anemic");
   const birthwtData = watch("birthwt");
   const edemaSeverity = watch("edemaSeverity");
-  const chhistCreatedAt = formData.created_at;
+  // const chhistCreatedAt = formData.created_at;
 
-  const latestHistoricalNutritionalStatus = useMemo(() => {
-    if (
-      !historicalNutritionalStatus ||
-      historicalNutritionalStatus.length === 0
-    )
-      return null;
-    const sorted = [...historicalNutritionalStatus].sort(
-      (a, b) =>
-        new Date(b.date || "").getTime() - new Date(a.date || "").getTime()
-    );
-    return sorted[0];
-  }, [historicalNutritionalStatus]);
+  // const latestHistoricalNutritionalStatus = useMemo(() => {
+  //   if (
+  //     !historicalNutritionalStatus ||
+  //     historicalNutritionalStatus.length === 0
+  //   )
+  //     return null;
+  //   const sorted = [...historicalNutritionalStatus].sort(
+  //     (a, b) =>
+  //       new Date(b.date || "").getTime() - new Date(a.date || "").getTime()
+  //   );
+  //   return sorted[0];
+  // }, [historicalNutritionalStatus]);
 
   const hasSevereMalnutrition = useMemo(() => {
     if (!nutritionalStatus) return false;
@@ -260,19 +257,6 @@ export default function LastPage({
     return hasSevereMalnutrition && !todaysHistoricalRecord;
   }, [hasSevereMalnutrition, todaysHistoricalRecord]);
 
-  // Function to sync all form data to parent
-  const syncFormDataToParent = useCallback(() => {
-    const currentFormValues = form.getValues();
-    updateFormData({
-      vitalSigns: newVitalSigns,
-      anemic: currentFormValues.anemic,
-      birthwt: currentFormValues.birthwt,
-      medicines: currentFormValues.medicines,
-      status: currentFormValues.status,
-      nutritionalStatus: currentFormValues.nutritionalStatus,
-      edemaSeverity: currentFormValues.edemaSeverity,
-    });
-  }, [form, newVitalSigns, updateFormData]);
 
   // Update parent form data whenever any watched values change
   useEffect(() => {
@@ -404,16 +388,9 @@ export default function LastPage({
     setEditingBirthWeightIndex(null);
   };
 
-  const handleToggleVitalSignsForm = () => {
-    setShowVitalSignsForm((prev) => !prev);
-  };
 
-  // Modified handlePrevious to sync data before going back
-  const handlePrevious = useCallback(() => {
-    // Sync all current form data to parent before navigating
-    syncFormDataToParent();
-    onPrevious();
-  }, [syncFormDataToParent, onPrevious]);
+
+  
 
   const handleFormSubmit = handleSubmit(
     (data) => {
