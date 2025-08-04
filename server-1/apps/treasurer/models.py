@@ -1,8 +1,5 @@
 from django.db import models
 from datetime import date
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
-from simple_history.models import HistoricalRecords
 
 
 class annual_gross_sales(models.Model):
@@ -44,8 +41,6 @@ class Budget_Plan(models.Model):
     plan_issue_date = models.DateField(default=date.today)
     plan_is_archive = models.BooleanField(default=False)
 
-    history = HistoricalRecords()
-
     class Meta:
         db_table = 'budget_plan'
 
@@ -55,8 +50,7 @@ class Budget_Plan_Detail(models.Model):
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
- 
-    history = HistoricalRecords()
+    
     class Meta: 
         db_table = 'budget_plan_detail'
 
