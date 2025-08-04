@@ -1,11 +1,14 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { FormProvider } from "react-hook-form"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate } from "react-router"
+import { useLocation } from "react-router"
+
+import { type Patient } from "@/components/ui/patientSearch"
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import PrenatalFormFirstPg from "./prenatal-form-page1"
@@ -14,15 +17,38 @@ import PrenatalFormThirdPg from "./prenatal-form-page3"
 import PrenatalFormFourthPq from "./prenatal-form-page4"
 
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { useAddPrenatalRecord } from "../../queries/maternalAddQueries" // Corrected import path for useAddPrenatalRecord
-import type { PrenatalRecord } from "../../restful-api/maternalPOST" // Import the type
+import { useAddPrenatalRecord } from "../../queries/maternalAddQueries" 
+import type { PrenatalRecord } from "../../restful-api/maternalPOST" 
 
 export default function PrenatalForm() {
   const defaultValues = generateDefaultValues(PrenatalFormSchema)
   const [currentPage, setCurrentPage] = useState(1)
+  const [isFromIndividualRecord, setIsFromIndividualRecord] = useState(false)
+  const [preselectedPatient, setPreselectedPatient] = useState<Patient | null>(null)
+  const [activePregnancyId, setActivePregnancyId] = useState<string | null>(null)
   const navigate = useNavigate()
+  const location = useLocation()
 
   const addPrenatalMutation = useAddPrenatalRecord()
+
+  useEffect(() => {
+    if (location.state?.params) {
+      const { pregnancyData, pregnancyId } = location.state.params
+      
+      if (pregnancyData) {
+        setIsFromIndividualRecord(true)
+        setPreselectedPatient(pregnancyData)
+        setActivePregnancyId(pregnancyId)
+        
+        console.log("Coming from individual record:", pregnancyData)
+        console.log("Active pregnancy ID:", pregnancyId)
+      } else {
+        setIsFromIndividualRecord(false)
+        setPreselectedPatient(null)
+        setActivePregnancyId(null)
+      }
+    }
+  }, [location.state])
 
   const form = useForm<z.infer<typeof PrenatalFormSchema>>({
     resolver: zodResolver(PrenatalFormSchema),
@@ -293,6 +319,9 @@ export default function PrenatalForm() {
           <PrenatalFormFirstPg 
           form={form} 
           onSubmit={() => handlePatientSubmit(1)} 
+          isFromIndividualRecord={isFromIndividualRecord}
+          preselectedPatient={preselectedPatient}
+          activePregnancyId={activePregnancyId}
         />}
         {currentPage === 2 && (
           <PrenatalFormSecPg 

@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from .serializer import (
     MedicalHistorySerializer, ObstetricalHistorySerializer, PostpartumCompleteSerializer,
     PrenatalCompleteSerializer, PregnancyDetailSerializer,BodyMeasurementReadSerializer,
-    PreviousPregnancyCreateSerializer, ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer
+    PreviousPregnancyCreateSerializer, ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer,
+    PrenatalDetailSerializer, PrenatalCareDetailSerializer, PrenatalFormCompleteViewSerializer
 ) 
 # PreviousHospitalizationSerializer, PreviousPregnancySerializer, TTStatusSerializer,
 #     Guide4ANCVisitSerializer, ChecklistSerializer,
@@ -319,6 +320,61 @@ def get_patient_postpartum_count(request, pat_id):
 
 
 @api_view(['GET'])
+def get_latest_patient_prenatal_record(request, pat_id):
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+
+        active_pregnancy = Pregnancy.objects.filter(
+            pat_id=patient,
+            status='active'
+        ).order_by('-created_at').first()
+
+        if not active_pregnancy:
+            return Response({
+                'pat_id': pat_id,
+                'message': 'No active pregnancy',
+                'latest_prenatal_form': None
+            }, status=status.HTTP_200_OK)
+
+        latest_pf = Prenatal_Form.objects.filter(
+            pregnancy_id=active_pregnancy
+        ).select_related(
+            'pregnancy_id', 'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'bm_id', 'staff_id'
+        ).prefetch_related(
+            'pf_previous_hospitalization', 'tt_status', 'lab_result__lab_result_img',
+            'pf_anc_visit', 'pf_checklist', 'pf_birth_plan', 
+            'pf_obstetric_risk_code', 'pf_prenatal_care'
+        ).order_by('-created_at').first()
+
+        if not latest_pf:
+            return Response({
+                'pat_id': pat_id,
+                'pregnancy_id': active_pregnancy.pregnancy_id,
+                'message': 'No prenatal forms found for this pregnancy',
+                'latest_prenatal_form': None
+            }, status=status.HTTP_200_OK)
+
+        serializer = PrenatalDetailSerializer(latest_pf)
+
+        return Response({
+            'pat_id': pat_id,
+            'pregnancy_id': active_pregnancy.pregnancy_id,
+            'latest_prenatal_form': serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    except Patien.DoesNotExist:
+        return Response({
+            'error': f'Patient does not exist'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    except Exception as e:
+        logger.error(f"Error fetching latest prenatal form for patient {pat_id}: {str(e)}")
+        return Response({
+            'error': f'Failed to fetch latest prenatal form: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
 def get_patient_postpartum_records(request, pat_id):
     """Get all postpartum records for a specific patient"""
     try:
@@ -526,4 +582,158 @@ def get_prenatal_prev_pregnancy(request, pat_id):
     except Exception as e:
         return Response({
             'error': f'Failed to fetch previous pregnancy records: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_prenatal_patient_tt_status(request, pat_id):
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+
+        tt_status = TTStatus.objects.filter(
+            patrec_id__pat_id=patient
+        ).select_related('patrec_id').order_by('-tt_id').first()
+
+        if not tt_status:
+            return Response({
+                'patient': patient.pat_id,
+                'message': 'No TT status records found for this patient'
+            }, status=status.HTTP_200_OK)
+
+        tt_data = {
+            'tt_id': tt_status.tt_id,
+            'tt_status': tt_status.tt_status,
+            'tt_date': tt_status.tt_date.isoformat() if tt_status.tt_date else None,
+            'patrec_id': tt_status.patrec_id.patrec_id if tt_status.patrec_id else None
+        }
+
+        return Response({
+            'patient': patient.pat_id,
+            'tt_status': tt_data
+        }, status=status.HTTP_200_OK)
+
+    except Patient.DoesNotExist:
+        return Response({
+            'error': f'Patient with ID {pat_id} does not exist'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error fetching TT status for patient {pat_id}: {str(e)}')
+        return Response({
+            'error': f'Failed to fetch TT status: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_prenatal_records_with_care(request, pat_id):
+    """Get all prenatal records with their prenatal care entries for a specific pregnancy"""
+    try:
+        patient = Patient.objects.get(pat_id=pat_id)
+        
+        # Get the pregnancy_id from query parameters
+        pregnancy_id = request.GET.get('pregnancy_id')
+        
+        if not pregnancy_id:
+            return Response({
+                'error': 'pregnancy_id parameter is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verify the pregnancy exists and belongs to this patient
+        try:
+            pregnancy = Pregnancy.objects.get(
+                pregnancy_id=pregnancy_id,
+                pat_id=patient
+            )
+        except Pregnancy.DoesNotExist:
+            return Response({
+                'error': f'Pregnancy with ID {pregnancy_id} not found for patient {pat_id}'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get all prenatal records for this specific pregnancy (regardless of status)
+        prenatal_records = Prenatal_Form.objects.filter(
+            pregnancy_id=pregnancy
+        ).select_related(
+            'patrec_id', 'pregnancy_id'
+        ).prefetch_related(
+            Prefetch('pf_prenatal_care', queryset=PrenatalCare.objects.select_related('pf_id__vital_id', 'pf_id__bm_id').order_by('pfpc_date'))
+        ).order_by('created_at')
+        
+        if not prenatal_records.exists():
+            return Response({
+                'patient_id': pat_id,
+                'pregnancy_id': pregnancy_id,
+                'pregnancy_status': pregnancy.status,
+                'message': 'No prenatal records found for this pregnancy',
+                'prenatal_records': []
+            }, status=status.HTTP_200_OK)
+        
+        records_data = []
+        for i, record in enumerate(prenatal_records):
+            prenatal_care_entries = record.pf_prenatal_care.all().order_by('pfpc_date')
+            
+            records_data.append({
+                'pf_id': record.pf_id,
+                'visit_number': i + 1,
+                'created_at': record.created_at,
+                'pregnancy_id': record.pregnancy_id.pregnancy_id,
+                'prenatal_care_entries': PrenatalCareDetailSerializer(prenatal_care_entries, many=True).data
+            })
+        
+        return Response({
+            'patient_id': pat_id,
+            'pregnancy_id': pregnancy_id,
+            'pregnancy_status': pregnancy.status,
+            'prenatal_records': records_data
+        }, status=status.HTTP_200_OK)
+        
+    except Patient.DoesNotExist:
+        return Response({
+            'error': f'Patient with ID {pat_id} does not exist'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error fetching prenatal records with care for patient {pat_id}: {str(e)}')
+        return Response({
+            'error': f'Failed to fetch prenatal records with care: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+def get_prenatal_form_complete(request, pf_id):
+    """Get complete prenatal form data by prenatal form ID"""
+    try:
+        # Get the prenatal form with all related data - fixed select_related
+        prenatal_form = Prenatal_Form.objects.select_related(
+            'patrec_id__pat_id__rp_id__per',
+            'patrec_id__pat_id__trans_id', 
+            'pregnancy_id',
+            'vital_id',
+            'bm_id',
+            'spouse_id',
+            'followv_id',
+            'staff_id'
+        ).prefetch_related(
+            'pf_prenatal_care',
+            'pf_previous_hospitalization',
+            'lab_result',   
+            'pf_anc_visit', 
+            'pf_checklist', 
+            'pf_birth_plan',
+            'pf_obstetric_risk_code'
+        ).get(pf_id=pf_id)
+        
+        # Serialize the complete prenatal form data
+        serializer = PrenatalFormCompleteViewSerializer(prenatal_form)  # Use PrenatalFormCompleteViewSerializer instead
+
+        return Response({
+            'prenatal_form': serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    except Prenatal_Form.DoesNotExist:
+        return Response({
+            'error': f'Prenatal form with ID {pf_id} does not exist'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error fetching complete prenatal form {pf_id}: {str(e)}')
+        return Response({
+            'error': f'Failed to fetch prenatal form: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

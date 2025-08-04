@@ -29,6 +29,7 @@ import { usePrenatalPatientMedHistory,
         usePrenatalPatientPrevHospitalization,
 } from "../../queries/maternalFetchQueries"
 import { usePrenatalPatientBodyMeasurement } from "../../queries/maternalFetchQueries"
+import { useLatestPatientPrenatalRecord } from "../../queries/maternalFetchQueries"
 
 
 // age calculation for dob
@@ -47,9 +48,15 @@ const calculateAge = (dob: string): number => {
 export default function PrenatalFormFirstPg({
   form,
   onSubmit,
+  isFromIndividualRecord = false,
+  preselectedPatient = null,
+  activePregnancyId = null,
 }: {
   form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>
   onSubmit: () => void
+  isFromIndividualRecord?: boolean
+  preselectedPatient?: Patient | null
+  activePregnancyId?: string | null
 }) {
   const { control, trigger, setValue, getValues, watch } = useFormContext<z.infer<typeof PrenatalFormSchema>>() // useFormContext to access the form methods
 
@@ -111,16 +118,124 @@ export default function PrenatalFormFirstPg({
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
+  const [showPatientSearch, setShowPatientSearch] = useState(!isFromIndividualRecord)
 
    // patient data fetching
   const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId)
   const { data: prevHospData, isLoading: prevHospLoading, error: prevHospError } = usePrenatalPatientPrevHospitalization(selectedPatientId)
   const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId)
   const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId)
-  // const { data: prevPregnancyData, isLoading: prevPregnancyLoading } = usePrenatalPatientPrevPregnancy(selectedPatientId)
+  const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord && activePregnancyId ?  selectedPatientId : "")
 
+  useEffect(() => {
+    if (isFromIndividualRecord && preselectedPatient) {
+      console.log("Preselected patient:", preselectedPatient)
+      console.log("Active pregnancy ID:", activePregnancyId)
+      
+      setSelectedPatient(preselectedPatient)
+      setSelectedPatientId(preselectedPatient.pat_id)
 
+      const displayFormat = `${preselectedPatient.pat_id}, ${preselectedPatient?.personal_info?.per_lname}, ${preselectedPatient?.personal_info?.per_fname} ${preselectedPatient?.personal_info?.per_mname || ''}`.trim()
+      setSelectedPatIdDisplay(displayFormat)
 
+      handlePatientSelection(preselectedPatient, preselectedPatient.pat_id)
+    }
+  }, [isFromIndividualRecord, preselectedPatient, activePregnancyId])
+
+  useEffect(() => {
+    if (isFromIndividualRecord && latestPrenatalData && !latestPrenatalLoading && activePregnancyId) {
+
+      const latestPF = latestPrenatalData.latest_prenatal_form
+      if (latestPF) {
+        console.log("Populating form with latest prenatal data")
+
+        setValue("motherPersonalInfo.motherWt", latestPF.body_measurement_details.weight)
+        setValue("motherPersonalInfo.motherHt", latestPF.body_measurement_details.height)
+        
+        setValue("presentPregnancy.pf_lmp", latestPF.pf_lmp || "")
+        setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "")
+
+        if(latestPF.spouse_details) {
+          setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "")
+          setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "")
+          setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "")
+          setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "")
+          setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || "")
+        }
+
+        if (latestPF.previous_hospitalizations?.length > 0) {
+          const formattedHospData = latestPF.previous_hospitalizations.map((hosp: any) => ({
+            prevHospitalization: hosp.prev_hospitalization || "None",
+            prevHospitalizationYr: hosp.prev_hospitalization_year || undefined
+          }))
+          
+          // Merge with existing data to avoid duplicates
+          const existingHospData = form.getValues("medicalHistory.prevHospitalizationData") || []
+          const mergedHospData = [...existingHospData, ...formattedHospData]
+          const uniqueHospData = mergedHospData.filter((item, index, self) => 
+            index === self.findIndex(t => t.prevHospitalization === item.prevHospitalization)
+          )
+          
+          setPrevHospitalizationData(uniqueHospData)
+          setValue("medicalHistory.prevHospitalizationData", uniqueHospData)
+        }
+
+        // present pregnancy
+        // if (latestPF.present_pregnancy) {
+        //   setValue("presentPregnancy.gravida", latestPF.present_pregnancy.gravida)
+        //   setValue("presentPregnancy.para", latestPF.present_pregnancy.para)
+        //   setValue("presentPregnancy.fullterm", latestPF.present_pregnancy.fullterm)
+        //   setValue("presentPregnancy.preterm", latestPF.present_pregnancy.preterm)
+        // }
+
+        // risk codes
+        if (latestPF.obstetric_risk_codes) {
+          const riskCodes = latestPF.obstetric_risk_codes
+          setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", riskCodes.pforc_prev_c_section)
+          setValue("riskCodes.hasOneOrMoreOfTheFF.miscarriages", riskCodes.pforc_3_consecutive_miscarriages)
+          setValue("riskCodes.hasOneOrMoreOfTheFF.postpartumHemorrhage", riskCodes.pforc_postpartum_hemorrhage)
+        }
+
+        // birth plan
+        if (latestPF.birth_plan_details) {
+          const birthPlan = latestPF.birth_plan_details
+          setValue("pregnancyPlan.planPlaceOfDel", birthPlan.place_of_delivery_plan)
+          setValue("pregnancyPlan.planNewbornScreening", birthPlan.newborn_screening_plan)
+        }
+
+        // prenatal care 
+        if(latestPF.prenatal_care_entries && latestPF.prenatal_care_entries.length > 0) {
+        const transformedPrenatalCare = latestPF.prenatal_care_entries.map((entry: any) => ({
+          date: entry.pfpc_date || "",
+          aog: {
+            aogWeeks: entry.pfpc_aog_weeks || undefined,
+            aogDays: entry.pfpc_aog_days || undefined
+          },
+          wt: entry.pfpc_weight || undefined,
+          bp: {
+            systolic: entry.pfpc_bp_systolic || undefined,
+            diastolic: entry.pfpc_bp_diastolic || undefined
+          },
+          leopoldsFindings: {
+            fundalHeight: entry.pfpc_fundal_height || "",
+            fetalHeartRate: entry.pfpc_fetal_heart_rate || "",
+            fetalPosition: entry.pfpc_fetal_position || ""
+          },
+          notes: {
+            complaints: entry.pfpc_complaints || "",
+            advises: entry.pfpc_advises || ""
+          }
+        }))
+        
+        // Store using the existing prenatalCare field from schema
+        setValue("prenatalCare", transformedPrenatalCare)
+        console.log("Prenatal care entries transformed:", transformedPrenatalCare)
+      } else {
+        setValue("prenatalCare", [])
+      }
+      }
+    }
+  })
 
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
@@ -325,7 +440,6 @@ export default function PrenatalFormFirstPg({
     }
   }
 
-
   useEffect(() => {
     const restoreSelection = () => {
       const formPatId = form.getValues("pat_id")
@@ -511,38 +625,6 @@ export default function PrenatalFormFirstPg({
     return mappedData
   }
 
-  
-  // useEffect(() => {
-  //   const currPrevPregnancy = prevPregnancyData?.previous_pregnancy
-  //   console.log("Current Previous Pregnancy Data:", currPrevPregnancy)
-
-  //   if(prevPregnancyData && !prevPregnancyLoading){
-  //     form.setValue("previousPregnancy.dateOfDelivery", currPrevPregnancy.date_of_delivery || "")
-  //     form.setValue("previousPregnancy.outcome", currPrevPregnancy.outcome || "")
-  //     form.setValue("previousPregnancy.typeOfDelivery", currPrevPregnancy.type_of_delivery || "")
-  //     form.setValue("previousPregnancy.babysWt", currPrevPregnancy.babys_wt || undefined)
-  //     form.setValue("previousPregnancy.gender", currPrevPregnancy.gender || "")
-  //     form.setValue("previousPregnancy.ballardScore", 
-  //       currPrevPregnancy.ballard_score !== null && currPrevPregnancy.ballard_score !== undefined 
-  //         ? Number(currPrevPregnancy.ballard_score) 
-  //         : undefined
-  //     )
-  //     form.setValue("previousPregnancy.apgarScore", 
-  //       currPrevPregnancy?.apgar_score !== null && currPrevPregnancy.apgar_score !== undefined
-  //         ? Number(currPrevPregnancy.apgar_score)
-  //         : undefined
-  //       )
-  //   } else {
-  //     form.setValue("previousPregnancy.dateOfDelivery", "")
-  //     form.setValue("previousPregnancy.outcome", "")
-  //     form.setValue("previousPregnancy.typeOfDelivery", "")
-  //     form.setValue("previousPregnancy.babysWt", 0)
-  //     form.setValue("previousPregnancy.gender", "")
-  //     form.setValue("previousPregnancy.ballardScore", undefined)
-  //     form.setValue("previousPregnancy.apgarScore", undefined)
-  //   }
-  // }, [prevPregnancyData, setValue])
-  
 
   const illnessColumn: ColumnDef<previousIllness>[] = [
     {
@@ -755,10 +837,15 @@ export default function PrenatalFormFirstPg({
       <LayoutWithBack
         title="Prenatal Record"
         description="Fill out the prenatal record with the mother's personal information."
-      >
-        <div>
-          <PatientSearch value={selectedPatIdDisplay} onChange={setSelectedPatientId} onPatientSelect={handlePatientSelection} />
-        </div>
+      > 
+        {!isFromIndividualRecord && (
+          <div>
+            <PatientSearch 
+              value={selectedPatIdDisplay} 
+              onChange={setSelectedPatientId} 
+              onPatientSelect={handlePatientSelection} />
+          </div>
+        )}
 
         <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
           <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 4</Label>

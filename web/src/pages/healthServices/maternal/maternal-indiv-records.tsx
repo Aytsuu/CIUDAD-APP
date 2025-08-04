@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, replace } from "react-router-dom"
 import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button/button"
@@ -437,7 +437,16 @@ export default function MaternalIndivRecords() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>
-                  <Link to="/prenatalform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Prenatal</Link>
+                  <Link 
+                    to="/prenatalform" 
+                    state={{ 
+                      params : {
+                        pregnancyData: selectedPatient, 
+                        pregnancyId: pregnancyGroups.find(group => group.status === "Active")?.pregnancyId || null
+                      }}}
+                  >
+                    Prenatal
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link to="/postpartumform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Postpartum</Link>

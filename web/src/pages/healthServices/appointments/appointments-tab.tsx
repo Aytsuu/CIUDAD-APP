@@ -32,6 +32,12 @@ export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): J
 					<div className="flex">
 						<div className="flex flex-row bg-blue-50 p-1 rounded-md gap-2">
 							<div
+								className={getTabStyle("all")}
+								onClick={() => handleTimeFrameChange("all")}
+							>
+								<h2 className="text-sm font-semibold text-gray-800">All</h2>
+							</div>
+							<div
 								className={getTabStyle("today")}
 								onClick={() => handleTimeFrameChange("today")}
 							>
@@ -42,7 +48,7 @@ export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): J
 								className={getTabStyle("thisWeek")}
 								onClick={() => handleTimeFrameChange("thisWeek")}
 							>
-								<h2 className="text-sm font-semibold text-gray-500">This Week</h2>
+								<h2 className="text-sm font-semibold text-gray-800">This Week</h2>
 							</div>
 
 							<div
@@ -50,14 +56,7 @@ export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): J
 								onClick={() => handleTimeFrameChange("thisMonth")}
 							>
 								<h2 className="text-sm font-semibold text-gray-800">This Month</h2>
-							</div>
-
-							<div
-								className={getTabStyle("all")}
-								onClick={() => handleTimeFrameChange("all")}
-							>
-								<h2 className="text-sm font-semibold text-gray-800">All</h2>
-							</div>
+							</div>							
 						</div>
 					</div>
 				</div>

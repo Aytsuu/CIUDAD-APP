@@ -36,7 +36,13 @@ class AllFollowUpVisitsView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        queryset = FollowUpVisit.objects.select_related('patrec').all()
+        queryset = FollowUpVisit.objects.select_related(
+            'patrec',
+            'patrec__pat_id',
+            'patrec__pat_id__rp_id',
+            'patrec__pat_id__rp_id__per',
+            'patrec__pat_id__trans_id'
+        ).all(  )
 
         # filtering options 
         status = self.request.query_params.get('status')
@@ -48,8 +54,10 @@ class AllFollowUpVisitsView(generics.ListAPIView):
         
         if search:
             queryset = queryset.filter(
-                Q(patient__per_fname__icontains=search) |
-                Q(patient__per_lname__icontains=search) |
+                Q(patrec__pat_id__rp_id__per__per_fname__icontains=search) |
+                Q(patrec__pat_id__rp_id__per__per_lname__icontains=search) |
+                Q(patrec__pat_id__trans_id__tran_fname__icontains=search) |
+                Q(patrec__pat_id__trans_id__tran_lname__icontains=search) |
                 Q(followv_description__icontains=search)
             )
         
@@ -57,17 +65,22 @@ class AllFollowUpVisitsView(generics.ListAPIView):
             today = timezone.now().date()
 
             if time_frame == 'today':
-                queryset =queryset.filter(followv_date__date=today)
+                queryset = queryset.filter(followv_date=today)
                 
             elif time_frame == 'thisWeek':
-                start_week = today - timedelta(days=today.weekday()) # standard start of the week - Monday 
-                end_week = start_week + timedelta(days=6) # end of week - Sunday
-                queryset = queryset.filter(followv_date__date__gte=start_week, followv_date__date__lte=end_week)
+                start_week = today - timedelta(days=today.weekday()) # Monday 
+                end_week = start_week + timedelta(days=6) # Sunday
+                queryset = queryset.filter(followv_date__range=[start_week, end_week])
 
             elif time_frame == 'thisMonth':
+                start_month = today.replace(day=1)
+                if today.month == 12:
+                    end_month = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+                else:
+                    end_month = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
+
                 queryset = queryset.filter(
-                    followv_date__year=today.year,
-                    followv_date__month=today.month
+                    followv_date__range=[start_month, end_month]
                 )
         return queryset.order_by('-followv_date')
 

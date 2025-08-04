@@ -11,6 +11,9 @@ from .views import (
 	get_prenatal_followup_visit,
 	get_prenatal_prev_hospitalization,
     get_prenatal_prev_pregnancy,
+    get_latest_patient_prenatal_record,
+    get_prenatal_records_with_care,
+    get_prenatal_form_complete,
 )
 
 urlpatterns=[
@@ -23,10 +26,13 @@ urlpatterns=[
 	path('patient/<str:pat_id>/followupvisits/', get_prenatal_followup_visit, name='prenatal-patient-followup-visit'),
     path('patient/<str:pat_id>/previoushospitalization/', get_prenatal_prev_hospitalization, name='prenatal-patient-previous-hospitalization'),
 	path('patient/<str:pat_id>/previouspregnancy/', get_prenatal_prev_pregnancy, name='prenatal-patient-previous-pregnancy'),
+    path('patient/<str:pat_id>/prenatalcare/', get_prenatal_records_with_care, name='prenatal-patient-care-records'),
 
     path("prenatal-record/", PrenatalRecordCreateView.as_view(), name="prenatal-record"),
 	path('patient/<str:pat_id>/prenatal_count/', get_patient_prenatal_count, name='patient-prenatal-count'),
-	 
+    path('prenatal/<str:pat_id>/latest/', get_latest_patient_prenatal_record, name='latest-prenatal-record'),
+    path('prenatal/<str:pf_id>/complete/', get_prenatal_form_complete, name='prenatal-form-complete'),
+	
     path('postpartum_record/', PostpartumRecordCreateView.as_view(), name='postpartum-record-create'),
     path('patient/<str:pat_id>/postpartum_count/', get_patient_postpartum_count, name='patient-postpartum-count'),
     path('patient/<str:pat_id>/postpartum_records/', get_patient_postpartum_records, name='patient-postpartum-records'),   

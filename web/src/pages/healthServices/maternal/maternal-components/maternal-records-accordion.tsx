@@ -49,6 +49,7 @@ interface MaternalRecord {
   prenatal_end_date?: string
   postpartum_end_date?: string
   notes?: string
+  visitNumber?: number
   postpartum_assessment?: {
     ppa_id: string;
     ppa_date: string;
@@ -184,10 +185,10 @@ export function PregnancyAccordion({
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-3">
-                  {sortedRecords.map((record) => {
+                  {sortedRecords.map((record, recordIndex) => {
                     // const showUpdateButton = shouldShowUpdateButton(record, pregnancy, sortedRecords)
                     const showCompleteButton = shouldShowCompleteButton(record, pregnancy, sortedRecords)
-
+                    const visitNumber = record.visitNumber || (sortedRecords.length - recordIndex)
                     return (
                       <Card key={record.id} className="border-l-4 border-l-blue-200">
                         <CardHeader className="pb-2">
@@ -214,7 +215,8 @@ export function PregnancyAccordion({
                                           params: { 
                                             patientData: selectedPatient, 
                                             recordId: record.id,
-                                            // Add postpartum assessment data for postpartum records
+                                            pregnancyId: record.pregnancyId,
+                                            visitNumber: visitNumber,
                                             ...(record.recordType === "Postpartum Care" && record.postpartum_assessment && {
                                               postpartumRecord: {
                                                 ppr_id: record.id,
@@ -222,6 +224,7 @@ export function PregnancyAccordion({
                                                 postpartum_assessment: record.postpartum_assessment
                                               }
                                             })
+                                            
                                           } 
                                         }}
                                       >

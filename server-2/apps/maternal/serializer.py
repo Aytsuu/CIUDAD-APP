@@ -12,7 +12,8 @@ from apps.maternal.models import (
     PostpartumRecord, PostpartumDeliveryRecord, PostpartumAssessment,
     ObstetricRiskCode, PrenatalCare
 )
-from apps.administration.models import Staff # Assuming Staff model is here
+from apps.administration.models import Staff 
+from apps.healthProfiling.models import PersonalAddress
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, SpouseSerializer    
 
 
@@ -23,37 +24,6 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
         model = MedicalHistory
         fields = ['medhist_id', 'year', 'ill', 'illness_name'] 
 
-
-# class PrenatalPatientMedHistorySerializer(serializers.ModelSerializer):
-#     med_history = serializers.SerializerMethodField()
-    
-#     class Meta:
-#         model = Patient
-#         fields = ['pat_id', 'med_history']
-
-#     def get_med_history(self, obj):
-#         med_history = []
-
-#         try:
-#             patient_records = PatientRecord.objects.filter(pat_id=obj)
-#             for record in patient_records:          
-#                 # prenatal forms checking
-#                 prenatal_forms = Prenatal_Form.objects.filter(patrec=record).select_related('medhist_id__ill')    
-#                 for pf in prenatal_forms:
-#                     if pf.medhist_id:
-#                         med_history.append(pf.medhist_id)
-                
-#                 # family planning forms checking
-#                 # family_planning_forms = FP_Record.objects.filter(patrec=record).select_related('medhist_id__ill')
-#                 # for fp in family_planning_forms:
-#                 #     if fp.medhist_id:
-#                 #         med_history.append(fp.medhist_id)
-                
-#             return MedicalHistorySerializer(med_history, many=True).data
-
-#         except Exception as e:
-#             print(f"Error fetching medical history: {e}")
-#             return []
 
 class ObstetricalHistorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -178,6 +148,542 @@ class PrenatalCareCreateSerializer(serializers.ModelSerializer):
             'pfpc_advises': {'required': False, 'allow_blank': True},
         }
 
+class PrenatalCareDetailSerializer(serializers.ModelSerializer):
+    weight = serializers.SerializerMethodField()
+    height = serializers.SerializerMethodField()
+    bp_systolic = serializers.SerializerMethodField()
+    bp_diastolic = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PrenatalCare
+        fields = [
+            'pfpc_date', 'pfpc_aog_wks', 'pfpc_aog_days', 'pfpc_fundal_ht',
+            'pfpc_fetal_hr', 'pfpc_fetal_pos', 'pfpc_complaints', 'pfpc_advises',
+            'weight', 'height', 'bp_systolic', 'bp_diastolic'
+        ]
+
+    def get_weight(self, obj):
+        try:
+            prenatal_form = obj.pf_id
+            if prenatal_form and prenatal_form.bm_id:
+                return prenatal_form.bm_id.weight
+            return None
+        except:
+            return None
+
+    def get_height(self, obj):
+        try:
+            prenatal_form = obj.pf_id
+            if prenatal_form and prenatal_form.bm_id:
+                return prenatal_form.bm_id.height
+            return None
+        except:
+            return None
+
+    def get_bp_systolic(self, obj):
+        try:
+            prenatal_form = obj.pf_id
+            if prenatal_form and prenatal_form.vital_id:
+                return prenatal_form.vital_id.vital_bp_systolic
+            return None
+        except:
+            return None
+
+    def get_bp_diastolic(self, obj):
+        try:
+            prenatal_form = obj.pf_id
+            if prenatal_form and prenatal_form.vital_id:
+                return prenatal_form.vital_id.vital_bp_diastolic
+            return None
+        except:
+            return None
+
+
+# serializer for Complete Prenatal Form for Comparison Table
+class PrenatalDetailSerializer(serializers.ModelSerializer):
+    # Related model serializers for reading
+    pregnancy_details = serializers.SerializerMethodField()
+    patient_record_details = serializers.SerializerMethodField()
+    spouse_details = SpouseSerializer(source='spouse_id', read_only=True)
+    body_measurement_details = BodyMeasurementReadSerializer(source='bm_id', read_only=True)
+    vital_signs_details = serializers.SerializerMethodField()
+    follow_up_visit_details = serializers.SerializerMethodField()
+    staff_details = serializers.SerializerMethodField()
+    
+    # Related nested data
+    previous_hospitalizations = serializers.SerializerMethodField()
+    tt_statuses = serializers.SerializerMethodField()
+    laboratory_results = serializers.SerializerMethodField()
+    anc_visit_guide = serializers.SerializerMethodField()
+    checklist_data = serializers.SerializerMethodField()
+    birth_plan_details = serializers.SerializerMethodField()
+    obstetric_risk_codes = serializers.SerializerMethodField()
+    prenatal_care_entries = PrenatalCareCreateSerializer(source='pf_prenatal_care', many=True, read_only=True)
+
+    class Meta:
+        model = Prenatal_Form
+        fields = [
+            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'created_at', 'updated_at',
+            'pregnancy_details', 'patient_record_details', 'spouse_details', 
+            'body_measurement_details', 'vital_signs_details', 'follow_up_visit_details',
+            'staff_details', 'previous_hospitalizations', 'tt_statuses', 
+            'laboratory_results', 'anc_visit_guide', 'checklist_data', 
+            'birth_plan_details', 'obstetric_risk_codes', 'prenatal_care_entries'
+        ]
+
+    def get_pregnancy_details(self, obj):
+        if obj.pregnancy_id:
+            return {
+                'pregnancy_id': obj.pregnancy_id.pregnancy_id,
+                'status': obj.pregnancy_id.status,
+                'created_at': obj.pregnancy_id.created_at,
+                'updated_at': obj.pregnancy_id.updated_at,
+                'prenatal_end_date': obj.pregnancy_id.prenatal_end_date,
+                'postpartum_end_date': obj.pregnancy_id.postpartum_end_date,
+            }
+        return None
+
+    def get_patient_record_details(self, obj):
+        if obj.patrec_id:
+            return {
+                'patrec_id': obj.patrec_id.patrec_id,
+                'patrec_type': obj.patrec_id.patrec_type,
+                'created_at': obj.patrec_id.created_at,
+                'patient_id': obj.patrec_id.pat_id.pat_id
+            }
+        return None
+
+    def get_vital_signs_details(self, obj):
+        if obj.vital_id:
+            return {
+                'vital_id': obj.vital_id.vital_id,
+                'vital_bp_systolic': obj.vital_id.vital_bp_systolic,
+                'vital_bp_diastolic': obj.vital_id.vital_bp_diastolic,
+                'vital_temp': obj.vital_id.vital_temp,
+                'vital_RR': obj.vital_id.vital_RR,
+                'vital_o2': obj.vital_id.vital_o2,
+                'vital_pulse': obj.vital_id.vital_pulse,
+                'created_at': obj.vital_id.created_at
+            }
+        return None
+
+    def get_follow_up_visit_details(self, obj):
+        if obj.followv_id:
+            return {
+                'followv_id': obj.followv_id.followv_id,
+                'followv_date': obj.followv_id.followv_date,
+                'followv_status': obj.followv_id.followv_status,
+                'followv_description': obj.followv_id.followv_description,
+                'created_at': obj.followv_id.created_at,
+                'completed_at': obj.followv_id.completed_at
+            }
+        return None
+
+    def get_staff_details(self, obj):
+        if obj.staff_id:
+            return {
+                'staff_id': obj.staff_id.staff_id,
+                'staff_fname': getattr(obj.staff_id, 'staff_fname', 'Unknown'),
+                'staff_lname': getattr(obj.staff_id, 'staff_lname', 'Unknown'),
+                # Add other staff fields as needed
+            }
+        return None
+
+    def get_previous_hospitalizations(self, obj):
+        hospitalizations = obj.pf_previous_hospitalization.all()
+        return [{
+            'pfph_id': hosp.pfph_id,
+            'prev_hospitalization': hosp.prev_hospitalization,
+            'prev_hospitalization_year': hosp.prev_hospitalization_year
+        } for hosp in hospitalizations]
+
+    def get_tt_statuses(self, obj):
+        tt_statuses = obj.tt_status.all()
+        return [{
+            'tts_id': tt.tts_id,
+            'tts_status': tt.tts_status,
+            'tts_date_given': tt.tts_date_given,
+            'tts_tdap': tt.tts_tdap
+        } for tt in tt_statuses]
+
+    def get_laboratory_results(self, obj):
+        lab_results = obj.lab_result.all()
+        lab_data = []
+        for lab in lab_results:
+            lab_images = [{
+                'lab_img_id': img.lab_img_id,
+                'image_url': img.image_url,
+                'image_name': img.image_name,
+                'image_type': img.image_type,
+                'image_size': img.image_size
+            } for img in lab.lab_result_img.all()]
+            
+            lab_data.append({
+                'lab_id': str(lab.lab_id),
+                'lab_type': lab.lab_type,
+                'result_date': lab.result_date,
+                'is_completed': lab.is_completed,
+                'to_be_followed': lab.to_be_followed,
+                'document_path': lab.document_path,
+                'remarks': lab.remarks,
+                'images': lab_images,
+                'created_at': lab.created_at
+            })
+        return lab_data
+
+    def get_anc_visit_guide(self, obj):
+        anc_visit = obj.pf_anc_visit.first()
+        if anc_visit:
+            return {
+                'pfav_id': anc_visit.pfav_id,
+                'pfav_1st_tri': anc_visit.pfav_1st_tri,
+                'pfav_2nd_tri': anc_visit.pfav_2nd_tri,
+                'pfav_3rd_tri_one': anc_visit.pfav_3rd_tri_one,
+                'pfav_3rd_tri_two': anc_visit.pfav_3rd_tri_two
+            }
+        return None
+
+    def get_checklist_data(self, obj):
+        checklist = obj.pf_checklist.first()
+        if checklist:
+            return {
+                'pfc_id': checklist.pfc_id,
+                'increased_bp': checklist.increased_bp,
+                'nausea': checklist.nausea,
+                'edema': checklist.edema,
+                'abno_vaginal_disch': checklist.abno_vaginal_disch,
+                'chills_fever': checklist.chills_fever,
+                'varicosities': checklist.varicosities,
+                'epigastric_pain': checklist.epigastric_pain,
+                'blurring_vision': checklist.blurring_vision,
+                'severe_headache': checklist.severe_headache,
+                'vaginal_bleeding': checklist.vaginal_bleeding,
+                'diff_in_breathing': checklist.diff_in_breathing,
+                'abdominal_pain': checklist.abdominal_pain,
+                'created_at': checklist.created_at
+            }
+        return None
+
+    def get_birth_plan_details(self, obj):
+        birth_plan = obj.pf_birth_plan.first()
+        if birth_plan:
+            return {
+                'pfbp_id': birth_plan.pfbp_id,
+                'place_of_delivery_plan': birth_plan.place_of_delivery_plan,
+                'newborn_screening_plan': birth_plan.newborn_screening_plan,
+                'created_at': birth_plan.created_at
+            }
+        return None
+
+    def get_obstetric_risk_codes(self, obj):
+        risk_codes = obj.pf_obstetric_risk_code.first()
+        if risk_codes:
+            return {
+                'pforc_id': risk_codes.pforc_id,
+                'pforc_prev_c_section': risk_codes.pforc_prev_c_section,
+                'pforc_3_consecutive_miscarriages': risk_codes.pforc_3_consecutive_miscarriages,
+                'pforc_postpartum_hemorrhage': risk_codes.pforc_postpartum_hemorrhage
+            }
+        return None
+
+# serializer for Complete Prenatal Form
+class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
+    # Patient details
+    patient_details = serializers.SerializerMethodField()
+    pregnancy_details = serializers.SerializerMethodField()
+    vital_signs_details = serializers.SerializerMethodField()
+    body_measurement_details = serializers.SerializerMethodField()
+    spouse_details = serializers.SerializerMethodField()
+    follow_up_visit_details = serializers.SerializerMethodField()
+    staff_details = serializers.SerializerMethodField()
+    
+    # Related data
+    previous_hospitalizations = serializers.SerializerMethodField()
+    laboratory_results = serializers.SerializerMethodField()
+    anc_visit_guide = serializers.SerializerMethodField()
+    checklist_data = serializers.SerializerMethodField()
+    birth_plan_details = serializers.SerializerMethodField()
+    obstetric_risk_codes = serializers.SerializerMethodField()
+    prenatal_care_entries = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Prenatal_Form
+        fields = [
+            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'created_at', 'updated_at',
+            'patient_details', 'pregnancy_details', 'vital_signs_details', 
+            'body_measurement_details', 'spouse_details', 'follow_up_visit_details',
+            'staff_details', 'previous_hospitalizations', 'laboratory_results',
+            'anc_visit_guide', 'checklist_data', 'birth_plan_details', 
+            'obstetric_risk_codes', 'prenatal_care_entries'
+        ]
+    
+    def get_patient_details(self, obj):
+        if obj.patrec_id and obj.patrec_id.pat_id:
+            patient = obj.patrec_id.pat_id
+            
+            # Initialize the response structure
+            patient_data = {
+                'pat_id': patient.pat_id,
+                'pat_type': patient.pat_type,
+                'personal_info': None,
+                'address': None,
+                'family': None
+            }
+            
+            # Handle Resident patients
+            if patient.pat_type == 'Resident' and patient.rp_id:
+                try:
+                    # Get personal info from ResidentProfile -> Personal
+                    if hasattr(patient.rp_id, 'per') and patient.rp_id.per:
+                        personal = patient.rp_id.per
+                        patient_data['personal_info'] = {
+                            'per_fname': personal.per_fname,
+                            'per_lname': personal.per_lname,
+                            'per_mname': personal.per_mname,
+                            'per_dob': personal.per_dob,
+                            'per_sex': personal.per_sex,
+                            'per_contact': personal.per_contact,
+                            'per_status': personal.per_status,
+                            'per_religion': personal.per_religion,
+                            'per_edAttainment': personal.per_edAttainment,
+                        }
+                        
+                        # Get address from Personal -> PersonalAddress -> Address
+                        try:
+                            # Use the correct import and access pattern
+                            from apps.healthProfiling.models import PersonalAddress
+                            
+                            personal_address = PersonalAddress.objects.filter(
+                                per=personal
+                            ).select_related('add', 'add__sitio').first()
+                            
+                            if personal_address and personal_address.add:
+                                address = personal_address.add
+                                patient_data['address'] = {
+                                    'add_street': address.add_street,
+                                    'add_sitio': address.sitio.sitio_name if hasattr(address, 'sitio') and address.sitio else None,
+                                    'add_brgy': address.add_brgy,
+                                    'add_city': address.add_city,
+                                    'add_province': address.add_province,
+                                    'add_zipcode': address.add_zipcode,
+                                }
+                            else:
+                                print(f"No PersonalAddress found for personal ID: {personal.per_id}")
+                                
+                        except Exception as e:
+                            print(f"Error getting resident address: {e}")
+                            # Try alternative approach - check if address is directly on personal
+                            try:
+                                if hasattr(personal, 'add_street'):
+                                    patient_data['address'] = {
+                                        'add_street': getattr(personal, 'add_street', None),
+                                        'add_sitio': getattr(personal, 'add_sitio', None),
+                                        'add_brgy': getattr(personal, 'add_brgy', None),
+                                        'add_city': getattr(personal, 'add_city', None),
+                                        'add_province': getattr(personal, 'add_province', None),
+                                        'add_zipcode': getattr(personal, 'add_zipcode', None),
+                                    }
+                            except Exception as e2:
+                                print(f"Alternative address approach failed: {e2}")
+                        
+                        # Get family info from FamilyComposition
+                        try:
+                            family_composition = FamilyComposition.objects.filter(
+                                rp=patient.rp_id
+                            ).select_related('fam_id').first()
+                            
+                            if family_composition and family_composition.fam_id:
+                                patient_data['family'] = {
+                                    'fam_id': family_composition.fam_id.fam_id,
+                                    'fc_role': family_composition.fc_role,
+                                    'fam_date_registered': family_composition.fam_id.fam_date_registered,
+                                }
+                        except Exception as e:
+                            print(f"Error getting family info: {e}")
+                            
+                except Exception as e:
+                    print(f"Error processing resident patient: {e}")
+            
+            # Handle Transient patients
+            elif patient.pat_type == 'Transient' and patient.trans_id:
+                try:
+                    transient = patient.trans_id
+                    patient_data['personal_info'] = {
+                        'per_fname': transient.tran_fname,
+                        'per_lname': transient.tran_lname,
+                        'per_mname': transient.tran_mname,
+                        'per_dob': transient.tran_dob,
+                        'per_sex': transient.tran_sex,
+                        'per_contact': transient.tran_contact,
+                        'per_status': transient.tran_status,
+                        'per_religion': transient.tran_religion,
+                        'per_edAttainment': transient.tran_ed_attainment,
+                    }
+                    
+                    # Get transient address
+                    if transient.tradd_id:
+                        trans_address = transient.tradd_id  # This is the TransientAddress object
+                        patient_data['address'] = {
+                            'add_street': trans_address.tradd_street,
+                            'add_sitio': trans_address.tradd_sitio,
+                            'add_brgy': trans_address.tradd_barangay,
+                            'add_city': trans_address.tradd_city,
+                            'add_province': trans_address.tradd_province,
+                            'add_zipcode': None,  # TransientAddress doesn't have zipcode field
+                        }
+                    else:
+                        # No address associated with this transient
+                        patient_data['address'] = None
+                    
+                    # Transients don't have family compositions
+                    patient_data['family'] = {
+                        'fam_id': None,
+                        'note': 'Transient patients do not have family compositions'
+                    }
+                    
+                    # Transients don't have family compositions
+                    patient_data['family'] = {
+                        'fam_id': None,
+                        'note': 'Transient patients do not have family compositions'
+                    }
+                    
+                except Exception as e:
+                    print(f"Error processing transient patient: {e}")
+            
+            return patient_data
+        return None
+    
+    def get_pregnancy_details(self, obj):
+        if obj.pregnancy_id:
+            return {
+                'pregnancy_id': obj.pregnancy_id.pregnancy_id,
+                'status': obj.pregnancy_id.status,
+                'created_at': obj.pregnancy_id.created_at,
+            }
+        return None
+    
+    def get_vital_signs_details(self, obj):
+        if obj.vital_id:
+            return {
+                'vital_bp_systolic': obj.vital_id.vital_bp_systolic,
+                'vital_bp_diastolic': obj.vital_id.vital_bp_diastolic,
+                'vital_temp': obj.vital_id.vital_temp,
+                'vital_pulse_rate': obj.vital_id.vital_pulse,
+            }
+        return None
+    
+    def get_body_measurement_details(self, obj):
+        if obj.bm_id:
+            return {
+                'weight': obj.bm_id.weight,
+                'height': obj.bm_id.height,
+                'age': obj.bm_id.age,
+            }
+        return None
+    
+    def get_spouse_details(self, obj):
+        if obj.spouse_id:
+            return {
+                'spouse_fname': obj.spouse_id.spouse_fname,
+                'spouse_lname': obj.spouse_id.spouse_lname,
+                'spouse_mname': obj.spouse_id.spouse_mname,
+                'spouse_occupation': obj.spouse_id.spouse_occupation,
+            }
+        return None
+    
+    def get_follow_up_visit_details(self, obj):
+        if obj.followv_id:
+            return {
+                'followv_id': obj.followv_id.followv_id,
+                'followv_date': obj.followv_id.followv_date,
+                'followv_status': obj.followv_id.followv_status,
+                'followv_description': obj.followv_id.followv_description,
+            }
+        return None
+    
+    def get_staff_details(self, obj):
+        if obj.staff_id:
+            return {
+                'staff_id': obj.staff_id.staff_id,
+                'staff_fname': getattr(obj.staff_id, 'staff_fname', 'Unknown'),
+                'staff_lname': getattr(obj.staff_id, 'staff_lname', 'Unknown'),
+            }
+        return None
+    
+    def get_previous_hospitalizations(self, obj):
+        hospitalizations = obj.pf_previous_hospitalization.all()
+        return [{
+            'pfph_id': hosp.pfph_id,
+            'prev_hospitalization': hosp.prev_hospitalization,
+            'prev_hospitalization_year': hosp.prev_hospitalization_year,
+        } for hosp in hospitalizations]
+    
+    def get_laboratory_results(self, obj):
+        lab_results = obj.lab_result.all()
+        return [{
+            'lab_id': str(lab.lab_id),
+            'lab_type': lab.lab_type,
+            'result_date': lab.result_date,
+            'to_be_followed': lab.to_be_followed,
+            'is_completed': lab.is_completed,
+        } for lab in lab_results]
+    
+    def get_anc_visit_guide(self, obj):
+        anc_visit = obj.pf_anc_visit.first()
+        if anc_visit:
+            return {
+                'pfav_id': anc_visit.pfav_id,
+                'pfav_1st_tri': anc_visit.pfav_1st_tri,
+                'pfav_2nd_tri': anc_visit.pfav_2nd_tri,
+                'pfav_3rd_tri_one': anc_visit.pfav_3rd_tri_one,
+                'pfav_3rd_tri_two': anc_visit.pfav_3rd_tri_two,
+            }
+        return None
+    
+    def get_checklist_data(self, obj):
+        checklist = obj.pf_checklist.first()
+        if checklist:
+            return {
+                'pfc_id': checklist.pfc_id,
+                # Add other checklist fields as needed
+            }
+        return None
+    
+    def get_birth_plan_details(self, obj):
+        birth_plan = obj.pf_birth_plan.first()
+        if birth_plan:
+            return {
+                'pfbp_id': birth_plan.pfbp_id,
+                'place_of_delivery_plan': birth_plan.place_of_delivery_plan,
+                'newborn_screening_plan': birth_plan.newborn_screening_plan,
+                'created_at': birth_plan.created_at,
+            }
+        return None
+    
+    def get_obstetric_risk_codes(self, obj):
+        risk_codes = obj.pf_obstetric_risk_code.first()
+        if risk_codes:
+            return {
+                'pforc_id': risk_codes.pforc_id,
+                'pforc_prev_c_section': risk_codes.pforc_prev_c_section,
+                'pforc_3_consecutive_miscarriages': risk_codes.pforc_3_consecutive_miscarriages,
+                'pforc_postpartum_hemorrhage': risk_codes.pforc_postpartum_hemorrhage,
+            }
+        return None
+    
+    def get_prenatal_care_entries(self, obj):
+        prenatal_care = obj.pf_prenatal_care.all().order_by('pfpc_date')
+        return [{
+            'pfpc_id': care.pfpc_id,
+            'pfpc_date': care.pfpc_date,
+            'pfpc_aog_wks': care.pfpc_aog_wks,
+            'pfpc_aog_days': care.pfpc_aog_days,
+            'pfpc_fundal_ht': care.pfpc_fundal_ht,
+            'pfpc_fetal_hr': care.pfpc_fetal_hr,
+            'pfpc_fetal_pos': care.pfpc_fetal_pos,
+            'pfpc_complaints': care.pfpc_complaints,
+            'pfpc_advises': care.pfpc_advises,
+        } for care in prenatal_care]
 
 # Main Prenatal Form Serializer for complete creation
 class PrenatalCompleteSerializer(serializers.ModelSerializer):

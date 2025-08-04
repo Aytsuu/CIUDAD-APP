@@ -101,6 +101,17 @@ export const getPregnancyDetails = async (patientId: string) => {
   }
 }
 
+// latest prenatal form
+export const getLatestPatientPrenatalRecord = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/prenatal/${patientId}/latest/`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching latest prenatal record: ", error);
+    throw error;
+  }
+}
+
 // medical history for prenatal form
 export const getPrenatalPatientMedHistory = async (patientId: string) => {
   try { 
@@ -165,4 +176,14 @@ export const getPrenatalPatientPrevPregnancy = async (patientId: string) => {
     console.error("Error fetching prenatal patient previous pregnancy: ", error);
     throw error;
   }
+}
+
+// prenatal care history
+export const getPrenatalPatientPrenatalCare = async (patientId: string, pregnancyId: string) => {
+  try {
+    const res = await api2.get(`maternal/patient/${patientId}/prenatalcare/?pregnancy_id=${pregnancyId}`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal patient prenatal care: ", error);
+    throw error;}
 }

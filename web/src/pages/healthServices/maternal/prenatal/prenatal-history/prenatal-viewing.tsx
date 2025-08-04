@@ -100,7 +100,7 @@ const obstetricHistory = [
         className: "w-20"
     },
     {
-        name: "HISTORY OF DIABETES:",
+        name: "DIABETES:",
         value: "",
         className: "w-20"
     }
@@ -120,7 +120,7 @@ const medicalHistory = [
         className: "w-[350px]"
     },
     {
-        name: "PREVIOUS PREG. COMPLICATION: (SPECIFY) ",
+        name: "PREVIOUS PREG. COMPLICATION: (SPECIFY) HISTORY OF",
         value: "",
         className: "w-[350px]"
     }
@@ -440,7 +440,7 @@ export const InputLine = ({className}: {className: string}) => (
 // default funtion
 export default function PrenatalViewingOne() {
     return (
-        <div className="max-w-5xl mx-auto m-5 p-5 border border-gray-300">
+        <div className="bg-white max-w-5xl mx-auto m-5 p-5 border border-gray-300">
             {/* upper text of header & header */}
             <div>
                 <p className="text-sm pb-3 mt-10"> CEBU CITY HEALTH DEPARTMENT <br /> 2020 </p>

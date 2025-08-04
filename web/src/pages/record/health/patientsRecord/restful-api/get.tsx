@@ -69,7 +69,7 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
 
 	const queryString = params.toString();
 	const url = queryString 
-		? `patientrecords/follow-up-visits-all/?${queryString}/` 
+		? `patientrecords/follow-up-visits-all/?${queryString}` 
 		: "patientrecords/follow-up-visits-all/";
 
     const res = await api2.get(url)

@@ -13,6 +13,8 @@ import { getPatients,
 			getPrenatalPatientFollowUpVisits,
 			getPrenatalPatientPrevHospitalization,
 			getPrenatalPatientPrevPregnancy,
+			getLatestPatientPrenatalRecord,
+			getPrenatalPatientPrenatalCare
 } from "../restful-api/maternalGetAPI";
 
 
@@ -82,6 +84,16 @@ export const usePregnancyDetails = (patientId: string) => {
 	})
 }
 
+// for getLatestPatientPrenatalRecord
+export const useLatestPatientPrenatalRecord = (patientId: string) => {
+	return useQuery({
+		queryKey: ['latestPrenatalRecord', patientId],
+		queryFn: () => getLatestPatientPrenatalRecord(patientId),
+		enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+		staleTime: 30 * 1,
+		retry: 3,
+	})
+}
 
 // for getPrenatalPatientMedHistory
 export const usePrenatalPatientMedHistory = (patientId: string) => {
@@ -146,6 +158,17 @@ export const usePrenatalPatientPrevPregnancy = (patientId: string) => {
 		queryKey: ["prenatalPatientPrevPregnancy", patientId],
 		queryFn: () => getPrenatalPatientPrevPregnancy(patientId),
 		enabled: !!patientId,
+		staleTime: 30 * 1,
+		retry: 3
+	})
+}
+
+// for getPrenatalPatientPrenatalCare
+export const usePrenatalPatientPrenatalCare = (patientId: string, pregnancyId: string) => {
+	return useQuery({
+		queryKey: ["prenatalPatientPrenatalCare", patientId, pregnancyId],
+		queryFn: () => getPrenatalPatientPrenatalCare(patientId, pregnancyId),
+		enabled: !!patientId && !!pregnancyId,
 		staleTime: 30 * 1,
 		retry: 3
 	})
