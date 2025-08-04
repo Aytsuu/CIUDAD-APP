@@ -159,7 +159,7 @@ export default function EditVaccineModal() {
     formState: { errors, isValid },
   } = form;
 
-  const [type, ageGroup, noOfDoses] = watch(["type", "ageGroup", "noOfDoses"]);
+  const [type, noOfDoses] = watch(["type", "noOfDoses"]);
   const updateVaccineMutation = useUpdateVaccine();
 
   // Set initial form values when component mounts

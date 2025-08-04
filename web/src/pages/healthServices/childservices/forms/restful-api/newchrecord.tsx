@@ -131,7 +131,7 @@ export async function addChildHealthRecord({
 
   // Create health notes if there are notes added
   if (submittedData.vitalSigns?.[0]?.notes) {
-    const newNotes = await createChildHealthNotes({
+    await createChildHealthNotes({
       chn_notes: submittedData.vitalSigns[0].notes,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -139,7 +139,6 @@ export async function addChildHealthRecord({
       chhist: current_chhist_id,
       staff: staff || null,
     });
-    const chnotes_id = newNotes.chnotes_id;
   }
 
   // Create body measurements

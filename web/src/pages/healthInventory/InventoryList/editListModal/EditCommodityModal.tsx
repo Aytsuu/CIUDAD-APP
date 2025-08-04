@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Form,
@@ -17,7 +17,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Package } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { user_type_options } from "../addListModal/CommodityModal";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { toTitleCase } from "@/helpers/ToTitleCase";
@@ -30,7 +30,6 @@ export interface CommodityData {
 export default function CommodityListEdit() {
   const location = useLocation();
   const initialData = location.state?.params?.initialData as CommodityData;
-  const navigate = useNavigate();
 
   // Initialize form with default values
   const form = useForm<CommodityType>({

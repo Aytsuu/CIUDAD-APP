@@ -28,12 +28,6 @@ interface PostpartumAssessment {
   updated_at: string;
 }
 
-interface PostpartumRecord {
-  ppr_id: string;
-  delivery_date: string;
-  postpartum_assessment?: PostpartumAssessment[];
-}
-
 interface Patient {
   pat_id: string;
   personal_info: {
@@ -84,8 +78,9 @@ export default function PostpartumIndivHistory() {
     if (location.state?.params) {
       const { patientData, recordId: passedRecordId, postpartumRecord } = location.state.params;
       
-      setSelectedPatient(patientData);
+      setSelectedPatient(patientData);  
       setRecordId(passedRecordId);
+      console.log(recordId)
       
       // If postpartum record data is passed directly
       if (postpartumRecord?.postpartum_assessment && postpartumRecord.postpartum_assessment.length > 0) {

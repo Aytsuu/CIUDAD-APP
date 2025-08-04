@@ -1,4 +1,3 @@
-
 import { StaffDetails } from "@/pages/healthServices/childservices/viewrecords/types";
 
 export interface InventoryDetail {
@@ -55,26 +54,33 @@ export interface FirstAidRecord {
   };
 }
 
-
-
 export interface MonthlyRecord {
   month: string;
   record_count: number;
   total_qty: number;
   records: FirstAidRecord[];
-  monthlyrcplist_id:string;
-  report:{
+  monthlyrcplist_id: string;
+  report: {
     staff_details: StaffDetails;
     signature: string;
     control_no: string;
-    office:string
-  }
-
+    office: string;
+  };
 }
 
 export interface FirstAidRecordsResponse {
   success: boolean;
-  data: MonthlyRecord[];
-  total_records: number;
-
+  results: {
+    data: MonthlyRecord[];
+    records: FirstAidRecord[];
+    report: {
+      staff_details: StaffDetails;
+      signature: string;
+      control_no: string;
+      office: string;
+    };
+    total_months: number;
+    record_count: number;
+  };
+  total_records?: number;
 }

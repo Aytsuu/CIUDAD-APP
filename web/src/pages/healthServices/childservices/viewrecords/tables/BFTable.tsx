@@ -15,7 +15,7 @@ interface BFCheckTableProps {
 
 export const BFCheckTable: React.FC<BFCheckTableProps> = ({
   fullHistoryData,
-  chhistId,
+  // chhistId,
 }) => {
   // Extract and flatten all BF checks with their created_at dates
   const allBfChecks = fullHistoryData

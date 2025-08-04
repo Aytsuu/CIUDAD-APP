@@ -16,6 +16,8 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Loader2, CircleCheck } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
+
+
 const formSchema = z.object({
   wastedDose: z.coerce
     .number()
@@ -25,7 +27,7 @@ const formSchema = z.object({
 
 export default function WastedAntigen() {
   const location = useLocation();
-  const { wasted, record } = location.state;
+  const {  record } = location.state;
   const { handleVaccineWaste, handleSupplyWaste } = useHandleWaste(); // Use the custom hook
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);

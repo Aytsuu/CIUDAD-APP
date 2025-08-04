@@ -46,7 +46,7 @@ export default function FirstAidRequestForm() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const { mutateAsync: submitFirstaidRequest, isPending: isSubmitting } =
+  const { mutateAsync: submitFirstaidRequest } =
     useFirstRequestMutation();
 
   // Initialize patient data based on mode

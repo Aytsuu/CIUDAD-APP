@@ -1,15 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
 import { getStaffList } from "../restful-api/getAPI";
 import { toast } from "sonner";
-import { getFirstaidRecords } from "../restful-api/getAPI";
+import { getFirstaidRecords,getMonthCount,getFirstaidReports } from "../restful-api/getAPI";
 
-export const useFirstAidRecords = (yearFilter: string) => {
+
+export const useFirstAidRecords = (
+  page: number, 
+  pageSize: number, 
+  searchQuery: string,
+  yearFilter: string
+) => {
   return useQuery({
-    queryKey: ["firstAidRecords", yearFilter],
+    queryKey: ["firstAidRecords", page, pageSize, searchQuery, yearFilter],
     queryFn: () =>
-      getFirstaidRecords(yearFilter === "all" ? undefined : yearFilter),
+      getFirstaidRecords(
+        page, 
+        pageSize, 
+        searchQuery,
+        yearFilter === "all" ? undefined : yearFilter
+      ),
   });
 };
+
+export const useFirstAidReports = (
+  month: string,
+  page: number,
+  pageSize: number,
+  searchQuery: string
+) => {
+  return useQuery({
+    queryKey: ["fareport", month, page, pageSize, searchQuery],
+    queryFn: () => getFirstaidReports(month, page, pageSize, searchQuery),
+  });
+};
+
+export const FAuseMonthCount = () => {
+  return useQuery({
+    queryKey: ["famonthCount"],
+    queryFn: getMonthCount,
+		retry: 3,
+    staleTime: 60 * 1000, // 1 minute
+	})
+}
+
 
 export const fetchStaffWithPositions = () => {
   return useQuery({

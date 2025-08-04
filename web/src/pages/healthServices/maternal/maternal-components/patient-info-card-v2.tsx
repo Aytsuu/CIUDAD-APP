@@ -83,7 +83,7 @@ export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
   }
 
   const fullName = formatFullName(patient.personal_info)
-  const age = patient.personal_info ? formatAge({ age: patient.age, ageTime: patient.personal_info.ageTime ?? "yrs" }) : ""
+  const age = patient.personal_info ? formatAge({ age: patient.age, ageTime: patient.personal_info.ageTime ?? "" }) : ""
   const dob = patient.personal_info ? formatDateOfBirth(patient.personal_info.per_dob) : ""
   const sex = patient.personal_info ? patient.personal_info.per_sex : "Not specified"
   const address = formatAddress(patient)

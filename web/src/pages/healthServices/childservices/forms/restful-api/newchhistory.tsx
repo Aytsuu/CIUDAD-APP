@@ -76,7 +76,7 @@ export async function updateChildHealthRecord({
         });
         followv_id = newFollowUp.followv_id;
 
-        const newNotes = await createChildHealthNotes({
+       await createChildHealthNotes({
           chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -86,7 +86,7 @@ export async function updateChildHealthRecord({
         });
       } else {
         if (submittedNotes !== originalNotes) {
-          const newNotes = await createChildHealthNotes({
+          await createChildHealthNotes({
             chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -253,7 +253,7 @@ export async function updateChildHealthRecord({
       chhist: current_chhist_id,
       staff: staff,
     });
-    const chnotes_id = newNotes.chnotes_id;
+    newNotes.chnotes_id;
 
     // Create body measurements
     const newBMI = await createBodyMeasurement({

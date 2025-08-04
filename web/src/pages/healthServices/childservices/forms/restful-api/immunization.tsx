@@ -3,10 +3,8 @@ import {
   createFollowUpVisit,
   createPatientDisability,
   createChildHealthNotes,
+  createExclusiveBFCheck
 } from "./createAPI";
-import {
-  createExclusiveBFCheck,
-} from "./chrecord";
 import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
 import { processMedicineRequest } from "./createAPI";
 import { AddRecordArgs } from "../muti-step-form/types";
@@ -178,14 +176,19 @@ export async function updateChildHealthRecord({
       if (updates.length > 0) {
         try {
           await updateSupplementStatus(
-            updates.filter(
-              (
-                update
-              ): update is {
-                chssupplementstat_id: number;
-                date_completed: string | null;
-              } => update !== null
-            )
+            updates
+              .filter(
+                (
+                  update
+                ): update is {
+                  chssupplementstat_id: number;
+                  date_completed: string | null;
+                } => update !== null
+              )
+              .map((update) => ({
+                ...update,
+                date_given_iron: null, // Provide a default value for date_given_iron
+              }))
           );
           console.log(
             `Successfully updated ${updates.length} supplement status records`

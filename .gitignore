@@ -71,4 +71,3 @@ env/
 
 # Vite cache
 /web/.vite/
-init__.py

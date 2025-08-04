@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card/card';
 import { toast } from 'sonner';
-import { Ordinance, getAllOrdinances, archiveOrdinance, deleteOrdinance } from './restful-api/OrdinanceGetAPI';
-import { getAllTemplates, deleteTemplate, archiveTemplate, OrdinanceTemplate } from './restful-api/TemplateAPI';
+import { Ordinance, getAllOrdinances, deleteOrdinance } from './restful-api/OrdinanceGetAPI';
+import { getAllTemplates, deleteTemplate, OrdinanceTemplate } from './restful-api/TemplateAPI';
 import { Link, useNavigate } from 'react-router';
 
 // Combined type for ordinances and templates
