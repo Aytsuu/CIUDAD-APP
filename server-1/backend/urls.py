@@ -42,7 +42,6 @@ urlpatterns = [
     path('notification/', include('apps.notification.urls')),
     path('announcement/', include('apps.announcement.urls')),
     path('authentication/', include('apps.authentication.urls')),
-    path('api/detection/', include('detection.urls')),
     path('gad/', include('apps.gad.urls')),
     path('council/', include('apps.council.urls')),
     path('clerk/', include('apps.clerk.urls')),
