@@ -641,11 +641,12 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
             values.inc_additional_notes = "None";
         }
 
+        
         if(prev_amount != current_amount){
             totalIncome = (totIncome - prev_amount) + current_amount;           
         }
         else{
-            totalIncome = current_amount;
+            totalIncome = totIncome;
         }
 
         const allValues = {

@@ -1270,6 +1270,9 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_en
             return
         }     
 
+        if(!values.iet_additional_notes){
+            values.iet_additional_notes = "None";
+        }        
 
         if(amount < 0){ // not accepting negative value for amount
             form.setError("iet_amount", {

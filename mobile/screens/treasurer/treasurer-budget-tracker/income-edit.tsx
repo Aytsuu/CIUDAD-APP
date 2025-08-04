@@ -579,7 +579,7 @@ function IncomeEditForm() {
             totalIncome = (totIncome - prev_amount) + current_amount;           
         }
         else{
-            totalIncome = current_amount;
+            totalIncome = totIncome;
         }
 
         const allValues = {

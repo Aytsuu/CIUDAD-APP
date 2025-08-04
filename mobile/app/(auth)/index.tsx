@@ -15,5 +15,5 @@ import Request from "../(request)";
 import GarbagePickupTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
 
 export default () => {
-    return <GarbagePickupTasksMain/>
+    return <WasteIllegalDumping/>
 }
