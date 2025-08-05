@@ -40,7 +40,6 @@ urlpatterns=[
     path('update-expense-particular/<int:year>/<int:exp_id>/', UpdateExpenseParticularView.as_view(), name = 'treasurer-update-expense-particular'),
 
     path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
-    path('update-budget-detail/<int:year>/<int:dtl_id>/', UpdateBudgetPlanDetailView.as_view(), name = 'treasurer-update-budget-plan-detail'),
 
     #INCOME URL
     path('income-tracking/', Income_TrackingView.as_view(), name = 'treasurer-income-tracking'),

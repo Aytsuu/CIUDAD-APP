@@ -7,6 +7,11 @@ class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Budget_Plan_Detail
         fields = '__all__'
+        extra_kwargs = {
+            'plan': {'required': False},
+            'dtl_budget_item': {'required': False},
+            'dtl_budget_category': {'required': False},
+        }
 
 class BudgetPlanSerializer(serializers.ModelSerializer):
     details = serializers.SerializerMethodField()
