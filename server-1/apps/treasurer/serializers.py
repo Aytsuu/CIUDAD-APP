@@ -91,13 +91,6 @@ class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):
 
 # --------- INCOME_EXPENSE
 
-# class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
-#     dtl_budget_item = serializers.CharField(source='dtl_id.dtl_budget_item', read_only=True)
-    
-#     class Meta:
-#         model = Income_Expense_Tracking
-#         fields = '__all__'
-
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
     exp_budget_item = serializers.CharField(source='exp_id.exp_budget_item', read_only=True)
     files = Income_Expense_FileSimpleSerializer(many=True, read_only=True)  # Add this line
