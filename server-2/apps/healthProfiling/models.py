@@ -204,6 +204,7 @@ class Dependents_Under_Five(models.Model):
 class WaterSupply(models.Model):
     water_sup_id = models.CharField(max_length=50, primary_key=True)
     water_sup_type = models.CharField(max_length=50)
+    water_conn_type = models.CharField(max_length=50)
     water_sup_desc = models.TextField(max_length=1000)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 

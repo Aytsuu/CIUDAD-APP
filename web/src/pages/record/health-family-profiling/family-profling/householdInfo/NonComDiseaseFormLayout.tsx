@@ -33,7 +33,7 @@ export default function NoncomDiseaseFormLayout({
   setSelectedResidentId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  familyMembers: PersonInfo[]; // Family members from composition
+  familyMembers: any[]; // Family members from composition
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;
 }) {
@@ -41,6 +41,11 @@ export default function NoncomDiseaseFormLayout({
   
   // Ensure familyMembers is always an array
   const safeFamilyMembers = familyMembers || [];
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('NonComDiseaseFormLayout - familyMembers:', safeFamilyMembers);
+  }, [safeFamilyMembers]);
   
   // Updated columns with lifestyle risk and maintenance status
   const columns: ColumnDef<PersonInfo>[] = [
@@ -106,7 +111,8 @@ export default function NoncomDiseaseFormLayout({
             default: safeFamilyMembers,
             formatted: safeFamilyMembers.map(member => ({
               ...member,
-              id: `${member.id} - ${member.firstName} ${member.lastName}`
+              // Use rp_id as the ID and format name properly
+              id: `${member.rp_id} - ${member.per?.per_fname || member.firstName || ''} ${member.per?.per_lname || member.lastName || ''}`
             }))
           }}
           form={form}
@@ -119,8 +125,8 @@ export default function NoncomDiseaseFormLayout({
         <Separator className="my-6" />
 
         <div className="mb-4">
-          <h3 className="font-semibold text-lg">NCD Patient Records</h3>
-          <p className="text-xs text-black/50">Manage patient records</p>
+          <h3 className="font-semibold text-lg">NCD Records</h3>
+          <p className="text-xs text-black/50">Manage NCD records</p>
         </div>
 
         <DataTable

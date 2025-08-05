@@ -32,7 +32,7 @@ export default function TbSurveilanceInfoLayout({
   setSelectedResidentId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  residents: PersonInfo[]; // Family members array
+  residents: any[]; // Family members array
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;
 }) {
@@ -41,12 +41,18 @@ export default function TbSurveilanceInfoLayout({
   // Ensure residents is always an array
   const safeResidents = residents || [];
   
+  // Debug logging
+  React.useEffect(() => {
+    console.log('TbSurveilanceInfoLayout - residents:', safeResidents);
+  }, [safeResidents]);
+  
   // Structure residents data for the form
   const structuredResidents = {
     default: safeResidents,
     formatted: safeResidents.map(member => ({
       ...member,
-      id: `${member.id} - ${member.firstName} ${member.lastName}`
+      // Use rp_id as the ID and format name properly
+      id: `${member.rp_id} - ${member.per?.per_fname || member.firstName || ''} ${member.per?.per_lname || member.lastName || ''}`
     }))
   };
   
@@ -113,7 +119,7 @@ export default function TbSurveilanceInfoLayout({
 
         <div className="mb-4">
           <h3 className="font-semibold text-lg">TB Patient Records</h3>
-          <p className="text-xs text-black/50">Manage TB patient records</p>
+          <p className="text-xs text-black/50">Manage TB Surveilance Records</p>
         </div>
 
         <DataTable

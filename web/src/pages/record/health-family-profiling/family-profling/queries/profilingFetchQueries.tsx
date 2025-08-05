@@ -18,6 +18,13 @@ import {
   getSitioListHealth,
   getPersonalInfo, // Add this import
   getHouseholdDataHealth, // Add this import
+  getWaterSupplyOptions,
+  getWaterSupplyTypes,
+  getWaterSupplyList,
+  getWaterSupplyByHousehold,
+  getEnvironmentalData,
+  getSanitaryFacilityList,
+  getSanitaryFacilityByHousehold,
 } from "../restful-api/profilingGetAPI";
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
@@ -128,39 +135,64 @@ export const useFamilyMembersHealth = (familyId: string) => {
 // Combined hook to get family members with full resident details
 export const useFamilyMembersWithResidentDetails = (familyId: string) => {
   const { data: familyMembers } = useFamilyMembersHealth(familyId);
-  const { data: allResidents } = useResidentsListHealth();
 
   return React.useMemo(() => {
-    // Debug logging
-    console.log('Family ID for fetch:', familyId);
-    console.log('Family Members API Response:', familyMembers);
-    console.log('All Residents API Response:', allResidents);
-
     // Return empty array if no familyId or if data is not available
-    if (!familyId || !familyMembers || !allResidents) return [];
+    if (!familyId || !familyMembers) {
+      return [];
+    }
 
-    // Ensure familyMembers is an array
-    const familyMembersArray = Array.isArray(familyMembers) ? familyMembers : [];
-    const allResidentsArray = Array.isArray(allResidents) ? allResidents : [];
+    // Handle paginated response structure - extract results array
+    const familyMembersArray = familyMembers?.results || familyMembers;
 
-    if (familyMembersArray.length === 0 || allResidentsArray.length === 0) return [];
+    // Ensure familyMembersArray is an array
+    const safeFamilyMembers = Array.isArray(familyMembersArray) ? familyMembersArray : [];
 
-    // Extract rp_ids from family members
-    const memberIds = familyMembersArray.map((member: any) => {
-      const rpId = member.rp?.rp_id || member.rp_id || member.id;
-      return rpId;
-    }).filter(Boolean); // Remove any undefined/null values
+    if (safeFamilyMembers.length === 0) {
+      return [];
+    }
+
+    // Transform family members to match expected structure (optimized)
+    const transformedMembers = safeFamilyMembers.map((member: any) => {
+      // Parse the name field more efficiently
+      let firstName = '';
+      let lastName = '';
+      let middleName = '';
+      
+      if (member.name) {
+        const [lastNamePart, ...restParts] = member.name.split(', ');
+        lastName = lastNamePart?.trim() || '';
+        
+        if (restParts.length > 0) {
+          const nameParts = restParts.join(', ').trim().split(' ');
+          firstName = nameParts[0] || '';
+          middleName = nameParts.slice(1).join(' ') || '';
+        }
+      }
+
+      return {
+        rp_id: member.rp_id,
+        per: {
+          per_fname: firstName,
+          per_lname: lastName,
+          per_mname: middleName,
+          per_sex: member.sex,
+          per_dob: member.dob,
+          per_contact: member.contact || ''
+        },
+        // Also include flat structure for compatibility
+        firstName,
+        lastName,
+        middleName,
+        sex: member.sex,
+        dateOfBirth: member.dob,
+        contact: member.contact || '',
+        fc_role: member.fc_role
+      };
+    });
     
-    console.log('Extracted Member IDs:', memberIds);
-    
-    // Filter residents to get only family members
-    const familyMembersWithDetails = allResidentsArray.filter((resident: any) => 
-      memberIds.includes(resident.rp_id)
-    );
-    console.log('Family Members with Details:', familyMembersWithDetails);
-
-    return familyMembersWithDetails;
-  }, [familyId, familyMembers, allResidents]);
+    return transformedMembers;
+  }, [familyId, familyMembers]);
 };
 export const useFamFilteredByHouseHealth = (householdId: string) => {
   return useQuery({
@@ -191,6 +223,67 @@ export const useHouseholdTableHealth = (page: number, pageSize: number, searchQu
   return useQuery({
     queryKey: ['householdTableHealth', page, pageSize, searchQuery],
     queryFn: () => getHouseholdTableHealth(page, pageSize, searchQuery),
+    staleTime: 5000,
+  })
+}
+
+// ================ WATER SUPPLY / ENVIRONMENTAL ================ 
+
+export const useWaterSupplyOptions = () => {
+  return useQuery({
+    queryKey: ['waterSupplyOptions'],
+    queryFn: getWaterSupplyOptions,
+    staleTime: 5 * 60 * 1000, // 5 minutes since this data is relatively static
+  })
+}
+
+export const useWaterSupplyTypes = () => {
+  return useQuery({
+    queryKey: ['waterSupplyTypes'],
+    queryFn: getWaterSupplyTypes,
+    staleTime: 5 * 60 * 1000, // 5 minutes since this data is relatively static
+  })
+}
+
+export const useWaterSupplyList = () => {
+  return useQuery({
+    queryKey: ['waterSupplyList'],
+    queryFn: getWaterSupplyList,
+    staleTime: 5000,
+  })
+}
+
+export const useWaterSupplyByHousehold = (householdId: string | null) => {
+  return useQuery({
+    queryKey: ['waterSupplyByHousehold', householdId],
+    queryFn: () => getWaterSupplyByHousehold(householdId!),
+    enabled: !!householdId,
+    staleTime: 5000,
+  })
+}
+
+export const useEnvironmentalData = (householdId: string | null) => {
+  return useQuery({
+    queryKey: ['environmentalData', householdId],
+    queryFn: () => getEnvironmentalData(householdId!),
+    enabled: !!householdId,
+    staleTime: 5000,
+  })
+}
+
+export const useSanitaryFacilityList = () => {
+  return useQuery({
+    queryKey: ['sanitaryFacilityList'],
+    queryFn: getSanitaryFacilityList,
+    staleTime: 5000,
+  })
+}
+
+export const useSanitaryFacilityByHousehold = (householdId: string | null) => {
+  return useQuery({
+    queryKey: ['sanitaryFacilityByHousehold', householdId],
+    queryFn: () => getSanitaryFacilityByHousehold(householdId!),
+    enabled: !!householdId,
     staleTime: 5000,
   })
 }

@@ -192,6 +192,70 @@ export const getRequests = async () => {
   }
 };
 
+// ==================== WATER SUPPLY / ENVIRONMENTAL ==================== 
+export const getWaterSupplyOptions = async () => {
+  try {
+    const res = await api2.get("health-profiling/water-supply/options/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getWaterSupplyTypes = async () => {
+  try {
+    const res = await api2.get("health-profiling/water-supply/types/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getWaterSupplyList = async () => {
+  try {
+    const res = await api2.get("health-profiling/water-supply/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getWaterSupplyByHousehold = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/water-supply/household/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getEnvironmentalData = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/environmental-data/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSanitaryFacilityList = async () => {
+  try {
+    const res = await api2.get("health-profiling/sanitary-facility/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSanitaryFacilityByHousehold = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/sanitary-facility/household/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 // // Fetch businesses
 // export const getBusinesses = async () => {
 //   try {

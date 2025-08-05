@@ -21,7 +21,7 @@ export const addPersonal = async (data: Record<string, any>) => {
       per_contact: data.per_contact,
     }
     const res = await api.post("profiling/personal/create/", new_data);
-    // await api2.post("health-profiling/personal/create/", new_data);
+    await api2.post("health-profiling/personal/create/", new_data);
 
     return res.data;
   } catch (err) {
@@ -30,7 +30,6 @@ export const addPersonal = async (data: Record<string, any>) => {
   }
 };
 
-// POST request for address
 // POST request for address
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
@@ -50,18 +49,18 @@ export const addPersonalAddress = async (data: Record<string, any>[], staff_id?:
       staff_id: staff_id,
       history_id: history_id
     }
-    
-    console.log("API addPersonalAddress payload:", values);
-    console.log("First per_add item:", data[0]);
-    
     const res = await api.post("profiling/per_address/create/", values);
-    await api2.post("health-profiling/per_address/create/", values)
-    return res.data;
-  } catch (err: any) {
-    console.error("addPersonalAddress error:", err);
-    if (err.response) {
-      console.error("Error response:", err.response.data);
+    // mirror to health database but ignore failures
+    try {
+      await api2.post("health-profiling/per_address/create/", values);
+    } catch (healthErr: any) {
+      console.error("Health database per_address creation error:", healthErr);
+      if (healthErr.response) {
+        console.error("Health database per_address error response:", healthErr.response.data);
+      }
     }
+    return res.data;
+  } catch (err) {
     throw err;
   }
 }

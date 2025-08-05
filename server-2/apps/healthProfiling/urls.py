@@ -8,6 +8,8 @@ from .views.household_views import *
 from .views.sitio_views import *
 from .views.address_views import *
 from .views.request_registration_views import *
+from .views.environmental_views import *
+from .views.environmental_form_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -78,6 +80,21 @@ urlpatterns = [
     # # Business Urls
     # path("business/", BusinessView.as_view(), name="business-details"),
     # path("business/file/", BusinessFileView.as_view(), name="business-files"),
+
+    # Environmental/Water Supply URLs
+    path("water-supply/list/", WaterSupplyListView.as_view(), name="water-supply-list"),
+    path("water-supply/types/", WaterSupplyTypesView.as_view(), name="water-supply-types"),
+    path("water-supply/options/", WaterSupplyOptionsView.as_view(), name="water-supply-options"),
+    path("water-supply/create/", WaterSupplyCreateView.as_view(), name="water-supply-create"),
+    path("water-supply/household/<str:hh_id>/", WaterSupplyByHouseholdView.as_view(), name="water-supply-by-household"),
+    
+    path("sanitary-facility/list/", SanitaryFacilityListView.as_view(), name="sanitary-facility-list"),
+    path("sanitary-facility/create/", SanitaryFacilityCreateView.as_view(), name="sanitary-facility-create"),
+    path("sanitary-facility/household/<str:hh_id>/", SanitaryFacilityByHouseholdView.as_view(), name="sanitary-facility-by-household"),
+    
+    path("environmental-data/<str:hh_id>/", EnvironmentalDataView.as_view(), name="environmental-data"),
+    path("environmental-data/create/", EnvironmentalDataCreateView.as_view(), name="environmental-data-create"),
+    path("environmental-form/submit/", EnvironmentalFormSubmitView.as_view(), name="environmental-form-submit"),
 
 ]
 

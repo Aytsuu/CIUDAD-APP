@@ -2,13 +2,12 @@ import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-// import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn, useFieldArray } from "react-hook-form";
 import { z } from "zod";
-import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button/button";
-import { Plus } from "lucide-react";
+import { Plus, Check } from "lucide-react";
+import { Card } from "@/components/ui/card/card";
 
 export default function TbSurveilanceForm({
   residents,
@@ -25,17 +24,34 @@ export default function TbSurveilanceForm({
   prefix: "tbRecords";
   title: string;
 }) {
-  const filteredResidents = React.useMemo(() => {
-    if (!residents?.formatted) return [];
-    return residents.formatted.filter((resident: any) => {
-      const residentId = resident.id.split(" ")[0];
-      return residentId !== selectedResidentId;
-    });
-  }, [residents?.formatted, selectedResidentId]);
-
-  // Get the current value for the new TB record
-  const newTbRecord = form.watch(`${prefix}.new`);
+  const [selectedMember, setSelectedMember] = React.useState<string>(""); // Changed to single selection
   
+  // Watch the current records list to filter out already added members
+  const currentRecords = form.watch(`${prefix}.list`) || [];
+  const addedMemberIds = React.useMemo(() => 
+    currentRecords.map((record: any) => record.id), 
+    [currentRecords]
+  );
+  
+  const availableMembers = React.useMemo(() => {
+    if (!residents?.formatted) {
+      return [];
+    }
+    
+    const allMembers = residents.formatted.map((resident: any) => ({
+      ...resident,
+      displayId: resident.id.split(" ")[0], // Extract just the ID part
+      displayName: resident.id.split(" - ")[1] || resident.id // Extract name part
+    }));
+    
+    // Filter out members that are already added to the table
+    const filteredMembers = allMembers.filter((member: any) => 
+      !addedMemberIds.includes(member.displayId)
+    );
+    
+    return filteredMembers;
+  }, [residents?.formatted, addedMemberIds]);
+
   // Calculate age based on date of birth
   const calculateAge = (dateOfBirth: string): string => {
     if (!dateOfBirth) return "";
@@ -62,55 +78,75 @@ export default function TbSurveilanceForm({
   // State to hold the calculated age
   const [calculatedAge, setCalculatedAge] = React.useState("");
   
-  // Update age whenever dateOfBirth changes
-  React.useEffect(() => {
-    if (newTbRecord?.dateOfBirth) {
-      setCalculatedAge(calculateAge(newTbRecord.dateOfBirth));
-    } else {
-      setCalculatedAge("");
-    }
-  }, [newTbRecord?.dateOfBirth]);
-
-  React.useEffect(() => {
-    if (!newTbRecord || !newTbRecord.id) return;
+  const handleMemberToggle = (member: any) => {
+    const memberId = member.displayId;
+    const isSelected = selectedMember === memberId;
     
-    // Extract just the ID part from the selected value (remove name part if present)
-    const fullIdWithName = newTbRecord.id;
-    const residentIdPart = fullIdWithName.split(" ")[0];
-
-    const searchResident =
-      residents.default?.find((value: any) => value.rp_id === residentIdPart) ||
-      residents.formatted?.find(
-        (resident: any) => resident.id.split(" ")[0] === residentIdPart
-      );
-
-    if (searchResident) {
-      const residentData = searchResident.per || searchResident;
-      
-      // Here we set the ID to just the ID part (without the name)
+    if (isSelected) {
+      // Unselect member - clear selection
+      setSelectedMember("");
+      // Clear form
       form.setValue(`${prefix}.new`, {
-        ...newTbRecord,
-        id: residentIdPart, // Store only the ID part
-        lastName: residentData.per_lname || residentData.lastName || "",
-        firstName: residentData.per_fname || residentData.firstName || "",
-        middleName: residentData.per_mname || residentData.middleName || "",
-        suffix: residentData.per_suffix || residentData.suffix || "",
-        sex: residentData.per_sex || residentData.sex || "",
-        dateOfBirth: residentData.per_dob || residentData.dateOfBirth || "",
-        contact: residentData.per_contact || residentData.contact || "",
-        tbSurveilanceSchema: newTbRecord.tbSurveilanceSchema || {
+        id: '',
+        lastName: '',
+        firstName: '',
+        middleName: '',
+        suffix: '',
+        sex: '',
+        dateOfBirth: '',
+        contact: '',
+        tbSurveilanceSchema: {
           srcAntiTBmeds: "",
           noOfDaysTakingMeds: "",
           tbStatus: ""
         }
       });
+      setCalculatedAge("");
+    } else {
+      // Select member - replace current selection
+      setSelectedMember(memberId);
       
-      // Update the calculated age when a new resident is selected
-      if (residentData.per_dob || residentData.dateOfBirth) {
-        setCalculatedAge(calculateAge(residentData.per_dob || residentData.dateOfBirth));
+      // Find the resident data from the default residents array
+      const residentData = residents.default?.find((res: any) => res.rp_id === memberId);
+      console.log('Selected resident data:', residentData);
+      
+      if (residentData) {
+        const personalData = residentData.per || residentData;
+        // Format sex value to match expected display format
+        const sexValue = personalData.per_sex || personalData.sex || "";
+        const formattedSex = sexValue.toLowerCase() === 'male' ? 'Male' : 
+                           sexValue.toLowerCase() === 'female' ? 'Female' : 
+                           sexValue;
+        
+        console.log('TbSurveilanceForm - Sex value from data:', sexValue);
+        console.log('TbSurveilanceForm - Formatted sex:', formattedSex);
+        
+        const formData = {
+          id: memberId,
+          lastName: personalData.per_lname || personalData.lastName || "",
+          firstName: personalData.per_fname || personalData.firstName || "",
+          middleName: personalData.per_mname || personalData.middleName || "",
+          suffix: personalData.per_suffix || personalData.suffix || "",
+          sex: formattedSex,
+          dateOfBirth: personalData.per_dob || personalData.dateOfBirth || "",
+          contact: personalData.per_contact || personalData.contact || "",
+          tbSurveilanceSchema: {
+            srcAntiTBmeds: "",
+            noOfDaysTakingMeds: "",
+            tbStatus: ""
+          }
+        };
+        
+        console.log('TbSurveilanceForm - Setting form data:', formData);
+        form.setValue(`${prefix}.new`, formData);
+        
+        // Update calculated age
+        if (personalData.per_dob || personalData.dateOfBirth) {
+          setCalculatedAge(calculateAge(personalData.per_dob || personalData.dateOfBirth));
+        }
       }
     }
-  }, [newTbRecord?.id, residents, prefix, form]);
+  };
   
   const { append } = useFieldArray({
     control: form.control,
@@ -127,7 +163,8 @@ export default function TbSurveilanceForm({
     
     append(newPatient);
     
-    // Reset the form fields for new patient
+    // Reset selection and form fields for new patient
+    setSelectedMember("");
     form.setValue(`${prefix}.new`, {
       id: '',
       lastName: '',
@@ -159,16 +196,49 @@ export default function TbSurveilanceForm({
 
       <Form {...form}>
         <form className="grid gap-4">
-          <div className="mb-2">
-            <Combobox
-              options={filteredResidents}
-              value={newTbRecord?.id || ""}
-              onChange={(value) => form.setValue(`${prefix}.new.id`, value)}
-              placeholder="Search for resident..."
-              contentClassName="w-[28rem]"
-              triggerClassName="w-1/3"
-              emptyMessage="No resident found"
-            />
+          <div className="mb-6">
+            <h3 className="font-medium text-base mb-3">Select Family Members</h3>
+            {availableMembers.length === 0 ? (
+              <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
+                All family members have been added
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {availableMembers.map((member: any) => {
+                  const isSelected = selectedMember === member.displayId;
+                  return (
+                    <Card 
+                      key={member.displayId}
+                      className={`p-4 cursor-pointer transition-all duration-200 border-2 ${
+                        isSelected 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleMemberToggle(member)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            isSelected 
+                              ? 'border-green-500 bg-green-500' 
+                              : 'border-gray-300'
+                          }`}>
+                            {isSelected && <Check className="w-4 h-4 text-white" />}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{member.displayName}</p>
+                            <p className="text-xs text-gray-500">ID: {member.displayId}</p>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {member.fc_role || 'Family Member'}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-4 gap-4 mb-6">
@@ -187,14 +257,12 @@ export default function TbSurveilanceForm({
               />
             </div>
             
-            <FormSelect control={form.control} name={`${prefix}.new.sex`} label="Sex"
-              options={[
-                { id: "male", name: "Male" },
-                { id: "female", name: "Female" },
-              ]}
+            <FormInput 
+              control={form.control} 
+              name={`${prefix}.new.sex`} 
+              label="Sex" 
+              readOnly 
             />
-            
-            
             
             <FormSelect 
               control={form.control} 

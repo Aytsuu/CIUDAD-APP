@@ -10,64 +10,48 @@ import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../../profilingTypes";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useResidentsHealth } from "../queries/profilingFetchQueries";
+import { useResidentsTableHealth } from "../queries/profilingFetchQueries";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  const { data: residents, isLoading: isLoadingResidents } = useResidentsHealth();
+  // Use debounced search query to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Format resident to populate data table
+  const { data: residentsTableData, isLoading: isLoadingResidents } = useResidentsTableHealth(
+    currentPage,
+    pageSize,
+    debouncedSearchQuery
+  );
+
+  const residents = residentsTableData?.results || [];
+  const totalCount = residentsTableData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // The backend ResidentProfileTableSerializer already returns the correct structure
+  // with registered_by field properly formatted, so we can use the data directly
   const formatResidentData = React.useCallback((): ResidentRecord[] => {
     if (!residents) return [];
 
-    return residents.map((resident: any) => {
-      const personal = resident?.per;
-      const [family_composition] = resident?.family_compositions;
-      const family = family_composition?.fam
-      const household = family?.hh;
-      const staff = resident?.staff?.rp?.per;
-
-      return {
-        id: resident.rp_id || "",
-        householdNo: household?.hh_id || "",
-        sitio: household?.sitio.sitio_name || "",
-        familyNo: family?.fam_id || "",
-        lname: personal.per_lname || "",
-        fname: personal.per_fname || "",
-        mname: personal.per_mname || "-",
-        suffix: personal.per_suffix || "-",
-        dateRegistered: resident.rp_date_registered || "",
-        registeredBy: (staff ? `${staff.per_lname}, 
-          ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
-      };
-    });
+    return residents.map((resident: any) => ({
+      id: resident.rp_id || "",
+      householdNo: resident.household_no || "",
+      sitio: "", // This might need to be added to the backend serializer if needed
+      familyNo: resident.family_no || "",
+      lname: resident.lname || "",
+      fname: resident.fname || "",
+      mname: resident.mname || "-",
+      suffix: "", // This might need to be added to the backend serializer if needed  
+      dateRegistered: resident.rp_date_registered || "",
+      registeredBy: resident.registered_by || "-" // Use the backend formatted value directly
+    }));
   }, [residents]);
-  
-  // Filter residents based on search query
-  const filteredResidents = React.useMemo(() => {
-    const formattedData = formatResidentData();
-    if (!formattedData?.length) return [];
 
-    return formattedData.filter((record: any) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, residents]);
-
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredResidents?.length / pageSize);
-
-  // Slice the data for the current page
-  const paginatedResidents = filteredResidents.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Use the formatted data directly - no need for client-side filtering since backend handles it
+  const formattedResidents = formatResidentData();
 
   if (isLoadingResidents) {
     return (
@@ -156,16 +140,16 @@ export default function ResidentRecords() {
         <div className="overflow-x-auto">
           <DataTable
             columns={residentColumns(residents)}
-            data={paginatedResidents}
+            data={formattedResidents}
           />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredResidents?.length)} of{" "}
-            {filteredResidents?.length} rows
+            {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} rows
           </p>
-          {paginatedResidents?.length > 0 && (
+          {formattedResidents?.length > 0 && (
             <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}

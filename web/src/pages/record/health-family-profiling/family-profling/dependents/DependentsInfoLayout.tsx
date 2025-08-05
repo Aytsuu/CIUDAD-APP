@@ -159,12 +159,26 @@ export default function DependentsInfoLayout({
       // Store fam_id for subsequent queries
       setFamId(newFamily.fam_id);
 
+      // Create family compositions for parents first
+      const parentCompositions = selectedParents
+        .filter(parentId => parentId) // Filter out empty parent IDs
+        .map((parentId, index) => ({
+          fam: newFamily.fam_id,
+          rp: parentId,
+          fc_role: PARENT_ROLES[index], // "Mother", "Father", "Guardian"
+        }));
+
       // Create family compositions for dependents
-      const compositions = dependentsList.map(dep => ({
+      const dependentCompositions = dependentsList.map(dep => ({
         fam: newFamily.fam_id,
         rp: dep.id,
+        fc_role: 'Dependent',
       }));
-      await addFamilyComposition(compositions);
+
+      // Combine all compositions
+      const allCompositions = [...parentCompositions, ...dependentCompositions];
+      
+      await addFamilyComposition(allCompositions);
 
       toast("Record added successfully", {
         icon: <CircleAlert size={24} className="fill-green-500 stroke-white" />,
