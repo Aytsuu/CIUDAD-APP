@@ -37,10 +37,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("No valid Supabase session found");
         setUser(null);
         setIsAuthenticated(false);
-        return;
       }
 
-      const response = await api.get("authentication/user/");
+      const response = await api.get("authentication/web/user/");
       setUser(response.data.user);
       setIsAuthenticated(true);
       

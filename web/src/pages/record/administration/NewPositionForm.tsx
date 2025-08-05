@@ -15,7 +15,7 @@ import { useAddPositionHealth } from "../health/administration/queries/administr
 import { useEditPosition } from "./queries/administrationUpdateQueries";
 import { useEditPositionHealth } from "../health/administration/queries/administrationUpdateQueries";
 import { renderActionButton } from "./administrationActionConfig";
-import { Type } from "./administrationEnums";
+import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";

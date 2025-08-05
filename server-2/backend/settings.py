@@ -326,13 +326,15 @@ LOGGING = {
 
 # # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
-# # SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
+# DEBUG = False
 # # ALLOWED_HOSTS = ['localhost', '*']
 # # ALLOWED_HOSTS = ['localhost', '*']
 
+# # ========================
+# # SUPABASE CONFIGURATION
+# # ========================
 # SUPABASE_CONFIG = {
 #     'URL': config('SUPABASE_URL'),
 #     'ANON_KEY': config('SUPABASE_ANON_KEY'),
@@ -357,6 +359,9 @@ LOGGING = {
 #     cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
 #     firebase_admin.initialize_app(cred)
 
+# # ========================
+# # APPLICATION DEFINITION
+# # ========================
 # INSTALLED_APPS = [
 #     'django.contrib.admin',
 #     'django.contrib.auth',
@@ -403,8 +408,9 @@ LOGGING = {
 
 
 # MIDDLEWARE = [
-#    'corsheaders.middleware.CorsMiddleware', 
+#     'corsheaders.middleware.CorsMiddleware', 
 #     'django.middleware.security.SecurityMiddleware',
+#     'whitenoise.middleware.WhiteNoiseMiddleware', 
 #     'django.contrib.sessions.middleware.SessionMiddleware',
 #     'django.middleware.common.CommonMiddleware',
 #     'corsheaders.middleware.CorsMiddleware',
@@ -474,27 +480,26 @@ LOGGING = {
 # ]
 
 
-# # Internationalization
-# # https://docs.djangoproject.com/en/5.1/topics/i18n/
-
+# # ========================
+# # INTERNATIONALIZATION
+# # ========================
 # LANGUAGE_CODE = 'en-us'
-
 # TIME_ZONE = 'UTC'
-
 # USE_I18N = True
-
 # USE_TZ = True
 
 
-# # Static files (CSS, JavaScript, Images)
-# # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
+# # ========================
+# # STATIC FILES
+# # ========================
 # STATIC_URL = 'static/'
+# if not DEBUG:
+#     # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
+#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# # DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
-
-# # Default primary key field type
-# # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+#     # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
+#     # and renames the files with unique names for each version to support long-term caching
+#     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -510,26 +515,25 @@ LOGGING = {
 #     ],
 # }
 
+# # ========================
+# # CORS SETTINGS
+# # ========================
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:3000",
 #     "http://localhost:5173",
-#     config('FRONTEND_URL', default='http://localhost:3000'),
+#     "https://ciudad-app-server-2.onrender.com",
+#     "http://127.0.0.1:5173",  # Add this for Vite sometimes
 # ]
-# ALLOWED_HOSTS = ['*'] 
-# CORS_ALLOW_ALL_ORIGINS= True
-# CORS_ALLOW_CREDENTIALS= True
 
+# ALLOWED_HOSTS = [
+#     'ciudad-app-server-2.onrender.com',
+#     'localhost',
+#     '127.0.0.1'
+# ]
 
-# # JWT Authentication Settings
-# SIMPLE_JWT = {
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-#     'ROTATE_REFRESH_TOKENS': True,
-#     'BLACKLIST_AFTER_ROTATION': True,
-#     'AUTH_HEADER_TYPES': ('Bearer',),
-# }
-
+# CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ALLOW_CREDENTIALS = True
+
 # CORS_ALLOW_HEADERS = [
 #     'accept',
 #     'accept-encoding',
@@ -554,8 +558,6 @@ LOGGING = {
 #     'POST',
 #     'PUT',
 # ]
-# CORS_ALLOW_HEADERS = ["*"]
-
 
 # CORS_PREFLIGHT_MAX_AGE = 86400
 

@@ -5,7 +5,7 @@ export default function FamilyProfileOptions() {
     <div className="w-full h-[14rem] sm:h-[18rem] md:h-[20rem] grid grid-cols-1 sm:grid-cols-2 gap-3">
       {/* Registration Form */}
       <Link
-        to="/family/form/solo"
+        to="/profiling/family/form/solo"
         className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
       >
         <div
@@ -18,7 +18,7 @@ export default function FamilyProfileOptions() {
         
       </Link>
       <Link
-        to="/family/form"
+        to="/profiling/family/form"
         className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
       >
         {/* Text content */}

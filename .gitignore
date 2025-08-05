@@ -56,10 +56,10 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Ignore all migration files except _init_.py
-*/migrations/.py
+# Ignore all migration files except __init__.py
+**/migrations/*.py
 **/migrations/__init__.py
-*/migrations/.pyc
+**/migrations/*.pyc
 
 # Virtual environments
 venv/

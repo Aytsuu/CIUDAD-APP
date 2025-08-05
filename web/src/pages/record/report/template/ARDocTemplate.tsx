@@ -130,7 +130,7 @@ export const ARDocTemplate = ({
   }
 
   const getName = (value: string) => {
-    return value.split(" ").map((val, idx) => {
+    return value.split(" ")?.map((val, idx) => {
       if(idx > 1) {
         return val
       }
@@ -202,6 +202,56 @@ export const ARDocTemplate = ({
     return null;
   }, []);
 
+  // Logo component
+  const LogoUpload = ({ 
+    logoUrl, 
+    onLogoChange, 
+    inputId, 
+  }: { 
+    logoUrl?: string; 
+    onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void; 
+    inputId: string; 
+    alt: string; 
+  }) => (
+    <div className="flex flex-col items-center relative">
+      <Input
+        type="file"
+        ref={fileInputRef}
+        onChange={onLogoChange}
+        accept="image/*"
+        className="hidden"
+        id={inputId}
+      />
+
+      <label htmlFor={inputId} className="relative cursor-pointer group">
+        {logoUrl ? (
+          <>
+            <img
+              src={logoUrl}
+              className="w-[70px] h-[70px] rounded-full object-cover bg-gray-100 border-2 border-gray-200"
+            />
+            {/* Hover overlay for existing logo */}
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <Upload size={16} className="text-white mb-1" />
+              <span className="text-white text-xs font-medium">Change</span>
+            </div>
+          </>
+        ) : (
+          <div className="w-[70px] h-[70px] rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center group-hover:border-gray-500 group-hover:bg-gray-200 transition-all duration-200">
+            <Upload size={20} className="text-gray-500 group-hover:text-gray-600 mb-1" />
+            <span className="text-gray-600 text-xs font-medium group-hover:text-gray-700">Logo</span>
+          </div>
+        )}
+      </label>
+      
+      {!logoUrl && (
+        <div className="mt-2 text-center">
+          <p className="text-xs font-medium text-gray-600">Click to upload logo</p>
+        </div>
+      )}
+    </div>
+  );
+
   if(isLoading) {
     return (
       <div className="w-full flex flex-col gap-4">
@@ -212,7 +262,7 @@ export const ARDocTemplate = ({
               <div className="text-center space-y-2">
                 <h3 className="text-lg font-medium">Loading Document</h3>
                 <p className="text-sm text-muted-foreground">
-                  Please wait while we load the staff information and document details...
+                  Please wait while we load the document details...
                 </p>
               </div>
               {/* Loading bars */}
@@ -243,27 +293,13 @@ export const ARDocTemplate = ({
         />
         <div className="w-full h-full flex flex-col items-center gap-1">
           <div className="w-[53%] flex justify-between ">
-            <div className="flex flex-col items-center relative">
-              <Input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleLeftLogoChange}
-                accept="image/*"
-                className="hidden"
-                id="logo-1"
-              />
-
-              <label htmlFor="logo-1" className="relative cursor-pointer">
-                <img
-                  src={reportTemplate?.rte_logoLeft}
-                  alt="Logo"
-                  className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Upload size={24} className="text-white" />
-                </div>
-              </label>
-            </div>
+            <LogoUpload
+              logoUrl={reportTemplate?.rte_logoLeft}
+              onLogoChange={handleLeftLogoChange}
+              inputId="logo-1"
+              alt="Left Logo"
+            />
+            
             <div className="flex flex-col gap-2 text-center">
               <Label>REPUBLIC OF THE PHILIPPINES</Label>
               <Label>CITY OF CEBU</Label>
@@ -271,27 +307,13 @@ export const ARDocTemplate = ({
               <Label>BARANGAY BASE RESPONDERS</Label>
               <Label>BARANGAY SAN ROQUE (CIUDAD) </Label>
             </div>
-            <div className="flex flex-col items-center relative">
-              <Input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleRightLogoChange}
-                accept="image/*"
-                className="hidden"
-                id="logo-2"
-              />
-
-              <label htmlFor="logo-2" className="relative cursor-pointer">
-                <img
-                  src={reportTemplate?.rte_logoRight}
-                  alt="Logo"
-                  className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Upload size={24} className="text-white" />
-                </div>
-              </label>
-            </div>
+            
+            <LogoUpload
+              logoUrl={reportTemplate?.rte_logoRight}
+              onLogoChange={handleRightLogoChange}
+              inputId="logo-2"
+              alt="Right Logo"
+            />
           </div>
           <Separator className="bg-black mt-4"/>
           <div className="w-full flex flex-col items-center">
@@ -303,7 +325,7 @@ export const ARDocTemplate = ({
               <Label>ACTIONS TAKEN: <span>{act_taken}</span></Label>
             </div>
             <div className="flex gap-8 mt-6">
-              {images.map((image: any) => (
+              {images?.map((image: any) => (
                 <img src={image.arf_url} className="w-[250px] h-[220px] bg-gray" />
               ))}
             </div>

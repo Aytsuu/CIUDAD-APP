@@ -18,5 +18,6 @@ export type ARReport = {
   ar_sitio: string;
   ar_street: string;
   ar_date: string;
+  ar_files: any;
   status: string;
 }

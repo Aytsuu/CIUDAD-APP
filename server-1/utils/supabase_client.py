@@ -46,5 +46,5 @@ def upload_to_storage(file_data, bucket, folder=None):
     except Exception as e:
         logger.error(f"Failed to upload file {file_data['name']}: {str(e)}")
 
-    return url if url else None
+    return url
          

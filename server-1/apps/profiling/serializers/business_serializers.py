@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import *
+from django.db import transaction
 from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 from utils.supabase_client import supabase, upload_to_storage
@@ -137,7 +138,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
     return f'{info.per_lname}, {info.per_fname} ' \
           f'{info.per_mname}' if info.per_mname else None 
   
-class BusinessFileInputSerializer(serializers.Serializer):
+class FileInputSerializer(serializers.Serializer):
   name = serializers.CharField()
   type = serializers.CharField()
   file = serializers.CharField()
@@ -158,7 +159,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     slug_field='sitio_id',
     write_only=True, 
     required=False)
-  files = BusinessFileInputSerializer(write_only=True, many=True, required=False)
+  files = FileInputSerializer(write_only=True, many=True, required=False)
   respondent = RespondentInputSerializer(write_only=True, required=False)
   rp = serializers.CharField(write_only=True, required=False)
   br = serializers.CharField(write_only=True, required=False)
@@ -169,6 +170,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
               'bus_status', 'bus_date_verified','sitio', 'bus_street', 
               'staff', 'files', ]
 
+  @transaction.atomic
   def create(self, validated_data):
     try:
         sitio = validated_data.pop('sitio', None)
@@ -213,22 +215,25 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         add=address,
         **validated_data
       )
-
+  
   def _upload_files(self, business_instance, files):
       business_files = []
       for file_data in files:
+        business_file = BusinessFile(
+          bus=business_instance,
+          bf_name=file_data['name'],
+          bf_type=file_data['type'],
+          bf_path=f"uploads/{file_data['name']}",
+        )
+        
         url = upload_to_storage(file_data, 'business-bucket', 'uploads')
-        business_files.append(BusinessFile(
-            bus=business_instance,
-            bf_name=file_data['name'],
-            bf_type=file_data['type'],
-            bf_path=f"uploads/{file_data['name']}",
-            bf_url=url
-        ))
+        business_file.bf_url=url
+        business_files.append(business_file)
 
       if business_files:
           BusinessFile.objects.bulk_create(business_files)
   
+  @transaction.atomic
   def update(self, instance, validated_data):
     files = validated_data.pop('files', [])
     sitio = validated_data.pop('sitio')

@@ -1,4 +1,4 @@
-import { Type } from "./administrationEnums";
+import { Type } from "./AdministrationEnums";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
