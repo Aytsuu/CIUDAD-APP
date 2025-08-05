@@ -36,7 +36,8 @@ class DevelopmentBudget(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='dev_id'
+        db_column='dev_id',
+        related_name='budgets'
     )
 
     class Meta:
@@ -232,3 +233,5 @@ class ProposalSuppDoc(models.Model):
 
     class Meta:
         db_table = 'proposal_supp_doc'
+
+        

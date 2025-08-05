@@ -183,7 +183,7 @@ const items: BaseMenuItem[] = [
       { title: "Medicine Record", url: "/all-medicine-records" },
       { title: "Firstaid Record", url: "/all-firstaid-records" },
       { title: "Archive", url: "/archiveMainInventoryStocks" },
-      { title: "Schedules", url: "/health-schedules" },
+      { title: "Schedules", url: "/health-appointments" },
       { title: "Service Scheduler", url: "/health-services/scheduler" },
       { title: "Reports", url: "/healthcare-reports" },
       {
@@ -204,6 +204,21 @@ const items: BaseMenuItem[] = [
         ],
       },
     ],
+  },
+  {
+    title: "Clerk",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Certifications", url: "record/clearances/certification" },
+      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
+    ],
+  },
+  {
+    title: "Activity Log",
+    url: "/record/activity-log",
+
   },
 ];
 

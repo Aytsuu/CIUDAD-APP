@@ -20,8 +20,6 @@ import { createImmunizationColumns } from "./columns";
 
 
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
 import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
 import { useAuth } from "@/context/AuthContext";
 import { NotesDialog } from "./NotesDialog";
@@ -109,16 +107,16 @@ export default function Immunization({
   const [nextVisitDescription, setNextVisitDescription] = useState<
     string | null
   >(null);
-  const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(
-    null
-  );
+  // const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(
+  //   null
+  // );
   const [isVaccineComplted, setisVaccineComplted] = useState(false);
   const [currentVaccineTotalDoses, setCurrentVaccineTotalDoses] =
     useState<number>(1);
   const [existingVaccineTotalDoses, setExistingVaccineTotalDoses] =
     useState<number>(1);
-  const [currentDoseNumber, setCurrentDoseNumber] = useState<number>(1);
-  const [newVaccineErrors, setNewVaccineErrors] = useState<{
+  // const [currentDoseNumber, setCurrentDoseNumber] = useState<number>(1);
+  const [newVaccineErrors] = useState<{
     vaccine?: string;
     dose?: string;
     date?: string;
@@ -132,8 +130,6 @@ export default function Immunization({
     ChildHealthRecord?.chrec_details?.patrec_details?.pat_id.toString() || "";
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [basicVaccineList, setBasicVaccineList] = useState<any[]>([]);
 
  
@@ -165,7 +161,7 @@ export default function Immunization({
         })),
       });
     }
-  }, [vaccinesData]);
+  }, [vaccinesData,vaccineOptions]);
 
 
 
@@ -268,7 +264,7 @@ export default function Immunization({
 
     if (!value) return;
 
-    const [vacStck_id, vac_id, vac_name, expiry_date] = value.split(",");
+    const [vacStck_id, vac_id, vac_name,] = value.split(",");
     const numericVacId = parseInt(vac_id, 10);
 
     const selectedVaccine = vaccinesData?.default?.find(
@@ -319,7 +315,7 @@ export default function Immunization({
     console.log("Vaccination Record", existingVacrecId);
 
     form.setValue("vaccines.0.dose", nextDose.toString());
-    setCurrentDoseNumber(nextDose);
+    // setCurrentDoseNumber(nextDose);
 
     if (vaccinelist.no_of_doses) {
       form.setValue(
@@ -344,7 +340,7 @@ export default function Immunization({
       );
     }
 
-    setSelectedVaccineType(vaccinelist.vac_type_choices);
+    // setSelectedVaccineType(vaccinelist.vac_type_choices);
 
     // Modified follow-up date calculation logic
     if (vaccinelist.vac_type_choices === "routine") {
@@ -433,7 +429,7 @@ export default function Immunization({
     form.setValue("existingVaccines.0.totalDoses", existingTotalDoses.toString());
 
     form.setValue(`existingVaccines.0.dose`, nextDose.toString());
-    setCurrentDoseNumber(nextDose);
+    // setCurrentDoseNumber(nextDose);
 
     if (selectedVaccine.no_of_doses) {
       form.setValue(
@@ -455,7 +451,7 @@ export default function Immunization({
       );
     }
 
-    setSelectedVaccineType(selectedVaccine.vac_type_choices);
+    // setSelectedVaccineType(selectedVaccine.vac_type_choices);
   };
 
   const addVac = () => {

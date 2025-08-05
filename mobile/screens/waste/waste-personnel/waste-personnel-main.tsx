@@ -3,8 +3,6 @@ import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
 import {
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
   Text,
   View,
   ScrollView,
@@ -22,11 +20,8 @@ import {
   Archive,
   ArchiveRestore,
   Plus,
-  Search,
-  XCircle,
   ChevronLeft
 } from "lucide-react-native";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -35,27 +30,16 @@ import {
   useDeleteTruck,
   useRestoreTruck,
 } from "./queries";
-import type { PersonnelItem, TruckData } from "./requests";
-import ScreenLayout from "@/screens/_ScreenLayout";
+import  { PersonnelItem, TruckData, SearchFormValues, Role, SearchFormSchema } from "./waste-personnel-types";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
 import { SearchInput } from "@/components/ui/search-input";
-
-const SearchFormSchema = z.object({
-  searchQuery: z.string(),
-});
-
-type SearchFormValues = z.infer<typeof SearchFormSchema>;
-
-type Role = "Watchman" | "Waste Driver" | "Waste Collector" | "Trucks";
 
 export default function WastePersonnelMain() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [selectedRole, setSelectedRole] = useState<Role>("Watchman");
-  const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">(
-    "active"
-  );
+  const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
   const searchInputRef = useRef<TextInput>(null);
 
   const {
@@ -70,7 +54,6 @@ export default function WastePersonnelMain() {
   });
 
   const searchQuery = watchSearch("searchQuery");
-
   const { data: trucks = [], isLoading: isTrucksLoading, refetch } = useTrucks();
   const { data: personnel = [], isLoading: isPersonnelLoading } = usePersonnel();
   const deleteTruckMutation = useDeleteTruck();
@@ -163,9 +146,7 @@ export default function WastePersonnelMain() {
           }
           headerTitle={<Text>Waste Personnel and Collection Vehicle Management</Text>}
           rightAction={
-            <TouchableOpacity>
-              <ChevronLeft size={30} color="black" className="text-white" />
-            </TouchableOpacity>
+            <View></View>
           }
         >
     <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>

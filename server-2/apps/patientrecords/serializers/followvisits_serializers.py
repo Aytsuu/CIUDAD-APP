@@ -33,7 +33,7 @@ class FollowUpVisitWithPatientSerializer(serializers.ModelSerializer):
             'followv_status',
             'patrec_id',
             'created_at',
-            'updated_at',
+            'completed_at',
             'patient_details',
         ]
     

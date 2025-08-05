@@ -3,16 +3,7 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { postdonationreq } from "../request-db/donationPostRequest";
-
-export type DonationInput = {
-  don_num?: string;
-  don_donor: string;
-  don_item_name: string;
-  don_qty: string;
-  don_category: string;
-  don_description?: string;
-  don_date: string;
-};
+import { DonationInput } from "../donation-types";
 
 export const useAddDonation = () => {
   const queryClient = useQueryClient();

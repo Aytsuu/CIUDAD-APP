@@ -56,6 +56,8 @@ export default function MedicalConsultationFlow() {
       physicalExamResults: [],
       selectedIllnesses: [],
       followv: "",
+      
+      
       selectedMedicines: initialMedicines.map((med: Medicine) => ({
         minv_id: med.minv_id,
         medrec_qty: med.medrec_qty,

@@ -5,11 +5,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters
-from .models import WasteTruck
+from .models import *
 from apps.profiling.models import Sitio
 from rest_framework import generics
 from .signals import archive_completed_hotspots
 from datetime import date, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 #KANI 3RD
@@ -141,7 +144,7 @@ class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
-        archive_completed_hotspots()
+        # archive_completed_hotspots()
         return WasteHotspot.objects.select_related(
             'wstp_id__staff__rp__per', 
             'sitio_id'                   
@@ -405,7 +408,7 @@ class DriverPersonnelAPIView(APIView):
         allowed_positions = ["Waste Driver", "Truck Driver", "Driver"]  
         
         drivers = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title__in=allowed_positions
+            staff__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
             'staff__pos',
             'staff__rp__per'
@@ -420,7 +423,7 @@ class CollectorPersonnelAPIView(APIView):
         allowed_positions = ["Waste Collector", "Collector"]  
         
         collectors = WastePersonnel.objects.filter( 
-            staff_id__pos__pos_title__in=allowed_positions
+            staff__pos__pos_title__in=allowed_positions
         ).select_related(  # Optimize query
             'staff__pos',
             'staff__rp__per'
@@ -442,7 +445,7 @@ class WasteCollectorView(generics.ListCreateAPIView):
 class WatchmanView(generics.GenericAPIView): 
     def get(self, request, *args, **kwargs):
         watchmen = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title="Watchman"  
+            staff__pos__pos_title="Watchman"  
         ).select_related(
             'staff__pos',
             'staff__rp__per'
@@ -507,6 +510,26 @@ class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
         obj = super().get_object()
         return obj
     
+
+class GarbagePickupRequestsByDriverView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestAcceptedSerializer
+
+    def get_queryset(self):
+        driver_id = self.request.query_params.get('wstp_id')
+
+        if not driver_id:
+            return Garbage_Pickup_Request.objects.none()
+
+        assigned_garb_ids = Pickup_Assignment.objects.filter(
+            wstp_id=driver_id
+        ).values_list('garb_id', flat=True)
+
+        return Garbage_Pickup_Request.objects.filter(
+            garb_id__in=assigned_garb_ids,
+            garb_req_status__iexact='accepted'  # Filter only accepted requests
+        )
+    
+    
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
     def get_queryset(self):
@@ -526,6 +549,27 @@ class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
     def get_object(self):
         obj = super().get_object()
         return obj
+    
+
+class GarbagePickupCompletedByDriverView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestCompletedSerializer
+
+    def get_queryset(self):
+        driver_id = self.request.query_params.get('wstp_id')
+
+        if not driver_id:
+            return Garbage_Pickup_Request.objects.none()
+
+        assigned_garb_ids = Pickup_Assignment.objects.filter(
+            wstp_id=driver_id
+        ).values_list('garb_id', flat=True)
+
+        confirmed_garb_ids = Pickup_Confirmation.objects.filter(
+            garb_id__in=assigned_garb_ids,
+            conf_staff_conf=True
+        ).values_list('garb_id', flat=True)
+
+        return Garbage_Pickup_Request.objects.filter(garb_id__in=confirmed_garb_ids)
     
 
 class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):

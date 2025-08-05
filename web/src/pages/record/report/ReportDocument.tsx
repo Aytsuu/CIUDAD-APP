@@ -37,6 +37,7 @@ export default function ReportDocument() {
   const arDocs = React.useMemo(() => ARInfo?.ar_files?.filter((file: any) => 
     file.arf_type.startsWith('application/')), [ARInfo])
 
+
   // For Weekly Accomplishment Report Document
   const { mutateAsync: addWARFile } = useAddWARFile();
   const { mutateAsync: deleteWARFile } = useDeleteWARFile();

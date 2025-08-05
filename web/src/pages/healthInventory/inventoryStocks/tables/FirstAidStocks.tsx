@@ -59,7 +59,6 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 export default function FirstAidStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false)
   const [firstAidToArchive, setFirstAidToArchive] = useState<string | null>(null)
-  const [isDialog, setIsDialog] = useState(false) // This state seems unused, consider removing if not needed
   const [searchQuery, setSearchQuery] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)

@@ -15,7 +15,7 @@ import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormTimeInput } from '@/components/ui/form/form-time-input';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
-import { SelectLayoutWithAdd } from '@/components/ui/selec-searchadd-layout';
+import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
 import { Textarea } from '@/components/ui/textarea';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
@@ -86,6 +86,11 @@ function WasteColCreate() {
 
 
     const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
+
+        if(!values.additionalInstructions){
+          values.additionalInstructions = "None"
+        }
+        
         createSchedule(
             {
             ...values,

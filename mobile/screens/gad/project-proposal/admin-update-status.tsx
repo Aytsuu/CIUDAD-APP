@@ -14,11 +14,10 @@ import {
   Modal,
   TextInput,
 } from "react-native";
-import { Search, ChevronLeft } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import {
   useGetProjectProposals,
   useGetProjectProposal,
-  type ProjectProposal,
 } from "./queries/fetchqueries";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
 import { QueryProvider } from "./api/query-provider";
@@ -26,8 +25,7 @@ import { ProjectProposalView } from "./view-projprop";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { useRouter } from "expo-router";
 import { SelectLayout } from "@/components/ui/select-layout";
-import { ProposalStatus } from "./queries/fetchqueries";
-import { SearchInput } from "@/components/ui/search-input";
+import { ProjectProposal, ProposalStatus } from "./projprop-types";
 
 const StatusUpdateModal: React.FC<{
   visible: boolean;
@@ -44,16 +42,16 @@ const StatusUpdateModal: React.FC<{
 
   const statusOptions: ProposalStatus[] = [
     "Pending",
-    "Amend", 
+    "Amend",
     "Approved",
     "Rejected",
   ];
 
-  const isReasonRequired = 
-    selectedStatus === "Approved" || 
-    selectedStatus === "Rejected" || 
+  const isReasonRequired =
+    selectedStatus === "Approved" ||
+    selectedStatus === "Rejected" ||
     selectedStatus === "Amend";
-    
+
   const isUpdateDisabled =
     !selectedStatus ||
     selectedStatus === project?.status ||
@@ -186,7 +184,8 @@ const StatusUpdateModal: React.FC<{
 const AdminUpdateStatusContent: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
-  const [selectedProject, setSelectedProject] = useState<ProjectProposal | null>(null);
+  const [selectedProject, setSelectedProject] =
+    useState<ProjectProposal | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(3);
@@ -231,7 +230,6 @@ const AdminUpdateStatusContent: React.FC = () => {
     });
 
   // Calculate pagination values
-  const totalPages = Math.ceil(filteredProjects.length / pageSize);
   const paginatedProjects = filteredProjects.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -244,34 +242,30 @@ const AdminUpdateStatusContent: React.FC = () => {
   };
 
   const handleProjectPress = (project: ProjectProposal) => {
-  // Automatically set to "Viewed" if current status is "Pending"
-  if (project.status === "Pending") {
-    updateStatus(
-      { 
-        gprId: project.gprId, 
-        status: "Viewed", // This is now type-safe
-        reason: "Project viewed by admin" 
-      },
-      {
-        onSuccess: () => {
-          // Create a new object with the correct type
-          const updatedProject: ProjectProposal = {
-            ...project,
-            status: "Viewed", // Explicitly typed
-            statusReason: "Project viewed by admin"
-          };
-          setSelectedProject(updatedProject);
+    // Automatically set to "Viewed" if current status is "Pending"
+    if (project.status === "Pending") {
+      updateStatus(
+        {
+          gprId: project.gprId,
+          status: "Viewed", // This is now type-safe
+          reason: "Project viewed by admin",
         },
-        onError: (error) => {
-          console.error("Failed to update status to Viewed:", error);
-          setSelectedProject(project); // Original project has correct types
+        {
+          onSuccess: () => {
+            // Create a new object with the correct type
+            const updatedProject: ProjectProposal = {
+              ...project,
+              status: "Viewed", // Explicitly typed
+              statusReason: "Project viewed by admin",
+            };
+            setSelectedProject(updatedProject);
+          },
         }
-      }
-    );
-  } else {
-    setSelectedProject(project); // Original project has correct types
-  }
-};
+      );
+    } else {
+      setSelectedProject(project); // Original project has correct types
+    }
+  };
 
   const handleBackPress = () => {
     setSelectedProject(null);
@@ -399,16 +393,6 @@ const AdminUpdateStatusContent: React.FC = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <View className="mt-2 px-4 pt-4 pb-2">
-        {/* <View className="relative mb-4">
-          <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-          <TextInput
-            placeholder="Search..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            className="bg-white pl-10 pr-4 py-3 rounded-lg border border-gray-200 text-sm"
-          />
-        </View> */}
-
         <View className="mb-4">
           <SelectLayout
             options={[

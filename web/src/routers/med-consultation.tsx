@@ -1,7 +1,3 @@
-// import AllMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/AllRecords";
-// import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/IndividualRecords";
-// import AllMedicalForm from "@/pages/healthServices/medicalconsultation/PHmedForm";
-// import IndivNonPHMedicalForm from "@/pages/healthServices/medicalconsultation/NewMedConForm";
 
 
 import AllMedicalConsRecord from "@/pages/healthServices/medicalconsultation/tables/AllRecords";

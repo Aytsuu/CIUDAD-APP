@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
-
+import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
+import { useQuery } from "@tanstack/react-query";
 
 
 const styles = {
@@ -39,8 +40,8 @@ export const columns: ColumnDef<PermitClearance>[] = [
     {
         accessorKey: "purpose",
         header: "Purpose",
-        cell: ({ row }) => row.original.purposes.join(", ") // Convert array to string
-      },
+        cell: ({ row }) => row.original.req_sales_proof || ""
+    },
     { accessorKey: "requestor", header: "Requestor"},
     { accessorKey: "reqDate",
         header: ({ column }) => (
@@ -68,7 +69,37 @@ export const columns: ColumnDef<PermitClearance>[] = [
             <div className="">{row.getValue("claimDate")}</div>
         )
     },
-    { accessorKey: "paymentStat", header: "Payment Status"},
+    { accessorKey: "paymentStat", 
+      header: "Payment Status",
+      cell: ({ row }) => {
+        const value = row.getValue("paymentStat") as string;
+        let bg = "bg-[#ffeaea]";
+        let text = "text-[#b91c1c]";
+        let border = "border border-[#f3dada]";
+        let label = value;
+
+        if (value === "Paid") {
+          bg = "bg-[#eaffea]";
+          text = "text-[#15803d]";
+          border = "border border-[#b6e7c3]";
+          label = "Paid";
+        } else if (value === "Pending") {
+          bg = "bg-[#ffeaea]";
+          text = "text-[#b91c1c]";
+          border = "border border-[#f3dada]";
+          label = "Pending";
+        }
+
+        return (
+          <span
+            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+          >
+            {label}
+          </span>
+        );
+      }
+    },
     { accessorKey: "action", 
       header: "Action",
       cell: ({}) =>(
@@ -161,7 +192,8 @@ type PermitClearance = {
     requestor: string,
     reqDate: string,
     claimDate: string,
-    paymentStat: "Paid" | "Pending"
+    paymentStat: "Paid" | "Pending",
+    req_sales_proof?: string
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -180,7 +212,12 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 
 function PermitClearance(){
-    const data = PermitClearanceRecords;
+    // Fetch data from backend
+    const { data: permitClearances, isLoading, error } = useQuery({
+        queryKey: ["permitClearances"],
+        queryFn: getPermitClearances
+    });
+
     const filter = [
         { id: "All", name: "All" },
         { id: "Pending", name: "Pending" },
@@ -189,11 +226,25 @@ function PermitClearance(){
 
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
-    const filteredData = selectedFilter === "All" ? data 
-    : data.filter((item) => item.paymentStat === selectedFilter);
-    
+    const filteredData = selectedFilter === "All" ? (permitClearances || [])
+    : (permitClearances || []).filter((item: any) => item.req_payment_status === selectedFilter);
 
-    
+    // Map backend data to frontend columns
+    const mappedData = (filteredData || []).map((item: any) => ({
+        businessName: item.business_details?.bus_name || "",
+        address: item.business_details?.bus_respondentAddress || "",
+        grossSales: item.business_details?.bus_gross_sales || "",
+        purposes: item.purposes || [],
+        requestor: item.business_details?.bus_respondentFname && item.business_details?.bus_respondentLname
+            ? `${item.business_details.bus_respondentFname} ${item.business_details.bus_respondentLname}`
+            : "",
+        reqDate: item.req_request_date,
+        claimDate: item.req_claim_date,
+        paymentStat: item.req_payment_status,
+        req_sales_proof: item.req_sales_proof,
+        ...item
+    }));
+
     return(
         <div className="w-full h-full">
             <div className="flex flex-col gap-3 mb-3">
@@ -261,7 +312,7 @@ function PermitClearance(){
                             </div>
                     </div>    
 
-                    <DataTable columns={columns} data={filteredData}></DataTable>
+                    <DataTable columns={columns} data={mappedData}></DataTable>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">

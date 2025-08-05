@@ -83,6 +83,6 @@ urlpatterns = [
     path("sidebar/analytics/data/", SidebarAnalyticsView.as_view(), name="sidebar-analytics"),
     
     # KYC
-    path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
-    path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
+    # path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
+    # path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
 ]

@@ -40,13 +40,12 @@ export default function ChildHealthRecordForm() {
       | "addnewchildhealthrecord"
       | undefined);
 
-  const { chrecId, chhistId, patId } = location.state?.params || {};
+  const { chrecId, chhistId } = location.state?.params || {};
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord";
   const isNewchildhealthrecord = mode === "newchildhealthrecord";
 
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id || null;
-  const position = user?.staff?.pos?.pos_title;
   const [immunizationTracking, setImmunizationTracking] = useState<
     ImmunizationTracking[]
   >([]);
@@ -629,8 +628,6 @@ export default function ChildHealthRecordForm() {
               <ChildHRPage3
                 onPrevious={() => setCurrentPage(2)}
                 onNext={() => setCurrentPage(4)}
-                updateFormData={updateFormData}
-                formData={formData}
                 immunizationTracking={immunizationTracking}
               />
             )}

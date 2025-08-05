@@ -13,10 +13,9 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getFirstaidRecords } from "../restful-api/getAPI";
-import { useNavigate } from "react-router";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
 
 export interface FirstAidRecord {
@@ -43,8 +42,6 @@ export default function AllFirstAidRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   // Fetch first aid records from API
   const { data: firstAidRecords, isLoading } = useQuery<FirstAidRecord[]>({

@@ -97,4 +97,4 @@ export const budgetWithoutLimits = [
     { name: "assemblyExpenses", label: "Barangay Assembly Expenses", category: "Other Expense" },
     { name: "disasterProg", label: "Disaster Response Program", category: "Other Expense" },
     { name: "capitalOutlays", label: "Total Capital Outlays", category: "Capital Outlays" },
-];
+]; 
