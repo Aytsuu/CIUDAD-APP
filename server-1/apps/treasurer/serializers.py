@@ -91,13 +91,6 @@ class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):
 
 # --------- INCOME_EXPENSE
 
-# class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
-#     dtl_budget_item = serializers.CharField(source='dtl_id.dtl_budget_item', read_only=True)
-    
-#     class Meta:
-#         model = Income_Expense_Tracking
-#         fields = '__all__'
-
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
     exp_budget_item = serializers.CharField(source='exp_id.exp_budget_item', read_only=True)
     files = Income_Expense_FileSimpleSerializer(many=True, read_only=True)  # Add this line
@@ -133,7 +126,7 @@ class Income_Expense_MainSerializers(serializers.ModelSerializer):
 
 class Annual_Gross_SalesSerializers(serializers.ModelSerializer):
     class Meta:
-        model= annual_gross_sales
+        model= Annual_Gross_Sales
         fields= '__all__'
 
 
@@ -143,24 +136,7 @@ class Purpose_And_RatesSerializers(serializers.ModelSerializer):
         fields= '__all__'
 
 
-# class InvoiceSerializers(serializers.ModelSerializer):
-#     class Meta:
-#         model = Invoice
-#         fields= '__all__'
-
-
-
-# class InvoiceSerializers(serializers.ModelSerializer):
-#     inv_payor = serializers.SerializerMethodField()  # Changed field name
-    
-#     class Meta:
-#         model = Invoice
-#         fields = '__all__'
-    
-#     def get_inv_payor(self, obj):  # Renamed method
-#         return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
-
-
+#=============================================================================
 class InvoiceSerializers(serializers.ModelSerializer):
     inv_payor = serializers.SerializerMethodField()
     inv_pay_method = serializers.CharField(source='cr_id.req_pay_method') 

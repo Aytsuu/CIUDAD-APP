@@ -36,23 +36,10 @@ SUPABASE_CONFIG = {
     'JWT_AUDIENCE': 'authenticated',
 }
 
-SUPABASE_URL = SUPABASE_CONFIG['SUPABASE_URL']
-SUPABASE_ANON_KEY = SUPABASE_CONFIG['SUPABASE_ANON_KEY']
-SUPABASE_SERVICE_ROLE_KEY = SUPABASE_CONFIG['SERVICE_ROLE_KEY']
-SUPABASE_JWT_SECRET = SUPABASE_CONFIG['JWT_SECRET']
-SUPABASE_PROJECT_ID = SUPABASE_CONFIG['SUPABASE_PROJECT_ID']
-
-if not DEBUG:
-    required_keys = {
-        'SUPABASE_URL': SUPABASE_URL,
-        'SUPABASE_ANON_KEY': SUPABASE_ANON_KEY,
-        'SUPABASE_SERVICE_ROLE_KEY': SUPABASE_SERVICE_ROLE_KEY,
-        'SUPABASE_JWT_SECRET': SUPABASE_JWT_SECRET,
-    }
-
-    for key, value in required_keys.items():
-        if not value or value in ['http://localhost:54321', 'anon-dev-key', 'service-role-dev-key', 'dev-jwt-secret']:
-            raise ValueError(f"[Supabase config error] {key} is missing or using a fallback value in production.")
+SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
 # ========================
 # FIREBASE CONFIGURATION
@@ -310,16 +297,16 @@ SCHEDULER_AUTOSTART = True
 # ========================
 # PAYMONGO
 # ========================
-PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret')
+PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 
 
 
 
 
-# # ---------------------------------------------------
-# # DEVELOPMENT SERVER
-# # ---------------------------------------------------
+# ---------------------------------------------------
+# DEVELOPMENT SERVER
+# ---------------------------------------------------
 
 # from pathlib import Path
 # from decouple import config
@@ -406,6 +393,7 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 #     'apps.authentication',
 #     'apps.gad',
 #     'apps.clerk',
+#     'apps.act_log',
 #     'backend.firebase.notifications',
     
 # ]
@@ -604,5 +592,3 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret'
 # # PAYMONGO
 # # ========================
 # PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
-# # ========================
-# PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY', default='my_paymongo_secret')

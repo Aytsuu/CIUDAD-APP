@@ -9,7 +9,8 @@ import AnnualDevPlanMain from "@/screens/gad/annual-dev-plan/main";
 import Request from "../(request)";
 import CertificatesMain from "@/screens/certificates/main";
 import ClearanceRequestList from "@/screens/treasurer/clearance-request";
+import Report from "../(report)";
 
 export default () => {
-    return <ClearanceRequestList/>
+    return <LoginScreen/>
 }

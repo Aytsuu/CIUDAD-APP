@@ -170,53 +170,6 @@ class BudgetPlanHistoryView(generics.ListAPIView):
         return Response(response_data)
     
 
-class RetrieveBudgetPlanAndDetailHistoryView(generics.ListAPIView):
-    serializer_class = BudgetPlanHistorySerializer
-
-    def get_queryset(self):
-        plan_id = self.kwargs['plan_id']
-        budget_plan = Budget_Plan.objects.get(plan_id=plan_id)
-        return budget_plan.history.all().order_by('-history_date')
-
-    def list(self, request, *args, **kwargs):
-        plan_id = self.kwargs['plan_id']
-        
-        try:
-            budget_plan = Budget_Plan.objects.get(plan_id=plan_id)
-            
-            plan_history = self.get_queryset()
-            plan_history_data = self.get_serializer(plan_history, many=True).data
-            
-            detail_items = Budget_Plan_Detail.objects.filter(plan=budget_plan)
-            
-            details_history = []
-            for detail in detail_items:
-                detail_history = detail.history.all().order_by('-history_date')
-                serialized_detail_history = BudgetPlanDetailHistorySerializer(detail_history, many=True).data
-                
-                details_history.append({
-                    'detail_id': detail.dtl_id,
-                    'item_name': detail.dtl_budget_item,
-                    'category': detail.dtl_budget_category,
-                    'history': serialized_detail_history
-                })
-            
-            response_data = {
-                'plan_id': budget_plan.plan_id,
-                'plan_year': budget_plan.plan_year,
-                'plan_history': plan_history_data,
-                'details_history': details_history
-            }
-            
-            return Response(response_data)
-            
-        except Budget_Plan.DoesNotExist:
-            return Response(
-                {'error': 'Budget Plan not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-
 # -------------------------------- INCOME & DISBURSEMENT ------------------------------------
 class IncomeFolderListView(generics.ListAPIView):
     serializer_class = Income_Folder_Serializer
@@ -659,11 +612,11 @@ class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
 
 class Annual_Gross_SalesView(generics.ListCreateAPIView):
     serializer_class = Annual_Gross_SalesSerializers
-    queryset = annual_gross_sales.objects.all()
+    queryset = Annual_Gross_Sales.objects.all()
 
 class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
     serializer_class = Annual_Gross_SalesSerializers
-    queryset = annual_gross_sales.objects.all()
+    queryset = Annual_Gross_Sales.objects.all()
     lookup_field = 'ags_id'
 
     def update(self, request, *args, **kwargs):
