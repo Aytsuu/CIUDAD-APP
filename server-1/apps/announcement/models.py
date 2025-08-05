@@ -1,6 +1,6 @@
 from django.db import models
 from datetime import date
-
+from django.utils import timezone
 
 class Announcement(models.Model):
     ann_id = models.AutoField(primary_key=True)
@@ -9,17 +9,9 @@ class Announcement(models.Model):
     ann_created_at = models.DateField(auto_now_add=True)
     ann_start_at = models.DateTimeField(null=True, blank=True)
     ann_end_at = models.DateTimeField(null=True, blank=True)
-    ann_type = models.CharField(
-        max_length=50,
-        choices=[
-            ('general', 'General'),
-            ('public', 'Public'),
-            ('event', 'Event'),
-            ('reminder', 'Reminder'),
-            ('advisory', 'Advisory'),
-            ('weather alert', 'Weather Alert'),
-        ]
-    )
+    ann_event_start = models.DateTimeField(null=True, blank=True)
+    ann_event_end = models.DateTimeField(null=True, blank=True)
+    ann_type = models.CharField(max_length=50)
     staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.CASCADE
@@ -47,51 +39,16 @@ class AnnouncementFile(models.Model):
 
 class AnnouncementRecipient(models.Model):
     ar_id = models.AutoField(primary_key=True)
-    
-    ar_mode = models.CharField(
-        max_length=50,
-        choices=[
-            ('email', 'Email'),
-            ('sms', 'SMS'),
-        ]
-    )
+
+    ar_mode = models.CharField(max_length=50)
 
     ann = models.ForeignKey(
         Announcement,
         on_delete=models.CASCADE,
     )
 
-    rp = models.ForeignKey(
-        'profiling.ResidentProfile',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
+    ar_type = models.CharField(max_length=50)
 
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    position = models.ForeignKey(
-        'administration.Position',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    ar_age = models.CharField(
-        max_length=50,
-        choices=[
-            ('youth', 'Youth'),
-            ('adult', 'Adult'),
-            ('senior', 'Senior Citizen'),
-        ],
-        null=True,
-        blank=True
-    )
 
     class Meta:
         db_table = 'announcement_recipient'

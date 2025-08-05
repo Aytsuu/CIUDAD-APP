@@ -19,10 +19,12 @@ class AnnouncementBaseSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()
     ann_start_at = serializers.DateTimeField(required=False, allow_null=True)
     ann_end_at = serializers.DateTimeField(required=False, allow_null=True)
+    ann_publish_at = serializers.DateTimeField(required=False, allow_null=True)  
 
     class Meta:
         model = Announcement
         fields = '__all__'
+
 
     def get_files(self, obj):
         files = AnnouncementFile.objects.filter(ann=obj)

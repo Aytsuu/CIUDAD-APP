@@ -60,7 +60,7 @@ function AnnouncementView() {
       ann_end_at: announcement?.ann_end_at
         ? formatDateTimeLocal(announcement.ann_end_at)
         : formatDateTimeLocal(new Date()),
-      ann_type: announcement?.ann_type || "General",
+      ann_type: (announcement as any)?.ann_type || "General",
       ar_mode: [firstRecipient?.ar_mode || ""],
     },
   });

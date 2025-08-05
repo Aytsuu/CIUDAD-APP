@@ -10,7 +10,6 @@ export type Announcement = {
   ann_created_at: Date | string;
   ann_start_at: Date | string;
   ann_end_at: Date | string;
-  ann_type: string;
   staff?: string;
   ar_type: string;
   ar_mode: string;

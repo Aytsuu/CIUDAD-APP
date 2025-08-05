@@ -18,7 +18,6 @@ import { postAnnouncementFile as postAnnouncementFileApi } from "./restful-api/a
 import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "../record/administration/queries/administrationFetchQueries";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 const AnnouncementCreate = () => {
@@ -38,16 +37,19 @@ const AnnouncementCreate = () => {
   };
 
   const defaultValues = {
-    ann_title: "",
-    ann_details: "",
-    ann_start_at: "",
-    ann_end_at: "",
-    ann_type: "",
-    ar_mode: [],
-    positions: [],
-    ar_age: [],
-    staff: ""
-  };
+  ann_title: "",
+  ann_details: "",
+  ann_start_at: "",
+  ann_end_at: "",
+  ann_event_start: "",
+  ann_event_end: "",
+  ann_type: "",
+  ar_mode: [],
+  positions: [],
+  ar_age: [],
+  staff: ""
+};
+
 
   const form = useForm<AnnouncementCreateFormValues>({
     resolver: zodResolver(AnnouncementSchema),
@@ -56,7 +58,9 @@ const AnnouncementCreate = () => {
 
   const annType = form.watch("ann_type");
 
-  React.useEffect(() => {
+9-
+
+8-+  React.useEffect(() => {
     if (["general", "reminder", "public"].includes(annType)) {
       form.setValue("ar_mode", ["sms", "email"]);
     }
@@ -68,6 +72,7 @@ const AnnouncementCreate = () => {
 
   const onSubmit = async () => {
     const formIsValid = await form.trigger();
+    const values = form.getValues();
 
     if (!formIsValid) {
       console.error("Form validation failed");
@@ -75,44 +80,15 @@ const AnnouncementCreate = () => {
       return;
     }
 
-    const values = form.getValues();
-
-    const cleanedValues = {
-      ...values,
-      ann_start_at: values.ann_start_at || null,
-      ann_end_at: values.ann_end_at || null,
-      staff: user?.staff?.staff_id
-    };
-
-    console.log("📤 Payload to backend:", cleanedValues);
+    const { ar_mode, positions, ar_age, ...restVal } = values;
+    
+    const recipients = [
+      ...positions,
+      ...ar_age,
+    ]
 
     try {
-      const createdAnnouncement = await postAnnouncement(cleanedValues);
-
-      if (!["general", "reminder", "public"].includes(annType)) {
-        if (!values.positions?.length) {
-          console.warn("No positions selected. Skipping recipient submission.");
-          toast.warning("No positions selected. Recipients skipped.");
-        } else {
-          const positionRecipients = values.positions.flatMap((posId: string) =>
-            values.ar_mode.flatMap((mode: string) =>
-              (values.ar_age?.length ? values.ar_age : ["youth", "adult", "senior"]).map((age) => ({
-                position: posId,
-                ar_mode: mode,
-                ann: createdAnnouncement?.ann_id,
-                staff: user?.staff?.staff_id,
-                ar_age: age,
-              }))
-            )
-          );
-
-          await postAnnouncementRecipient({
-            recipients: positionRecipients,
-          });
-        }
-      }
-
-      const files = mediaFiles.map((media) => ({
+       const files = mediaFiles.map((media) => ({
         af_name: media.file.name,
         af_type: media.file.type,
         af_path: media.storagePath,
@@ -121,16 +97,13 @@ const AnnouncementCreate = () => {
         staff: user?.staff?.staff_id
       }));
 
-      postAnnouncementFile(files, {
-        onSuccess: async () => {
-          await queryClient.invalidateQueries({ queryKey: ["announcements"] });
-          await queryClient.invalidateQueries({ queryKey: ["recipients"] });
-        },
-        onError: (error) => {
-          console.error("File upload failed", error);
-        }
-      });
+      const createdAnnouncement = await postAnnouncement(restVal);
 
+       await postAnnouncementRecipient({
+            recipients: recipients,
+          });
+
+     
     } catch (err) {
       console.error("Error during announcement creation:", err);
     }
@@ -144,11 +117,6 @@ const AnnouncementCreate = () => {
   return (
     <LayoutWithBack title="Create Announcement " description="Fill in the details below to create and distribute your announcement">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-          </div>
-        </div>
-
         <Form {...form}>
           <form
             onSubmit={(e) => {
@@ -167,20 +135,6 @@ const AnnouncementCreate = () => {
                 <CardDescription>Enter the main details of your announcement</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormInput
-                  control={form.control}
-                  name="ann_title"
-                  label="Announcement Title"
-                  placeholder="Enter a clear and descriptive title"
-                />
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Announcement Details</label>
-                  <textarea
-                    {...form.register("ann_details")}
-                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                    placeholder="Provide detailed information about the announcement"
-                  />
-                </div>
                 <FormSelect
                   control={form.control}
                   name="ann_type"
@@ -191,14 +145,31 @@ const AnnouncementCreate = () => {
                     { id: "event", name: "Event" },
                     { id: "reminder", name: "Reminder" },
                     { id: "advisory", name: "Advisory" },
-                    { id: "weather alert", name: "Weather Alert" },
                   ]}
                 />
+
+                <FormInput
+                  control={form.control}
+                  name="ann_title"
+                  label="Announcement Title"
+                  placeholder="Enter a clear and descriptive title"
+                />
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Announcement Details</label>
+                  <textarea
+                    {...form.register("ann_details")}
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
+                    placeholder="Provide detailed information about the announcement"
+                  />
+                </div>
+
+                
               </CardContent>
             </Card>
 
             {/* Schedule */}
-            {["event", "urgent"].includes(annType) && (
+            {["event", "public"].includes(annType) && (
               <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-2">
@@ -216,7 +187,9 @@ const AnnouncementCreate = () => {
                     <FormDateTimeInput
                       control={form.control}
                       name="ann_start_at"
-                      type="datetime-local" label={""}                    />
+                      type="datetime-local"
+                      label=""
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -227,69 +200,115 @@ const AnnouncementCreate = () => {
                     <FormDateTimeInput
                       control={form.control}
                       name="ann_end_at"
-                      type="datetime-local" label={""}                    />
+                      type="datetime-local"
+                      label=""
+                    />
                   </div>
+
+                  {annType === "event" && (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                          <Clock className="h-4 w-4" />
+                          Event Start Date & Time
+                        </div>
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="ann_event_start"
+                          type="datetime-local"
+                          label=""
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                          <Clock className="h-4 w-4" />
+                          Event End Date & Time
+                        </div>
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="ann_event_end"
+                          type="datetime-local"
+                          label=""
+                        />
+                      </div>
+                    </>
+                  )}z
                 </CardContent>
               </Card>
             )}
 
             {/* Recipients & Delivery */}
-            {["event", "urgent"].includes(annType) && (
-              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-gray-600" />
-                    <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
-                  </div>
-                  <CardDescription>Choose which positions and delivery modes</CardDescription>
-                </CardHeader>
+            {["event", "general"].includes(annType) && (
+  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <div className="flex items-center gap-2">
+        <Users className="h-5 w-5 text-gray-600" />
+        <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
+      </div>
+      <CardDescription>
+        Choose audience, positions, age group, and delivery modes
+      </CardDescription>
+    </CardHeader>
 
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Badge variant="outline" className="text-xs">
-                        Target Positions
-                      </Badge>
-                      <FormComboCheckbox
-                        control={form.control}
-                        name="positions"
-                        options={positionOptions}
-                      />
-                    </div>
+    <CardContent className="space-y-6">
+      {/* Audience Select */}
+      <FormSelect
+        control={form.control}
+        name="recipient"
+        label="Target Audience"
+        options={[
+          { id: "everyone", name: "everyone" },
+          { id: "resident", name: "resident" },
+          { id: "staff", name: "staff" },
+        ]}
+      />
 
-                    <div className="space-y-2">
-                      <Badge variant="outline" className="text-xs">
-                        Age Group
-                      </Badge>
-                      <FormComboCheckbox
-                        control={form.control}
-                        name="ar_age"
-                        options={[
-                          { id: "youth", name: "Youth" },
-                          { id: "adult", name: "Adult" },
-                          { id: "senior", name: "Senior Citizen" },
-                        ]}
-                      />
-                    </div>
+      {/* Show Positions if Staff */}
+      {form.watch("recipient") === "staff" && (
+        <div className="space-y-2">
+          <Badge variant="outline" className="text-xs">Target Positions</Badge>
+          <FormComboCheckbox
+            control={form.control}
+            name="positions"
+            options={positionOptions}
+          />
+        </div>
+      )}
 
-                    <div className="space-y-2">
-                      <Badge variant="outline" className="text-xs">
-                        Delivery Mode
-                      </Badge>
-                      <FormComboCheckbox
-                        control={form.control}
-                        name="ar_mode"
-                        options={[
-                          { id: "sms", name: "SMS" },
-                          { id: "email", name: "Email" },
-                        ]}
-                        readOnly={["general", "reminder", "public"].includes(annType)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+      {/* Show Age Groups if Resident */}
+      {form.watch("recipient") === "resident" && (
+        <div className="space-y-2">
+          <Badge variant="outline" className="text-xs">Age Group</Badge>
+          <FormComboCheckbox
+            control={form.control}
+            name="ar_age"
+            options={[
+              { id: "youth", name: "Youth" },
+              { id: "adult", name: "Adult" },
+              { id: "senior", name: "Senior Citizen" },
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Always show delivery mode */}
+      <div className="space-y-2">
+        <Badge variant="outline" className="text-xs">Delivery Mode</Badge>
+        <FormComboCheckbox
+          control={form.control}
+          name="ar_mode"
+          options={[
+            { id: "sms", name: "SMS" },
+            { id: "email", name: "Email" },
+          ]}
+          readOnly={["general", "reminder", "public"].includes(annType)}
+        />
+      </div>
+    </CardContent>
+  </Card>
+)}
+
 
             {/* Upload */}
             <MediaUpload

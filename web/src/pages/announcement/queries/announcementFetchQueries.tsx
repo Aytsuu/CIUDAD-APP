@@ -5,13 +5,13 @@ import {
 } from "../restful-api/announcementGetRequest";
 
 export type Announcement = {
+  ann_type: any;
   ann_id?: number;
   ann_title: string;
   ann_details: string;
   ann_created_at: Date | string;
   ann_start_at?: Date | string;
   ann_end_at?: Date | string;
-  ann_type: string;
   staff: string;
   files?: {
     af_id: number;

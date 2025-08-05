@@ -62,11 +62,18 @@ class KYCVerificationProcessor:
                 .eq('kyc_id', kyc_id) \
                 .execute()
             
+            # return {
+            #     'name': f'{user_data['lname'].upper(), user_data['fname'].upper()}',
+            #     'id_has_face': True if id_face is not None else False,
+            #     'info_match': info_match['match'],
+            # }
+
             return {
-                'name': f'{user_data['lname'].upper(), user_data['fname'].upper()}',
-                'id_has_face': True if id_face is not None else False,
-                'info_match': info_match['match'],
-            }
+    'name': f"{user_data['lname'].upper()}, {user_data['fname'].upper()}",
+    'id_has_face': id_face is not None,
+    'info_match': info_match['match'],
+}
+
 
         except Exception as e:
             supabase.table('kyc_record') \
