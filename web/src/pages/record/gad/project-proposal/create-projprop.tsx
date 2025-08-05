@@ -24,13 +24,15 @@ import z from "zod";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import { generateProposalPdf } from "./personalized-compo/pdfGenerator";
-import { Signatory, ProjectProposalFormProps } from "./projprop-types";
+import { Signatory, ProjectProposalFormProps, Staff } from "./projprop-types";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { useAuth } from "@/context/AuthContext";
 
 export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   onSuccess,
   existingProposal,
 }) => {
+  const { user } = useAuth();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
@@ -41,11 +43,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
+  const [barangayCaptain, setBarangayCaptain] = useState<Staff | null>(null);
 
-  const {
-    data: budgetEntries = [],
-    isLoading: isBudgetLoading,
-  } = useGADBudgets(new Date().getFullYear().toString());
+  const { data: budgetEntries = [], isLoading: isBudgetLoading } =
+    useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
   const currentYearBudget = yearBudgets?.find(
@@ -75,6 +76,13 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     ? Number(currentYearBudget)
     : 0;
 
+  useEffect(() => {
+    if (staffList.length > 0) {
+      const captain = staffList.find((s) => s.position === "Barangay Captain");
+      setBarangayCaptain(captain || null);
+    }
+  }, [staffList]);
+
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
@@ -86,7 +94,18 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       venue: "",
       budgetItems: [{ name: "", pax: "", amount: "0" }],
       monitoringEvaluation: "",
-      signatories: [{ name: "", position: "", type: "prepared" }],
+      signatories: [
+        {
+          name: user?.full_name || "",
+          position: user?.position || "",
+          type: "prepared",
+        },
+        {
+          name: barangayCaptain?.full_name || "",
+          position: "",
+          type: "approved",
+        },
+      ],
       paperSize: "letter",
       headerImage: [],
       supportingDocs: [],
@@ -94,7 +113,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   });
 
   const { control, setValue, watch, handleSubmit } = form;
-
   const projectTitle = watch("projectTitle");
   const background = watch("background");
   const objectives = watch("objectives");
@@ -246,6 +264,8 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         gpr_header_img: headerImage,
         paperSize: paperSize,
         staff_id: null,
+        status: "Pending" as const,
+        statusReason: '',
       };
 
       const proposalResponse = await addMutation.mutateAsync(proposalData);
