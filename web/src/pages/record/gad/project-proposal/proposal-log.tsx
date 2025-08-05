@@ -129,7 +129,7 @@ function ProjectProposalLogTable() {
     },
     {
       accessorKey: "gprl_reason",
-      header: "Reason",
+      header: "Reason/Remarks",
       cell: ({ row }) => (
         <div className="text-center">{row.original.gprl_reason || "-"}</div>
       ),
