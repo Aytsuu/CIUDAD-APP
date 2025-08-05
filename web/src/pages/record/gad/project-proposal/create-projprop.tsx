@@ -24,9 +24,10 @@ import z from "zod";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import { generateProposalPdf } from "./personalized-compo/pdfGenerator";
-import { Signatory, ProjectProposalFormProps, Staff } from "./projprop-types";
+import { Signatory, ProjectProposalFormProps } from "./projprop-types";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { useAuth } from "@/context/AuthContext";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   onSuccess,
@@ -43,7 +44,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
-  const [barangayCaptain, setBarangayCaptain] = useState<Staff | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const { data: budgetEntries = [], isLoading: isBudgetLoading } =
     useGADBudgets(new Date().getFullYear().toString());
@@ -52,6 +53,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const currentYearBudget = yearBudgets?.find(
     (budget) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
+  console.log("User object:", user);
 
   const latestExpenseWithBalance = budgetEntries
     .filter(
@@ -76,13 +78,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     ? Number(currentYearBudget)
     : 0;
 
-  useEffect(() => {
-    if (staffList.length > 0) {
-      const captain = staffList.find((s) => s.position === "Barangay Captain");
-      setBarangayCaptain(captain || null);
-    }
-  }, [staffList]);
-
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
@@ -95,22 +90,55 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       budgetItems: [{ name: "", pax: "", amount: "0" }],
       monitoringEvaluation: "",
       signatories: [
-        {
-          name: user?.full_name || "",
-          position: user?.position || "",
-          type: "prepared",
-        },
-        {
-          name: barangayCaptain?.full_name || "",
-          position: "",
-          type: "approved",
-        },
+        { name: "", position: "", type: "prepared" },
+        { name: "", position: "Barangay Captain", type: "approved" },
       ],
       paperSize: "letter",
       headerImage: [],
       supportingDocs: [],
     },
   });
+
+  useEffect(() => {
+    // Get current user's staff details
+    const userStaff = user?.staff;
+    const userFullName = userStaff?.rp?.per 
+      ? `${userStaff.rp.per.per_fname} ${userStaff.rp.per.per_lname}`.trim()
+      : user?.username || "";
+
+    const userPosition = userStaff?.pos?.pos_title || "Staff";
+
+    // Find Barangay Captain
+    const captain = staffList.find(s => s.position === "Barangay Captain");
+    const captainName = captain?.full_name || "";
+    if (!isStaffLoading && staffList.length > 0) {
+      form.reset({
+        projectTitle: "",
+        background: "",
+        objectives: [""],
+        participants: [{ category: "", count: "0" }],
+        date: "",
+        venue: "",
+        budgetItems: [{ name: "", pax: "", amount: "0" }],
+        monitoringEvaluation: "",
+        signatories: [
+          {
+          name: userFullName,
+          position: userPosition,
+          type: "prepared",
+        },
+        {
+          name: captainName,
+          position: "Barangay Captain",
+          type: "approved",
+        },
+        ],
+        paperSize: "letter",
+        headerImage: [],
+        supportingDocs: [],
+      });
+    }
+  }, [isStaffLoading, staffList, user]);
 
   const { control, setValue, watch, handleSubmit } = form;
   const projectTitle = watch("projectTitle");
@@ -265,7 +293,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         paperSize: paperSize,
         staff_id: null,
         status: "Pending" as const,
-        statusReason: '',
+        statusReason: "",
       };
 
       const proposalResponse = await addMutation.mutateAsync(proposalData);
@@ -806,13 +834,26 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
               >
                 Preview
               </Button>
-              <Button
-                type="submit"
-                className="w-full sm:w-auto items-center gap-2"
-                disabled={addMutation.isPending}
-              >
-                {addMutation.isPending ? "Saving..." : "Save"}
-              </Button>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto items-center gap-2"
+                    disabled={
+                      addMutation.isPending || 
+                      Object.keys(form.formState.errors).length > 0
+                    }
+                  >
+                    {addMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                }
+                title="Confirm Save"
+                description="Are you sure you want to save this project proposal?"
+                actionLabel="Confirm"
+                onClick={() => form.handleSubmit(handleSave)()}
+                open={isConfirmModalOpen}
+                onOpenChange={setIsConfirmModalOpen}
+              />
             </div>
           </div>
         </form>

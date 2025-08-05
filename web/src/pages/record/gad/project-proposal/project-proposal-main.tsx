@@ -425,7 +425,7 @@ function GADProjectProposal() {
                       onClick={() => handleViewProject(project)}
                     />
                     {viewMode === "active" ? (
-                      project.status !== 'Viewed' && project.status !== 'Approved' && (
+                      (project.status !== 'Viewed' && project.status !== 'Approved' && project.status !== 'Resubmitted') && (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -632,7 +632,7 @@ function GADProjectProposal() {
                         doc={doc}
                         showActions={
                           selectedProject?.gprIsArchive === false &&
-                          selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected"
+                          (selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected")
                         }
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onArchive={() => handleArchiveDoc(doc.psd_id)}
@@ -666,7 +666,7 @@ function GADProjectProposal() {
                         doc={doc}
                         showActions={
                           selectedProject?.gprIsArchive === false &&
-                          selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected"
+                          (selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected")
                         }
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onRestore={() => handleRestoreDoc(doc.psd_id)}

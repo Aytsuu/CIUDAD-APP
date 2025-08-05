@@ -189,6 +189,8 @@ class ProjectProposalLog(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
+        ('Amend', 'Amend'),
+        ('Resubmitted', 'Resubmitted')
     ]
 
     gprl_id = models.BigAutoField(primary_key=True)
