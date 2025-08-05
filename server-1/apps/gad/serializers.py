@@ -8,6 +8,23 @@ import uuid
 Staff = apps.get_model('administration', 'Staff')
 File = apps.get_model('file', 'File')
 
+class StaffSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    position = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Staff
+        fields = ['staff_id', 'full_name', 'position']
+
+    def get_full_name(self, obj):
+        try:
+            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}"
+        except AttributeError:
+            return "Unknown"
+
+    def get_position(self, obj):
+        return obj.pos.pos_title if hasattr(obj, 'pos') and obj.pos else ""
+
 class FileUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
@@ -69,9 +86,24 @@ class GADBudgetYearSerializer(serializers.ModelSerializer):
         fields = ['gbudy_num', 'gbudy_budget', 'gbudy_year', 'gbudy_expenses', 'gbudy_income', 'gbudy_is_archive']
 
 class ProjectProposalLogSerializer(serializers.ModelSerializer):
+    staff_details = StaffSerializer(source='staff', read_only=True)
+    gpr_title = serializers.CharField(source='gpr.gpr_title', read_only=True)
+    gpr_id = serializers.IntegerField(source='gpr.gpr_id', read_only=True)
+    
     class Meta:
         model = ProjectProposalLog
-        fields = '__all__'
+        fields = [
+            'gprl_id',
+            'gpr_id',
+            'gpr_title',   
+            'gprl_date_approved_rejected',
+            'gprl_reason',
+            'gprl_date_submitted',
+            'gprl_status',
+            'staff',
+            'staff_details',
+            'gpr'
+        ]
         extra_kwargs = {
             'gprl_id': {'read_only': True},
             'gprl_date_approved_rejected': {'read_only': True}
@@ -134,19 +166,3 @@ class ProposalSuppDocSerializer(serializers.ModelSerializer):
             'psd_is_archive': {'default': False}
         }
 
-class StaffSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-    position = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Staff
-        fields = ['staff_id', 'full_name', 'position']
-
-    def get_full_name(self, obj):
-        try:
-            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}"
-        except AttributeError:
-            return "Unknown"
-
-    def get_position(self, obj):
-        return obj.pos.pos_title if hasattr(obj, 'pos') and obj.pos else ""

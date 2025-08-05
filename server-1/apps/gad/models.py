@@ -127,6 +127,7 @@ class ProjectProposal(models.Model):
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
         ('Amend', 'Amend'),
+        ('Resubmitted', 'Resubmitted')
     ]
 
     gpr_id = models.BigAutoField(primary_key=True)

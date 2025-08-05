@@ -35,7 +35,7 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save(
-            gbud_datetime=timezone.now(),
+            # gbud_datetime=timezone.now(),
             staff=getattr(self.request.user, 'staff', None)  # Safely get staff or None
         )
     
@@ -223,6 +223,13 @@ class ProjectProposalLogView(generics.ListCreateAPIView):
         gpr_id = self.kwargs.get('gpr_id')
         return ProjectProposalLog.objects.filter(gpr__gpr_id=gpr_id).order_by('-gprl_date_approved_rejected')
 
+class AllProjectProposalLogView(generics.ListAPIView):
+    serializer_class = ProjectProposalLogSerializer
+    queryset = ProjectProposalLog.objects.all().order_by('-gprl_date_approved_rejected')
+    
+    def get_queryset(self):
+        return super().get_queryset().select_related('staff', 'staff__rp__per', 'staff__pos' ,'gpr')
+
 class UpdateProposalStatusView(generics.GenericAPIView):
     serializer_class = ProjectProposalLogSerializer
 
@@ -314,7 +321,7 @@ class ProjectProposalRestoreView(generics.UpdateAPIView):
     queryset = ProjectProposal.objects.filter(gpr_is_archive=True)
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
-
+ 
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=False)
 
@@ -339,6 +346,7 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             pending=Count('pk', filter=Q(latest_status='Pending')),
             viewed=Count('pk', filter=Q(latest_status='Viewed')),
             amend=Count('pk', filter=Q(latest_status='Amend')),
+            resubmitted=Count('pk', filter=Q(latest_status='Resubmitted')),
             approved=Count('pk', filter=Q(latest_status='Approved')),
             rejected=Count('pk', filter=Q(latest_status='Rejected'))
         )
@@ -348,6 +356,7 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             'pending': status_counts['pending'] or 0,
             'viewed': status_counts['viewed'] or 0,
             'amend': status_counts['amend'] or 0,
+            'resubmitted': status_counts['resubmitted'] or 0,
             'approved': status_counts['approved'] or 0,
             'rejected': status_counts['rejected'] or 0
         })

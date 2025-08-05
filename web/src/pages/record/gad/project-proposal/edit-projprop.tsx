@@ -3,23 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import { Plus, X, Wallet } from "lucide-react";
 import { useUpdateProjectProposal } from "./queries/updatequeries";
 import { useAddSupportDocument } from "./queries/addqueries";
-import { useDeleteSupportDocument } from "./queries/delqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useGetStaffList } from "./queries/fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -29,26 +13,16 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
+import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import {
   ProjectProposal,
   ProjectProposalInput,
-  SupportDoc,
-} from "./queries/fetchqueries";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
-
-export interface EditProjectProposalFormProps {
-  onSuccess: (data: ProjectProposal) => void;
-  initialValues?: ProjectProposal;
-  isEditMode?: boolean;
-  isSubmitting?: boolean;
-}
-
-interface Signatory {
-  name: string;
-  position: string;
-  type: "prepared" | "approved";
-}
+  EditProjectProposalFormProps,
+} from "./projprop-types";
+import { Signatory } from "./projprop-types";
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 export const EditProjectProposalForm: React.FC<
   EditProjectProposalFormProps
@@ -57,19 +31,42 @@ export const EditProjectProposalForm: React.FC<
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const updateMutation = useUpdateProjectProposal();
   const addSupportDocMutation = useAddSupportDocument();
-  const deleteSupportDocMutation = useDeleteSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
 
   // Display remaining balance from budget tracker
-  const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
+  const { data: budgetEntries = [], isLoading: isBudgetLoading } =
+    useGADBudgets(new Date().getFullYear().toString());
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const currentYear = new Date().getFullYear().toString();
+  const currentYearBudget = yearBudgets?.find(
+    (budget) => budget.gbudy_year === currentYear
+  )?.gbudy_budget;
+
   const latestExpenseWithBalance = budgetEntries
-    .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
-    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
-  const availableBudget = latestExpenseWithBalance ? Number(latestExpenseWithBalance.gbud_remaining_bal) : null;
+    .filter(
+      (entry) =>
+        entry.gbud_type === "Expense" &&
+        !entry.gbud_is_archive &&
+        entry.gbud_remaining_bal != null
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.gbud_datetime).getTime() -
+        new Date(a.gbud_datetime).getTime()
+    )[0];
+
+  const availableBudget = latestExpenseWithBalance
+    ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
+      ? currentYearBudget
+        ? Number(currentYearBudget)
+        : 0
+      : Number(latestExpenseWithBalance.gbud_remaining_bal)
+    : currentYearBudget
+    ? Number(currentYearBudget)
+    : 0;
 
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     resolver: zodResolver(ProjectProposalSchema),
@@ -471,27 +468,6 @@ export const EditProjectProposalForm: React.FC<
                 }}
                 setActiveVideoId={setActiveVideoId}
               />
-              {/* {headerImageUrl && (
-                <div className="mt-2 flex flex-col sm:flex-row gap-2 items-center">
-                  <img
-                    src={headerImageUrl}
-                    alt="Header preview"
-                    className="max-h-40"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setMediaFiles([]);
-                      setHeaderImageUrl(null);
-                    }}
-                    className="mt-2 sm:mt-0"
-                  >
-                    Remove Image
-                  </Button>
-                </div>
-              )} */}
             </div>
 
             <div>
@@ -640,8 +616,10 @@ export const EditProjectProposalForm: React.FC<
             </div>
 
             <div>
-             <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium">Budgetary Requirements</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium">
+                  Budgetary Requirements
+                </label>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Wallet className="h-4 w-4 text-blue-600" />
                   <span>Available Funds:</span>
@@ -649,7 +627,8 @@ export const EditProjectProposalForm: React.FC<
                     <span className="text-gray-500">Loading...</span>
                   ) : availableBudget != null ? (
                     <span className="font-mono text-red-500">
-                      ₱{availableBudget.toLocaleString("en-US", {
+                      ₱
+                      {availableBudget.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -734,7 +713,7 @@ export const EditProjectProposalForm: React.FC<
                 <div className="space-y-2">
                   {signatories
                     .filter((s) => s.type === "prepared")
-                    .map((sig, index) => {
+                    .map((sig) => {
                       const globalIndex = signatories.findIndex(
                         (s) => s === sig
                       );
@@ -743,110 +722,36 @@ export const EditProjectProposalForm: React.FC<
                           key={globalIndex}
                           className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
                         >
-                          <div className="flex-1">
-                            <Popover
-                              open={openCombobox === globalIndex}
-                              onOpenChange={(open) =>
-                                setOpenCombobox(open ? globalIndex : null)
-                              }
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openCombobox === globalIndex}
-                                  className="w-full h-10 justify-between truncate"
-                                  disabled={isStaffLoading}
-                                >
-                                  <span className="truncate">
-                                    {isStaffLoading
-                                      ? "Loading staff..."
-                                      : sig.name || "Select staff..."}
-                                  </span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[200px] p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder="Search staff..."
-                                    onValueChange={(value) => {
-                                      if (
-                                        !staffList.some((staff) =>
-                                          staff.full_name
-                                            .toLowerCase()
-                                            .includes(value.toLowerCase())
-                                        )
-                                      ) {
-                                        updateSignatory(
-                                          globalIndex,
-                                          "name",
-                                          value
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <CommandList
-                                    className="max-h-64 overflow-auto"
-                                    onWheel={(e) => {
-                                      e.stopPropagation();
-                                      const el = e.currentTarget;
-                                      if (
-                                        e.deltaY > 0 &&
-                                        el.scrollTop >=
-                                          el.scrollHeight - el.clientHeight
-                                      ) {
-                                        return;
-                                      }
-                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
-                                        return;
-                                      }
-                                      e.preventDefault();
-                                      el.scrollTop += e.deltaY;
-                                    }}
-                                  >
-                                    <CommandEmpty>
-                                      No staff found. Enter name manually.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {staffList.map((staff) => (
-                                        <CommandItem
-                                          key={staff.staff_id}
-                                          value={staff.full_name}
-                                          onSelect={() => {
-                                            updateSignatory(
-                                              globalIndex,
-                                              "name",
-                                              staff.full_name,
-                                              staff.position
-                                            );
-                                            setOpenCombobox(null);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              sig.name === staff.full_name
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {staff.full_name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
+                          <ComboboxInput
+                            value={sig.name}
+                            options={staffList}
+                            isLoading={isStaffLoading}
+                            label=""
+                            placeholder="Select staff..."
+                            emptyText="No staff found. Enter name manually."
+                            onSelect={(value, item) => {
+                              updateSignatory(
+                                globalIndex,
+                                "name",
+                                value,
+                                item?.position
+                              );
+                            }}
+                            onCustomInput={(value) => {
+                              updateSignatory(globalIndex, "name", value);
+                            }}
+                            displayKey="full_name"
+                            valueKey="staff_id"
+                            additionalDataKey="position"
+                          />
                           <div className="flex-1">
                             <FormInput
                               control={control}
                               name={`signatories.${globalIndex}.position`}
                               label=""
-                              placeholder="Position"
+                              placeholder=""
                               type="text"
-                              className="mb-2 p-0"
+                              className="p-0"
                             />
                           </div>
                           <Button
@@ -880,7 +785,7 @@ export const EditProjectProposalForm: React.FC<
                 <div className="space-y-2">
                   {signatories
                     .filter((s) => s.type === "approved")
-                    .map((sig, index) => {
+                    .map((sig) => {
                       const globalIndex = signatories.findIndex(
                         (s) => s === sig
                       );
@@ -889,110 +794,36 @@ export const EditProjectProposalForm: React.FC<
                           key={globalIndex}
                           className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
                         >
-                          <div className="flex-1">
-                            <Popover
-                              open={openCombobox === globalIndex}
-                              onOpenChange={(open) =>
-                                setOpenCombobox(open ? globalIndex : null)
-                              }
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openCombobox === globalIndex}
-                                  className="w-full h-10 justify-between truncate"
-                                  disabled={isStaffLoading}
-                                >
-                                  <span className="truncate">
-                                    {isStaffLoading
-                                      ? "Loading staff..."
-                                      : sig.name || "Select staff..."}
-                                  </span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[200px] p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder="Search staff..."
-                                    onValueChange={(value) => {
-                                      if (
-                                        !staffList.some((staff) =>
-                                          staff.full_name
-                                            .toLowerCase()
-                                            .includes(value.toLowerCase())
-                                        )
-                                      ) {
-                                        updateSignatory(
-                                          globalIndex,
-                                          "name",
-                                          value
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <CommandList
-                                    className="max-h-64 overflow-auto"
-                                    onWheel={(e) => {
-                                      e.stopPropagation();
-                                      const el = e.currentTarget;
-                                      if (
-                                        e.deltaY > 0 &&
-                                        el.scrollTop >=
-                                          el.scrollHeight - el.clientHeight
-                                      ) {
-                                        return;
-                                      }
-                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
-                                        return;
-                                      }
-                                      e.preventDefault();
-                                      el.scrollTop += e.deltaY;
-                                    }}
-                                  >
-                                    <CommandEmpty>
-                                      No staff found. Enter name manually.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {staffList.map((staff) => (
-                                        <CommandItem
-                                          key={staff.staff_id}
-                                          value={staff.full_name}
-                                          onSelect={() => {
-                                            updateSignatory(
-                                              globalIndex,
-                                              "name",
-                                              staff.full_name,
-                                              staff.position
-                                            );
-                                            setOpenCombobox(null);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              sig.name === staff.full_name
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {staff.full_name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
+                          <ComboboxInput
+                            value={sig.name}
+                            options={staffList}
+                            isLoading={isStaffLoading}
+                            label=""
+                            placeholder="Select staff..."
+                            emptyText="No staff found. Enter name manually."
+                            onSelect={(value, item) => {
+                              updateSignatory(
+                                globalIndex,
+                                "name",
+                                value,
+                                item?.position
+                              );
+                            }}
+                            onCustomInput={(value) => {
+                              updateSignatory(globalIndex, "name", value);
+                            }}
+                            displayKey="full_name"
+                            valueKey="staff_id"
+                            additionalDataKey="position"
+                          />
                           <div className="flex-1">
                             <FormInput
                               control={control}
                               name={`signatories.${globalIndex}.position`}
                               label=""
-                              placeholder="Position"
+                              placeholder=""
                               type="text"
-                              className="mb-2 p-0"
+                              className="p-0"
                             />
                           </div>
                           <Button
@@ -1012,7 +843,7 @@ export const EditProjectProposalForm: React.FC<
                     type="button"
                     onClick={() => addSignatory("approved")}
                     variant="outline"
-                    className="gap-2 w-full sm:w-auto"
+                    className="gap-2 w-full sm:w-auto mb-5"
                   >
                     <Plus size={16} />
                     Add
@@ -1020,7 +851,6 @@ export const EditProjectProposalForm: React.FC<
                 </div>
               </div>
             </div>
-
             <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
               <ConfirmationModal
                 trigger={
