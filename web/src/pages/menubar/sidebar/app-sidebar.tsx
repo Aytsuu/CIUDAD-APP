@@ -321,6 +321,10 @@ const items: MenuItem[] = [
         url: "/treasurer-income-expense-main",
       },
       {
+        title: "Expense Log",
+        url: "/treasurer-expense-log",
+      },
+      {
         title: "Income & Disbursement",
         url: "/treasurer-income-and-disbursement",
       },
