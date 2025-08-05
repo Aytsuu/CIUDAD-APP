@@ -4,7 +4,6 @@ import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { FaFacebook, FaPhoneAlt } from "react-icons/fa";
 import { GoVerified } from "react-icons/go";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import SignIn from "@/pages/landing/Signin";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button/button";
 import AuthDialog from "@/components/AuthDialog";

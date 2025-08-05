@@ -1,60 +1,45 @@
 // MonthlyMedicineRecords.tsx
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, ChevronLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Search, ChevronLeft ,Loader2} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
-import {
-  getMedicineRecords,
-  MonthlyMedicineRecord,
-} from "../medicine-report/restful-api/getAPI";
+import { useMedicineRecords } from "./queries/fetchQueries";
+import { MonthlyMedicineRecord } from "./types";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function MonthlyMedicineRecords() {
+  const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [yearFilter] = useState<string>("all");
   const navigate = useNavigate();
+  const { data: apiResponse, isLoading, error } = useMedicineRecords(yearFilter);
+  const monthlyData = apiResponse?.data || [];
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["medicineRecords", yearFilter],
-    queryFn: () =>
-      getMedicineRecords(yearFilter === "all" ? undefined : yearFilter),
-  });
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch medicine records");
+      toast.error("Failed to fetch report");
+      toast("Retrying to fetch  report...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     }
   }, [error]);
 
-  const monthlyData = useMemo(() => {
-    if (!apiResponse?.data) return [];
-    return apiResponse.data.map((month) => ({
-      ...month,
-      records: month.records.map((record) => ({
-        ...record,
-        requested_at: record.requested_at
-          ? new Date(record.requested_at).toISOString()
-          : null,
-        fulfilled_at: record.fulfilled_at
-          ? new Date(record.fulfilled_at).toISOString()
-          : null,
-      })),
-    }));
-  }, [apiResponse]);
 
   const filteredData = useMemo(() => {
     return monthlyData.filter((monthData) => {
@@ -113,10 +98,12 @@ export default function MonthlyMedicineRecords() {
                   {
                     month: "long",
                     year: "numeric",
+                    
                   }
                 ),
                 records: row.original.records,
                 recordCount: row.original.record_count,
+                monthlyrcplist_id: row.original.monthlyrcplist_id,
               },
             })
           }
@@ -127,16 +114,7 @@ export default function MonthlyMedicineRecords() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
+
 
   return (
     <>
@@ -193,8 +171,16 @@ export default function MonthlyMedicineRecords() {
             </div>
           </div>
 
+         
           <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={paginatedData} />
+            {isLoading ? (
+              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
+              </div>
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

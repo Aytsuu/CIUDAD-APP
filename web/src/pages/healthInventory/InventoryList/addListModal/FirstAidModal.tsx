@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import {
   FormField,
   FormItem,
@@ -20,15 +20,12 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
 import { toast } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { CircleCheck } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 export default function FirstAidModal() {
-  const navigate = useNavigate();
 
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id;
@@ -50,7 +47,6 @@ export default function FirstAidModal() {
   const { mutate: addFirstAidMutation, isPending } = useAddFirstAid();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newFirstAidName, setNewFirstAidName] = useState<string>("");
-  const queryClient = useQueryClient();
 
   const getCurrentCategoryName = () => {
     const currentId = form.watch("cat_id");

@@ -1,12 +1,10 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, FileInput, ChevronLeft } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Search, FileInput, ChevronLeft, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
-import { api2 } from "@/api/api";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { getChildHealthColumns } from "./columns/indiv_col";
-import CardLayout from "@/components/ui/card/card-layout";
 import { useUnvaccinatedVaccines } from "../../vaccination/queries/fetch";
 import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
@@ -34,11 +29,10 @@ export default function InvChildHealthRecords() {
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
-  const [childData, setChildData] = useState(ChildHealthRecord);
+  const [childData] = useState(ChildHealthRecord);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const queryClient = useQueryClient();
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
     useUnvaccinatedVaccines(ChildHealthRecord?.pat_id, ChildHealthRecord.dob);
   const { data: followUps = [], isLoading: followupLoading } =
@@ -335,7 +329,10 @@ export default function InvChildHealthRecords() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <TableSkeleton columns={columns} rowCount={3} />
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
+            </div>
           ) : (
             <DataTable columns={columns} data={currentData} />
           )}

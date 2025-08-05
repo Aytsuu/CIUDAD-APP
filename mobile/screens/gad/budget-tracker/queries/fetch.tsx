@@ -1,45 +1,42 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api/api";
+import api from "@/api/api";
 import {
     fetchGADBudgets,
     fetchGADBudgetEntry,
     fetchIncomeParticulars,
     fetchExpenseParticulars,
-    GADBudgetEntry,
-    DevelopmentBudgetItem,
     fetchGADBudgetFile,
     fetchGADBudgetFiles
 } from "../request/get";
-
-import { GADBudgetFile } from "../request/post";
-
-export type GADBudgetEntryUI = GADBudgetEntry & {
-    gbud_particulars?: string | null;
-    gbud_amount?: number | null;
-};
+import { GADBudgetFile, GADBudgetEntryUI, GADBudgetEntry, DevelopmentBudgetItem } from "../bt-types";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
+  const toNumberIfNumeric = (val: any) => {
+    if (val === null || val === undefined) return undefined;
+    return isNaN(val) ? val : Number(val);
+  };
+
   return {
     ...entry,
-    gbud_inc_amt: entry.gbud_inc_amt != null ? Number(entry.gbud_inc_amt) : undefined,
-    gbud_proposed_budget: entry.gbud_proposed_budget != null ? Number(entry.gbud_proposed_budget) : undefined,
-    gbud_actual_expense: entry.gbud_actual_expense != null ? Number(entry.gbud_actual_expense) : undefined,
-    gbud_particulars: entry.gbud_type === 'Income' 
-      ? entry.gbud_inc_particulars || null
-      : entry.gbud_exp_particulars || null,
-    gbud_amount: entry.gbud_type === 'Income'
-      ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
-      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
+    gbud_inc_amt: toNumberIfNumeric(entry.gbud_inc_amt),
+    gbud_proposed_budget: toNumberIfNumeric(entry.gbud_proposed_budget),
+    gbud_actual_expense: toNumberIfNumeric(entry.gbud_actual_expense),
+    gbud_particulars:
+      entry.gbud_type === 'Income'
+        ? entry.gbud_inc_particulars || null
+        : entry.gbud_exp_particulars || null,
+    gbud_amount:
+      entry.gbud_type === 'Income'
+        ? toNumberIfNumeric(entry.gbud_inc_amt) ?? null
+        : toNumberIfNumeric(entry.gbud_actual_expense) ?? null,
   };
 };
-
 
 export const useGADBudgets = (year?: string) => {
     return useQuery({
         queryKey: ['gad-budgets', year],
         queryFn: async () => {
             const data = await fetchGADBudgets(year || '');
-            console.log('fetchGADBudgets raw response:', data);
             return data;
         },
         enabled: !!year,

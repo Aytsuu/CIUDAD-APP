@@ -13,7 +13,7 @@ import {
   AgeGroupType,
   time_unit_options,
 } from "./types";
-import { createAgegroup, updateAgegroup, getAgegroup } from "./restful-api/agepostAPI";
+import { updateAgegroup, getAgegroup } from "./restful-api/agepostAPI";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface AgeGroupFormProps {

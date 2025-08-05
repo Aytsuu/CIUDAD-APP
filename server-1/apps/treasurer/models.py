@@ -1,8 +1,5 @@
 from django.db import models
-from datetime import date, datetime
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
-
+from datetime import date
 
 class Budget_Plan(models.Model): 
     plan_id = models.BigAutoField(primary_key=True)
@@ -76,7 +73,6 @@ class Budget_Plan_History(models.Model):
         db_table = 'budget_plan_history'
         ordering = ['-bph_date_updated']
 
-
 #=======================================================================================
 
 class Income_File_Folder(models.Model):
@@ -101,10 +97,14 @@ class Income_Image(models.Model):
     infi_num = models.BigAutoField(primary_key=True)
     infi_upload_date = models.CharField(default=date.today)
     infi_is_archive = models.BooleanField(default=False)
-    infi_type = models.CharField(max_length=100, null=True)
-    infi_name = models.CharField(max_length=255, null=True)
-    infi_path = models.CharField(max_length=500, null=True)
-    infi_url = models.CharField(max_length=500, null=True)
+
+    file = models.ForeignKey(
+        'file.File',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='file_id'
+    )
 
     inf_num = models.ForeignKey(
         Income_File_Folder,
@@ -147,10 +147,14 @@ class Disbursement_Image(models.Model):
     disf_num = models.BigAutoField(primary_key=True)
     disf_upload_date = models.CharField(default=date.today)
     disf_is_archive = models.BooleanField(default=False)
-    disf_type = models.CharField(max_length=100, null=True)  # File type (e.g., image/jpeg)
-    disf_name = models.CharField(max_length=255, null=True)  # File name
-    disf_path = models.CharField(max_length=500, null=True)  # File path
-    disf_url = models.CharField(max_length=500, null=True)   # File URL
+
+    file = models.ForeignKey(
+        'file.File',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='file_id'
+    )
 
     dis_num = models.ForeignKey(
         Disbursement_File_Folder,
@@ -181,7 +185,8 @@ class Invoice(models.Model):
     cr_id = models.ForeignKey(
         'clerk.ClerkCertificate', 
         on_delete=models.CASCADE, 
-        db_column='cr_id'
+        db_column='cr_id',
+        related_name='treasurer_invoices' 
     )
     # sr_id = FK sad siya
 
@@ -228,14 +233,11 @@ class Income_Tracking(models.Model):
     inc_num = models.BigAutoField(primary_key=True)
     inc_serial_num = models.CharField(max_length=100, null=True, blank=True) 
     inc_transac_num = models.CharField(max_length=100, null=True, blank=True) 
-    # inc_date = models.DateField(default=date.today)
     inc_datetime = models.DateTimeField(null=True)
     inc_entryType = models.CharField(max_length=100, default='Income')
     inc_amount = models.DecimalField(max_digits=10, decimal_places=2)
     inc_additional_notes = models.CharField(max_length=100, null=True, blank=True)
-    # inc_receipt_image = models.CharField(null=True, blank=True)
     inc_is_archive = models.BooleanField(default=False)
-    # inv_num = models.ForeignKey( 'invoice', on_delete=models.CASCADE, null=True, blank=True)
     incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
 
     class Meta:
@@ -273,10 +275,6 @@ class Income_Expense_File(models.Model):
 
 
 class Income_Expense_Main(models.Model):
-    # ie_main_year = models.BigAutoField(primary_key=True)
-    # ie_main_tot_budget = models.DecimalField(max_digits=10, decimal_places=2)
-    # ie_main_inc = models.DecimalField(max_digits=10, decimal_places=2)
-    # ie_main_exp = models.DecimalField(max_digits=10, decimal_places=2)
     ie_main_year = models.CharField(max_length=4, primary_key=True)     
     ie_main_tot_budget = models.DecimalField(max_digits=10, decimal_places=2)
     ie_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
@@ -289,14 +287,15 @@ class Income_Expense_Main(models.Model):
 
 
 class Annual_Gross_Sales(models.Model):
-    ags_id= models.BigAutoField(primary_key=True)
-    ags_minimum=models.DecimalField(max_digits=10, decimal_places=2)
-    ags_maximum=models.DecimalField(max_digits=10, decimal_places=2)
-    ags_rate=models.DecimalField(max_digits=10, decimal_places=2)
-    ags_date=models.DateTimeField(default=date.today)
-    ags_is_archive=models.BooleanField(default=False)
+    ags_id = models.BigAutoField(primary_key=True)
+    ags_minimum = models.DecimalField(max_digits=10, decimal_places=2)
+    ags_maximum = models.DecimalField(max_digits=10, decimal_places=2)
+    ags_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    ags_date = models.DateField()
+    # staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
+        managed = False  
         db_table = 'annual_gross_sales'
 
 

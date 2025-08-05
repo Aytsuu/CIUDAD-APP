@@ -51,13 +51,14 @@ urlpatterns = [
     path("sitio/", SitioListView.as_view(), name="sitio-list"),
 
     # Garbage Pickup Urls
+    # Staff
     path('garbage-pickup-request-analytics/', GarbagePickupRequestAnalyticsView.as_view(), name='agarbage-pickup-request-analytics'),
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
     path('garbage-pickup-request-accepted/', GarbagePickupRequestAcceptedView.as_view(), name='garbage-pickup-request-accepted'), #retrieve accepted requests
-    path('garbage-pickup-view-accepted/<int:garb_id>/', GarbagePickupAcceptedRequestDetailView.as_view(), name='garbage-pickup-view-accepted'), #retrieve accted request details
     path('garbage-pickup-request-completed/', GarbagePickupRequestCompletedView.as_view(), name='garbage-pickup-request-completed'), #retrieve completed requests
     path('garbage-pickup-view-completed/<int:garb_id>/', GarbagePickupCompletedRequestDetailView.as_view(), name='garbage-pickup-view-completed'), #retrieve completed request details
+    path('garbage-pickup-view-accepted/<int:garb_id>/', GarbagePickupAcceptedRequestDetailView.as_view(), name='garbage-pickup-view-accepted'), #retrieve accted request details
     path('update-garbage-pickup-request/<int:garb_id>/', UpdateGarbagePickupRequestStatusView.as_view(), name='update-garbage-pickup-request'), #reject request update status to rejected
     path('update-pickup-assignment/<int:pick_id>/', UpdatePickupAssignmentView.as_view(), name='update-pickup-assignment'), #update pickup assignment
     path('delete-assignment-collector/<int:acl_id>/', AssignmentCollectorDeleteView.as_view(), name='delete-assignment-collector'), #update pickup assignment
@@ -65,5 +66,9 @@ urlpatterns = [
     path('pickup-assignment/', PickupAssignmentView.as_view(), name='pickup-assignment'),
     path('assignment-collector/', AssignmentCollectorView.as_view(), name='assignment-collector'),
     path('pickup-confirmation/', PickupConfirmationView.as_view(), name='pickup-confirmation'),
+
+    # Driver
+    path('driver-garbage-pickup-tasks/', GarbagePickupRequestsByDriverView.as_view(), name='garbage-pickup-tasks'),
+    path('driver-garbage-completed-tasks/', GarbagePickupCompletedByDriverView.as_view(), name='garbage-completed-tasks'),
 
 ]  

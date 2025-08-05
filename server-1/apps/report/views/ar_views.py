@@ -44,37 +44,42 @@ class ARTableView(generics.ListAPIView):
 
 
 class ARFileCreateView(generics.CreateAPIView):
-  serializer_class = ARFileBaseSerializer
+  serializer_class = ARFileCreateSerializer
   queryset = ARFile.objects.all()
 
   @transaction.atomic
   def create(self, request, *args, **kwargs):
-      serializer = self.get_serializer(data=request.data, many=True)
-      serializer.is_valid(raise_exception=True)
+      files = request.data.get('files', [])
+      ar_id = request.data.get('ar_id', None)
 
-      # Prepare model instances
-      instances = [
-          ARFile(**item)
-          for item in serializer.validated_data
-      ]
-      created_instances = ARFile.objects.bulk_create(instances)
+      if ar_id:
+        ar = AcknowledgementReport.objects.filter(ar_id=ar_id).first()
 
-      # Check for pdf, docs, word upload
-      contains_doc = [
-        item for item in serializer.validated_data
-        if item['arf_type'] == "application/pdf" 
-      ]
+      if files and ar:
+        instances = []
+        for file_data in files:
+          file = ARFile(
+            ar=ar,
+            arf_name=file_data['name'],
+            arf_type=file_data['type'],
+            arf_path=f'ar/{file_data['name']}'
+          )
+          url = upload_to_storage(file_data, 'report-bucket', 'ar')
+          file.arf_url = url
+          instances.append(file)
 
-      if contains_doc:
-        ar = AcknowledgementReport.objects.filter(ar_id=contains_doc[0]['ar'].pk).first()
-        if ar:
-          ar.ar_status = "Signed"
-          ar.save()
-        
-      if len(created_instances) > 0 and created_instances[0].pk is not None:
-          return Response(status=status.HTTP_201_CREATED)
+        ARFile.objects.bulk_create(instances)
+        ar.ar_status = "Signed"
+        ar.save()
+    
+        return Response(data=ARFileBaseSerializer(instances, many=True).data,status=status.HTTP_201_CREATED)
       
-      return Response(status=status.HTTP_201_CREATED)
+      return Response(status=status.HTTP_400_BAD_REQUEST)
+
+class ARInfoView(generics.RetrieveAPIView):
+   serializer_class = ARTableSerializer
+   queryset = AcknowledgementReport.objects.all()
+   lookup_field = 'ar_id'
 
 class ARByDateView(APIView):
   def get(self, request, *args, **kwargs):
@@ -93,3 +98,21 @@ class ARByDateView(APIView):
         ).distinct()
 
     return Response(ARTableSerializer(ar_reports, many=True).data)
+
+class ARFileDeleteView(generics.DestroyAPIView):
+  serializer_class = ARFileBaseSerializer
+  queryset = ARFile.objects.all()
+  lookup_field = 'arf_id'
+
+class ARUpdateView(generics.UpdateAPIView):
+  serializer_class = ARBaseSerializer
+  queryset = AcknowledgementReport.objects.all()
+  lookup_field = 'ar_id'
+
+  def update(self, request, *args, **kwargs):
+    instance = self.get_object()
+    serializer = self.get_serializer(instance, data=request.data, partial=True)
+    if serializer.is_valid():
+      serializer.save()
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_400_BAD_REQUEST)

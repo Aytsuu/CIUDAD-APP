@@ -291,10 +291,6 @@ function IncomeEditForm() {
             return; 
         }
 
-        if(!values.inc_additional_notes){
-            values.inc_additional_notes = "None";
-        }        
-
         if(prev_amount != current_amount){
             totalIncome = (totIncome - prev_amount) + current_amount;           
         }
@@ -315,7 +311,7 @@ function IncomeEditForm() {
 
   return (
     <_ScreenLayout
-      headerBetweenAction={<Text className="text-[13px]">Edit Income Entry</Text>}
+      header="Edit Income Entry"
       headerAlign="left"
       showExitButton={false}
       showBackButton={true}
@@ -377,7 +373,7 @@ function IncomeEditForm() {
       }
       stickyFooter={true}
     >
-      <View className="w-full px-4 pt-5">
+      <View className="w-full px-4">
         {/* Date Input */}
         <View className="relative">
           <FormDateAndTimeInput

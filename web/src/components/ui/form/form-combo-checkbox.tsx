@@ -214,7 +214,7 @@ export const FormComboCheckbox   = React.memo(
     control: any
     name: string
     label?: string
-    options: OptionType[]
+    options: any[]
     readOnly?: boolean
     placeholder?: string
     showBadges?: boolean

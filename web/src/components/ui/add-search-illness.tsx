@@ -78,7 +78,7 @@ export const IllnessComponent = ({
       
       return { previousIllnesses };
     },
-    onError: (err, newIllness, context) => {
+    onError: (context: any) => {
       queryClient.setQueryData(['illnesses'], context?.previousIllnesses);
       toast.error("Failed to add illness");
     },

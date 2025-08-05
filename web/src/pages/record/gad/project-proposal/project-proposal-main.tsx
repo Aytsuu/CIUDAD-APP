@@ -20,8 +20,6 @@ import { Button } from "@/components/ui/button/button";
 import {
   useGetProjectProposals,
   useGetProjectProposal,
-  ProjectProposal,
-  SupportDoc,
   useGetSupportDocs,
 } from "./queries/fetchqueries";
 import {
@@ -43,6 +41,7 @@ import {
 import ViewProjectProposal from "./view-projprop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { ProjectProposal, SupportDoc } from "./projprop-types";
 
 function DocumentCard({
   doc,

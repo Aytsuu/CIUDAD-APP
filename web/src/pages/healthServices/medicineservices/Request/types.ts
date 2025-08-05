@@ -63,6 +63,8 @@ export interface MedicineRequest {
   status: string;
   rp_id: string | null;
   pat_id: string | null;
+  total_quantity?: number;
+
 }
 
 export interface MedicineRequestWithItems extends MedicineRequest {

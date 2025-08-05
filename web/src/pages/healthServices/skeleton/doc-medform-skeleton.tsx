@@ -1,6 +1,5 @@
 // src/components/consultation-history-skeleton.tsx
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 
 export function ConsultationHistorySkeleton() {
   return (

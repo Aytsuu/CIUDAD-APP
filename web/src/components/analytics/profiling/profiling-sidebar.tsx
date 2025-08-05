@@ -1,7 +1,7 @@
 import React from "react";
 import { useGetSidebarAnalytics } from "./profiling-analytics-queries";
 import { Card } from "@/components/ui/card/card";
-import { Clock, Users, ChevronRight, Calendar } from "lucide-react";
+import { Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 

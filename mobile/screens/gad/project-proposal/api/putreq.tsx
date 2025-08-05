@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { ProjectProposal, ProjectProposalInput } from "../queries/fetchqueries";
+import { ProjectProposal, ProjectProposalInput } from "../projprop-types";
 
 export const putProjectProposal = async (
   gprId: number, 
@@ -40,7 +40,6 @@ export const putProjectProposal = async (
     const res = await api.put(`gad/project-proposals/${gprId}/`, payload);
     return res.data;
   } catch (err) {
-    console.error(`Error updating project proposal ${gprId}:`, err);
     throw err;
   }
 };
@@ -59,7 +58,6 @@ export const patchProjectProposalStatus = async (
     const res = await api.patch(`gad/review-project-proposals/${gprId}/`, payload);
     return res.data;
   } catch (err) {
-    console.error(`Error updating project proposal status ${gprId}:`, err);
     throw err;
   }
 };

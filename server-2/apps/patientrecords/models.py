@@ -165,15 +165,15 @@ class VitalSigns(models.Model):
 
 class Obstetrical_History(models.Model):
     obs_id = models.BigAutoField(primary_key=True)
-    obs_ch_born_alive = models.PositiveIntegerField()
-    obs_living_ch = models.PositiveIntegerField()
-    obs_abortion = models.PositiveIntegerField()
-    obs_still_birth = models.PositiveIntegerField()
-    obs_lg_babies = models.PositiveIntegerField()
-    obs_gravida = models.PositiveIntegerField()
-    obs_para = models.PositiveIntegerField()
-    obs_fullterm = models.PositiveIntegerField()
-    obs_preterm = models.PositiveIntegerField()
+    obs_ch_born_alive = models.PositiveIntegerField(null=True, blank=True)
+    obs_living_ch = models.PositiveIntegerField(null=True, blank=True)
+    obs_abortion = models.PositiveIntegerField(null=True, blank=True)
+    obs_still_birth = models.PositiveIntegerField(null=True, blank=True)
+    obs_lg_babies = models.PositiveIntegerField(null=True, blank=True)
+    obs_gravida = models.PositiveIntegerField(null=True, blank=True)
+    obs_para = models.PositiveIntegerField(null=True, blank=True)
+    obs_fullterm = models.PositiveIntegerField(null=True, blank=True)
+    obs_preterm = models.PositiveIntegerField(null=True, blank=True)
     obs_record_from = models.CharField(max_length=100)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='obstetrical_history', db_column='patrec_id')
 
@@ -249,7 +249,7 @@ class Finding(models.Model):
 
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
-    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True)
+    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='ill_id')
     year = models.IntegerField(null=True, blank=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)

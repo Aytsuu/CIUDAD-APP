@@ -15,7 +15,7 @@ import { useLocation } from "react-router";
 import { useUpdateVaccine } from "../queries/Antigen/VaccinePutQueries";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router";
-import { CircleCheck, Loader2, Pill } from "lucide-react";
+import { Loader2, Pill } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { getAgegroup } from "@/pages/healthServices/agegroup/restful-api/agepostAPI";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -159,7 +159,7 @@ export default function EditVaccineModal() {
     formState: { errors, isValid },
   } = form;
 
-  const [type, ageGroup, noOfDoses] = watch(["type", "ageGroup", "noOfDoses"]);
+  const [type, noOfDoses] = watch(["type", "noOfDoses"]);
   const updateVaccineMutation = useUpdateVaccine();
 
   // Set initial form values when component mounts

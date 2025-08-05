@@ -14,7 +14,7 @@ import {
   UserCog,
   ArrowUp,
   ArrowDown,
-  Loader2,
+  // Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,6 +33,9 @@ import { Button } from "@/components/ui/button/button";
 import { usePatients } from "./queries/fetch";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
+
+import PatientRecordCount from "./PatientRecordCounts";
+
 type Report = {
   id: string;
   sitio: string;
@@ -40,6 +43,7 @@ type Report = {
   firstName: string;
   mi: string;
   type: string;
+  noOfRecords?: number; 
 };
 
 interface Patients {
@@ -63,13 +67,20 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "id",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full justify-center items-center gap-2 cursor-pointer "
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Patient No.
         <ArrowUpDown size={14} />
       </div>
     ),
+    cell: ({ row }) => (
+      <div className="flex w-full justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+            {row.original.id}
+          </div>
+        </div>
+    )
   },
   {
     accessorKey: "sitio",
@@ -135,6 +146,11 @@ export const columns: ColumnDef<Report>[] = [
     cell: ({ row }) => (
       <div className="hidden xl:block">{row.getValue("type")}</div>
     ),
+  },
+  {
+    accessorKey: "noOfRecords",
+    header: "No. of Records",
+    cell: ({ row }) => <PatientRecordCount patientId={row.getValue("id")} />,
   },
   {
     accessorKey: "action",
@@ -271,7 +287,7 @@ const transformPatientsToReports = (patients: Patients[]): Report[] => {
     sitio: patient.address?.add_sitio || "N/A",
     lastName: patient.personal_info?.per_lname || "",
     firstName: patient.personal_info?.per_fname || "",
-    mi: patient.personal_info?.per_mname || "",
+    mi: patient.personal_info?.per_mname || "N/A",
     type: patient.pat_type || "Resident", // assuming pat_type maps to resident/transient
   }));
 };
@@ -286,6 +302,23 @@ export default function PatientsRecord() {
   const [filterBy, setFilterBy] = useState("");
 
   const { data: patientData, isLoading } = usePatients();
+
+  // record counts
+  // const { data: medicineCountData } = useMedicineCount(patientId ?? "")
+  //   const medicineCount = medicineCountData?.medicinerecord_count
+  //   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
+  //   const vaccinationCount = vaccinationCountData?.vaccination_count
+  //   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "")
+  //   const firstAidCount = firstAidCountData?.firstaidrecord_count
+  //   const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "")
+  //   const childHealthCountData = childHealthCount?.childhealthrecord_count
+  //   const { data: medconCountData } = useMedConCount(patientId ?? "")
+  //   const medconCount = medconCountData?.medcon_count
+  //   const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
+  //   const postpartumCount = postpartumCountData
+  //   const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
+  //   const prenatalCount = prenatalCountData
+    
 
   const transformedPatients = useMemo(() => {
     if (!patientData) return [];
@@ -344,15 +377,6 @@ export default function PatientsRecord() {
     setCurrentData(filteredData.slice(startIndex, endIndex));
   }, [currentPage, pageSize, filteredData]);
 
- 
-  // Show empty state if no data
-  // if (!patientData || patientData.length === 0) {
-  //   return (
-  //     <div className="w-full flex justify-center items-center h-64">
-  //       <div className="text-lg text-gray-500">No patients found</div>
-  //     </div>
-  //   );
-  // }
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);

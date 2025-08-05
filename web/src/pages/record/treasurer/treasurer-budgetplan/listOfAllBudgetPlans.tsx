@@ -4,7 +4,7 @@ import { Eye, Trash, ArrowUpDown, Search, Archive, ArchiveRestore } from 'lucide
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Link } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";

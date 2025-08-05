@@ -1,12 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { 
 	getResident, 
 	getPatients, 
 	getPatientDetails, 
 	getAllFollowUpVisits, 
 	getAllTransientAddresses,
-	getchilddata
+	getchilddata,
  } from "../restful-api/get";
+import { AppointmentFilters } from "../restful-api/get";
+
 
 
  export const useChildHealthRecords = (patientId: string | undefined) => {
@@ -77,12 +79,13 @@ export const followUpVisitQueryKey = {
   lists: () => [...followUpVisitQueryKey.allFollowUpVisits, "list"],
 }
 
-export const useAllFollowUpVisits = (options = {}) => {
+export const useAllFollowUpVisits = (filters: AppointmentFilters, options = {}) => {
   return useQuery({
-    queryKey: followUpVisitQueryKey.lists(),
-    queryFn: getAllFollowUpVisits,
+    queryKey: ['followUpVisits', filters],
+    queryFn: () => getAllFollowUpVisits(filters),
     staleTime: 60 * 2,
     retry: 3,
+	placeholderData: keepPreviousData,
     ...options,
   })
 }

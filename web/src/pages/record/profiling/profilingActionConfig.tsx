@@ -1,9 +1,9 @@
-import { Type, Origin } from "./profilingEnums";
+import { Type, Origin } from "./ProfilingEnums";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import AssignPosition from "../administration/AssignPosition";
-import { Check, Pen, X } from "lucide-react";
+import { Check, Pen } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Configuration Object
@@ -75,7 +75,7 @@ export const buttonConfig = (
         <ConfirmationModal
           trigger={<Button className="w-full"> 
             <Check/>
-            Approve & Create Record 
+            Approve Request
           </Button>
           }
           title="Confirm Approval"

@@ -47,7 +47,7 @@ export default function HouseholdProfileForm({
           emptyMessage={
             <div className="flex gap-2 justify-center items-center">
               <Label className="font-normal text-[13px]">No resident found.</Label>
-              <Link to="/resident/form">
+              <Link to="/profiling/resident/form">
                 <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
                   Register
                 </Label>

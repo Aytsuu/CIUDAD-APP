@@ -1,6 +1,5 @@
 import {api2} from "@/api/api";
 import { toTitleCase } from "@/helpers/ToTitleCase";
-import { MedicineType } from "@/form-schema/inventory/lists/inventoryListSchema";
 
 export const addMedicine = async (data : Record<string, string>) => {
     try {

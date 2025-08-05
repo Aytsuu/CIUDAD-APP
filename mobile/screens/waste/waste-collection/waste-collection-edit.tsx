@@ -10,7 +10,7 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
-import { SelectLayoutWithAdd } from '@/components/ui/selec-searchadd-layout';
+import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
 import { useGetWasteDrivers } from './queries/waste-col-fetch-queries';
@@ -96,7 +96,13 @@ function WasteColEdit() {
   });
 
   const onSubmit = async (values: z.infer<typeof WasteColSchedSchema>) => {
+
     try {
+      
+      if(!values.additionalInstructions){
+        values.additionalInstructions = "None"
+      }      
+
       await new Promise<void>((resolve, reject) => {
         updateSchedule({
           wc_num: Number(wc_num),

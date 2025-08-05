@@ -40,9 +40,6 @@ export const FormSelect = React.memo(({
         return options;
     }, [options, isLoading, emptyMessage]);
 
-    // Determine if the select should be disabled
-    const isDisabled = readOnly || isLoading || options.length === 0;
-
     return (
         <FormField
             control={control}

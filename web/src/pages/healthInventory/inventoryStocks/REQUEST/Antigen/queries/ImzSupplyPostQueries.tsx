@@ -3,7 +3,6 @@ import {
   addImzTransaction,
   addImmunizationStock,
 } from "../restful-api/ImzSupplyPostAPI";
-import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { useAddInventory } from "../../InventoryAPIQueries";
 import { useNavigate } from "react-router";
 import {toast} from "sonner"

@@ -11,12 +11,12 @@ import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type Donation } from "./queries/donationFetchQueries";
+import { Donations } from "./donation-types";
 import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
 
 function DonationTracker() {
-  const [data] = useState<Donation[]>([]);
+  const [data] = useState<Donations[]>([]);
   // const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null); 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -65,7 +65,7 @@ function DonationTracker() {
     currentPage * pageSize
   );
 
-  const columns: ColumnDef<Donation>[] = [
+  const columns: ColumnDef<Donations>[] = [
     {
       accessorKey: "don_num",
       header: ({ column }) => (

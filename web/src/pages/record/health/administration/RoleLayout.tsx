@@ -4,7 +4,6 @@ import FeatureSelection from "./FeatureSelection";
 // import SettingPermissions from "./SettingPermissions";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "react-router";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Assigned, Feature } from "./administrationTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";

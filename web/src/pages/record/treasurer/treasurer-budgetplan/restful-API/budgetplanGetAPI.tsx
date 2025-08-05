@@ -31,15 +31,6 @@ export const getBudgetPlanHistory = async (planId: string) => {
     }
 }
 
-export const getBudgetPlanAndDetailHistory = async (bph_id: string) => {
-    try{
-        const res = await api.get(`treasurer/budget-plan-and-detail-history/${bph_id}/`)
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
 export const getBudgetPlanSuppDocs = async (plan_id: string) => {
     try{
         const res = await api.get(`treasurer/budget-plan-file/${plan_id}/`)

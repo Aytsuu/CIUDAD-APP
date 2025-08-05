@@ -57,7 +57,7 @@ export default function VaccinationRecordForm() {
   const [submitting, setSubmitting] = useState(false);
   const [isStep1ConfirmOpen, setIsStep1ConfirmOpen] = useState(false);
   const [isStep2ConfirmOpen, setIsStep2ConfirmOpen] = useState(false);
-  const [nextVisitDate, setNextVisitDate] = useState<string | null>(null);
+  const [, setNextVisitDate] = useState<string | null>(null);
   const [nextVisitDescription, setNextVisitDescription] = useState<
     string | null
   >(null);
@@ -74,7 +74,7 @@ export default function VaccinationRecordForm() {
   const { data: patientVaccinationRecords } = useIndivPatientVaccinationRecords(
     patientToUse?.pat_id
   );
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =
+  const { data: vaccinations = [] } =
     usePatientVaccinationDetails(patientToUse?.pat_id);
   const { data: unvaccinatedVaccines = [] } = useUnvaccinatedVaccines(
     patientToUse?.pat_id,
@@ -82,14 +82,11 @@ export default function VaccinationRecordForm() {
   );
   const { data: followupVaccines = [], isLoading: isFollowVacLoading } =
     useFollowupVaccines(patientToUse?.pat_id);
+
   const { data: vaccinesData, isLoading: isVacstckLoading } =
     fetchVaccinesWithStock();
 
-  const isLoading =
-    isVacstckLoading ||
-    isCompleteVaccineLoading ||
-    patientVaccinationRecords ||
-    isFollowVacLoading;
+  const isLoading = unvaccinatedVaccines && isFollowVacLoading;
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
@@ -216,40 +213,47 @@ export default function VaccinationRecordForm() {
           toast.warning(
             `${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`
           );
+          return;
         }
 
-        // Rest of your existing logic for routine and primary vaccines...
-        if (vaccinelist.vac_type_choices === "routine") {
-          const { interval, time_unit } = vaccinelist.routine_frequency;
-          const nextDate = calculateNextVisitDate(
-            interval,
-            time_unit,
-            new Date().toISOString()
-          );
-          setNextVisitDate(nextDate.toISOString().split("T")[0]);
-          setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
-          form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
-        } else if (vaccinelist.vac_type_choices === "primary") {
-          if (vaccinelist.no_of_doses >= 2) {
-            const dose2Interval = vaccinelist.intervals.find(
-              (interval: any) => interval.dose_number === 2
+        if (doseNumber < vaccinelist.no_of_doses) {
+          if (vaccinelist.vac_type_choices === "routine") {
+            const { interval, time_unit } = vaccinelist.routine_frequency;
+            const nextDate = calculateNextVisitDate(
+              interval,
+              time_unit,
+              new Date().toISOString()
             );
-            if (dose2Interval) {
-              const nextDate = calculateNextVisitDate(
-                dose2Interval.interval,
-                dose2Interval.time_unit,
-                new Date().toISOString()
+            setNextVisitDate(nextDate.toISOString().split("T")[0]);
+            setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+            form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+          } else if (vaccinelist.vac_type_choices === "primary") {
+            if (vaccinelist.no_of_doses >= 2) {
+              const nextDoseInterval = vaccinelist.intervals.find(
+                (interval: any) => interval.dose_number === doseNumber + 1
               );
-              setNextVisitDate(nextDate.toISOString().split("T")[0]);
-              setNextVisitDescription(
-                `Vaccination for ${vaccinelist.vac_name}`
-              );
-              form.setValue(
-                "followv_date",
-                nextDate.toISOString().split("T")[0]
-              );
+              if (nextDoseInterval) {
+                const nextDate = calculateNextVisitDate(
+                  nextDoseInterval.interval,
+                  nextDoseInterval.time_unit,
+                  new Date().toISOString()
+                );
+                setNextVisitDate(nextDate.toISOString().split("T")[0]);
+                setNextVisitDescription(
+                  `Vaccination for ${vaccinelist.vac_name}`
+                );
+                form.setValue(
+                  "followv_date",
+                  nextDate.toISOString().split("T")[0]
+                );
+              }
             }
           }
+        } else {
+          // If current dose equals total dose, clear follow-up date
+          setNextVisitDate(null);
+          setNextVisitDescription(null);
+          form.setValue("followv_date", "");
         }
       }
     }
@@ -426,28 +430,31 @@ export default function VaccinationRecordForm() {
               <PatientInfoCard patient={patientToUse} />
             </div>
 
-            {isLoading ? (
-              <VaccinationStatusCardsSkeleton />
-            ) : (
-              <CardLayout
-                cardClassName="mb-6"
-                content={
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    <div className="w-full">
-                      <VaccinationStatusCards
-                        unvaccinatedVaccines={unvaccinatedVaccines}
-                        vaccinations={vaccinations}
-                      />
-                    </div>
+            {patientToUse?.pat_id && (
+              <>
+                {isLoading ? (
+                  <VaccinationStatusCardsSkeleton />
+                ) : (
+                  <CardLayout
+                    cardClassName="mb-6"
+                    content={
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="w-full">
+                          <VaccinationStatusCards
+                            unvaccinatedVaccines={unvaccinatedVaccines}
+                            vaccinations={vaccinations}
+                          />
+                        </div>
 
-                    <div className="w-full">
-                      <FollowUpsCard followupVaccines={followupVaccines} />
-                    </div>
-                  </div>
-                }
-              />
+                        <div className="w-full">
+                          <FollowUpsCard followupVaccines={followupVaccines} />
+                        </div>
+                      </div>
+                    }
+                  />
+                )}
+              </>
             )}
-
             <div className="bg-white p-6 sm:p-8 rounded-sm shadow-sm border-gray-100">
               <Form {...form}>
                 <form onSubmit={handleStep1Submit} className="space-y-6">
@@ -468,7 +475,7 @@ export default function VaccinationRecordForm() {
                         value={form.watch("vaccinetype") || ""}
                         onChange={(value) => handleVaccineChange(value)}
                         placeholder={
-                          isLoading
+                          isVacstckLoading
                             ? "Loading vaccines..."
                             : "Search and select a vaccine"
                         }
@@ -476,7 +483,7 @@ export default function VaccinationRecordForm() {
                         emptyMessage={
                           <div className="flex gap-2 justify-center items-center">
                             <Label className="font-normal text-xs">
-                              {isLoading
+                              {isVacstckLoading
                                 ? "Loading..."
                                 : "No available vaccines in stock."}
                             </Label>
@@ -485,7 +492,7 @@ export default function VaccinationRecordForm() {
                       />
                       {form.watch("vaccinetype") && (
                         <>
-                          <div className="mt-4 space-y-4">
+                          <div className="mt-4  flex flex-col sm:flex-row sm:space-x-4">
                             <FormInput
                               control={form.control}
                               name="vacrec_totaldose"
@@ -502,25 +509,7 @@ export default function VaccinationRecordForm() {
                             />
                           </div>
 
-                          {selectedVaccineType !== "conditional" &&
-                            nextVisitDate && (
-                              <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
-                                <h3 className="font-medium text-blue-800">
-                                  Next Follow-up Visit
-                                </h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-sm text-blue-700">
-                                    {nextVisitDescription}
-                                  </span>
-                                  <span className="font-semibold text-blue-900">
-                                    {format(
-                                      new Date(nextVisitDate),
-                                      "MMMM d, yyyy"
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                         
                         </>
                       )}
                     </div>

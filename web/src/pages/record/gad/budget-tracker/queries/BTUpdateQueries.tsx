@@ -5,13 +5,7 @@ import { useNavigate } from "react-router";
 import { updateGADBudget, createGADBudgetFile } from "../requestAPI/BTPutRequest";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { deleteGADBudgetFiles } from "../requestAPI/BTDelRequest";
-
-type BudgetYear = {
-  gbudy_year: string;
-  gbudy_budget: number;
-  gbudy_expenses: number;
-  gbudy_income: number;
-};
+import { BudgetYear, GADBudgetUpdatePayload } from "../budget-tracker-types";
 
 export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
   const queryClient = useQueryClient();
@@ -25,8 +19,6 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       filesToDelete: string[];
       remainingBalance: number; // Add remainingBalance
     }) => {
-      console.log("Files to Delete:", data.filesToDelete);
-      console.log("Received remainingBalance:", data.remainingBalance);
       // Validate remaining balance for Expense
       if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
         const currentYearBudget = yearBudgets.find(
@@ -58,7 +50,10 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       }
 
       // Update budget entry
-      const budgetEntryResponse = await updateGADBudget(data.gbud_num, data.budgetData);
+      const budgetEntryResponse = await updateGADBudget(
+        data.gbud_num,
+        data.budgetData as GADBudgetUpdatePayload
+      );
 
       // Validate and create new files
       if (data.files.length > 0) {
@@ -96,13 +91,6 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
       toast.error('Failed to update budget entry', {
         description: errorMessage,
-      });
-      console.error('Update informational:', {
-        errorMessage,
-        response: error.response?.data,
-        filesToDelete: variables.filesToDelete,
-        gbud_num: variables.gbud_num,
-        remainingBalance: variables.remainingBalance,
       });
     },
   });

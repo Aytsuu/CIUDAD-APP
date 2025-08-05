@@ -142,7 +142,7 @@ export default function ReportSectionCharts() {
                         year: "numeric",
                       })
                     }}
-                    formatter={(value, name) => [`${value} reports`, "Incidents"]}
+                    formatter={(value) => [`${value} reports`, "Incidents"]}
                   />
                 }
               />

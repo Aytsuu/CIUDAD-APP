@@ -10,12 +10,11 @@ import ScreenLayout from "@/screens/_ScreenLayout";
 import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
 import { useAddTruck } from './queries';
-import { TruckFormValues } from './requests';
+import { TruckFormValues } from './waste-personnel-types';
 
 export default function WasteTruckCreate() {
   const router = useRouter();
-  const { mutate: addTruck, isLoading: isSubmitting } = useAddTruck(() => router.back()); // Use the mutation hook
-
+  const { mutate: addTruck, isPending: isSubmitting } = useAddTruck(() => router.back());
   const { control, handleSubmit } = useForm<TruckFormValues>({
     resolver: zodResolver(TruckFormSchema),
     defaultValues: {

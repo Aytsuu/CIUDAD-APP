@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { getCommodityStocks,getMedicineInventory ,getFirstAidInventoryList,getFirstAidStocks,getCombinedStock} from "../restful-api/getAPI";
+import { getCommodityStocks,getMedicineInventory ,getFirstAidInventoryList,getCombinedStock} from "../restful-api/getAPI";
 
  export const useCommodityStocks = () => {
     return useQuery({

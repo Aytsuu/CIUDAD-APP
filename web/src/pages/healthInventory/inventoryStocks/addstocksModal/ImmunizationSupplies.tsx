@@ -13,9 +13,7 @@ import {
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
-import { useNavigate, Link } from "react-router";
+import { Link } from "react-router";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
@@ -50,7 +48,6 @@ export default function AddImzSupplyStock() {
   const pcs = form.watch("imzStck_pcs");
   const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
 
-  const navigate = useNavigate();
   const { mutate: submit, isPending } = useSubmitImmunizationStock();
   const batchNumbers = useBatchNumbers();
 
@@ -198,7 +195,7 @@ export default function AddImzSupplyStock() {
                 disabled={isPending}
                 onClick={form.handleSubmit(onSubmit)}
               >
-                {isPending ? (
+                {isPending || loading? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...

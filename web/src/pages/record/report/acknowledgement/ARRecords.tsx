@@ -2,7 +2,7 @@ import React from "react"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { Check, CircleAlert, FileDown, Plus, Search } from "lucide-react"
+import { Check, FileDown, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { ARColumns } from "../ReportColumns"
 import { useGetAcknowledgementReport, useGetWeeklyAR } from "../queries/reportFetch"
@@ -10,7 +10,6 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { LoadButton } from "@/components/ui/button/load-button"
 import { useAddWAR, useAddWARComp } from "../queries/reportAdd"
 import { useAuth } from "@/context/AuthContext"
-import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -21,6 +20,7 @@ import { useLoading } from "@/context/LoadingContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { useDebounce } from "@/hooks/use-debounce"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
 export default function ARRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -89,15 +89,7 @@ export default function ARRecords() {
     
     // Check there are selected ARs
     if (!selectedRows.length && !(selectedRows.length > 0)) {
-      toast("Please select acknowledgement report(s)", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: "1px solid rgb(225, 193, 193)",
-          padding: "16px",
-          color: "#b91c1c",
-          background: "#fef2f2",
-        }
-      })
+      showErrorToast("Please select acknowledgement report(s)");
       setIsSubmitting(false);
       return;
     }
@@ -113,15 +105,7 @@ export default function ARRecords() {
 
           addWARComp(compositions, {
             onSuccess: () => {
-              toast("Weekly AR created successfully", {
-                icon: <Check size={24} className="text-green-500" />,
-                style: {
-                  border: "1px solid rgb(187, 247, 208)",
-                  padding: "16px",
-                  color: "#166534",
-                  background: "#f0fdf4",
-                },
-              })
+              showSuccessToast("Weekly AR created successfully");
               setIsCreatingWeeklyAR(false);
               setIsCreatable(false);
               setReset(true);
@@ -132,15 +116,7 @@ export default function ARRecords() {
       })
     } catch (err) {
       setIsSubmitting(false)
-      toast("Failed to create Weekly AR", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: "1px solid rgb(225, 193, 193)",
-          padding: "16px",
-          color: "#b91c1c",
-          background: "#fef2f2",
-        },
-      })
+      showErrorToast("Failed to create Weekly AR")
     }
   }
 
@@ -170,7 +146,7 @@ export default function ARRecords() {
     >
       {/* Selection Mode Banner */}
       {isCreatingWeeklyAR && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="bg-blue-100 p-2 rounded-full">
               <Check className="h-5 w-5 text-blue-600" />

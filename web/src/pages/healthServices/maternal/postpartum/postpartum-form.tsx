@@ -360,7 +360,7 @@ export default function PostpartumFormFirstPg({
   return (
     <LayoutWithBack title="Postpartum Form" description="Fill out the postpartum form with the mother's information.">
       <div>
-        <PatientSearch onPatientSelect={handlePatientSelection} />
+        <PatientSearch onChange={setSelectedPatientId} value={selectedPatientId} onPatientSelect={handlePatientSelection} />
       </div>
 
       {/* Form Errors */}

@@ -2,11 +2,9 @@ import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Eye, Search, Plus } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button/button";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Label } from "@/components/ui/label";
 
 type SuppDoc = {
@@ -20,7 +18,6 @@ export default function MOMSuppDoc() {
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Sample data - in a real app, this would come from an API
     const data: SuppDoc[] = [
@@ -104,21 +101,6 @@ export default function MOMSuppDoc() {
                                 }}
                             />
                         </div>
-
-                        {/* <div className="w-full sm:w-auto">
-                            <DialogLayout
-                                trigger={<Button className="w-full sm:w-auto">Add <Plus className="ml-2" /></Button>}
-                                title="Add Supporting Document"
-                                description="Upload supporting documents for meetings"
-                                mainContent={
-                                    <AddSuppDoc
-                                        onSuccess={() => setIsDialogOpen(false)}
-                                    />
-                                }
-                                isOpen={isDialogOpen}
-                                onOpenChange={setIsDialogOpen}
-                            />
-                        </div> */}
                     </div>
                 </div>
 

@@ -1,16 +1,12 @@
-import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import RatesFormPage4 from "./forms/rates-form-page4"
 import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { Pen, Trash, History, Search, ArrowUpDown } from 'lucide-react'
+import { Pen, History, Search, ArrowUpDown } from 'lucide-react'
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useGetPurposeAndRate, type PurposeAndRate } from "./queries/RatesFetchQueries"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
-import { useDeletePurposeAndRate } from "./queries/RatesDeleteQueries"
 import RatesEditFormPage4 from "./edit-forms/rates-edit-form-4"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -20,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import React from "react"
 
 function RatesPage4() {
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
 
@@ -33,10 +28,6 @@ function RatesPage4() {
     const [currentPageHistory, setCurrentPageHistory] = useState(1)
 
     const { data: fetchedData = [], isLoading } = useGetPurposeAndRate()
-    const { mutate: deletePermitClearance } = useDeletePurposeAndRate()
-
-    const handleDelete = (prId: number) => deletePermitClearance(prId)
-
     const formatNumber = (value: string) =>
         `₱${Number(value).toLocaleString(undefined, {
             minimumFractionDigits: 2,
@@ -110,20 +101,7 @@ function RatesPage4() {
                             }
                             content="Edit"
                         />
-                        {/* <TooltipLayout
-                            trigger={
-                                <div>
-                                    <ConfirmationModal
-                                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16} /></div>}
-                                        title="Confirm Delete"
-                                        description="Are you sure you want to delete this record?"
-                                        actionLabel="Confirm"
-                                        onClick={() => handleDelete(Number(prId))}
-                                    />
-                                </div>
-                            }
-                            content="Delete"
-                        /> */}
+                    
                     </div>
                 )
             }
@@ -174,16 +152,7 @@ function RatesPage4() {
                 <div className='p-7 flex flex-col justify-end gap-7'>
                     <div className="flex flex-row items-center">
                         <h2 className='font-bold w-3/4'>BARANGAY CLEARANCE FOR PERMITS:</h2>
-                        {/* <div className='flex justify-end w-[32rem]'>
-                            <DialogLayout
-                                trigger={<Button>+ Add</Button>}
-                                title='Add New Purpose and Fee for Permit Clearance'
-                                description="Define a new purpose and its corresponding fee for permit clearance applications."
-                                mainContent={<RatesFormPage4 onSuccess={() => setIsDialogOpen(false)} />}
-                                isOpen={isDialogOpen}
-                                onOpenChange={setIsDialogOpen}
-                            />
-                        </div> */}
+                    
                     </div>
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>

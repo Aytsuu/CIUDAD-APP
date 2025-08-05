@@ -28,24 +28,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import ScreenLayout from '@/screens/_ScreenLayout';
-import { useGADBudgets, GADBudgetEntryUI } from './queries/fetch';
+import { useGADBudgets} from './queries/fetch';
 import { useArchiveGADBudget, useRestoreGADBudget, usePermanentDeleteGADBudget } from './queries/del';
 import { useGetGADYearBudgets } from './queries/yearqueries';
 import { Input } from '@/components/ui/input';
 import PageLayout from '@/screens/_PageLayout';
-
-type DropdownOption = {
-  label: string;
-  value: string;
-};
-
-type BudgetFile = {
-  gbf_id: number;
-  gbf_name: string;
-  gbf_type: string;
-  gbf_path: string;
-  gbf_url: string;
-};
+import { GADBudgetEntryUI, DropdownOption, BudgetFile } from './bt-types';
 
 const BudgetTrackerRecords = () => {
   const router = useRouter();
@@ -130,10 +118,8 @@ const BudgetTrackerRecords = () => {
 
   const handleEdit = (entry: GADBudgetEntryUI) => {
     if (!entry.gbud_num || !year) {
-      console.error('Error: Missing gbud_num or year', { gbud_num: entry.gbud_num, year });
       return;
     }
-
     const params: Record<string, string | number> = {
       gbud_num: entry.gbud_num.toString(),
       budYear: year,

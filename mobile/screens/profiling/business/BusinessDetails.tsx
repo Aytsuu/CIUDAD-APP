@@ -123,7 +123,7 @@ export default function BusinessDetails() {
   const respondentId = businessInfo?.rp ? business.rp : businessInfo?.br?.br_id;
   const businessName = business?.bus_name || 'Unnamed Business';
   const businessAddress = businessInfo ? `${businessInfo?.bus_street || ''}, Sitio ${businessInfo?.sitio || ''}` : '';
-  const registeredDate = businessInfo ? formatDate(businessInfo?.bus_date_registered, true) : '';
+  const registeredDate = businessInfo ? formatDate(businessInfo?.bus_date_registered, 'long') : '';
   const registeredBy = businessInfo?.bus_registered_by || 'N/A';
   const businessFiles = businessInfo?.files || [];
 

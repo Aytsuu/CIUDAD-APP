@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import ReceiptForm from "./treasurer-create-receipt-form";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 

@@ -1,6 +1,5 @@
 // REQUEST/InventoryStock.ts
 import { api2 } from "@/api/api";
-import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 
 export const addImmunizationStock = async (
   data: Record<string, any>,

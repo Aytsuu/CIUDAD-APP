@@ -1,7 +1,7 @@
 import { useAuth } from "./context/AuthContext";
 import { UserPosition } from "./context/auth-types";
 import { Navigate, useLocation } from "react-router";
-import React, { useEffect } from "react";
+import React from "react";
 
 interface ProtectedRouteProps {
   requiredPosition: UserPosition;

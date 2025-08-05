@@ -15,7 +15,7 @@ export const features: FeatureType[] = [
   {
     name: "Request",
     icon: <ClipboardPlus className="text-white"/>,
-    route: ""
+    route: "/(request)"
   },
   {
     name: "Report",

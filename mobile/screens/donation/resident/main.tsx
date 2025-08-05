@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   Image,
@@ -13,7 +12,7 @@ import {
   TextInput,
 } from "react-native";
 import { Svg, Circle } from "react-native-svg";
-import { ArrowLeft, Heart, ChevronLeft } from "lucide-react-native";
+import { Heart, ChevronLeft } from "lucide-react-native";
 import {
   createDonationPayment,
   checkPaymentStatus,
@@ -23,7 +22,6 @@ import { useState, useEffect } from "react";
 import { AppState } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { useRouter } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
 
@@ -58,9 +56,6 @@ const ResidentDonationMain = () => {
               setShowDialog(false);
             }
           })
-          .catch((error) => {
-            console.log("Payment verification error:", error);
-          });
       }
     };
     const handleAppStateChange = (nextAppState: string) => {
@@ -73,9 +68,6 @@ const ResidentDonationMain = () => {
               setShowDialog(false);
             }
           })
-          .catch((error) => {
-            console.log("Payment verification error:", error);
-          });
       }
     };
 

@@ -1,6 +1,6 @@
 import { useConnectionStatus } from './hooks/use-connection-status';
 
-const statusColors = {
+const statusColors: any = {
   connecting: 'bg-yellow-500',
   connected: 'bg-green-500',
   disconnected: 'bg-red-500',

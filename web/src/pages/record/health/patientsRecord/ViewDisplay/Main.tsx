@@ -1,40 +1,44 @@
 "use client"
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
-
-import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button/button"
 import { ChevronLeft, Edit, AlertCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
 import { useParams } from "react-router"
+import { toast } from "sonner"
+
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import CardLayout from "@/components/ui/card/card-layout"
+import { calculateAge } from "@/helpers/ageCalculator"
+
+import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
+import {PatientData,ChildHealthRecord} from "./types"
+
+import PersonalInfoTab from "./PersonalInfoTab"
+import Records from "./Records"
+import VisitHistoryTab from "./VisitHistoryTab"
+
+import { useUpdatePatient } from "../queries/update"
 import { usePatientDetails } from "../queries/fetch"
+import { useChildHealthRecords } from "../queries/fetch"
+import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries"
 import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv"
-import { usePatientPostpartumCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries"
-import { toast } from "sonner"
-import { useUpdatePatient } from "../queries/update"
-import CardLayout from "@/components/ui/card/card-layout"
-import PersonalInfoTab from "./PersonalInfoTab"
-import Records from "./Records"
-import VisitHistoryTab from "./VisitHistoryTab"
-import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
-import {PatientData,ChildHealthRecord} from "./types"
-import {useChildHealthRecords} from "../queries/fetch"
-import { calculateAge } from "@/helpers/ageCalculator"
+import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries"
+
 
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
   const [isEditable, setIsEditable] = useState(false)
   const { patientId } = useParams<{ patientId: string }>()
-  const { data: patientsData, isLoading, error, isError } = usePatientDetails(patientId ?? "")
+  const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "")
   const { data: rawChildHealthRecords, isLoading: isLoadingChildHealthRecords } = useChildHealthRecords(patientId);
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
@@ -50,6 +54,8 @@ export default function ViewPatientRecord() {
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "")
   const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
   const postpartumCount = postpartumCountData
+  const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
+  const prenatalCount = prenatalCountData
   const updatePatientData = useUpdatePatient()
 
   const currentPatient = useMemo(() => {
@@ -433,6 +439,7 @@ export default function ViewPatientRecord() {
             medicalconCount={medconCount}
             childHealthCount={childHealthCountData}
             childHealthRecords={formattedChildHealthData}
+            prenatalCount={prenatalCount}
           />
         )}
 

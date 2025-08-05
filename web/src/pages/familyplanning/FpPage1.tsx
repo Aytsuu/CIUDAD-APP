@@ -13,7 +13,6 @@ import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
 import { toast } from "sonner"
-import { api } from "@/api/api"
 
 type Page1Props = {
   onNext2: () => void

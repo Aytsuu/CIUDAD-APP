@@ -6,11 +6,36 @@ import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/com
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
+
+
+
 
 function PersonalClearanceForm(){
+    const { user } = useAuth();
 
     const onSubmit = (values: z.infer<typeof PersonalClearanceFormSchema>) => {
-        console.log(values)
+        try {
+            // Get staff_id from current user using the correct pattern
+            const staffId = user?.staff?.staff_id;
+            
+            if (!staffId) {
+                toast.error("Staff information not available. Please log in again.");
+                return;
+            }
+
+            const payload = {
+                ...values,
+                staff: staffId  // Use the current user's staff_id
+            };
+            
+            console.log("Personal Clearance Data:", payload);
+            // TODO: Add API call here
+        } catch (error) {
+            console.error('Error creating personal clearance:', error);
+            toast.error("Failed to create personal clearance. Please try again.");
+        }
     };
 
     const form = useForm<z.infer<typeof PersonalClearanceFormSchema>>({

@@ -4,20 +4,17 @@ import {
   View,
   Text,
   TouchableWithoutFeedback,
-  ScrollView,
-  KeyboardAvoidingView,
   TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ChevronLeft } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { CreateFolderSchema } from "@/form-schema/treasurer-inc-disbursement";
 import { useCreateFolder, useUploadImage } from "./queries";
-import type { CreateFolderFormValues } from "./queries";
+import { CreateFolderFormValues } from "./inc-disc-types";
 import MultiImageUploader, {
   MediaFileType,
 } from "@/components/ui/multi-media-upload";
@@ -105,9 +102,7 @@ const CreateFolderForm = () => {
       }
       headerTitle={<Text>Create New Folder and Upload Images</Text>}
       rightAction={
-        <TouchableOpacity>
-          <ChevronLeft size={30} color="black" className="text-white" />
-        </TouchableOpacity>
+        <View></View>
       }
     >
       <View className="flex-1 p-5">
@@ -176,13 +171,6 @@ const CreateFolderForm = () => {
               <Text className="text-white text-base font-semibold text-center">
                 {isSubmitting ? "Submitting..." : "Create"}
               </Text>
-              {isSubmitting && (
-                <Loader2
-                  size={20}
-                  color="white"
-                  className="ml-2 animate-spin"
-                />
-              )}
             </View>
           </TouchableWithoutFeedback>
         </View>

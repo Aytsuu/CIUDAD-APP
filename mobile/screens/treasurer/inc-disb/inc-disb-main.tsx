@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, Dimensions, ScrollView, RefreshControl } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, Image, Modal, Dimensions, RefreshControl } from "react-native";
 import { router } from "expo-router";
 import { Input } from "@/components/ui/input";
 import { Search, Trash, Archive, ArchiveRestore, Edit, X, ChevronLeft } from "lucide-react-native";
@@ -9,10 +9,6 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { 
   useGetIncomeImages, 
   useGetDisbursementImages, 
-  IncomeImage, 
-  DisbursementImage,
-  Album,
-  ImageItem,
   useArchiveIncomeImage,
   useRestoreIncomeImage,
   useDeleteIncomeImage,
@@ -23,12 +19,10 @@ import {
   usePermanentDeleteDisbursementImage,
   usePermanentDeleteDisbursementFolder,
   usePermanentDeleteIncomeFolder,
-  useRestoreDisbursementFolder,
-  useRestoreIncomeFolder
 } from "./queries";
 import { formatDate } from "@/helpers/dateHelpers";
 import PageLayout from "@/screens/_PageLayout";
-import { SearchInput } from "@/components/ui/search-input";
+import { IncomeImage, DisbursementImage, Album, ImageItem } from "./inc-disc-types";
 
 const PLACEHOLDER_IMAGE = "/placeholder-image.png";
 
@@ -41,10 +35,8 @@ const IncomeandDisbursementMain = () => {
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [zoomVisible, setZoomVisible] = useState(false);
-
   const { data: incomeImages = [], isLoading: isIncomeLoading, error: incomeError, refetch } = useGetIncomeImages(viewMode === "archived");
   const { data: disbursementImages = [], isLoading: isDisbursementLoading, error: disbursementError } = useGetDisbursementImages(viewMode === "archived");
-
   const archiveIncomeImage = useArchiveIncomeImage();
   const restoreIncomeImage = useRestoreIncomeImage();
   const deleteIncomeImage = useDeleteIncomeImage();
@@ -54,9 +46,7 @@ const IncomeandDisbursementMain = () => {
   const deleteDisbursementImage = useDeleteDisbursementImage();
   const permanentDeleteDisbursementImage = usePermanentDeleteDisbursementImage();
   const permanentDeleteIncomeFolder = usePermanentDeleteIncomeFolder();
-  const restoreIncomeFolder = useRestoreIncomeFolder();
   const permanentDeleteDisbursementFolder = usePermanentDeleteDisbursementFolder();
-  const restoreDisbursementFolder = useRestoreDisbursementFolder();
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
   const [refreshing, setRefreshing] = useState(false)
@@ -164,7 +154,6 @@ const IncomeandDisbursementMain = () => {
     return result;
   }, [albums, selectedYear, selectedType, viewMode, searchQuery]);
 
-  const totalPages = Math.ceil(filteredAlbums.length / pageSize);
   const paginatedAlbums = filteredAlbums.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -550,46 +539,6 @@ const IncomeandDisbursementMain = () => {
             />
           )}
         </View>
-
-        {/* <View className="flex-row justify-between items-center mt-4">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-sm text-gray-600">Show</Text>
-            <TextInput
-              className="w-16 h-8 border border-gray-300 rounded-md text-center"
-              keyboardType="numeric"
-              value={pageSize.toString()}
-              onChangeText={(text) => {
-                const value = Math.max(1, Number(text) || 1);
-                setPageSize(value);
-                setCurrentPage(1);
-              }}
-            />
-            <Text className="text-sm text-gray-600">entries</Text>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <Text className="text-sm text-gray-600">
-              Showing {(currentPage - 1) * pageSize + 1} to{' '}
-              {Math.min(currentPage * pageSize, filteredAlbums.length)} of{' '}
-              {filteredAlbums.length} albums
-            </Text>
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                className={`px-2 py-1 rounded-md ${currentPage > 1 ? "bg-blue-600" : "bg-gray-300"}`}
-                onPress={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
-                <Text className="text-white">Prev</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`px-2 py-1 rounded-md ${currentPage < totalPages ? "bg-blue-600" : "bg-gray-300"}`}
-                onPress={() => setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))}
-                disabled={currentPage === totalPages}
-              >
-                <Text className="text-white">Next</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View> */}
 
         <Modal visible={zoomVisible} transparent={true} onRequestClose={() => setZoomVisible(false)}>
           <View className="flex-1 bg-black/80 justify-center items-center">

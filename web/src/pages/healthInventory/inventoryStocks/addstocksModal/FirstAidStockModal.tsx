@@ -9,16 +9,16 @@ import {
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { fetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidFetchAPI";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { toast } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+
 export default function () {
   const {user}=useAuth()
   const staff_id = user?.staff?.staff_id
@@ -33,7 +33,6 @@ export default function () {
       expiryDate: new Date().toISOString().split("T")[0],
     },
   });
-  const navigate = useNavigate();
   const firstaid = fetchFirstAid();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setformData] = useState<FirstAidStockType | null>(null);

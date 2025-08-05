@@ -1,15 +1,20 @@
 import { usegetBudgetPlanDetail } from "./queries/budgetPlanFetchQueries";
 import MobileBudgetPlanView from "@/components/ui/budgetPlanTable";
-import { View, SafeAreaView, Text, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, SafeAreaView, Text, ActivityIndicator, TouchableOpacity, ScrollView } from "react-native";
 import { ChevronLeft } from "lucide-react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router";
 import _ScreenLayout from '@/screens/_ScreenLayout';
+import { useState } from "react";
+import BudgetPlanHistory from "./budget-plan-history";
+import BudgetPlanSuppDocs from "./budget-plan-suppdocs";
+import PageLayout from "@/screens/_PageLayout";
 
 export default function BudgetPlanView() {
     const router = useRouter();
     const { plan_id } = useLocalSearchParams();
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(plan_id as string);
+    const [activeTab, setActiveTab] = useState<"plan" | "history" | "documents">("plan");
 
     if (isLoading) {
         return (
@@ -28,21 +33,73 @@ export default function BudgetPlanView() {
     }
 
     return (
-        <_ScreenLayout
-            customLeftAction={
-              <TouchableOpacity onPress={() => router.back()}>
-                <ChevronLeft size={30} className="text-black" />
+        <PageLayout
+            leftAction={
+              <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+                <ChevronLeft size={24} className="text-gray-700" />
               </TouchableOpacity>
             }
-            headerBetweenAction={<Text className="text-[13px]">Budget Plan {fetchedData.plan_year}</Text>}
-            showExitButton={false}
-          >
-          <SafeAreaView className="flex-1">
-              <View>
+            
+            headerTitle={<Text className="text-gray-900 text-[13px]">Budget Plan {fetchedData.plan_year}</Text>}
+            rightAction={
+                <Text className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center" > </Text>
+            }          >
+          <View className="flex-1 bg-gray-50">
+            {/* Fixed Tab Headers (won't scroll) */}
+            <View className="bg-white border-b border-gray-200">
+                <View className="flex-row">
+                    <TouchableOpacity
+                        className={`flex-1 py-4 items-center border-b-2 ${
+                            activeTab === "plan" ? "border-blue-500" : "border-transparent"
+                        }`}
+                        onPress={() => setActiveTab("plan")}
+                    >
+                        <Text className={`font-medium ${activeTab === "plan" ? "text-blue-600" : "text-gray-500"}`}>
+                            Budget Plan
+                        </Text>
+                    </TouchableOpacity>
 
-                  <MobileBudgetPlanView  budgetData={fetchedData} />
-              </View>
-          </SafeAreaView>
-       </_ScreenLayout>
+                    <TouchableOpacity
+                        className={`flex-1 py-4 items-center border-b-2 ${
+                            activeTab === "history" ? "border-blue-500" : "border-transparent"
+                        }`}
+                        onPress={() => setActiveTab("history")}
+                    >
+                        <Text className={`font-medium ${activeTab === "history" ? "text-blue-600" : "text-gray-500"}`}>
+                            Update History
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        className={`flex-1 py-4 items-center border-b-2 ${
+                            activeTab === "documents" ? "border-blue-500" : "border-transparent"
+                        }`}
+                        onPress={() => setActiveTab("documents")}
+                    >
+                        <Text className={`font-medium ${activeTab === "documents" ? "text-blue-600" : "text-gray-500"}`}>
+                            Documents
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            {/* Scrollable Content Area */}
+            <View className="flex-1">
+                {activeTab === "plan" && (
+                    <ScrollView className="flex-1 pt-2 px-4">
+                        <MobileBudgetPlanView budgetData={fetchedData} />
+                    </ScrollView>
+                )}
+
+                {activeTab === "history" && (
+                    <BudgetPlanHistory planId={plan_id as string} />
+                )}
+
+                {activeTab === "documents" && (
+                    <BudgetPlanSuppDocs plan_id = {plan_id as string}/>
+                )}
+            </View>
+          </View>
+       </PageLayout>
     );
 }

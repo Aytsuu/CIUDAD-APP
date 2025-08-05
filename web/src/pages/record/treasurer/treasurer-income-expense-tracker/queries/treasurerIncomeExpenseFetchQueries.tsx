@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { getIncomeExpense } from "../request/income-ExpenseTrackingGetRequest";
-import { getParticulars } from "../request/particularsGetRequest";
 import { getExpenseParticulars } from "../request/particularsGetRequest";
 import { getIncomeData } from "../request/income-ExpenseTrackingGetRequest";
 import { getIncomeParticulars } from "../request/particularsGetRequest";

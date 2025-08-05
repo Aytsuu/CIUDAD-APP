@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, ChevronLeft, FileInput } from "lucide-react";
+import { ArrowUpDown, Search, FileInput } from "lucide-react";
 import { Link } from "react-router";
 import {
   DropdownMenu,
@@ -14,9 +14,6 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getMedicineRecords } from "../restful-api/getAPI";
 import { useNavigate } from "react-router";
