@@ -574,19 +574,15 @@
     import { SelectLayout } from "@/components/ui/select/select-layout";
     import { Button } from "@/components/ui/button/button";
     import { ColumnDef } from "@tanstack/react-table";
-    import { ArrowUpDown, Eye, Search, FileInput, CircleAlert } from 'lucide-react';
-    import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-    import IncomeandExpenseEditForm from "../treasurer-expense-tracker-edit";
+    import { ArrowUpDown, Search, FileInput, CircleAlert } from 'lucide-react';
     import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
     import { Skeleton } from "@/components/ui/skeleton";
     import PaginationLayout from "@/components/ui/pagination/pagination-layout";
     import { useIncomeExpense, type IncomeExpense } from "../queries/treasurerIncomeExpenseFetchQueries";
     import { useIncomeExpenseMainCard } from "../queries/treasurerIncomeExpenseFetchQueries";
-    import { useBudgetItems, type BudgetItem } from "../queries/treasurerIncomeExpenseFetchQueries";
     import { useLocation } from "react-router-dom";
 
     function ExpenseLogMain() {
-        const [editingRowId, setEditingRowId] = useState<number | null>(null);
         const [searchQuery, setSearchQuery] = useState("");
         const [pageSize, setPageSize] = useState(10);
         const [currentPage, setCurrentPage] = useState(1);
@@ -613,10 +609,9 @@
         const location = useLocation();
         const year = location.state?.budYear;
         const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
-        const { data: budgetItems = [] } = useBudgetItems(year);
-        const { data: fetchIncData = [] } = useIncomeExpenseMainCard();
+        const { data: _fetchIncData = [] } = useIncomeExpenseMainCard();
 
-        const matchedYearData = fetchIncData.find(item => Number(item.ie_main_year) === Number(year));
+        // const matchedYearData = fetchIncData.find(item => Number(item.ie_main_year) === Number(year));
 
 
         // Filter data - only show non-archived entries
@@ -832,22 +827,6 @@
                                 }}
                             />
                             <p className="text-xs sm:text-sm">Entries</p>
-                        </div>
-
-                        <div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline">
-                                        <FileInput />
-                                        Export
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>                    
                         </div>
                     </div>
 

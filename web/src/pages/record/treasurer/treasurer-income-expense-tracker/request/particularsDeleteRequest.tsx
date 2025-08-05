@@ -11,7 +11,7 @@ interface Option {
 
 export const useDeleteParticular = () => {
 
-    const [particulars, setParticulars] = useState<Option[]>([]);
+    const [_particulars, setParticulars] = useState<Option[]>([]);
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
     const [particularToDelete, setParticularToDelete] = useState<number | null>(null);
     const queryClient = useQueryClient();
