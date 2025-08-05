@@ -1,33 +1,5 @@
 from django.db import models
 from datetime import date
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
-from simple_history.models import HistoricalRecords
-
-
-class annual_gross_sales(models.Model):
-    ags_id = models.BigAutoField(primary_key=True)
-    ags_minimum = models.DecimalField(max_digits=10, decimal_places=2)
-    ags_maximum = models.DecimalField(max_digits=10, decimal_places=2)
-    ags_rate = models.DecimalField(max_digits=10, decimal_places=2)
-    ags_date = models.DateField()
-    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
-
-    class Meta:
-        managed = False  # Tell Django this table already exists
-        db_table = 'annual_gross_sales'
-
-class purpose_and_rate(models.Model):
-    pr_id = models.BigAutoField(primary_key=True)
-    pr_purpose = models.CharField(max_length=100)
-    pr_rate = models.DecimalField(max_digits=10, decimal_places=2)
-    pr_category = models.CharField(max_length=100)
-    pr_date = models.DateField()
-    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
-
-    class Meta:
-        managed = False
-        db_table = 'purpose_and_rate'
 
 class Budget_Plan(models.Model): 
     plan_id = models.BigAutoField(primary_key=True)
@@ -44,8 +16,6 @@ class Budget_Plan(models.Model):
     plan_issue_date = models.DateField(default=date.today)
     plan_is_archive = models.BooleanField(default=False)
 
-    history = HistoricalRecords()
-
     class Meta:
         db_table = 'budget_plan'
 
@@ -55,8 +25,7 @@ class Budget_Plan_Detail(models.Model):
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
- 
-    history = HistoricalRecords()
+    
     class Meta: 
         db_table = 'budget_plan_detail'
 
@@ -266,14 +235,11 @@ class Income_Tracking(models.Model):
     inc_num = models.BigAutoField(primary_key=True)
     inc_serial_num = models.CharField(max_length=100, null=True, blank=True) 
     inc_transac_num = models.CharField(max_length=100, null=True, blank=True) 
-    # inc_date = models.DateField(default=date.today)
     inc_datetime = models.DateTimeField(null=True)
     inc_entryType = models.CharField(max_length=100, default='Income')
     inc_amount = models.DecimalField(max_digits=10, decimal_places=2)
     inc_additional_notes = models.CharField(max_length=100, null=True, blank=True)
-    # inc_receipt_image = models.CharField(null=True, blank=True)
     inc_is_archive = models.BooleanField(default=False)
-    # inv_num = models.ForeignKey( 'invoice', on_delete=models.CASCADE, null=True, blank=True)
     incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
 
     class Meta:
@@ -311,18 +277,28 @@ class Income_Expense_File(models.Model):
 
 
 class Income_Expense_Main(models.Model):
-    # ie_main_year = models.BigAutoField(primary_key=True)
-    # ie_main_tot_budget = models.DecimalField(max_digits=10, decimal_places=2)
-    # ie_main_inc = models.DecimalField(max_digits=10, decimal_places=2)
-    # ie_main_exp = models.DecimalField(max_digits=10, decimal_places=2)
-    ie_main_year = models.CharField(max_length=4, primary_key=True) 
+    ie_main_year = models.CharField(max_length=4, primary_key=True)     
     ie_main_tot_budget = models.DecimalField(max_digits=10, decimal_places=2)
+    ie_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     ie_main_inc = models.DecimalField(max_digits=10, decimal_places=2)
     ie_main_exp = models.DecimalField(max_digits=10, decimal_places=2)
     ie_is_archive = models.BooleanField(default=False)
 
     class Meta:
         db_table = "income_expense_main"
+
+
+class Annual_Gross_Sales(models.Model):
+    ags_id = models.BigAutoField(primary_key=True)
+    ags_minimum = models.DecimalField(max_digits=10, decimal_places=2)
+    ags_maximum = models.DecimalField(max_digits=10, decimal_places=2)
+    ags_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    ags_date = models.DateField()
+    # staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
+
+    class Meta:
+        managed = False  
+        db_table = 'annual_gross_sales'
 
 
 class Purpose_And_Rates(models.Model):

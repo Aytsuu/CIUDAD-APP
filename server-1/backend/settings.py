@@ -40,6 +40,10 @@ SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
 SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
 SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
 SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
+SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
 # ========================
 # FIREBASE CONFIGURATION
@@ -303,9 +307,9 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 
 
-# # ---------------------------------------------------
-# # DEVELOPMENT SERVER
-# # ---------------------------------------------------
+# ---------------------------------------------------
+# DEVELOPMENT SERVER
+# ---------------------------------------------------
 
 # from pathlib import Path
 # from decouple import config
@@ -392,6 +396,7 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #     'apps.authentication',
 #     'apps.gad',
 #     'apps.clerk',
+#     'apps.act_log',
 #     'backend.firebase.notifications',
 #     'apps.act_log',
     
