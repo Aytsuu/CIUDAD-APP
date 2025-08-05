@@ -25,7 +25,6 @@ class Budget_Plan_Detail(models.Model):
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
-    
     class Meta: 
         db_table = 'budget_plan_detail'
 
@@ -73,7 +72,6 @@ class Budget_Plan_History(models.Model):
     class Meta:
         db_table = 'budget_plan_history'
         ordering = ['-bph_date_updated']
-
 
 #=======================================================================================
 
