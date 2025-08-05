@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label"
 import type { UseFormReturn } from "react-hook-form"
 import type { businessFormSchema } from "@/form-schema/profiling-schema"
 import { MediaUpload, type MediaUploadType } from "@/components/ui/media-upload"
-import { renderActionButton } from "../profilingActionConfig"
-import { Type } from "../profilingEnums"
+import { renderActionButton } from "../ProfilingActionConfig"
+import { Type } from "../ProfilingEnums"
 import {
   CheckCircle2,
   Plus,

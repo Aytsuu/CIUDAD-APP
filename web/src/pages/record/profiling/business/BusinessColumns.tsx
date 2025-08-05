@@ -1,10 +1,10 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { BusinessRecord, BusinessRespondent } from "../profilingTypes";
+import { BusinessRecord, BusinessRespondent } from "../ProfilingTypes";
 import { useNavigate } from "react-router";
 import ViewButton from "@/components/ui/view-button";
 import { formatDate } from "@/helpers/dateHelper";
 import { Combobox } from "@/components/ui/combobox";
-import { formatOwnedBusinesses } from "../profilingFormats";
+import { formatOwnedBusinesses } from "../ProfilingFormats";
 import React from "react";
 
 export const activeColumns: ColumnDef<BusinessRecord>[] = [
@@ -45,7 +45,7 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/business/form", {
+        navigate("/profiling/business/form", {
           state: {
             params: {
               type: "viewing",
@@ -100,7 +100,7 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/business/form", {
+        navigate("/profiling/business/form", {
           state: {
             params: {
               type: "request",

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { ArrowUpDown, Building, CircleUserRound, House, UsersRound } from "lucide-react";
-import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../profilingTypes";
+import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../ProfilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
@@ -308,7 +308,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/resident/view", {
+        navigate("/profiling/resident/view", {
           state: {
             params: {
               type: 'viewing',
@@ -369,7 +369,7 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/resident/view", {
+        navigate("/profiling/resident/view", {
           state: {
             params: {
               type: 'viewing',
@@ -430,7 +430,7 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/business/form", {
+        navigate("/profiling/business/form", {
           state: {
             params: {
               type: "viewing",

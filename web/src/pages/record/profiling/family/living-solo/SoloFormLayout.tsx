@@ -4,7 +4,7 @@ import { demographicInfoSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { zodResolver } from "@hookform/resolvers/zod"
 import LivingSoloForm from "./LivingSoloForm"
-import { formatHouseholds, formatResidents } from "../../profilingFormats"
+import { formatHouseholds, formatResidents } from "../../ProfilingFormats"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import {
   User,

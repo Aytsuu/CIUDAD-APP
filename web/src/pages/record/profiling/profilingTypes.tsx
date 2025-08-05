@@ -1,4 +1,10 @@
 
+export type AllRecordCombined = {
+  lname: string;
+  fname: string;
+  mname: string;
+}
+
 export type ResidentRecord = {
   rp_id: string;
   household_no: string;

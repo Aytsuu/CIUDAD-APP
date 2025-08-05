@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, CircleAlert, CircleCheck, CircleMinus, Loader2 } from "lucide-react";
-import { FamilyRecord, MemberRecord } from "../profilingTypes";
+import { FamilyRecord, MemberRecord } from "../ProfilingTypes";
 import { Label } from "@/components/ui/label";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -13,7 +13,7 @@ import { getFamilyData, getFamilyMembers, getHouseholdList, getPersonalInfo } fr
 import { Badge } from "@/components/ui/badge";
 import { Combobox } from "@/components/ui/combobox";
 import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
-import { formatResidents } from "../profilingFormats";
+import { formatResidents } from "../ProfilingFormats";
 import ViewButton from "@/components/ui/view-button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
@@ -122,7 +122,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
           const familyData = await getFamilyData(row.original.fam_id);
           const members = await getFamilyMembers(row.original.fam_id);
           const households = await getHouseholdList();
-          navigate("/family/view", {
+          navigate("/profiling/family/view", {
             state: {
               params: {
                 family: {
@@ -165,7 +165,7 @@ export const familyViewColumns = (
         showLoading();
         try {
           const personalInfo = await getPersonalInfo(data.rp_id);
-            navigate("/resident/view", {
+            navigate("/profiling/resident/view", {
               state: {
                 params: {
                   type: 'viewing',
