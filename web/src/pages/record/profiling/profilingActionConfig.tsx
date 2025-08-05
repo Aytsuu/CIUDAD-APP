@@ -1,4 +1,4 @@
-import { Type, Origin } from "./profilingEnums";
+import { Type, Origin } from "./ProfilingEnums";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
@@ -75,7 +75,7 @@ export const buttonConfig = (
         <ConfirmationModal
           trigger={<Button className="w-full"> 
             <Check/>
-            Approve & Create Record 
+            Approve Request
           </Button>
           }
           title="Confirm Approval"

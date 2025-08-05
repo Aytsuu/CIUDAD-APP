@@ -60,8 +60,8 @@ class BusinessPermitRequest(models.Model):
     req_status = models.CharField(max_length=100, default='Pending')
     req_payment_status = models.CharField(max_length=100, default='Unpaid')
     business = models.ForeignKey(Business, on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests')
-    ags_id = models.ForeignKey('treasurer.annual_gross_sales', on_delete=models.CASCADE, db_column='ags_id', related_name='business_permits', null=True)
-    pr_id = models.ForeignKey('treasurer.purpose_and_rate', on_delete=models.CASCADE, db_column='pr_id', related_name='business_permits', null=True)
+    ags_id = models.ForeignKey('treasurer.Annual_Gross_Sales', on_delete=models.CASCADE, db_column='ags_id', related_name='business_permits', null=True)
+    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='business_permits', null=True)
     ra_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='ra_id', related_name='ra_business_permits', null=True)
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', related_name='staff_business_permits', null=True)
 

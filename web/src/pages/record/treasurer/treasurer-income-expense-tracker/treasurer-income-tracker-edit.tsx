@@ -523,4 +523,4 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
     );
 }
 
-export default IncomeEditForm;
+export default IncomeEditForm; 

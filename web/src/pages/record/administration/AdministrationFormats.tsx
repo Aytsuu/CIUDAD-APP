@@ -31,13 +31,15 @@ export const formatStaffs = (staffs: any) => {
   return staffs.map((staff: any) => ({
     id: `${staff.staff_id} ${staff.position}-${staff.lname} ${staff.fname} ${staff.mname ? staff.mname : ''}`,
     name: (
-      <div className="flex gap-4 items-center">
-        <Badge className="bg-green-500 hover:bg-green-500">
-          {staff.staff_id}
-        </Badge>
-        <Badge>
-          {staff.position}
-        </Badge>
+      <div className="flex flex-col gap-2 items-start pb-2">
+        <div className="flex gap-2">
+          <Badge className="bg-green-500 hover:bg-green-500">
+            {staff.staff_id}
+          </Badge>
+          <Badge>
+            {staff.position}
+          </Badge>
+        </div>
         {`${staff.lname}, ${staff.fname} ${staff.mname ? staff.mname : ''}`}
       </div>
     ),

@@ -88,7 +88,7 @@ export default function ActiveRecords() {
             </div>  
 
             <Link
-              to="/business/form"
+              to="/profiling/business/form"
               state={{
                 params: {
                   type: "create",
@@ -147,7 +147,7 @@ export default function ActiveRecords() {
           </p>
           {!searchQuery && (
             <Link
-              to="/business/form"
+              to="/profling/business/form"
               state={{
                 params: {
                   type: "create",

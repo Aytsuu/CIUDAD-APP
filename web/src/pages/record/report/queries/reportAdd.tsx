@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/api";
 
 export const useAddAR = () => {
@@ -17,8 +17,9 @@ export const useAddAR = () => {
 }
 
 export const useAddARFile = () => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Record<string, any>[]) => {
+    mutationFn: async (data: Record<string, any>) => {
       try {
         const res = await api.post('report/ar/file/create/', data);
         return res.data;
@@ -26,6 +27,13 @@ export const useAddARFile = () => {
         throw err;
       }
     },
+    onSuccess: (newData) => {
+      queryClient.setQueryData(['ARInfo'], (old: any) => ({
+        ...old,
+        ar_files: newData
+      }));
+      queryClient.invalidateQueries({queryKey: ['ARInfo']});
+    }
   })
 }
 
@@ -56,8 +64,9 @@ export const useAddWARComp = () => {
 }
 
 export const useAddWARFile = () => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Record<string, any>[]) => {
+    mutationFn: async (data: Record<string, any>) => {
       try {
         const res = await api.post('report/war/file/create/', data);
         return res.data;
@@ -65,5 +74,12 @@ export const useAddWARFile = () => {
         throw err;
       }
     },
+    onSuccess: (newData) => {
+      queryClient.setQueryData(['WARInfo'], (old: any) => ({
+        ...old,
+        war_files: newData
+      }));
+      queryClient.invalidateQueries({queryKey: ['WARInfo']});
+    }
   })
 }

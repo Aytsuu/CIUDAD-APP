@@ -1,5 +1,5 @@
 import { useLocation } from "react-router";
-import { Type } from "../../profilingEnums";
+import { Type } from "../../ProfilingEnums";
 import ResidentCreateForm from "./ResidentCreateForm";
 import ResidentViewForm from "./ResidentViewForm";
 import ResidentRequestForm from "./ResidentRequestForm";
