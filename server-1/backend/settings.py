@@ -307,6 +307,7 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 
 
+
 # ---------------------------------------------------
 # DEVELOPMENT SERVER
 # ---------------------------------------------------
@@ -396,7 +397,6 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #     'apps.authentication',
 #     'apps.gad',
 #     'apps.clerk',
-#     'apps.act_log',
 #     'backend.firebase.notifications',
 #     'apps.act_log',
     
