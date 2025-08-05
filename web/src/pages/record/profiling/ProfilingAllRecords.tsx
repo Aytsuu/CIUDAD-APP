@@ -8,14 +8,14 @@ import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import { capitalize } from "@/helpers/capitalize"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
+import { allRecordColumns } from "./AllRecordColumns"
+import { useProfilingAllRecord } from "./queries/profilingFetchQueries"
 
 const profiles = [
   {
@@ -36,7 +36,7 @@ const profiles = [
   },
 ]
 
-export default function ResidentRecords() {
+export default function ProfilingAllRecords() {
   // ----------------- STATE INITIALIZATION --------------------
   const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
@@ -44,17 +44,15 @@ export default function ResidentRecords() {
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
-
-  const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
-  const { data: residentsTableData, isLoading } = useResidentsTable(
+  const { data: profilingAllRecord, isLoading } = useProfilingAllRecord(
     currentPage,
     debouncedPageSize,
-    debouncedSearchQuery,
+    debouncedSearchQuery
   )
 
-  const residents = residentsTableData?.results || [];
-  const totalCount = residentsTableData?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const recordList = profilingAllRecord?.results || [];
+  const totalCount = profilingAllRecord?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize)
 
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
@@ -63,9 +61,9 @@ export default function ResidentRecords() {
   }, [debouncedSearchQuery])
 
   React.useEffect(() => {
-    if(isLoading) showLoading();
+    if(false) showLoading();
     else hideLoading();
-  }, [isLoading])
+  }, [])
 
   // ----------------- HANDLERS --------------------
 
@@ -103,20 +101,6 @@ export default function ResidentRecords() {
                       { id: "pdf", name: "Export as PDF" },
                     ]}
                   />
-
-                <Link to="/profiling/request/pending/individual" className="flex-1 sm:flex-none">
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <ClockArrowUp className="h-4 w-4 mr-2" />
-                    Pending
-                    {isLoadingRequestCount ? <Skeleton className="w-7 h-6"/> : (requestCount > 0 ?
-                      (<Badge variant="secondary" 
-                        className="ml-2 bg-orange-500/20 text-orange-600 hover:bg-orange-500/20"
-                      >
-                        {requestCount}
-                      </Badge>) : (<></>)
-                    )}
-                  </Button>
-                </Link>
 
                 <Link
                   to="/profiling/resident/registration"
@@ -181,7 +165,7 @@ export default function ResidentRecords() {
             )}
 
             {/* Empty State */}
-            {!isLoading && residents.length === 0 && (
+            {!isLoading && recordList.length === 0 && (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -213,12 +197,12 @@ export default function ResidentRecords() {
             )}
 
             {/* Data Table */}
-            {!isLoading && residents.length > 0 && (
-              <DataTable columns={residentColumns} data={residents} isLoading={isLoading} />
+            {!isLoading && recordList.length > 0 && (
+              <DataTable columns={allRecordColumns} data={recordList} isLoading={isLoading} />
             )}
 
             {/* Pagination */}
-            {!isLoading && residents.length > 0 && (
+            {!isLoading && recordList.length > 0 && (
               <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}

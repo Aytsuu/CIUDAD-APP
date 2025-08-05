@@ -9,9 +9,13 @@ from .views.address_views import *
 from .views.request_registration_views import *
 from .views.business_views import *
 from .views.analytics_views import *
-# from .views.kyc_views import *
+from .views.kyc_views import *
+from .views.all_record_views import *
 
 urlpatterns = [
+    # All record (combined record of resident and business respondents)
+    path("all/", AllRecordTableView.as_view(), name="all-record"),
+
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
 
