@@ -966,8 +966,8 @@ function IncomeandExpenseTracking() {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <div className='pl-5 pb-3'>
-                        <TabsList className="grid w-full grid-cols-2 max-w-xs">
+                    <div className="flex items-center justify-between px-5 pb-3">
+                        <TabsList className="grid grid-cols-2 max-w-xs">
                             <TabsTrigger value="active">Active Entries</TabsTrigger>
                             <TabsTrigger value="all">
                                 <div className="flex items-center gap-2">
@@ -975,6 +975,13 @@ function IncomeandExpenseTracking() {
                                 </div>
                             </TabsTrigger>
                         </TabsList>
+
+                        {/* New Button Here */}
+                        <Link to="/treasurer-expense-log">
+                            <Button variant="link" className="mr-1 w-20 underline"> 
+                                View Logs 
+                            </Button>                        
+                        </Link>
                     </div>
 
                     <TabsContent value="active">
@@ -992,6 +999,7 @@ function IncomeandExpenseTracking() {
                         </div>
                     </TabsContent>
                 </Tabs>
+
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

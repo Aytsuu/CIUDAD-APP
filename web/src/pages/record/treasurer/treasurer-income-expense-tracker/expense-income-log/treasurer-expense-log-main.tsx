@@ -581,6 +581,7 @@
     import { useIncomeExpense, type IncomeExpense } from "../queries/treasurerIncomeExpenseFetchQueries";
     import { useIncomeExpenseMainCard } from "../queries/treasurerIncomeExpenseFetchQueries";
     import { useLocation } from "react-router-dom";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
     function ExpenseLogMain() {
         const [searchQuery, setSearchQuery] = useState("");
@@ -763,96 +764,88 @@
         }
 
         return (
-            <div className="w-full h-full">
-                <div className="flex flex-col gap-4 mb-4">
-                    <div className="flex items-center gap-4">
-                        <div>
-                            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-2">
-                                <div>Expense Log</div>
-                            </h1>
-                            <p className="text-xs sm:text-sm text-darkGray pt-2">
-                                View expense log records for this year.
-                            </p>
+            <LayoutWithBack
+                title="Expense Log"
+                description="View expense log records."
+            >
+                <div className="w-full h-full">
+
+                    <div className="mb-[1rem] flex flex-col justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                            <div className="relative flex-1">
+                                <Search
+                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                                    size={17}
+                                />
+                                <Input 
+                                    placeholder="Search..." 
+                                    className="pl-10 w-full bg-white text-sm" 
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                />
+                            </div>
+                            <div className="flex flex-row gap-2 justify-center items-center">
+                                <SelectLayout
+                                    className="bg-white" 
+                                    placeholder="Month"
+                                    value={selectedMonth} 
+                                    options={monthOptions}
+                                    onChange={(value) => {
+                                        setSelectedMonth(value);
+                                        setCurrentPage(1);
+                                    }}
+                                />
+                            </div>                            
                         </div>
+                    </div>
+
+                    <div className="bg-white">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
+                            <div className="flex gap-x-2 items-center">
+                                <p className="text-xs sm:text-sm">Show</p>
+                                <Input 
+                                    type="number" 
+                                    className="w-14 h-8" 
+                                    value={pageSize}
+                                    onChange={(e) => {
+                                        const value = +e.target.value;
+                                        if (value >= 1) {
+                                            setPageSize(value);
+                                            setCurrentPage(1);
+                                        }
+                                    }}
+                                />
+                                <p className="text-xs sm:text-sm">Entries</p>
+                            </div>
+                        </div>
+
+                        <div className="border overflow-auto max-h-[400px]">
+                            <DataTable 
+                                columns={columns} 
+                                data={paginatedData} 
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                            Showing {(currentPage - 1) * pageSize + 1}-
+                            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                            {filteredData.length} rows
+                        </p>
+                        {filteredData.length > 0 && (
+                            <PaginationLayout
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
                     </div>  
                 </div>
-                <hr className="border-gray mb-7 sm:mb-9" /> 
-
-                <div className="mb-[1rem] flex flex-col justify-between gap-4">
-                    <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                        <div className="relative flex-1">
-                            <Search
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                                size={17}
-                            />
-                            <Input 
-                                placeholder="Search..." 
-                                className="pl-10 w-full bg-white text-sm" 
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                            />
-                        </div>
-                        <div className="flex flex-row gap-2 justify-center items-center">
-                            <SelectLayout
-                                className="bg-white" 
-                                placeholder="Month"
-                                value={selectedMonth} 
-                                options={monthOptions}
-                                onChange={(value) => {
-                                    setSelectedMonth(value);
-                                    setCurrentPage(1);
-                                }}
-                            />
-                        </div>                            
-                    </div>
-                </div>
-
-                <div className="bg-white">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
-                        <div className="flex gap-x-2 items-center">
-                            <p className="text-xs sm:text-sm">Show</p>
-                            <Input 
-                                type="number" 
-                                className="w-14 h-8" 
-                                value={pageSize}
-                                onChange={(e) => {
-                                    const value = +e.target.value;
-                                    if (value >= 1) {
-                                        setPageSize(value);
-                                        setCurrentPage(1);
-                                    }
-                                }}
-                            />
-                            <p className="text-xs sm:text-sm">Entries</p>
-                        </div>
-                    </div>
-
-                    <div className="border overflow-auto max-h-[400px]">
-                        <DataTable 
-                            columns={columns} 
-                            data={paginatedData} 
-                        />
-                    </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-                    <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                        Showing {(currentPage - 1) * pageSize + 1}-
-                        {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                        {filteredData.length} rows
-                    </p>
-                    {filteredData.length > 0 && (
-                        <PaginationLayout
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={setCurrentPage}
-                        />
-                    )}
-                </div>  
-            </div>
+            </LayoutWithBack>            
         );
     }
 
