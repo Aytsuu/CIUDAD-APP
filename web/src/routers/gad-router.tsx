@@ -5,7 +5,7 @@ import GADProjectProposal from "@/pages/record/gad/project-proposal/project-prop
 import AnnualDevelopmentPlan from "@/pages/record/gad/annual_development_plan/annual_development_plan_main";
 import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_plan/annual_development_table";
 import AdminGADProjectProposal from "@/pages/record/gad/project-proposal/admin-update-status";
-
+import ProjectProposalLogTable from "@/pages/record/gad/project-proposal/proposal-log";
 
 export const gad_router = [
     {
@@ -37,5 +37,9 @@ export const gad_router = [
     {
         path: '/gad-annual-development-plan-table',
         element: <AnnaualDevelopmentPlanTable/>
+    },
+        {
+        path: '/gad-project-proposal-log',
+        element: <ProjectProposalLogTable/>
     }
 ]
