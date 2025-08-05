@@ -134,7 +134,14 @@ class ProjectProposalView(generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer
 
     def get_queryset(self):
-        queryset = ProjectProposal.objects.all().select_related('staff')
+        # Get the most recent log date for each proposal
+        latest_log_dates = ProjectProposalLog.objects.filter(
+            gpr_id=OuterRef('gpr_id')
+        ).order_by('-gprl_date_approved_rejected').values('gprl_date_approved_rejected')[:1]
+        
+        queryset = ProjectProposal.objects.all().select_related('staff').annotate(
+            latest_log_date=Subquery(latest_log_dates)
+        ).order_by('-latest_log_date')  # Newest first
 
         # Get archive status from query params
         archive_status = self.request.query_params.get('archive', None)
@@ -154,7 +161,12 @@ class ProjectProposalView(generics.ListCreateAPIView):
         
         status_filter = self.request.query_params.get('status', None)
         if status_filter:
-            queryset = queryset.filter(latest_status=status_filter)
+            latest_status = ProjectProposalLog.objects.filter(
+                gpr_id=OuterRef('gpr_id')
+            ).order_by('-gprl_date_approved_rejected').values('gprl_status')[:1]
+            queryset = queryset.annotate(
+                current_status=Subquery(latest_status)
+            ).filter(current_status=status_filter)
             
         return queryset
 
