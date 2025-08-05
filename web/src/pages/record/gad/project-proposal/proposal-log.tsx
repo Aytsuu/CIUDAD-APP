@@ -8,6 +8,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProposalLog } from "./projprop-types";
 import { useGetAllProposalLogs } from "./queries/fetchqueries";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 function ProjectProposalLogTable() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -152,80 +153,75 @@ function ProjectProposalLogTable() {
   }
 
   return (
-    <div className="w-full h-full">
-      <div className="flex-col items-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-          Proposal Logs
-        </h1>
-        <p className="text-xs sm:text-sm text-darkGray">
-          View and manage proposal logs
-        </p>
-      </div>
-      <hr className="border-gray mb-6 sm:mb-8" />
-
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
-        <div className="relative w-full flex gap-2">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-            size={17}
-          />
-          <Input
-            placeholder="Search..."
-            className="pl-10 bg-white w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <SelectLayout
-            className="bg-white"
-            label=""
-            placeholder="Filter by Status"
-            options={statusOptions}
-            value={statusFilter}
-            onChange={(value) => setStatusFilter(value)}
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-md">
-        <div className="flex justify-between p-3">
-          <div className="flex items-center gap-2">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-6"
-              value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
-                setCurrentPage(1);
-              }}
+    <LayoutWithBack
+      title="Project Proposal Logs"
+      description="View and manage proposal logs"
+    >
+      <div className="w-full h-full">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+          <div className="relative w-full flex gap-2">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+              size={17}
             />
-            <p className="text-xs sm:text-sm">Entries</p>
+            <Input
+              placeholder="Search..."
+              className="pl-10 bg-white w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <SelectLayout
+              className="bg-white"
+              label=""
+              placeholder="Filter by Status"
+              options={statusOptions}
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value)}
+            />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <DataTable columns={columns} data={paginatedData} />
-        </div>
+        <div className="bg-white rounded-md">
+          <div className="flex justify-between p-3">
+            <div className="flex items-center gap-2">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-6"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                  setCurrentPage(1);
+                }}
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+          </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
-          </p>
-          {filteredData.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => {
-                setCurrentPage(page);
-              }}
-            />
-          )}
+          <div className="overflow-x-auto">
+            <DataTable columns={columns} data={paginatedData} />
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+            <p className="text-xs sm:text-sm text-darkGray">
+              Showing {(currentPage - 1) * pageSize + 1}-
+              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+              {filteredData.length} rows
+            </p>
+            {filteredData.length > 0 && (
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => {
+                  setCurrentPage(page);
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </LayoutWithBack>
   );
 }
 

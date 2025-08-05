@@ -5,14 +5,24 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { X, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import {useGetProjectProposals,useGetProjectProposal,useGetSupportDocs,} from "./queries/fetchqueries";
+import {
+  useGetProjectProposals,
+  useGetProjectProposal,
+  useGetSupportDocs,
+} from "./queries/fetchqueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import {Dialog,DialogContent,DialogHeader,DialogTitle,} from "@/components/ui/dialog/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "./view-projprop";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
 import { ProposalStatus, SupportDoc, ProjectProposal } from "./projprop-types";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Link } from "react-router";
 
 function AdminGADProjectProposal() {
   const style = {
@@ -34,25 +44,32 @@ function AdminGADProjectProposal() {
     { id: "Rejected", name: "Rejected" },
   ];
 
-    const updateStatus = [
+  const updateStatus = [
     { id: "Amend", name: "Amend" },
     { id: "Approved", name: "Approved" },
     { id: "Rejected", name: "Rejected" },
   ];
 
-  const {data: projects = [],isLoading,isError,error} = useGetProjectProposals();
+  const {
+    data: projects = [],
+    isLoading,
+    isError,
+    error,
+  } = useGetProjectProposals();
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<ProjectProposal | null>(null);
+  const [selectedProject, setSelectedProject] =
+    useState<ProjectProposal | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
   const [selectedSuppDocs, setSelectedSuppDocs] = useState<SupportDoc[]>([]);
-  const [isStatusUpdateDialogOpen, setIsStatusUpdateDialogOpen] = useState(false);
+  const [isStatusUpdateDialogOpen, setIsStatusUpdateDialogOpen] =
+    useState(false);
   const [newStatus, setNewStatus] = useState<ProposalStatus | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const updateStatusMutation = useUpdateProjectProposalStatus();
-  const [isPdfLoading, setIsPdfLoading] = useState(true);
-  const [pageSize, setPageSize] = useState(3);
+  const [_isPdfLoading, setIsPdfLoading] = useState(true);
+  const [pageSize, _setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -125,15 +142,15 @@ function AdminGADProjectProposal() {
             setSelectedProject(updatedProject);
             setIsViewDialogOpen(true);
           },
-          onError: (error) => {
-            setSelectedProject(project); // Original project has correct types
+          onError: (_error) => {
+            setSelectedProject(project);
             setIsViewDialogOpen(true);
           },
         }
       );
     } else {
       setTimeout(() => {
-        setSelectedProject(project); // Original project has correct types
+        setSelectedProject(project);
         setIsViewDialogOpen(true);
       }, 50);
     }
@@ -261,7 +278,7 @@ function AdminGADProjectProposal() {
       </div>
       <hr className="border-gray mb-5 sm:mb-4" />
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="relative flex-1">
             <Search
@@ -286,25 +303,29 @@ function AdminGADProjectProposal() {
             />
           </div>
         </div>
-
-        {/* Dynamic Total Budget Display */}
-        <div className="flex justify-end mt-2 mb-2">
-          <div className="bg-white border px-4 py-2 rounded-lg">
-            <span className="font-medium text-black">
-              Grand Total:{" "}
-              <span className="font-bold text-green-700">
-                ₱
-                {new Intl.NumberFormat("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(totalBudget)}
-              </span>
+      </div>
+      {/* Dynamic Total Budget Display */}
+      <div className="flex justify-between mt-2">
+        <div className="bg-white border px-4 py-2 rounded-lg">
+          <span className="font-medium text-black">
+            Grand Total:{" "}
+            <span className="font-bold text-green-700">
+              ₱
+              {new Intl.NumberFormat("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(totalBudget)}
             </span>
-          </div>
+          </span>
         </div>
+        <Link to="/gad-project-proposal-log">
+          <Button variant="link" className="mr-1 w-20 underline text-sky-600">
+            View Logs
+          </Button>
+        </Link>
       </div>
 
-      <div className="flex flex-col mt-4 gap-4">
+      <div className="flex flex-col mt-2 gap-4">
         {paginatedProjects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No project proposals found.

@@ -42,6 +42,7 @@ import ViewProjectProposal from "./view-projprop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
+import { Link } from "react-router";
 
 function DocumentCard({
   doc,
@@ -508,7 +509,7 @@ function GADProjectProposal() {
       </div>
 
       {/* Dynamic Total Budget Display */}
-      <div className="flex justify-end mt-2 mb-2">
+      <div className="flex justify-between mt-2 mb-2">
         <div className="bg-white border px-4 py-2 rounded-lg">
           <span className="font-medium text-black">
             Grand Total:{" "}
@@ -520,6 +521,11 @@ function GADProjectProposal() {
             </span>
           </span>
         </div>
+        <Link to= "/gad-project-proposal-log">
+        <Button variant="link" className="mr-1 w-20 underline text-sky-600">
+          View Logs
+        </Button>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-4">

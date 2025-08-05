@@ -74,6 +74,8 @@ export type ProjectProposalInput = {
   staffId?: number | null;
   gprIsArchive?: boolean;
   supportDocs?: SupportDoc[];
+  status: ProposalStatus;
+  statusReason: string | null;
 };
 
 export type Staff = {

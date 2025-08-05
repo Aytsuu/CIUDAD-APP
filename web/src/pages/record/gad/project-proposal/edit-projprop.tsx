@@ -35,15 +35,12 @@ export const EditProjectProposalForm: React.FC<
   const updateMutation = useUpdateProjectProposal();
   const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-
-  // Display remaining balance from budget tracker
-  const { data: budgetEntries = [], isLoading: isBudgetLoading } =
-    useGADBudgets(new Date().getFullYear().toString());
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"save" | "resubmit">("save");
+  const { data: budgetEntries = [], isLoading: isBudgetLoading } = useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === currentYear
-  )?.gbudy_budget;
+  const currentYearBudget = yearBudgets?.find((budget) => budget.gbudy_year === currentYear)?.gbudy_budget;
 
   const latestExpenseWithBalance = budgetEntries
     .filter(
@@ -335,7 +332,10 @@ export const EditProjectProposalForm: React.FC<
             psd_name: doc.psd_name,
             psd_type: doc.psd_type,
             psd_is_archive: doc.psd_is_archive,
-          })) || [], // Only existing docs with valid psdId for PUT
+          })) || [],
+        // Include status updates if they exist in the data
+        status: data.status || initialValues.status,
+        statusReason: data.statusReason || initialValues.statusReason,
       };
 
       const fullProposal: ProjectProposal = {
@@ -343,7 +343,7 @@ export const EditProjectProposalForm: React.FC<
         ...proposalData,
         paperSize: data.paperSize,
         headerImage: headerImage,
-        supportDocs: proposalData.supportDocs || [], // Ensure a default empty array
+        supportDocs: proposalData.supportDocs || [],
         participants: proposalData.participants.map((p) => ({
           category: p.category,
           count: parseInt(p.count) || 0,
@@ -353,6 +353,8 @@ export const EditProjectProposalForm: React.FC<
           pax: item.pax,
           amount: parseFloat(item.amount) || 0,
         })),
+        status: proposalData.status || initialValues.status,
+        statusReason: proposalData.statusReason || initialValues.statusReason,
       };
 
       // Add new documents via mutation before updating the proposal
@@ -387,10 +389,6 @@ export const EditProjectProposalForm: React.FC<
           "Failed to save proposal. Please check the form data and try again."
       );
     }
-  };
-
-  const handleConfirmSave = () => {
-    handleSubmit(handleSave)();
   };
 
   return (
@@ -852,22 +850,65 @@ export const EditProjectProposalForm: React.FC<
               </div>
             </div>
             <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
+              <div className="flex gap-2 mb-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setConfirmAction("save");
+                    setShowConfirm(true);
+                  }}
+                  disabled={updateMutation.isPending || isSubmitting}
+                  className="gap-2"
+                >
+                  Just Save
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setConfirmAction("resubmit");
+                    setShowConfirm(true);
+                  }}
+                  disabled={updateMutation.isPending || isSubmitting}
+                  className="gap-2"
+                >
+                  Save and Resubmit
+                </Button>
+              </div>
+
               <ConfirmationModal
-                trigger={
-                  <Button
-                    type="button"
-                    disabled={updateMutation.isPending || isSubmitting}
-                    className="gap-2 w-full sm:w-auto mb-5"
-                  >
-                    {updateMutation.isPending || isSubmitting
-                      ? "Updating..."
-                      : "Save"}
-                  </Button>
+                open={showConfirm}
+                onOpenChange={setShowConfirm}
+                title={
+                  confirmAction === "save"
+                    ? "Confirm Save"
+                    : "Confirm Resubmission"
                 }
-                title="Confirm Save"
-                description="Are you sure you want to save the changes?"
-                actionLabel="Confirm"
-                onClick={handleConfirmSave}
+                description={
+                  confirmAction === "save"
+                    ? "Are you sure you want to save without resubmitting?"
+                    : "Are you sure you want to save and resubmit this proposal?"
+                }
+                actionLabel={
+                  confirmAction === "save"
+                    ? "Confirm Save"
+                    : "Confirm Resubmission"
+                }
+                onClick={() => {
+                  if (confirmAction === "resubmit") {
+                    handleSubmit((data) => {
+                      const updatedData = {
+                        ...data,
+                        status: "Resubmitted" as const,
+                        statusReason: "Project proposal resubmitted by user",
+                      };
+                      handleSave(updatedData);
+                    })();
+                  } else {
+                    handleSubmit(handleSave)();
+                  }
+                }}
               />
             </div>
           </div>
