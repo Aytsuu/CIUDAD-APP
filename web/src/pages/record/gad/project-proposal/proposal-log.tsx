@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProposalLog } from "./projprop-types";
 import { useGetAllProposalLogs } from "./queries/fetchqueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 function ProjectProposalLogTable() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -129,12 +130,29 @@ function ProjectProposalLogTable() {
       },
     },
     {
-      accessorKey: "gprl_reason",
-      header: "Reason/Remarks",
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.gprl_reason || "-"}</div>
-      ),
-    },
+       accessorKey: "gprl_reason",
+        header: "Reason/Remarks",
+        cell: ({ row }) => {
+            const reason = row.original.gprl_reason;
+            return (
+                <div className="text-center">
+                    {reason ? (
+                        <DialogLayout
+                            trigger={
+                                <button className="text-sky-600 underline">
+                                    View
+                                </button>
+                            }
+                            title="Reason/Remarks"
+                            mainContent={<div className="p-4">{reason}</div>}
+                        />
+                    ) : (
+                        "-"
+                    )}
+                </div>
+            );
+        },
+      },
   ];
 
   if (isLoading) {

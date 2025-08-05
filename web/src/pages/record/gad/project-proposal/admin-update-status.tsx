@@ -279,8 +279,9 @@ function AdminGADProjectProposal() {
       <hr className="border-gray mb-5 sm:mb-4" />
 
       <div className="flex flex-col md:flex-row justify-between gap-4">
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          {/* Search input with flex-grow */}
+          <div className="relative flex-grow">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
               size={17}
@@ -292,10 +293,12 @@ function AdminGADProjectProposal() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-2 justify-center items-center">
-            <Label>Filter: </Label>
+
+          {/* Filter with fixed width */}
+          <div className="flex flex-row gap-2 items-center w-[200px]">
+            <Label className="whitespace-nowrap">Filter:</Label>
             <SelectLayout
-              className="bg-white"
+              className="bg-white w-full"
               options={filter}
               placeholder="Filter"
               value={selectedFilter}
@@ -304,6 +307,7 @@ function AdminGADProjectProposal() {
           </div>
         </div>
       </div>
+
       {/* Dynamic Total Budget Display */}
       <div className="flex justify-between mt-2">
         <div className="bg-white border px-4 py-2 rounded-lg">
