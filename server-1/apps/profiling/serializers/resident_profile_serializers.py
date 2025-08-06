@@ -21,6 +21,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     lname = serializers.CharField(source='per.per_lname')
     fname = serializers.CharField(source='per.per_fname')
     mname = serializers.SerializerMethodField()
+    suffix = serializers.CharField(source='per.per_suffix')
     sex = serializers.CharField(source='per.per_sex')
     household_no = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
@@ -31,7 +32,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResidentProfile
-        fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'dob', 
+        fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'suffix', 'dob', 
                   'age', 'sex', 'household_no', 'family_no', 'business_owner', 'has_account']
     
     def get_mname(self, obj):

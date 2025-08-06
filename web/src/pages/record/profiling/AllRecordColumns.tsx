@@ -4,6 +4,7 @@ import ViewButton from "@/components/ui/view-button";
 import { ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
+import { formatDate } from "@/helpers/dateHelper";
 
 export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
   {
@@ -59,19 +60,21 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
   },
   {
     accessorKey: 'suffix',
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Suffix
-        <ArrowUpDown size={14} />
-      </div>
+    header: "Suffix"
+  },
+  {
+    accessorKey: 'sex',
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]
     )
   },
   {
     accessorKey: 'date_registered',
-    header: "Date Registered"
+    header: "Date Registered",
+    cell: ({row}) => (
+      formatDate(row.original.date_registered, "long")
+    )
   },
   {
     accessorKey: 'action',

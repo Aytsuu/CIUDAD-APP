@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -122,7 +123,10 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   },
   {
     accessorKey: 'date_registered',
-    header: 'Date Registered'
+    header: 'Date Registered',
+    cell: ({row}) => (
+      formatDate(row.original.date_registered, "long")
+    )
   },
   {
     accessorKey: 'action',

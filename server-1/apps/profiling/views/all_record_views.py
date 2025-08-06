@@ -20,6 +20,7 @@ class AllRecordTableView(generics.GenericAPIView):
         'fname': res.per.per_fname,
         'mname': res.per.per_mname,
         'suffix': res.per.per_suffix,
+        'sex': res.per.per_sex,
         'date_registered': res.rp_date_registered,
         'family_no': (fam_comp.fam.fam_id if (fam_comp := FamilyComposition.objects.filter(rp=res.rp_id).first()) else None),
         'type': 'Resident',
@@ -38,6 +39,7 @@ class AllRecordTableView(generics.GenericAPIView):
         'fname': res.per.per_fname,
         'mname': res.per.per_mname,
         'suffix': res.per.per_suffix,
+        'sex': res.per.per_sex,
         'date_registered': res.br_date_registered,
         'type': 'Business',
       }

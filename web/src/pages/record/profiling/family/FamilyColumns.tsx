@@ -19,6 +19,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -108,6 +109,9 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   {
     accessorKey: "fam_date_registered",
     header: "Date Registered",
+    cell: ({row}) => (
+      formatDate(row.original.fam_date_registered, "long")
+    )
   },
   {
     accessorKey: "action",

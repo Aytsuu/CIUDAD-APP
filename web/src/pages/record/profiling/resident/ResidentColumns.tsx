@@ -6,6 +6,7 @@ import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
 import React from "react";
 import { ResidentBusinessRecord, ResidentFamilyRecord, ResidentRecord } from "../ProfilingTypes";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -258,8 +259,22 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     ),
   },
   {
+    accessorKey: "suffix",
+    header: "Suffix"
+  },
+  {
+    accessorKey: "sex",
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]
+    )
+  },
+  {
     accessorKey: "rp_date_registered",
-    header: "Date Registered"
+    header: "Date Registered",
+    cell: ({row}) => (
+      formatDate(row.original.rp_date_registered, "long")
+    )
   },
   {
     accessorKey: "completed_profiles",

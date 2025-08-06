@@ -5,6 +5,8 @@ export type AllRecordCombined = {
   fname: string;
   mname: string;
   suffix: string;
+  sex: string;
+  date_registered: string;
   family_no: string;
   type: string;
 }
@@ -19,6 +21,7 @@ export type ResidentRecord = {
   fname: string;
   mname: string;
   suffix: string;
+  sex: string;
   rp_date_registered: string;
   registered_by: string;
   has_account: boolean;
