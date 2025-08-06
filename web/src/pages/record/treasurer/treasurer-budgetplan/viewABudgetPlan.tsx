@@ -46,7 +46,6 @@ function ViewBudgetPlan(){
     const planId = location.state?.planId;
     const [activeTab, setActiveTab] = useState("current");
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
 
     // calculating net available resources
@@ -199,7 +198,7 @@ function ViewBudgetPlan(){
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
 
-                   {fetchedData?.plan_year === String(new Date().getFullYear()) && (
+                   {fetchedData?.plan_year === String(new Date().getFullYear()) && activeTab == "current" && (
                     <DialogLayout
                         trigger={
                             <Button>

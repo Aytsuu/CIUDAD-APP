@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button/button";
 import { useAddBudgetPlanSuppDoc } from "./queries/budgetPlanInsertQueries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BudgetPlanSuppDocSchema } from "@/form-schema/treasurer/supp-doc-schema";
+import { FormTextArea } from "@/components/ui/form/form-text-area";
 
 export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
     plan_id: number;
@@ -20,7 +21,8 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
     const form = useForm<z.infer<typeof BudgetPlanSuppDocSchema>>({
         resolver: zodResolver(BudgetPlanSuppDocSchema),
         defaultValues: {
-            files: []
+            files: [],
+            description: ""
         }
     })
 
@@ -40,7 +42,8 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
     const onSubmit = (values: z.infer<typeof BudgetPlanSuppDocSchema>) => {
         const payload = values.files.map(file => ({
             ...file,
-            plan_id
+            plan_id,
+            description: values.description // Include the description with each file
         }));
         
         addSuppDoc(payload);
@@ -69,6 +72,13 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
                             </FormItem>
                         )}
                     />
+
+                    <FormTextArea
+                        control={form.control}
+                        name="description"
+                        label="Description"
+                    />
+                    
                     <div className="flex items-center justify-end">
                         <Button type="submit" className="w-[100px]" disabled={isPending}>
                             {isPending ? "Uploading..." : "Submit"}

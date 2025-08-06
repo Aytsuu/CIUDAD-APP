@@ -133,7 +133,7 @@ export const createBudgetPlanDetailHistory = async (bph_id: string, detailHistor
     }
 };
 
-export const addBudgetPlanSuppDoc = async (files: Array<{ publicUrl: string; storagePath: string; type: "image" | "video" | "document"; name: string; plan_id: number;
+export const addBudgetPlanSuppDoc = async (files: Array<{ publicUrl: string; storagePath: string; type: "image" | "video" | "document"; name: string; plan_id: number; description: string;
 }>) => {
     try {
         const uploadPromises = files.map(file => {
@@ -144,6 +144,7 @@ export const addBudgetPlanSuppDoc = async (files: Array<{ publicUrl: string; sto
             formData.append('bpf_name', file.name);
             formData.append('plan_id', file.plan_id.toString());
             formData.append('bpf_upload_date', new Date().toISOString());
+            formData.append('bpf_description', file.description);
             
             return api.post('treasurer/budget-plan-file/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },

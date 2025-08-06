@@ -76,6 +76,7 @@ export const useAddBudgetPlanSuppDoc = (onSuccess?: () => void) => {
             type: "image" | "video" | "document";
             name: string;
             plan_id: number;
+            description: string;
         }>) => {
             if (files.length === 0) {
                 throw new Error('No files to upload');
