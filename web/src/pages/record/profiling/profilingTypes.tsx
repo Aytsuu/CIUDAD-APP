@@ -1,8 +1,12 @@
 
 export type AllRecordCombined = {
+  id: string;
   lname: string;
   fname: string;
   mname: string;
+  suffix: string;
+  family_no: string;
+  type: string;
 }
 
 export type ResidentRecord = {

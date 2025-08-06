@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router";
 import { ArrowUpDown, Building, CircleUserRound, House, UsersRound } from "lucide-react";
-import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../ProfilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
 import React from "react";
+import { ResidentBusinessRecord, ResidentFamilyRecord, ResidentRecord } from "../ProfilingTypes";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -291,7 +291,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
                 }
                 content={profile.tooltip}
               />
-              ) : (
+              ) : (profile.id !== 'business' &&
                 <profile.icon size={20} 
                   className="text-gray-300"
                 />

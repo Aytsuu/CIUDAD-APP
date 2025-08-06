@@ -336,18 +336,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   // Render Business Card Content
   const renderBusinessContent = () => {
-    if (isLoadingBusinesses) {
-      return <ActivityIndicator message="Loading business information..." />
-    }
-    if (!businesses || businesses.length === 0) {
-      return (
-        <EmptyState
-          icon={Building2}
-          title="No businesses found"
-          description="This resident has no registered business ownership."
-        />
-      )
-    }
     return (
       <div className="flex justify-center">
         <div className="w-full max-w-5xl mt-5 border">
@@ -427,14 +415,17 @@ export default function ResidentViewForm({ params }: { params: any }) {
           </div>
           {renderFamilyContent()}
         </Card>
-
-        <Card className="w-full p-10">
-          <div className="pb-4">
-            <h2 className="text-lg font-semibold">Business</h2>
-            <p className="text-xs text-black/50">Shows owned business of this resident</p>
-          </div>
-          {renderBusinessContent()}
-        </Card>
+        
+        {(!isLoadingBusinesses && (!businesses || businesses.length === 0)) &&
+          <Card className="w-full p-10">
+            <div className="pb-4">
+              <h2 className="text-lg font-semibold">Business</h2>
+              <p className="text-xs text-black/50">Shows owned business of this resident</p>
+            </div>
+            {renderBusinessContent()}
+          </Card>
+        }
+        
       </div>
     </LayoutWithBack>
   )
