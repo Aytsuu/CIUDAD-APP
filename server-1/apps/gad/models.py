@@ -50,8 +50,8 @@ class GAD_Budget_Year(models.Model):
     gbudy_num = models.BigAutoField(primary_key=True)
     gbudy_budget = models.DecimalField(max_digits=10, decimal_places=2)
     gbudy_year = models.CharField(max_length=4, unique=True)
-    gbudy_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0) #total expenses for the year from gad_budget_record
-    gbudy_income = models.DecimalField(max_digits=10, decimal_places=2, default=0)# total income for the year from gad_budget_record
+    gbudy_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    gbudy_income = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     gbudy_is_archive = models.BooleanField(default=False)
 
     class Meta:
@@ -68,8 +68,9 @@ class GAD_Budget_Tracker(models.Model):
     gbud_inc_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     #if type is expense
-    gbud_exp_particulars = models.CharField(max_length=200, null=True) #this saves the retrieved gdb_name from devbudget
-    gbud_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
+    gbud_exp_project = models.CharField(max_length=200, null=True)
+    gbud_exp_particulars = models.JSONField(default=list, null=True)
+    # gbud_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_actual_expense = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_reference_num = models.CharField(max_length=200, null=True)
@@ -82,6 +83,14 @@ class GAD_Budget_Tracker(models.Model):
         on_delete=models.CASCADE,
         related_name='transactions',
         db_column='gbudy_num'
+    )
+    
+    gpr = models.ForeignKey(
+        'ProjectProposal',
+        on_delete=models.CASCADE,
+        related_name='proposals',
+        db_column='gpr_id',
+        null=True
     )
 
     gdb = models.ForeignKey(

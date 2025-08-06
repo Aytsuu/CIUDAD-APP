@@ -45,7 +45,6 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
         }
 
 class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
-    gdb = DevelopmentBudgetSerializer(read_only=True)
     files = GADBudgetFileSerializer(many=True, read_only=True)
     gbudy = serializers.PrimaryKeyRelatedField(queryset=GAD_Budget_Year.objects.all())
     staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, default=None)
@@ -54,16 +53,16 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
         model = GAD_Budget_Tracker
         fields = [
             'gbud_num', 'gbud_datetime', 'gbud_type', 'gbud_add_notes', 'gbud_inc_particulars',
-            'gbud_inc_amt', 'gbud_exp_particulars', 'gbud_proposed_budget', 'gbud_actual_expense',
+            'gbud_inc_amt', 'gbud_exp_particulars', 'gbud_exp_project', 'gbud_actual_expense',
             'gbud_remaining_bal', 'gbud_reference_num', 'gbud_is_archive',
-            'gbudy', 'gdb', 'staff', 'files'
+            'gbudy', 'staff', 'files', 'gpr'
         ]
         extra_kwargs = {
             'gbud_num': {'read_only': True},
             'gbud_inc_particulars': {'required': False, 'allow_null': True},
             'gbud_inc_amt': {'required': False, 'allow_null': True},
             'gbud_exp_particulars': {'required': False, 'allow_null': True},
-            'gbud_proposed_budget': {'required': False, 'allow_null': True},
+            'gbud_exp_project': {'required': False, 'allow_null': True},
             'gbud_actual_expense': {'required': False, 'allow_null': True},
             'gbud_reference_num': {'required': False, 'allow_null': True},
             'gbud_remaining_bal': {'required': False, 'allow_null': True},

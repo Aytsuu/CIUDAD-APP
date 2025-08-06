@@ -1,5 +1,4 @@
-import api from '@/pages/api/api';
-
+import { api } from "@/api/api";
 
 export const getbudgetyearreq = async () => {
     try {
@@ -10,7 +9,6 @@ export const getbudgetyearreq = async () => {
             : [];
         return filteredData;
     } catch (err) {
-        console.error("API Error:", err);
-        return [];  // Always return an array
+        return []; 
     }
 };

@@ -12,7 +12,7 @@ class DevelopmentBudgetItemsView(generics.ListAPIView):
     queryset = DevelopmentBudget.objects.all()
     serializer_class = DevelopmentBudgetSerializer 
 
-    def list(self, request, *args, **kwargs):
+    def list(self):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response({
@@ -31,7 +31,7 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
         return GAD_Budget_Tracker.objects.filter(
             gbudy__gbudy_year=year,
             # gbud_is_archive=False
-        ).select_related('gbudy', 'gdb', 'staff').prefetch_related('files')
+        ).select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
     
     def perform_create(self, serializer):
         serializer.save(
@@ -45,7 +45,7 @@ class GAD_Budget_TrackerDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'gbud_num'
 
     def get_queryset(self):
-        return super().get_queryset().select_related('gbudy', 'gdb', 'staff').prefetch_related('files')
+        return super().get_queryset().select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
