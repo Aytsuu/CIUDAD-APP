@@ -581,12 +581,13 @@
     import { useIncomeExpense, type IncomeExpense } from "../queries/treasurerIncomeExpenseFetchQueries";
     import { useIncomeExpenseMainCard } from "../queries/treasurerIncomeExpenseFetchQueries";
     import { useLocation } from "react-router-dom";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+    import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
     function ExpenseLogMain() {
         const [searchQuery, setSearchQuery] = useState("");
         const [pageSize, setPageSize] = useState(10);
         const [currentPage, setCurrentPage] = useState(1);
+
 
         // Month filter options
         const monthOptions = [
@@ -608,11 +609,10 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
         // Fetch data
         const location = useLocation();
-        const year = location.state?.budYear;
+        const year = location.state?.LogYear;
         const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
         const { data: _fetchIncData = [] } = useIncomeExpenseMainCard();
 
-        // const matchedYearData = fetchIncData.find(item => Number(item.ie_main_year) === Number(year));
 
 
         // Filter data - only show non-archived entries
@@ -704,7 +704,11 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
                         <div>₱{difference.toFixed(2)}</div>
                     );
                 }
-            },       
+            },    
+            {
+                accessorKey: "staff_name",
+                header: "Assigned Staff",
+            },   
             {
                 accessorKey: "files",
                 header: "Supporting Documents",

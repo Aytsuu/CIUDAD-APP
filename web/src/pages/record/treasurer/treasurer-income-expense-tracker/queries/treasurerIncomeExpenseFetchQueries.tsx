@@ -21,6 +21,7 @@ export type IncomeExpense = {
     iet_receipt_image: string;
     iet_is_archive: boolean;
     inv_num: string;
+    staff_name: string;
     files: {  
         ief_id: number;
         ief_url: string;
@@ -138,6 +139,7 @@ export type Income = {
     inc_additional_notes: string;
     inc_receipt_image: string;
     inc_is_archive: boolean;
+    staff_name: string;
 };
 
 // export const useIncomeData = () => {

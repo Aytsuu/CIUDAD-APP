@@ -604,14 +604,14 @@ function IncomeandExpenseTracking() {
         },
         { 
             accessorKey: "iet_amount", 
-            header: "Amount" ,
+            header: "Proposed Budget" ,
             cell: ({row}) => (
                 <div>₱{row.getValue("iet_amount")}</div>
             )
         },
         { 
             accessorKey: "iet_actual_amount", 
-            header: "Actual Amount" ,
+            header: "Actual Expense" ,
             cell: ({row}) => (
                 <div>₱{row.getValue("iet_actual_amount")}</div>
             )
@@ -652,6 +652,10 @@ function IncomeandExpenseTracking() {
         //         );
         //     }
         // }
+        {
+            accessorKey: "staff_name",
+            header: "Assigned Staff",
+        },
         {
             accessorKey: "files",
             header: "Supporting Documents",
@@ -865,7 +869,7 @@ function IncomeandExpenseTracking() {
                     </NavLink>
                     <NavLink 
                         to={`/treasurer-income-tracking`}
-                    state={{type: "viewing", budYear: year, totalInc: totInc,}}
+                        state={{type: "viewing", budYear: year, totalInc: totInc,}}
                         className={({ isActive }) => 
                             `px-5 py-2 rounded-full text-sm font-medium transition-all ${
                             isActive 
@@ -977,7 +981,10 @@ function IncomeandExpenseTracking() {
                         </TabsList>
 
                         {/* New Button Here */}
-                        <Link to="/treasurer-expense-log">
+                        <Link 
+                            to="/treasurer-expense-log"
+                            state={{type: "viewing", LogYear: year}}
+                        >
                             <Button variant="link" className="mr-1 w-20 underline"> 
                                 View Logs 
                             </Button>                        

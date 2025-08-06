@@ -118,10 +118,26 @@ class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
     exp_budget_item = serializers.CharField(source='exp_id.exp_budget_item', read_only=True)
     files = Income_Expense_FileSimpleSerializer(many=True, read_only=True)  # Add this line
-    
+    staff_name = serializers.SerializerMethodField()   
+
     class Meta:
         model = Income_Expense_Tracking
         fields = '__all__'
+    
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None
 
 
 # -------- INCOME 
@@ -134,10 +150,26 @@ class Income_ParticularSerializers(serializers.ModelSerializer):
 
 class Income_TrackingSerializers(serializers.ModelSerializer):
     incp_item = serializers.CharField(source='incp_id.incp_item', read_only=True)
+    staff_name = serializers.SerializerMethodField()   
 
     class Meta:
         model = Income_Tracking
         fields = '__all__'
+
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None      
 
 
 class Income_Expense_MainSerializers(serializers.ModelSerializer):

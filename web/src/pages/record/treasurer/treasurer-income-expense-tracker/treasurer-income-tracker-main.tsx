@@ -529,11 +529,17 @@ function IncomeTracking() {
             accessorKey: "incp_item", 
             header: "Particulars",
         },
-        { accessorKey: "inc_amount", header: "Amount" },
+        { 
+            accessorKey: "inc_amount", 
+            header: "Amount" },
         { 
             accessorKey: "inc_additional_notes", 
             header: "Additional Notes",
-        }
+        },
+        {
+            accessorKey: "staff_name",
+            header: "Assigned Staff",
+        },        
     ];
 
     // Active tab columns

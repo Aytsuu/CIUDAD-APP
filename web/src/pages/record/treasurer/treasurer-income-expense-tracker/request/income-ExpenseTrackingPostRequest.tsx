@@ -50,7 +50,6 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
     try{
 
-        let entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
 
         console.log({
             iet_datetime: incomeExpenseInfo.iet_datetime,
@@ -60,7 +59,8 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_is_archive: false,
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
-            exp_id:  parseInt(incomeExpenseInfo.iet_particulars)
+            exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
+            staff_id: "00003250722"
         })
 
         const res = await api.post('treasurer/income-expense-tracking/',{
@@ -74,7 +74,8 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             inv_num: "urlforInvNum",
             iet_receipt_image: "nothing",
-            exp_id:  parseInt(incomeExpenseInfo.iet_particulars)
+            exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
+            staff_id: "00003250722"
 
         })
 
@@ -199,7 +200,8 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes,
             // inc_receipt_image: incomeInfo.inc_receipt_image || null,
-            incp_id:  incomeInfo.inc_particulars
+            incp_id:  incomeInfo.inc_particulars,
+            staff_id: "00003250722"
         })
 
         const res = await api.post('treasurer/income-tracking/',{
@@ -211,7 +213,8 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             // inc_serial_num: "100200",
             // inc_transac_num: "100300",
             // inc_receipt_image: incomeInfo.inc_receipt_image || null,
-            incp_id:  parseInt(incomeInfo.inc_particulars)
+            incp_id:  parseInt(incomeInfo.inc_particulars),
+            staff_id: "00003250722"
 
         })
 

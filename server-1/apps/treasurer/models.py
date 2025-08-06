@@ -212,6 +212,13 @@ class Income_Expense_Tracking(models.Model):
     iet_receipt_image = models.CharField(null=True, blank=True)
     iet_is_archive = models.BooleanField(default=False)
     exp_id = models.ForeignKey('expense_particular', on_delete=models.CASCADE, null=True)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = "income_expense_tracking"
@@ -238,6 +245,13 @@ class Income_Tracking(models.Model):
     inc_is_archive = models.BooleanField(default=False)
     # inv_num = models.ForeignKey( 'invoice', on_delete=models.CASCADE, null=True, blank=True)
     incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = "income_tracking"
