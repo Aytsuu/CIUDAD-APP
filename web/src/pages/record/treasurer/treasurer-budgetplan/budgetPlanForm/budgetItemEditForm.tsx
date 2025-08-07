@@ -81,6 +81,10 @@ export default function BudgetItemEditForm({
 
   const formValues = form.watch();
 
+  const hasSameFromAndTo = () => {
+    return formValues.items.some(item => item.from && item.to && item.from === item.to);
+  };
+
   const hasNegativeAvailableAmount = () => {
     return formValues.items.some((item, _index) => {
       const fromValue = item.from;
@@ -152,7 +156,6 @@ export default function BudgetItemEditForm({
 
       const amount = Number.parseFloat(item.amount) || 0;
       
-      // Handle transfer to unappropriated balance
       if (item.to === "unappropriated") {
         const fromItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.from);
         if (!fromItem?.dtl_id) return [];
@@ -170,7 +173,6 @@ export default function BudgetItemEditForm({
         ];
       }
       
-      // Handle transfer from unappropriated balance
       if (item.from === "unappropriated") {
         const toItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.to);
         if (!toItem?.dtl_id) return [];
@@ -188,7 +190,6 @@ export default function BudgetItemEditForm({
         ];
       }
       
-      // Handle transfer between budget items
       const fromItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.from);
       const toItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.to);
       if (!fromItem?.dtl_id || !toItem?.dtl_id) return [];
@@ -320,12 +321,13 @@ export default function BudgetItemEditForm({
               const availableAmount = calculateAvailableAmount(index);
               const hasError = form.formState.errors.items?.[index]?.amount;
               const isAmountInputDisabled = !fromValue || !toValue;
+              const hasSameValues = fromValue && toValue && fromValue === toValue;
 
               return (
                 <div
                   key={field.id}
                   className={`grid grid-cols-12 gap-4 items-center p-2 rounded-lg hover:bg-gray-50 ${
-                    Number(availableAmount) < 0 ? "bg-red-50" : ""
+                    Number(availableAmount) < 0 || hasSameValues ? "bg-red-50" : ""
                   }`}
                 >
                   <div className="col-span-3">
@@ -440,7 +442,7 @@ export default function BudgetItemEditForm({
         <div className="flex justify-end mt-3 pt-2 border-t">
           <Button
             type="submit"
-            disabled={isPending || hasNegativeAvailableAmount()}
+            disabled={isPending || hasNegativeAvailableAmount() || hasSameFromAndTo()}
             onClick={form.handleSubmit(handleSubmit)}
           >
             {isPending ? "Updating..." : "Update"}
