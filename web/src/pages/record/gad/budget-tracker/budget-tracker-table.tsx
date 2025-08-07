@@ -193,191 +193,198 @@ const getLatestRemainingBalance = (): number => {
 
   return balance;
 };
-  const columns: ColumnDef<GADBudgetEntry>[] = [
-    {
-      accessorKey: "gbud_datetime",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date & Time
-          <ArrowUpDown size={14} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="">
-          {new Date(row.getValue("gbud_datetime")).toLocaleString()}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "gbud_type",
-      header: "Type",
-    },
-    {
-      id: "particulars",
-      header: "Particular",
-      cell: ({ row }) => {
-        const particulars =
-          row.original.gbud_inc_particulars ||
-          row.original.gbud_exp_particulars;
-        return <div>{particulars}</div>;
-      },
-    },
-    {
-      accessorKey: "gbud_amount",
-      header: "Amount",
-      cell: ({ row }) => {
-        const {
-          gbud_type,
-          gbud_inc_amt,
-          gbud_actual_expense,
-          gbud_proposed_budget,
-        } = row.original;
-        const num = (val: any) =>
-          val !== undefined && val !== null ? +val : undefined;
 
-        let amount: number = 0;
-
-        if (gbud_type === "Income") {
-          amount = num(gbud_inc_amt) ?? 0;
-        } else {
-          const actual = num(gbud_actual_expense);
-          const proposed = num(gbud_proposed_budget);
-          amount = actual && actual > 0 ? actual : proposed ?? 0;
-        }
-        return <div>Php {amount.toFixed(2)}</div>;
-      },
+const columns: ColumnDef<GADBudgetEntry>[] = [
+  {
+    accessorKey: "gbud_datetime",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Date & Time
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="">
+        {new Date(row.getValue("gbud_datetime")).toLocaleString()}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "gbud_type",
+    header: "Type",
+  },
+  {
+    id: "particulars",
+    header: "Particular",
+    cell: ({ row }) => {
+      const { gbud_inc_particulars, gbud_exp_particulars, gbud_type } = row.original;
+      let displayParticulars = "";
+      if (gbud_type === "Income") {
+        displayParticulars = gbud_inc_particulars || "N/A";
+      } else if (gbud_type === "Expense" && Array.isArray(gbud_exp_particulars)) {
+        displayParticulars = gbud_exp_particulars
+          .map((item: { name: string; pax: string; amount: number }) => item.name)
+          .join(", ") || "No items";
+      }
+      return <div>{displayParticulars}</div>;
     },
-    {
-      accessorKey: "files",
-      header: "Supporting Docs",
-      cell: ({ row }) => {
-        const entry = row.original;
-        const files = entry.files || [];
-        const hasReferenceNum = !!entry.gbud_reference_num;
-        const hasFiles = files.length > 0;
+  },
+  {
+    accessorKey: "gbud_amount",
+    header: "Amount",
+    cell: ({ row }) => {
+      const {
+        gbud_type,
+        gbud_inc_amt,
+        gbud_actual_expense,
+        gbud_proposed_budget,
+      } = row.original;
+      const num = (val: any) =>
+        val !== undefined && val !== null ? +val : undefined;
 
-        return (
-          <div className="flex justify-center gap-2">
-            {entry.gbud_type === "Expense" &&
-            (!hasReferenceNum || !hasFiles) ? (
-              <span className="text-red-500">
-                Missing
-                {!hasReferenceNum && " Reference Number"}
-                {!hasReferenceNum && !hasFiles && " and"}
-                {!hasFiles && " Supporting Docs"}
-              </span>
-            ) : files.length > 0 ? (
-              <div
-                className="text-sky-500 underline cursor-pointer"
-                onClick={() => {
-                  setSelectedRowFiles(files);
-                  setIsSuppDocDialogOpen(true);
-                }}
-              >
-                View All Docs ({files.length})
-              </div>
-            ) : (
-              <span>No docs</span>
-            )}
-          </div>
-        );
-      },
+      let amount: number = 0;
+
+      if (gbud_type === "Income") {
+        amount = num(gbud_inc_amt) ?? 0;
+      } else {
+        const actual = num(gbud_actual_expense);
+        const proposed = num(gbud_proposed_budget);
+        amount = actual && actual > 0 ? actual : proposed ?? 0;
+      }
+      return <div>Php {amount.toFixed(2)}</div>;
     },
-    {
-      id: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-1">
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                    <Eye size={16} />
-                  </div>
-                }
-                className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                title="Entry Details"
-                description="View detailed information about this budget entry."
-                mainContent={
-                  <div className="w-full h-full">
-                    <GADEditEntryForm
-                      gbud_num={row.original.gbud_num!}
-                      onSaveSuccess={refetch}
-                    />
-                  </div>
-                }
-              />
-            }
-            content="View"
-          />
-          <TooltipLayout
-            trigger={
-              <ConfirmationModal
-                trigger={
-                  <Button variant="destructive">
-                    <Archive size={16} />
-                  </Button>
-                }
-                title="Archive Entry"
-                description="This will move the entry to archive. Continue?"
-                actionLabel="Archive"
-                onClick={() => handleArchive(row.original.gbud_num!)}
-              />
-            }
-            content="Archive"
-          />
+  },
+  {
+    accessorKey: "files",
+    header: "Supporting Docs",
+    cell: ({ row }) => {
+      const entry = row.original;
+      const files = entry.files || [];
+      const hasReferenceNum = !!entry.gbud_reference_num;
+      const hasFiles = files.length > 0;
+
+      return (
+        <div className="flex justify-center gap-2">
+          {entry.gbud_type === "Expense" &&
+          (!hasReferenceNum || !hasFiles) ? (
+            <span className="text-red-500">
+              Missing
+              {!hasReferenceNum && " Reference Number"}
+              {!hasReferenceNum && !hasFiles && " and"}
+              {!hasFiles && " Supporting Docs"}
+            </span>
+          ) : files.length > 0 ? (
+            <div
+              className="text-sky-500 underline cursor-pointer"
+              onClick={() => {
+                setSelectedRowFiles(files);
+                setIsSuppDocDialogOpen(true);
+              }}
+            >
+              View All Docs ({files.length})
+            </div>
+          ) : (
+            <span>No docs</span>
+          )}
         </div>
-      ),
+      );
     },
-  ];
+  },
+  {
+    id: "action",
+    header: "Action",
+    cell: ({ row }) => (
+      <div className="flex justify-center gap-1">
+        <TooltipLayout
+          trigger={
+            <DialogLayout
+              trigger={
+                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                  <Eye size={16} />
+                </div>
+              }
+              className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              title="Entry Details"
+              description="View detailed information about this budget entry."
+              mainContent={
+                <div className="w-full h-full">
+                  <GADEditEntryForm
+                    gbud_num={row.original.gbud_num!}
+                    onSaveSuccess={refetch}
+                  />
+                </div>
+              }
+            />
+          }
+          content="View"
+        />
+        <TooltipLayout
+          trigger={
+            <ConfirmationModal
+              trigger={
+                <Button variant="destructive">
+                  <Archive size={16} />
+                </Button>
+              }
+              title="Archive Entry"
+              description="This will move the entry to archive. Continue?"
+              actionLabel="Archive"
+              onClick={() => handleArchive(row.original.gbud_num!)}
+            />
+          }
+          content="Archive"
+        />
+      </div>
+    ),
+  },
+];
 
   const archiveColumns: ColumnDef<GADBudgetEntry>[] = [
-    ...columns.filter((col) => col.id !== "action"),
-    {
-      id: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-1">
-          <TooltipLayout
-            trigger={
-              <ConfirmationModal
-                trigger={
-                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                    <ArchiveRestore size={16} />
-                  </div>
-                }
-                title="Restore Entry"
-                description="This will move the entry back to active. Continue?"
-                actionLabel="Restore"
-                onClick={() => handleRestore(row.original.gbud_num!)}
-              />
-            }
-            content="Restore"
-          />
-          <TooltipLayout
-            trigger={
-              <ConfirmationModal
-                trigger={
-                  <Button variant="destructive">
-                    <Trash size={16} />
-                  </Button>
-                }
-                title="Permanently Delete"
-                description="This cannot be undone. The entry will be permanently deleted."
-                actionLabel="Delete"
-                onClick={() => handlePermanentDelete(row.original.gbud_num!)}
-              />
-            }
-            content="Delete Permanently"
-          />
-        </div>
-      ),
-    },
-  ];
+  ...columns.filter((col) => col.id !== "action"),
+  {
+    id: "action",
+    header: "Action",
+    cell: ({ row }) => (
+      <div className="flex justify-center gap-1">
+        <TooltipLayout
+          trigger={
+            <ConfirmationModal
+              trigger={
+                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                  <ArchiveRestore size={16} />
+                </div>
+              }
+              title="Restore Entry"
+              description="This will move the entry back to active. Continue?"
+              actionLabel="Restore"
+              onClick={() => handleRestore(row.original.gbud_num!)}
+            />
+          }
+          content="Restore"
+        />
+        <TooltipLayout
+          trigger={
+            <ConfirmationModal
+              trigger={
+                <Button variant="destructive">
+                  <Trash size={16} />
+                </Button>
+              }
+              title="Permanently Delete"
+              description="This cannot be undone. The entry will be permanently deleted."
+              actionLabel="Delete"
+              onClick={() => handlePermanentDelete(row.original.gbud_num!)}
+            />
+          }
+          content="Delete Permanently"
+        />
+      </div>
+    ),
+  },
+];
 
   if (isLoading) {
     return (
