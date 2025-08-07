@@ -75,7 +75,7 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
 
       return budgetEntryResponse;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.gbud_num] });
@@ -87,7 +87,7 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
 
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
     },
-    onError: (error: any, variables) => {
+    onError: (error: any, _variables) => {
       const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
       toast.error('Failed to update budget entry', {
         description: errorMessage,

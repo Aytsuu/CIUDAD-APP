@@ -1,50 +1,5 @@
 from django.db import models
 from datetime import date
-from django.contrib.postgres.fields import ArrayField
-
-
-#gihimoan lang nako so that I could connect as fk
-class DevelopmentPlan(models.Model):
-    dev_id = models.BigAutoField(primary_key=True)
-    dev_date = models.DateField(default=date.today)
-    dev_client = models.CharField(max_length=200, null=True)
-    dev_issue = models.CharField(max_length=200, null=True)
-    dev_project = models.CharField(max_length=200, null=True)
-    dev_res_person = models.CharField(max_length=200, null=True)
-    dev_indicator = models.CharField(max_length=200, null=True)
-    dev_gad_budget = models.DecimalField(max_digits=10, decimal_places=2)
-
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
-
-    class Meta:
-        db_table = 'gad_development_plan'
-
-class DevelopmentBudget(models.Model):
-    gdb_id = models.BigAutoField(primary_key=True)
-    gdb_name = models.CharField(max_length=200, null=True)
-    gdb_pax = models.DecimalField(max_digits=10, decimal_places=2)
-    gdb_price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    dev = models.ForeignKey(
-        DevelopmentPlan,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='dev_id'
-    )
-
-    class Meta:
-        db_table = 'gad_development_budget'
-
-
-
-#===========================================================================================================
 
 class GAD_Budget_Year(models.Model):
     gbudy_num = models.BigAutoField(primary_key=True)
@@ -91,14 +46,6 @@ class GAD_Budget_Tracker(models.Model):
         related_name='proposals',
         db_column='gpr_id',
         null=True
-    )
-
-    gdb = models.ForeignKey(
-        DevelopmentBudget,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='gdb_id'
     )
 
     staff = models.ForeignKey(

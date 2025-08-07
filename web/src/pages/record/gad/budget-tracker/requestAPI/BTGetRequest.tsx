@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { GADBudgetEntry, DevelopmentBudgetItem, GADBudgetFile } from "../budget-tracker-types";
+import { GADBudgetEntry, GADBudgetFile } from "../budget-tracker-types";
 
 export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
     const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
@@ -16,10 +16,10 @@ export const fetchBudgetYears = async (): Promise<any[]> => {
     return response.data || [];
 };
 
-export const fetchExpenseParticulars = async (): Promise<DevelopmentBudgetItem[]> => {
-    const response = await api.get('/gad/development-budget-items/');
-    return response.data?.data || [];
-};
+// export const fetchExpenseParticulars = async (): Promise<DevelopmentBudgetItem[]> => {
+//     const response = await api.get('/gad/development-budget-items/');
+//     return response.data?.data || [];
+// };
 
 export const fetchIncomeParticulars = async (year: string): Promise<string[]> => {
     try {
@@ -43,4 +43,9 @@ export const fetchGADBudgetFiles = async (): Promise<GADBudgetFile[]> => {
 export const fetchGADBudgetFile = async (gbf_id: number): Promise<GADBudgetFile> => {
     const response = await api.get(`/gad/gad-budget-files/${gbf_id}/`);
     return response.data;
+};
+
+export const fetchProjectProposalsAvailability = async (year: string) => {
+  const response = await api.get(`/gad/project-proposals-availability/${year}/`);
+  return response.data.data;
 };

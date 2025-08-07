@@ -3,23 +3,26 @@ import {
     fetchGADBudgets,
     fetchGADBudgetEntry,
     fetchIncomeParticulars,
-    fetchExpenseParticulars,
     fetchGADBudgetFile,
-    fetchGADBudgetFiles
+    fetchGADBudgetFiles, fetchProjectProposalsAvailability
 } from "../requestAPI/BTGetRequest";
 
-import { GADBudgetEntryUI, GADBudgetEntry, DevelopmentBudgetItem, GADBudgetFile } from "../budget-tracker-types";
+import { GADBudgetEntryUI, GADBudgetEntry, GADBudgetFile, ProjectProposal } from "../budget-tracker-types";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
-//   console.log("Transforming Entry:", entry);
   return {
     ...entry,
     gbud_particulars: entry.gbud_type === 'Income' 
-      ? entry.gbud_inc_particulars || null
-      : entry.gbud_exp_particulars || null,
+      ? entry.gbud_inc_particulars || undefined
+      : entry.gbud_exp_particulars || undefined,
     gbud_amount: entry.gbud_type === 'Income'
       ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
-      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
+      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null,
+    gbud_exp_particulars: entry.gbud_type === 'Expense' && entry.gbud_exp_particulars
+      ? Array.isArray(entry.gbud_exp_particulars) 
+        ? entry.gbud_exp_particulars 
+        : undefined
+      : undefined
   };
 };
 
@@ -53,14 +56,6 @@ export const useIncomeParticulars = (year?: string) => {
     });
 };
 
-export const useExpenseParticulars = () => {
-    return useQuery<DevelopmentBudgetItem[]>({
-        queryKey: ['expense-particulars'],
-        queryFn: fetchExpenseParticulars,
-        staleTime: 1000 * 60 * 60 * 24,
-    });
-};
-
 export const useGADBudgetFiles = () => {
     return useQuery<GADBudgetFile[]>({
         queryKey: ['gad-budget-files'],
@@ -76,4 +71,13 @@ export const useGADBudgetFile = (gbf_id?: number) => {
         enabled: !!gbf_id,
         staleTime: 1000 * 60 * 15, 
     });
+};
+
+export const useProjectProposalsAvailability = (year?: string) => {
+  return useQuery<ProjectProposal[], Error>({
+    queryKey: ["projectProposalsAvailability", year],
+    queryFn: () => fetchProjectProposalsAvailability(year || ""),
+    enabled: !!year,
+    staleTime: 1000 * 60 * 5,
+  });
 };
