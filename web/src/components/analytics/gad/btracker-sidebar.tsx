@@ -3,7 +3,7 @@ import { Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { useLatestExpenses, useLatestIncomes } from "./btracker-analytics-queries";
-import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/queries/BTFetchQueries";
+import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,23 @@ export const GADExpenseSidebar = () => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear().toString();
   const { data: expenses, isLoading } = useLatestExpenses(currentYear);
-  const [selectedExpense, setSelectedExpense] = useState<GADBudgetEntryUI | null>(null);
+  const [_selectedExpense, setSelectedExpense] = useState<GADBudgetEntryUI | null>(null);
+
+  // Helper function to format particulars for display
+  const formatParticulars = (
+    particulars: string | { name: string; pax: string; amount: number }[] | undefined
+  ) => {
+    if (particulars === undefined || particulars === null) {
+      return "N/A";
+    }
+    if (typeof particulars === "string") {
+      return particulars || "N/A";
+    }
+    if (Array.isArray(particulars)) {
+      return particulars.map(item => item.name).join(", ") || "No items";
+    }
+    return "N/A";
+  };
 
   return (
     <Card className="w-80 bg-white h-full flex flex-col">
@@ -45,7 +61,7 @@ export const GADExpenseSidebar = () => {
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate mb-1">
-                          {expense.gbud_particulars}
+                          {formatParticulars(expense.gbud_particulars)}
                         </h3>
                         <div className="flex flex-col gap-1 text-xs text-gray-500">
                           <span>₱{expense.gbud_amount?.toLocaleString()}</span>
@@ -63,7 +79,7 @@ export const GADExpenseSidebar = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Particulars</Label>
-                        <p>{expense.gbud_particulars}</p>
+                        <p>{formatParticulars(expense.gbud_particulars)}</p>
                       </div>
                       <div>
                         <Label>Amount</Label>
@@ -116,8 +132,25 @@ export const GADIncomeSidebar = () => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear().toString();
   const { data: incomes, isLoading } = useLatestIncomes(currentYear);
+  const [_selectedIncome, setSelectedIncome] = useState<GADBudgetEntryUI | null>(null);
 
-  return  (
+  // Helper function to format particulars for display
+  const formatParticulars = (
+    particulars: string | { name: string; pax: string; amount: number }[] | undefined
+  ) => {
+    if (particulars === undefined || particulars === null) {
+      return "N/A";
+    }
+    if (typeof particulars === "string") {
+      return particulars || "N/A";
+    }
+    if (Array.isArray(particulars)) {
+      return particulars.map(item => item.name).join(", ") || "No items";
+    }
+    return "N/A";
+  };
+
+  return (
     <Card className="w-80 bg-white h-full flex flex-col">
       <div className="p-4 border-b border-black/10">
         <h2 className="text-lg font-semibold text-black/90">
@@ -143,11 +176,12 @@ export const GADIncomeSidebar = () => {
                 trigger={
                   <Card 
                     className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedIncome(income)}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate mb-1">
-                          {income.gbud_particulars}
+                          {formatParticulars(income.gbud_particulars)}
                         </h3>
                         <div className="flex flex-col gap-1 text-xs text-gray-500">
                           <span>₱{income.gbud_amount?.toLocaleString()}</span>
@@ -165,7 +199,7 @@ export const GADIncomeSidebar = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Particulars</Label>
-                        <p>{income.gbud_particulars}</p>
+                        <p>{formatParticulars(income.gbud_particulars)}</p>
                       </div>
                       <div>
                         <Label>Amount</Label>
