@@ -22,6 +22,8 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             newBudgetHeader: BudgetPlan;
             newBudgetDetails: z.infer<typeof BudgetPlanDetailSchema>[];
         }) => {
+            // toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
+
             try {
                 const validatedDetails = values.newBudgetDetails.map(detail => {
                     const parsed = BudgetPlanDetailSchema.parse(detail);
@@ -74,6 +76,7 @@ export const useAddBudgetPlanSuppDoc = (onSuccess?: () => void) => {
             type: "image" | "video" | "document";
             name: string;
             plan_id: number;
+            description: string;
         }>) => {
             if (files.length === 0) {
                 throw new Error('No files to upload');
