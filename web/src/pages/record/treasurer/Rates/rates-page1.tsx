@@ -64,10 +64,10 @@ function RatesPage1() {
         return { filtered, paginated, total }
     }
 
-    const { filtered: filteredActive, paginated: paginatedActive, total: totalActive } =
+    const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive } =
         filterAndPaginate(fetchedData.filter(row => !row.ags_is_archive), searchQueryActive, currentPageActive, pageSizeActive)
 
-    const { filtered: filteredHistory, paginated: paginatedHistory, total: totalHistory } =
+    const { filtered: _filteredHistory, paginated: paginatedHistory, total: totalHistory } =
         filterAndPaginate(fetchedData, searchQueryHistory, currentPageHistory, pageSizeHistory)
 
     const sharedColumns: ColumnDef<AnnualGrossSales>[] = [

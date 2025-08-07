@@ -50,7 +50,7 @@ function BudgetPlan() {
         return { filtered, paginated, total };
     };
 
-    const { filtered, paginated, total } = filterAndPaginate(visiblePlans, searchTerm, currentPage, pageSize, activeTab);
+    const { paginated, total } = filterAndPaginate(visiblePlans, searchTerm, currentPage, pageSize, activeTab);
 
     // Check if current year plan exists (regardless of archive status)
     const hasCurrentYearPlan = visiblePlans.some(plan => plan.plan_year === currentYear);

@@ -48,7 +48,7 @@ function CreateBudgetWithLimits({
   ]
 
   const [total, setTotal] = useState(0)
-  const [balance, setBalance] = useState(0)
+  const [_balance, setBalance] = useState(0)
   const [isOverLimit, setIsOverLimit] = useState(false)
   const budgetToast = useRef<string | number | null>(null)
 

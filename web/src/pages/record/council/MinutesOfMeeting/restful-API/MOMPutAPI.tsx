@@ -81,6 +81,8 @@ export const updateMinutesOfMeeting = async (mom_id: number, momf_id: number, va
             await updateMOMFile(mediaFiles[0], momf_id); // Use the update function with file ID
         }
 
+        return res.data
+
     } catch(err){
         console.error(err)
     }

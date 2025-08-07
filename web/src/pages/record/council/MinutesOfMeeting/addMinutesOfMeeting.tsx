@@ -83,7 +83,7 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                     <FormField
                         control={form.control}
                         name="meetingFile"
-                        render={({ field }) => (
+                        render={({ }) => (
                             <FormItem>
                                 <FormControl>
                                     <MediaUpload
