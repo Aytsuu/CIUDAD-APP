@@ -44,6 +44,10 @@ export default () => {
                 <Stack.Screen name="admin/scheduler/schedule-main" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/scheduler/schedule-weekly" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/scheduler/schedule-today" options={{headerShown:false}}/>
+                <Stack.Screen name="admin/childhealth/individual" options={{headerShown:false}}/>
+                <Stack.Screen name="admin/childhealth/overall" options={{headerShown:false}}/>
+                <Stack.Screen name="admin/childhealth/history" options={{headerShown:false}}/>
+            
             </Stack>
         </QueryClientProvider>
     );

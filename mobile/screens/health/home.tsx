@@ -7,16 +7,11 @@ import { router } from "expo-router";
 import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 
-
-
-
-
-
 const { width } = Dimensions.get('window');
 
 const Homepage = () => {
   const modules = [
-    { name: 'Child Health Records', route: '/child-health-records', icon: Baby },
+    { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
     { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
     { name: 'Animal Bites', route: '/admin/animalbites/overall', icon: Dog },
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
@@ -54,7 +49,6 @@ const Homepage = () => {
     },
   ];
 
-  // Function to navigate to the full scheduler screen
   const handleViewWeeklySchedule = () => {
     router.push('/admin/scheduler/schedule-weekly'); 
   };

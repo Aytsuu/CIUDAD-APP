@@ -35,8 +35,8 @@ class MedicalHistoryView(generics.ListCreateAPIView):
         return Response({"error": "Invalid data format"}, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteMedicalHistoryByPatrecView(APIView):
-    def delete(self, request, medrec_id):
-        deleted_count, _ = MedicalHistory.objects.filter(medrec_id=medrec_id).delete()
+    def delete(self, request, patrec):
+        deleted_count, _ = MedicalHistory.objects.filter(patrec=patrec).delete()
         if deleted_count > 0:
             return Response({"message": f"Deleted {deleted_count} medical history record(s)."}, status=status.HTTP_204_NO_CONTENT)
         return Response({"message": "No medical history records found."}, status=status.HTTP_404_NOT_FOUND)

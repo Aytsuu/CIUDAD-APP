@@ -3,6 +3,7 @@ from django.apps import apps
 from apps.patientrecords.models import *
 from apps.inventory.models import *
 from apps.healthProfiling.models import *
+from apps.administration.models import Staff
 
         
         
@@ -35,12 +36,6 @@ class MedicineRequestItem(models.Model):
 
 class MedicineRecord(models.Model):
    
-    # Request type choices
-    # REQ_TYPE_CHOICES = [
-    #     ('WALK IN', 'Walk In'),
-    #     ('APP', 'App'),
-    # ]
-
     medrec_id = models.BigAutoField(primary_key=True)
     medrec_qty = models.PositiveIntegerField(default=0)
     # req_type = models.CharField(max_length=10, choices=REQ_TYPE_CHOICES)
@@ -51,6 +46,7 @@ class MedicineRecord(models.Model):
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, blank=True,null=True, db_column='patrec_id', related_name='medicine_records')
     minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_records')
     medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, db_column='medreq_id', related_name='medicine_records',blank=True,null=True,)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_records', null=True, blank=True)
 
     def __str__(self):
         return f"MedicineRecord #{self.medrec_id}"
@@ -58,4 +54,13 @@ class MedicineRecord(models.Model):
     class Meta:
         db_table = 'medicine_record'
          
+class FindingsPlanTreatment(models.Model):
+    fpt_id = models.BigAutoField(primary_key=True)
+    medreq = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='findings_plan_treatments')
+    find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='findings_plan_treatments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+   
+    class Meta:
+        db_table = 'findings_plan_treatment'
         

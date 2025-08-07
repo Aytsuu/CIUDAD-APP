@@ -11,6 +11,8 @@ from .views.medicalhistory_views import *
 from .views.patient_views import *
 from .views.illness_views import *
 from .views.disability_views import *
+from apps.administration.views.staff_views import HealthStaffListView
+
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
@@ -39,7 +41,7 @@ urlpatterns = [
     path("findings/", FindingView.as_view(), name="findings"),
 
     path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
-    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
+    path('followup-pending/<int:patrec_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
@@ -58,7 +60,7 @@ urlpatterns = [
     path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
     path('body-measurements/<int:body_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
    
-    path('medical-history/<int:medrec_id>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
+    path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
     path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
 
@@ -66,6 +68,8 @@ urlpatterns = [
     
     path('disability/', ListDisabilityView.as_view(), name='list-disability'),
     path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
-    
+   
+    # HEALTH STAFF
+
 ]
 
