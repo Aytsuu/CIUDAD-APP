@@ -530,6 +530,10 @@ const IncomeTracking = () => {
           </Text>
         </View>
         <View className="flex-row justify-between">
+          <Text className="text-gray-600">Assigned Staff:</Text>
+          <Text>{item.staff_name || 'None'}</Text>
+        </View>        
+        <View className="flex-row justify-between">
           <Text className="text-gray-600">Additional Notes:</Text>
           <Text>{item.inc_additional_notes || 'None'}</Text>
         </View>

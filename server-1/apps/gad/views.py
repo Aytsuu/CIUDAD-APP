@@ -7,18 +7,7 @@ from .serializers import *
 from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
-
-class DevelopmentBudgetItemsView(generics.ListAPIView):
-    queryset = DevelopmentBudget.objects.all()
-    serializer_class = DevelopmentBudgetSerializer 
-
-    def list(self):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({
-            'data': serializer.data,
-            'count': queryset.count()
-        })
+from django.core.files.storage import default_storage
 
 class GAD_Budget_TrackerView(generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
@@ -352,7 +341,6 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             latest_status=Subquery(latest_logs.values('gprl_status')[:1])
         )
         
-
         # Aggregate counts for each status
         status_counts = queryset.aggregate(
             pending=Count('pk', filter=Q(latest_status='Pending')),
@@ -362,7 +350,7 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             approved=Count('pk', filter=Q(latest_status='Approved')),
             rejected=Count('pk', filter=Q(latest_status='Rejected'))
         )
-        print("Status Counts:", status_counts)
+
         # Return JSON response with counts
         return Response({
             'pending': status_counts['pending'] or 0,
@@ -371,4 +359,58 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             'resubmitted': status_counts['resubmitted'] or 0,
             'approved': status_counts['approved'] or 0,
             'rejected': status_counts['rejected'] or 0
+        })
+        
+class ProjectProposalAvailabilityView(generics.ListAPIView):
+    serializer_class = ProjectProposalSerializer
+
+    def get_queryset(self):
+        year = self.kwargs.get('year')
+        queryset = ProjectProposal.objects.filter(gpr_is_archive=False).select_related('staff')
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        year = self.kwargs.get('year')
+        if not year:
+            raise NotFound("Year parameter is required")
+
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+
+        response_data = []
+        for proposal in data:
+            # Check existing GAD_Budget_Tracker entries for this project and year
+            existing_entries = GAD_Budget_Tracker.objects.filter(
+                gbudy__gbudy_year=year,
+                gbud_exp_project=proposal['gprTitle'],
+                gbud_is_archive=False
+            )
+            is_used = existing_entries.exists()
+
+            # Collect all recorded budget item names
+            recorded_items = set()
+            for entry in existing_entries:
+                for item in entry.gbud_exp_particulars or []:
+                    recorded_items.add(item['name'])
+
+            # Determine unrecorded items
+            project_items = {item['name'] for item in proposal['gprBudgetItems'] or []}
+            unrecorded_items = [
+                item for item in proposal['gprBudgetItems']
+                if item['name'] not in recorded_items
+            ]
+
+            response_data.append({
+                'gpr_id': proposal['gprId'],
+                'gpr_title': proposal['gprTitle'],
+                'gpr_budget_items': proposal['gprBudgetItems'],
+                'recorded_items': list(recorded_items),
+                'unrecorded_items': unrecorded_items,
+                'is_editable': not is_used  # Still useful for other project-level editability
+            })
+
+        return Response({
+            'data': response_data,
+            'count': len(response_data)
         })

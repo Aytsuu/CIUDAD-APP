@@ -616,21 +616,31 @@ function ExpenseEdit() {
     // Calculate budget changes
     if (amount) {
       if (actualAmount) {
-        if (actualAmount != prevActualAmount && prevActualAmount != 0.00) {
-          totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
-          totalExpense = (totEXP - prevActualAmount) + actualAmount;
-          proposedBud = (propBudget + prevActualAmount) - actualAmount;
-        } else {
-          if (amount != prevAmount) {
-            totalBudget = (totBUDGET + prevAmount) - actualAmount;
-            totalExpense = (totEXP - prevAmount) + actualAmount;
-            proposedBud = (propBudget + prevAmount) - actualAmount;
-          } else {
-            totalBudget = (totBUDGET + amount) - actualAmount;
-            totalExpense = (totEXP - amount) + actualAmount;
-            proposedBud = (propBudget + amount) - actualAmount;
-          }
+        if(actualAmount == prevActualAmount)
+        {
+            totalBudget = totBUDGET;      
+            totalExpense = totEXP;   
+            proposedBud = propBudget;                              
         }
+        else{
+            if(actualAmount != prevActualAmount && prevActualAmount != 0){ // if the user updates the actual amount
+                totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
+                totalExpense = (totEXP - prevActualAmount) + actualAmount; 
+                proposedBud = (propBudget + prevActualAmount) - actualAmount;                        
+            }
+            else{// if new added actual amount
+                if(amount != prevAmount){  // if theres changes in the amount value
+                    totalBudget = (totBUDGET + prevAmount) - actualAmount;
+                    totalExpense = (totEXP - prevAmount) + actualAmount; 
+                    proposedBud = (propBudget + prevAmount) - actualAmount;   
+                }
+                else{ // if no changes in amount value
+                    totalBudget = (totBUDGET + amount) - actualAmount;
+                    totalExpense = (totEXP - amount) + actualAmount; 
+                    proposedBud = (propBudget + amount) - actualAmount;
+                }
+            }                           
+        }          
       } else {
         if (actualAmount != prevActualAmount) {
           totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
