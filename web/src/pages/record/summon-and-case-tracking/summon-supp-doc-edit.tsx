@@ -74,7 +74,7 @@ export default function SummonSuppDocEditForm({csd_id, csd_url, csd_description,
                     <FormField
                         control={form.control}
                         name="supp_doc"
-                        render={({ field }) => (
+                        render={({ }) => (
                             <FormItem>
                                 <FormControl>
                                     <MediaUpload

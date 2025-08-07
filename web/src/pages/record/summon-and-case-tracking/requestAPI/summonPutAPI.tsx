@@ -28,7 +28,7 @@ export const escalateCase = async (sr_id: string, comp_id: string) => {
             decision_date: new Date().toISOString(),
         })
 
-        return res.data
+        return res.data, res2.data
     }catch(err){
         console.error(err)
     }
