@@ -1291,23 +1291,31 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_en
             else{
                 if(amount){
                     if(actualAmount){ //checks if actual amount is also available
-                        if(actualAmount != prevActualAmount && prevActualAmount != 0){ // if the user updates the actual amount
-                            totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
-                            totalExpense = (totEXP - prevActualAmount) + actualAmount; 
-                            proposedBud = (propBudget + prevActualAmount) - actualAmount;                        
+                        if(actualAmount == prevActualAmount)
+                        {
+                            totalBudget = totBUDGET;      
+                            totalExpense = totEXP;   
+                            proposedBud = propBudget;                              
                         }
-                        else{// if new added actual amount
-                            if(amount != prevAmount){  // if theres changes in the amount value
-                                totalBudget = (totBUDGET + prevAmount) - actualAmount;
-                                totalExpense = (totEXP - prevAmount) + actualAmount; 
-                                proposedBud = (propBudget + prevAmount) - actualAmount;   
+                        else{
+                            if(actualAmount != prevActualAmount && prevActualAmount != 0){ // if the user updates the actual amount
+                                totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
+                                totalExpense = (totEXP - prevActualAmount) + actualAmount; 
+                                proposedBud = (propBudget + prevActualAmount) - actualAmount;                        
                             }
-                            else{ // if no changes in amount value
-                                totalBudget = (totBUDGET + amount) - actualAmount;
-                                totalExpense = (totEXP - amount) + actualAmount; 
-                                proposedBud = (propBudget + amount) - actualAmount;
-                            }
-                        }
+                            else{// if new added actual amount
+                                if(amount != prevAmount){  // if theres changes in the amount value
+                                    totalBudget = (totBUDGET + prevAmount) - actualAmount;
+                                    totalExpense = (totEXP - prevAmount) + actualAmount; 
+                                    proposedBud = (propBudget + prevAmount) - actualAmount;   
+                                }
+                                else{ // if no changes in amount value
+                                    totalBudget = (totBUDGET + amount) - actualAmount;
+                                    totalExpense = (totEXP - amount) + actualAmount; 
+                                    proposedBud = (propBudget + amount) - actualAmount;
+                                }
+                            }                           
+                        }                
                     }
                     else{ // if no actual amount cuz it will go here if the value is 0
                         if(actualAmount != prevActualAmount){ // checks if the user changes actual amount to 0
