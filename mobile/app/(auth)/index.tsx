@@ -14,7 +14,8 @@ import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
 import Request from "../(request)";
 import GarbagePickupTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
 import ResolutionPage from "@/screens/council/resolution/resolution-main";
+import ExpenseLogMain from "@/screens/treasurer/treasurer-budget-tracker/expense-income-log/expense-log-main";
 
 export default () => {
-    return <ResolutionPage/>
+    return <IncomeExpenseMain/>
 }

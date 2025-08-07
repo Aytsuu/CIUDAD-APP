@@ -546,7 +546,8 @@ import {
   Pencil,
   CircleAlert,
   ArchiveRestore,
-  Trash  
+  Trash,
+  ClipboardCheck    
 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
@@ -785,24 +786,28 @@ const ExpenseTracking = () => {
         )}
       </CardHeader>
       <CardContent className="space-y-2">
-        <View className="flex-row justify-between">
+        <View className="flex-row justify-between pb-2">
           <Text className="text-gray-600">Particulars:</Text>
           <Text>{item.exp_budget_item}</Text>
         </View>
         <View className="flex-row justify-between">
-          <Text className="text-gray-600">Amount:</Text>
+          <Text className="text-gray-600">Proposed Budget:</Text>
           <Text className="font-semibold">
             ₱{Number(item.iet_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Text>
         </View>
         {item.iet_actual_amount && (
-          <View className="flex-row justify-between">
-            <Text className="text-gray-600">Actual Amount:</Text>
+          <View className="flex-row justify-between pb-2">
+            <Text className="text-gray-600">Actual Expense:</Text>
             <Text className="font-semibold">
               ₱{Number(item.iet_actual_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
           </View>
         )}
+        <View className="flex-row justify-between pb-2">
+          <Text className="text-gray-600">Assigned Staff:</Text>
+          <Text>{item.staff_name}</Text>
+        </View>
         <View className="flex-row justify-between">
           <Text className="text-gray-600">Documents:</Text>
           {item.files?.length > 0 ? (
@@ -914,7 +919,7 @@ const ExpenseTracking = () => {
           {/* Tabs */}
           <View className="px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
+              <TabsList className="bg-blue-50 mb-3 mt-5 flex-row justify-between">
                 <TabsTrigger 
                     value="active" 
                     className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
@@ -939,6 +944,24 @@ const ExpenseTracking = () => {
                     </View>
                   </TabsTrigger>
               </TabsList>
+
+              <View className="flex-row justify-end mb-3">
+                <TouchableOpacity
+                  onPress={() => {
+                    router.push({
+                      pathname: '/(treasurer)/budget-tracker/budget-expense-log', // Update this path to your actual route
+                      params: {
+                        LogYear: year, // Pass any parameters you need
+                      }
+                    });
+                  }}
+                  className="bg-primaryBlue px-3 py-2 rounded-md" // Different color to distinguish from Create
+                >
+                  <Text className="text-white text-[17px]">
+                    <ClipboardCheck size={14} color="white"/>   Logs
+                  </Text>
+                </TouchableOpacity>
+              </View>         
 
               {/* Active Entries */}
               <TabsContent value="active">
