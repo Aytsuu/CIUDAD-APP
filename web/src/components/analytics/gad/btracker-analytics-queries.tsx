@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/queries/BTFetchQueries";
-import { GADBudgetEntry, fetchGADBudgets } from "@/pages/record/gad/budget-tracker/requestAPI/BTGetRequest";
+import type { GADBudgetEntry, GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
+import {  fetchGADBudgets } from "@/pages/record/gad/budget-tracker/requestAPI/BTGetRequest";
 import { getbudgetyearreq } from "@/pages/record/gad/budget-tracker/requestAPI/BTYearReq";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
   return {
     ...entry,
     gbud_particulars: entry.gbud_type === 'Income' 
-      ? entry.gbud_inc_particulars || null
-      : entry.gbud_exp_particulars || null,
+      ? entry.gbud_inc_particulars || undefined
+      : entry.gbud_exp_particulars || undefined,
     gbud_amount: entry.gbud_type === 'Income'
       ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
     //   : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
