@@ -49,3 +49,8 @@ export const fetchProjectProposalsAvailability = async (year: string) => {
   const response = await api.get(`/gad/project-proposals-availability/${year}/`);
   return response.data.data;
 };
+
+export const fetchBudgetLog = async (year: string) => {
+  const response = await api.get(`/gad/budget-logs/${year}/`);
+  return response.data.data;
+};

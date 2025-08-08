@@ -115,6 +115,18 @@ class GADBudgetFileView(generics.ListCreateAPIView):
                 "error": True
             }, status=400)
 
+class GADBudgetLogListView(generics.ListCreateAPIView):
+    def get(self, request, year):
+        logs = GADBudgetLog.objects.filter(
+            gbudl_budget_entry__gbudy__gbudy_year=year,
+            gbudl_budget_entry__gbud_type="Expense"
+        ).select_related(
+            'gbudl_budget_entry'
+        ).order_by("-gbudl_created_at")
+        
+        serializer = GADBudgetLogSerializer(logs, many=True)
+        return Response({"data": serializer.data})
+
 class GADBudgetFileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_File.objects.all()
     serializer_class = GADBudgetFileSerializer

@@ -10,7 +10,8 @@ urlpatterns = [
     path("gad-budget-files/", GADBudgetFileView.as_view()),
     path("gad-budget-files/<int:pk>/", GADBudgetFileDetailView.as_view()),
     path("project-proposals-availability/<str:year>/", ProjectProposalAvailabilityView.as_view(), name='project-proposal-availability'),
-
+    path("budget-logs/<str:year>/", GADBudgetLogListView.as_view(), name="gad-budget-log-list"),
+    
     path('project-proposals/', ProjectProposalView.as_view(), name='project-proposal-list'),
     path('project-proposals/<int:gpr_id>/', ProjectProposalDetailView.as_view(), name='project-proposal-detail'),
     path('project-proposals/<int:gpr_id>/logs/', ProjectProposalLogView.as_view(), name='project-proposal-logs'),

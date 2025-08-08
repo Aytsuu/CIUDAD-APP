@@ -3,11 +3,11 @@ import {
     fetchGADBudgets,
     fetchGADBudgetEntry,
     fetchIncomeParticulars,
-    fetchGADBudgetFile,
+    fetchGADBudgetFile, fetchBudgetLog,
     fetchGADBudgetFiles, fetchProjectProposalsAvailability
 } from "../requestAPI/BTGetRequest";
 
-import { GADBudgetEntryUI, GADBudgetEntry, GADBudgetFile, ProjectProposal } from "../budget-tracker-types";
+import { GADBudgetEntryUI, GADBudgetEntry, GADBudgetFile, ProjectProposal, BudgetLogTable } from "../budget-tracker-types";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
   return {
@@ -77,6 +77,15 @@ export const useProjectProposalsAvailability = (year?: string) => {
   return useQuery<ProjectProposal[], Error>({
     queryKey: ["projectProposalsAvailability", year],
     queryFn: () => fetchProjectProposalsAvailability(year || ""),
+    enabled: !!year,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useGADBudgetLogs = (year: string) => {
+  return useQuery<BudgetLogTable[], Error>({
+    queryKey: ["gadBudgetLogs", year],
+    queryFn: () => fetchBudgetLog(year),
     enabled: !!year,
     staleTime: 1000 * 60 * 5,
   });

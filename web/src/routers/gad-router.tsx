@@ -6,40 +6,45 @@ import AnnualDevelopmentPlan from "@/pages/record/gad/annual_development_plan/an
 import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_plan/annual_development_table";
 import AdminGADProjectProposal from "@/pages/record/gad/project-proposal/admin-update-status";
 import ProjectProposalLogTable from "@/pages/record/gad/project-proposal/proposal-log";
+import GADBudgetLogTable from "@/pages/record/gad/budget-tracker/budget-log";
 
 export const gad_router = [
-    {
-        // path: '/gad-budget-tracker-table/:year',
-        // element: <BudgetTracker/>
-        path: '/gad/gad-budget-tracker-table/:year/',
-        element: <BudgetTracker/>
-    },
-    {
-        path: 'gad-budget-tracker-entry/:gbud_num/',
-        element: <GADEditEntryForm />,
-    },
-    {
-        path: '/gad-budget-tracker-main',
-        element: <GADBudgetTrackerMain/>
-    },
-    {
-        path: '/gad-project-proposal',
-        element: <GADProjectProposal/>
-    },
-    {
-        path: '/gad-review-project-proposal',
-        element: <AdminGADProjectProposal/>
-    },
-    {
-        path: '/gad-annual-development-plan',
-        element: <AnnualDevelopmentPlan/>
-    },
-    {
-        path: '/gad-annual-development-plan-table',
-        element: <AnnaualDevelopmentPlanTable/>
-    },
-        {
-        path: '/gad-project-proposal-log',
-        element: <ProjectProposalLogTable/>
-    }
-]
+  {
+    // path: '/gad-budget-tracker-table/:year',
+    // element: <BudgetTracker/>
+    path: "/gad/gad-budget-tracker-table/:year/",
+    element: <BudgetTracker />,
+  },
+  {
+    path: "gad-budget-tracker-entry/:gbud_num/",
+    element: <GADEditEntryForm />,
+  },
+  {
+    path: "/gad-budget-tracker-main",
+    element: <GADBudgetTrackerMain />,
+  },
+  {
+    path: "/gad-budget-log/:year",
+    element: <GADBudgetLogTable />,
+  },
+  {
+    path: "/gad-project-proposal",
+    element: <GADProjectProposal />,
+  },
+  {
+    path: "/gad-review-project-proposal",
+    element: <AdminGADProjectProposal />,
+  },
+  {
+    path: "/gad-annual-development-plan",
+    element: <AnnualDevelopmentPlan />,
+  },
+  {
+    path: "/gad-annual-development-plan-table",
+    element: <AnnaualDevelopmentPlanTable />,
+  },
+  {
+    path: "/gad-project-proposal-log",
+    element: <ProjectProposalLogTable />,
+  },
+];

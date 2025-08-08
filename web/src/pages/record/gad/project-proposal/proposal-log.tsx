@@ -173,7 +173,7 @@ function ProjectProposalLogTable() {
   return (
     <LayoutWithBack
       title="Project Proposal Logs"
-      description="View and manage proposal logs"
+      description="View proposal logs"
     >
       <div className="w-full h-full">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">

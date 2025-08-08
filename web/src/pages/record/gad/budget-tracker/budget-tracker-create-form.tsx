@@ -16,23 +16,16 @@ import {
 } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { useCreateGADBudget } from "./queries/BTAddQueries";
-import GADAddEntrySchema, {
-  FormValues,
-} from "@/form-schema/gad-budget-track-create-form-schema";
+import GADAddEntrySchema, {FormValues} from "@/form-schema/gad-budget-track-create-form-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { removeLeadingZeros } from "@/helpers/removeLeadingZeros";
 
 function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   const { year } = useParams<{ year: string }>();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
-  const [selectedBudgetItems, setSelectedBudgetItems] = useState<
-    { name: string; pax: string; amount: number }[]
-  >([]);
-  const [recordedBudgetItems, setRecordedBudgetItems] = useState<
-    { name: string; pax: string; amount: number }[]
-  >([]); // Track recorded items
-
-  // Data hooks
+  const [selectedBudgetItems, setSelectedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
+  const [recordedBudgetItems, setRecordedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
   const {
     data: yearBudgets,
     isLoading: yearBudgetsLoading,
@@ -60,6 +53,13 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     return initialBudget - totalExpenses;
   };
 
+  // Calculate proposed budget (sum of unrecorded items' amounts)
+  const proposedBudget = removeLeadingZeros(
+    selectedBudgetItems
+      .filter(item => !recordedBudgetItems.some(r => r.name === item.name))
+      .reduce((sum, item) => sum + item.amount, 0)
+  );
+
   // Form setup
   const form = useForm<FormValues>({
     resolver: zodResolver(GADAddEntrySchema),
@@ -72,6 +72,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       gbud_exp_project: "",
       gbud_exp_particulars: [],
       gbud_actual_expense: 0,
+      gbud_proposed_budget: 0,
       gbud_reference_num: "",
       gbud_remaining_bal: 0,
       gbudy: 0,
@@ -85,6 +86,15 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   const actualExpenseWatch = form.watch("gbud_actual_expense");
   const projectWatch = form.watch("gbud_exp_project");
   const remainingBalance = calculateRemainingBalance();
+
+  // Update proposed_budget in form
+  useEffect(() => {
+    if (typeWatch === "Expense") {
+      form.setValue("gbud_proposed_budget", proposedBudget);
+    } else {
+      form.setValue("gbud_proposed_budget", 0);
+    }
+  }, [proposedBudget, typeWatch, form]);
 
   // Set year budget
   useEffect(() => {
@@ -225,6 +235,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
         gbud_exp_project: values.gbud_exp_project,
         gbud_exp_particulars: values.gbud_exp_particulars,
         gbud_actual_expense: values.gbud_actual_expense,
+        gbud_proposed_budget: values.gbud_proposed_budget,
         gbud_reference_num: values.gbud_reference_num,
         gbud_remaining_bal:
           remainingBalance - (values.gbud_actual_expense || 0),
@@ -306,7 +317,6 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                         onCustomInput={(value) => {
                           field.onChange(value);
                         }}
-                        // Remove displayKey and valueKey for string arrays
                         disabled={incomeParticularsLoading}
                       />
                     )}
@@ -358,6 +368,14 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                 )}
               </div>
             </div>
+
+            <FormInput
+              control={form.control}
+              name="gbud_add_notes"
+              label="Description"
+              placeholder="Enter related information (if any)"
+            />
+
             {typeWatch === "Expense" && selectedProject && (
               <>
                 <FormField
@@ -438,15 +456,18 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                     </div>
                   </div>
                 )}
+                <FormInput
+                  control={form.control}
+                  name="gbud_proposed_budget"
+                  label="Proposed Budget"
+                  type="number"
+                  readOnly={true}
+                  placeholder="Calculated from unrecorded budget items"
+                />
               </>
             )}
+
             <div className="flex flex-col gap-4">
-              <FormInput
-                control={form.control}
-                name="gbud_add_notes"
-                label="Description"
-                placeholder="Enter related information (if any)"
-              />
               {typeWatch === "Income" ? (
                 <FormInput
                   control={form.control}
@@ -534,6 +555,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                 </>
               )}
             </div>
+
             <div className="mt-4 flex justify-end gap-3">
               {Object.keys(form.formState.errors).length > 0 && (
                 <div className="text-red-500 text-sm">
@@ -543,7 +565,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
               {typeWatch === "Expense" &&
                 selectedBudgetItems.length > 0 &&
                 !hasUnrecordedItems() && (
-                  <p className="text-sm text-amber-600 mb-2">
+                  <p className="text-sm text-red-500 mb-2">
                     Note: Add at least one new budget item to save
                   </p>
                 )}

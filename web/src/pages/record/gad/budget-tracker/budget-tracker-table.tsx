@@ -19,7 +19,7 @@ import GADAddEntryForm from "./budget-tracker-create-form";
 import { Input } from "@/components/ui/input";
 import GADEditEntryForm from "./budget-tracker-edit-form";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -477,6 +477,11 @@ const columns: ColumnDef<GADBudgetEntry>[] = [
               }}
             />
           </div>
+           <Link to={`/gad-budget-log/${gbudy_year}`}>
+              <Button variant="link" className="mr-1 w-20 underline text-sky-600">
+                View Logs
+              </Button>
+            </Link>
         </div>
         <div>
           <DialogLayout

@@ -106,3 +106,14 @@ export interface ProjectProposal {
   unrecorded_items: { name: string; pax: string; amount: number }[];
   is_editable: boolean;
 }
+
+export interface BudgetLogTable {
+  gbudl_id: number;
+  gbud_exp_project: string | null;
+  gbud_exp_particulars: { name: string; pax: string; amount: number }[] | null;
+  gbud_proposed_budget: number | null;
+  gbud_actual_expense: number | null;
+  gbudl_amount_returned: number | null;
+  gbudl_created_at: string;
+  gbud_type: "Income" | "Expense";
+}

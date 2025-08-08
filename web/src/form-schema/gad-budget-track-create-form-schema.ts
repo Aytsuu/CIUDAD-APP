@@ -45,6 +45,7 @@ const GADAddEntrySchema = z.object({
   gbud_actual_expense: DataRequirement.optional(),
   gbud_reference_num: z.string().max(200, "Reference number must not exceed 200 characters").optional(),
   gbud_remaining_bal: DataRequirement.optional(),
+  gbud_proposed_budget: DataRequirement.optional(),
   gbudy: z.number().min(1, "Valid year budget is required"),
   gpr_id: z.number().optional(),
 }).superRefine((data, ctx) => {
