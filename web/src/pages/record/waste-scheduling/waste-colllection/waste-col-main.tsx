@@ -297,7 +297,7 @@ import { formatTime } from "@/helpers/timeFormatter";
 import UpdateWasteColSched from "./waste-col-UpdateSched";
 import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "./queries/wasteColFetchQueries";
 import WasteColSched from "./waste-col-sched";
-import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from "./queries/wasteColDeleteQueries";
+import { useArchiveWasteCol, useDeleteWasteCol } from "./queries/wasteColDeleteQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 function WasteCollectionMain() {
@@ -313,7 +313,6 @@ function WasteCollectionMain() {
     // ARCHIVE / RESTORE / DELETE MUTATIONS
     const { mutate: archiveWasteSchedCol } = useArchiveWasteCol();
     const { mutate: deleteWasteSchedCol } = useDeleteWasteCol();
-    const { mutate: restoreWasteSchedCol } = useRestoreWasteCol();
 
     useEffect(() => {
         const today = new Date();
@@ -331,14 +330,6 @@ function WasteCollectionMain() {
 
     const handleDelete = (wc_num: number) => {
         deleteWasteSchedCol(wc_num);
-    };
-
-    const handleArchive = (wc_num: number) => {
-        archiveWasteSchedCol(wc_num);
-    };
-
-    const handleRestore = (wc_num: number) => {
-        restoreWasteSchedCol(wc_num);
     };
 
     // Filter data based on selected sitio
