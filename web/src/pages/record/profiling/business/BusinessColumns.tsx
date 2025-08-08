@@ -136,6 +136,17 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
     header: "Last Name",
   },
   {
+    accessorKey: "suffix",
+    header: "Suffix",
+  },
+   {
+    accessorKey: "sex",
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]
+    )
+  },
+  {
     accessorKey: "businesses",
     header: "Owned Businesses",
     cell: ({row}) => {
