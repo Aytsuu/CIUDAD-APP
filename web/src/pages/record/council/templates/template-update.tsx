@@ -68,8 +68,8 @@ function TemplateUpdateForm({
   } : TemplateUpdateFormProps) {
 
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [formValues, setFormValues] = useState<z.infer<typeof documentTemplateFormSchema>>();
+  const [_isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [_formValues, setFormValues] = useState<z.infer<typeof documentTemplateFormSchema>>();
 
 
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
