@@ -12,37 +12,13 @@ export const fetchImzSupplyStockById = async (imzStck_id: number) => {
   return response.data;
 };
 
-// export const updateVaccineStockQuantity = async (
-//   vacStck_id: number,
-//   wasted_dose: number,
-//   vacStck_qty_avail: number
-// ) => {
-//   const payload = {
-//     wasted_dose,
-//     vacStck_qty_avail,
-//     updated_at: new Date().toISOString(),
-//   };
 
-//   const response = await updateVaccineStock({
-//     vacStck_id,
-//     payload,
-//   });
-
-//   return response.data;
-// };
 
 export const createVaccineWasteTransaction = async (
-  vacStck_id: number,
-  wastedAmount: number,
-  unit: "doses" | "containers"
+  data: Record<string, any>
 ) => {
   try {
-    const res = await api2.post("inventory/antigens_stocks/transaction/", {
-      antt_qty: `${wastedAmount} ${unit}`,
-      antt_action: "Wasted",
-      vacStck_id: vacStck_id,
-      staff: 0,
-    });
+    const res = await api2.post("inventory/antigens_stocks/transaction/", data);
     return res.data;
   } catch (err) {
     console.error(err);
@@ -51,40 +27,23 @@ export const createVaccineWasteTransaction = async (
 };
 
 export const updateImmunizationStockQuantity = async (
-  imzStck_id: number,
-  wasted_items: number,
-  imzStck_avail: number
+  data: Record<string, any>
 ) => {
-  const payload: {
-    wasted_items: number;
-    imzStck_avail: number;
-    updated_at: string;
-  } = {
-    wasted_items,
-    imzStck_avail,
-    updated_at: new Date().toISOString(),
-  };
+ 
 
   const response = await api2.put(
-    `inventory/immunization_stock/${imzStck_id}/`,
-    payload
+    `inventory/immunization_stock/${data.imzStck_id}/`,
+    data
   );
   return response.data;
 };
 
-export const createImmunizationWasteTransaction = async (
-  imzStck_id: number,
-  wastedAmount: number,
-  unit: "pcs" | "boxes"
-) => {
-  const payload = {
-    imzt_qty: `${wastedAmount} ${unit}`,
-    imzt_action: "Wasted",
-    staff: 0, // Assuming staff ID 0 for system-generated transactions
-    imzStck_id,
-    created_at: new Date().toISOString(),
-  };
 
-  const response = await api2.post("inventory/imz_transaction/", payload);
+export const createImmunizationWasteTransaction = async (
+  data: Record<string, any>
+) => {
+  
+
+  const response = await api2.post("inventory/imz_transaction/", data);
   return response.data;
 };

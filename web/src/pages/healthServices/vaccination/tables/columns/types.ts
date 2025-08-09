@@ -1,5 +1,5 @@
 import { VaccineDetails,FollowUpVisit } from "@/pages/healthServices/childservices/viewrecords/types";
-
+import { Address } from "@/pages/healthServices/childservices/viewrecords/types";
 
 export interface VacrecDetails  {
   vacrec_id?: string,
@@ -25,9 +25,16 @@ export interface VaccinationRecord {
   vacStck?: number;
   vacrec_status?: string;
   vacrec_totaldose?: number;
+  signature?: string | null;
 
   patient?:{
+    pat_id?: string;
+    pat_type?: string;
     personal_info?: PersonalInfo
+    address?:Address;  
+    households: any[];
+
+
   };
 
   vital_signs: {
@@ -119,12 +126,6 @@ export type BasicInfoVaccinationRecord = {
   dob: string;
 }
 export type filter = "all" | "partially_vaccinated" | "completed";
-
-//   export interface VaccinationCountsCardProps {
-//     residentCount: number;
-//     transientCount: number;
-//     totalCount: number;
-//   }
 
 export interface VaccinationCounts {
   residentCount: number;

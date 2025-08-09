@@ -1,6 +1,6 @@
 from .models import *
 from rest_framework import serializers
-from apps.inventory.serializers import *
+from apps.inventory.serializers.firstaid_serializers import *
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response

@@ -220,16 +220,7 @@ export default function FirstAidStocks() {
     }
   }
 
-  if (isLoadingFirstAid) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    )
-  }
+ 
 
   const columns = getColumns(handleArchiveInventory)
   return (

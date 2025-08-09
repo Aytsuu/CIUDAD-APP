@@ -188,8 +188,7 @@ const items: MenuItem[] = [
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
-          { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          { title: "Transactions List", url: "/transactionMainInventoryList" },
+          { title: "Inventory Stocks", url: "/main-inventory" },
         ],
       },
       {

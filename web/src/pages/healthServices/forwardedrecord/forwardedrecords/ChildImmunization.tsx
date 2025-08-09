@@ -54,12 +54,10 @@ export default function ForwardedCHimmunization() {
     const personalInfo = patDetails?.personal_info;
     const addressInfo = patDetails?.address;
     const familyHeadInfo = patDetails?.family_head_info;
-
     const motherInfo = familyHeadInfo?.family_heads?.mother?.personal_info;
     const fatherInfo = familyHeadInfo?.family_heads?.father?.personal_info;
-
     return {
-      record, // Keep the full record
+      record, 
       chrec_id: record.chrec,
       chhist_id: record.chhist_id,
 

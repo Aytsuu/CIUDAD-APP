@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {getMedconRecordById,getMedicalRecord} from '../restful-api/get';
-export const usePatientMedicalRecords = (patientId: string | undefined) => {
+export const usePatientMedicalRecords = (patientId: string | null) => {
   return useQuery({
     queryKey: ['patientMedicalDetails', patientId],
     queryFn: () => patientId ? getMedconRecordById(patientId) : Promise.resolve(null),

@@ -15,7 +15,7 @@ export const addVaccineStock = async (
       vac_id: vac_id,
       batch_number: data.batchNumber.toUpperCase(),
       solvent: data.solvent,
-      volume: data.volume || 0,
+      // volume: data.volume || 0,
       qty: data.qty,
       dose_ml: data.volume || 0,
       vacStck_qty_avail: availqty, // Use the calculated available quantity

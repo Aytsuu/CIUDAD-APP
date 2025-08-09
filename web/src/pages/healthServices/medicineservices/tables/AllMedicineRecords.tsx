@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, FileInput } from "lucide-react";
+import { ArrowUpDown, Search, FileInput, Loader2 } from "lucide-react";
 import { Link } from "react-router";
 import {
   DropdownMenu,
@@ -317,7 +317,7 @@ export default function AllMedicineRecords() {
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
+              <Loader2 className="animate-spin text-gray-500 w-6 h-6 mx-auto my-4" />
             ) : (
               <DataTable columns={columns} data={paginatedData} />
             )}

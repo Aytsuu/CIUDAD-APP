@@ -28,7 +28,7 @@ export default function FirstAidList() {
       const staffFullName = `${staffFirstName} ${staffLastName}`.trim()
 
       return {
-        inv_id:firstAid.finv_details?.inv_detail?.inv_id,
+        inv_id:firstAid.finv_detail?.inv_detail?.inv_id,
         fat_id: firstAid.fat_id,
         fa_name: firstAid.fa_name,
         fat_qty: firstAid.fat_qty,
@@ -50,16 +50,7 @@ export default function FirstAidList() {
   // Slice the data for the current page
   const paginatedFirstAid = filteredFirstAid.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-  if (isLoadingFirstAid) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    )
-  }
+  
   return (
     <div>
       <div className="hidden lg:flex justify-between items-center mb-4">

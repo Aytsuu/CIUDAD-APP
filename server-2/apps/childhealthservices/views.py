@@ -92,7 +92,6 @@ class UpdateChildHealthSupplementsStatusView(generics.RetrieveUpdateAPIView):
         for item in data:
             chssupplementstat_id = item.get("chssupplementstat_id")
             date_completed = item.get("date_completed")
-            date_given_iron= item.get("date_given_iron")
 
             if not chssupplementstat_id:
                 errors.append(
@@ -119,8 +118,7 @@ class UpdateChildHealthSupplementsStatusView(generics.RetrieveUpdateAPIView):
             update_data = {}
             if date_completed is not None:
                 update_data["date_completed"] = date_completed
-            if date_given_iron is not None:
-                update_data["date_given_iron"] = date_given_iron
+           
 
             serializer = ChildHealthSupplementStatusSerializer(
                 instance, data=update_data, partial=True

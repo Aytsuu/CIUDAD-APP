@@ -91,7 +91,7 @@ export default function CombinedHealthRecordsTable() {
   const { data: childHealthData, isLoading: childHealthLoading } = useQuery({
     queryKey: ["ChildHealthCheckuprecord"],
     queryFn: async () => {
-      const response = await api2.get("/child-health/record/checkup/");
+      const response = await api2.get("/child-health/history/checkup/");
       return response.data || [];
     },
   });

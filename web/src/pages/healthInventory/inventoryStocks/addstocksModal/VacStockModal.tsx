@@ -18,6 +18,8 @@ import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQue
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/VaccineFetchAPI";
 import { useAuth } from "@/context/AuthContext";
+
+
 export default function AddVaccineStock() {
 
   const{user}=useAuth()

@@ -8,6 +8,7 @@ import {
   getUnvaccinatedResidents,
   getVaccinationRecords,
   getVaccinationRecordById,
+  getLatestVitals,
 } from '../restful-api/get';
 
 export const useIndivPatientVaccinationRecords = (patientId?: string) => {
@@ -44,6 +45,7 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
             vacrec_status: record.vachist_status,
             vaccination_count: record.vaccination_count || 0,
             created_at: record.created_at || "",
+            signature: record.signature || null,
             vital_signs: record.vital_signs || {
               vital_bp_systolic: "",
               vital_bp_diastolic: "",
@@ -81,14 +83,11 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
         );
       },
   
-      staleTime: 2 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false, // Prevent refetch on tab focus
-      refetchOnMount: false, // Prevent refetch when component mounts
-      enabled: !!patientId, // Only run query if patientId exists
+      staleTime: 2 * 60 * 1000, 
+      enabled: !!patientId,
     });
   };
   
-
 
 // src/queries/vaccination.ts
 export const useFollowupVaccines = (patientId?: string) => {
@@ -106,6 +105,19 @@ export const useFollowupVaccines = (patientId?: string) => {
   };
 
 
+export const useLatestVitals = (patientId?: string) => {
+  return useQuery({
+    queryKey: ['latestVitals', patientId],
+    queryFn: async () => {
+      if (!patientId) return null;
+      
+      const res = await getLatestVitals(patientId);
+      return res || null;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    enabled: !!patientId,
+  });
+}
 
   // src/queries/vaccination.ts
 export const useFollowupChildHealthandVaccines = (patientId?: string) => {

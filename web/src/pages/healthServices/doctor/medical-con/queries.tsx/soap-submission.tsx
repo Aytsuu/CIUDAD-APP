@@ -7,7 +7,7 @@ import {
   createMedicineRequest,
   createPEResults,
   createFindings,
-  createFindingPlantreatment
+  createFindingPlantreatment,
 } from "../restful-api/create";
 import { updateMedicalConsultation } from "../restful-api/update";
 import {
@@ -48,15 +48,13 @@ export const useSubmitSoapForm = () => {
 
       try {
         // 1. Create Findings
-        const findingResponse = await createFindings(
-          {
-            assessment_summary: formData.assessment_summary || "",
-            plantreatment_summary: formData.plantreatment_summary || "",
-            subj_summary: formData.subj_summary || "",
-            obj_summary: formData.obj_summary || "",
-          },
-          staffId
-        );
+        const findingResponse = await createFindings({
+          assessment_summary: formData.assessment_summary || "",
+          plantreatment_summary: formData.plantreatment_summary || "",
+          subj_summary: formData.subj_summary || "",
+          obj_summary: formData.obj_summary || "",
+          staff: staffId,
+        });
 
         findingId = findingResponse.find_id;
 
@@ -69,17 +67,20 @@ export const useSubmitSoapForm = () => {
             pat_id: formData.medicineRequest.pat_id,
             medicines: formData.medicineRequest.medicines.map((med) => ({
               minv_id: med.minv_id,
-              medrec_qty: med.medrec_qty,
+              medreqitem_qty: med.medrec_qty,
               reason: med.reason || "No reason provided",
             })),
           });
           medRequestId = medRequestResponse.medreq_id;
         }
 
-        console.log("medRequestId", medRequestId)
-        
-        await createFindingPlantreatment(medRequestId?.toString() || "",findingId)
+        console.log("medRequestId", medRequestId);
 
+    
+        await createFindingPlantreatment({
+          medreq: medRequestId?.toString() || "",
+          find: findingId,
+        });
 
         // 3. Create Physical Exam Results if needed
         if (
@@ -90,23 +91,26 @@ export const useSubmitSoapForm = () => {
           perCreated = true;
         }
 
+  
         // 4. Create Follow-up Visit if needed
         if (formData.followv) {
-          const followv_response = await createFollowUpVisit(
-            MedicalConsultation.patrec ?? "",
-            formData.followv ?? ""
-          );
+          const followv_response = await createFollowUpVisit({
+            patrec: MedicalConsultation.patrec ?? "",
+            followv_date: formData.followv ?? "",
+            followv_status: "pending",
+            followv_description: "Follow up Shedule for Medical Consultation",
+          });
           followv = followv_response?.followv_id;
         }
 
-        // 5. Update Medical Consultation status
-        await updateMedicalConsultation(
-          MedicalConsultation.medrec_id,
-          "completed",
-          findingId,
-          medRequestId ?? undefined,
-          followv ?? undefined
-        );
+      
+        await updateMedicalConsultation({
+          medrec_id: MedicalConsultation.medrec_id,
+          medrec_status: "completed",
+          find: findingId,
+          medreq: medRequestId ?? undefined,
+          followv: followv ?? undefined,
+        });
 
         // 6. Create Medical History if illnesses are selected
         if (
@@ -117,7 +121,7 @@ export const useSubmitSoapForm = () => {
             (illnessId) => ({
               patrec: MedicalConsultation?.patrec,
               ill: illnessId,
-              created_at: new Date().toISOString(),
+              year: new Date().getFullYear(),
             })
           );
           await createMedicalHistory(medicalHistoryData);
@@ -126,12 +130,19 @@ export const useSubmitSoapForm = () => {
 
         // Update loading toast to success
         toast.success("Successfully submitted", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000
+          icon: (
+            <CircleCheck size={24} className="fill-green-500 stroke-white" />
+          ),
+          duration: 2000,
         });
         navigate(-1);
         queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] }); // Update with your query key
-        queryClient.invalidateQueries({ queryKey: ["patientMedicalDetails",MedicalConsultation?.patrec_details?.pat_id] }); // Update with your query key
+        queryClient.invalidateQueries({
+          queryKey: [
+            "patientMedicalDetails",
+            MedicalConsultation?.patrec_details?.pat_id,
+          ],
+        }); // Update with your query key
 
         return {
           success: true,
@@ -148,10 +159,10 @@ export const useSubmitSoapForm = () => {
             await deleteMedicalHistory(MedicalConsultation.patrec);
           }
           if (findingId) {
-            await updateMedicalConsultation(
-              MedicalConsultation.medrec_id,
-              "pending"
-            );
+            await updateMedicalConsultation({
+              medrec_id: MedicalConsultation.medrec_id,
+              medrec_status: "pending",
+            });
           }
           if (medRequestId) {
             await deleteMedicineRequest(medRequestId);

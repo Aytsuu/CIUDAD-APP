@@ -10,11 +10,11 @@ import {
   createSupplementStatus,
   createChildHealthHistory,
 } from "./createAPI";
-import { updateSupplementStatus,updateCHHistory } from "./updateAPI";
-import { processMedicineRequest } from "./createAPI";
+import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
 import { AddRecordArgs } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
+import { processMedicineRequest } from "@/pages/healthServices/medicineservices/queries/processSubmit";
 
 export async function updateChildHealthRecord({
   submittedData,
@@ -28,6 +28,8 @@ export async function updateChildHealthRecord({
   const old_chhist = originalRecord?.chhist_id;
   const old_chrec_id = originalChrecDetails.chrec_id;
   const old_patrec_id = originalPatrecDetails.patrec_id;
+  console.log("Original Record Details:", originalRecord);
+  console.log("SBackend:", submittedData);
 
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -76,7 +78,7 @@ export async function updateChildHealthRecord({
         });
         followv_id = newFollowUp.followv_id;
 
-       await createChildHealthNotes({
+        await createChildHealthNotes({
           chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -98,9 +100,9 @@ export async function updateChildHealthRecord({
       }
 
       await updateCHHistory({
-        chhist_id:current_chhist_id,status:submittedData.status
-
-      })
+        chhist_id: current_chhist_id,
+        status: submittedData.status,
+      });
       // Handle breastfeeding dates
       if (submittedData.BFdates && submittedData.BFdates.length > 0) {
         for (const date of submittedData.BFdates) {
@@ -123,7 +125,6 @@ export async function updateChildHealthRecord({
             })),
           },
           staff || null,
-          current_chhist_id
         );
       }
     }
@@ -136,7 +137,7 @@ export async function updateChildHealthRecord({
     const disabilitiesToAdd = currentDisabilityIds.filter(
       (id) => !originalActiveDisabilityIds.includes(id)
     );
-   
+
     // Add new disabilities
     if (disabilitiesToAdd.length > 0) {
       await createPatientDisability({
@@ -158,33 +159,38 @@ export async function updateChildHealthRecord({
           ): status is {
             chssupplementstat_id: number;
             date_completed?: string | null;
-            date_given_iron?: string | undefined; // Exclude null
-          } =>
-            Boolean(status.chssupplementstat_id) &&
-            status.date_given_iron !== null // Ensure ID exists and exclude null
+          } => Boolean(status.chssupplementstat_id)
         )
         .map((status) => {
           // Find the original status to compare
           const originalStatus = originalStatuses.find(
             (s: any) => s.chssupplementstat_id === status.chssupplementstat_id
           );
+          console.log("Original status:", originalStatus);
+          console.log("Submitted status:", status);
+          console.log(
+            "Date completed comparison:",
+            originalStatus?.date_completed,
+            "vs",
+            status.date_completed
+          );
+          console.log(
+            "Has changed:",
+            originalStatus?.date_completed !== status.date_completed
+          );
 
-          // Only include if:
-          // 1. This is a new record (no original status) OR
-          // 2. date_completed or date_given_iron has changed from original
           const isNewRecord = !originalStatus;
           const hasChangedDateCompleted =
-            originalStatus?.date_completed !== status.date_completed;
-          const hasChangedDateGivenIron =
-            originalStatus?.date_given_iron !== status.date_given_iron;
+            originalStatus?.date_completed !== status.date_completed &&
+            !(
+              originalStatus?.date_completed == null &&
+              status.date_completed == null
+            );
 
-          return isNewRecord ||
-            hasChangedDateCompleted ||
-            hasChangedDateGivenIron
+          return isNewRecord || hasChangedDateCompleted
             ? {
                 chssupplementstat_id: status.chssupplementstat_id,
                 date_completed: status.date_completed || null,
-                date_given_iron: status.date_given_iron || null,
               }
             : null;
         })
@@ -216,9 +222,8 @@ export async function updateChildHealthRecord({
         console.log("No supplement status changes detected, skipping update");
       }
     }
-  } 
-  
-  
+  }
+
   // ==============================================================//
   else {
     const newChhist = await createChildHealthHistory({
@@ -269,7 +274,7 @@ export async function updateChildHealthRecord({
     const vitalsigns = await createVitalSigns({
       vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
       staff: staff || null,
-      patrec_id: patrec_id,
+      patrec: patrec_id,
     });
     const vital_id = vitalsigns.vital_id;
 
@@ -360,7 +365,6 @@ export async function updateChildHealthRecord({
           })),
         },
         staff || null,
-        current_chhist_id // assuming you have this in submittedData
       );
     }
 
@@ -391,10 +395,7 @@ export async function updateChildHealthRecord({
           ): status is {
             chssupplementstat_id: number;
             date_completed?: string | null;
-            date_given_iron?: string | undefined; // Exclude null
-          } =>
-            Boolean(status.chssupplementstat_id) &&
-            status.date_given_iron !== null // Ensure ID exists and exclude null
+          } => Boolean(status.chssupplementstat_id)
         )
         .map((status) => {
           // Find the original status to compare
@@ -407,17 +408,15 @@ export async function updateChildHealthRecord({
           // 2. date_completed or date_given_iron has changed from original
           const isNewRecord = !originalStatus;
           const hasChangedDateCompleted =
-            originalStatus?.date_completed !== status.date_completed;
-          const hasChangedDateGivenIron =
-            originalStatus?.date_given_iron !== status.date_given_iron;
-
-          return isNewRecord ||
-            hasChangedDateCompleted ||
-            hasChangedDateGivenIron
+            originalStatus?.date_completed !== status.date_completed &&
+            !(
+              originalStatus?.date_completed == null &&
+              status.date_completed == null
+            );
+          return isNewRecord || hasChangedDateCompleted
             ? {
                 chssupplementstat_id: status.chssupplementstat_id,
                 date_completed: status.date_completed || null,
-                date_given_iron: status.date_given_iron || null,
               }
             : null;
         })
@@ -427,7 +426,6 @@ export async function updateChildHealthRecord({
           ): update is {
             chssupplementstat_id: number;
             date_completed: string | null;
-            date_given_iron: string | null;
           } => update !== null
         );
 
@@ -460,8 +458,6 @@ export async function updateChildHealthRecord({
   };
 }
 
-
-
 // src/hooks/useChildHealthRecordMutation.ts
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -477,7 +473,8 @@ export const useUpdateChildHealthRecordMutation = () => {
       const { chrec_id } = data;
       console.log("Child health record updated successfully result :", data);
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({queryKey: ["childHealthHistory", chrec_id],
+      queryClient.invalidateQueries({
+        queryKey: ["childHealthHistory", chrec_id],
       });
       toast.success("Child health record created successfully!");
       navigate(-1);

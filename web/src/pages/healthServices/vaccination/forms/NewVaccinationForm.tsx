@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,6 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "../restful-api/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
@@ -34,60 +33,56 @@ import {
   useUnvaccinatedVaccines,
   useFollowupVaccines,
   usePatientVaccinationDetails,
+  useLatestVitals
 } from "../queries/fetch";
 import { useIndivPatientVaccinationRecords } from "../queries/fetch";
 import { VaccinationRecord } from "../tables/columns/types";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
+import {
+  SignatureFieldRef,
+  SignatureField,
+} from "../../Reports/firstaid-report/signature";
+import { showErrorToast} from "@/components/ui/toast";
+import { fetchStaffWithPositions } from "../../Reports/firstaid-report/queries/fetchQueries";
+
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, params } = location.state || {};
   const patientDataFromLocation = params?.patientData;
-
   const shouldShowPatientSearch = mode === "newvaccination_record";
-  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
-    "self"
-  );
+  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">( "self");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isStep1ConfirmOpen, setIsStep1ConfirmOpen] = useState(false);
   const [isStep2ConfirmOpen, setIsStep2ConfirmOpen] = useState(false);
   const [, setNextVisitDate] = useState<string | null>(null);
-  const [nextVisitDescription, setNextVisitDescription] = useState<
-    string | null
-  >(null);
-  const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(
-    null
-  );
+  const [nextVisitDescription, setNextVisitDescription] = useState< string | null >(null);
+  const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>( null);
   const [vaccineHistory, setVaccineHistory] = useState<VaccinationRecord[]>([]);
   const [isVaccineCompleted, setIsVaccineCompleted] = useState(false);
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
-  const patientToUse = shouldShowPatientSearch
-    ? selectedPatientData
-    : patientDataFromLocation;
-  const { data: patientVaccinationRecords } = useIndivPatientVaccinationRecords(
-    patientToUse?.pat_id
-  );
-  const { data: vaccinations = [] } =
-    usePatientVaccinationDetails(patientToUse?.pat_id);
-  const { data: unvaccinatedVaccines = [] } = useUnvaccinatedVaccines(
-    patientToUse?.pat_id,
-    patientToUse?.personal_info?.per_dob
-  );
-  const { data: followupVaccines = [], isLoading: isFollowVacLoading } =
-    useFollowupVaccines(patientToUse?.pat_id);
+  const patientToUse = shouldShowPatientSearch? selectedPatientData: patientDataFromLocation;
+  const signatureRef = useRef<SignatureFieldRef>(null);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState("");
 
-  const { data: vaccinesData, isLoading: isVacstckLoading } =
-    fetchVaccinesWithStock();
-
-  const isLoading = unvaccinatedVaccines && isFollowVacLoading;
-
+  // Data fetching hooks
+  const { data: patientVaccinationRecords } = useIndivPatientVaccinationRecords( patientToUse?.pat_id);
+  const { data: vaccinations = [] } = usePatientVaccinationDetails( patientToUse?.pat_id);
+  const { data: unvaccinatedVaccines = [] } = useUnvaccinatedVaccines( patientToUse?.pat_id, patientToUse?.personal_info?.per_dob);
+  const { data: followupVaccines = [], isLoading: isFollowVacLoading } =useFollowupVaccines(patientToUse?.pat_id);
+  const { data: vaccinesData, isLoading: isVacstckLoading } =fetchVaccinesWithStock(patientToUse?.personal_info?.per_dob);
+  const { data: staffOptions, isLoading: staffLoading } = fetchStaffWithPositions();
+  const { data: latestVitals } = useLatestVitals(patientToUse?.pat_id);
+  
+  const isLoading = unvaccinatedVaccines && isFollowVacLoading && staffLoading;
+  
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
     defaultValues: {
@@ -113,6 +108,22 @@ export default function VaccinationRecordForm() {
     },
   });
 
+
+// Use useEffect to update form2 when latestVitals changes
+useEffect(() => {
+  if (latestVitals) {
+    form2.reset({
+      pr: latestVitals.pulse || "",
+      temp: latestVitals.temperature || "", // Default to "36" if empty
+      o2: latestVitals.oxygen_saturation || "",
+      bpsystolic: latestVitals.bp_systolic || "",
+      bpdiastolic: latestVitals.bp_diastolic || "",
+    });
+  }
+}, [latestVitals, form2]);
+
+
+  
   useEffect(() => {
     form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
     if (patientToUse?.personal_info?.per_dob) {
@@ -132,6 +143,10 @@ export default function VaccinationRecordForm() {
     selectedPatientData,
     patientDataFromLocation,
   ]);
+
+  const handleSignatureChange = useCallback((signature: string | null) => {
+    setSignature(signature);
+  }, []);
 
   const handlePatientSelect = (patient: Patient | null, patientId: string) => {
     setSelectedPatientId(patientId);
@@ -176,6 +191,7 @@ export default function VaccinationRecordForm() {
 
         let doseNumber = 1;
 
+        // Always get the latest dose and increment by 1 for non-routine vaccines
         if (vaccinelist.vac_type_choices !== "routine") {
           const latestDose =
             currentVaccineHistory.length > 0
@@ -190,33 +206,39 @@ export default function VaccinationRecordForm() {
 
         form.setValue("vachist_doseNo", doseNumber);
 
-        // Set vacrec_totaldose for all vaccines
-        if (vaccinelist.no_of_doses) {
+        // Only set total dose for non-conditional vaccines
+        if (
+          vaccinelist.vac_type_choices !== "conditional" &&
+          vaccinelist.no_of_doses
+        ) {
           form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
         }
 
-        // Check if vaccine is already completed
+        // Check if vaccine is already completed (only for non-conditional vaccines)
         const isCompleted =
+          vaccinelist.vac_type_choices !== "conditional" &&
           currentVaccineHistory.some((record) => {
             const recordTotalDose = record.vacrec_details?.vacrec_totaldose
               ? Number(record.vacrec_details.vacrec_totaldose)
               : 0;
             const currentDose = Number(doseNumber);
 
-            // Check if current dose is equal to or exceeds total doses
             return currentDose > recordTotalDose && recordTotalDose > 0;
-          }) && vaccinelist.vac_type_choices !== "routine";
+          });
 
         setIsVaccineCompleted(isCompleted);
 
-        if (isCompleted && vaccinelist.vac_type_choices !== "routine") {
-          toast.warning(
+        if (isCompleted) {
+          showErrorToast(
             `${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`
           );
           return;
         }
 
-        if (doseNumber < vaccinelist.no_of_doses) {
+        if (
+          vaccinelist.vac_type_choices !== "conditional" &&
+          doseNumber < vaccinelist.no_of_doses
+        ) {
           if (vaccinelist.vac_type_choices === "routine") {
             const { interval, time_unit } = vaccinelist.routine_frequency;
             const nextDate = calculateNextVisitDate(
@@ -250,7 +272,7 @@ export default function VaccinationRecordForm() {
             }
           }
         } else {
-          // If current dose equals total dose, clear follow-up date
+          // If current dose equals total dose or it's conditional, clear follow-up date
           setNextVisitDate(null);
           setNextVisitDescription(null);
           form.setValue("followv_date", "");
@@ -263,7 +285,7 @@ export default function VaccinationRecordForm() {
     setSubmitting(true);
     if (assignmentOption === "other" && !data.assignto) {
       form.setError("assignto", { message: "Please select an assignee" });
-      toast.error("Please select an assignee");
+      showErrorToast("Please select an assignee");
       return;
     }
     try {
@@ -285,6 +307,7 @@ export default function VaccinationRecordForm() {
       await submitStep2.mutateAsync({
         assignmentOption,
         data,
+        signature: signature || "",
         vacStck_id: vacStck_id.trim(),
         vac_id: vac_id.trim(),
         vac_name: vac_name.trim(),
@@ -308,6 +331,8 @@ export default function VaccinationRecordForm() {
 
   const submitStep2 = useSubmitStep2();
   const onSubmitStep2 = async (data: VitalSignsType) => {
+    const currentSignature = signatureRef.current?.getSignature();
+
     setSubmitting(true);
     try {
       const formData = form.getValues();
@@ -327,6 +352,7 @@ export default function VaccinationRecordForm() {
 
       await submitStep2.mutateAsync({
         assignmentOption,
+        signature: currentSignature || "",
         data,
         vacStck_id: vacStck_id.trim(),
         vac_id: vac_id.trim(),
@@ -352,20 +378,32 @@ export default function VaccinationRecordForm() {
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isValid = await form.trigger();
+    const currentSignature = signatureRef.current?.getSignature();
+    console.log("Current Signature:", currentSignature);
+    if (!currentSignature) {
+      showErrorToast("Please provide a signature before submitting.");
+      return;
+    }
     if (isValid && !hasInvalidStep1Fields) {
       setIsStep1ConfirmOpen(true);
     } else {
-      toast.error("Please complete all required fields correctly");
+      showErrorToast("Please complete all required fields correctly");
     }
   };
 
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isValid = await form2.trigger();
-    if (isValid && !hasInvalidStep1Fields && !hasInvalidStep2Fields) {
+    const currentSignature = signatureRef.current?.getSignature();
+    console.log("Current Signature:", currentSignature);
+    if (!currentSignature) {
+      showErrorToast("Please provide a signature before submitting.");
+      return;
+    }
+    if (isValid && !hasInvalidStep1Fields) {
       setIsStep2ConfirmOpen(true);
     } else {
-      toast.error("Please complete all required fields correctly");
+      showErrorToast("Please complete all required fields correctly");
     }
   };
 
@@ -385,13 +423,7 @@ export default function VaccinationRecordForm() {
     (shouldShowPatientSearch && !selectedPatientId) ||
     !form.watch("vaccinetype") ||
     (assignmentOption === "other" && !form.watch("assignto")) ||
-    !form.watch("vachist_doseNo") ||
-    (selectedVaccineType === "conditional" && !form.watch("vacrec_totaldose"));
-
-  const hasInvalidStep2Fields =
-    assignmentOption === "self" &&
-    selectedVaccineType === "conditional" &&
-    !form.watch("followv_date");
+    !form.watch("vachist_doseNo");
 
   return (
     <>
@@ -508,8 +540,6 @@ export default function VaccinationRecordForm() {
                               type="date"
                             />
                           </div>
-
-                         
                         </>
                       )}
                     </div>
@@ -530,6 +560,15 @@ export default function VaccinationRecordForm() {
                         readOnly={mode !== "newvaccination_record"}
                       />
                     </div>
+                  </div>
+
+                  <div className="w-full ">
+                    <SignatureField
+                      ref={signatureRef}
+                      title="Signature"
+                      onSignatureChange={handleSignatureChange}
+                      required={true}
+                    />
                   </div>
                   <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">
                     <h2 className="font-bold text-darkBlue1 mb-3">
@@ -559,24 +598,20 @@ export default function VaccinationRecordForm() {
                     {assignmentOption === "other" && (
                       <div className="mt-4">
                         <Combobox
-                          options={[
-                            { id: "1", name: "Keneme" },
-                            { id: "2", name: "Dr. Smith" },
-                            { id: "3", name: "Nurse Johnson" },
-                          ]}
-                          value={form.watch("assignto") || ""}
-                          onChange={(value) =>
-                            form.setValue("assignto", value || "")
+                          options={staffOptions?.formatted || []}
+                          value={selectedStaffId}
+                          // onChange={setSelectedStaffId}
+                          onChange={(value) => {
+                            form.setValue("assignto", value || ""); // Update form value
+                            setSelectedStaffId(value || ""); // Keep local state in sync if needed
+                          }}
+                          placeholder={
+                            isLoading
+                              ? "Loading staff..."
+                              : "Select staff member"
                           }
-                          placeholder="Select a person to assign"
-                          triggerClassName="font-normal w-full"
-                          emptyMessage={
-                            <div className="flex gap-2 justify-center items-center">
-                              <Label className="font-normal text-[13px]">
-                                No assignees available
-                              </Label>
-                            </div>
-                          }
+                          emptyMessage="No available staff members"
+                          triggerClassName="w-full"
                         />
                       </div>
                     )}
@@ -607,7 +642,7 @@ export default function VaccinationRecordForm() {
                       <Button
                         type="submit"
                         className="w-[120px]"
-                        disabled={hasInvalidStep1Fields || submitting}
+                        disabled={hasInvalidStep1Fields || submitting || isVaccineCompleted}
                       >
                         {submitting ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -633,26 +668,29 @@ export default function VaccinationRecordForm() {
                         </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-white">
+                    <span className="text-sm text-yellow-600">
+                        Note* Previous data recorded on {format(new Date(latestVitals.created_at), "MMMM d, yyyy ")}
+                      </span>                   
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-white">
                       <FormInput
                         control={form2.control}
                         name="pr"
                         label="Pulse Rate (bpm)"
-                        placeholder="Enter pulse rate"
+                        placeholder="60-100 bpm (Normal adult range)"
                         type="number"
                       />
                       <FormInput
                         control={form2.control}
                         name="temp"
                         label="Temperature (°C)"
-                        placeholder="Enter temperature"
+                        placeholder="36.5-37.5°C"
                         type="number"
                       />
                       <FormInput
                         control={form2.control}
                         name="o2"
                         label="Oxygen Saturation (%)"
-                        placeholder="Enter SpO2 level"
+                        placeholder="95-100% (Room air)"
                         type="number"
                       />
                     </div>
@@ -664,15 +702,15 @@ export default function VaccinationRecordForm() {
                         control={form2.control}
                         name="bpsystolic"
                         label="Systolic Blood Pressure"
+                        placeholder="range: 90-130"
                         type="number"
-                        placeholder="Systolic"
                       />
                       <FormInput
                         control={form2.control}
                         name="bpdiastolic"
                         label="Diastolic Blood Pressure"
                         type="number"
-                        placeholder="Diastolic"
+                        placeholder="range: 60-80"
                       />
                     </div>
                     <ValidationAlert

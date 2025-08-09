@@ -35,14 +35,18 @@ export default function IndivVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filter, setfilter] = useState<filter>("all");
+  const { data: vaccinationRecords, isLoading: isVaccinationRecordsLoading } = useIndivPatientVaccinationRecords(patientData?.pat_id);
+  const vaccinationCount = vaccinationRecords?.length ?? 0;
+  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =useUnvaccinatedVaccines(patientData?.pat_id, patientData.personal_info.per_dob );
+  const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } =useFollowupVaccines(patientData?.pat_id);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(patientData?.pat_id);
+  const isLoading = isCompleteVaccineLoading || isUnvaccinatedLoading || isFollowVaccineLoading || isVaccinationRecordsLoading;
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
 
   // Guard clause for missing patientData
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
 
   useEffect(() => {
     // Get patient data from route state
@@ -51,27 +55,7 @@ export default function IndivVaccinationRecords() {
       setSelectedPatientData(patientData);
     }
   }, [location.state]);
-  const { data: vaccinationRecords, isLoading: isVaccinationRecordsLoading } =
-    useIndivPatientVaccinationRecords(patientData?.pat_id);
-
-  const vaccinationCount = vaccinationRecords?.length ?? 0;
-
-  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
-    useUnvaccinatedVaccines(
-      patientData?.pat_id,
-      patientData.personal_info.per_dob
-    );
-
-  const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } =
-    useFollowupVaccines(patientData?.pat_id);
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =
-    usePatientVaccinationDetails(patientData?.pat_id);
-
-  const isLoading =
-    isCompleteVaccineLoading ||
-    isUnvaccinatedLoading ||
-    isFollowVaccineLoading ||
-    isVaccinationRecordsLoading;
+  
   const filteredData = React.useMemo(() => {
     if (!vaccinationRecords) return [];
     return vaccinationRecords.filter((record) => {
@@ -79,17 +63,10 @@ export default function IndivVaccinationRecords() {
         `${record.vachist_id} ${record.vaccine_name} ${record.batch_number} ${record.vachist_doseNo} ${record.vachist_status}`.toLowerCase();
       const matchesSearch = searchText.includes(searchQuery.toLowerCase());
       const matchesFilter = true;
-      // if (filter !== "all") {
-      //   const status = (record.vachist_status ?? "").toLowerCase();
-      //   if (filter === "partially_vaccinated") {
-      //     matchesFilter = status === "partially vaccinated";
-      //   } else if (filter === "completed") {
-      //     matchesFilter = status === "completed";
-      //   }
-      // }
+
       return matchesSearch && matchesFilter;
     });
-  }, [searchQuery, vaccinationRecords, filter]);
+  }, [searchQuery, vaccinationRecords]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -97,7 +74,7 @@ export default function IndivVaccinationRecords() {
     currentPage * pageSize
   );
   // In your IndivVaccinationRecords component:
-  const columns = IndivVaccineColumns(patientData, vaccinationRecords || []);
+  const columns = IndivVaccineColumns(patientData);
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4 ">

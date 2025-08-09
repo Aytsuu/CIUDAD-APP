@@ -3,7 +3,7 @@ import {
   createFollowUpVisit,
   createBodyMeasurement,
   createPatientDisability,
-  processMedicineRequest,
+  
   createChildHealthNotes,
   createChildVitalSign,
   createNutritionalStatus,
@@ -12,7 +12,7 @@ import {
   createChildHealthRecord,
   createChildHealthHistory,
 } from "./createAPI";
-
+import { processMedicineRequest } from "@/pages/healthServices/medicineservices/queries/processSubmit";
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
@@ -80,9 +80,9 @@ export async function addChildHealthRecord({
 
   // Create patient record
   const newPatrec = await createPatientRecord(
-    submittedData.pat_id,
-    "Child Health Record",
-    staff
+   { pat_id:submittedData.pat_id,
+    patrec_type:"Child Health Record",
+    staff:staff}
   );
 
   const patrec_id = newPatrec.patrec_id;
@@ -250,7 +250,6 @@ export async function addChildHealthRecord({
         })),
       },
       staff || null,
-      current_chhist_id 
     );
   }
 

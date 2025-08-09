@@ -1,9 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Form,
-} from "@/components/ui/form/form";
+import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useState } from "react";
@@ -11,145 +9,153 @@ import { isVaccine, isSupply } from "../tables/VaccineStocks";
 import { useLocation } from "react-router";
 import { Pill } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { useHandleWaste } from "../REQUEST/Antigen/queries/WastedQueries"; // Import the custom hook
+import { useHandleWaste } from "../REQUEST/Antigen/queries/WastedQueries";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Loader2, CircleCheck } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
-
+import { useAuth } from "@/context/AuthContext";
+import { showErrorToast,showSuccessToast } from "@/components/ui/toast";
 
 const formSchema = z.object({
   wastedDose: z.coerce
     .number()
     .min(1, "Wasted dose must be at least 1")
     .int("Must be a whole number"),
+  staff_id: z.string().optional(),
 });
 
 export default function WastedAntigen() {
   const location = useLocation();
-  const {  record } = location.state;
-  const { handleVaccineWaste, handleSupplyWaste } = useHandleWaste(); // Use the custom hook
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { record } = location.state || {};
+  const { handleVaccineWaste, handleSupplyWaste } = useHandleWaste();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [formData, setFormData] = useState<z.infer<typeof formSchema> | null>(
-    null
-  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      wastedDose: 0,
+      wastedDose: undefined,
+      staff_id: user?.staff?.staff_id || undefined,
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    setFormData(data);
+  const handleConfirm = () => {
     setIsConfirmationOpen(true);
   };
 
-  const handleConfirm = async () => {
-    if (!formData) return;
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (!data || !record) {
+      toast.error("Missing form data or record");
+      return;
+    }
+
 
     try {
       setIsSubmitting(true);
-      setIsConfirmationOpen(false);
+      
+    
+
       if (isVaccine(record)) {
-        await handleVaccineWaste(record, formData.wastedDose);
+        await handleVaccineWaste(record, { ...data, wastedAmount: data.wastedDose });
       } else if (isSupply(record)) {
-        await handleSupplyWaste(record, formData.wastedDose);
-      }
-      navigate(-1);
-      toast.success("Added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+        await handleSupplyWaste(record, { ...data, wastedAmount: data.wastedDose });
+      }data
+      
+      setIsConfirmationOpen(false);
+
+     showSuccessToast("Wasted dose recorded successfully")
     } catch (error: any) {
-      console.error("Error recording wasted dose:", error);
-      toast.error(error.message || "Failed to Add"); // Display the actual error message
+      console.error("Submission error:", error);
+      showErrorToast(error.message || "Failed to record wasted dose");
     } finally {
       setIsSubmitting(false);
+      setIsConfirmationOpen(false);
     }
   };
 
   const getFormLabel = () => {
     if (isVaccine(record)) {
       return "Wasted (enter doses)";
-    } else {
-      return `Wasted (enter pcs)`;
     }
+    return "Wasted (enter pcs)";
   };
 
   const getConfirmationMessage = (amount: number) => {
     if (isVaccine(record)) {
       const unit = record.solvent === "diluent" ? "containers" : "doses";
-      return `Are you sure you want to record ${amount} ${unit}?`;
-    } else {
-      if (record.imzStck_unit === "boxes") {
-        const pcsPerBox = record.imzStck_per_pcs || 1;
-        return `Are you sure you want to record ${amount} boxes (${
-          amount * pcsPerBox
-        } pcs)?`;
-      }
-      return `Are you sure you want to record ${amount} pcs?`;
+      return `Record ${amount} ${unit} as wasted?`;
     }
+    
+    if (record.imzStck_unit === "boxes") {
+      const pcsPerBox = record.imzStck_per_pcs || 1;
+      return `Record ${amount} boxes (${amount * pcsPerBox} pcs) as wasted?`;
+    }
+    
+    return `Record ${amount} pcs as wasted?`;
   };
 
+  if (!record) {
+    navigate(-1);
+    return null;
+  }
+
   return (
-    <>
-      <div className="w-full flex items-center justify-center p-4 sm:p-4">
-        <Form {...form}>
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-5"
-          >
-            <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
-              <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              Add First Aid Stocks
-            </Label>
-            <FormInput
-              control={form.control}
-              name="wastedDose"
-              label={getFormLabel()}
-              placeholder={getFormLabel()
-                .replace("Wasted (", "Enter ")
-                .replace(")", "")}
-              type="number"
-            />
-            <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-              <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
-                Cancel
-              </Button>
+    <div className="w-full flex items-center justify-center p-4 sm:p-4">
+      <Form {...form}>
+        <form className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-5">
+          <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
+            <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+            Record Wasted Stock
+          </Label>
+          
+          <FormInput
+            control={form.control}
+            name="wastedDose"
+            label={getFormLabel()}
+            placeholder={`Enter ${getFormLabel().replace("Wasted (", "").replace(")", "")}`}
+            type="number"
+          />
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-                onClick={form.handleSubmit(onSubmit)}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save"
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
+          <div className="flex justify-end gap-3 pt-8">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate(-1)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
 
+            <Button
+              type="button"
+              className="w-full"
+              disabled={isSubmitting}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
       <ConfirmationDialog
         isOpen={isConfirmationOpen}
         onOpenChange={setIsConfirmationOpen}
         onConfirm={handleConfirm}
         title="Confirm Wasted Dose"
-        description={
-          formData ? getConfirmationMessage(formData.wastedDose) : ""
-        }
+        description= {getConfirmationMessage(form.getValues("wastedDose"))}
+        
       />
-    </>
+    </div>
   );
 }

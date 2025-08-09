@@ -1,4 +1,4 @@
-import { useState,useEffect,useCallback,useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -19,46 +19,8 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
-
-export interface PatientRecord {
-  pat_id: string;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  pat_type: string;
-  address: string;
-  dob: string;
-}
-
-export interface VaccinationRecord {
-  vachist_id: number;
-  vaccine_name: string;
-  dose_number: number;
-  total_doses: number;
-  status: string;
-  vaccination_type: string;
-  batch_number: string;
-  expiry_date: string;
-  created_at: string;
-  patient: PatientRecord;
-  vacrec: number;
-  vital_signs: {
-    vital_bp_systolic: string;
-    vital_bp_diastolic: string;
-    vital_temp: string;
-    vital_pulse: string;
-    vital_RR: string;
-    vital_o2: string;
-  };
-}
+import { VaccinationRecord } from "../../vaccination/tables/columns/types";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function ScheduledVaccinations() {
   const navigate = useNavigate();
@@ -82,58 +44,54 @@ export default function ScheduledVaccinations() {
       const patientDetails = record.patient || {};
       const personalInfo = patientDetails.personal_info || {};
       const address = patientDetails.address || {};
+      const vitalSigns = record.vital_signs || {};
+      const vaccineStock = record.vaccine_stock || {};
+      const vaccineList = vaccineStock.vaccinelist || {};
+      const invDetails = vaccineStock.inv_details || {};
+      const vacrecDetails = record.vacrec_details || {};
 
       // Construct address string
-      const addressParts = [
-        address.add_street,
-        address.add_barangay,
-        address.add_city,
-        address.add_province,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      const fullAddress = address.full_address || 
+        [address.add_street, address.add_barangay, address.add_city, address.add_province]
+          .filter(Boolean)
+          .join(", ") || "";
 
-      const fullAddress = address.full_address || addressParts || "";
-
-      const patientRecord: PatientRecord = {
-        pat_id: patientDetails.pat_id || "",
-        fname: personalInfo.per_fname || "",
-        lname: personalInfo.per_lname || "",
-        mname: personalInfo.per_mname || "",
-        sex: personalInfo.per_sex || "",
-        age: calculateAge(personalInfo.per_dob).toString(),
-        dob: personalInfo.per_dob || "",
-        householdno: patientDetails.households?.[0]?.hh_id || "N/A",
-        street: address.add_street || "",
-        sitio: address.add_sitio || "",
-        barangay: address.add_barangay || "",
-        city: address.add_city || "",
-        province: address.add_province || "",
-        pat_type: patientDetails.pat_type || "",
-        address: fullAddress,
-      };
-
+     
       return {
-        vachist_id: record.vachist_id,
-        vacrec: record.vacrec,
-        vaccine_name:
-          record.vaccine_stock?.vaccinelist?.vac_name || "Unknown Vaccine",
-        dose_number: record.vachist_doseNo,
-        vaccination_type: record.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
-        total_doses: record.vacrec_details?.vacrec_totaldose || 1,
-        status: record.vachist_status,
-        batch_number: record.vaccine_stock?.batch_number || "N/A",
-        expiry_date: record.vaccine_stock?.inv_details?.expiry_date || "N/A",
-        created_at: record.created_at,
-        patient: patientRecord,
-        vital_signs: {
-          vital_bp_systolic: record.vital_signs?.vital_bp_systolic || "N/A",
-          vital_bp_diastolic: record.vital_signs?.vital_bp_diastolic || "N/A",
-          vital_temp: record.vital_signs?.vital_temp || "N/A",
-          vital_pulse: record.vital_signs?.vital_pulse || "N/A",
-          vital_RR: record.vital_signs?.vital_RR || "N/A",
-          vital_o2: record.vital_signs?.vital_o2 || "N/A",
+        ...record,
+        vaccine_name: vaccineList.vac_name || "Unknown Vaccine",
+        vachist_doseNo: record.vachist_doseNo || "N/A",
+        vacrec_totaldose: vacrecDetails.vacrec_totaldose || 1,
+        status: record.vachist_status || "N/A",
+        batch_number: vaccineStock.batch_number || "N/A",
+        expiry_date: invDetails.expiry_date || "N/A",
+        patient: {
+          pat_id: patientDetails.pat_id || "N/A",
+          pat_type: patientDetails.pat_type || "N/A",
+          personal_info: personalInfo,
+          address: {
+            add_street: address.add_street || "",
+            add_barangay: address.add_barangay || "",
+            add_city: address.add_city || "",
+            add_province: address.add_province || "",
+            add_sitio: address.add_sitio || "",
+            full_address: fullAddress
+          }
         },
+        vital_signs: {
+          vital_bp_systolic: vitalSigns.vital_bp_systolic || "N/A",
+          vital_bp_diastolic: vitalSigns.vital_bp_diastolic || "N/A",
+          vital_temp: vitalSigns.vital_temp || "N/A",
+          vital_pulse: vitalSigns.vital_pulse || "N/A",
+          vital_RR: vitalSigns.vital_RR || "N/A",
+          vital_o2: vitalSigns.vital_o2 || "N/A",
+          created_at: vitalSigns.created_at || ""
+        },
+        vaccine_stock: {
+          ...vaccineStock,
+          vaccinelist: vaccineList
+        },
+        vacrec_details: vacrecDetails
       };
     });
   }, [ScheduledVaccinations]);
@@ -141,11 +99,11 @@ export default function ScheduledVaccinations() {
   const filteredData = useMemo(() => {
     return formatVaccinationData().filter((record: VaccinationRecord) => {
       const searchText =
-        `${record.patient.pat_id} ${record.patient.lname} ${record.patient.fname} ${record.vaccine_name}`.toLowerCase();
+        `${record.patient?.personal_info?.per_id || ''} ${record.patient?.personal_info?.per_lname || ''} ${record.patient?.personal_info?.per_fname || ''} ${record.vaccine_name || ''}`.toLowerCase();
 
       const statusMatches =
         statusFilter === "all" ||
-        record.status.toLowerCase() === statusFilter.toLowerCase();
+        (record.vachist_status || '').toLowerCase() === statusFilter.toLowerCase();
 
       return searchText.includes(searchQuery.toLowerCase()) && statusMatches;
     });
@@ -169,17 +127,18 @@ export default function ScheduledVaccinations() {
         </div>
       ),
       cell: ({ row }) => {
+        const patient = row.original.patient?.personal_info;
         const fullName =
-          `${row.original.patient.lname}, ${row.original.patient.fname} ${row.original.patient.mname}`.trim();
+          `${patient?.per_lname || ''}, ${patient?.per_fname || ''} ${patient?.per_mname || ''}`.trim();
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-gray-500">
-                {row.original.patient.sex}, {row.original.patient.age}
+                {patient?.per_sex || ''}, {patient?.per_dob ? calculateAge(patient.per_dob).toString() : 'N/A'}
               </div>
               <div className="text-xs text-gray-400">
-                {row.original.patient.pat_id}
+                {row.original.patient?.personal_info?.per_id || ''}
               </div>
             </div>
           </div>
@@ -191,24 +150,23 @@ export default function ScheduledVaccinations() {
       header: "Vaccine",
       cell: ({ row }) => (
         <div className="flex flex-col min-w-[150px]">
-          <div className="font-medium">{row.original.vaccine_name}</div>
+          <div className="font-medium">{row.original.vaccine_name || 'N/A'}</div>
         </div>
       ),
     },
-
     {
       accessorKey: "dose",
       header: "Dose",
       cell: ({ row }) => (
-        <div className="flex flex-col ">
+        <div className="flex flex-col">
           <div className="text-sm text-gray-500">
-            {row.original.dose_number === 1
+            {row.original.vachist_doseNo === "1"
               ? "1st dose"
-              : row.original.dose_number === 2
+              : row.original.vachist_doseNo === "2"
               ? "2nd dose"
-              : row.original.dose_number === 3
+              : row.original.vachist_doseNo === "3"
               ? "3rd dose"
-              : `${row.original.dose_number}th dose`}{" "}
+              : `${row.original.vachist_doseNo || ''}th dose`}
           </div>
         </div>
       ),
@@ -217,114 +175,111 @@ export default function ScheduledVaccinations() {
       accessorKey: "vital_signs",
       header: "Vital Signs",
       cell: ({ row }) => {
-        const vital = row.original.vital_signs;
+        const vital = row.original.vital_signs || {};
         return (
           <div className="grid grid-cols-2 gap-1 text-sm min-w-[200px]">
             <div>
-              BP: {vital.vital_bp_systolic}/{vital.vital_bp_diastolic}
+              BP: {vital.vital_bp_systolic || 'N/A'}/{vital.vital_bp_diastolic || 'N/A'}
             </div>
-            <div>Temp: {vital.vital_temp}°C</div>
-            <div>Pulse: {vital.vital_pulse}</div>
-            <div>o2: {vital.vital_o2}</div>
+            <div>Temp: {vital.vital_temp || 'N/A'}°C</div>
+            <div>Pulse: {vital.vital_pulse || 'N/A'}</div>
+            <div>o2: {vital.vital_o2 || 'N/A'}</div>
           </div>
         );
       },
     },
-
     {
       accessorKey: "address",
       header: "Address",
-      cell: ({ row }) => (
-        <div className="flex justify-start px-2">
-          <div className="w-[200px] break-words">
-            {row.original.patient.address || "No address provided"}
+      cell: ({ row }) => {
+        const address = row.original.patient?.address;
+        return (
+          <div className="flex justify-start px-2">
+            <div className="w-[200px] break-words">
+              {address?.full_address || 
+               [address?.add_street, address?.add_barangay, address?.add_city, address?.add_province]
+                 .filter(Boolean)
+                 .join(", ") || "No address provided"}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
-
     {
       accessorKey: "Sitio",
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-start px-2">
-          <div>{row.original.patient.sitio || "No address provided"}</div>
+          <div>{row.original.patient?.address?.add_sitio || "No address provided"}</div>
         </div>
       ),
     },
-
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <Link
-            to="/scheduled-vaccine"
-            state={{
-              Vaccination: row.original,
-              patientData: {
-                pat_id: row.original.patient.pat_id,
-                pat_type: row.original.patient.pat_type,
-                age: row.original.patient.age,
-                addressFull:
-                  row.original.patient.address || "No address provided",
-                address: {
-                  add_street: row.original.patient.street,
-                  add_barangay: row.original.patient.barangay,
-                  add_city: row.original.patient.city,
-                  add_province: row.original.patient.province,
-                  add_sitio: row.original.patient.sitio,
+      cell: ({ row }) => {
+        const patient = row.original.patient?.personal_info;
+        const address = row.original.patient?.address;
+        return (
+          <div className="flex justify-center gap-2">
+            <Link
+              to="/scheduled-vaccine"
+              state={{
+                Vaccination: row.original,
+                patientData: {
+                  pat_id: row.original.patient?.pat_id || "",
+                  pat_type: row.original.patient?.pat_type || "",
+                  age: patient?.per_dob ? calculateAge(patient.per_dob).toString() : "N/A",
+                  addressFull: address?.full_address || 
+                    [address?.add_street, address?.add_barangay, address?.add_city, address?.add_province]
+                      .filter(Boolean)
+                      .join(", ") || "No address provided",
+                  address: {
+                    add_street: address?.add_street || "",
+                    add_barangay: address?.add_barangay || "",
+                    add_city: address?.add_city || "",
+                    add_province: address?.add_province || "",
+                    add_sitio: address?.add_sitio || "",
+                  },
+                  households: [{ hh_id: row.original.patient?.households?.[0]?.hh_id || "N/A" }],
+                  personal_info: {
+                    per_fname: patient?.per_fname || "",
+                    per_mname: patient?.per_mname || "",
+                    per_lname: patient?.per_lname || "",
+                    per_dob: patient?.per_dob || "",
+                    per_sex: patient?.per_sex || "",
+                  },
                 },
-                households: [{ hh_id: row.original.patient.householdno }],
-                personal_info: {
-                  per_fname: row.original.patient.fname,
-                  per_mname: row.original.patient.mname,
-                  per_lname: row.original.patient.lname,
-                  per_dob: row.original.patient.dob,
-                  per_sex: row.original.patient.sex,
-                },
-              },
-            }}
-          >
-            <Button variant="outline" size="sm">
-              View
-            </Button>
-          </Link>
-        </div>
-      ),
+              }}
+            >
+              <Button variant="outline" size="sm">
+                View
+              </Button>
+            </Link>
+          </div>
+        );
+      },
     },
   ];
-    const { showLoading, hideLoading } = useLoading();
-  
 
-useEffect(() => {
+  const { showLoading, hideLoading } = useLoading();
+
+  useEffect(() => {
     if (isLoading) {
       showLoading();
     } else {
       hideLoading();
     }
-  }, [isLoading]);
+  }, [isLoading, showLoading, hideLoading]);
+
   return (
     <>
-      <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-            onClick={() => navigate(-1)}
-          >
-            <ChevronLeft />
-          </Button>
-          <div className="flex-col items-center mb-4">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Scheduled Vaccinations
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view scheduled vaccinations
-            </p>
-          </div>
-        </div>
-        <hr className="border-gray mb-5 sm:mb-8" />
+      <LayoutWithBack
+        title="Scheduled Vaccinations"
+        description="Manage and view scheduled vaccinations for patients."
+      
+      >
+
 
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
@@ -390,7 +345,7 @@ useEffect(() => {
           </div>
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2">loading....</span>
               </div>
@@ -415,8 +370,8 @@ useEffect(() => {
             </div>
           </div>
         </div>
-      </div>
-      <Toaster richColors />
+        </LayoutWithBack>
+
     </>
   );
 }

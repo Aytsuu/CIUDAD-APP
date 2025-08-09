@@ -1,51 +1,57 @@
 import { useState, useCallback, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router";
 import PendingDisplayChildHealthRecord from "./Step1";
 import Immunization from "./Step2";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
-import { ChevronLeft } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { VitalSignType, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
 import { useVaccinesListImmunization } from "./queries/fetchQueries";
-import { fetchVaccinesWithStock } from "../../vaccination/restful-api/fetch";
 import { getVaccinationRecordById } from "../../vaccination/restful-api/get";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
-
+import { fetchVaccinesWithStock } from "./queries/fetchQueries";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useUnvaccinatedVaccines, usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
+import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function ChildImmunization() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const { ChildHealthRecord } = location.state || {};
+  const pat_id = ChildHealthRecord?.chrec_details?.patrec_details?.pat_id?.toString() || "";
+  const pat_dob = ChildHealthRecord?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
+  const{showLoading, hideLoading} = useLoading();
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
   const [historicalNotes, setHistoricalNotes] = useState<any[]>([]);
   const [fullHistoryData, setFullHistoryData] = useState<ChildHealthHistoryRecord[]>([]);
-  const { data: vaccinesData, isLoading: isVaccinesLoading } = fetchVaccinesWithStock();
-  const { data: vaccinesListData, isLoading: isVaccinesListLoading } = useVaccinesListImmunization();
   const [showVaccineList, setShowVaccineList] = useState<boolean>(false);
   const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
   const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>([]);
   const [vaccineHistory, setVaccineHistory] = useState<any[]>([]);
 
-  const { 
-    data: historyData, 
-    isLoading: isChildLoading, 
-    isError, 
-    refetch 
-  } = useChildHealthHistory(ChildHealthRecord?.chrec);
+  // Data fetching hooks
+  const { data: vaccinesData, isLoading: isVaccinesLoading } = fetchVaccinesWithStock();
+  const { data: vaccinesListData, isLoading: isVaccinesListLoading } = useVaccinesListImmunization();
+  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(pat_id, pat_dob);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(pat_id);
+  const { data: followUps = [], isLoading: followupLoading } = useFollowupChildHealthandVaccines(pat_id);
+  const { data: historyData, isLoading: isChildLoading, isError, refetch } = useChildHealthHistory(ChildHealthRecord?.chrec);
+  const isLoading = isChildLoading || isVaccinesLoading || isVaccinesListLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || followupLoading;
 
-
-  const isLoading = isChildLoading || isVaccinesLoading || isVaccinesListLoading;
-
-
-
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
+  
   useEffect(() => {
     const fetchVaccineHistory = async () => {
       try {
-        if (ChildHealthRecord?.chrec_details?.patrec_details?.pat_id) {
-          const pat_id = ChildHealthRecord.chrec_details.patrec_details.pat_id.toString();
+        if (pat_id) {
           const response = await getVaccinationRecordById(pat_id);
           setVaccineHistory(response);
         }
@@ -55,9 +61,8 @@ export default function ChildImmunization() {
     };
     
     fetchVaccineHistory();
-  }, [ChildHealthRecord]);
+  }, [pat_id]);
 
-  
   useEffect(() => {
     if (historyData) {
       const sortedHistory = (historyData[0]?.child_health_histories || []).sort(
@@ -71,7 +76,7 @@ export default function ChildImmunization() {
       const filteredNotes: any[] = [];
   
       sortedHistory.forEach((history: any) => {
-        // Process vital signs (unchanged)
+        // Process vital signs
         const vitalSigns = history.child_health_vital_signs?.map((vital: any) => ({
           date: vital.created_at
             ? new Date(vital.created_at).toISOString().split("T")[0]
@@ -112,10 +117,9 @@ export default function ChildImmunization() {
       });
   
       setHistoricalVitalSigns(allVitalSigns);
-      setHistoricalNotes(filteredNotes); // Now only contains same-day notes
+      setHistoricalNotes(filteredNotes);
     }
   }, [historyData]);
-
 
   const nextStep = useCallback(() => {
     setCurrentStep(2);
@@ -133,31 +137,13 @@ export default function ChildImmunization() {
   );
 
   return (
-    <>
-      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-darkGray p-2 bg-white hover:bg-gray-100 rounded-md border border-gray-200"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <div>
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
-            Child Immunization Record
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View immunization details and child information
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray mb-4 sm:mb-6" />
-
+    <LayoutWithBack
+      title="Immunization"
+      description="Manage immunization records for the child"
+    >
       {isLoading ? (
         <div className="w-full h-full px-6">
-          <Skeleton className="h-10 w-1/6 mb-3" />
-          <Skeleton className="h-7 w-1/4 mb-6" />
-          <Skeleton className="h-10 w-full mb-4" />
-          <Skeleton className="h-4/5 w-full mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500 mx-auto mt-20" />
           {isError && (
             <div className="flex justify-center mt-4">
               <Button onClick={() => refetch()}>Retry</Button>
@@ -193,14 +179,16 @@ export default function ChildImmunization() {
                   vaccinesData={vaccinesData}
                   vaccinesListData={vaccinesListData}
                   isLoading={isLoading}
-                  vaccineHistory={vaccineHistory} // Pass the vaccine history
-
+                  vaccineHistory={vaccineHistory} 
+                  unvaccinatedVaccines={unvaccinatedVaccines}
+                  vaccinations={vaccinations}
+                  followUps={followUps}
                 />
               )}
             </>
           }
         />
       )}
-    </>
+    </LayoutWithBack>
   );
 }

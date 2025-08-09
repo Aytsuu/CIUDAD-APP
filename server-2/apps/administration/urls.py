@@ -31,5 +31,5 @@ urlpatterns = [
     path('permission/', PermissionView.as_view(), name='permissions-list'),
     path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
     
-
+ 
 ]   

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from datetime import date
-from apps.inventory.serializers import VaccineStockSerializer,VacccinationListSerializer
+from apps.inventory.serializers.vaccine_serializers import *
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
 from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
@@ -87,13 +87,3 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         ).count()
         print(f"Completed vaccination history count for patient {obj.pat_id}: {count}")
         return count
-
-    # def get_vaccination_records(self, obj):
-    #     records = obj.patient_records.filter(
-    #         patrec_type__iexact='Vaccination',
-    #         vaccination_records__vacrec_status__iexact='complete'
-    #     ).distinct()
-    #     return PatientRecordSerializer(records, many=True).data
-
-
-

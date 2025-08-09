@@ -49,6 +49,10 @@ export default function InvMedicalConRecords() {
       const vitalSigns = record.vital_signs || {};
       const bmiDetails = record.bmi_details || {};
       const patrecDetails = record.patrec_details || {};
+      
+      // Safe access to staff details
+      const staffDetails = record.staff_details || null;
+      const staffPer = staffDetails?.rp?.per || null;
 
       return {
         medrec_chief_complaint: record.medrec_chief_complaint || "N/A",
@@ -79,17 +83,17 @@ export default function InvMedicalConRecords() {
           medicalrec_count: patrecDetails.medicalrec_count || 0,
           patient_details: patrecDetails.patient_details || null,
         },
-        staff_details: {
-          rp: {
+        staff_details: staffDetails ? {
+          rp: staffPer ? {
             per: {
-              per_fname: record.staff_details.rp?.per?.per_fname || "",
-              per_lname: record.staff_details.rp?.per?.per_lname || "",
-              per_mname: record.staff_details.rp?.per?.per_mname || "",
-              per_suffix: record.staff_details.rp?.per?.per_suffix || "",
-              per_dob: record.staff_details.rp?.per?.per_dob || "",
-            },
-          },
-        },
+              per_fname: staffPer.per_fname || "",
+              per_lname: staffPer.per_lname || "",
+              per_mname: staffPer.per_mname || "",
+              per_suffix: staffPer.per_suffix || "",
+              per_dob: staffPer.per_dob || "",
+            }
+          } : null
+        } : null,
       };
     });
   }, [medicalRecords]);

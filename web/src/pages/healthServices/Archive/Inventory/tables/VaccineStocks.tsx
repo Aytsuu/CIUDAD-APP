@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import  { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -137,16 +137,7 @@ export default function CombinedStockTable() {
 
   const columns = getStockColumns();
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
+ 
 
   if (error) {
     return (

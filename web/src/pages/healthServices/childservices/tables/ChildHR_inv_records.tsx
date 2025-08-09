@@ -35,8 +35,7 @@ export default function InvChildHealthRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
     useUnvaccinatedVaccines(ChildHealthRecord?.pat_id, ChildHealthRecord.dob);
-  const { data: followUps = [], isLoading: followupLoading } =
-    useFollowupChildHealthandVaccines(ChildHealthRecord?.pat_id);
+  const { data: followUps = [], isLoading: followupLoading } =  useFollowupChildHealthandVaccines(ChildHealthRecord?.pat_id);
   const {
     data: historyData = [],
     isLoading: childHistoryLoading,

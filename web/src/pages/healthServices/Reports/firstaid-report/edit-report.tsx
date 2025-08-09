@@ -16,9 +16,7 @@ export default function EditMonthlyRecipientList() {
   const {
     reports,
     monthlyrcplist_id,
-    recordCount,
-    state_office,
-    state_control,
+   
     year,
   } = location.state || {};
   const navigate = useNavigate();

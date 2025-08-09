@@ -176,6 +176,8 @@ export default function MonthlyMedicineDetails() {
     document.body.innerHTML = printContent.innerHTML;
     window.print();
     document.body.innerHTML = originalContents;
+    window.location.reload(); // <-- simplest but reloads entire page (loses app state)
+
   };
 
   const tableHeader = [

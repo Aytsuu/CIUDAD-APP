@@ -52,6 +52,7 @@ export default function AllMedicalConsRecord() {
           .join(", ") || "";
 
       return {
+        rp_id:record.rp_id || null,
         pat_id: record.pat_id,
         fname: info.per_fname || "",
         lname: info.per_lname || "",

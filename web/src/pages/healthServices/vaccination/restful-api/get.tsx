@@ -50,6 +50,15 @@ export const getVaccinationRecords =  async () => {
   }
 };
 
+export const getLatestVitals =  async (patId: string) => {
+  try {
+    const response = await api2.get(`/patientrecords/vital-signs/latest/${patId}/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 // id ani kay pat_id
 export const getVaccinationRecordById =  async (id: string) => {
   try {
