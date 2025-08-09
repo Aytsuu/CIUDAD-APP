@@ -17,7 +17,10 @@ import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/Reports/inve
 import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/Reports/inventory/firstaid/records";
 import MonthlyInventoryAntigenRecords from "@/pages/healthServices/Reports/inventory/antigen/monthly";
 import MonthlyInventoryAntigenDetails from "@/pages/healthServices/Reports/inventory/antigen/records"; 
+import MonthlyOPTRecords from "@/pages/healthServices/Reports/opt-tracking/monthly";
+import MonthlyOPTDetails from "@/pages/healthServices/Reports/opt-tracking/records";
 import path from "path";
+
 
 export const reports_router = [
   {
@@ -88,6 +91,15 @@ export const reports_router = [
   path: "/inventory-monthly-antigen-details",
     element: <MonthlyInventoryAntigenDetails />
 
+  },
+  {
+    path: "/monthly-opt-records",
+    element: <MonthlyOPTRecords />
+  },
+  {
+    path: "/monthly-opt-details",
+    element: <MonthlyOPTDetails />
   }
+
    
 ];

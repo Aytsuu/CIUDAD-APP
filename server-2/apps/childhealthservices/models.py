@@ -84,8 +84,6 @@ class ChildHealthVitalSigns(models.Model):
 
 class ChildHealthSupplements(models.Model):
     chsupplement_id = models.BigAutoField(primary_key=True)
-    # supplement_summary = models.TextField(blank=True, null=True)
-    # medreq= models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='child_health_supplements', blank=True, null=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_supplements')
     # staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
     medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')

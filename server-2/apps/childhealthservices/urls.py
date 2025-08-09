@@ -29,5 +29,11 @@ urlpatterns = [
     path('child-health-records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
     path('child-immunization-status/',ChildHealthImmunizationStatusListView.as_view(), name='child-immunization-status'),
     path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
+    
+    # OPT TRACKING
+    path('opt-tracking/', OPTTrackingViews.as_view(), name='opt-tracking'),
+    path('opt-tracking/monthly/summaries/', MonthlyOPTChildHealthSummariesAPIView.as_view(), name='opt-tracking-detail'),
+    path('opt-tracking/current-last-month/count', ChildHealthCurrentandLastMonthCountAPIView.as_view(), name='opt-tracking-detail'),
+    path('opt-tracking/reports/<str:month>/', MonthlyOPTChildHealthReportAPIView.as_view(), name='opt-tracking-detail'),
 ]
 
