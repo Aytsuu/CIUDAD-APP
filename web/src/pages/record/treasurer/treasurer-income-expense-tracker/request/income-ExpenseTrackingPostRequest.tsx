@@ -88,23 +88,50 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
 
 // FILE FOLDER 
+// export const income_expense_file_create = async (data: {
+//   iet_num: number;
+//   file_data: {
+//     name: string;
+//     type: string;
+//     path: string;
+//     url: string;
+//   };
+// }) => {
+//   try {
+//     const res = await api.post('treasurer/inc-exp-file/', {
+//       iet_num: data.iet_num,
+//       ief_name: data.file_data.name,
+//       ief_type: data.file_data.type,
+//       ief_path: data.file_data.path,
+//       ief_url: data.file_data.url
+//     });
+//     return res.data;
+//   } catch (err) {
+//     console.error(`Failed to create file ${data.file_data.name}:`, err);
+//     throw err;
+//   }
+// }
+
 export const income_expense_file_create = async (data: {
   iet_num: number;
   file_data: {
     name: string;
     type: string;
-    path: string;
-    url: string;
+    file: any;
   };
 }) => {
   try {
-    const res = await api.post('treasurer/inc-exp-file/', {
+    // Create the payload that matches your serializer's _upload_files method
+    const payload = {
       iet_num: data.iet_num,
-      ief_name: data.file_data.name,
-      ief_type: data.file_data.type,
-      ief_path: data.file_data.path,
-      ief_url: data.file_data.url
-    });
+      files: [{
+        name: data.file_data.name,
+        type: data.file_data.type,
+        file: data.file_data.file // The actual file object
+      }]
+    };
+
+    const res = await api.post('treasurer/inc-exp-file/', payload);
     return res.data;
   } catch (err) {
     console.error(`Failed to create file ${data.file_data.name}:`, err);

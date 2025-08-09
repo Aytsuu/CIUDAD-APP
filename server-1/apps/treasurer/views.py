@@ -624,6 +624,17 @@ class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
 
 # ------------- INCOME_EXPENSE FILE FOLDER
 
+# class Income_Expense_FileView(generics.ListCreateAPIView):
+#     serializer_class = Income_Expense_FileSerializers
+#     queryset = Income_Expense_File.objects.all()
+
+#     def get_queryset(self):
+#         queryset = super().get_queryset()
+#         iet_num = self.request.query_params.get('iet_num')
+#         if iet_num:
+#             queryset = queryset.filter(iet_num=iet_num)
+#         return queryset
+
 class Income_Expense_FileView(generics.ListCreateAPIView):
     serializer_class = Income_Expense_FileSerializers
     queryset = Income_Expense_File.objects.all()
@@ -634,6 +645,23 @@ class Income_Expense_FileView(generics.ListCreateAPIView):
         if iet_num:
             queryset = queryset.filter(iet_num=iet_num)
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        # Get iet_num from either query params or request data
+        iet_num = request.query_params.get('iet_num') or request.data.get('iet_num')
+        
+        if not iet_num:
+            return Response(
+                {"error": "iet_num is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, iet_num=iet_num)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
+
 
 class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
     queryset = Income_Expense_File.objects.all()
