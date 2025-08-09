@@ -11,7 +11,7 @@ export const api = axios.create({
 });
 
 export const api2 = axios.create({
-  baseURL: "http://192.168.1.13:8001",
+  baseURL: "http://192.168.1.15:8001",
   timeout: 10000,
 });
 
@@ -22,7 +22,7 @@ api.interceptors.request.use(async (config) => {
     config.url?.includes("authentication/login/") ||
     config.url?.includes("authentication/signup/")
   ) {
-    return config;
+    return config;  
   }
 
   try {

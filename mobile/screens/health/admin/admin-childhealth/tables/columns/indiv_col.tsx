@@ -1,4 +1,4 @@
-// child-health-columns.tsx (React Native)
+
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import type { ColumnDef } from "@tanstack/react-table";

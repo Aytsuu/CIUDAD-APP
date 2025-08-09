@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getFPRecordsForPatient } from "./GetRequest";
+import { getFPCompleteRecord, getFPRecordsForPatient } from "./GetRequest";
 import { 
   ArrowLeft, 
   FileText, 
@@ -120,18 +120,34 @@ export default function IndividualFpRecordsScreen() {
       }
     });
   };
+const [isComparing, setIsComparing] = useState(false);
 
- const handleCompareRecords = () => {
-  if (selectedRecords.length === 2) {
+// Update handleCompareRecords to handle loading state
+const handleCompareRecords = async () => {
+  if (selectedRecords.length !== 2) {
+    alert("Please select exactly two records to compare.");
+    return;
+  }
+
+  setIsComparing(true);
+  try {
+    const [record1, record2] = await Promise.all([
+      getFPCompleteRecord(selectedRecords[0].fprecord),
+      getFPCompleteRecord(selectedRecords[1].fprecord)
+    ]);
+
     router.push({
       pathname: "/admin/familyplanning/comparison",
       params: { 
-        record1: JSON.stringify(selectedRecords[0]),
-        record2: JSON.stringify(selectedRecords[1])
+        record1: JSON.stringify(record1),
+        record2: JSON.stringify(record2)
       }
     });
-  } else {
-    alert("Please select exactly two records to compare.");
+  } catch (error) {
+    console.error("Error fetching records for comparison:", error);
+    alert("Failed to fetch records for comparison. Please try again.");
+  } finally {
+    setIsComparing(false);
   }
 };
 
@@ -246,7 +262,7 @@ export default function IndividualFpRecordsScreen() {
         <AlertCircle size={32} color="#EF4444" />
         <Text className="text-lg text-red-600 mt-4 text-center">Failed to load records</Text>
         <Text className="text-sm text-gray-500 mt-2 text-center">{error?.message}</Text>
-        <Button onPress={() => navigation.goBack()} className="mt-4">
+        <Button onPress={() => router.back()} className="mt-4">
           <Text className="text-white font-semibold">Go Back</Text>
         </Button>
       </View>
@@ -259,7 +275,7 @@ export default function IndividualFpRecordsScreen() {
       <View className="bg-blue-600 px-6 pt-16 pb-6">
         <View className="flex-row items-center">
           <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
+            onPress={() => router.back()} 
             className="mr-4 w-10 h-10 bg-white/20 rounded-full items-center justify-center"
           >
             <ArrowLeft size={20} color="white" />
@@ -319,12 +335,10 @@ export default function IndividualFpRecordsScreen() {
         )}
       </View>
 
-      {/* Compare Button - Fixed at bottom */}
-      {fpPatientRecords.length > 0 && (
         <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
           <Button
             onPress={handleCompareRecords}
-            disabled={selectedRecords.length !== 2}
+            disabled={selectedRecords.length !== 2 || isComparing}
             className="flex-row items-center justify-center"
           >
             <GitCompare size={20} color="white" />
@@ -333,7 +347,7 @@ export default function IndividualFpRecordsScreen() {
             </Text>
           </Button>
         </View>
-      )}
+      
     </View>
   );
 }

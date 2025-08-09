@@ -16,94 +16,105 @@ export const NutritionStatusTable: React.FC<NutritionStatusTableProps> = ({
     .filter(record => {
       const recordDate = new Date(record.created_at).getTime();
       const currentRecordDate = new Date(
-        fullHistoryData.find(r => r.chhist_id === chhistId)?.created_at || 0
+        fullHistoryData.find(r => String(r.chhist_id) === String(chhistId))?.created_at || 0
       ).getTime();
       return recordDate <= currentRecordDate;
     })
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
-    <View className="flex-1 bg-gray-50 mb-6">
-      <View className="bg-white shadow-sm p-4 border-b border-gray-100">
-        <Text className="text-sm font-semibold text-gray-800">OPT Tracking</Text>
+    <View className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 mb-10">
+      <View className="p-3 border-b border-gray-100">
+        <Text className="font-semibold text-lg text-gray-800">OPT Tracking</Text>
       </View>
-      <View className="flex-row bg-white shadow-sm p-4 border-b border-gray-100 flex-wrap">
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Date</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Age</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Weight (kg)</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Height (cm)</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">WFA</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">LHFA</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">WFL</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">MUAC</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">MUAC Status</Text>
-      </View>
-      <ScrollView className="flex-1 px-4 py-2">
-        {nutritionData.length > 0 ? (
-          nutritionData.map(record => {
-            const isCurrentRecord = record.chhist_id === chhistId;
-            const vitalSigns = record.child_health_vital_signs?.[0] || {};
-            const bmDetails = vitalSigns.bm_details || {};
-            const nutritionStatus = record.nutrition_statuses?.[0] || {};
+      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+        <View className="min-w-full">
+          {/* Table Header */}
+          <View className="flex-row bg-gray-50 px-3 py-2 border-b border-gray-200">
+            <View className="min-w-[120px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">Date</Text>
+            </View>
+            <View className="min-w-[150px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">Age</Text>
+            </View>
+            <View className="min-w-[100px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">Weight (kg)</Text>
+            </View>
+            <View className="min-w-[100px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">Height (cm)</Text>
+            </View>
+            <View className="min-w-[80px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">WFA</Text>
+            </View>
+            <View className="min-w-[80px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">LHFA</Text>
+            </View>
+            <View className="min-w-[80px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">WFL</Text>
+            </View>
+            <View className="min-w-[80px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">MUAC</Text>
+            </View>
+            <View className="min-w-[120px] flex-1">
+              <Text className="text-xs font-medium text-gray-500">MUAC Status</Text>
+            </View>
+          </View>
+          
+          {/* Table Body */}
+          {nutritionData.length > 0 ? (
+            nutritionData.map(record => {
+              const isCurrentRecord = String(record.chhist_id) === String(chhistId);
+              const vitalSigns = record.child_health_vital_signs?.[0] || {};
+              const bmDetails = vitalSigns.bm_details || {};
+              const nutritionStatus = record.nutrition_statuses?.[0] || {};
+              const dataTextStyle = `text-sm text-gray-800`;
 
-            return (
-              <TouchableOpacity
-                key={record.chhist_id}
-                className={`bg-white rounded-xl shadow-sm mb-3 p-4 border border-gray-100 ${
-                  isCurrentRecord ? 'border-blue-200 bg-blue-50' : ''
-                } active:opacity-80 transition-all duration-200`}
-                onPress={() => console.log('Nutrition Status:', { record })}
-              >
-                <View className="flex-row flex-wrap">
-                  <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Date:</Text>
-                    <Text className="text-sm text-gray-600">
+              return (
+                <TouchableOpacity
+                  key={record.chhist_id}
+                  className={`flex-row px-3 py-2 border-b border-gray-100 ${isCurrentRecord ? 'bg-blue-50' : ''}`}
+                  onPress={() => console.log('Nutrition Status:', { record })}
+                >
+                  <View className="min-w-[120px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>
                       {record.created_at && isValid(new Date(record.created_at))
                         ? format(new Date(record.created_at), 'MMM dd, yyyy')
                         : 'N/A'}
                     </Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pl-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Age:</Text>
-                    <Text className="text-sm text-gray-600">{bmDetails.age || 'N/A'}</Text>
+                  <View className="min-w-[150px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{bmDetails.age || 'N/A'}</Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Weight (kg):</Text>
-                    <Text className="text-sm text-gray-600">{bmDetails.weight || 'N/A'}</Text>
+                  <View className="min-w-[100px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{bmDetails.weight || 'N/A'}</Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pl-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Height (cm):</Text>
-                    <Text className="text-sm text-gray-600">{bmDetails.height || 'N/A'}</Text>
+                  <View className="min-w-[100px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{bmDetails.height || 'N/A'}</Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">WFA:</Text>
-                    <Text className="text-sm text-gray-600">{nutritionStatus.wfa || 'N/A'}</Text>
+                  <View className="min-w-[80px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{nutritionStatus.wfa || 'N/A'}</Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pl-2">
-                    <Text className="text-xs text-gray-400 font-semibold">LHFA:</Text>
-                    <Text className="text-sm text-gray-600">{nutritionStatus.lhfa || 'N/A'}</Text>
+                  <View className="min-w-[80px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{nutritionStatus.lhfa || 'N/A'}</Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">WFL:</Text>
-                    <Text className="text-sm text-gray-600">{nutritionStatus.wfl || 'N/A'}</Text>
+                  <View className="min-w-[80px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{nutritionStatus.wfl || 'N/A'}</Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pl-2">
-                    <Text className="text-xs text-gray-400 font-semibold">MUAC:</Text>
-                    <Text className="text-sm text-gray-600">{nutritionStatus.muac || 'N/A'}</Text>
+                  <View className="min-w-[80px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{nutritionStatus.muac || 'N/A'}</Text>
                   </View>
-                  <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">MUAC Status:</Text>
-                    <Text className="text-sm text-gray-600">{nutritionStatus.muac_status || 'N/A'}</Text>
+                  <View className="min-w-[120px] flex-1">
+                    <Text className={dataTextStyle} numberOfLines={1}>{nutritionStatus.muac_status || 'N/A'}</Text>
                   </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })
-        ) : (
-          <View className="flex-1 justify-center items-center py-10">
-            <Text className="text-gray-500 text-base">No vital signs records available</Text>
-          </View>
-        )}
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <View className="p-4 items-center">
+              <Text className="text-gray-500">No vital signs records available</Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </View>
   );

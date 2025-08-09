@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { FamilyPlanningRecordDetail } from './familyplanningtypes'; // Import your type definition
+import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -71,15 +72,14 @@ const Section: React.FC<SectionProps> = ({ title, children }) => (
 );
 
 const RecordComparisonScreen: React.FC = () => {
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
   const route = useRoute();
-  const { records } = route.params as { records: FamilyPlanningRecordDetail[] };
+  
+  // Parse the records with proper typing
+  const record1 = route.params?.record1 ? JSON.parse(route.params.record1) as FamilyPlanningRecordDetail : null;
+  const record2 = route.params?.record2 ? JSON.parse(route.params.record2) as FamilyPlanningRecordDetail : null;
 
-  const record1 = route.params?.record1 ? JSON.parse(route.params.record1) : null;
-  const record2 = route.params?.record2 ? JSON.parse(route.params.record2) : null;
-
-
-   if (!record1 || !record2) {
+  if (!record1 || !record2) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50 p-4">
         <Text className="text-base text-red-600 text-center mb-4">
@@ -87,7 +87,7 @@ const RecordComparisonScreen: React.FC = () => {
         </Text>
         <TouchableOpacity 
           className="bg-gray-200 px-4 py-2 rounded-lg" 
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
         >
           <Text className="text-gray-800 text-base font-bold">Go Back</Text>
         </TouchableOpacity>

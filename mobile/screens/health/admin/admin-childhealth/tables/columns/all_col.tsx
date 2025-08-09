@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Text, View } from "react-native";
 import { ArrowUpDown } from "lucide-react-native";
-import { ChildHealthRecord } from "../forms/muti-step-form/types";
+import { ChildHealthRecord } from "../../forms/muti-step-form/types";
 
 export const childColumns: ColumnDef<ChildHealthRecord>[] = [
   {

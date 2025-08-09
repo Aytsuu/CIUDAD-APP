@@ -6,10 +6,10 @@ import { ChildHealthHistoryRecord } from './types';
 import { calculateAge } from '@/helpers/ageCalculator';
 import { getValueByPath } from './ChildHealthutils';
 import { ImmunizationTable } from './tables/ImmunizationTable';
-import { SupplementStatusTable } from './tables/SupplementStatusTable';
 import { VitalSignsTable } from './tables/VitalSignsTable';
-import { NutritionStatusTable } from './tables/NutritionStatusTable';
 import { BFCheckTable } from './tables/BFTable';
+import { NutritionStatusTable } from './tables/NutritionStatusTable';
+import { SupplementStatusTable } from './tables/SupplementStatusTable';
 
 interface PatientSummarySectionProps {
     recordsToDisplay: ChildHealthHistoryRecord[];
@@ -420,31 +420,26 @@ export function PatientSummarySection({
                 </View>
 
                 {/* Additional Tables */}
-                <View className="w-full space-y-4">
-                    <View className="print-table-container print-section">
+                <View className="w-full">
+                    <View className="print-table-container print-section ">
                         <BFCheckTable
                             fullHistoryData={fullHistoryData}
                             chhistId={chhistId}
                         />
                     </View>
 
-                    <View className="print-table-container print-section">
-                        <SupplementStatusTable
+                    <View className="print-table-container print-section mt-2">
+                        <VitalSignsTable
                             fullHistoryData={fullHistoryData}
                             chhistId={chhistId}
                         />
                     </View>
-
-                   
                 </View>
             </View>
-
-            <View className="no-print mt-8">
-                <NutritionStatusTable
-                    fullHistoryData={fullHistoryData}
-                    chhistId={chhistId}
-                />
-            </View>
+            <NutritionStatusTable
+                fullHistoryData={fullHistoryData}
+                chhistId={chhistId}
+            />
         </ScrollView>
 
     );

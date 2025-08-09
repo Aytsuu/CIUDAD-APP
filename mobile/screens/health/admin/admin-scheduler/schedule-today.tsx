@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { format } from "date-fns";
-import { useRouter } from "expo-router"; // Import the useRouter hook
 import { useGetScheduler, useGetServices } from "./queries/schedulerFetchQueries";
 
 // Define interfaces for type safety
@@ -24,8 +23,9 @@ interface DailySchedule {
   [serviceName: string]: ServiceTimeSlots;
 }
 
-// TodayScheduleWidgetProps interface is no longer needed
-// as we are using the useRouter hook for navigation.
+interface TodayScheduleWidgetProps {
+  onViewWeeklySchedule?: () => void;
+}
 
 interface UseQueryResult<T> {
   data: T;
@@ -33,21 +33,10 @@ interface UseQueryResult<T> {
   error: Error | null;
 }
 
-
-export default function TodayScheduleWidget() {
-  // Initialize the router
-  const router = useRouter();
-
+export default function TodayScheduleWidget({ onViewWeeklySchedule }: TodayScheduleWidgetProps) {
   const { data: servicesData = [], isLoading: servicesLoading, error: servicesError } = useGetServices();
   const { data: schedulersData = [], isLoading: schedulersLoading, error: schedulersError } = useGetScheduler();
 
-  console.log("TodayScheduleWidget - servicesData:", servicesData);
-  console.log("TodayScheduleWidget - schedulersData:", schedulersData);
-  console.log("TodayScheduleWidget - servicesLoading:", servicesLoading);
-  console.log("TodayScheduleWidget - schedulersLoading:", schedulersLoading);
-  console.log("TodayScheduleWidget - servicesError:", servicesError);
-  console.log("TodayScheduleWidget - schedulersError:", schedulersError);
-          
   const [dailySchedule, setDailySchedule] = useState<DailySchedule>({});
   const [services, setServices] = useState<string[]>([]);
 
@@ -148,7 +137,7 @@ export default function TodayScheduleWidget() {
         )}
         <TouchableOpacity
           className="bg-blue-600 py-3 px-5 rounded-lg items-center mt-2"
-          onPress={() => router.push("/(health)/admin/scheduler/schedule-weekly")} // Use the router to navigate
+          onPress={onViewWeeklySchedule}
           accessibilityLabel="View weekly schedule"
         >
           <Text className="text-white text-base font-bold">View Weekly Schedule</Text>

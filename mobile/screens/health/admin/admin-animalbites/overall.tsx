@@ -209,7 +209,7 @@ export default function AnimalBiteOverallScreen() {
         <View className="p-4">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View className="flex-row gap-3">
-              <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 min-w-[150px]">
+              <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                 <View className="flex-row items-center mb-2">
                   <Users size={20} color="#3B82F6" />
                   <Text className="ml-2 text-gray-600 text-sm font-medium">Total Patients</Text>
@@ -225,7 +225,7 @@ export default function AnimalBiteOverallScreen() {
               <Text className="text-3xl font-bold text-gray-800">{stats.totalRecords}</Text>
             </View> */}
 
-              <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 min-w-[150px]">
+              <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                 <View className="flex-row items-center mb-2">
                   <User size={20} color="#8B5CF6" />
                   <Text className="ml-2 text-gray-600 text-sm font-medium">Residents</Text>
@@ -233,7 +233,7 @@ export default function AnimalBiteOverallScreen() {
                 <Text className="text-3xl font-bold text-gray-800">{stats.residentPatients}</Text>
               </View>
 
-              <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 min-w-[150px]">
+              <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                 <View className="flex-row items-center mb-2">
                   <TrendingUp size={20} color="#F59E0B" />
                   <Text className="ml-2 text-gray-600 text-sm font-medium">Transients</Text>

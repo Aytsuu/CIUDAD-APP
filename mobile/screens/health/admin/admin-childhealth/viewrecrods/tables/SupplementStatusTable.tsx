@@ -1,112 +1,100 @@
+
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { ChildHealthHistoryRecord } from '../types';
 import { format, isValid } from 'date-fns';
 
-interface SupplementStatusTableProps {
+interface NutritionStatusTableProps {
   fullHistoryData: ChildHealthHistoryRecord[];
   chhistId: string;
 }
 
-export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
+export const SupplementStatusTable: React.FC<NutritionStatusTableProps> = ({
   fullHistoryData,
   chhistId,
 }) => {
-  const hasSupplementRecords = fullHistoryData.some(
-    record => record.supplements_statuses && record.supplements_statuses.length > 0
-  );
-
-  const supplementData = fullHistoryData
-    .flatMap(
-      record =>
-        record.supplements_statuses?.map(status => ({
-          record,
-          status,
-        })) || []
-    )
-    .filter(({ record }) => {
+  const nutritionData = fullHistoryData
+    .filter(record => {
       const recordDate = new Date(record.created_at).getTime();
       const currentRecordDate = new Date(
         fullHistoryData.find(r => r.chhist_id === chhistId)?.created_at || 0
       ).getTime();
       return recordDate <= currentRecordDate;
     })
-    .sort(
-      (a, b) => new Date(a.status.date_seen).getTime() - new Date(b.status.date_seen).getTime()
-    );
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
     <View className="flex-1 bg-gray-50 mb-6">
       <View className="bg-white shadow-sm p-4 border-b border-gray-100">
-        <Text className="text-sm font-semibold text-gray-800">Health Monitoring</Text>
+        <Text className="text-sm font-semibold text-gray-800">OPT Tracking</Text>
       </View>
-      <View className="flex-row bg-white shadow-sm p-4 border-b border-gray-100">
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2">Date Seen</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2">Anemic/BirthWt</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2">Birth Weight</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2">Iron Given</Text>
-        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2">Date Completed</Text>
+      <View className="flex-row bg-white shadow-sm p-4 border-b border-gray-100 flex-wrap">
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Date</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Age</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Weight (kg)</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">Height (cm)</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">WFA</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">LHFA</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">WFL</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">MUAC</Text>
+        <Text className="flex-1 text-sm font-semibold text-gray-800 px-2 min-w-[120px]">MUAC Status</Text>
       </View>
       <ScrollView className="flex-1 px-4 py-2">
-        {hasSupplementRecords ? (
-          supplementData.map(({ record, status }, index) => {
+        {nutritionData.length > 0 ? (
+          nutritionData.map(record => {
             const isCurrentRecord = record.chhist_id === chhistId;
+            const vitalSigns = record.child_health_vital_signs?.[0] || {};
+            const bmDetails = vitalSigns.bm_details || {};
+            const nutritionStatus = record.nutrition_statuses?.[0] || {};
+
             return (
               <TouchableOpacity
-                key={`${status.chssupplementstat_id}-${index}`}
+                key={record.chhist_id}
                 className={`bg-white rounded-xl shadow-sm mb-3 p-4 border border-gray-100 ${
                   isCurrentRecord ? 'border-blue-200 bg-blue-50' : ''
                 } active:opacity-80 transition-all duration-200`}
-                onPress={() => console.log('Supplement Status:', { record, status })}
+                onPress={() => console.log('Nutrition Status:', { record })}
               >
                 <View className="flex-row flex-wrap">
                   <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Date Seen:</Text>
+                    <Text className="text-xs text-gray-400 font-semibold">Date:</Text>
                     <Text className="text-sm text-gray-600">
-                      {status.date_seen && isValid(new Date(status.date_seen))
-                        ? format(new Date(status.date_seen), 'MMM dd, yyyy')
+                      {record.created_at && isValid(new Date(record.created_at))
+                        ? format(new Date(record.created_at), 'MMM dd, yyyy')
                         : 'N/A'}
                     </Text>
                   </View>
                   <View className="flex-1 min-w-[120px] py-1 pl-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Anemic/BirthWt:</Text>
-                    <Text
-                      className={`text-xs px-2 py-1 rounded ${
-                        status.status_type === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : status.status_type === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {status.status_type || 'N/A'}
-                    </Text>
+                    <Text className="text-xs text-gray-400 font-semibold">Age:</Text>
+                    <Text className="text-sm text-gray-600">{bmDetails.age || 'N/A'}</Text>
                   </View>
                   <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Birth Weight:</Text>
-                    <Text className="text-sm text-gray-600">
-                      {status.birthwt
-                        ? status.birthwt.toString().endsWith('.00')
-                          ? `${status.birthwt.toString().slice(0, -3)} kg`
-                          : `${status.birthwt} kg`
-                        : 'N/A'}
-                    </Text>
+                    <Text className="text-xs text-gray-400 font-semibold">Weight (kg):</Text>
+                    <Text className="text-sm text-gray-600">{bmDetails.weight || 'N/A'}</Text>
                   </View>
                   <View className="flex-1 min-w-[120px] py-1 pl-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Iron Given:</Text>
-                    <Text className="text-sm text-gray-600">
-                      {status.date_given_iron && isValid(new Date(status.date_given_iron))
-                        ? format(new Date(status.date_given_iron), 'MMM dd, yyyy')
-                        : 'Not given'}
-                    </Text>
+                    <Text className="text-xs text-gray-400 font-semibold">Height (cm):</Text>
+                    <Text className="text-sm text-gray-600">{bmDetails.height || 'N/A'}</Text>
                   </View>
                   <View className="flex-1 min-w-[120px] py-1 pr-2">
-                    <Text className="text-xs text-gray-400 font-semibold">Date Completed:</Text>
-                    <Text className="text-sm text-gray-600">
-                      {status.date_completed && isValid(new Date(status.date_completed))
-                        ? format(new Date(status.date_completed), 'MMM dd, yyyy')
-                        : ''}
-                    </Text>
+                    <Text className="text-xs text-gray-400 font-semibold">WFA:</Text>
+                    <Text className="text-sm text-gray-600">{nutritionStatus.wfa || 'N/A'}</Text>
+                  </View>
+                  <View className="flex-1 min-w-[120px] py-1 pl-2">
+                    <Text className="text-xs text-gray-400 font-semibold">LHFA:</Text>
+                    <Text className="text-sm text-gray-600">{nutritionStatus.lhfa || 'N/A'}</Text>
+                  </View>
+                  <View className="flex-1 min-w-[120px] py-1 pr-2">
+                    <Text className="text-xs text-gray-400 font-semibold">WFL:</Text>
+                    <Text className="text-sm text-gray-600">{nutritionStatus.wfl || 'N/A'}</Text>
+                  </View>
+                  <View className="flex-1 min-w-[120px] py-1 pl-2">
+                    <Text className="text-xs text-gray-400 font-semibold">MUAC:</Text>
+                    <Text className="text-sm text-gray-600">{nutritionStatus.muac || 'N/A'}</Text>
+                  </View>
+                  <View className="flex-1 min-w-[120px] py-1 pr-2">
+                    <Text className="text-xs text-gray-400 font-semibold">MUAC Status:</Text>
+                    <Text className="text-sm text-gray-600">{nutritionStatus.muac_status || 'N/A'}</Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -114,7 +102,7 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
           })
         ) : (
           <View className="flex-1 justify-center items-center py-10">
-            <Text className="text-gray-500 text-base">No supplement given</Text>
+            <Text className="text-gray-500 text-base">No vital signs records available</Text>
           </View>
         )}
       </ScrollView>

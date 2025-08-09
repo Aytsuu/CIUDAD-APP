@@ -6,16 +6,11 @@ import { getFPPatientsCounts, getFPRecordsList } from "./GetRequest";
 import {
   ArrowLeft,
   Search,
-  User,
-  Users,
   FileText,
-  Calendar,
-  Stethoscope,
   Loader2,
   AlertCircle,
   ChevronRight,
 } from "lucide-react-native";
-import { Picker } from "@react-native-picker/picker";
 
 interface FPRecord {
   fprecord_id: number;
@@ -134,8 +129,6 @@ export default function OverallFpRecordsScreen() {
     }
   };
 
- 
-
   const renderRecordItem = ({ item }: { item: FPRecord }) => (
     <TouchableOpacity
       className="bg-white mx-4 mb-3 rounded-2xl shadow-sm"
@@ -149,7 +142,6 @@ export default function OverallFpRecordsScreen() {
             <Text className="text-lg font-semibold text-gray-900 mb-1">
               {item.patient_name || "N/A"}
             </Text>
-            {/* <Text className="text-sm text-gray-500">{item.client_id}</Text> */}
           </View>
           <View className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center">
             <ChevronRight size={16} color="#6B7280" />
@@ -168,7 +160,7 @@ export default function OverallFpRecordsScreen() {
             <Text className="text-xs text-gray-400 uppercase tracking-wide mb-1 mt-3">
               Patient Type
             </Text>
-             <Text className="text-sm text-gray-700 font-medium">
+            <Text className="text-sm text-gray-700 font-medium">
               {item.patient_type || "N/A"}
             </Text>
           </View>
@@ -291,18 +283,25 @@ export default function OverallFpRecordsScreen() {
           </View>
         </View>
 
-        {/* Filter */}
-        <View className="bg-white rounded-2xl overflow-hidden">
-          <Picker
-            selectedValue={selectedFilter}
-            onValueChange={handleFilterChange}
-            style={{ height: 50 }}
-            accessibilityLabel="Filter by client type"
-          >
-            {clientTypeOptions.map((option) => (
-              <Picker.Item key={option.id} label={option.name} value={option.id} />
-            ))}
-          </Picker>
+        {/* Filter - Now using a button group */}
+        <View className="flex-row justify-between rounded-2xl bg-white p-2">
+          {clientTypeOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              onPress={() => handleFilterChange(option.id)}
+              className={`flex-1 items-center py-2 rounded-xl transition-colors duration-200 ${
+                selectedFilter === option.id ? "bg-blue-500" : "bg-white"
+              }`}
+            >
+              <Text
+                className={`text-sm font-semibold ${
+                  selectedFilter === option.id ? "text-white" : "text-gray-700"
+                }`}
+              >
+                {option.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
@@ -335,17 +334,13 @@ export default function OverallFpRecordsScreen() {
               onPress={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className={`px-6 py-3 rounded-xl ${
-                currentPage === 1 
-                  ? "bg-gray-100" 
-                  : "bg-blue-600"
+                currentPage === 1 ? "bg-gray-100" : "bg-blue-600"
               }`}
               accessibilityLabel="Previous page"
             >
-              <Text 
+              <Text
                 className={`font-medium ${
-                  currentPage === 1 
-                    ? "text-gray-400" 
-                    : "text-white"
+                  currentPage === 1 ? "text-gray-400" : "text-white"
                 }`}
               >
                 Previous
@@ -360,17 +355,13 @@ export default function OverallFpRecordsScreen() {
               onPress={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className={`px-6 py-3 rounded-xl ${
-                currentPage === totalPages 
-                  ? "bg-gray-100" 
-                  : "bg-blue-600"
+                currentPage === totalPages ? "bg-gray-100" : "bg-blue-600"
               }`}
               accessibilityLabel="Next page"
             >
-              <Text 
+              <Text
                 className={`font-medium ${
-                  currentPage === totalPages 
-                    ? "text-gray-400" 
-                    : "text-white"
+                  currentPage === totalPages ? "text-gray-400" : "text-white"
                 }`}
               >
                 Next
