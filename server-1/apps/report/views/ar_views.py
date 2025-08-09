@@ -59,11 +59,11 @@ class ARFileCreateView(generics.CreateAPIView):
         instances = []
         for file_data in files:
           file = ARFile(
-            ar=ar,
-            arf_name=file_data['name'],
-            arf_type=file_data['type'],
-            arf_path=f'ar/{file_data['name']}'
-          )
+    ar=ar,
+    arf_name=file_data['name'],
+    arf_type=file_data['type'],
+    arf_path=f"ar/{file_data['name']}"  # Recommended solution
+)
           url = upload_to_storage(file_data, 'report-bucket', 'ar')
           file.arf_url = url
           instances.append(file)

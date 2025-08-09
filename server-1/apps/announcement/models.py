@@ -12,10 +12,9 @@ class Announcement(models.Model):
     ann_event_start = models.DateTimeField(null=True, blank=True)
     ann_event_end = models.DateTimeField(null=True, blank=True)
     ann_type = models.CharField(max_length=50)
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.CASCADE
-    )
+    ann_to_sms = models.BooleanField(default=False)
+    ann_to_email = models.BooleanField(default=False)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         db_table = 'announcement'
@@ -40,15 +39,12 @@ class AnnouncementFile(models.Model):
 class AnnouncementRecipient(models.Model):
     ar_id = models.AutoField(primary_key=True)
 
-    ar_mode = models.CharField(max_length=50)
-
     ann = models.ForeignKey(
         Announcement,
         on_delete=models.CASCADE,
     )
 
     ar_type = models.CharField(max_length=50)
-
 
     class Meta:
         db_table = 'announcement_recipient'

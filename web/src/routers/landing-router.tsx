@@ -10,7 +10,7 @@ import Services from '@/pages/landing/services';
 import About from '@/pages/landing/about';
 import Home from '@/pages/landing/home';
 import Donation from '@/pages/landing/donation';
-
+import Announcements from '@/pages/landing/announcements';
 
 export const landing_router: RouteObject[] = [
   {
