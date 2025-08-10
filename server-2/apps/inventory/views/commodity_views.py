@@ -177,7 +177,6 @@ class CommoditySummaryMonthsAPIView(APIView):
             }, status=500)
 
 
-
 class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
     serializer_class = CommodityInventorySerializer
     pagination_class = StandardResultsPagination
@@ -196,18 +195,36 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
 
         inventory_summary = []
 
-        # Unique commodity + expiry_date combos within or before month end
-        com_expiry_pairs = CommodityTransaction.objects.filter(
+        # Get unique commodity + expiry_date + inv_id combos to avoid duplicates
+        com_expiry_inv_pairs = CommodityTransaction.objects.filter(
             created_at__date__lte=end_of_month
         ).values_list(
             "cinv_id__com_id",
-            "cinv_id__inv_id__expiry_date"
+            "cinv_id__inv_id__expiry_date",
+            "cinv_id__inv_id"
         ).distinct()
 
-        for com_id, expiry_date in com_expiry_pairs:
+        # Track unique combinations to avoid duplicates
+        seen_combinations = set()
+
+        for com_id, expiry_date, inv_id in com_expiry_inv_pairs:
+            # Skip if expiry date is before the current month (already expired)
+            if expiry_date and expiry_date < start_of_month:
+                continue
+                
+            # Create a unique key for this combination
+            combo_key = (com_id, expiry_date, inv_id)
+            
+            # Skip if we've already processed this combination
+            if combo_key in seen_combinations:
+                continue
+                
+            seen_combinations.add(combo_key)
+
             transactions = CommodityTransaction.objects.filter(
                 cinv_id__com_id=com_id,
-                cinv_id__inv_id__expiry_date=expiry_date
+                cinv_id__inv_id__expiry_date=expiry_date,
+                cinv_id__inv_id=inv_id
             ).order_by('created_at')
 
             first_tx = transactions.select_related("cinv_id__com_id", "cinv_id__inv_id").first()
@@ -226,19 +243,18 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
                 created_at__date__lt=start_of_month,
                 comt_action__icontains="deduct"
             )
-            opening_qty = sum(self._parse_qty(t) for t in opening_in) - sum(self._parse_qty(t) for t in opening_out)
+            # For opening stock, multiply boxes for added quantities but not for deducted
+            opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
 
-            # No extra multiplication here (boxes are counted as pcs per transaction)
-
-            # Received during the month
-            received_qty = sum(self._parse_qty(t) for t in transactions.filter(
+            # Received during the month (multiply boxes for received items)
+            received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in transactions.filter(
                 created_at__date__gte=start_of_month,
                 created_at__date__lte=end_of_month,
                 comt_action__icontains="added"
             ))
 
-            # Dispensed during the month
-            dispensed_qty = sum(self._parse_qty(t) for t in transactions.filter(
+            # Dispensed during the month (DON'T multiply boxes for dispensed items)
+            dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in transactions.filter(
                 created_at__date__gte=start_of_month,
                 created_at__date__lte=end_of_month,
                 comt_action__icontains="deduct"
@@ -248,8 +264,12 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
             display_opening = opening_qty + received_qty
             closing_qty = display_opening - dispensed_qty
 
-            # Display unit as "pcs" if boxes
-            display_unit = "pcs" if unit and unit.lower() == "boxes" else unit
+            # Skip if there's no stock (opening + received = 0) and it's not expiring this month
+            if closing_qty <= 0 and (not expiry_date or expiry_date > end_of_month):
+                continue
+
+            # Display unit as is (frontend will handle conversion)
+            display_unit = unit
 
             inventory_summary.append({
                 'com_name': first_tx.cinv_id.com_id.com_name,
@@ -272,16 +292,21 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
             }
         })
 
-    def _parse_qty(self, transaction):
-        """Parse quantity number from transaction.comt_qty."""
+    def _parse_qty(self, transaction, multiply_boxes=False):
+        """Parse quantity number from transaction.comt_qty.
+        
+        Args:
+            multiply_boxes: Whether to multiply by pcs_per_box for box units
+                           (False for dispensed quantities)
+        """
         match = re.search(r'\d+', str(transaction.comt_qty))
         qty_num = int(match.group()) if match else 0
 
-        # Multiply by pcs if unit is boxes
-        if transaction.cinv_id.cinv_qty_unit and transaction.cinv_id.cinv_qty_unit.lower() == "boxes":
+        # Only multiply if it's a box unit AND we're supposed to multiply
+        if (multiply_boxes and 
+            transaction.cinv_id.cinv_qty_unit and 
+            transaction.cinv_id.cinv_qty_unit.lower() == "boxes"):
             pcs_per_box = transaction.cinv_id.cinv_pcs or 1
             qty_num *= pcs_per_box
 
         return qty_num
-
-     

@@ -5,13 +5,11 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Loader2, Search } from "lucide-react";
 import { Link } from "react-router-dom";
-
-
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useMedicalRecord } from "../queries/fetchQueries";
 import { MedicalRecord } from "../types";
-import { getAllMedicalRecordsColumns,exportColumns } from "./columns/all_col";
+import { getAllMedicalRecordsColumns, exportColumns } from "./columns/all_col";
 import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";
 
@@ -23,20 +21,24 @@ export default function AllMedicalConsRecord() {
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const { showLoading, hideLoading } = useLoading();
   
+  // Ensure data is always an array with default value
+  const { data: medicalRecords = [], isLoading } = useMedicalRecord();
 
-  const { data: MedicalRecord, isLoading } = useMedicalRecord();
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
-    useEffect(() => {
-      if (isLoading) {
-        showLoading();
-      } else {
-        hideLoading();
-      }
-    }, [isLoading]);
   const formatMedicalData = React.useCallback((): MedicalRecord[] => {
-    if (!MedicalRecord) return [];
+    // Add proper type checking and array validation
+    if (!medicalRecords || !Array.isArray(medicalRecords)) {
+      return [];
+    }
 
-    return MedicalRecord.map((record: any) => {
+    return medicalRecords.map((record: any) => {
       const details = record.patient_details || {};
       const info = details.personal_info || {};
       const address = details.address || {};
@@ -52,7 +54,7 @@ export default function AllMedicalConsRecord() {
           .join(", ") || "";
 
       return {
-        rp_id:record.rp_id || null,
+        rp_id: record.rp_id || null,
         pat_id: record.pat_id,
         fname: info.per_fname || "",
         lname: info.per_lname || "",
@@ -71,10 +73,11 @@ export default function AllMedicalConsRecord() {
         medicalrec_count: record.medicalrec_count || 0,
       };
     });
-  }, [MedicalRecord]);
+  }, [medicalRecords]);
 
   const filteredData = React.useMemo(() => {
-    return formatMedicalData().filter((record: MedicalRecord) => {
+    const formattedData = formatMedicalData();
+    return formattedData.filter((record: MedicalRecord) => {
       const searchText = `${record.pat_id} 
         ${record.lname} 
         ${record.fname} 
@@ -148,7 +151,7 @@ export default function AllMedicalConsRecord() {
                 }}
               >
                 New Record
-              </Link>{" "}
+              </Link>
             </Button>
           </div>
         </div>
@@ -169,21 +172,24 @@ export default function AllMedicalConsRecord() {
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
-             <ExportButton
-                        data={paginatedData}
-                        filename="overall-child-health-records"
-                        columns={exportColumns}
-                      />
+            <ExportButton
+              data={paginatedData}
+              filename="overall-child-health-records"
+              columns={exportColumns}
+            />
           </div>
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2">loading....</span>
               </div>
             ) : (
-              <DataTable columns={columns} data={paginatedData} />
+              <DataTable 
+                columns={columns} 
+                data={paginatedData} 
+              />
             )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

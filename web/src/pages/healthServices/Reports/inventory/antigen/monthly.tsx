@@ -70,24 +70,7 @@ export default function MonthlyInventoryAntigenRecords() {
         </div>
       ),
     },
-    {
-      accessorKey: "vaccine_items",
-      header: "Vaccines",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.vaccine_items.toLocaleString()}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "immunization_items",
-      header: "Immunization Items",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.immunization_items.toLocaleString()}
-        </div>
-      ),
-    },
+
     {
       id: "actions",
       cell: ({ row }) => (
@@ -130,7 +113,10 @@ export default function MonthlyInventoryAntigenRecords() {
 
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={17} />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2"
+            size={17}
+          />
           <Input
             placeholder="Search by month (e.g. 'August 2025')..."
             className="pl-10 bg-white w-full"
@@ -172,8 +158,10 @@ export default function MonthlyInventoryAntigenRecords() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray">
-            Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
+            Showing{" "}
+            {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths}{" "}
+            months
           </p>
           {totalPages > 1 && (
             <PaginationLayout

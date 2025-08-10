@@ -1,27 +1,30 @@
-from rest_framework import generics
-from rest_framework.views import APIView
-from .serializers import *
-from rest_framework.response import Response
-from rest_framework import status
+# Standard library imports
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+# Django imports
+from django.db.models import (
+    Case, When, F, CharField, Q, Prefetch, Count
+)
+from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import NotFound
-from .utils import get_childhealth_record_count
-from .models import *
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.db.models import Prefetch
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-from apps.healthProfiling.models import *
-from django.db.models import Q
-from pagination import StandardResultsPagination
-from django.db.models.functions import TruncMonth
-from django.db.models import Count
+
+# DRF imports
+from rest_framework import generics, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
+
+# Local app imports
+from .models import *
+from .serializers import *
+from .utils import get_childhealth_record_count
 from apps.patientrecords.models import *
-
-
-
+from apps.healthProfiling.models import *
+from pagination import StandardResultsPagination
 
 
 
@@ -427,253 +430,467 @@ class MonthlyOPTChildHealthSummariesAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
- 
- 
- 
+   
+
+
+
+# class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
+#     serializer_class = OPTTrackingSerializer
+#     pagination_class = StandardResultsPagination
+
+#     def get_queryset(self):
+#         month = self.kwargs.get('month')
+#         try:
+#             year, month_num = map(int, month.split('-'))
+#             start_date = datetime(year, month_num, 1)
+#             end_date = datetime(year, month_num + 1, 1) if month_num < 12 else datetime(year + 1, 1, 1)
+#             end_date -= timedelta(microseconds=1)
+#         except ValueError:
+#             return ChildHealthVitalSigns.objects.none()
+
+#         queryset = ChildHealthVitalSigns.objects.filter(
+#             bm__created_at__gte=start_date,
+#             bm__created_at__lte=end_date
+#         ).select_related(
+#             'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
+#             'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
+#             'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id',
+#             'chhist__chrec__patrec__pat_id__trans_id__tradd_id'
+#         ).prefetch_related(
+#             'nutritional_status',
+#             Prefetch(
+#                 'chhist__chrec__patrec__pat_id__rp_id__per__personaladdress_set',
+#                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
+#                 to_attr='prefetched_personal_addresses'
+#             ),
+#             Prefetch(
+#                 'chhist__chrec__patrec__pat_id__rp_id__household_set',
+#                 queryset=Household.objects.select_related('add', 'add__sitio'),
+#                 to_attr='prefetched_households'
+#             )
+#         ).order_by('bm__created_at')
+
+#         search_query = self.request.query_params.get('search', '').strip()
+#         if search_query:
+#             queryset = self._apply_search_filter(queryset, search_query)
+
+#         age_range = self.request.query_params.get('age_range', '').strip()
+#         if age_range:
+#             queryset = self._apply_age_filter(queryset, age_range)
+
+#         return queryset
+
+#     def _parse_age_to_months(self, age_str):
+#         """Convert age string to whole number of months"""
+#         if not age_str:
+#             return 0
+            
+#         try:
+#             # Case 1: "X weeks and Y days"
+#             if 'week' in age_str and 'day' in age_str:
+#                 parts = age_str.split()
+#                 weeks = int(parts[0])
+#                 days = int(parts[3])
+#                 total_days = weeks * 7 + days
+#                 return int(total_days / 30.44)  # Convert to whole number
+            
+#             # Case 2: "X weeks"
+#             elif 'week' in age_str:
+#                 weeks = int(age_str.split()[0])
+#                 return int((weeks * 7) / 30.44)
+                
+#             # Case 3: "X months"
+#             elif 'month' in age_str:
+#                 return int(age_str.split()[0])
+                
+#             # Case 4: "X years"
+#             elif 'year' in age_str:
+#                 return int(age_str.split()[0]) * 12
+                
+#             return 0
+#         except (ValueError, IndexError, AttributeError):
+#             return 0
+
+#     def _apply_age_filter(self, queryset, age_range):
+#         """Apply age range filter to queryset"""
+#         try:
+#             min_age, max_age = map(int, age_range.split('-'))
+#             filtered_data = []
+#             for obj in queryset:
+#                 age_str = obj.bm.age if hasattr(obj, 'bm') and obj.bm else ''
+#                 age_months = self._parse_age_to_months(age_str)
+#                 if min_age <= age_months <= max_age:
+#                     filtered_data.append(obj)
+#             return filtered_data
+#         except ValueError:
+#             return queryset
+
+#     def _apply_search_filter(self, queryset, search_query):
+#         """Apply multi-keyword search filter to queryset"""
+#         # Split search terms by comma and remove empty/whitespace-only terms
+#         search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
+#         if not search_terms:
+#             return queryset
+
+#         # Initialize Q objects for different search types
+#         name_query = Q()
+#         family_no_query = Q()
+#         person_ids = set()
+#         transient_ids = set()
+
+#         for term in search_terms:
+#             # Build name query (search across first, middle, last names)
+#             name_query &= (
+#                 Q(chhist__chrec__patrec__pat_id__rp_id__per__per_fname__icontains=term) |
+#                 Q(chhist__chrec__patrec__pat_id__rp_id__per__per_mname__icontains=term) |
+#                 Q(chhist__chrec__patrec__pat_id__rp_id__per__per_lname__icontains=term)
+#             )
+
+#             # Build family number query
+#             family_no_query |= Q(chhist__chrec__family_no__icontains=term)
+
+#             # Search addresses for resident patients
+#             matching_person_ids = PersonalAddress.objects.filter(
+#                 Q(add__add_city__icontains=term) |
+#                 Q(add__add_barangay__icontains=term) |
+#                 Q(add__add_street__icontains=term) |
+#                 Q(add__add_external_sitio__icontains=term) |
+#                 Q(add__add_province__icontains=term) |
+#                 Q(add__sitio__sitio_name__icontains=term)
+#             ).values_list('per', flat=True)
+#             person_ids.update(matching_person_ids)
+
+#             # Search addresses for transient patients
+#             matching_transient_ids = Transient.objects.filter(
+#                 Q(tradd_id__tradd_city__icontains=term) |
+#                 Q(tradd_id__tradd_barangay__icontains=term) |
+#                 Q(tradd_id__tradd_street__icontains=term) |
+#                 Q(tradd_id__tradd_sitio__icontains=term) |
+#                 Q(tradd_id__tradd_province__icontains=term)
+#             ).values_list('trans_id', flat=True)
+#             transient_ids.update(matching_transient_ids)
+
+#         # Combine all queries
+#         combined_query = name_query | family_no_query
+#         if person_ids:
+#             combined_query |= Q(chhist__chrec__patrec__pat_id__rp_id__per__in=person_ids)
+#         if transient_ids:
+#             combined_query |= Q(chhist__chrec__patrec__pat_id__trans_id__in=transient_ids)
+
+#         return queryset.filter(combined_query)
+
+#     def _format_report_data(self, data, queryset_objects=None):
+#         report_data = []
+        
+#         if queryset_objects:
+#             for i, entry in enumerate(data):
+#                 try:
+#                     vs_obj = queryset_objects[i]
+#                     vs = entry['vital_signs']
+#                     chist = entry['chist_details']
+#                     patrec = chist['chrec_details']['patrec_details']['pat_details']
+
+#                     address, sitio, is_transient = self._get_patient_address(vs_obj)
+
+#                     # Calculate age in whole months
+#                     age_in_months = 0
+#                     if vs.get('bm_details') and vs['bm_details'].get('age'):
+#                         age_str = vs['bm_details']['age']
+#                         age_in_months = self._parse_age_to_months(age_str)
+
+#                     # Format parents information
+#                     parents = {}
+#                     family_info = patrec.get('family_head_info', {})
+#                     if family_info.get('has_mother'):
+#                         mother = family_info['family_heads']['mother']['personal_info']
+#                         parents['mother'] = f"{mother['per_fname']} {mother['per_mname']} {mother['per_lname']}"
+#                     if family_info.get('has_father'):
+#                         father = family_info['family_heads']['father']['personal_info']
+#                         parents['father'] = f"{father['per_fname']} {father['per_mname']} {father['per_lname']}"
+
+#                     # Format nutritional status
+#                     nutritional_status = {}
+#                     if vs.get('nutritional_status'):
+#                         ns = vs['nutritional_status']
+#                         nutritional_status = {
+#                             'wfa': ns.get('wfa'),
+#                             'lhfa': ns.get('lhfa'),
+#                             'wfl': ns.get('wfl'),
+#                             'muac': ns.get('muac'),
+#                             'edema': ns.get('edemaSeverity'),
+#                             'muac_status': ns.get('muac_status')
+#                         }
+
+#                     report_entry = {
+#                         'household_no': chist['chrec_details'].get('family_no', 'N/A'),
+#                         'child_name': f"{patrec['personal_info']['per_fname']} {patrec['personal_info']['per_mname']} {patrec['personal_info']['per_lname']}",
+#                         'sex': patrec['personal_info']['per_sex'],
+#                         'date_of_birth': patrec['personal_info']['per_dob'],
+#                         'age_in_months': age_in_months,
+#                         'parents': parents,
+#                         'address': address,
+#                         'sitio': sitio,
+#                         'transient': is_transient,
+#                         'date_of_weighing': vs['bm_details']['created_at'][:10] if vs.get('bm_details') else None,
+#                         'age_at_weighing': vs['bm_details']['age'] if vs.get('bm_details') else None,
+#                         'weight': vs['bm_details']['weight'] if vs.get('bm_details') else None,
+#                         'height': vs['bm_details']['height'] if vs.get('bm_details') else None,
+#                         'nutritional_status': nutritional_status,
+#                         'type_of_feeding': chist['chrec_details'].get('type_of_feeding')
+#                     }
+
+#                     report_data.append(report_entry)
+#                 except Exception as e:
+#                     print(f"Error formatting report entry {i}: {e}")
+#                     continue
+
+#         return {
+#             'month': self.kwargs['month'],
+#             'total_entries': len(report_data),
+#             'report_data': report_data
+#         }
+
+#     def _get_patient_address(self, vital_signs_obj):
+#         """Helper method to get patient address"""
+#         try:
+#             patient = vital_signs_obj.chhist.chrec.patrec.pat_id
+            
+#             if patient.pat_type == 'Transient' and patient.trans_id:
+#                 trans = patient.trans_id
+#                 if trans.tradd_id:
+#                     trans_addr = trans.tradd_id
+#                     sitio = trans_addr.tradd_sitio
+#                     address_parts = [
+#                         trans_addr.tradd_street,
+#                         trans_addr.tradd_barangay,
+#                         trans_addr.tradd_city,
+#                         trans_addr.tradd_province,
+#                         f"Sitio {sitio}" if sitio else None
+#                     ]
+#                     return ", ".join(filter(None, address_parts)), sitio, True
+            
+#             elif patient.pat_type == 'Resident' and patient.rp_id:
+#                 rp = patient.rp_id
+#                 if rp.per:
+#                     if hasattr(rp.per, 'prefetched_personal_addresses'):
+#                         for addr in rp.per.prefetched_personal_addresses:
+#                             if addr.add:
+#                                 address = addr.add
+#                                 sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+#                                 address_parts = [
+#                                     address.add_street,
+#                                     address.add_barangay,
+#                                     address.add_city,
+#                                     address.add_province,
+#                                     f"Sitio {sitio}" if sitio else None
+#                                 ]
+#                                 return ", ".join(filter(None, address_parts)), sitio, False
+                    
+#                     personal_address = PersonalAddress.objects.filter(
+#                         per=rp.per
+#                     ).select_related('add', 'add__sitio').first()
+                    
+#                     if personal_address and personal_address.add:
+#                         address = personal_address.add
+#                         sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+#                         address_parts = [
+#                             address.add_street,
+#                             address.add_barangay,
+#                             address.add_city,
+#                             address.add_province,
+#                             f"Sitio {sitio}" if sitio else None
+#                         ]
+#                         return ", ".join(filter(None, address_parts)), sitio, False
+                
+#                 return None, None, False
+            
+#         except Exception as e:
+#             print(f"Error getting address: {e}")
+#             return None, None, None
+
+#     def list(self, request, *args, **kwargs):
+#         queryset = self.filter_queryset(self.get_queryset())
+#         page = self.paginate_queryset(queryset)
+
+#         if page is not None:
+#             serializer = self.get_serializer(page, many=True)
+#             return self.get_paginated_response(self._format_report_data(serializer.data, page))
+
+#         serializer = self.get_serializer(queryset, many=True)
+#         return Response(self._format_report_data(serializer.data, queryset))
+
 class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
     serializer_class = OPTTrackingSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         month = self.kwargs.get('month')
-        search_query = self.request.query_params.get('search', '').strip()
-        age_range = self.request.query_params.get('age_range', '').strip()
-
         try:
             year, month_num = map(int, month.split('-'))
-            if month_num < 1 or month_num > 12:
-                raise ValueError
             start_date = datetime(year, month_num, 1)
-            end_date = (datetime(year + (month_num // 12), ((month_num % 12) + 1), 1) 
-                        - timedelta(days=1))
-        except (ValueError, TypeError):
+            end_date = datetime(year, month_num + 1, 1) if month_num < 12 else datetime(year + 1, 1, 1)
+            end_date -= timedelta(microseconds=1)
+        except ValueError:
             return ChildHealthVitalSigns.objects.none()
 
-        # Optimized queryset with proper relationships
-        queryset = (
-            ChildHealthVitalSigns.objects.filter(
-                bm__created_at__gte=start_date,
-                bm__created_at__lte=end_date
+        queryset = ChildHealthVitalSigns.objects.filter(
+            bm__created_at__gte=start_date,
+            bm__created_at__lte=end_date
+        ).select_related(
+            'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
+            'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
+            'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id',
+            'chhist__chrec__patrec__pat_id__trans_id__tradd_id'
+        ).prefetch_related(
+            'nutritional_status',
+            Prefetch(
+                'chhist__chrec__patrec__pat_id__rp_id__per__personaladdress_set',
+                queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
+                to_attr='prefetched_personal_addresses'
+            ),
+            Prefetch(
+                'chhist__chrec__patrec__pat_id__rp_id__household_set',
+                queryset=Household.objects.select_related('add', 'add__sitio'),
+                to_attr='prefetched_households'
             )
-            .select_related(
-                'bm',
-                'chhist',
-                'chhist__chrec',
-                'chhist__chrec__patrec',
-                'chhist__chrec__patrec__pat_id',
-                'chhist__chrec__patrec__pat_id__rp_id',
-                'chhist__chrec__patrec__pat_id__rp_id__per',
-                'chhist__chrec__patrec__pat_id__trans_id',
-                'chhist__chrec__patrec__pat_id__trans_id__tradd_id',
-            )
-            .prefetch_related(
-                'nutritional_status',
-                # For resident addresses
-                Prefetch(
-                    'chhist__chrec__patrec__pat_id__rp_id__per__personaladdress_set',
-                    queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
-                    to_attr='prefetched_personal_addresses'
-                ),
-                # For household addresses as fallback
-                Prefetch(
-                    'chhist__chrec__patrec__pat_id__rp_id__household_set',
-                    queryset=Household.objects.select_related('add', 'add__sitio'),
-                    to_attr='prefetched_households'
-                )
-            )
-            .order_by('bm__created_at')
-        )
+        ).order_by('bm__created_at')
 
+        # Sitio search
+        sitio_search = self.request.query_params.get('sitio', '').strip()
+        if sitio_search:
+            queryset = self._apply_sitio_search(queryset, sitio_search)
+
+        # Nutritional status search
+        nutritional_search = self.request.query_params.get('nutritional_status', '').strip()
+        if nutritional_search:
+            queryset = self._apply_nutritional_search(queryset, nutritional_search)
+
+        age_range = self.request.query_params.get('age_range', '').strip()
         if age_range:
-            try:
-                min_age, max_age = map(int, age_range.split('-'))
-                queryset = queryset.filter(
-                    bm__age_months__gte=min_age,
-                    bm__age_months__lte=max_age
-                )
-            except (ValueError, AttributeError):
-                pass
-
-        if search_query:
-            try:
-                # Search in addresses
-                matching_person_ids = PersonalAddress.objects.filter(
-                    Q(add__add_city__icontains=search_query) |
-                    Q(add__add_barangay__icontains=search_query) |
-                    Q(add__add_street__icontains=search_query) |
-                    Q(add__add_external_sitio__icontains=search_query) |
-                    Q(add__add_province__icontains=search_query) |
-                    Q(add__sitio__sitio_name__icontains=search_query)
-                ).values_list('per', flat=True)
-
-                # Also search in transient addresses
-                matching_transient_ids = Transient.objects.filter(
-                    Q(tradd_id__tradd_city__icontains=search_query) |
-                    Q(tradd_id__tradd_barangay__icontains=search_query) |
-                    Q(tradd_id__tradd_street__icontains=search_query) |
-                    Q(tradd_id__tradd_sitio__icontains=search_query) |
-                    Q(tradd_id__tradd_province__icontains=search_query)
-                ).values_list('trans_id', flat=True)
-
-                queryset = queryset.filter(
-                    Q(chhist__chrec__patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
-                    Q(chhist__chrec__patrec__pat_id__rp_id__per__per_mname__icontains=search_query) |
-                    Q(chhist__chrec__patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
-                    Q(chhist__chrec__family_no__icontains=search_query) |
-                    Q(chhist__chrec__patrec__pat_id__rp_id__per__in=matching_person_ids) |
-                    Q(chhist__chrec__patrec__pat_id__trans_id__in=matching_transient_ids)
-                )
-            except Exception as e:
-                print(f"Search query error: {e}")
+            queryset = self._apply_age_filter(queryset, age_range)
 
         return queryset
 
-    def _get_patient_address(self, vital_signs_obj):
-        """Get address and sitio from the ChildHealthVitalSigns object using prefetched data"""
+    def _apply_sitio_search(self, queryset, search_query):
+        """Search only by sitio or external sitio - returns empty if no matches"""
+        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
+        if not search_terms:
+            return queryset.none()  # Return empty if no search terms
+
+        person_ids = set()
+        transient_ids = set()
+        
+        for term in search_terms:
+            # Search addresses for regular patients
+            matching_person_ids = PersonalAddress.objects.filter(
+                Q(add__add_external_sitio__icontains=term) |
+                Q(add__sitio__sitio_name__icontains=term)
+            ).values_list('per', flat=True)
+            person_ids.update(matching_person_ids)
+
+            # Search addresses for transient patients
+            matching_transient_ids = Transient.objects.filter(
+                Q(tradd_id__tradd_sitio__icontains=term)
+            ).values_list('trans_id', flat=True)
+            transient_ids.update(matching_transient_ids)
+
+        # If no matches found in either search, return empty queryset
+        if not person_ids and not transient_ids:
+            return queryset.none()
+
+        # Build the query
+        combined_query = Q()
+        
+        if person_ids:
+            combined_query |= Q(chhist__chrec__patrec__pat_id__rp_id__per__in=person_ids)
+        if transient_ids:
+            combined_query |= Q(chhist__chrec__patrec__pat_id__trans_id__in=transient_ids)
+
+        return queryset.filter(combined_query)
+
+
+    def _apply_nutritional_search(self, queryset, search_query):
+        """Search by nutritional status"""
+        search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
+        if not search_terms:
+            return queryset
+
+        status_query = Q()
+        for term in search_terms:
+            status_query |= (
+                Q(nutritional_status__wfa__iexact=term) |
+                Q(nutritional_status__lhfa__iexact=term) |
+                Q(nutritional_status__wfl__iexact=term) |
+                Q(nutritional_status__muac_status__iexact=term)
+            )
+        
+        return queryset.filter(status_query)
+
+    def _parse_age_to_months(self, age_str):
+        """Convert age string to whole number of months"""
+        if not age_str:
+            return 0
+            
         try:
-            patient = vital_signs_obj.chhist.chrec.patrec.pat_id
+            # Case 1: "X weeks and Y days"
+            if 'week' in age_str and 'day' in age_str:
+                parts = age_str.split()
+                weeks = int(parts[0])
+                days = int(parts[3])
+                total_days = weeks * 7 + days
+                return int(total_days / 30.44)  # Convert to whole number
             
-            if patient.pat_type == 'Transient' and patient.trans_id:
-                # Handle transient patients
-                trans = patient.trans_id
-                if trans.tradd_id:
-                    trans_addr = trans.tradd_id
-                    sitio = trans_addr.tradd_sitio
-                    address_parts = [
-                        trans_addr.tradd_street,
-                        trans_addr.tradd_barangay,
-                        trans_addr.tradd_city,
-                        trans_addr.tradd_province,
-                        f"Sitio {sitio}" if sitio else None
-                    ]
-                    full_address = ", ".join(filter(None, address_parts))
-                    return full_address, sitio, True
-                return None, None, True
-            
-            elif patient.pat_type == 'Resident' and patient.rp_id:
-                # Handle resident patients
-                rp = patient.rp_id
-                if rp.per:
-                    # Try to use prefetched personal addresses
-                    if hasattr(rp.per, 'prefetched_personal_addresses'):
-                        personal_addresses = rp.per.prefetched_personal_addresses
-                        if personal_addresses:
-                            personal_address = personal_addresses[0]
-                            if personal_address.add:
-                                address = personal_address.add
-                                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                                address_parts = [
-                                    address.add_street,
-                                    address.add_barangay,
-                                    address.add_city,
-                                    address.add_province,
-                                    f"Sitio {sitio}" if sitio else None
-                                ]
-                                full_address = ", ".join(filter(None, address_parts))
-                                return full_address, sitio, False
-                    
-                    # Fallback: Try prefetched households
-                    if hasattr(rp, 'prefetched_households'):
-                        households = rp.prefetched_households
-                        if households:
-                            household = households[0]
-                            if household.add:
-                                address = household.add
-                                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                                address_parts = [
-                                    address.add_street,
-                                    address.add_barangay,
-                                    address.add_city,
-                                    address.add_province,
-                                    f"Sitio {sitio}" if sitio else None
-                                ]
-                                full_address = ", ".join(filter(None, address_parts))
-                                return full_address, sitio, False
-                    
-                    # Last resort: Direct database query (not ideal for performance)
-                    personal_address = PersonalAddress.objects.filter(
-                        per=rp.per
-                    ).select_related('add', 'add__sitio').first()
-                    
-                    if personal_address and personal_address.add:
-                        address = personal_address.add
-                        sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                        address_parts = [
-                            address.add_street,
-                            address.add_barangay,
-                            address.add_city,
-                            address.add_province,
-                            f"Sitio {sitio}" if sitio else None
-                        ]
-                        full_address = ", ".join(filter(None, address_parts))
-                        return full_address, sitio, False
-                    
-                    # Household fallback
-                    household = Household.objects.filter(
-                        rp=rp
-                    ).select_related('add', 'add__sitio').first()
-                    
-                    if household and household.add:
-                        address = household.add
-                        sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                        address_parts = [
-                            address.add_street,
-                            address.add_barangay,
-                            address.add_city,
-                            address.add_province,
-                            f"Sitio {sitio}" if sitio else None
-                        ]
-                        full_address = ", ".join(filter(None, address_parts))
-                        return full_address, sitio, False
+            # Case 2: "X weeks"
+            elif 'week' in age_str:
+                weeks = int(age_str.split()[0])
+                return int((weeks * 7) / 30.44)
                 
-                return None, None, False
-            
-        except AttributeError as e:
-            print(f"Attribute error getting address: {e}")
-            return None, None, None
-        except Exception as e:
-            print(f"Error getting address: {e}")
-            return None, None, None
+            # Case 3: "X months"
+            elif 'month' in age_str:
+                return int(age_str.split()[0])
+                
+            # Case 4: "X years"
+            elif 'year' in age_str:
+                return int(age_str.split()[0]) * 12
+                
+            return 0
+        except (ValueError, IndexError, AttributeError):
+            return 0
 
-        return None, None, None
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(self._format_report_data(serializer.data, page))
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(self._format_report_data(serializer.data, queryset))
+    def _apply_age_filter(self, queryset, age_range):
+        """Apply age range filter to queryset"""
+        try:
+            min_age, max_age = map(int, age_range.split('-'))
+            filtered_data = []
+            for obj in queryset:
+                age_str = obj.bm.age if hasattr(obj, 'bm') and obj.bm else ''
+                age_months = self._parse_age_to_months(age_str)
+                if min_age <= age_months <= max_age:
+                    filtered_data.append(obj)
+            return filtered_data
+        except ValueError:
+            return queryset
 
     def _format_report_data(self, data, queryset_objects=None):
         report_data = []
-
-        # If we have the actual queryset objects, use them for better address retrieval
+        
         if queryset_objects:
             for i, entry in enumerate(data):
                 try:
-                    vs_obj = queryset_objects[i]  # Get the actual model instance
+                    vs_obj = queryset_objects[i]
                     vs = entry['vital_signs']
                     chist = entry['chist_details']
                     patrec = chist['chrec_details']['patrec_details']['pat_details']
 
-                    # Get address using the actual object (more reliable)
                     address, sitio, is_transient = self._get_patient_address(vs_obj)
 
-                    # Age calculation
+                    # Calculate age in whole months
                     age_in_months = 0
                     if vs.get('bm_details') and vs['bm_details'].get('age'):
-                        age_parts = vs['bm_details']['age'].split()
-                        if 'month' in vs['bm_details']['age']:
-                            age_in_months = int(age_parts[0])
-                        elif 'week' in vs['bm_details']['age']:
-                            weeks = int(age_parts[0])
-                            age_in_months = weeks // 4
+                        age_str = vs['bm_details']['age']
+                        age_in_months = self._parse_age_to_months(age_str)
 
-                    # Parents info
+                    # Format parents information
                     parents = {}
                     family_info = patrec.get('family_head_info', {})
                     if family_info.get('has_mother'):
@@ -683,7 +900,7 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                         father = family_info['family_heads']['father']['personal_info']
                         parents['father'] = f"{father['per_fname']} {father['per_mname']} {father['per_lname']}"
 
-                    # Nutritional status
+                    # Format nutritional status
                     nutritional_status = {}
                     if vs.get('nutritional_status'):
                         ns = vs['nutritional_status']
@@ -718,23 +935,6 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                 except Exception as e:
                     print(f"Error formatting report entry {i}: {e}")
                     continue
-        else:
-            # Fallback to original logic if no queryset objects
-            for entry in data:
-                try:
-                    vs = entry['vital_signs']
-                    chist = entry['chist_details']
-                    patrec = chist['chrec_details']['patrec_details']['pat_details']
-
-                    # Get address (less reliable without actual objects)
-                    address, sitio, is_transient = self._get_patient_address_from_serialized_data(patrec)
-
-                    # Rest of the logic remains the same...
-                    # [Include the same logic as above for consistency]
-
-                except Exception as e:
-                    print(f"Error formatting report entry: {e}")
-                    continue
 
         return {
             'month': self.kwargs['month'],
@@ -742,76 +942,355 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
             'report_data': report_data
         }
 
-    def _get_patient_address_from_serialized_data(self, pat_details):
-        """Fallback method for getting address from serialized data"""
-        if not pat_details:
+    def _get_patient_address(self, vital_signs_obj):
+        """Helper method to get patient address"""
+        try:
+            patient = vital_signs_obj.chhist.chrec.patrec.pat_id
+            
+            if patient.pat_type == 'Transient' and patient.trans_id:
+                trans = patient.trans_id
+                if trans.tradd_id:
+                    trans_addr = trans.tradd_id
+                    sitio = trans_addr.tradd_sitio
+                    address_parts = [
+                        trans_addr.tradd_street,
+                        trans_addr.tradd_barangay,
+                        trans_addr.tradd_city,
+                        trans_addr.tradd_province,
+                        f"Sitio {sitio}" if sitio else None
+                    ]
+                    return ", ".join(filter(None, address_parts)), sitio, True
+            
+            elif patient.pat_type == 'Resident' and patient.rp_id:
+                rp = patient.rp_id
+                if rp.per:
+                    if hasattr(rp.per, 'prefetched_personal_addresses'):
+                        for addr in rp.per.prefetched_personal_addresses:
+                            if addr.add:
+                                address = addr.add
+                                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                                address_parts = [
+                                    address.add_street,
+                                    address.add_barangay,
+                                    address.add_city,
+                                    address.add_province,
+                                    f"Sitio {sitio}" if sitio else None
+                                ]
+                                return ", ".join(filter(None, address_parts)), sitio, False
+                    
+                    personal_address = PersonalAddress.objects.filter(
+                        per=rp.per
+                    ).select_related('add', 'add__sitio').first()
+                    
+                    if personal_address and personal_address.add:
+                        address = personal_address.add
+                        sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                        address_parts = [
+                            address.add_street,
+                            address.add_barangay,
+                            address.add_city,
+                            address.add_province,
+                            f"Sitio {sitio}" if sitio else None
+                        ]
+                        return ", ".join(filter(None, address_parts)), sitio, False
+                
+                return None, None, False
+            
+        except Exception as e:
+            print(f"Error getting address: {e}")
             return None, None, None
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(self._format_report_data(serializer.data, page))
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(self._format_report_data(serializer.data, queryset))
+    
+
+
+
+
+# =====OPT  SUMMARY=====
+
+
+class OPTSummaryAllMonths(APIView):
+    def get(self, request):
         try:
-            # Handle Transient patients
-            if pat_details.get('pat_type') == 'Transient':
-                trans_addr = pat_details.get('trans_id', {}).get('tradd_id', {})
-                if trans_addr:
-                    sitio = trans_addr.get('tradd_sitio')
-                    address_parts = [
-                        trans_addr.get('tradd_street'),
-                        trans_addr.get('tradd_barangay'),
-                        trans_addr.get('tradd_city'),
-                        trans_addr.get('tradd_province'),
-                        f"Sitio {sitio}" if sitio else None
-                    ]
-                    full_address = ", ".join(filter(None, address_parts))
-                    return full_address, sitio, True
-
-            # Handle Resident patients
-            rp_info = pat_details.get('rp_id', {})
-            per_info = rp_info.get('per', {})
-            per_id = per_info.get('per_id')
-
-            # Try PersonalAddress first
-            if per_id:
-                personal_address = (
-                    PersonalAddress.objects
-                    .filter(per_id=per_id)
-                    .select_related('add', 'add__sitio')
-                    .first()
+            # Base queryset with all necessary relations
+            queryset = ChildHealthVitalSigns.objects.select_related(
+                'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
+                'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
+                'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id'
+            ).annotate(
+                sex=Case(
+                    When(chhist__chrec__patrec__pat_id__pat_type='Resident',
+                         then=F('chhist__chrec__patrec__pat_id__rp_id__per__per_sex')),
+                    When(chhist__chrec__patrec__pat_id__pat_type='Transient',
+                         then=F('chhist__chrec__patrec__pat_id__trans_id__tran_sex')),
+                    output_field=CharField()
                 )
-                if personal_address and personal_address.add:
-                    address = personal_address.add
-                    sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                    address_parts = [
-                        address.add_street,
-                        address.add_barangay,
-                        address.add_city,
-                        address.add_province,
-                        f"Sitio {sitio}" if sitio else None
-                    ]
-                    full_address = ", ".join(filter(None, address_parts))
-                    return full_address, sitio, False
+            ).order_by('-bm__created_at')
 
-            # Fallback to Household address
-            rp_id = rp_info.get('rp_id')
-            if rp_id:
-                household = (
-                    Household.objects
-                    .filter(rp_id=rp_id)
-                    .select_related('add', 'add__sitio')
-                    .first()
-                )
-                if household and household.add:
-                    address = household.add
-                    sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                    address_parts = [
-                        address.add_street,
-                        address.add_barangay,
-                        address.add_city,
-                        address.add_province,
-                        f"Sitio {sitio}" if sitio else None
-                    ]
-                    full_address = ", ".join(filter(None, address_parts))
-                    return full_address, sitio, False
+            # Search query (month name or year)
+            search_query = request.GET.get('search', '').strip()
+
+            # Filter by year or year-month
+            year_param = request.GET.get('year', 'all')
+            if year_param and year_param != 'all':
+                try:
+                    if '-' in year_param:
+                        year, month = map(int, year_param.split('-'))
+                        queryset = queryset.filter(
+                            bm__created_at__year=year,
+                            bm__created_at__month=month
+                        )
+                    else:
+                        year = int(year_param)
+                        queryset = queryset.filter(bm__created_at__year=year)
+                except ValueError:
+                    return Response({
+                        'success': False,
+                        'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Annotate and count records per month with gender breakdown
+            monthly_data = queryset.annotate(
+                month=TruncMonth('bm__created_at')
+            ).values('month').annotate(
+                record_count=Count('vital_id'),
+                male_count=Count('vital_id', filter=Q(sex='Male')),
+                female_count=Count('vital_id', filter=Q(sex='Female'))
+            ).order_by('-month')
+
+            formatted_data = []
+            for item in monthly_data:
+                month_str = item['month'].strftime('%Y-%m')
+                month_name = item['month'].strftime('%B %Y')
+
+                # Apply search filter if provided
+                if search_query and search_query.lower() not in month_name.lower():
+                    continue
+
+                formatted_data.append({
+                    'month': month_str,
+                    'month_name': month_name,
+                    'record_count': item['record_count'],
+                    'gender_totals': {
+                        'Male': item['male_count'],
+                        'Female': item['female_count']
+                    }
+                })
+
+            # Calculate overall totals
+            overall_totals = {
+                'Male': sum(item['male_count'] for item in monthly_data),
+                'Female': sum(item['female_count'] for item in monthly_data)
+            }
+
+            return Response({
+                'success': True,
+                'data': formatted_data,
+                'total_months': len(formatted_data),
+                'overall_totals': overall_totals
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            print(f"Error getting address from serialized data: {e}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+  
+  
+class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
+    serializer_class = OPTTrackingSerializer
+    pagination_class = None
 
-        return None, None, None
+    AGE_BUCKETS = [
+        (0, 5, "0-5"),
+        (6, 11, "6-11"),
+        (12, 23, "12-23"),
+        (24, 35, "24-35"),
+        (36, 47, "36-47"),
+        (48, 59, "48-59"),
+        (60, 71, "60-71"),
+    ]
+
+    # Define all possible status categories and their values
+    STATUS_CATEGORIES = {
+        "WFA": ["N", "UW", "SUW","OW"],  # Weight-for-age
+        "HFA": ["N", "ST", "SST", "T"],  # Height-for-age
+        "WFH": ["N", "W", "SW", "OW"]   # Weight-for-height
+    }
+
+    def get_queryset(self):
+        month = self.kwargs.get('month')
+        try:
+            year, month_num = map(int, month.split('-'))
+            start_date = datetime(year, month_num, 1)
+            end_date = datetime(year, month_num + 1, 1) if month_num < 12 else datetime(year + 1, 1, 1)
+            end_date -= timedelta(microseconds=1)
+        except ValueError:
+            return ChildHealthVitalSigns.objects.none()
+
+        queryset = ChildHealthVitalSigns.objects.filter(
+            bm__created_at__gte=start_date,
+            bm__created_at__lte=end_date
+        ).annotate(
+            sex=Case(
+                When(chhist__chrec__patrec__pat_id__pat_type='Resident',
+                     then=F('chhist__chrec__patrec__pat_id__rp_id__per__per_sex')),
+                When(chhist__chrec__patrec__pat_id__pat_type='Transient',
+                     then=F('chhist__chrec__patrec__pat_id__trans_id__tran_sex')),
+                output_field=CharField()
+            )
+        ).select_related(
+            'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
+            'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
+            'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id',
+            'chhist__chrec__patrec__pat_id__trans_id__tradd_id'
+        ).prefetch_related('nutritional_status')
+
+        # Add sitio search functionality
+        sitio_search = self.request.query_params.get('sitio', '').strip()
+        if sitio_search:
+            queryset = self._apply_sitio_search(queryset, sitio_search)
+
+        return queryset
+
+    def _apply_sitio_search(self, queryset, search_query):
+        """Search only by sitio or external sitio"""
+        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
+        if not search_terms:
+            return queryset
+
+        person_ids = set()
+        transient_ids = set()
+        
+        for term in search_terms:
+            # Search addresses for regular patients
+            matching_person_ids = PersonalAddress.objects.filter(
+                Q(add__add_external_sitio__icontains=term) |
+                Q(add__sitio__sitio_name__icontains=term)
+            ).values_list('per', flat=True)
+            person_ids.update(matching_person_ids)
+
+            # Search addresses for transient patients
+            matching_transient_ids = Transient.objects.filter(
+                Q(tradd_id__tradd_sitio__icontains=term)
+            ).values_list('trans_id', flat=True)
+            transient_ids.update(matching_transient_ids)
+
+        # Build the query
+        combined_query = Q()
+        
+        if person_ids:
+            combined_query |= Q(chhist__chrec__patrec__pat_id__rp_id__per__in=person_ids)
+        if transient_ids:
+            combined_query |= Q(chhist__chrec__patrec__pat_id__trans_id__in=transient_ids)
+
+        return queryset.filter(combined_query)
+
+    def _parse_age_to_months(self, age_str):
+        if not age_str:
+            return 0
+        try:
+            if 'week' in age_str and 'day' in age_str:
+                parts = age_str.split()
+                weeks = int(parts[0])
+                days = int(parts[3])
+                total_days = weeks * 7 + days
+                return int(total_days / 30.44)
+            elif 'week' in age_str:
+                weeks = int(age_str.split()[0])
+                return int((weeks * 7) / 30.44)
+            elif 'month' in age_str:
+                return int(age_str.split()[0])
+            elif 'year' in age_str:
+                return int(age_str.split()[0]) * 12
+            return 0
+        except (ValueError, IndexError, AttributeError):
+            return 0
+
+    def _get_age_bucket(self, age_months):
+        for min_age, max_age, label in self.AGE_BUCKETS:
+            if min_age <= age_months <= max_age:
+                return label
+        return None
+
+    def _initialize_report_structure(self):
+        """Initialize the complete report structure with all categories and age groups"""
+        report_data = {}
+        
+        for category, statuses in self.STATUS_CATEGORIES.items():
+            report_data[category] = {
+                "age_groups": {},
+                "totals": {"Male": 0, "Female": 0}
+            }
+            
+            # Initialize all age groups with all statuses
+            for _, _, age_label in self.AGE_BUCKETS:
+                report_data[category]["age_groups"][age_label] = {
+                    status: {"Male": 0, "Female": 0} for status in statuses
+                }
+                # Add Total field for each age group
+                report_data[category]["age_groups"][age_label]["Total"] = {"Male": 0, "Female": 0}
+        
+        return report_data
+
+    def _count_statuses(self, queryset):
+        report_data = self._initialize_report_structure()
+        overall_totals = {"Male": 0, "Female": 0}
+
+        for obj in queryset:
+            age_months = self._parse_age_to_months(obj.bm.age)
+            age_bucket = self._get_age_bucket(age_months)
+            if not age_bucket:
+                continue
+
+            sex = (obj.sex or "").strip()
+            if sex not in ["Male", "Female"]:
+                continue
+
+            ns = obj.nutritional_status.first()
+            if not ns:
+                continue
+
+            # Process each category
+            for category, statuses in self.STATUS_CATEGORIES.items():
+                status_value = getattr(ns, {
+                    "WFA": "wfa",
+                    "HFA": "lhfa",
+                    "WFH": "wfl"
+                }[category], None)
+                
+                if status_value in statuses:
+                    # Update specific status count
+                    report_data[category]["age_groups"][age_bucket][status_value][sex] += 1
+                    # Update age group total
+                    report_data[category]["age_groups"][age_bucket]["Total"][sex] += 1
+                    # Update category total
+                    report_data[category]["totals"][sex] += 1
+                    # Update overall total
+                    overall_totals[sex] += 1
+
+        # Add overall totals to the report
+        report_data["overall_totals"] = overall_totals
+        return report_data
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        table_counts = self._count_statuses(queryset)
+
+        # Get the sitio search parameter if it exists
+        sitio_search = request.query_params.get('sitio', '').strip()
+
+        return Response({
+            "month": self.kwargs.get("month"),
+            "sitio_filter": sitio_search if sitio_search else "All Sitios",
+            "report": table_counts
+        })

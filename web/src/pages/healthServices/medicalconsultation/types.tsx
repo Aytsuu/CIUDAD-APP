@@ -62,3 +62,9 @@ export type MedicalConsultationHistory = {
     medicalrec_count: number;
     dob: string;
   }
+
+
+  export type previousIllness = {
+    prevIllness: string
+    prevIllnessYr?: string
+  }

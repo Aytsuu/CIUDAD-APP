@@ -10,7 +10,7 @@ import {
   Box,
   Users,
   ClipboardList,
-  Package,
+  ArrowRight,
 } from "lucide-react";
 import { FaBandAid } from "react-icons/fa";
 import { Link } from "react-router";
@@ -20,105 +20,96 @@ import { MeduseMonthCount } from "./medicine-report/queries/fetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function HealthcareReports() {
-  const { data: monthCountData, isLoading: isMonthCountLoading } =
-    FAuseMonthCount();
-  const { data: vacMonthCountData, isLoading: isVacMonthCountLoading } =
-    VacuseMonthCount();
-  const { data: medMonthCountData, isLoading: isMedMonthCountLoading } =
-    MeduseMonthCount();
-
-  const isLoading =
-    isMonthCountLoading || isVacMonthCountLoading || isMedMonthCountLoading;
-
-  const FAmonthCount = monthCountData?.current_month?.total_records || "0";
-  const FAlastMonthCount = monthCountData?.last_month?.total_records || "0";
-  const VacmonthCount = vacMonthCountData?.current_month?.total_records || "0";
-  const VaclastMonthCount = vacMonthCountData?.last_month?.total_records || "0";
-  const MedmonthCount = medMonthCountData?.current_month?.total_records || "0";
-  const MedlastMonthCount = medMonthCountData?.last_month?.total_records || "0";
+  const { data: monthCountData } = FAuseMonthCount();
+  const { data: vacMonthCountData } = VacuseMonthCount();
+  const { data: medMonthCountData } = MeduseMonthCount();
 
   const bhwReport = [
     {
       title: "BHW Report",
-      icon: <Activity className="w-5 h-5 text-green-600" />,
-      bgColor: "bg-green-50",
-      description:
-        "Monthly report of Barangay Health Workers activities and achievements",
-      currentCount: "56",
-      lastCount: "20",
+      icon: <Activity className="w-6 h-6 text-green-600" />,
+      bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
+      description: "Monthly report of Barangay Health Workers activities and achievements",
       link: "#",
-      isStatic: true,
     },
   ];
 
   const recipientLists = [
     {
       title: "Vaccination Recipient List",
-      icon: <Syringe className="w-5 h-5 text-violet-600" />,
-      bgColor: "bg-violet-50",
+      icon: <Syringe className="w-6 h-6 text-violet-600" />,
+      bgColor: "bg-gradient-to-br from-violet-50 to-purple-50",
       description: "Monthly report of vaccination recipients",
-      currentCount: VacmonthCount,
-      lastCount: VaclastMonthCount,
       link: "/monthly-vaccine-records",
-
     },
     {
       title: "Medicine Recipient List",
-      icon: <Pill className="w-5 h-5 text-sky-600" />,
-      bgColor: "bg-sky-50",
+      icon: <Pill className="w-6 h-6 text-sky-600" />,
+      bgColor: "bg-gradient-to-br from-sky-50 to-blue-50",
       description: "Monthly report of medicine recipients",
-      currentCount: MedmonthCount,
-      lastCount: MedlastMonthCount,
       link: "/monthly-medicine-records",
-
     },
     {
       title: "First Aid Recipient List",
-      icon: <FaBandAid className="w-5 h-5 text-red-600" />,
-      bgColor: "bg-red-50",
+      icon: <FaBandAid className="w-6 h-6 text-red-600" />,
+      bgColor: "bg-gradient-to-br from-red-50 to-rose-50",
       description: "Monthly report of first aid recipients",
-      currentCount: FAmonthCount,
-      lastCount: FAlastMonthCount,
       link: "/monthly-firstaid-records",
-
     },
   ];
 
   const inventoryReports = [
     {
       title: "Medicine Inventory Report",
-      icon: <Package className="w-5 h-5 text-amber-600" />,
-      bgColor: "bg-amber-50",
+      icon: <Box className="w-6 h-6 text-amber-600" />,
+      bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
       description: "Monthly report of medicine inventory status",
-      currentCount: "56",
-      lastCount: "20",
       link: "/inventory-monthly-medicine-records",
     },
     {
       title: "First Aid Inventory Report",
-      icon: <FaBandAid className="w-5 h-5 text-blue-600" />,
-      bgColor: "bg-blue-50",
+      icon: <FaBandAid className="w-6 h-6 text-blue-600" />,
+      bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
       description: "Monthly report of first aid inventory status",
-      currentCount: "56",
-      lastCount: "20",
       link: "/inventory-monthly-firstaid-records",
     },
     {
       title: "Commodity Inventory Report",
-      icon: <Box className="w-5 h-5 text-indigo-600" />,
-      bgColor: "bg-indigo-50",
+      icon: <Box className="w-6 h-6 text-indigo-600" />,
+      bgColor: "bg-gradient-to-br from-indigo-50 to-blue-50",
       description: "Monthly report of commodity inventory status",
-      currentCount: "56",
-      lastCount: "20",
       link: "/inventory-monthly-commodity-records",
-      
+    },
+    {
+      title: "EPI Inventory and Utilization Report",
+      icon: <Box className="w-6 h-6 text-teal-600" />,
+      bgColor: "bg-gradient-to-br from-teal-50 to-cyan-50",
+      description: "Monthly report of antigen inventory status",
+      link: "/inventory-monthly-antigen-records",
     },
   ];
 
-  const renderCard = (card: any, index: any) => (
+  const optReports = [
+    {
+      title: "OPT PLUS FORM",
+      icon: <Activity className="w-6 h-6 text-green-600" />,
+      bgColor: "bg-gradient-to-br from-green-50 to-lime-50",
+      description: "List of Preschoolers with weight and height measurements and identified status",
+      link: "/monthly-opt-records",
+    },
+    {
+      title: "OPT PLUS SUMMARY REPORT",
+      icon: <Activity className="w-6 h-6 text-emerald-600" />,
+      bgColor: "bg-gradient-to-br from-emerald-50 to-green-50",
+      description: "Total no. of Preschoolers base on WFA, HFA, LFA",
+      link: "/opt-summaries-all-months",
+    },
+  ];
+
+  const renderCard = (card:any, index:any) => (
     <CardLayout
       key={index}
-      cardClassName="flex flex-col h-full border border-gray-200 rounded-xl hover:shadow-md transition-shadow"
+      // cardClassName={`${card.bgColor}  rounded-2xl  hover:scale-[1.02] transition-all duration-300 overflow-hidden group cursor-pointer`}
       contentClassName="flex flex-col flex-grow p-5"
       title={
         <div className="flex items-center gap-3 mb-4">
@@ -134,34 +125,16 @@ export default function HealthcareReports() {
           </div>
         </div>
       }
-      description={card.description}
+      description={<p className="text-gray-600 mb-4">{card.description}</p>}
       content={
-        <>
-          <div className="space-y-3 flex-grow">
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-500">Current Month:</span>
-                <span className="font-medium">{card.currentCount} records</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-500">Last Month</span>
-                <span
-                  className="text-red-500"
-                >
-                  {card.lastCount} records
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6">
-            <Link to={card.link}>
-              <Button size="sm" className="w-full">
-                <Eye className="w-4 h-4 mr-2" />
-                View Report
-              </Button>
-            </Link>
-          </div>
-        </>
+        <div className="mt-auto">
+          <Link to={card.link}>
+            <Button size="sm" className="w-full "  >
+              <Eye className="w-4 h-4 mr-2" />
+              View Report
+            </Button>
+          </Link>
+        </div>
       }
     />
   );
@@ -171,44 +144,59 @@ export default function HealthcareReports() {
       title="Healthcare Reports"
       description="Manage and view healthcare reports for various services"
     >
-      <CardLayout
-        content={
-          <>
-            {/* BHW Report Section */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-green-600" />
-                BHW Reports
-              </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {bhwReport.map(renderCard)}
-              </div>
+      <div className="space-y-10 bg-white p-8 rounded-md shadow-sm border border-gray-100">
+        {/* BHW Report Section */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
+              <Users className="w-5 h-5 text-green-600" />
             </div>
+            <h2 className="text-xl font-semibold text-gray-800">BHW Reports</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {bhwReport.map(renderCard)}
+          </div>
+        </section>
 
-            {/* Recipient Lists Section */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-blue-600" />
-                Recipient Lists
-              </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {recipientLists.map(renderCard)}
-              </div>
+        {/* Recipient Lists Section */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+              <ClipboardList className="w-5 h-5 text-blue-600" />
             </div>
+            <h2 className="text-xl font-semibold text-gray-800">Recipient Lists</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {recipientLists.map(renderCard)}
+          </div>
+        </section>
 
-            {/* Inventory Reports Section */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Package className="w-5 h-5 text-amber-600" />
-                Inventory Reports
-              </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {inventoryReports.map(renderCard)}
-              </div>
+        {/* Inventory Reports Section */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center">
+              <Box className="w-5 h-5 text-amber-600" />
             </div>
-          </>
-        }
-      />
+            <h2 className="text-xl font-semibold text-gray-800">Inventory Reports</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {inventoryReports.map(renderCard)}
+          </div>
+        </section>
+
+        {/* OPT Reports Section */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <Activity className="w-5 h-5 text-emerald-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-800">OPT Reports</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {optReports.map(renderCard)}
+          </div>
+        </section>
+      </div>
     </MainLayoutComponent>
   );
 }

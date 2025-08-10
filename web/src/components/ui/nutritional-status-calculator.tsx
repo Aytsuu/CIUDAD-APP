@@ -57,76 +57,143 @@ export function NutritionalStatusCalculator({
     };
   };
 
+  // Weight-for-Age (WFA) calculation for 0-71 months
   const calculateWFA = (weight: number, age: AgeDetails): string => {
     if (!weight) return "";
 
-    const totalDays = age.days + (age.weeks * 7) + (age.months * 30);
-
+    const totalMonths = age.months;
+    
     // Newborns (0-28 days)
-    if (totalDays < 28) {
-      if (weight < 2.1) return "SUW";
-      if (weight < 2.5) return "UW";
+    if (totalMonths === 0 && age.days <= 28) {
+      if (weight < 2.1) return "SUW"; // Very low birth weight
+      if (weight < 2.5) return "UW";  // Low birth weight
+      if (weight > 4.0) return "OW";  // Overweight for newborns
       return "N";
     }
 
-    // Infants 1-6 months (4-24 weeks)
-    if (age.months < 6) {
-      const expectedWeight = 3.3 + (age.weeks * 0.16);
-      const zScore = (weight - expectedWeight) / 0.4;
-      if (zScore < -3) return "SUW";
-      if (zScore < -2) return "UW";
+    // 1-6 months
+    if (totalMonths < 6) {
+      if (weight < 4.5) return "SUW";
+      if (weight < 5.0) return "UW";
+      if (weight > 8.0) return "OW";  // Overweight threshold for 1-6 months
       return "N";
     }
 
-    // Older infants/children (6+ months)
-    const expectedWeight = 6 + (age.months * 0.25);
-    const zScore = (weight - expectedWeight) / (expectedWeight * 0.15);
-    if (zScore < -3) return "SUW";
-    if (zScore < -2) return "UW";
-    return "N";
+    // 6-12 months
+    if (totalMonths < 12) {
+      if (weight < 6.0) return "SUW";
+      if (weight < 6.5) return "UW";
+      if (weight > 10.0) return "OW"; // Overweight threshold for 6-12 months
+      return "N";
+    }
+
+    // 1-2 years (12-24 months)
+    if (totalMonths < 24) {
+      if (weight < 7.5) return "SUW";
+      if (weight < 8.0) return "UW";
+      if (weight > 12.0) return "OW"; // Overweight threshold for 1-2 years
+      return "N";
+    }
+
+    // 2-3 years (24-36 months)
+    if (totalMonths < 36) {
+      if (weight < 9.0) return "SUW";
+      if (weight < 9.5) return "UW";
+      if (weight > 14.0) return "OW"; // Overweight threshold for 2-3 years
+      return "N";
+    }
+
+    // 3-5 years (36-60 months)
+    if (totalMonths < 60) {
+      if (weight < 10.5) return "SUW";
+      if (weight < 11.0) return "UW";
+      if (weight > 18.0) return "OW"; // Overweight threshold for 3-5 years
+      return "N";
+    }
+
+    // 5-6 years (60-71 months)
+    if (totalMonths <= 71) {
+      if (weight < 12.0) return "SUW";
+      if (weight < 13.0) return "UW";
+      if (weight > 22.0) return "OW"; // Overweight threshold for 5-6 years
+      return "N";
+    }
+
+    return "";
   };
 
+  // Length/Height-for-Age (L/HFA) calculation for 0-71 months
   const calculateLHFA = (height: number, age: AgeDetails): string => {
     if (!height) return "";
 
-    const totalDays = age.days + (age.weeks * 7) + (age.months * 30);
-
+    const totalMonths = age.months;
+    
     // Newborns (0-28 days)
-    if (totalDays < 28) {
+    if (totalMonths === 0 && age.days <= 28) {
       if (height < 45) return "SST";
       if (height < 48) return "ST";
       return "N";
     }
 
-    // Infants 1-6 months (4-24 weeks)
-    if (age.months < 6) {
-      const expectedHeight = 50 + (age.weeks * 0.3);
-      const zScore = (height - expectedHeight) / 1.2;
-      if (zScore < -3) return "SST";
-      if (zScore < -2) return "ST";
+    // 1-6 months
+    if (totalMonths < 6) {
+      if (height < 55) return "SST";
+      if (height < 58) return "ST";
       return "N";
     }
 
-    // Older infants/children
-    const expectedHeight = 60 + (age.months * 0.8);
-    const zScore = (height - expectedHeight) / (expectedHeight * 0.1);
-    if (zScore < -3) return "SST";
-    if (zScore < -2) return "ST";
-    if (zScore > 3) return "T";
-    if (zScore > 2) return "OB";
-    return "N";
+    // 6-12 months
+    if (totalMonths < 12) {
+      if (height < 65) return "SST";
+      if (height < 68) return "ST";
+      return "N";
+    }
+
+    // 1-2 years (12-24 months)
+    if (totalMonths < 24) {
+      if (height < 75) return "SST";
+      if (height < 78) return "ST";
+      return "N";
+    }
+
+    // 2-3 years (24-36 months)
+    if (totalMonths < 36) {
+      if (height < 85) return "SST";
+      if (height < 88) return "ST";
+      return "N";
+    }
+
+    // 3-5 years (36-60 months)
+    if (totalMonths < 60) {
+      if (height < 92) return "SST";
+      if (height < 95) return "ST";
+      return "N";
+    }
+
+    // 5-6 years (60-71 months)
+    if (totalMonths <= 71) {
+      if (height < 98) return "SST";
+      if (height < 101) return "ST";
+      return "N";
+    }
+
+    return "";
   };
 
+  // Weight-for-Height (WFH) calculation for 0-71 months
   const calculateWFH = (weight: number, height: number): string => {
     if (!weight || !height) return "";
 
-    const bmi = weight / (height / 100) ** 2;
-
+    const bmi = weight / ((height / 100) ** 2);
+    
+    // Wasting criteria
     if (bmi < 12) return "SW";
     if (bmi < 14) return "W";
-    if (bmi > 20) return "OW";
-    if (bmi >= 14 && bmi <= 20) return "N";
-    return "";
+    
+    // Overweight criteria
+    if (bmi > 18) return "OW";
+    
+    return "N";
   };
 
   const calculateMUACStatus = (muacValue: number): string => {
@@ -141,8 +208,8 @@ export function NutritionalStatusCalculator({
     const ageDetails = parseAge(age || "");
     
     const newStatus: NutritionalStatusType = {
-      wfa: weight ? (calculateWFA(weight, ageDetails) as "" | "N" | "UW" | "SUW" | undefined) : "",
-      lhfa: height ? (calculateLHFA(height, ageDetails) as "" | "N" | "ST" | "SST" | "T" | "OB" | undefined) : "",
+      wfa: weight ? (calculateWFA(weight, ageDetails) as "" | "N" | "UW" | "SUW" | "OW" | undefined) : "",
+      lhfa: height ? (calculateLHFA(height, ageDetails) as "" | "N" | "ST" | "SST" | "T" | undefined) : "",
       wfh: weight && height ? (calculateWFH(weight, height) as "" | "N" | "W" | "SW" | "OW" | undefined) : "",
       muac: manualMuac,
       muac_status: manualMuac ? (calculateMUACStatus(manualMuac) as "" | "N" | "MAM" | "SAM" | undefined) : ""
@@ -166,9 +233,8 @@ export function NutritionalStatusCalculator({
       case "SW":
       case "SAM":
         return "bg-red-100 text-red-800 border-red-200";
+      case "OW": // Changed from OB to OW
       case "T":
-      case "OB":
-      case "OW":
         return "bg-blue-100 text-blue-800 border-blue-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -183,6 +249,7 @@ export function NutritionalStatusCalculator({
       case "ST":
       case "W":
       case "MAM":
+      case "OW": // Added OW to warning icon
         return <AlertTriangle className="w-4 h-4" />;
       case "SUW":
       case "SST":

@@ -22,18 +22,25 @@ export const getOPTMonths = async (
   }
 };
 
+
+
+
 export const getMonthlyOPTRecords = async (
   month: string,
   page: number,
   pageSize: number,
-  searchQuery?: string
+  sitio?: string,
+  nutritional_status?: string,
+  age_range?: string
 ): Promise<OPTMonthlyDetailResponse> => {
   try {
     const response = await api2.get<OPTMonthlyDetailResponse>(`/child-health/opt-tracking/reports/${month}/`, {
       params: {
         page,
         page_size: pageSize,
-        search: searchQuery,
+        sitio,
+        nutritional_status,
+        age_range,
       },
     });
     return response.data;

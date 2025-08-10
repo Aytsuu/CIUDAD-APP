@@ -19,14 +19,17 @@ export const useOPTMonths = (
   });
 };
 
+
 export const useMonthlyOPTRecords = (
   month: string,
   page: number,
   pageSize: number,
-  searchQuery?: string
+  sitio?: string,
+  nutritional_status?: string,
+  age_range?: string
 ) => {
   return useQuery({
-    queryKey: ["monthlyOPTRecords", month, page, pageSize, searchQuery],
-    queryFn: () => getMonthlyOPTRecords(month, page, pageSize, searchQuery),
+    queryKey: ["monthlyOPTRecords", month, page, pageSize, sitio, nutritional_status, age_range],
+    queryFn: () => getMonthlyOPTRecords(month, page, pageSize, sitio, nutritional_status, age_range),
   });
 };

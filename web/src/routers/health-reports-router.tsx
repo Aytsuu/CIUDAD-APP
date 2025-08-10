@@ -19,9 +19,10 @@ import MonthlyInventoryAntigenRecords from "@/pages/healthServices/Reports/inven
 import MonthlyInventoryAntigenDetails from "@/pages/healthServices/Reports/inventory/antigen/records"; 
 import MonthlyOPTRecords from "@/pages/healthServices/Reports/opt-tracking/monthly";
 import MonthlyOPTDetails from "@/pages/healthServices/Reports/opt-tracking/records";
+
+import OPTSummariesAllMonths from "@/pages/healthServices/Reports/opt-tracking-summary/monthly";
+import OPTMonthlyDetails from "@/pages/healthServices/Reports/opt-tracking-summary/records";
 import path from "path";
-
-
 export const reports_router = [
   {
     path: "/bhwmonthlyreport",
@@ -87,10 +88,8 @@ export const reports_router = [
     element: <MonthlyInventoryAntigenRecords />
   },
   {
-
   path: "/inventory-monthly-antigen-details",
     element: <MonthlyInventoryAntigenDetails />
-
   },
   {
     path: "/monthly-opt-records",
@@ -99,6 +98,14 @@ export const reports_router = [
   {
     path: "/monthly-opt-details",
     element: <MonthlyOPTDetails />
+  },
+  {
+    path: "/opt-summaries-all-months",
+    element: <OPTSummariesAllMonths />
+  },
+  {
+    path: "/opt-summry-details",
+    element: <OPTMonthlyDetails />
   }
 
    

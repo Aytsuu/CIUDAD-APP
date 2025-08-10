@@ -35,5 +35,7 @@ urlpatterns = [
     path('opt-tracking/monthly/summaries/', MonthlyOPTChildHealthSummariesAPIView.as_view(), name='opt-tracking-detail'),
     path('opt-tracking/current-last-month/count', ChildHealthCurrentandLastMonthCountAPIView.as_view(), name='opt-tracking-detail'),
     path('opt-tracking/reports/<str:month>/', MonthlyOPTChildHealthReportAPIView.as_view(), name='opt-tracking-detail'),
+    path('opt-tracking/summary/', OPTSummaryAllMonths.as_view(), name='opt-tracking-monthlyoverall'),
+    
+    path('opt-tracking/summary/<str:month>/', MonthlyOPTSummaryDetailedReport.as_view(), name='opt-tracking-detail-overall'),
 ]
-
