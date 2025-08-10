@@ -179,3 +179,12 @@ class BusinessModificationUpdateView(generics.UpdateAPIView):
       serializer.save()
       return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
+  
+class BusinessHistoryView(APIView):
+  def get(self, request, *args, **kwargs):
+    bus_id = request.query_params.get('bus_id', None)
+
+    if bus_id:
+      query = Business.history.filter(bus_id=bus_id, bus_status='Active')
+      return Response(data=BusinessHistoryBaseSerializer(query, many=True).data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_404_NOT_FOUND)

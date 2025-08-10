@@ -196,7 +196,6 @@ export default () => {
           status={status}
           title={feedbackContents[status].title}
           content={feedbackContents[status].content}
-          animationType="slideRight"
           animationDuration={200}
         />
       )

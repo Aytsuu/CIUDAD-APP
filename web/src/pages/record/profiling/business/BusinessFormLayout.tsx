@@ -2,20 +2,20 @@ import React from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import BusinessProfileForm from "./BusinessProfileForm"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
-import { useLocation } from "react-router"
+import { useLocation, useNavigate } from "react-router"
 import { formatResidents, formatSitio } from "../ProfilingFormats"
 import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { FileText, MapPin, User, Database, Store, Loader2 } from "lucide-react"
+import { FileText, MapPin, User, Database, Store, Loader2, ClipboardList, Clock } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
 import { useAddAddress, useAddBusiness, useAddBusinessRespondent, useAddPerAddress, useAddPersonal } from "../queries/profilingAddQueries"
 import type { MediaUploadType } from "@/components/ui/media-upload"
-import { useBusinessInfo, useModificationRequests, useResidentsList, useSitioList } from "../queries/profilingFetchQueries"
+import { useBusinessHistory, useBusinessInfo, useModificationRequests, useResidentsList, useSitioList } from "../queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { useUpdateBusiness } from "../queries/profilingUpdateQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
@@ -28,9 +28,13 @@ import { Button } from "@/components/ui/button/button"
 import { formatDate } from "@/helpers/dateHelper"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
 import ModificationRequest from "./ModificationRequest"
+import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
+import { RenderHistory } from "../ProfilingHistory"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
+  const navigate = useNavigate();
   const location = useLocation()
   const params = React.useMemo(() => location.state?.params || {}, [location.state])
   const { user } = useAuth()
@@ -67,6 +71,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
 
   const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
   const { data: businessInfo, isLoading: isLoadingBusInfo } = useBusinessInfo(params?.busId)
+  const { data: businessHistory, isLoading: isLoadingHistory } = useBusinessHistory(params?.busId)
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
 
@@ -112,25 +117,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   }, [businessInfo])
   
   // --------------------- HANDLERS -----------------------
-
-  const validateAddresses = React.useCallback(
-    (addresses: any[]) => {
-      const validity = addresses.map(
-        (address: any) =>
-          address.add_province !== "" &&
-          address.add_city !== "" &&
-          address.add_barangay !== "" &&
-          (address.add_barangay === "San Roque"
-            ? address.sitio !== ""
-            : address.add_external_sitio !== "")
-      );
-      setValidAddresses(validity);
-      const isValidAll = validity.every((valid: any) => valid === true);
-      return isValidAll;
-    },
-    [setValidAddresses]
-  );
-
   const getFormTitle = () => {
     switch (formType) {
       case Type.Viewing:
@@ -151,6 +137,35 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       default:
         return "Register a new business by providing essential details and supporting documentation"
     }
+  }
+
+  const validateAddresses = React.useCallback(
+    (addresses: any[]) => {
+      const validity = addresses.map(
+        (address: any) =>
+          address.add_province !== "" &&
+          address.add_city !== "" &&
+          address.add_barangay !== "" &&
+          (address.add_barangay === "San Roque"
+            ? address.sitio !== ""
+            : address.add_external_sitio !== "")
+      );
+      setValidAddresses(validity);
+      const isValidAll = validity.every((valid: any) => valid === true);
+      return isValidAll;
+    },
+    [setValidAddresses]
+  );
+
+  const handleHistoryItemClick = (index: number) => {
+    navigate('/profiling/resident/update/view', {
+      state: {
+        params: {
+          newData: businessHistory[index],
+          oldData: businessHistory[index + 1],
+        }
+      }
+    })
   }
 
   const fullName = (lname: string, fname: string, mname?: string) => {
@@ -345,12 +360,39 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   )
 
   const respondentView = () => (
-    <Card className="bg-blue-600 rounded-b-none px-6  ">
-      <CardHeader className="mb-4">
+    <Card className="bg-blue-600 rounded-b-none pl-6 pr-2  ">
+      <CardHeader className="flex-row justify-between mb-4">
         <div className="flex items-center gap-3">
           <div>
             <Label className="text-xl font-semibold text-white">Respondent/Owner Information</Label>
           </div>
+        </div>
+        <div>
+          <SheetLayout 
+            trigger={
+              <div>
+                <TooltipLayout 
+                  trigger={<ClipboardList className="text-white"/>}
+                  content="History"
+                />
+              </div>
+            }
+            content={
+              <RenderHistory 
+                history={businessHistory}
+                isLoadingHistory={isLoadingHistory}
+                itemTitle="Business Information Update"
+                handleHistoryItemClick={handleHistoryItemClick}
+              />
+            }
+            title={
+              <Label className="flex items-center gap-2 text-lg text-darkBlue1">
+                <Clock size={20}/>
+                Update History
+              </Label>
+            }
+            description="View all changes made to this business information"
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -379,6 +421,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       </CardContent>
     </Card>
   )
+
 
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">

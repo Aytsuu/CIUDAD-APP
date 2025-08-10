@@ -81,6 +81,7 @@ urlpatterns = [
     path("business/modification/delete/", BusinessModificationDeleteView.as_view(), name='modification-request-result'),
     path("business/modification/<int:bm_id>/result/", BusinessModificationUpdateView.as_view(), name='update-modification'),
     path("business/modification/request-list/", BusinessModificationListView.as_view(), name="request-list"),
+    path("business/history/", BusinessHistoryView.as_view(), name="business-history"),
     
     # Analytics Urls,
     path("card/analytics/data/", CardAnalyticsView.as_view(), name='card-analytics'),

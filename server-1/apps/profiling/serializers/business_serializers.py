@@ -28,6 +28,32 @@ class BusinessModificationBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = BusinessModification
     fields = '__all__'
+class BusinessHistoryBaseSerializer(serializers.ModelSerializer):
+  history_user_name = serializers.SerializerMethodField()
+  history_date = serializers.DateTimeField(format='%Y-%m-%d %I:%M:%S %p')
+  address = serializers.SerializerMethodField()
+
+  class Meta:
+      model = Business.history.model
+      fields = '__all__'
+  
+  def get_history_user_name(self, obj):
+      if obj.history_user and hasattr(obj.history_user, 'rp'):
+          per = obj.history_user.rp.per
+          return f"{per.per_lname}, {per.per_fname}" + \
+                  (f" {per.per_mname}" if per.per_mname else "")
+      return None
+
+  def get_address(self, obj):   
+      return ({
+        'street': obj.add.add_street,
+        'sitio': obj.add.sitio.sitio_name,
+        'barangay': obj.add.add_barangay,
+        'city': obj.add.add_city,
+        'province': obj.add.add_province
+      })
+
+
 
 class BusinessTableSerializer(serializers.ModelSerializer):
   sitio = serializers.CharField(source="add.sitio.sitio_name")
@@ -119,7 +145,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = Business
-    fields = ['bus_id', 'br', 'rp', 'bus_name', 'bus_gross_sales', 'sitio', 
+    fields = ['bus_id', 'br', 'rp', 'bus_name', 'bus_gross_sales', 'bus_status', 'sitio', 
               'bus_street', 'bus_date_of_registration', 'bus_date_verified',
               'bus_registered_by', 'files']
     
@@ -245,6 +271,9 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     street = validated_data.pop('bus_street', None)
     staff = validated_data.pop('staff', None)
     add = validated_data.pop('add', None)
+
+    if not staff:
+      raise serializers.ValidationError('Staff is required')
     
     if add:
       validated_data['add'] = Address.objects.filter(add_id=add).first()

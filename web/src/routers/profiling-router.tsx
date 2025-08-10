@@ -130,6 +130,10 @@ export const profiling_router = [
     element: <PendingRecords />,
   },
   {
+    path: "profiling/business/record/pending/form",
+    element: <BusinessFormLayout />,
+  },
+  {
     path: "profiling/business/record/respondent",
     element: <RespondentRecords />,
   },

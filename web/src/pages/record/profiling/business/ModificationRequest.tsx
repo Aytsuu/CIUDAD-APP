@@ -7,7 +7,7 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { useAuth } from "@/context/AuthContext";
 import { getDateTimeFormat } from "@/helpers/dateHelper";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, Loader2 } from "lucide-react";
+import { Check, Info, Loader2, X } from "lucide-react";
 import { MediaGallery } from "@/components/ui/media-gallery";
 
 interface FieldComparisonProps {
@@ -19,15 +19,7 @@ interface FieldComparisonProps {
 function FieldComparison({ label, current, proposed }: FieldComparisonProps) {
   const hasChanged = current !== proposed;
 
-  if (!hasChanged) {
-    // return (
-    //   <div className="py-3 border-b border-gray-100 last:border-b-0">
-    //     <div className="text-sm font-medium text-gray-600 mb-1">{label}</div>
-    //     <div className="text-gray-900">{current}</div>
-    //   </div>
-    // );
-    return;
-  }
+  if (!hasChanged) return;
 
   return (
     <div className="py-3 border-b border-gray-100 last:border-b-0">
@@ -150,7 +142,9 @@ export default function ModificationRequest({ data } : {
                 <Loader2 className="animate-spin w-5 h-5 text-gray-600"/>
               </>) : (<>
                 <ConfirmationModal
-                  trigger={<Button className="flex-1 bg-green-500 hover:bg-green-400">Approve</Button>}
+                  trigger={<Button className="flex-1 bg-green-500 hover:bg-green-400">
+                    <Check/> Approve
+                  </Button>}
                   title="Confirm Approval"
                   description="Review the changes thoroughly before proceeding. Once approved, this action cannot be reversed."
                   onClick={handleApprove}
@@ -161,7 +155,7 @@ export default function ModificationRequest({ data } : {
                   variant="outline"
                   className="flex-1 bg-transparent border-red-200 text-red-500 hover:text-red-500 hover:bg-red-100"
                 >
-                  Reject
+                  <X/> Reject
                 </Button>
               </>)}
             </div>
