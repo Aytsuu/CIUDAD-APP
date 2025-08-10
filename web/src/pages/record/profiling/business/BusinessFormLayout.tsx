@@ -15,7 +15,7 @@ import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
 import { useAddAddress, useAddBusiness, useAddBusinessRespondent, useAddPerAddress, useAddPersonal } from "../queries/profilingAddQueries"
 import type { MediaUploadType } from "@/components/ui/media-upload"
-import { useBusinessInfo, useResidentsList, useSitioList } from "../queries/profilingFetchQueries"
+import { useBusinessInfo, useModificationRequests, useResidentsList, useSitioList } from "../queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { useUpdateBusiness } from "../queries/profilingUpdateQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button/button"
 import { formatDate } from "@/helpers/dateHelper"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
+import ModificationRequest from "./ModificationRequest"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
@@ -39,7 +40,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const [activeVideoId, setActiveVideoId] = React.useState<string>("")
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
-  const [formType, setFormType] = React.useState<Type>(params?.type)
+  const [formType, setFormType] = React.useState<Type>(params?.type || tab_params?.type)
   const [validAddresses, setValidAddresses] = React.useState<boolean[]>([]);
   const [addresses, setAddresses] = React.useState<any[]>([
     {
@@ -64,17 +65,23 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
   const { mutateAsync: addBusinessRespondent } = useAddBusinessRespondent();
 
+  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
   const { data: businessInfo, isLoading: isLoadingBusInfo } = useBusinessInfo(params?.busId)
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
 
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList])
   const formattedResidents = React.useMemo(() => formatResidents(residentsList) || [], [residentsList])
+  const modRequest = React.useMemo(() => 
+    modificationRequests?.find((req: any) => 
+      req.current_details.bus_id == params?.busId
+    )
+  , [modificationRequests]);
 
   // Check if we need business info and if it's still loading
   const needsBusinessInfo = formType !== Type.Create
   const isBusinessInfoLoading = needsBusinessInfo && isLoadingBusInfo && !businessInfo
-  const isFormDataLoading = isLoadingSitio || isLoadingResidents || isLoadingBusInfo
+  const isFormDataLoading = isLoadingSitio || isLoadingResidents || isLoadingBusInfo || isLoadingRequests
 
   // --------------------- SIDE EFFECTS -----------------------
   React.useEffect(() => {
@@ -104,8 +111,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     }
   }, [businessInfo])
   
-  console.log(businessInfo)
-
   // --------------------- HANDLERS -----------------------
 
   const validateAddresses = React.useCallback(
@@ -159,17 +164,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     // const resident = formattedResidents?.find((res: any) => res.id.split(" "[0] == params?.rpId));
 
     const fields = [
-      // ...(businessInfo.rp
-      //   ? [{ key: "respondent.rp_id", value: resident?.id }]
-      //   : [
-      //     { key: "respondent.br_lname", value: businessInfo.br.br_lname },
-      //     { key: "respondent.br_fname", value: businessInfo.br.br_fname },
-      //     { key: "respondent.br_mname", value: businessInfo.br.br_mname },
-      //     { key: "respondent.br_sex", value: businessInfo.br.br_sex },
-      //     { key: "respondent.br_dob", value: businessInfo.br.br_dob },
-      //     { key: "respondent.br_contact", value: businessInfo.br.br_contact },
-      //     { key: "respondent.br_address", value: businessInfo.br.br_address },
-      //   ]),
       { key: "bus_name", value: businessInfo.bus_name },
       { key: "bus_gross_sales", value: String(businessInfo.bus_gross_sales) },
       { key: "bus_province", value: businessInfo.bus_province },
@@ -363,17 +357,17 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         <div className="flex flex-col gap-1">
           <div className="flex gap-2">
             <Badge variant={"outline"} className="bg-white text-blue-900">
-              ID: {businessInfo.br ? businessInfo.br.br_id : params?.rpId}
+              ID: {businessInfo?.br ? businessInfo.br.br_id : params?.rpId}
             </Badge>
-            {businessInfo.br ? 
+            {businessInfo?.br ? 
               (<Badge variant={"outline"} className=" text-white">Not a Resident</Badge>) :
               (<Badge variant={"outline"} className=" text-white">Resident</Badge>)
             }
           </div>
           <Label className="flex text-xl text-gray-100 items-center gap-4">
-            {businessInfo.br ? 
+            {businessInfo?.br ? 
               fullName(businessInfo.br.per_lname, businessInfo.br.per_fname, businessInfo.br.per_mname) : 
-              fullName(businessInfo.rp.per_lname, businessInfo.rp.per_fname, businessInfo.rp.per_mname)
+              fullName(businessInfo?.rp.per_lname, businessInfo?.rp.per_fname, businessInfo?.rp.per_mname)
             }
             {formType == Type.Editing && <div>
               <Button className="shadow-none bg-green-500 hover:bg-green-500 h-5 px-2">
@@ -470,41 +464,47 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const MainContent = (
     <>
       {isBusinessInfoLoading ? (<BusinessInfoLoading />) : (
-        <>
-          {formType !== Type.Create && respondentView()}
-          <Card className="w-full rounded-t-none border-t-0">
-            <Form {...form}>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  submit()
-                }}
-                className="space-y-6"
-              >
-                <BusinessProfileForm
-                  addresses={addresses}
-                  validAddresses={validAddresses}
-                  isRegistrationTab={tab_params?.isRegistrationTab}
-                  formattedResidents={formattedResidents}
-                  formType={formType}
-                  sitio={formattedSitio}
-                  form={form}
-                  isSubmitting={isSubmitting}
-                  isReadOnly={isReadOnly}
-                  mediaFiles={mediaFiles}
-                  activeVideoId={activeVideoId}
-                  url={params.business?.bus_doc_url}
-                  setAddresses={setAddresses}
-                  setValidAddresses={setValidAddresses}
-                  setFormType={setFormType}
-                  setMediaFiles={setMediaFiles}
-                  setActiveVideoId={setActiveVideoId}
-                  submit={submit}
-                />
-              </form>
-            </Form>
-          </Card>
-        </>
+        <div className="flex gap-4">
+          <div className="w-full">
+            {formType !== Type.Create && respondentView()}
+            <Card className="w-full rounded-t-none border-t-0">
+              <Form {...form}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    submit()
+                  }}
+                  className="space-y-6"
+                >
+                  <BusinessProfileForm
+                    addresses={addresses}
+                    validAddresses={validAddresses}
+                    isRegistrationTab={tab_params?.isRegistrationTab}
+                    isModificationRequest = {!!modRequest}
+                    formattedResidents={formattedResidents}
+                    formType={formType}
+                    sitio={formattedSitio}
+                    form={form}
+                    isSubmitting={isSubmitting}
+                    isReadOnly={isReadOnly}
+                    mediaFiles={mediaFiles}
+                    activeVideoId={activeVideoId}
+                    url={params.business?.bus_doc_url}
+                    setAddresses={setAddresses}
+                    setValidAddresses={setValidAddresses}
+                    setFormType={setFormType}
+                    setMediaFiles={setMediaFiles}
+                    setActiveVideoId={setActiveVideoId}
+                    submit={submit}
+                  />
+                </form>
+              </Form>
+            </Card>
+          </div>
+          {modRequest && (
+            <ModificationRequest data={modRequest}/>
+          )}
+        </div>
       )}
     </>
   )
@@ -519,5 +519,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   )
 
   // ==================== MAIN RENDER ======================
-  return tab_params?.isRegistrationTab ? residentRegistrationForm() : standardForm()
+  return (
+    tab_params?.isRegistrationTab ? residentRegistrationForm() : standardForm()
+  )
 }

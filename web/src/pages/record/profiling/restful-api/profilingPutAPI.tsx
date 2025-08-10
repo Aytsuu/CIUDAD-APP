@@ -52,7 +52,7 @@ export const updateHousehold = async (householdInfo: Record<string, any>) => {
 
 export const updateBusiness = async (data: Record<string, any>, businessId: string) => {
   try {
-    const res = await api.put(`profiling/business/${businessId}/update/`, data);
+    const res = await api.patch(`profiling/business/${businessId}/update/`, data);
     return res.data;
   } catch (err) {
     console.error(err);

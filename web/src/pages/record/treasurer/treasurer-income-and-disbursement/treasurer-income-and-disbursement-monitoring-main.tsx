@@ -29,7 +29,7 @@ import {
   usePermanentDeleteIncomeFolder,
   usePermanentDeleteDisbursementFolder,
 } from "./queries/delqueries";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelper";
 import { ImageItem, Album, IncomeImage, DisbursementImage } from "./inc-disb-types";
 
 function IncomeandDisbursementView() {

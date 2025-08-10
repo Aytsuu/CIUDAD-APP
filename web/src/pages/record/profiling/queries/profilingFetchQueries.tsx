@@ -298,6 +298,22 @@ export const useRespondentInfo = (respondentId: string) => {
   })
 }
 
+export const useModificationRequests = () => {
+  return useQuery({
+    queryKey: ['modificationRequests'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/business/modification/request-list/');
+        return res.data
+      } catch (err) {
+        console.error(err);
+        throw(err);
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
 export const useHouseholdsList = () => {

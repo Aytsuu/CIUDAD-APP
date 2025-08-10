@@ -97,9 +97,9 @@ export const Combobox = React.memo(
       <Command className="w-full">
         <CommandInput placeholder={placeholder} className="w-full" />
         <CommandList className={cn("max-h-[300px] overflow-auto", variant === "modal" && "max-h-[60vh]")}>
-          <CommandEmpty>{emptyMessage}.</CommandEmpty>
+          <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup>
-            {options.map((option) => (
+            {options?.map((option) => (
               <CommandItem
                 key={option.id}
                 value={option.id}

@@ -77,12 +77,16 @@ urlpatterns = [
     path("business/specific/ownership/", SpecificOwnerView.as_view(), name="business-for-specific-owner"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
     path("business/verify/account-creation/", VerifyBusinessRespondent.as_view(), name="respondent-account-creation"),
+    path("business/modification/create/", BusinessModificationCreateView.as_view(), name='modify-business'),
+    path("business/modification/delete/", BusinessModificationDeleteView.as_view(), name='modification-request-result'),
+    path("business/modification/<int:bm_id>/result/", BusinessModificationUpdateView.as_view(), name='update-modification'),
+    path("business/modification/request-list/", BusinessModificationListView.as_view(), name="request-list"),
     
     # Analytics Urls,
     path("card/analytics/data/", CardAnalyticsView.as_view(), name='card-analytics'),
     path("sidebar/analytics/data/", SidebarAnalyticsView.as_view(), name="sidebar-analytics"),
     
     # KYC
-    # path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
-    # path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
+    path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
+    path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
 ]

@@ -101,6 +101,11 @@ class BusinessUpdateView(generics.UpdateAPIView):
   queryset = Business.objects.all()
   lookup_field = 'bus_id'
 
+  def update(self, request, *args, **kwargs):
+    super().update(request, *args, **kwargs)  # performs the update
+    instance = self.get_object()
+    return Response(BusinessInfoSerializer(instance).data)
+
 class VerifyBusinessRespondent(APIView):
   def post(self, request, *args, **kwargs):
     br_id = request.data.get('br_id',None)
@@ -149,3 +154,28 @@ class SpecificOwnerView(generics.ListAPIView):
       else:
           return Business.objects.none()
 
+class BusinessModificationCreateView(generics.CreateAPIView):
+  serializer_class = BusinessModificationCreateSerializer
+  queryset = BusinessModification.objects.all()
+
+class BusinessModificationListView(generics.ListAPIView):
+  serializer_class = BusinessModificationListSerializer
+  queryset = BusinessModification.objects.filter(bm_status=None)
+
+class BusinessModificationDeleteView(generics.DestroyAPIView):
+  serializer_class = BusinessModificationBaseSerializer
+  queryset = BusinessModification.objects.all()
+
+class BusinessModificationUpdateView(generics.UpdateAPIView):
+  serializer_class = BusinessModificationBaseSerializer
+  queryset = BusinessModification.objects.all()
+  lookup_field = 'bm_id'
+
+  def update(self, request, *args, **kwargs):
+    instance = self.get_object()
+    serializer = self.get_serializer(instance, data=request.data, partial=True)
+    
+    if serializer.is_valid():
+      serializer.save()
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_400_BAD_REQUEST)

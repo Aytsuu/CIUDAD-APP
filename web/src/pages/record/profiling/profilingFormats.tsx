@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { capitalize } from "@/helpers/capitalize";
 import { formatCurrency } from "@/helpers/currencyFormat";
+import { useNavigate } from "react-router";
 
 // Format residents for searching
 export const formatResidents = (residents: any) => {
@@ -122,4 +123,39 @@ export const formatOwnedBusinesses = (businesses: any) => {
       </div>
     )
   }))
+}
+
+export const formatModificationRequests = (requests: any) => {
+  const navigate = useNavigate()
+  if(!requests) return [];
+  return requests.map((req: any) => ({
+      id: `${req.bm_id} ${req.current_details.bus_name}`,
+      name: (
+        <div className="flex flex-col w-full items-start py-2"
+          onClick={() => navigate('form', {
+            state: {
+              params: {
+                type: "viewing",
+                busId: req.current_details.bus_id,
+              }
+            }
+          })}
+        >
+          <div className="flex items-center gap-2">
+            <p className="text-[15px] font-medium">{req.current_details.bus_name}</p>
+            <Badge variant="outline" className="text-xs">
+              ID: {req.current_details.bus_id}
+            </Badge>
+          </div>
+          <div className="flex w-full justify-between items-center mt-1">
+            <p className="text-xs text-gray-600">
+              Modification Request Pending
+            </p>
+            <Badge className="bg-amber-500 hover:bg-amber-500">
+              Pending Review
+            </Badge>
+          </div>
+        </div>
+      )
+    }))
 }

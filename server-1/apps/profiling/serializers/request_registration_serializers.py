@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import *
+from django.db import transaction
 from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
 from apps.account.models import Account
 from utils.supabase_client import supabase
@@ -65,6 +66,7 @@ class RequestCreateSerializer(serializers.ModelSerializer):
     model = RequestRegistration
     fields = ['comp']
   
+  @transaction.atomic
   def create(self, validated_data):
     comp = validated_data.get('comp', None)
         

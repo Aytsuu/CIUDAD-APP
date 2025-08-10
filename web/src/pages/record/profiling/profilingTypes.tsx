@@ -132,6 +132,8 @@ export type BusinessRespondent = {
   lname: string;
   fname: string;
   mname: string;
+  suffix: string;
+  sex: string;
   br_date_registered: string;
   businesses: Record<string, any>[];
 }

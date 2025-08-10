@@ -45,7 +45,7 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/profiling/business/form", {
+        navigate("form", {
           state: {
             params: {
               type: "viewing",

@@ -128,13 +128,13 @@ import { cn } from "@/lib/utils"
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns?.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24">
+                <TableCell colSpan={columns?.length} className="h-24">
                   <div className="w-full h-full flex items-center justify-center">
                     <Loader2 className="animate-spin opacity-50"/>
                   </div>

@@ -30,6 +30,7 @@ export default function BusinessProfileForm({
   addresses,
   validAddresses,
   isRegistrationTab,
+  isModificationRequest,
   formattedResidents,
   formType,
   sitio,
@@ -48,6 +49,7 @@ export default function BusinessProfileForm({
   addresses?: any[];
   validAddresses?: boolean[];
   isRegistrationTab: boolean
+  isModificationRequest: boolean
   formattedResidents: any
   formType: Type
   sitio: any
@@ -506,22 +508,24 @@ export default function BusinessProfileForm({
       </div>
       <Separator />
       {/* Action Buttons */}
-      <div className="p-10">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            {!isReadOnly && <p>Make sure all required information is complete before submitting.</p>}
-          </div>
-          <div className="flex gap-3">
-            {renderActionButton({
-              formType,
-              origin: "defaultOrigin",
-              isSubmitting,
-              setFormType,
-              submit,
-            })}
+      {!isModificationRequest && 
+        <div className="p-10">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              {!isReadOnly && <p>Make sure all required information is complete before submitting.</p>}
+            </div>
+            <div className="flex gap-3">
+              {renderActionButton({
+                formType,
+                origin: "defaultOrigin",
+                isSubmitting,
+                setFormType,
+                submit,
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      }
     </div>
   )
 }

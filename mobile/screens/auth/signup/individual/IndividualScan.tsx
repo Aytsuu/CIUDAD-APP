@@ -168,14 +168,15 @@ export default function IndividualScan() {
     ),
     failure: (
       <View className="flex-1 justify-end">
-        <View>
+        <View className="flex-row gap-2">
           <Button variant={"outline"} className={`rounded-xl native:h-[45px]`}
+            onPress={() => router.replace('/(auth)')}
           >
-            <Text className="text-white text-base font-semibold">
+            <Text className="text-gray-900 text-base font-semibold">
               Cancel
             </Text>
           </Button>
-          <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
+          <Button className={`flex-1 bg-primaryBlue rounded-xl native:h-[45px]`}
             onPress={() => {
               setShowFeedback(false)
               setTimeout(() => {

@@ -21,6 +21,7 @@ import PendingRecords from "@/pages/record/profiling/business/PendingRecords";
 import RespondentRecords from "@/pages/record/profiling/business/RespondentRecords";
 import RespondentDetails from "@/pages/record/profiling/business/RespondentDetails";
 import ProfilingAllRecords from "@/pages/record/profiling/ProfilingAllRecords";
+import ModificationRequest from "@/pages/record/profiling/business/ModificationRequest";
 
 export const profiling_router = [
   // All Records
@@ -119,27 +120,21 @@ export const profiling_router = [
   {
     path: "profiling/business/record",
     element: <BusinessRecords />,
-    children: [
-      {
-        path: "active",
-        element: <ActiveRecords />,
-      },
-      {
-        path: "pending",
-        element: <PendingRecords />,
-      },
-      {
-        path: "respondent",
-        element: <RespondentRecords />,
-      },
-      {
-        path: "respondent/details",
-        element: <RespondentDetails />,
-      },
-    ]
   },
   {
-    path: "profiling/business/form",
+    path: "profiling/business/record/form",
     element: <BusinessFormLayout />,
+  },
+  {
+    path: "profiling/business/record/pending",
+    element: <PendingRecords />,
+  },
+  {
+    path: "profiling/business/record/respondent",
+    element: <RespondentRecords />,
+  },
+  {
+    path: "profiling/business/record/respondent/details",
+    element: <RespondentDetails />,
   },
 ];
