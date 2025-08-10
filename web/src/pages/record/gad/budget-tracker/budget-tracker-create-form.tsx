@@ -53,12 +53,14 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     return initialBudget - totalExpenses;
   };
 
-  // Calculate proposed budget (sum of unrecorded items' amounts)
   const proposedBudget = removeLeadingZeros(
-    selectedBudgetItems
-      .filter(item => !recordedBudgetItems.some(r => r.name === item.name))
-      .reduce((sum, item) => sum + item.amount, 0)
-  );
+  selectedBudgetItems
+    .filter(item => !recordedBudgetItems.some(r => r.name === item.name))
+    .reduce((sum, item) => {
+      const pax = parseInt(item.pax) || 1; // Default to 1 if pax is not a number
+      return sum + (item.amount * pax);
+    }, 0)
+);
 
   // Form setup
   const form = useForm<FormValues>({
@@ -76,7 +78,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       gbud_reference_num: "",
       gbud_remaining_bal: 0,
       gbudy: 0,
-      gpr_id: 0,
+      gpr: 0,
     },
     context: { calculateRemainingBalance },
   });
@@ -144,12 +146,12 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
           setSelectedBudgetItems([...recordedItems, ...unrecordedItems]);
         }
 
-        form.setValue("gpr_id", selectedProject.gpr_id);
+        form.setValue("gpr", selectedProject.gpr_id);
         form.clearErrors("gbud_exp_particulars");
         form.clearErrors("gbud_exp_project");
-        form.clearErrors("gpr_id");
+        form.clearErrors("gpr");
       } else {
-        form.setValue("gpr_id", 0);
+        form.setValue("gpr", 0);
         form.setValue("gbud_exp_particulars", []);
         setSelectedBudgetItems([]);
         setRecordedBudgetItems([]);
@@ -239,7 +241,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
         gbud_reference_num: values.gbud_reference_num,
         gbud_remaining_bal:
           remainingBalance - (values.gbud_actual_expense || 0),
-        gpr: values.gpr_id,
+        gpr: values.gpr,
       }),
       gbudy: values.gbudy,
     };
@@ -336,7 +338,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                         onSelect={(value, item) => {
                           field.onChange(value);
                           if (item) {
-                            form.setValue("gpr_id", item.gpr_id);
+                            form.setValue("gpr", item.gpr_id);
                             const recordedItems = item.recorded_items
                               .map((name) =>
                                 item.gpr_budget_items.find(
@@ -356,7 +358,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                             setRecordedBudgetItems(recordedItems);
                             form.clearErrors("gbud_exp_particulars");
                             form.clearErrors("gbud_exp_project");
-                            form.clearErrors("gpr_id");
+                            form.clearErrors("gpr");
                           }
                         }}
                         displayKey="gpr_title"
@@ -415,7 +417,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                 {(recordedBudgetItems.length > 0 ||
                   selectedBudgetItems.length > 0) && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">Budget Items</label>
+                    <label className="text-sm font-medium text-black/70">Budget Items</label>
                     <div className="border rounded p-4">
                       {selectedBudgetItems.map((item, index) => {
                         const isRecorded = recordedBudgetItems.some(

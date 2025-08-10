@@ -22,7 +22,7 @@ interface ComboboxInputProps<T> {
   isLoading?: boolean;
   label: string;
   placeholder: string;
-  emptyText: string;
+  emptyText?: string;
   onSelect: (value: string, item?: T) => void;
   onCustomInput?: (value: string) => void;
   displayKey?: T extends string ? never : keyof T;
@@ -104,7 +104,7 @@ export function ComboboxInput<T>({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <label className="text-sm font-medium">{label}</label>
+      <label className="text-sm font-medium text-black/70">{label}</label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

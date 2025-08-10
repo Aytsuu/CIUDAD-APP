@@ -64,6 +64,10 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
+        # Preserve existing proposed budget for updates
+        if self.instance and self.instance.gbud_proposed_budget:
+            data['gbud_proposed_budget'] = self.instance.gbud_proposed_budget
+
         if data["gbud_type"] == "Expense":
             if not data.get("gbud_exp_project"):
                 raise serializers.ValidationError({"gbud_exp_project": "Project title is required for expense entries"})
@@ -71,29 +75,39 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"gpr": "Valid project ID is required for expense entries"})
             if not data.get("gbud_exp_particulars") or not isinstance(data["gbud_exp_particulars"], list):
                 raise serializers.ValidationError({"gbud_exp_particulars": "At least one budget item is required for expense entries"})
+            
+            # Only calculate proposed budget for new entries
+            if not self.instance:
+                recorded_items = GAD_Budget_Tracker.objects.filter(
+                    gbud_type="Expense",
+                    gpr=data["gpr"],
+                    gbudy__gbudy_year=data["gbudy"].gbudy_year
+                ).values_list("gbud_exp_particulars", flat=True)
+                recorded_item_names = {item["name"] for entry in recorded_items if entry for item in entry}
 
-            # Fetch project and existing budget entries
-            recorded_items = GAD_Budget_Tracker.objects.filter(
-                gbud_type="Expense",
-                gpr=data["gpr"],
-                gbudy__gbudy_year=data["gbudy"].gbudy_year
-            ).values_list("gbud_exp_particulars", flat=True)
-            recorded_item_names = {item["name"] for entry in recorded_items if entry for item in entry}
+                submitted_item_names = {item["name"] for item in data["gbud_exp_particulars"]}
+                if not recorded_item_names.issubset(submitted_item_names):
+                    raise serializers.ValidationError({
+                        "gbud_exp_particulars": "Must include all previously recorded budget items for this project"
+                    })
 
-            # Validate gbud_exp_particulars includes all recorded items
-            submitted_item_names = {item["name"] for item in data["gbud_exp_particulars"]}
-            if not recorded_item_names.issubset(submitted_item_names):
-                raise serializers.ValidationError({
-                    "gbud_exp_particulars": "Must include all previously recorded budget items for this project"
-                })
+                unrecorded_items = [
+                    item for item in data["gbud_exp_particulars"]
+                    if item["name"] not in recorded_item_names
+                ]
+                
+                proposed_budget = Decimal(0)
+                for item in unrecorded_items:
+                    try:
+                        pax_str = str(item.get("pax", "1")).split()[0]
+                        pax = Decimal(pax_str) if pax_str.replace('.', '', 1).isdigit() else Decimal(1)
+                    except:
+                        pax = Decimal(1)
+                        
+                    amount = Decimal(str(item["amount"]))
+                    proposed_budget += amount * pax
 
-            # Calculate proposed_budget (sum of unrecorded items' amounts)
-            unrecorded_items = [
-                item for item in data["gbud_exp_particulars"]
-                if item["name"] not in recorded_item_names
-            ]
-            proposed_budget = sum(Decimal(str(item["amount"])) for item in unrecorded_items)
-            data["gbud_proposed_budget"] = proposed_budget
+                data["gbud_proposed_budget"] = proposed_budget
 
         elif data["gbud_type"] == "Income":
             if not data.get("gbud_inc_particulars"):
@@ -105,32 +119,37 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-         # Create instance
         instance = GAD_Budget_Tracker.objects.create(**validated_data)
         
-        # Convert to Decimal for safe arithmetic
-        proposed_budget = Decimal(str(instance.gbud_proposed_budget or 0))
-        actual_expense = Decimal(str(instance.gbud_actual_expense or 0))
-        
-        # Perform calculation (e.g., for remaining balance)
-        budget_difference = proposed_budget - actual_expense
-        
-        # Update remaining balance or other logic
-        instance.gbud_remaining_bal = (
-            instance.gbud_remaining_bal - actual_expense
-            if instance.gbud_remaining_bal is not None
-            else budget_difference
-        )
-        
-        # Save instance
-        instance.save()
-        
+        # Store initial values in log
         GADBudgetLog.objects.create(
             gbudl_budget_entry=instance,
-            gbudl_amount_returned=float(budget_difference)
+            gbudl_amount_returned=float(
+                Decimal(str(instance.gbud_proposed_budget or 0)) - 
+                Decimal(str(instance.gbud_actual_expense or 0))
+            ),
+            gbudl_prev_amount=float(instance.gbud_actual_expense or 0),
+        )
+        return instance
+
+    def update(self, instance, validated_data):
+        # Store the current actual expense before updating
+        previous_actual = float(instance.gbud_actual_expense or 0)
+        
+        # Perform the update
+        updated_instance = super().update(instance, validated_data)
+        
+        # Create log with both current and previous values
+        GADBudgetLog.objects.create(
+            gbudl_budget_entry=updated_instance,
+            gbudl_amount_returned=float(
+                Decimal(str(updated_instance.gbud_proposed_budget or 0)) - 
+                Decimal(str(updated_instance.gbud_actual_expense or 0))
+            ),
+            gbudl_prev_amount=previous_actual,
         )
         
-        return instance
+        return updated_instance
 
 class GADBudgetYearSerializer(serializers.ModelSerializer):
     class Meta:
@@ -164,9 +183,10 @@ class GADBudgetLogSerializer(serializers.ModelSerializer):
             'gbud_actual_expense',
             'gbudl_amount_returned',
             'gbudl_created_at',
-            'gbud_type'
+            'gbud_type',
+            'gbudl_prev_amount',
         ]
-
+        
 class ProjectProposalLogSerializer(serializers.ModelSerializer):
     staff_details = StaffSerializer(source='staff', read_only=True)
     gpr_title = serializers.CharField(source='gpr.gpr_title', read_only=True)

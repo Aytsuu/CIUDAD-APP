@@ -47,7 +47,7 @@ const GADAddEntrySchema = z.object({
   gbud_remaining_bal: DataRequirement.optional(),
   gbud_proposed_budget: DataRequirement.optional(),
   gbudy: z.number().min(1, "Valid year budget is required"),
-  gpr_id: z.number().optional(),
+  gpr: z.number().optional().nullable(),
 }).superRefine((data, ctx) => {
   // Income validation
   if (data.gbud_type === "Income") {
@@ -66,18 +66,25 @@ const GADAddEntrySchema = z.object({
       });
     }
   }
-    if (data.gbud_type === "Expense") {
-      return (
-        !!data.gbud_exp_project &&
-        !!data.gbud_exp_particulars &&
-        data.gbud_exp_particulars.length > 0 &&
-        data.gbud_actual_expense != null &&
-        data.gpr_id != null
-      );
+
+  // Expense validation
+  if (data.gbud_type === "Expense") {
+    if (!data.gbud_exp_project) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gbud_exp_project"],
+        message: "Project title is required",
+      });
     }
-    return true; // Allow initial state before type is set
-  },
-);
+    if (!data.gbud_exp_particulars || data.gbud_exp_particulars.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gbud_exp_particulars"],
+        message: "At least one budget item is required",
+      });
+    }
+  }
+});
 
 export type FormValues = z.infer<typeof GADAddEntrySchema>;
 export default GADAddEntrySchema;

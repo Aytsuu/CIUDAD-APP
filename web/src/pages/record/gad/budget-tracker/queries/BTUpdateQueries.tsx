@@ -88,10 +88,11 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
     },
     onError: (error: any, _variables) => {
-      const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
-      toast.error('Failed to update budget entry', {
-        description: errorMessage,
-      });
-    },
+  console.error('Error response:', error.response?.data);
+  const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
+  toast.error('Failed to update budget entry', {
+    description: errorMessage,
+  });
+},
   });
 };
