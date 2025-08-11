@@ -192,7 +192,7 @@ class CommodityInventory(models.Model):
     cinv_qty = models.PositiveIntegerField(default=0)
     cinv_qty_unit = models.CharField(max_length=100)
     cinv_pcs = models.PositiveIntegerField(default=0)
-    cinv_dispensed = models.PositiveIntegerField(default=0)
+    # cinv_dispensed = models.PositiveIntegerField(default=0)
     cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
     cinv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE, db_column='inv_id')

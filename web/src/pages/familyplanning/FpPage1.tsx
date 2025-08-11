@@ -169,7 +169,7 @@ export default function FamilyPlanningForm({
         s_middleInitial: (father.per_mname ? father.per_mname[0] : "") || "",
         s_dateOfBirth: father.per_dob || "",
         s_age: father.per_dob ? calculateAge(father.per_dob) : 0,
-        s_occupation: "", // Occupation might not be available
+        s_occupation: "",
       };
     } else if (gender === 'male' && familyHeads?.mother) {
       // For male patients, use mother as spouse
@@ -180,7 +180,7 @@ export default function FamilyPlanningForm({
         s_middleInitial: (mother.per_mname ? mother.per_mname[0] : "") || "",
         s_dateOfBirth: mother.per_dob || "",
         s_age: mother.per_dob ? calculateAge(mother.per_dob) : 0,
-        s_occupation: "", // Occupation might not be available
+        s_occupation: "",
       };
     }
 

@@ -247,7 +247,7 @@ export default function FamilyPlanningForm6({
 
     updateFormData({
       serviceProvisionRecords: finalRecords,
-      pregnancyCheck: data.pregnancyCheck,
+      pregnancyCheck: formData.pregnancyCheck,
       latestFollowUpDate: latestFollowUpDate
     });
     onSubmitFinal()

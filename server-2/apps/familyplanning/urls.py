@@ -69,5 +69,10 @@ urlpatterns = [
     path('medical-history/create/', create_medical_history_records, name='create_medical_history'),
     path('medical-history/<int:patrec_id>/', get_patient_medical_history, name='get_patient_medical_history'),
     
-    path('all-fp-records-by-patient/<str:patient_id>/', FPRecordsForPatientListView.as_view(), name='all_fp_records_by_patient'),
+    path('submit-full-form/', submit_full_family_planning_form, name='submit_full_family_planning_form'),
+    
+    # NEW: Path for submitting a follow-up record
+    path('submit-follow-up-form/', submit_follow_up_family_planning_form, name='submit_follow_up_family_planning_form'),
+    
+    # path('familyplanning/submit-followup/', submit_followup_family_planning_form, name='submit_followup_family_planning_form'),
 ]

@@ -34,7 +34,8 @@ const PregnancyCheckSchema = z.object({
 
 const FamilyPlanningBaseSchema = z.object({
   pat_id: z.string().optional(),
-  fpt_id: z.string().optional(),
+  patrec_id: z.string().optional(),
+  // fpt_id: z.string().optional(),
   clientID: z.string().optional(),
   philhealthNo: z.string().optional(),
   nhts_status: z.boolean().optional(),
@@ -63,7 +64,7 @@ const FamilyPlanningBaseSchema = z.object({
     s_dateOfBirth: z.string().optional(),
     s_age: z.coerce.number().optional(),
     s_occupation: z.string().optional(),
-  }),
+  }).optional(),
 
   numOfLivingChildren: z.coerce.number().min(0).optional(),
   planToHaveMoreChildren: z.boolean(),
@@ -201,7 +202,7 @@ export const page1Schema = FamilyPlanningBaseSchema.pick({
   educationalAttainment: true,
   occupation: true,
   address: true,
-  spouse: true,
+  // spouse: false,
   numOfLivingChildren: true,
   planToHaveMoreChildren: true,
   averageMonthlyIncome: true,
@@ -237,12 +238,12 @@ export const page4Schema = FamilyPlanningBaseSchema.pick({
   breastExamination: true,
   abdomenExamination: true,
   extremitiesExamination: true,
-  pelvicExamination: true,
-  cervicalConsistency: true,
-  cervicalTenderness: true,
-  cervicalAdnexal: true,
-  uterinePosition: true,
-  uterineDepth: true,
+  // pelvicExamination: false,
+  // cervicalConsistency: false,
+  // cervicalTenderness: false,
+  // cervicalAdnexal: false,
+  // uterinePosition: false,
+  // uterineDepth: false,
   bodyMeasurementRecordedAt: true 
 });
 

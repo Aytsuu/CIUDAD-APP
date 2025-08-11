@@ -4,6 +4,7 @@ import axios from "axios"
 
 // Type for a single FP Record entry in the individual patient's table
 interface IndividualFPRecordDetail {
+  patrec_id: string
   fprecord_id: number
   client_id: string
   patient_name: string
