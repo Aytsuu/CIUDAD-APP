@@ -97,7 +97,11 @@ import { z } from "zod";
 //     }
 //   });
 // };
-
+type FileData = {
+    name: string;
+    type: string;
+    file: string;
+};
 
 type ExtendedIncomeExpense = z.infer<typeof IncomeExpenseFormSchema> & {
   totalBudget: number;
@@ -105,6 +109,7 @@ type ExtendedIncomeExpense = z.infer<typeof IncomeExpenseFormSchema> & {
   years: number;
   proposedBud: number;
   particularId: number;
+  files: FileData[]; 
 };
 
 
@@ -117,38 +122,23 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       const iet_num = await income_expense_tracking(values);
       
       // 2. Create all file entries in parallel
-      // if (values.iet_receipt_image?.length) {
-      //   await Promise.all(
-      //     values.iet_receipt_image.map(file => 
-      //       income_expense_file_create({
-      //         iet_num,
-      //         file_data: file
-      //       })
-      //     )
-      //   );
-      // }
-
-      if (values.iet_receipt_image && values.iet_receipt_image.length > 0) {
-        // Filter out any invalid files before processing
-        const validFiles = values.iet_receipt_image.filter(file => 
-          file && (file.url || file.path) && file.name
+      if (values.files && values.files.length > 0) {
+        await Promise.all(
+          values.files.map(file => 
+            income_expense_file_create({
+              iet_num,
+              file_data: {
+                name: file.name,
+                type: file.type,
+                file: file.file
+              }
+            }).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
+            })
+          )
         );
-        
-        if (validFiles.length > 0) {
-          await Promise.all(
-            validFiles.map(file => 
-              income_expense_file_create({
-                iet_num,
-                file_data: file
-              }).catch(error => {
-                console.error("Error creating file entry:", error);
-                // Continue with other files even if one fails
-                return null;
-              })
-            )
-          );
-        }
-      }      
+      }    
       
       //3. Update main for the expenses
       await updateIncomeExpenseMain(values.years, {

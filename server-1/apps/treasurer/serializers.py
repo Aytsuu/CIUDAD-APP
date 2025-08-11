@@ -150,9 +150,38 @@ class Expense_ParticularSerializers(serializers.ModelSerializer):
         }
 
 class Income_Expense_FileSerializers(serializers.ModelSerializer):
+    
     class Meta:
         model = Income_Expense_File
         fields = '__all__'
+    
+    def _upload_files(self, files, iet_num=None):
+
+        if not iet_num:
+            return
+        
+        try:
+            tracking_instance = Income_Expense_Tracking.objects.get(pk=iet_num)
+        except Income_Expense_Tracking.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {iet_num} does not exist")       
+        
+        ief_files = []
+        for file_data in files:
+            ief_file = Income_Expense_File(
+                ief_name=file_data['name'],
+                ief_type=file_data['type'],
+                ief_path=f"uploads/{file_data['name']}",
+                iet_num=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            ief_file.ief_url = url
+            ief_files.append(ief_file)
+
+        if ief_files:
+            Income_Expense_File.objects.bulk_create(ief_files)
+
 
 
 class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):

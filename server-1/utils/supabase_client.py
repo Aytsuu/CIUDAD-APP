@@ -4,9 +4,14 @@ import base64
 import logging
 
 logger = logging.getLogger(__name__)
+import base64
+import logging
+
+logger = logging.getLogger(__name__)
 
 supabase: Client = create_client(
     settings.SUPABASE_URL, 
+    settings.SUPABASE_ANON_KEY,
     settings.SUPABASE_ANON_KEY,
 )
 

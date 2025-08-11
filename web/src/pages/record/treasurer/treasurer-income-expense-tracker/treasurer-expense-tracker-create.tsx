@@ -56,7 +56,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
             iet_amount: "",
             iet_actual_amount: "",
             iet_additional_notes: "",
-            iet_receipt_image: undefined,
+            // iet_receipt_image: undefined,
         },
     });
 
@@ -70,18 +70,19 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
 
     console.log("EXP REMAIN BAL CREATE: ", totBud)
 
-    useEffect(() => {
-        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-            form.setValue('iet_receipt_image', mediaFiles.map(file => ({
-                name: file.file.name,
-                type: file.file.type,
-                path: file.storagePath || '',
-                url: file.publicUrl || ''
-            })));
-        } else {
-            form.setValue('iet_receipt_image', []);
-        }
-    }, [mediaFiles, form]);
+    // useEffect(() => {
+    //     console.log("Current mediaFiles:", mediaFiles);         
+    //     if (mediaFiles.length > 0 && mediaFiles[0].url) {
+    //         form.setValue('iet_receipt_image', mediaFiles.map(file => ({
+    //             name: file.name, 
+    //             type: file.type,  
+    //             path: file.id,    
+    //             url: file.url     
+    //         })));
+    //     } else {
+    //         form.setValue('iet_receipt_image', []);
+    //     }
+    // }, [mediaFiles, form]);
 
 
     const selectedParticularId = form.watch("iet_particulars");
@@ -113,6 +114,12 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
         //dtl_id
         const particularid = selectedParticularId?.split(' ')[0] || '';
         const particularId = Number(particularid);
+
+        const files = mediaFiles.map((media) => ({
+            'name': media.name,
+            'type': media.type,
+            'file': media.file
+        }))
 
         if (inputYear !== years) {
             form.setError('iet_datetime', {
@@ -153,6 +160,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
             totalExpense,
             proposedBud,
             particularId,
+            files
         };
         console.log("TANANNNNNNNNNNNNNNNN: ", allValues)
 
@@ -351,26 +359,14 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                         </div>
 
                         <div className="pb-5">
-                            <FormField
-                                control={form.control}
-                                name="iet_receipt_image"
-                                render={() => (
-                                    <FormItem>
-                                        <FormLabel>Supporting Document</FormLabel>
-                                        <FormControl>
-                                            <MediaUpload
-                                                title=""
-                                                description="Upload supporting document as proof of transaction"
-                                                mediaFiles={mediaFiles}
-                                                activeVideoId={activeVideoId}
-                                                setMediaFiles={setMediaFiles}
-                                                setActiveVideoId={setActiveVideoId}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <MediaUpload
+                                title=""
+                                description="Upload supporting document as proof of transaction"
+                                mediaFiles={mediaFiles}
+                                activeVideoId={activeVideoId}
+                                setMediaFiles={setMediaFiles}
+                                setActiveVideoId={setActiveVideoId}
+                            />   
                         </div>
 
                         <div className="flex justify-end mt-[20px] space-x-2">
