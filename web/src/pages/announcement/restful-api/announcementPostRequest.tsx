@@ -31,16 +31,16 @@ export const postAnnouncementRecipient = async (payload: { recipients: Record<st
   }
 };
 
-export const postAnnouncementFile = () => {
-  return useMutation({
-    mutationFn: async (data: Record<string, any>[]) => {
-      try {
-        const res = await api.post('announcement/upload-files/', data);
-        return res.data;
-      } catch (err) {
-        console.error(err);
-        throw err;
-      }
-    }
-  })
-}
+// export const postAnnouncementFile = () => {
+//   return useMutation({
+//     mutationFn: async (data: Record<string, any>[]) => {
+//       try {
+//         const res = await api.post('announcement/upload-files/', data);
+//         return res.data;
+//       } catch (err) {
+//         console.error(err);
+//         throw err;
+//       }
+//     }
+//   })
+// }

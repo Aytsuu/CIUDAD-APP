@@ -31,10 +31,9 @@ import {
 } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-
 function AnnouncementView() {
   const { id } = useParams<{ id: string }>();
-  const ann_id = Number(id); // convert from string to number
+  const ann_id = Number(id);
 
   const [isEditing] = useState(false);
   const { data: announcements } = useGetAnnouncement();
@@ -42,7 +41,6 @@ function AnnouncementView() {
 
   const announcement = announcements?.find((a) => a.ann_id === ann_id);
   const matchingRecipients = recipients?.filter((r) => r.ann === ann_id) || [];
-  const firstRecipient = matchingRecipients.length > 0 ? matchingRecipients[0] : null;
 
   const formatDateTimeLocal = (value: string | Date) => {
     const date = new Date(value);
@@ -61,7 +59,6 @@ function AnnouncementView() {
         ? formatDateTimeLocal(announcement.ann_end_at)
         : formatDateTimeLocal(new Date()),
       ann_type: (announcement as any)?.ann_type || "General",
-      ar_mode: [firstRecipient?.ar_mode || ""],
     },
   });
 
@@ -87,176 +84,165 @@ function AnnouncementView() {
   }
 
   return (
-    <LayoutWithBack title="Announcement Details " description="View the complete details of this announcement">
-    <div className="max-w-4xl mx-auto">
-  
-
-      <Form {...form}>
-        <form className="space-y-6">
-          {/* Basic Info */}
-          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-gray-600" />
-                <CardTitle className="text-lg">Basic Information</CardTitle>
-              </div>
-              <CardDescription>Main details of the announcement</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormInput
-                control={form.control}
-                name="ann_title"
-                label="Announcement Title"
-                readOnly={!isEditing}
-              />
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Announcement Details
-                </label>
-                <textarea
-                  {...form.register("ann_details")}
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
-                  readOnly={!isEditing}
-                />
-              </div>
-              <FormInput
-                control={form.control}
-                name="ann_type"
-                label="Announcement Type"
-                readOnly={!isEditing}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Attached Files */}
-          {(announcement.files?.length ?? 0) > 0 && (
+    <LayoutWithBack
+      title="Announcement Details"
+      description="View the complete details of this announcement"
+    >
+      <div className="max-w-4xl mx-auto">
+        <Form {...form}>
+          <form className="space-y-6">
+            {/* Basic Info */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Attached Files</CardTitle>
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
                 </div>
-                <CardDescription>Media attached to the announcement</CardDescription>
+                <CardDescription>Main details of the announcement</CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-wrap gap-4">
-                {announcement.files?.map((file, index) => (
-                  <div key={index} className="w-40 h-40 border rounded overflow-hidden shadow-sm">
-                    {file.af_type.startsWith("image/") ? (
-                      <img
-                        src={file.af_url}
-                        alt={file.af_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-sm text-gray-500">
-                        {file.af_name}
-                      </div>
-                    )}
-                  </div>
-                ))}
+              <CardContent className="space-y-4">
+                <FormInput
+                  control={form.control}
+                  name="ann_title"
+                  label="Announcement Title"
+                  readOnly={!isEditing}
+                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Announcement Details
+                  </label>
+                  <textarea
+                    {...form.register("ann_details")}
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+                    readOnly={!isEditing}
+                  />
+                </div>
+                <FormInput
+                  control={form.control}
+                  name="ann_type"
+                  label="Announcement Type"
+                  readOnly={!isEditing}
+                />
               </CardContent>
             </Card>
-          )}
 
-          {/* Schedule */}
-          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-gray-600" />
-                <CardTitle className="text-lg">Schedule</CardTitle>
-              </div>
-              <CardDescription>When this announcement is active</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Clock className="h-4 w-4" />
-                  Start Date & Time
-                </div>
-                <FormDateTimeInput
-                  control={form.control}
-                  name="ann_start_at"
-                  label=""
-                  readOnly={!isEditing}
-                  type="datetime-local"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Clock className="h-4 w-4" />
-                  End Date & Time
-                </div>
-                <FormDateTimeInput
-                  control={form.control}
-                  name="ann_end_at"
-                  label=""
-                  readOnly={!isEditing}
-                  type="datetime-local"
-                />
-              </div>
-            </CardContent>
-          </Card>
+            {/* Attached Files */}
+            {(announcement.files?.length ?? 0) > 0 && (
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-gray-600" />
+                    <CardTitle className="text-lg">Attached Files</CardTitle>
+                  </div>
+                  <CardDescription>Media attached to the announcement</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-4">
+                  {announcement.files?.map((file, index) => (
+                    <div key={index} className="w-40 h-40 border rounded overflow-hidden shadow-sm">
+                      {file.af_type.startsWith("image/") ? (
+                        <img
+                          src={file.af_url}
+                          alt={file.af_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-sm text-gray-500">
+                          {file.af_name}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Recipients & Delivery */}
-          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-gray-600" />
-                <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
-              </div>
-              <CardDescription>Who received this announcement and how</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Positions */}
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Target Positions</p>
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(new Set(matchingRecipients.map((r) => r.position_title)))
-                    .slice(0, 5)
-                    .map((title, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs px-2 py-1">
-                        {title}
+            {/* Schedule */}
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Schedule</CardTitle>
+                </div>
+                <CardDescription>When this announcement is active</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    Start Date & Time
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_start_at"
+                    label=""
+                    readOnly={!isEditing}
+                    type="datetime-local"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    End Date & Time
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_end_at"
+                    label=""
+                    readOnly={!isEditing}
+                    type="datetime-local"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recipients */}
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Recipients</CardTitle>
+                </div>
+                <CardDescription>Who received this announcement</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Positions */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Target Positions</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(new Set(matchingRecipients.map((r) => r.position_title)))
+                      .slice(0, 5)
+                      .map((title, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs px-2 py-1">
+                          {title}
+                        </Badge>
+                      ))}
+                    {matchingRecipients.length > 5 && (
+                      <Badge variant="outline" className="text-xs px-2 py-1">
+                        +{matchingRecipients.length - 5} more
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Age Groups */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Target Age Group</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(new Set(matchingRecipients.map((r) => r.ar_age))).map((age, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs px-2 py-1 capitalize">
+                        {age}
                       </Badge>
                     ))}
-                  {matchingRecipients.length > 5 && (
-                    <Badge variant="outline" className="text-xs px-2 py-1">
-                      +{matchingRecipients.length - 5} more
-                    </Badge>
-                  )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Age Groups */}
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Target Age Group</p>
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(new Set(matchingRecipients.map((r) => r.ar_age))).map((age, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs px-2 py-1 capitalize">
-                      {age}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Delivery Modes */}
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Delivery Mode</p>
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(new Set(matchingRecipients.map((r) => r.ar_mode))).map((mode, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs px-2 py-1 capitalize">
-                      {mode}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-            </CardContent>
-          </Card>
-        </form>
-      </Form>
-    </div>
-     </LayoutWithBack>
+                <Separator />
+              </CardContent>
+            </Card>
+          </form>
+        </Form>
+      </div>
+    </LayoutWithBack>
   );
 }
 

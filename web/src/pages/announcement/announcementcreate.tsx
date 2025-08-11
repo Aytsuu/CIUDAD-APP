@@ -11,45 +11,35 @@ import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import { Button } from "@/components/ui/button/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Calendar, Users, Clock, Send } from "lucide-react";
-import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
+import { FileText, Calendar, Users, Clock, Send, MessageSquare } from "lucide-react";
 import React from "react";
-import { postAnnouncementFile as postAnnouncementFileApi } from "./restful-api/announcementPostRequest";
 import { useAuth } from "@/context/AuthContext";
-import { usePositions } from "../record/administration/queries/administrationFetchQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import axios from "axios";
 
 const AnnouncementCreate = () => {
   const queryClient = useQueryClient();
   const { mutateAsync: postAnnouncement } = usePostAnnouncement();
-  const { mutate: postAnnouncementRecipient } = usePostAnnouncementRecipient();
-  const { mutate: postAnnouncementFile } = postAnnouncementFileApi();
-
-  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
-  const [activeVideoId, setActiveVideoId] = React.useState<string>("");
+  usePostAnnouncementRecipient();
   const { user } = useAuth();
-  const { data: positions = [] } = usePositions();
 
-  type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema> & {
-    positions?: string[];
-    ar_age?: string[];
-  };
+  type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema>;
 
   const defaultValues = {
-  ann_title: "",
-  ann_details: "",
-  ann_start_at: "",
-  ann_end_at: "",
-  ann_event_start: "",
-  ann_event_end: "",
-  ann_type: "",
-  ar_mode: [],
-  positions: [],
-  ar_age: [],
-  staff: ""
-};
-
+    ann_title: "",
+    ann_details: "",
+    ann_start_at: "",
+    ann_end_at: "",
+    ann_event_start: "",
+    ann_event_end: "",
+    ann_type: "",
+    ar_type: [],
+    recipient: "everyone",
+    staff: user?.staff?.staff_id || "",
+    ann_to_sms: false,
+    ann_to_email: false
+  };
 
   const form = useForm<AnnouncementCreateFormValues>({
     resolver: zodResolver(AnnouncementSchema),
@@ -57,74 +47,60 @@ const AnnouncementCreate = () => {
   });
 
   const annType = form.watch("ann_type");
+  const recipientType = form.watch("recipient");
 
-9-
-
-8-+  React.useEffect(() => {
-    if (["general", "reminder", "public"].includes(annType)) {
-      form.setValue("ar_mode", ["sms", "email"]);
-    }
+  React.useEffect(() => {
     if (annType === "general") {
       form.setValue("ann_start_at", "");
       form.setValue("ann_end_at", "");
+      form.setValue("ann_event_start", "");
+      form.setValue("ann_event_end", "");
     }
-  }, [annType, form]);
+    // Reset ar_type when recipient changes
+    form.setValue("ar_type", []);
+  }, [annType, recipientType, form]);
 
-  const onSubmit = async () => {
-    const formIsValid = await form.trigger();
-    const values = form.getValues();
-
-    if (!formIsValid) {
-      console.error("Form validation failed");
-      console.log(form.formState.errors);
-      return;
+  const onSubmit = async (data: AnnouncementCreateFormValues) => {
+  try {
+    const cleanedData: Record<string, any> = {};
+    for (const key in data) {
+      const value = (data as any)[key];
+      if (value !== "" && value !== undefined) {
+        cleanedData[key] = value;
+      } else {
+        cleanedData[key] = null;
+      }
     }
 
-    const { ar_mode, positions, ar_age, ...restVal } = values;
-    
-    const recipients = [
-      ...positions,
-      ...ar_age,
-    ]
+    const { ar_type, ...announcementData } = cleanedData;
 
-    try {
-       const files = mediaFiles.map((media) => ({
-        af_name: media.file.name,
-        af_type: media.file.type,
-        af_path: media.storagePath,
-        af_url: media.publicUrl,
-        ann: createdAnnouncement?.ann_id,
-        staff: user?.staff?.staff_id
+    if (ar_type && ar_type.length > 0) {
+      announcementData.recipients = ar_type.map((type: string) => ({
+        ar_type: type,
       }));
-
-      const createdAnnouncement = await postAnnouncement(restVal);
-
-       await postAnnouncementRecipient({
-            recipients: recipients,
-          });
-
-     
-    } catch (err) {
-      console.error("Error during announcement creation:", err);
     }
-  };
 
-  const positionOptions = positions.map((pos: any) => ({
-    id: pos.pos_id?.toString(),
-    name: pos.pos_title,
-  }));
+    console.log("Sending announcement payload:", announcementData);
+
+    const createdAnnouncement = await postAnnouncement(announcementData);
+
+    queryClient.invalidateQueries(["announcements"]);
+
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Validation errors from backend:", error.response.data);
+    } else {
+      console.error("Unexpected error:", error);
+    }
+  }
+};
+
 
   return (
-    <LayoutWithBack title="Create Announcement " description="Fill in the details below to create and distribute your announcement">
+    <LayoutWithBack title="Create Announcement" description="Fill in the details below to create and distribute your announcement">
       <div className="max-w-4xl mx-auto">
         <Form {...form}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              onSubmit();
-            }}
-            className="space-y-6"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Info */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
@@ -162,9 +138,12 @@ const AnnouncementCreate = () => {
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
                     placeholder="Provide detailed information about the announcement"
                   />
+                  {form.formState.errors.ann_details && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.ann_details.message}
+                    </p>
+                  )}
                 </div>
-
-                
               </CardContent>
             </Card>
 
@@ -233,95 +212,115 @@ const AnnouncementCreate = () => {
                         />
                       </div>
                     </>
-                  )}z
+                  )}
                 </CardContent>
               </Card>
             )}
 
-            {/* Recipients & Delivery */}
+            {/* Recipients */}
             {["event", "general"].includes(annType) && (
-  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-    <CardHeader className="pb-4">
-      <div className="flex items-center gap-2">
-        <Users className="h-5 w-5 text-gray-600" />
-        <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
-      </div>
-      <CardDescription>
-        Choose audience, positions, age group, and delivery modes
-      </CardDescription>
-    </CardHeader>
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-600" />
+                    <CardTitle className="text-lg">Recipients</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Choose audience, positions, and age group
+                  </CardDescription>
+                </CardHeader>
 
-    <CardContent className="space-y-6">
-      {/* Audience Select */}
-      <FormSelect
-        control={form.control}
-        name="recipient"
-        label="Target Audience"
-        options={[
-          { id: "everyone", name: "everyone" },
-          { id: "resident", name: "resident" },
-          { id: "staff", name: "staff" },
-        ]}
-      />
+                <CardContent className="space-y-6">
+                  {/* Audience Select */}
+                  <FormSelect
+                    control={form.control}
+                    name="recipient"
+                    label="Target Audience"
+                    options={[
+                      { id: "everyone", name: "Everyone" },
+                      { id: "resident", name: "Resident" },
+                      { id: "staff", name: "Staff" },
+                    ]}
+                  />
 
-      {/* Show Positions if Staff */}
-      {form.watch("recipient") === "staff" && (
-        <div className="space-y-2">
-          <Badge variant="outline" className="text-xs">Target Positions</Badge>
-          <FormComboCheckbox
-            control={form.control}
-            name="positions"
-            options={positionOptions}
-          />
-        </div>
-      )}
+                  {/* Show Positions if Staff */}
+                  {recipientType === "staff" && (
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">Target Positions</Badge>
+                      <FormComboCheckbox
+                        control={form.control}
+                        name="ar_type"
+                        options={[
+                          { id: "Midwife", name: "Midwife" },
+                          { id: "Doctor", name: "Doctor" },
+                          { id: "Barangay Health Worker", name: "Barangay Health Worker" },
+                          { id: "Watchmen", name: "Watchmen" },
+                          { id: "Waste Driver", name: "Waste Driver" },
+                          { id: "Waste Collector", name: "Waste Collector" },
+                          { id: "Barangay Captain", name: "Barangay Captain" }
+                        ]}
+                      />
+                    </div>
+                  )}
 
-      {/* Show Age Groups if Resident */}
-      {form.watch("recipient") === "resident" && (
-        <div className="space-y-2">
-          <Badge variant="outline" className="text-xs">Age Group</Badge>
-          <FormComboCheckbox
-            control={form.control}
-            name="ar_age"
-            options={[
-              { id: "youth", name: "Youth" },
-              { id: "adult", name: "Adult" },
-              { id: "senior", name: "Senior Citizen" },
-            ]}
-          />
-        </div>
-      )}
+                  {/* Show Age Groups if Resident */}
+                  {recipientType === "resident" && (
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">Age Group</Badge>
+                      <FormComboCheckbox
+                        control={form.control}
+                        name="ar_type"
+                        options={[
+                          { id: "young", name: "Young" },
+                          { id: "adult", name: "Adult" },
+                          { id: "senior", name: "Senior Citizen" },
+                        ]}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-      {/* Always show delivery mode */}
-      <div className="space-y-2">
-        <Badge variant="outline" className="text-xs">Delivery Mode</Badge>
-        <FormComboCheckbox
-          control={form.control}
-          name="ar_mode"
-          options={[
-            { id: "sms", name: "SMS" },
-            { id: "email", name: "Email" },
-          ]}
-          readOnly={["general", "reminder", "public"].includes(annType)}
-        />
-      </div>
-    </CardContent>
-  </Card>
-)}
-
-
-            {/* Upload */}
-            <MediaUpload
-              title="Upload Image"
-              description="Upload images"
-              mediaFiles={mediaFiles}
-              activeVideoId={activeVideoId}
-              setActiveVideoId={setActiveVideoId}
-              setMediaFiles={setMediaFiles}
-            />
+            {/* Notification Options */}
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Notification Options</CardTitle>
+                </div>
+                <CardDescription>Choose how to notify recipients</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="ann_to_sms"
+                      {...form.register("ann_to_sms")}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="ann_to_sms" className="text-sm font-medium text-gray-700">
+                      Send SMS Notification
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="ann_to_email"
+                      {...form.register("ann_to_email")}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="ann_to_email" className="text-sm font-medium text-gray-700">
+                      Send Email Notification
+                    </label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="flex justify-end pt-4">
-              <Button>
+              <Button type="submit">
                 <Send className="h-4 w-4 mr-2" />
                 Create Announcement
               </Button>

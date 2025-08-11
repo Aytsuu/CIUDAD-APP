@@ -19,11 +19,11 @@ const AnnouncementSchema = z.object({
     message: "Invalid event end datetime format",
   }),
   ann_type: z.string().nonempty({ message: "Type is required" }),
-  ar_mode: z.array(z.string()).optional().default([]),
-  positions: z.array(z.string()).optional().default([]),
-  ar_age: z.array(z.enum(["youth", "adult", "senior"])).optional().default([]),
+  ar_type: z.array(z.enum(["youth", "adult", "senior", "Midwife", "Doctor", "Barangay Health Worker", "Watchmen", "Waste Driver", "Waste Collector", "Barangay Captain"])).optional().default([]),
   staff: z.string().optional(),
   recipient: z.string().nonempty({ message: "Recipient is required" }),
+  ann_to_sms: z.boolean().optional().default(false),
+  ann_to_email: z.boolean().optional().default(false),  
 })
 
 export default AnnouncementSchema;

@@ -12,8 +12,8 @@ class Announcement(models.Model):
     ann_event_start = models.DateTimeField(null=True, blank=True)
     ann_event_end = models.DateTimeField(null=True, blank=True)
     ann_type = models.CharField(max_length=50)
-    ann_to_sms = models.BooleanField(default=False)
-    ann_to_email = models.BooleanField(default=False)
+    ann_to_sms = models.BooleanField(default=True)
+    ann_to_email = models.BooleanField(default=True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
