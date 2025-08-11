@@ -335,18 +335,6 @@ const IndividualFamPlanningTable: React.FC = () => {
         },
       },
       {
-        id: "followUpActions",
-        header: "Follow-up",
-        cell: ({ row }) => (
-          <Button
-            size="sm"
-            onClick={() => handleAddFollowUp(row.original)}
-          >
-            <Plus className="h-4 w-4 mr-1" /> Add Follow-up Visit
-          </Button>
-        ),
-      },
-      {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
@@ -448,12 +436,23 @@ const IndividualFamPlanningTable: React.FC = () => {
             {Object.entries(groupedRecords).map(([patrecId, records]) => (
               <AccordionItem key={patrecId} value={patrecId}>
                 <AccordionTrigger className="hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium">{getGroupHeader(records)}</span>
-                    <Badge variant="secondary" className="ml-2">
-                      {records.length} Records
-                    </Badge>
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium">{getGroupHeader(records)}</span>
+                      <Badge variant="secondary" className="ml-2">
+                        {records.length} Records
+                      </Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent accordion toggle
+                        handleAddFollowUp(records[0]); // Use the latest record in the group
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Add Follow-up
+                    </Button>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
