@@ -75,7 +75,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       gbud_exp_particulars: [],
       gbud_actual_expense: 0,
       gbud_proposed_budget: 0,
-      gbud_reference_num: "",
+      gbud_reference_num: null,
       gbud_remaining_bal: 0,
       gbudy: 0,
       gpr: 0,

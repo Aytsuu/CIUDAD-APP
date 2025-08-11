@@ -368,7 +368,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     placeholder="Enter reference number"
                     readOnly={!isEditing}
                   />
-                  {/* {isEditing ? (
+                   {isEditing ? (
                     <MediaUpload
                       title="Supporting Documents"
                       description="Upload proof of transaction"
@@ -399,7 +399,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     <div className="p-2 border rounded text-sm text-gray-500">
                       No supporting docs uploaded
                     </div>
-                  )} */}
+                  )}
                 </>
               )}
             </div>
@@ -449,29 +449,29 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
               {isEditing ? (
                 <>
                   <Button
-                    // type="button"
-                    // onClick={() => {
-                    //   form.reset();
-                    //   setIsEditing(false);
-                    //   setRemovedFiles([]);
-                    //   if (budgetEntry.files?.length) {
-                    //     const files = budgetEntry.files.map((file) => ({
-                    //       id: `receipt-${file.gbf_id}`,
-                    //       type: "image" as const,
-                    //       file: new File([], file.gbf_name, {
-                    //         type: file.gbf_type || "image/jpeg",
-                    //       }),
-                    //       publicUrl: file.gbf_url,
-                    //       storagePath: file.gbf_path,
-                    //       status: "uploaded" as const,
-                    //       previewUrl: file.gbf_url,
-                    //     }));
-                    //     setMediaFiles(files);
-                    //   } else {
-                    //     setMediaFiles([]);
-                    //   }
-                    // }}
-                    // variant="outline"
+                    type="button"
+                    onClick={() => {
+                      form.reset();
+                      setIsEditing(false);
+                      setRemovedFiles([]);
+                      if (budgetEntry.files?.length) {
+                        const files = budgetEntry.files.map((file) => ({
+                          id: `receipt-${file.gbf_id}`,
+                          type: "image" as const,
+                          file: new File([], file.gbf_name, {
+                            type: file.gbf_type || "image/jpeg",
+                          }),
+                          publicUrl: file.gbf_url,
+                          storagePath: file.gbf_path,
+                          status: "uploaded" as const,
+                          previewUrl: file.gbf_url,
+                        }));
+                        // setMediaFiles(files);
+                      } else {
+                        setMediaFiles([]);
+                      }
+                    }}
+                    variant="outline"
                   >
                     Cancel
                   </Button>
