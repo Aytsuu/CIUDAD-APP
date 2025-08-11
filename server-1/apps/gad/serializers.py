@@ -75,6 +75,8 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"gpr": "Valid project ID is required for expense entries"})
             if not data.get("gbud_exp_particulars") or not isinstance(data["gbud_exp_particulars"], list):
                 raise serializers.ValidationError({"gbud_exp_particulars": "At least one budget item is required for expense entries"})
+            if 'gbud_reference_num' in data and data['gbud_reference_num'] is None:
+                data.pop('gbud_reference_num')
             
             # Only calculate proposed budget for new entries
             if not self.instance:
@@ -121,35 +123,27 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         instance = GAD_Budget_Tracker.objects.create(**validated_data)
         
-        # Store initial values in log
+        # Create initial log with current actual expense snapshot
         GADBudgetLog.objects.create(
             gbudl_budget_entry=instance,
-            gbudl_amount_returned=float(
-                Decimal(str(instance.gbud_proposed_budget or 0)) - 
-                Decimal(str(instance.gbud_actual_expense or 0))
-            ),
-            gbudl_prev_amount=float(instance.gbud_actual_expense or 0),
+            gbudl_amount_returned=float(instance.gbud_proposed_budget or 0) - float(instance.gbud_actual_expense or 0),
+            gbudl_prev_amount=float(instance.gbud_actual_expense or 0),  # Store current value
         )
         return instance
 
     def update(self, instance, validated_data):
-        # Store the current actual expense before updating
-        previous_actual = float(instance.gbud_actual_expense or 0)
-        
-        # Perform the update
-        updated_instance = super().update(instance, validated_data)
-        
-        # Create log with both current and previous values
-        GADBudgetLog.objects.create(
-            gbudl_budget_entry=updated_instance,
-            gbudl_amount_returned=float(
-                Decimal(str(updated_instance.gbud_proposed_budget or 0)) - 
-                Decimal(str(updated_instance.gbud_actual_expense or 0))
-            ),
-            gbudl_prev_amount=previous_actual,
-        )
-        
-        return updated_instance
+        current_actual = float(validated_data.get('gbud_actual_expense', instance.gbud_actual_expense) or 0)
+        if 'gbud_actual_expense' in validated_data:
+        # Only create log if actual expense is changing
+            if float(validated_data['gbud_actual_expense']) != float(instance.gbud_actual_expense or 0):
+                GADBudgetLog.objects.create(
+                    gbudl_budget_entry=instance,
+                    gbudl_amount_returned=float(instance.gbud_proposed_budget or 0) - current_actual,
+                    gbudl_prev_amount=current_actual,
+                )
+            
+        # Now perform the update (which may change actual_expense)
+        return super().update(instance, validated_data)
 
 class GADBudgetYearSerializer(serializers.ModelSerializer):
     class Meta:
@@ -172,6 +166,7 @@ class GADBudgetLogSerializer(serializers.ModelSerializer):
         read_only=True
     )
     gbud_type = serializers.CharField(source='gbudl_budget_entry.gbud_type', read_only=True)
+    current_actual = serializers.SerializerMethodField()
 
     class Meta:
         model = GADBudgetLog
@@ -181,11 +176,16 @@ class GADBudgetLogSerializer(serializers.ModelSerializer):
             'gbud_exp_particulars',
             'gbud_proposed_budget',
             'gbud_actual_expense',
+            'current_actual',
             'gbudl_amount_returned',
             'gbudl_created_at',
             'gbud_type',
             'gbudl_prev_amount',
         ]
+    
+    def get_current_actual(self, obj):
+        """Returns the current actual expense from the related budget entry"""
+        return obj.gbudl_budget_entry.gbud_actual_expense
         
 class ProjectProposalLogSerializer(serializers.ModelSerializer):
     staff_details = StaffSerializer(source='staff', read_only=True)

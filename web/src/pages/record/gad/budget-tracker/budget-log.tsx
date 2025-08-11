@@ -45,8 +45,7 @@ function GADBudgetLogTable() {
       log.gbud_exp_particulars?.map((item) => item.name).join(" ") || ""
     } ${log.gbud_type}`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    const matchesType =
-      typeFilter === "all" || log.gbud_type === typeFilter;
+    const matchesType = typeFilter === "all" || log.gbud_type === typeFilter;
     return matchesSearch && matchesType && matchesYear;
   });
 
@@ -100,7 +99,7 @@ function GADBudgetLogTable() {
       accessorKey: "gbudl_prev_amount",
       header: "Actual Expense",
       cell: ({ row }) => {
-        const expense = row.original.gbud_actual_expense;
+        const expense = row.original.gbudl_prev_amount;
         return (
           <div className="text-center">
             {expense !== null
@@ -117,15 +116,35 @@ function GADBudgetLogTable() {
       accessorKey: "gbudl_amount_returned",
       header: "Return/Excess",
       cell: ({ row }) => {
-        const amount = row.original.gbudl_amount_returned;
+        const amount =
+          typeof row.original.gbudl_amount_returned === "number"
+            ? row.original.gbudl_amount_returned
+            : null;
+
+        const prevAmount = row.original.gbudl_prev_amount;
+
+        // Show "-" if amount is null OR if prevAmount is 0 or null/undefined
+        if (amount === null || !prevAmount) {
+          // This covers 0, null, undefined
+          return <div className="text-center">-</div>;
+        }
+
+        const isNegative = amount < 0;
+        const absoluteAmount = Math.abs(amount);
+
         return (
-          <div className="text-center">
-            {amount !== null
-              ? `₱${amount.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`
-              : "-"}
+          <div
+            className={`text-center font-medium ${
+              isNegative ? "text-red-500" : "text-green-500"
+            }`}
+          >
+            {`${isNegative ? "-" : ""}₱${absoluteAmount.toLocaleString(
+              "en-US",
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }
+            )}`}
           </div>
         );
       },
