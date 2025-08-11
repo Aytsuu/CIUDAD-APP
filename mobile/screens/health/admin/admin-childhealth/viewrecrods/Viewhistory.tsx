@@ -5,7 +5,9 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator,
-  SafeAreaView 
+  SafeAreaView,
+  FlatList,
+  Dimensions
 } from "react-native";
 import { ChevronLeft, ChevronRight, History, Baby } from "lucide-react-native";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
@@ -26,318 +28,352 @@ interface Props {
 
 // TT Status Section
 const TTStatusSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => record.tt_status && record.tt_status !== "N/A";
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">TT Status (Mother)</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`tt-${index}`} className="mb-3 last:mb-0">
-            <View className="flex-row justify-between">
-              <Text className="font-medium">
-                {new Date(record.created_at).toLocaleDateString()}
-              </Text>
-              <Text className="text-blue-600">{record.tt_status}</Text>
-            </View>
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `tt-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
+            <Text className="font-medium">
+              {new Date(item.created_at).toLocaleDateString()}
+            </Text>
+            <Text className="text-blue-600">{item.tt_status}</Text>
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Exclusive Breastfeeding Section
 const ExclusiveBFSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => 
+    record.exclusive_bf_checks && record.exclusive_bf_checks.some(ebf => ebf.ebf_date && ebf.ebf_date !== "N/A");
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">Exclusive Breastfeeding Checks</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`ebf-${index}`} className="mb-3 last:mb-0">
-            {record.exclusive_bf_checks.map((ebf, ebfIndex) => (
-              <View key={`ebf-item-${ebfIndex}`}>
-                <View className="flex-row justify-between">
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `ebf-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
+            {item.exclusive_bf_checks.map((ebf, ebfIndex) => (
+              ebf.ebf_date && ebf.ebf_date !== "N/A" && (
+                <View key={`ebf-item-${ebfIndex}`}>
                   <Text className="font-medium">
-                    {new Date(record.created_at).toLocaleDateString()}
+                    {new Date(item.created_at).toLocaleDateString()}
                   </Text>
                   <Text className="text-blue-600">{ebf.ebf_date}</Text>
                 </View>
-                {ebfIndex < record.exclusive_bf_checks.length - 1 && (
-                  <View className="h-px bg-gray-200 my-2" />
-                )}
-              </View>
+              )
             ))}
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Findings Section
 const FindingsSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => 
+    record.child_health_vital_signs.some(vital => vital.find_details && 
+      (vital.find_details.assessment_summary || vital.find_details.obj_summary || 
+       vital.find_details.subj_summary || vital.find_details.plantreatment_summary));
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">Findings Details</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`findings-${index}`} className="mb-3 last:mb-0">
-            {record.child_health_vital_signs.map((vital, vitalIndex) => (
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `findings-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
+            {item.child_health_vital_signs.map((vital, vitalIndex) =>
               vital.find_details && (
-                <View key={`vital-${vitalIndex}`}>
-                  <Text className="font-medium mb-1">
-                    {new Date(record.created_at).toLocaleDateString()}
-                  </Text>
-                  <Text className="font-medium text-blue-600 mb-1">Assessment Summary:</Text>
-                  <Text className="mb-2">{vital.find_details.assessment_summary || 'N/A'}</Text>
-                  
-                  <Text className="font-medium text-blue-600 mb-1">Objective Findings:</Text>
-                  <Text className="mb-2">{vital.find_details.obj_summary || 'N/A'}</Text>
-                  
-                  <Text className="font-medium text-blue-600 mb-1">Subjective Findings:</Text>
-                  <Text className="mb-2">{vital.find_details.subj_summary || 'N/A'}</Text>
-                  
-                  <Text className="font-medium text-blue-600 mb-1">Plan/Treatment:</Text>
-                  <Text>{vital.find_details.plantreatment_summary || 'N/A'}</Text>
-                  
-                  {vitalIndex < record.child_health_vital_signs.length - 1 && (
-                    <View className="h-px bg-gray-200 my-2" />
-                  )}
-                </View>
+                (vital.find_details.assessment_summary || vital.find_details.obj_summary || 
+                 vital.find_details.subj_summary || vital.find_details.plantreatment_summary) && (
+                  <View key={`vital-${vitalIndex}`}>
+                    <Text className="font-medium mb-1">
+                      {new Date(item.created_at).toLocaleDateString()}
+                    </Text>
+                    <Text className="font-medium text-blue-600 mb-1">Assessment Summary:</Text>
+                    <Text className="mb-2">{vital.find_details.assessment_summary || 'N/A'}</Text>
+                    <Text className="font-medium text-blue-600 mb-1">Objective Findings:</Text>
+                    <Text className="mb-2">{vital.find_details.obj_summary || 'N/A'}</Text>
+                    <Text className="font-medium text-blue-600 mb-1">Subjective Findings:</Text>
+                    <Text className="mb-2">{vital.find_details.subj_summary || 'N/A'}</Text>
+                    <Text className="font-medium text-blue-600 mb-1">Plan/Treatment:</Text>
+                    <Text>{vital.find_details.plantreatment_summary || 'N/A'}</Text>
+                  </View>
+                )
               )
-            ))}
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
+            )}
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Disabilities Section
 const DisabilitiesSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => record.disabilities && record.disabilities.length > 0;
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">Disabilities</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`disabilities-${index}`} className="mb-3 last:mb-0">
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `disabilities-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
             <Text className="font-medium mb-1">
-              {new Date(record.created_at).toLocaleDateString()}
+              {new Date(item.created_at).toLocaleDateString()}
             </Text>
-            {record.disabilities.length > 0 ? (
-              record.disabilities.map((disability, dIndex) => (
-                <Text key={`disability-${dIndex}`}>- {disability}</Text>
-              ))
-            ) : (
-              <Text>No disabilities recorded</Text>
-            )}
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
+            {item.disabilities.map((disability, dIndex) => (
+              <Text key={`disability-${dIndex}`}>- {disability}</Text>
+            ))}
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Vital Signs & Notes Section
 const VitalSignsNotesSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => 
+    (record.child_health_vital_signs.some(vital => vital.bm_details?.age || vital.bm_details?.weight || 
+      vital.bm_details?.height || vital.temp) || 
+     record.child_health_notes.some(note => note.chn_notes || note.followv_details));
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">Vital Signs & Notes</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`vitals-${index}`} className="mb-3 last:mb-0">
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `vitals-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
             <Text className="font-medium mb-1">
-              {new Date(record.created_at).toLocaleDateString()}
+              {new Date(item.created_at).toLocaleDateString()}
             </Text>
-            
-            {record.child_health_vital_signs.map((vital, vitalIndex) => (
-              <View key={`vital-detail-${vitalIndex}`} className="mb-2">
-                <Text>Age: {vital.bm_details?.age || 'N/A'}</Text>
-                <Text>Weight: {vital.bm_details?.weight || 'N/A'} kg</Text>
-                <Text>Height: {vital.bm_details?.height || 'N/A'} cm</Text>
-                <Text>Temperature: {vital.temp || 'N/A'} °C</Text>
-                
-                {vitalIndex < record.child_health_vital_signs.length - 1 && (
-                  <View className="h-px bg-gray-200 my-2" />
-                )}
-              </View>
+            {item.child_health_vital_signs.map((vital, vitalIndex) => (
+              (vital.bm_details?.age || vital.bm_details?.weight || vital.bm_details?.height || vital.temp) && (
+                <View key={`vital-detail-${vitalIndex}`} className="mb-2">
+                  <Text>Age: {vital.bm_details?.age || 'N/A'}</Text>
+                  <Text>Weight: {vital.bm_details?.weight || 'N/A'} kg</Text>
+                  <Text>Height: {vital.bm_details?.height || 'N/A'} cm</Text>
+                  <Text>Temperature: {vital.temp || 'N/A'} °C</Text>
+                </View>
+              )
             ))}
-            
-            {record.child_health_notes.length > 0 && (
+            {item.child_health_notes.length > 0 && (
               <>
                 <Text className="font-medium text-blue-600 mt-2">Clinical Notes:</Text>
-                {record.child_health_notes.map((note, noteIndex) => (
-                  <View key={`note-${noteIndex}`} className="mb-1">
-                    <Text>{note.chn_notes || 'No notes recorded'}</Text>
-                    {/* Add follow-up information if available */}
-                    {note.followv_details && (
-                      <View className="mt-2 pl-2 border-l-2 border-blue-200">
-                        <Text className="font-medium text-blue-600">Follow-up:</Text>
-                        <Text>Date: {note.followv_details.followv_date || 'N/A'}</Text>
-                        <Text>Status: {note.followv_details.followv_status || 'N/A'}</Text>
-                        <Text>Description: {note.followv_details.followv_description || 'N/A'}</Text>
-                        {note.followv_details.completed_at && (
-                          <Text>Completed At: {note.followv_details.completed_at}</Text>
-                        )}
-                      </View>
-                    )}
-                  </View>
+                {item.child_health_notes.map((note, noteIndex) => (
+                  (note.chn_notes || note.followv_details) && (
+                    <View key={`note-${noteIndex}`} className="mb-1">
+                      <Text>{note.chn_notes || 'No notes recorded'}</Text>
+                      {note.followv_details && (
+                        <View className="mt-2 pl-2 border-l-2 border-blue-200">
+                          <Text className="font-medium text-blue-600">Follow-up:</Text>
+                          <Text>Date: {note.followv_details.followv_date || 'N/A'}</Text>
+                          <Text>Status: {note.followv_details.followv_status || 'N/A'}</Text>
+                          <Text>Description: {note.followv_details.followv_description || 'N/A'}</Text>
+                          {note.followv_details.completed_at && (
+                            <Text>Completed At: {note.followv_details.completed_at}</Text>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )
                 ))}
               </>
             )}
-            
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Nutritional Status Section
 const NutritionalStatusSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => 
+    record.nutrition_statuses.some(status => status.wfa || status.lhfa || status.muac || status.muac_status || status.edemaSeverity);
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">Nutritional Status</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`nutrition-${index}`} className="mb-3 last:mb-0">
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `nutrition-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
             <Text className="font-medium mb-1">
-              {new Date(record.created_at).toLocaleDateString()}
+              {new Date(item.created_at).toLocaleDateString()}
             </Text>
-            
-            {record.nutrition_statuses.map((status, statusIndex) => (
-              <View key={`status-${statusIndex}`} className="mb-2">
-                <Text>Weight for Age (WFA): {status.wfa || 'N/A'}</Text>
-                <Text>Length/Height for Age (LHFA): {status.lhfa || 'N/A'}</Text>
-                <Text>MUAC: {status.muac || 'N/A'}</Text>
-                <Text>MUAC Status: {status.muac_status || 'N/A'}</Text>
-                <Text>Edema Severity: {status.edemaSeverity || 'N/A'}</Text>
-                
-                {statusIndex < record.nutrition_statuses.length - 1 && (
-                  <View className="h-px bg-gray-200 my-2" />
-                )}
-              </View>
+            {item.nutrition_statuses.map((status, statusIndex) => (
+              (status.wfa || status.lhfa || status.muac || status.muac_status || status.edemaSeverity) && (
+                <View key={`status-${statusIndex}`} className="mb-2">
+                  <Text>Weight for Age (WFA): {status.wfa || 'N/A'}</Text>
+                  <Text>Length/Height for Age (LHFA): {status.lhfa || 'N/A'}</Text>
+                  <Text>Weight-for-Length (WFL): {status.wfl || 'N/A'}</Text>
+                  <Text>MUAC: {status.muac || 'N/A'}</Text>
+                  <Text>MUAC Status: {status.muac_status || 'N/A'}</Text>
+                </View>
+              )
             ))}
-            
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Immunization Section
 const ImmunizationSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => 
+    record.immunization_tracking.some(imt => imt.vachist_details?.vaccine_stock?.vaccinelist?.vac_name || 
+      imt.vachist_details?.vachist_doseNo || imt.vachist_details?.date_administered || 
+      imt.vachist_details?.vachist_status || imt.vachist_details?.vachist_age || 
+      imt.vachist_details?.follow_up_visit);
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">Immunization Tracking</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`immunization-${index}`} className="mb-3 last:mb-0">
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `immunization-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
             <Text className="font-medium mb-1">
-              {new Date(record.created_at).toLocaleDateString()}
+              {new Date(item.created_at).toLocaleDateString()}
             </Text>
-            
-            {record.immunization_tracking.length > 0 ? (
-              record.immunization_tracking.map((imt, imtIndex) => (
-                <View key={`imt-${imtIndex}`} className="mb-2">
-                  <Text>Vaccine: {imt.vachist_details?.vaccine_stock?.vaccinelist?.vac_name || 'N/A'}</Text>
-                  <Text>Dose Number: {imt.vachist_details?.vachist_doseNo || 'N/A'}</Text>
-                  <Text>Date Administered: {imt.vachist_details?.date_administered || 'N/A'}</Text>
-                  <Text>Status: {imt.vachist_details?.vachist_status || 'N/A'}</Text>
-                  <Text>Age at Administration: {imt.vachist_details?.vachist_age || 'N/A'}</Text>
-                  
-                  {imt.vachist_details?.follow_up_visit && (
-                    <>
-                      <Text className="font-medium text-blue-600 mt-1">Follow-up:</Text>
-                      <Text>Date: {imt.vachist_details.follow_up_visit.followv_date}</Text>
-                      <Text>Description: {imt.vachist_details.follow_up_visit.followv_description}</Text>
-                      <Text>Status: {imt.vachist_details.follow_up_visit.followv_status}</Text>
-                    </>
-                  )}
-                  
-                  {imtIndex < record.immunization_tracking.length - 1 && (
-                    <View className="h-px bg-gray-200 my-2" />
-                  )}
-                </View>
+            {item.immunization_tracking.length > 0 ? (
+              item.immunization_tracking.map((imt, imtIndex) => (
+                (imt.vachist_details?.vaccine_stock?.vaccinelist?.vac_name || 
+                 imt.vachist_details?.vachist_doseNo || imt.vachist_details?.date_administered || 
+                 imt.vachist_details?.vachist_status || imt.vachist_details?.vachist_age || 
+                 imt.vachist_details?.follow_up_visit) && (
+                  <View key={`imt-${imtIndex}`} className="mb-2">
+                    <Text>Vaccine: {imt.vachist_details?.vaccine_stock?.vaccinelist?.vac_name || 'N/A'}</Text>
+                    <Text>Dose Number: {imt.vachist_details?.vachist_doseNo || 'N/A'}</Text>
+                    <Text>Date Administered: {imt.vachist_details?.date_administered || 'N/A'}</Text>
+                    <Text>Status: {imt.vachist_details?.vachist_status || 'N/A'}</Text>
+                    <Text>Age at Administration: {imt.vachist_details?.vachist_age || 'N/A'}</Text>
+                    {imt.vachist_details?.follow_up_visit && (
+                      <>
+                        <Text className="font-medium text-blue-600 mt-1">Follow-up:</Text>
+                        <Text>Date: {imt.vachist_details.follow_up_visit.followv_date}</Text>
+                        <Text>Description: {imt.vachist_details.follow_up_visit.followv_description}</Text>
+                        <Text>Status: {imt.vachist_details.follow_up_visit.followv_status}</Text>
+                      </>
+                    )}
+                  </View>
+                )
               ))
-            ) : (
-              <Text>No immunizations recorded</Text>
-            )}
-            
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
+            ) : null}
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Supplements Section
 const SupplementsSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
-  return (
+  const hasData = (record: ChildHealthHistoryRecord) => 
+    (record.child_health_supplements.some(sup => sup.medrec_details?.minv_details?.med_detail?.med_name) || 
+     record.supplements_statuses.some(status => status.status_type || status.birthwt || status.date_seen || 
+       status.date_given_iron || status.date_completed));
+  const filteredRecords = records.filter(hasData);
+
+  return filteredRecords.length > 0 ? (
     <View className="mb-6">
       <Text className="font-semibold text-lg mb-2">Supplements & Status</Text>
-      <View className="border border-gray-200 rounded-lg p-4">
-        {records.map((record, index) => (
-          <View key={`supplements-${index}`} className="mb-3 last:mb-0">
+      <FlatList
+        data={filteredRecords}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `supplements-${index}`}
+        renderItem={({ item }) => (
+          <View className="mr-4 p-4 bg-white border border-gray-200 rounded-lg">
             <Text className="font-medium mb-1">
-              {new Date(record.created_at).toLocaleDateString()}
+              {new Date(item.created_at).toLocaleDateString()}
             </Text>
-            
-            {/* Supplements */}
-            {record.child_health_supplements.length > 0 && (
+            {item.child_health_supplements.length > 0 && (
               <>
                 <Text className="font-medium text-blue-600">Supplements:</Text>
-                {record.child_health_supplements.map((supplement, suppIndex) => (
-                  <View key={`supplement-${suppIndex}`} className="mb-2">
-                    <Text>Medicine: {supplement.medrec_details?.minv_details?.med_detail?.med_name || 'N/A'}</Text>
-                    <Text>Dosage: {supplement.medrec_details?.minv_details?.minv_dsg || 'N/A'} {supplement.medrec_details?.minv_details?.minv_dsg_unit || ''}</Text>
-                    <Text>Quantity: {supplement.medrec_details?.medrec_qty || 'N/A'}</Text>
-                    
-                    {suppIndex < record.child_health_supplements.length - 1 && (
-                      <View className="h-px bg-gray-200 my-2" />
-                    )}
-                  </View>
+                {item.child_health_supplements.map((supplement, suppIndex) => (
+                  (supplement.medrec_details?.minv_details?.med_detail?.med_name) && (
+                    <View key={`supplement-${suppIndex}`} className="mb-2">
+                      <Text>Medicine: {supplement.medrec_details?.minv_details?.med_detail?.med_name || 'N/A'}</Text>
+                      <Text>Dosage: {supplement.medrec_details?.minv_details?.minv_dsg || 'N/A'} {supplement.medrec_details?.minv_details?.minv_dsg_unit || ''}</Text>
+                      <Text>Quantity: {supplement.medrec_details?.medrec_qty || 'N/A'}</Text>
+                    </View>
+                  )
                 ))}
               </>
             )}
-            
-            {/* Supplement Statuses */}
-            {record.supplements_statuses.length > 0 && (
+            {item.supplements_statuses.length > 0 && (
               <>
                 <Text className="font-medium text-blue-600 mt-2">Supplement Statuses:</Text>
-                {record.supplements_statuses.map((status, statusIndex) => (
-                  <View key={`status-${statusIndex}`} className="mb-2">
-                    <Text>Status Type: {status.status_type || 'N/A'}</Text>
-                    <Text>Birth Weight: {status.birthwt || 'N/A'} kg</Text>
-                    <Text>Date Seen: {status.date_seen || 'N/A'}</Text>
-                    <Text>Date Given Iron: {status.date_given_iron || 'N/A'}</Text>
-                    <Text>Date Completed: {status.date_completed || 'N/A'}</Text>
-                    
-                    {statusIndex < record.supplements_statuses.length - 1 && (
-                      <View className="h-px bg-gray-200 my-2" />
-                    )}
-                  </View>
+                {item.supplements_statuses.map((status, statusIndex) => (
+                  (status.status_type || status.birthwt || status.date_seen || 
+                   status.date_given_iron || status.date_completed) && (
+                    <View key={`status-${statusIndex}`} className="mb-2">
+                      <Text>Status Type: {status.status_type || 'N/A'}</Text>
+                      <Text>Birth Weight: {status.birthwt || 'N/A'} kg</Text>
+                      <Text>Date Seen: {status.date_seen || 'N/A'}</Text>
+                      <Text>Date Given Iron: {status.date_given_iron || 'N/A'}</Text>
+                      <Text>Date Completed: {status.date_completed || 'N/A'}</Text>
+                    </View>
+                  )
                 ))}
               </>
             )}
-            
-            {record.child_health_supplements.length === 0 && record.supplements_statuses.length === 0 && (
-              <Text>No supplements or statuses recorded</Text>
-            )}
-            
-            {index < records.length - 1 && <View className="h-px bg-gray-200 my-2" />}
           </View>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={{ paddingRight: 16 }}
+      />
     </View>
-  );
+  ) : null;
 };
 
 // Health History Sections component
@@ -372,7 +408,6 @@ export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
   // State management
   const [fullHistoryData, setFullHistoryData] = useState<ChildHealthHistoryRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [recordsPerPage, setRecordsPerPage] = useState(2);
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
 
   const supplementStatusesFields = useMemo(
@@ -406,28 +441,8 @@ export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
 
   const recordsToDisplay = useMemo(() => {
     if (fullHistoryData.length === 0) return [];
-    const records = fullHistoryData.slice(currentIndex, currentIndex + recordsPerPage);
-    console.log('ChildHealthHistoryDetail: recordsToDisplay:', records);
-    return records;
-  }, [fullHistoryData, currentIndex, recordsPerPage]);
-
-  // Navigation handlers
-  const handleSwipeLeft = () => {
-    if (currentIndex < fullHistoryData.length - recordsPerPage) {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  };
-
-  const handleSwipeRight = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
-  };
-
-  // Set default value for recordsPerPage
-  useEffect(() => {
-    setRecordsPerPage(3);
-  }, []);
+    return fullHistoryData; // Return all records for horizontal swipe
+  }, [fullHistoryData]);
 
   // Loading component
   const LoadingComponent = () => (
@@ -452,41 +467,6 @@ export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
     </TouchableOpacity>
   );
 
-  // Pagination controls component
-  const PaginationControls = ({ showRecordCount = true }: { showRecordCount?: boolean }) => (
-    <View className="flex-col gap-4">
-      {showRecordCount && (
-        <Text className="text-sm text-gray-500 font-medium text-center">
-          Showing records {currentIndex + 1}-
-          {Math.min(currentIndex + recordsPerPage, fullHistoryData.length)}{" "}
-          of {fullHistoryData.length}
-        </Text>
-      )}
-      <View className="flex-row justify-center gap-2">
-        <TouchableOpacity
-          className={`p-3 rounded-lg border border-gray-300 ${
-            currentIndex === 0 ? 'opacity-50' : 'bg-white'
-          }`}
-          onPress={handleSwipeRight}
-          disabled={currentIndex === 0}
-        >
-          <ChevronLeft size={16} color={currentIndex === 0 ? "#9CA3AF" : "#374151"} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          className={`p-3 rounded-lg border border-gray-300 ${
-            currentIndex >= fullHistoryData.length - recordsPerPage ? 'opacity-50' : 'bg-white'
-          }`}
-          onPress={handleSwipeLeft}
-          disabled={currentIndex >= fullHistoryData.length - recordsPerPage}
-        >
-          <ChevronRight size={16} color={
-            currentIndex >= fullHistoryData.length - recordsPerPage ? "#9CA3AF" : "#374151"
-          } />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   // Loading state
   if (isLoading) {
     return (
@@ -503,12 +483,12 @@ export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
         <View className="px-6 pt-4">
           <View className="flex-row items-center mb-4">
             <TouchableOpacity
-              className=" rounded-lg mr-4"
+              className="rounded-lg mr-4"
               onPress={() => router.back()}
             >
               <ChevronLeft size={20} color="#374151" />
             </TouchableOpacity>
-            <View className="flex-1 ">
+            <View className="flex-1">
               <Text className="font-semibold text-xl text-gray-800">
                 Child Health History Records
               </Text>
@@ -561,24 +541,13 @@ export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
               ) : (
                 <View className="border border-gray-200 rounded-lg bg-white">
                   <View className="p-6">
-                    {/* Pagination Controls with Record Count */}
-                    <PaginationControls />
-
-                    {/* Divider */}
-                    <View className="h-px bg-gray-200 my-6" />
-
-                    {/* Accordion Sections */}
+                    {/* Accordion Sections with Horizontal Swipe */}
                     <View className="space-y-4">
                       <HealthHistorySections
                         recordsToDisplay={recordsToDisplay}
                         chhistId={chhistId}
                         supplementStatusesFields={supplementStatusesFields}
                       />
-                    </View>
-
-                    {/* Bottom Pagination Controls (mobile-friendly) */}
-                    <View className="mt-6 pt-4">
-                      <PaginationControls showRecordCount={false} />
                     </View>
                   </View>
                 </View>
