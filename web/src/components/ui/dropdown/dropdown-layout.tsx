@@ -78,7 +78,9 @@ export default function DropdownLayout({
             <DropdownMenuItem
               className={cn("cursor-pointer flex items-center gap-x-2", variant[option.variant ?? ""])}
               key={option.id || index}
-              onSelect={() => option.id && onSelect && onSelect(option.id)}
+              onSelect={(e) => {option.id && onSelect && onSelect(option.id)
+                e.preventDefault()
+              }}
             >
               {option.icon}
               {option.name}
