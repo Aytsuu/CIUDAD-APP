@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateFamilyHealth, updateFamilyRoleHealth, updateHouseholdHealth, updateProfileHealth } from "../restful-api/profilingPutAPI";
+import { updateFamilyHealth, updateFamilyRoleHealth, updateHouseholdHealth, updateProfileHealth, updateWaterSupply, updateSanitaryFacility, updateSolidWaste, updateSurveyIdentification } from "../restful-api/profilingPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 
@@ -96,3 +96,69 @@ export const useUpdateFamilyHealth = () => {
     }
   })
 }
+
+// Environmental updates
+export const useUpdateWaterSupply = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ water_sup_id, data }: { water_sup_id: string; data: { water_sup_type?: string; water_conn_type?: string; water_sup_desc?: string } }) =>
+      updateWaterSupply(water_sup_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['waterSupplyList'] });
+      queryClient.invalidateQueries({ queryKey: ['environmentalData'] });
+      toast("Water supply updated", { icon: <CircleCheck size={24} className="fill-green-500 stroke-white" /> });
+    }
+  });
+};
+
+export const useUpdateSanitaryFacility = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sf_id, data }: { sf_id: string; data: { sf_type?: string; sf_toilet_type?: string } }) =>
+      updateSanitaryFacility(sf_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sanitaryFacilityList'] });
+      queryClient.invalidateQueries({ queryKey: ['environmentalData'] });
+      toast("Sanitary facility updated", { icon: <CircleCheck size={24} className="fill-green-500 stroke-white" /> });
+    }
+  });
+};
+
+export const useUpdateSolidWaste = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ swm_id, data }: { swm_id: string; data: { swn_desposal_type?: string; swm_desc?: string } }) =>
+      updateSolidWaste(swm_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['solidWasteList'] });
+      queryClient.invalidateQueries({ queryKey: ['environmentalData'] });
+      toast("Solid waste updated", { icon: <CircleCheck size={24} className="fill-green-500 stroke-white" /> });
+    }
+  });
+};
+
+// ================ SURVEY IDENTIFICATION ================ (Status: Completed)
+export const useUpdateSurveyIdentification = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ si_id, data }: { 
+      si_id: string; 
+      data: { 
+        si_filled_by?: string; 
+        si_informant?: string; 
+        si_checked_by?: string; 
+        si_date?: string; 
+        si_signature?: string;
+        fam_id?: string;
+      } 
+    }) => updateSurveyIdentification(si_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['surveyIdentificationList'] });
+      queryClient.invalidateQueries({ queryKey: ['surveyIdentificationByFamily'] });
+      queryClient.invalidateQueries({ queryKey: ['surveyIdentificationFormData'] });
+      toast("Survey identification updated", { 
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" /> 
+      });
+    }
+  });
+};

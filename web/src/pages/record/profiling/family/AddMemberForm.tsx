@@ -10,12 +10,10 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
-import { CircleCheck, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { formatResidents } from "../profilingFormats";
 import { useAddFamilyComposition } from "../queries/profilingAddQueries";
-import { useAddFamilyCompositionHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries"; // Add this import
-import { toast } from "sonner";
 import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
 
@@ -32,7 +30,6 @@ export default function AddMemberForm({
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResident, setInvalidResident] = React.useState<boolean>(false);
   const { mutateAsync: addFamilyComposition} = useAddFamilyComposition(); 
-  const { mutateAsync: addFamilyCompositionHealth} = useAddFamilyCompositionHealth(); // Add this line
   const { data: residentsWithFamExclusion, isLoading: isLoadingResidents } = useResidentsWithFamExclusion(familyId);
 
   const formattedResidents = React.useMemo(() => 
@@ -57,50 +54,21 @@ export default function AddMemberForm({
       return;
     }
 
-    const role = form.getValues().role;
-    const compositionData = [{
+    const values = form.getValues();
+    addFamilyComposition([{
       "fam": familyId,
-      "fc_role": capitalize(role),
+      "fc_role": capitalize(values.role),
       "rp": residentId
-    }];
-
-    try {
-      // Execute both mutations concurrently
-      const [newComposition] = await Promise.all([
-        addFamilyComposition(compositionData, {
-          onSuccess: () => {
-            // Individual success handler for main database
-            console.log("Main database insertion successful");
-          }
-        }),
-        addFamilyCompositionHealth(compositionData, {
-          onSuccess: () => {
-            // Individual success handler for health database
-            console.log("Health database insertion successful");
-          }
-        })
-      ]);
-
-      // Both insertions successful
-      setIsOpenDialog(false);
-      setIsSubmitting(false);
-      setCompositions((prev: any) => [
-        ...prev,
-        newComposition
-      ]);
-
-      toast("Record added successfully to both databases", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
-    } catch (error) {
-      console.error("Error inserting to databases:", error);
-      setIsSubmitting(false);
-      
-      toast("Error adding record", {
-        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
-      });
-    }
+    }], {
+      onSuccess: (newComposition) => {3
+        setIsOpenDialog(false);
+        setIsSubmitting(false);
+        setCompositions((prev: any) => [
+          ...prev,
+          newComposition[0]
+        ]);
+      }
+    });
   };
 
   if(isLoadingResidents) {
@@ -142,10 +110,10 @@ export default function AddMemberForm({
           </Label> : ""}
         </div>
         <FormSelect control={form.control} name="role" label="Role" options={[
-          {id: "Mother", name: "Mother"},
-          {id: "Father", name: "Father"},
-          {id: "Guardian", name: "Guardian"},
-          {id: "Dependent", name: "Dependent"},
+          {id: "mother", name: "Mother"},
+          {id: "father", name: "Father"},
+          {id: "guardian", name: "Guardian"},
+          {id: "dependent", name: "Dependent"},
         ]}/>
         <div className="flex justify-end items-start mt-8">
           {!isSubmitting ? (<Button>

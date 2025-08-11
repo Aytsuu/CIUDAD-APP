@@ -256,6 +256,71 @@ export const getSanitaryFacilityByHousehold = async (householdId: string) => {
   }
 };
 
+// Solid waste management
+export const getSolidWasteList = async () => {
+  try {
+    const res = await api2.get("health-profiling/solid-waste/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSolidWasteByHousehold = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/solid-waste/household/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// ==================== FETCH SURVEY IDENTIFICATION ==================== (Status: Completed)
+export const getSurveyIdentificationList = async () => {
+  try {
+    const res = await api2.get("health-profiling/survey-identification/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationDetail = async (siId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/${siId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationByFamily = async (famId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/family/${famId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationFormData = async (famId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/form/submit/?fam_id=${famId}`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationDataByHousehold = async (hhId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/household/${hhId}/data/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 // // Fetch businesses
 // export const getBusinesses = async () => {
 //   try {

@@ -23,6 +23,8 @@ export const formatResidents = (residents: any) => {
 
 };
 
+
+
 // Format sitio for searching
 export const formatSitio = (sitio: any) => {
   if (!sitio) return [];

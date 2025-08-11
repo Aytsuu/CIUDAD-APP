@@ -18,6 +18,7 @@ export default function ParentsFormLayout({
   setSelectedMotherId,
   setSelectedFatherId,
   setSelectedGuardianId,
+  setSelectedRespondentId,
   onSubmit,
   back,
 }: {
@@ -28,11 +29,13 @@ export default function ParentsFormLayout({
   setSelectedMotherId: React.Dispatch<React.SetStateAction<string>>;
   setSelectedFatherId: React.Dispatch<React.SetStateAction<string>>;
   setSelectedGuardianId: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedRespondentId?: React.Dispatch<React.SetStateAction<string>>;
   onSubmit: () => void;
   back: () => void;
 }) {
-  // Add state for respondent selection
-  const [selectedRespondentId, setSelectedRespondentId] = React.useState("");
+  // Add state for respondent selection - use internal state or external prop
+  const [internalSelectedRespondentId, setInternalSelectedRespondentId] = React.useState("")
+  const respondentSetter = setSelectedRespondentId || setInternalSelectedRespondentId;
 
   const submit = React.useCallback(() => {
     const isValid = Object.values(selectedParents).some(
@@ -63,8 +66,7 @@ export default function ParentsFormLayout({
           residents={residents}
           form={form}
           dependentsList={dependentsList}
-          selectedParents={[selectedParents.mother, selectedParents.father]}
-          onSelect={setSelectedRespondentId}
+          onSelect={respondentSetter}
           prefix="respondentInfo"
           title="Respondent's Information"
         />
@@ -76,7 +78,6 @@ export default function ParentsFormLayout({
           residents={residents}
           form={form}
           dependentsList={dependentsList}
-          selectedParents={[selectedParents.guardian, selectedParents.mother]}
           onSelect={setSelectedFatherId}
           prefix="fatherInfo"
           title="Father's Information"
@@ -89,7 +90,6 @@ export default function ParentsFormLayout({
           residents={residents}
           form={form}
           dependentsList={dependentsList}
-          selectedParents={[selectedParents.guardian, selectedParents.father]}
           onSelect={setSelectedMotherId}
           prefix="motherInfo"
           title="Mother's Information"

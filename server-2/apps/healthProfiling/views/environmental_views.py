@@ -27,6 +27,21 @@ class WaterSupplyCreateView(generics.CreateAPIView):
     queryset = WaterSupply.objects.all()
     serializer_class = WaterSupplySerializer
 
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        hh_id = data.get('hh')
+        if not hh_id:
+            return Response({'detail': 'hh (household id) is required'}, status=status.HTTP_400_BAD_REQUEST)
+        # Ensure household exists
+        get_object_or_404(Household, hh_id=hh_id)
+        if not data.get('water_sup_id'):
+            data['water_sup_id'] = f"{hh_id}_water"
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         serializer.save()
 
@@ -105,6 +120,20 @@ class SanitaryFacilityCreateView(generics.CreateAPIView):
     queryset = SanitaryFacility.objects.all()
     serializer_class = SanitaryFacilitySerializer
 
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        hh_id = data.get('hh')
+        if not hh_id:
+            return Response({'detail': 'hh (household id) is required'}, status=status.HTTP_400_BAD_REQUEST)
+        get_object_or_404(Household, hh_id=hh_id)
+        if not data.get('sf_id'):
+            data['sf_id'] = f"{hh_id}_sanitary"
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class SanitaryFacilityByHouseholdView(generics.ListAPIView):
     """
@@ -115,6 +144,58 @@ class SanitaryFacilityByHouseholdView(generics.ListAPIView):
     def get_queryset(self):
         hh_id = self.kwargs['hh_id']
         return SanitaryFacility.objects.filter(hh__hh_id=hh_id)
+
+
+# NEW: Update/Delete endpoints for Water Supply and Sanitary Facility
+class WaterSupplyUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = WaterSupplySerializer
+    queryset = WaterSupply.objects.all()
+    lookup_field = 'water_sup_id'
+
+
+class SanitaryFacilityUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = SanitaryFacilitySerializer
+    queryset = SanitaryFacility.objects.all()
+    lookup_field = 'sf_id'
+
+
+# Solid Waste Management CRUD
+class SolidWasteListView(generics.ListAPIView):
+    queryset = SolidWasteMgmt.objects.all()
+    serializer_class = SolidWasteMgmtSerializer
+
+
+class SolidWasteCreateView(generics.CreateAPIView):
+    queryset = SolidWasteMgmt.objects.all()
+    serializer_class = SolidWasteMgmtSerializer
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        hh_id = data.get('hh')
+        if not hh_id:
+            return Response({'detail': 'hh (household id) is required'}, status=status.HTTP_400_BAD_REQUEST)
+        get_object_or_404(Household, hh_id=hh_id)
+        if not data.get('swm_id'):
+            data['swm_id'] = f"{hh_id}_waste"
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class SolidWasteByHouseholdView(generics.ListAPIView):
+    serializer_class = SolidWasteMgmtSerializer
+
+    def get_queryset(self):
+        hh_id = self.kwargs['hh_id']
+        return SolidWasteMgmt.objects.filter(hh__hh_id=hh_id)
+
+
+class SolidWasteUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = SolidWasteMgmtSerializer
+    queryset = SolidWasteMgmt.objects.all()
+    lookup_field = 'swm_id'
 
 
 class EnvironmentalDataView(APIView):

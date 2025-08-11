@@ -257,13 +257,13 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.comorbidities`}
               label="Comorbidities/Sakit Balation"
               options={[
-                { id: "hypertension", name: "HPN - Hypertension" },
-                { id: "diabetes", name: "Diabetes" },
-                { id: "asthma", name: "Bronchial Asthma" },
-                { id: "dyslipidemia", name: "Dyslipedemia" },
-                { id: "ckd", name: "Chronic Kidney Disease" },
-                { id: "cancer", name: "Cancer" },
-                { id: "mhi", name: "Mental Health Illness" },
+                { id: "Hypertension", name: "HPN - Hypertension" },
+                { id: "Diabetes", name: "Diabetes" },
+                { id: "Asthma", name: "Bronchial Asthma" },
+                { id: "Dyslipidemia", name: "Dyslipedemia" },
+                { id: "CKD", name: "Chronic Kidney Disease" },
+                { id: "Cancer", name: "Cancer" },
+                { id: "MHI", name: "Mental Health Illness" },
               ]}
             />
             <FormSelect
@@ -271,9 +271,10 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.lifestyleRisk`}
               label="Lifestyle Risk"
               options={[
-                { id: "smoker", name: "Smoker" },
-                { id: "alcoholic", name: "Alcoholic Beverage Drinking" },
-                { id: "others", name: "Others" },
+                { id: "Smoker", name: "Smoker" },
+                { id: "Alcoholic", name: "Alcoholic Beverage Drinking" },
+                { id: "None", name: "None" },
+                { id: "Others", name: "Others" },
               ]}
             />
             <FormSelect

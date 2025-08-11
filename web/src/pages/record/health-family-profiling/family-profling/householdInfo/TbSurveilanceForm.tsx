@@ -269,11 +269,11 @@ export default function TbSurveilanceForm({
               name={`${prefix}.new.tbSurveilanceSchema.srcAntiTBmeds`} 
               label="Source of Anti TB Meds"
               options={[
-                { id: "healthCenter", name: "Health Center" },
-                { id: "privateClinic", name: "Private Clinic" },
-                { id: "government", name: "Government Hospital" },
-                { id: "privateHospital", name: "Private Hospital" },
-                { id: "other", name: "Other" },
+                { id: "Health Center", name: "Health Center" },
+                { id: "Private Clinic", name: "Private Clinic" },
+                { id: "Government", name: "Government Hospital" },
+                { id: "Private Hospital", name: "Private Hospital" },
+                { id: "Other", name: "Other" },
               ]}
             />
             <FormInput 
@@ -286,11 +286,11 @@ export default function TbSurveilanceForm({
               name={`${prefix}.new.tbSurveilanceSchema.tbStatus`} 
               label="TB Status"
               options={[
-                { id: "positive", name: "Positive" },
-                { id: "negative", name: "Negative" },
-                { id: "underTreatment", name: "Under Treatment" },
-                { id: "completed", name: "Treatment Completed" },
-                { id: "defaulted", name: "Defaulted" },
+                { id: "Positive", name: "Positive" },
+                { id: "Negative", name: "Negative" },
+                { id: "Under Treatment", name: "Under Treatment" },
+                { id: "Treatment Completed", name: "Treatment Completed" },
+                { id: "Defaulted", name: "Defaulted" },
               ]}
             />
            

@@ -126,6 +126,49 @@ export const addHouseholdHealth = async (householdInfo: Record<string, string>, 
     }
 };
 
+// Environmental: create individual records
+export const addWaterSupply = async (payload: { hh: string; water_sup_type: string; water_conn_type: string; water_sup_desc: string; water_sup_id?: string; }) => {
+  try {
+    const res = await api2.post("health-profiling/water-supply/create/", payload);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const addSanitaryFacility = async (payload: { hh: string; sf_type: string; sf_toilet_type: string; sf_id?: string; }) => {
+  try {
+    const res = await api2.post("health-profiling/sanitary-facility/create/", payload);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const addSolidWaste = async (payload: { hh: string; swn_desposal_type: string; swm_desc?: string; swm_id?: string; }) => {
+  try {
+    const res = await api2.post("health-profiling/solid-waste/create/", payload);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Submit combined environmental form payload
+export const submitEnvironmentalForm = async (payload: {
+  household_id: string;
+  water_supply?: { type: 'level1' | 'level2' | 'level3' };
+  sanitary_facility?: { facility_type: string; toilet_facility_type: string };
+  waste_management?: { waste_management_type: string; description?: string };
+}) => {
+  try {
+    const res = await api2.post("health-profiling/environmental-form/submit/", payload);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 // POST request for respondents table
 export const addRespondentHealth = async (data: Record<string, any>) => {
   try {
@@ -156,5 +199,44 @@ export const addMotherHealthInfo = async (data: Record<string, any>) => {
     throw err;
   }
 }
+
+// ==================== CREATE SURVEY IDENTIFICATION ==================== (Status: Completed)
+export const createSurveyIdentification = async (data: Record<string, any>) => {
+  try {
+    const res = await api2.post("health-profiling/survey-identification/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const submitSurveyIdentificationForm = async (data: Record<string, any>) => {
+  try {
+    const res = await api2.post("health-profiling/survey-identification/form/submit/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// ==================== NCD SURVEILLANCE ==================== (Status: New)
+export const createNCDRecord = async (data: Record<string, any>) => {
+  try {
+    const res = await api2.post("health-profiling/ncd/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// ==================== TB SURVEILLANCE ==================== (Status: New)
+export const createTBRecord = async (data: Record<string, any>) => {
+  try {
+    const res = await api2.post("health-profiling/tb-surveillance/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
 
 // ----------------------------------------------------------------------------------------------------------------------------

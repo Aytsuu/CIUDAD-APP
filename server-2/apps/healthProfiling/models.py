@@ -77,9 +77,9 @@ class PersonalAddress(models.Model):
     class Meta:
         db_table = 'personal_address'
 
+
 class PersonalAddressHistory(models.Model):
     pah_id = models.BigAutoField(primary_key=True)
-    pah_date = models.DateTimeField(auto_now_add=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
     history_id = models.IntegerField()
@@ -107,6 +107,7 @@ class ResidentProfile(models.Model):
 class RespondentsInfo(models.Model):
     ri_id = models.BigAutoField(primary_key=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='respondents_info')
+    fam = models.ForeignKey('Family', on_delete=models.CASCADE, related_name='respondents_info', null=True, blank=True)
  
     class Meta:
         db_table = 'respondents_info'
@@ -204,7 +205,7 @@ class Dependents_Under_Five(models.Model):
 class WaterSupply(models.Model):
     water_sup_id = models.CharField(max_length=50, primary_key=True)
     water_sup_type = models.CharField(max_length=50)
-    water_conn_type = models.CharField(max_length=50)
+    water_conn_type = models.CharField(max_length=50, null=True, blank=True)
     water_sup_desc = models.TextField(max_length=1000)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 
@@ -241,9 +242,9 @@ class SolidWasteMgmt(models.Model):
         
 class TBsurveilance(models.Model):
     tb_id = models.CharField(max_length=50, primary_key=True)
-    tb_meds_source = models.CharField(max_length=100)
-    tb_days_taking_meds = models.IntegerField()
-    tb_status = models.CharField(max_length=100)
+    tb_meds_source = models.CharField(max_length=100, blank=True, null=True)
+    tb_days_taking_meds = models.IntegerField(null=True, blank=True, default=0)
+    tb_status = models.CharField(max_length=100, blank=True, null=True)
 
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
@@ -252,10 +253,10 @@ class TBsurveilance(models.Model):
 
 class NonCommunicableDisease(models.Model):
     ncd_id = models.CharField(max_length=50, primary_key=True)
-    ncd_riskclass_age = models.CharField(max_length=100)
-    ncd_comorbidities = models.CharField(max_length=100)
-    ncd_lifestyle_risk = models.CharField(max_length=100)
-    ncd_maintenance_status = models.CharField(max_length=100)
+    ncd_riskclass_age = models.CharField(max_length=100, blank=True, null=True)
+    ncd_comorbidities = models.CharField(max_length=100, blank=True, null=True)
+    ncd_lifestyle_risk = models.CharField(max_length=100, blank=True, null=True)
+    ncd_maintenance_status = models.CharField(max_length=100, blank=True, null=True)
 
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
@@ -292,6 +293,28 @@ class KYCRecord(models.Model):
 
     class Meta:
         db_table = 'kyc_record'
+
+class SurveyIdentification(models.Model):
+    si_id = models.CharField(max_length=50, primary_key=True)
+    si_filled_by = models.CharField(max_length=100, blank=True, null=True)
+    si_informant = models.CharField(max_length=100)
+    si_checked_by = models.CharField(max_length=100)
+    si_date = models.DateField()
+    si_signature = models.TextField()  # Base64 encoded signature
+    si_created_at = models.DateTimeField(auto_now_add=True)
+    si_updated_at = models.DateTimeField(auto_now=True)
+    
+    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='survey_identifications')
+
+    class Meta:
+        db_table = 'survey_identification'
+        indexes = [
+            models.Index(fields=['fam']),
+            models.Index(fields=['si_date']),
+        ]
+
+    def __str__(self):
+        return f"Survey {self.si_id} - Family {self.fam.fam_id}"
 
 
 # class RiskClassGroups(models.Model):

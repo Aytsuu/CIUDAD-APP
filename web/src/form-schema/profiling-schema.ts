@@ -211,3 +211,12 @@ export const newMemberFormSchema = z.object({
   id: z.string(),
   role: z.string().min(1, "Role is required")
 })
+export const surveyFormSchema = z.object({
+  filledBy: z.string().min(1, "Name is required"),
+  informant: z.string().min(1, "Informant/Conforme name is required"),
+  checkedBy: z.string().min(1, "Checker name is required"),
+  date: z.date({
+    required_error: "Date is required",
+  }),
+  signature: z.string().min(1, "Signature is required"),
+});

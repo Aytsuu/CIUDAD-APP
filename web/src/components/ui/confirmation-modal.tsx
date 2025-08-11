@@ -27,7 +27,7 @@ export function ConfirmationModal({
 }: {
   trigger: React.ReactNode;
   title: string;
-  description: string;
+  description: string | React.ReactNode;
   actionLabel?: string;
   type?: string;
   variant?: string;

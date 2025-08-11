@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,6 +24,13 @@ import {
   getEnvironmentalData,
   getSanitaryFacilityList,
   getSanitaryFacilityByHousehold,
+  getSolidWasteList,
+  getSolidWasteByHousehold,
+  getSurveyIdentificationList,
+  getSurveyIdentificationDetail,
+  getSurveyIdentificationByFamily,
+  getSurveyIdentificationFormData,
+  getSurveyIdentificationDataByHousehold,
 } from "../restful-api/profilingGetAPI";
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
@@ -42,7 +48,7 @@ export const useResidentsListHealth = () => {
   return useQuery({
     queryKey: ['residentsListHealth'],
     queryFn: getResidentsListHealth,
-    staleTime: 5000,
+    staleTime: 30000, // Increase to 30 seconds for better performance
   })
 }
 export const usePersonalInfo = (residentId: string | null) => {
@@ -115,25 +121,26 @@ export const useFamiliesTableHealth = (page: number, pageSize: number, searchQue
   });
 }
 
-export const useFamilyDataHealth = (familyId: string) => {
+export const useFamilyDataHealth = (familyId: string | null) => {
   return useQuery({
     queryKey: ["familyDataHealth", familyId],
-    queryFn: () => getFamilyDataHealth(familyId),
-    staleTime: 5000,
+    queryFn: () => getFamilyDataHealth(familyId!),
+    enabled: !!familyId, // Only run when familyId exists
+    staleTime: 30000, // Increase stale time to 30 seconds for better performance
   })
 }
 
-export const useFamilyMembersHealth = (familyId: string) => {
+export const useFamilyMembersHealth = (familyId: string | null) => {
   return useQuery({
     queryKey: ["familyMembersHealth", familyId],
-    queryFn: () => getFamilyMembersHealth(familyId),
+    queryFn: () => getFamilyMembersHealth(familyId!),
     enabled: !!familyId, // Only run when familyId exists
-    staleTime: 5000,
+    staleTime: 30000, // Increase stale time to 30 seconds
   })
 }
 
 // Combined hook to get family members with full resident details
-export const useFamilyMembersWithResidentDetails = (familyId: string) => {
+export const useFamilyMembersWithResidentDetails = (familyId: string | null) => {
   const { data: familyMembers } = useFamilyMembersHealth(familyId);
 
   return React.useMemo(() => {
@@ -215,7 +222,7 @@ export const useHouseholdsListHealth = () => {
   return useQuery({
     queryKey: ['householdsListHealth'],
     queryFn: getHouseholdListHealth,
-    staleTime: 5000,
+    staleTime: 30000, // Increase to 30 seconds for better performance
   })
 }
 
@@ -284,6 +291,68 @@ export const useSanitaryFacilityByHousehold = (householdId: string | null) => {
     queryKey: ['sanitaryFacilityByHousehold', householdId],
     queryFn: () => getSanitaryFacilityByHousehold(householdId!),
     enabled: !!householdId,
+    staleTime: 5000,
+  })
+}
+
+export const useSolidWasteList = () => {
+  return useQuery({
+    queryKey: ['solidWasteList'],
+    queryFn: getSolidWasteList,
+    staleTime: 5000,
+  })
+}
+
+export const useSolidWasteByHousehold = (householdId: string | null) => {
+  return useQuery({
+    queryKey: ['solidWasteByHousehold', householdId],
+    queryFn: () => getSolidWasteByHousehold(householdId!),
+    enabled: !!householdId,
+    staleTime: 5000,
+  })
+}
+
+// ================ SURVEY IDENTIFICATION ================ (Status: Completed)
+export const useSurveyIdentificationList = () => {
+  return useQuery({
+    queryKey: ['surveyIdentificationList'],
+    queryFn: getSurveyIdentificationList,
+    staleTime: 5000,
+  })
+}
+
+export const useSurveyIdentificationDetail = (siId: string | null) => {
+  return useQuery({
+    queryKey: ['surveyIdentificationDetail', siId],
+    queryFn: () => getSurveyIdentificationDetail(siId!),
+    enabled: !!siId,
+    staleTime: 5000,
+  })
+}
+
+export const useSurveyIdentificationByFamily = (famId: string | null) => {
+  return useQuery({
+    queryKey: ['surveyIdentificationByFamily', famId],
+    queryFn: () => getSurveyIdentificationByFamily(famId!),
+    enabled: !!famId,
+    staleTime: 5000,
+  })
+}
+
+export const useSurveyIdentificationFormData = (famId: string | null) => {
+  return useQuery({
+    queryKey: ['surveyIdentificationFormData', famId],
+    queryFn: () => getSurveyIdentificationFormData(famId!),
+    enabled: !!famId,
+    staleTime: 5000,
+  })
+}
+
+export const useSurveyIdentificationDataByHousehold = (hhId: string | null) => {
+  return useQuery({
+    queryKey: ['surveyIdentificationDataByHousehold', hhId],
+    queryFn: () => getSurveyIdentificationDataByHousehold(hhId!),
+    enabled: !!hhId,
     staleTime: 5000,
   })
 }
