@@ -16,11 +16,6 @@ export const fetchBudgetYears = async (): Promise<any[]> => {
     return response.data || [];
 };
 
-// export const fetchExpenseParticulars = async (): Promise<DevelopmentBudgetItem[]> => {
-//     const response = await api.get('/gad/development-budget-items/');
-//     return response.data?.data || [];
-// };
-
 export const fetchIncomeParticulars = async (year: string): Promise<string[]> => {
     try {
         const budgets = await fetchGADBudgets(year);
@@ -45,8 +40,13 @@ export const fetchGADBudgetFile = async (gbf_id: number): Promise<GADBudgetFile>
     return response.data;
 };
 
+// export const fetchProjectProposalsAvailability = async (year: string) => {
+//   const response = await api.get(`/gad/project-proposals-availability/${year}/`);
+//   return response.data.data;
+// };
+
 export const fetchProjectProposalsAvailability = async (year: string) => {
-  const response = await api.get(`/gad/project-proposals-availability/${year}/`);
+  const response = await api.get(`/gad/project-proposals-availability/${year}/?status=Approved`);
   return response.data.data;
 };
 

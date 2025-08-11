@@ -378,7 +378,11 @@ class ProjectProposalAvailabilityView(generics.ListAPIView):
 
     def get_queryset(self):
         year = self.kwargs.get('year')
-        queryset = ProjectProposal.objects.filter(gpr_is_archive=False).select_related('staff')
+        # Only get approved proposals
+        queryset = ProjectProposal.objects.filter(
+            gpr_is_archive=False,
+            logs__gprl_status='Approved'
+        ).distinct().select_related('staff')
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -419,7 +423,7 @@ class ProjectProposalAvailabilityView(generics.ListAPIView):
                 'gpr_budget_items': proposal['gprBudgetItems'],
                 'recorded_items': list(recorded_items),
                 'unrecorded_items': unrecorded_items,
-                'is_editable': not is_used  # Still useful for other project-level editability
+                'is_editable': not is_used 
             })
 
         return Response({

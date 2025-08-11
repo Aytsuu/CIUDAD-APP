@@ -97,7 +97,7 @@ function GADBudgetLogTable() {
       },
     },
     {
-      accessorKey: "gbudl_actual_expense",
+      accessorKey: "gbudl_prev_amount",
       header: "Actual Expense",
       cell: ({ row }) => {
         const expense = row.original.gbud_actual_expense;

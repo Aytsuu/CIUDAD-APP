@@ -85,6 +85,7 @@ class GADBudgetLog(models.Model):
     )
     gbudl_amount_returned = models.FloatField(default=0, null=True)
     gbudl_created_at = models.DateTimeField(auto_now_add=True)
+    gbudl_prev_amount = models.FloatField(default=0, null=True)
 
     class Meta:
         db_table = "gad_budget_log"
