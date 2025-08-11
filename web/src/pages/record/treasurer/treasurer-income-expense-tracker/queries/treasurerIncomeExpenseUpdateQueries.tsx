@@ -48,8 +48,16 @@ import {api} from "@/api/api";
 //     }
 //   });
 // };
+
+type FileData = {
+    id: string;
+    name: string;
+    type: string;
+    file?: string;
+};
+
 type ExtendedIncomeExpenseUpdateValues = z.infer<typeof IncomeExpenseEditFormSchema> & {
-  mediaFiles: any[];
+  files: FileData[]; 
   years: number;
   totalBudget: number;
   totalExpense: number;
@@ -76,7 +84,7 @@ export const useUpdateIncomeExpense = (
       await updateIncomeExpense(iet_num, submissionValues);
       
       // Then handle file updates
-      await handleFileUpdates(iet_num, values.mediaFiles);
+      await handleFileUpdates(iet_num, values.files);
 
       //handle main update
       await updateIncomeExpenseMain(values.years, {
@@ -120,6 +128,7 @@ export const useUpdateIncomeExpense = (
 
 const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
   try {
+    console.log("MEDIA FILESS SA QUERY EDIT: ", mediaFiles)
     // Get current files from server
     const currentFilesRes = await api.get(`treasurer/income-expense-files/?iet_num=${iet_num}`);
     const currentFiles = currentFilesRes.data || [];
@@ -140,10 +149,15 @@ const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
     await Promise.all(filesToAdd.map(file =>
       api.post('treasurer/inc-exp-file/', {
         iet_num,
-        ief_name: file.file?.name || `file-${Date.now()}`,
-        ief_type: file.type,
-        ief_path: file.storagePath || '',
-        ief_url: file.publicUrl
+        // ief_name: file.file?.name || `file-${Date.now()}`,
+        // ief_type: file.type,
+        // ief_path: file.storagePath || '',
+        // ief_url: file.publicUrl,
+        files: [{
+          name: file.name,
+          type: file.type,
+          file: file.file // The actual file object
+        }]
       })
     ));
   } catch (err) {
