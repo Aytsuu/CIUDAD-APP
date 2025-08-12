@@ -22,7 +22,6 @@ export interface LabResultData {
   toBeFollowed: boolean
   remarks?: string
   images: LabImage[]
-  // Backward compatibility fields
   imageFile?: File | null
   imagePreview?: string
 }
@@ -191,7 +190,7 @@ const ImageUploadSection = ({
         <div className="space-y-4">
           <div className="flex justify-center">
             <Upload size={40} className="text-gray-400" />
-          </div>
+          </div>  
           <div>
             <p className="text-sm text-gray-600 mb-2">Drag and drop your lab result images here, or click to browse</p>
             <input
@@ -214,7 +213,7 @@ const ImageUploadSection = ({
         </div>
       </div>
 
-      {/* Uploaded Images Grid - Made more compact */}
+      {/* Uploaded Images Grid*/}
       {labData.images.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-2">
           {labData.images.map((image, index) => (

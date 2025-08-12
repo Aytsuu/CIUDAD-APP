@@ -15,7 +15,10 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { useEffect, useState } from "react"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Card, CardContent } from "@/components/ui/card/card"
+
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries"
+import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries"
+
 
 export default function PrenatalFormFourthPq({
   form,
@@ -31,9 +34,13 @@ export default function PrenatalFormFourthPq({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Watch values from other parts of the form to auto-fill
+  const patId = form.watch("pat_id") || ""
+  const pregnancyId = form.watch("pregnancy_id") || ""
   const momWt = form.watch("motherPersonalInfo.motherWt")
   const aogWks = form.watch("followUpSchedule.aogWeeks")
   const aogDays = form.watch("followUpSchedule.aogDays")
+
+  const { data: prenatalCareHistory, isLoading: isLoadingPrenatalCare } = usePrenatalPatientPrenatalCare(patId, pregnancyId)
 
   type prenatalCareTypes = {
     date: string
@@ -57,10 +64,9 @@ export default function PrenatalFormFourthPq({
     }
   }
 
-  // Local state to hold the array of added prenatal care entries for the table
   const [prenatalCareData, setPrenatalCareData] = useState<prenatalCareTypes[]>([])
+  const [prenatalCareHistoryTableData, setPrenatalCareHistoryTableData] = useState<any[]>([])
 
-  // date today for initial input value
   const today = new Date().toLocaleDateString("en-CA")
 
   useEffect(() => {
@@ -74,6 +80,61 @@ export default function PrenatalFormFourthPq({
     setValue("prenatalCare.aog.aogDays", aogDays !== undefined && aogDays !== null ? String(aogDays) : "")
 
   }, [momWt, aogWks, aogDays, setValue])
+
+  // prenatal care fetching
+  useEffect(() => {
+    if (prenatalCareHistory && !isLoadingPrenatalCare) {
+      console.log("🔍 Raw prenatal care history:", prenatalCareHistory)
+      
+      // Extract prenatal_records array
+      const prenatalRecords = prenatalCareHistory.prenatal_records || []
+      
+      if (prenatalRecords.length > 0) {
+        // Flatten all prenatal_care_entries from all records
+        const allCareEntries: prenatalCareTypes[] = []
+        
+        prenatalRecords.forEach((record: any) => {
+          const careEntries = record.prenatal_care_entries || []
+          
+          careEntries.forEach((entry: any) => {
+            const mappedEntry: prenatalCareTypes = {
+              date: entry.pfpc_date || 'N/A',
+              aog: {
+                aogWeeks: entry.pfpc_aog_wks || 0,
+                aogDays: entry.pfpc_aog_days || 0,
+              },
+              wt: Number(entry.weight) || 0,
+              bp: {
+                systolic: entry.bp_systolic === "None" ? 0 : Number(entry.bp_systolic) || 0,
+                diastolic: entry.bp_diastolic === "None" ? 0 : Number(entry.bp_diastolic) || 0,
+              },
+              leopoldsFindings: {
+                fundalHeight: entry.pfpc_fundal_ht || undefined,
+                fetalHeartRate: entry.pfpc_fetal_hr || undefined,
+                fetalPosition: entry.pfpc_fetal_pos || undefined,
+              },
+              notes: {
+                complaints: entry.pfpc_complaints === "None" ? "None" : entry.pfpc_complaints || undefined,
+                advises: entry.pfpc_advises === "None" ? "None" : entry.pfpc_advises || undefined,
+              },
+            }
+            
+            allCareEntries.push(mappedEntry)
+          })
+        })
+        
+        console.log("🔍 Mapped prenatal care entries:", allCareEntries)
+        setPrenatalCareHistoryTableData(allCareEntries)
+      } else {
+        setPrenatalCareHistoryTableData([])
+      }
+    }
+  }, [prenatalCareHistory, isLoadingPrenatalCare])
+
+  // Function to get combined data (history + current session)
+  const getAllPrenatalCareData = (): prenatalCareTypes[] => {
+    return [...prenatalCareHistoryTableData, ...prenatalCareData]
+  }
 
   const addPrenatalCare = () => {
     console.log("🔍 Adding prenatal care entry...")
@@ -105,30 +166,6 @@ export default function PrenatalFormFourthPq({
       advises
     })
 
-    // Manual validation for required fields
-    if (
-      !date ||
-      isNaN(weight) ||
-      isNaN(aogWks) ||
-      isNaN(aogDays) ||
-      isNaN(systolic) ||
-      isNaN(diastolic) ||
-      weight <= 0 ||
-      aogWks < 0 ||
-      aogDays < 0 ||
-      systolic <= 0 ||
-      diastolic <= 0
-    ) {
-      console.error("❌ Validation failed:", {
-        date: !date ? "Date is required" : "OK",
-        weight: isNaN(weight) ? "Weight is not a number" : weight <= 0 ? "Weight must be positive" : "OK",
-        aogWks: isNaN(aogWks) ? "AOG weeks is not a number" : aogWks < 0 ? "AOG weeks must be non-negative" : "OK",
-        aogDays: isNaN(aogDays) ? "AOG days is not a number" : aogDays < 0 ? "AOG days must be non-negative" : "OK",
-        systolic: isNaN(systolic) ? "Systolic is not a number" : systolic <= 0 ? "Systolic must be positive" : "OK",
-        diastolic: isNaN(diastolic) ? "Diastolic is not a number" : diastolic <= 0 ? "Diastolic must be positive" : "OK"
-      })
-      return
-    }
 
     const newEntry: prenatalCareTypes = {
       date: date,
@@ -184,7 +221,7 @@ export default function PrenatalFormFourthPq({
       cell: ({ row }) => {
         return (
           <div className="text-center">
-            {row.original.aog.aogWeeks} wk/s {row.original.aog.aogDays} day/s
+            {row.original.aog.aogWeeks || ""} wk/s {row.original.aog.aogDays || ""} day/s
           </div>
         )
       },
@@ -193,7 +230,7 @@ export default function PrenatalFormFourthPq({
       accessorKey: "wt",
       header: "Weight",
       cell: ({ row }) => {
-        return <div className="text-center">{row.original.wt} kg</div>
+        return <div className="text-center">{row.original.wt || ""} kg</div>
       },
     },
     {
@@ -202,7 +239,7 @@ export default function PrenatalFormFourthPq({
       cell: ({ row }) => {
         return (
           <div className="text-center">
-            {row.original.bp.systolic}/{row.original.bp.diastolic}
+            {row.original.bp.systolic || ""}/{row.original.bp.diastolic || ""}
           </div>
         )
       },
@@ -259,22 +296,18 @@ export default function PrenatalFormFourthPq({
         return
       }
 
-      // Transform the prenatal care data to match schema expectations
       const transformedPrenatalCare = prenatalCareData.map(entry => ({
         ...entry,
-        // Ensure date is in correct format
         date: entry.date,
-        // Ensure numbers are properly typed
         wt: Number(entry.wt),
         aog: {
-          aogWeeks: Number(entry.aog.aogWeeks),
-          aogDays: Number(entry.aog.aogDays)
+          aogWeeks: entry.aog.aogWeeks != null && !isNaN(Number(entry.aog.aogWeeks)) ? Number(entry.aog.aogWeeks) : null,
+          aogDays: entry.aog.aogDays != null && !isNaN(Number(entry.aog.aogDays)) ?  Number(entry.aog.aogDays) : null
         },
         bp: {
-          systolic: Number(entry.bp.systolic),
-          diastolic: Number(entry.bp.diastolic)
+          systolic: (entry.bp.systolic != null && !isNaN(Number(entry.bp.systolic))) ?  Number(entry.bp.systolic) : null,
+          diastolic: (entry.bp.diastolic != null && !isNaN(Number(entry.bp.diastolic))) ? Number(entry.bp.diastolic) : null
         },
-        // Optional fields - remove if empty
         leopoldsFindings: {
           ...(entry.leopoldsFindings.fundalHeight && { fundalHeight: entry.leopoldsFindings.fundalHeight }),
           ...(entry.leopoldsFindings.fetalHeartRate && { fetalHeartRate: entry.leopoldsFindings.fetalHeartRate }),
@@ -288,14 +321,11 @@ export default function PrenatalFormFourthPq({
 
       console.log("Transformed prenatal care data:", transformedPrenatalCare)
 
-      // CRITICAL: Set the prenatal care data in the form BEFORE calling onSubmit
       setValue("prenatalCare", transformedPrenatalCare)
       console.log("Prenatal care data set in form as array")
 
-      // Wait for the setValue to take effect
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // Let the main form handle the actual submission
       onSubmit()
       
     } catch (error) {
@@ -424,7 +454,7 @@ export default function PrenatalFormFourthPq({
               </CardContent>
             </Card>
             <div className="mt-10 border h-[40rem] overflow-auto">
-              <DataTable columns={prenatalCareColumn} data={prenatalCareData} />
+              <DataTable columns={prenatalCareColumn} data={getAllPrenatalCareData()} />
             </div>
             <div className="mt-8 sm:mt-10 flex justify-end">
               <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>

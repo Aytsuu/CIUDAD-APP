@@ -187,3 +187,58 @@ export const getPrenatalPatientPrenatalCare = async (patientId: string, pregnanc
     console.error("Error fetching prenatal patient prenatal care: ", error);
     throw error;}
 }
+
+// prenatal history complete
+export const getPrenatalRecordComplete = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/prenatal/${patientId}/complete/`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal record complete: ", error);
+    throw error;
+  }
+} 
+
+// tt status for prenatal and postpartum
+export const getPatientTTStatus = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/patient/${patientId}/ttstatus/`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching patient TT status: ", error);
+    throw error;
+  }
+}
+
+// calculated missed visits
+export const getCalculatedMissedVisits = async (pregnancyId: string, aogWks?: number, aogDays?: number) => {
+  try {
+    const params = new URLSearchParams()
+    
+    if(aogWks !== undefined) params.append('aog_weeks', aogWks.toString())
+    if(aogDays !== undefined) params.append('aog_days', aogDays.toString())
+
+    const queryString = params.toString()
+    const url = `maternal/prenatal/missed-visits/${pregnancyId}/${queryString ? `?${queryString}` : ''}`
+
+    const res = await api2.get(url)
+    return res.data || {}
+  } catch (error) {
+    console.error("Error fetching calcualted missed visits: ", error)
+    throw error;
+  }
+}
+
+
+// postpartum
+
+// latest postpartum
+export const getLatestPatientPostpartumRecord = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/postpartum/${patientId}/latest/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching latest patient postpartum record: ", error);
+    throw error;
+  }
+}

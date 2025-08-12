@@ -185,7 +185,7 @@ class Obstetrical_History(models.Model):
 
 class FollowUpVisit(models.Model):
     followv_id = models.BigAutoField(primary_key=True)
-    followv_date = models.DateField()
+    followv_date = models.DateField(null=True, blank=True)
     followv_status = models.CharField(max_length=100)
     followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)

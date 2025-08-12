@@ -10,10 +10,10 @@ from .serializer import (
     PreviousPregnancyCreateSerializer, ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer,
     PrenatalDetailSerializer, PrenatalCareDetailSerializer, PrenatalFormCompleteViewSerializer
 ) 
-# PreviousHospitalizationSerializer, PreviousPregnancySerializer, TTStatusSerializer,
-#     Guide4ANCVisitSerializer, ChecklistSerializer,
 from apps.patientrecords.serializers.patients_serializers import *
 from .models import *
+from .utils import calculate_missed_visits
+
 
 from datetime import datetime
 import logging
@@ -362,7 +362,7 @@ def get_latest_patient_prenatal_record(request, pat_id):
             'latest_prenatal_form': serializer.data
         }, status=status.HTTP_200_OK)
     
-    except Patien.DoesNotExist:
+    except Patient.DoesNotExist:
         return Response({
             'error': f'Patient does not exist'
         }, status=status.HTTP_404_NOT_FOUND)
@@ -375,25 +375,32 @@ def get_latest_patient_prenatal_record(request, pat_id):
 
 
 @api_view(['GET'])
-def get_patient_postpartum_records(request, pat_id):
+def get_latest_patient_postpartum_records(request, pat_id):
     """Get all postpartum records for a specific patient"""
     try:
         patient = Patient.objects.get(pat_id=pat_id)
         
-        # get postpartum records for this patient
-        records = PostpartumRecord.objects.filter(
+        # Get the latest postpartum record (without checking pregnancy status)
+        latest_record = PostpartumRecord.objects.filter(
             patrec_id__pat_id=patient
         ).select_related(
             'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
         ).prefetch_related(
             'postpartum_delivery_record', 'postpartum_assessment'
-        ).order_by('-created_at')  # Most recent first
+        ).order_by('-created_at').first()  # Get the most recent record
+
+        if not latest_record:
+            return Response({
+                'pat_id': pat_id,
+                'message': 'No postpartum records found for this patient',
+                'latest_postpartum_record': None
+            }, status=status.HTTP_200_OK)
+
+        serializer = PostpartumCompleteSerializer(latest_record)
         
-        serializer = PostpartumCompleteSerializer(records, many=True)
         return Response({
             'pat_id': pat_id,
-            'count': records.count(),
-            'records': serializer.data
+            'latest_postpartum_record': serializer.data
         }, status=status.HTTP_200_OK)
         
     except Patient.DoesNotExist:
@@ -402,9 +409,9 @@ def get_patient_postpartum_records(request, pat_id):
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
-        logger.error(f"Error fetching postpartum records for patient {pat_id}: {str(e)}")
+        logger.error(f"Error fetching latest postpartum record for patient {pat_id}: {str(e)}")
         return Response(
-            {'error': f'Failed to fetch postpartum records: {str(e)}'},
+            {'error': f'Failed to fetch latest postpartum record: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
    
@@ -590,22 +597,37 @@ def get_prenatal_patient_tt_status(request, pat_id):
     try:
         patient = Patient.objects.get(pat_id=pat_id)
 
-        tt_status = TTStatus.objects.filter(
-            patrec_id__pat_id=patient
-        ).select_related('patrec_id').order_by('-tt_id').first()
+        tt_statuses = TT_Status.objects.filter(
+            pf_id__patrec_id__pat_id=patient,
+            pf_id__patrec_id__patrec_type__in=['Prenatal', 'Postpartum Care']
+        ).select_related(
+            'pf_id__patrec_id',
+            'pf_id__pregnancy_id'
+        ).order_by('-tts_date_given')
 
-        if not tt_status:
+        if not tt_statuses.exists():
             return Response({
                 'patient': patient.pat_id,
                 'message': 'No TT status records found for this patient'
             }, status=status.HTTP_200_OK)
 
-        tt_data = {
-            'tt_id': tt_status.tt_id,
-            'tt_status': tt_status.tt_status,
-            'tt_date': tt_status.tt_date.isoformat() if tt_status.tt_date else None,
-            'patrec_id': tt_status.patrec_id.patrec_id if tt_status.patrec_id else None
-        }
+        tt_data = []
+        for tt_status in tt_statuses:
+            tt_data.append({
+                'tts_id': tt_status.tts_id,
+                'tts_status': tt_status.tts_status,
+                'tts_date_given': tt_status.tts_date_given,
+                'tts_tdap': tt_status.tts_tdap,
+                'prenatal_form': {
+                    'pf_id': tt_status.pf_id.pf_id,
+                    'pregnancy_id': tt_status.pf_id.pregnancy_id.pregnancy_id if tt_status.pf_id.pregnancy_id else None,
+                    'created_at': tt_status.pf_id.created_at
+                },
+                'patient_record': {
+                    'patrec_id': tt_status.pf_id.patrec_id.patrec_id,
+                    'patrec_type': tt_status.pf_id.patrec_id.patrec_type,
+                }
+            })
 
         return Response({
             'patient': patient.pat_id,
@@ -737,3 +759,32 @@ def get_prenatal_form_complete(request, pf_id):
         return Response({
             'error': f'Failed to fetch prenatal form: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def calculate_missed_visits_by_pregnancy(request, pregnancy_id):
+    """Calculate missed visits for a specific pregnancy - GET method"""
+    try:
+        # query parameters from URL
+        current_aog_weeks = request.GET.get('aog_weeks', 0)
+        current_aog_days = request.GET.get('aog_days', 0)
+        
+        # convert to integers with defaults
+        current_aog_weeks = int(current_aog_weeks) if current_aog_weeks else 0
+        current_aog_days = int(current_aog_days) if current_aog_days else 0
+        
+        if not pregnancy_id:
+            return Response(
+                {'error': 'Pregnancy ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        result = calculate_missed_visits(pregnancy_id, current_aog_weeks, current_aog_days)
+        
+        return Response(result, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Error calculating missed visits: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

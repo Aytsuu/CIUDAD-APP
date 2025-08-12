@@ -1,7 +1,7 @@
 "use client"
 
 
-import { useState, useCallback } from "react" // Added useEffect
+import { useState, useCallback, useEffect } from "react" 
 import type { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 
@@ -16,10 +16,11 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card" // Added Card imports
 
-import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
-import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
 import { MedicineDisplay } from "@/components/ui/medicine-display"
-import { usePrenatalPatientFollowUpVisits } from "../../queries/maternalFetchQueries"
+import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
+
+import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
+import { usePrenatalPatientFollowUpVisits, useCalculatedMissedVisits } from "../../queries/maternalFetchQueries"
 
 export default function PrenatalFormThirdPg({
   form,
@@ -30,13 +31,13 @@ export default function PrenatalFormThirdPg({
   onSubmit: () => void
   back: () => void
 }) {
-  // Renamed to submitLocal for clarity
+
   const handleNext = async () => {
     window.scrollTo(0, 0)
 
     if (Object.keys(form.formState.errors).length === 0) {
       console.log("Form is valid, proceeding to next page")
-      onSubmit() // This calls handlePatientSubmit(3) from prenatal-form-main.tsx
+      onSubmit() 
     } else {
       console.log("Form validation failed for RHF fields.")
       console.log("Validation errors:", form.formState.errors) 
@@ -49,14 +50,32 @@ export default function PrenatalFormThirdPg({
     window.scrollTo(0, 0)
   }
 
-  // const [selectedOption, setSelectedOption] = useState("")
+  const aogWks = form.watch("followUpSchedule.aogWeeks") || undefined
+  const aogDays = form.watch("followUpSchedule.aogDays") || undefined
+  const pregnancyId = form.watch("pregnancy_id") || ""
+
+  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
   const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
-  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
   const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
-  
+  const { data: missedVisitsData, isLoading: isMissedVisitsLoading, error: missedVisitsError, refetch: refetchMissedVisits } = useCalculatedMissedVisits(pregnancyId, aogWks, aogDays)
+
+  useEffect(() => {
+    if(pregnancyId && aogWks) {
+      refetchMissedVisits()
+    }
+  }, [pregnancyId, aogWks, aogDays, refetchMissedVisits])
+
+  const getDayName = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-PH", { weekday: "long" })
+  }
+
+  const followupDate = form.watch("followUpSchedule.followUpDate")
+
+  const followupDayName = followupDate ? `is on ${getDayName(followupDate).toLocaleUpperCase()}` : ""
 
   const handleSelectedMedicinesChange = useCallback(
     (
@@ -305,7 +324,7 @@ export default function PrenatalFormThirdPg({
                       </div>
                     </div>
 
-                    {aogAnalysis && (
+                    {/* {aogAnalysis && (
                       <Card className="mt-4 mb-4 p-4 border rounded-lg bg-blue-50">
                         <CardHeader>
                           <CardTitle className="font-semibold text-blue-800 mb-3">AOG Analysis</CardTitle>
@@ -340,14 +359,107 @@ export default function PrenatalFormThirdPg({
                           </div>
                         </CardContent>
                       </Card>
-                    )}
+                    )} */}
+                    <div>
+                      {/* Your existing form fields */}
+                      
+                      {/* AOG Analysis Display */}
+                      {isMissedVisitsLoading && (
+                        <Card className="mt-4 mb-4 p-4 border rounded-lg bg-gray-50">
+                          <CardContent>
+                            <p>Calculating missed visits...</p>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {missedVisitsError && (
+                        <Card className="mt-4 mb-4 p-4 border rounded-lg bg-red-50">
+                          <CardContent>
+                            <p className="text-red-600">Error calculating missed visits</p>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {missedVisitsData && !missedVisitsData.error && (
+                        <Card className="mt-4 mb-4 p-4 border rounded-lg bg-blue-50">
+                          <CardHeader>
+                            <CardTitle className="font-semibold text-blue-800 mb-3">
+                              AOG Analysis & Visit Tracking
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <p><strong>Current Status:</strong></p>
+                                <p>Week {missedVisitsData.current_aog_weeks}, Day {missedVisitsData.current_aog_days}</p>
+                                <p><strong>First Visit:</strong> Month {missedVisitsData.first_visit_month} (Week {missedVisitsData.first_visit_week})</p>
+                                <p><strong>Visit Schedule:</strong></p>
+                                <p>
+                                  {missedVisitsData.current_aog_weeks <= 28 
+                                    ? "Monthly (every 4 weeks)"
+                                    : missedVisitsData.current_aog_weeks <= 36
+                                    ? "Bi-weekly (every 2 weeks)"
+                                    : "Weekly"
+                                  }
+                                </p>
+                              </div>
+                              <div>
+                                <p><strong>Expected Visits by Now:</strong> {missedVisitsData.expected_visits}</p>
+                                <p><strong>Actual Visits:</strong> {missedVisitsData.actual_visits}</p>
+                                {missedVisitsData.missed_visits > 0 && (
+                                  <p className="text-red-600">
+                                    <strong>Missed Visits:</strong> {missedVisitsData.missed_visits}
+                                  </p>
+                                )}
+                                <p><strong>Next Visit:</strong> 
+                                  {missedVisitsData.current_aog_weeks <= 28 
+                                    ? " In 4 weeks"
+                                    : missedVisitsData.current_aog_weeks <= 36
+                                    ? " In 2 weeks"
+                                    : " In 1 week"
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Visit Breakdown */}
+                            {missedVisitsData.visit_breakdown && missedVisitsData.visit_breakdown.length > 0 && (
+                              <div className="mt-4">
+                                <p className="font-semibold mb-2">Visit History:</p>
+                                <div className="space-y-1 max-h-32 overflow-y-auto">
+                                  {missedVisitsData.visit_breakdown.map((visit : any, index : any) => (
+                                    <div key={index} className="flex justify-between items-center text-xs py-1">
+                                      <span>{visit.period} - Month {visit.expected_month} (Week {visit.expected_week})</span>
+                                      <Badge 
+                                        variant={visit.status === 'completed' ? 'default' : 'destructive'}
+                                        className={visit.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
+                                      >
+                                        {visit.status === 'completed' ? 'Completed' : 'Missed'}
+                                      </Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {missedVisitsData?.error && (
+                        <Card className="mt-4 mb-4 p-4 border rounded-lg bg-yellow-50">
+                          <CardContent>
+                            <p className="text-yellow-700">{missedVisitsData.error}</p>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
 
                     {/* Follow-up Date Picker */}
                     <div className="mb-4">
                       <FormDateTimeInput
                         control={form.control}
                         name="followUpSchedule.followUpDate"
-                        label="Follow-up Date"
+                        label={`Follow-up Date ${followupDayName}`}
                         type="date"
                       />
                     </div>

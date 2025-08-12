@@ -32,7 +32,7 @@ interface PrenatalVisit {
 
 export default function PrenatalIndivHistory() {
   const location = useLocation();
-  const { patientData, pregnancyId, visitNumber } = location.state?.params || {};
+  const { patientData, pregnancyId, visitNumber, recordId } = location.state?.params || {};
   const [activeTab, setActiveTab] = useState("prenatalcare");
 
   // Fetch real API data
@@ -143,12 +143,16 @@ export default function PrenatalIndivHistory() {
     >
       <div className="bg-white p-3 space-y-2">
         {/* Patient Context Info */}
-        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
+        <div className="bg-blue-5 p-3 rounded-lg border border-blue-200 mb-4">
           <div className="text-sm">
-            <div className="font-medium text-blue-800">
+            <div className="font-medium text-2xl text-blue-800">
               {patientData?.personal_info?.per_fname} {patientData?.personal_info?.per_lname}
             </div>
             <div className="text-blue-600">
+              <div>
+                Patient ID: {patientData?.pat_id}
+              </div>
+              
               Pregnancy ID: {pregnancyId} | Viewing visits 1 through {visitNumber}
             </div>
             <div className="text-blue-600">
@@ -158,7 +162,7 @@ export default function PrenatalIndivHistory() {
         </div>
 
         <div className="">
-          <PrenatalViewingOne />
+          <PrenatalViewingOne pfId={recordId} />
         </div>
         
         <div className="bg-white/70 p-2">

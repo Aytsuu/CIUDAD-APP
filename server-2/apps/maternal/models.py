@@ -341,36 +341,6 @@ class PostpartumRecord(models.Model):
         ordering = ['created_at']
 
 
-# class PostpartumHistory(models.Model):
-#     pprh_id = models.BigAutoField(primary_key=True)
-#     ppr_id = models.ForeignKey(PostpartumRecord, on_delete=models.CASCADE, related_name='postpartum_history', db_column='ppr_id')
-
-#     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_history', null=False, db_column='patrec_id')
-#     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_history', db_column='spouse_id', null=True)
-#     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_history', db_column='vital_id', null=False)
-#     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_history', db_column='followv_id', null=True)
-#     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_history', db_column='pregnancy_id', null=True, blank=True)
-
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     record_no = models.CharField(max_length=150, blank=True)
-
-#     def save(self, *args, **kwargs):
-#         if not self.record_no:
-#             with transaction.atomic():
-#                 count = PostpartumHistory.objects.filter(
-#                     ppr_id=self.ppr_id
-#                 ).select_for_update().count()
-
-#                 seq_num = f'{count + 1:04d}'
-#                 self.record_no = f'{self.ppr_id.ppr_id}-{seq_num}'
-                
-#             super().save(*args, **kwargs)
-
-#     class Meta:
-#         db_table = 'postpartum_history'
-#         ordering = ['created_at']
-
-
 class PostpartumDeliveryRecord(models.Model):
     ppdr_id = models.BigAutoField(primary_key=True) 
     ppdr_date_of_delivery = models.DateField()

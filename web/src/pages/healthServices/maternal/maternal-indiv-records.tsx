@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Link, useLocation, replace } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button/button"
@@ -137,10 +137,6 @@ export default function MaternalIndivRecords() {
     if (location.state?.params?.patientData) {
       const patientData = location.state.params.patientData
       setSelectedPatient(patientData)
-      const ageTimeCheck = patientData.personal_info.ageTime
-      console.log("Age Time: ", ageTimeCheck)
-
-      console.log("Selected patient data:", patientData)
     }
   }, [location.state])
 
@@ -169,11 +165,6 @@ export default function MaternalIndivRecords() {
       }
 
       const currPregnancyGroup =  grouped[pregnancy.pregnancy_id]
-
-      // const aogWks = pregnancy.prenatal_care?.[0]?.pfpc_aog_wks
-      // const aogDays = pregnancy.prenatal_care?.[0]?.pfpc_aog_days
-      // const gestationalFormatted = `${aogWks} weeks ${aogDays} days`
-
 
       pregnancy.prenatal_form?.forEach((pf) => {
         const addressParts = [

@@ -92,10 +92,10 @@ export default function CreatePatientRecord() {
   const { data: transAddress, isLoading: transAddressLoading } = useAllTransientAddresses()
 
 
-  const transientAddressOpt = transAddress?.map((tradd: any) => ({
+  const transientAddressOpt = (transAddress && Array.isArray(transAddress)) ? transAddress?.map((tradd: any) => ({
     id: tradd.tradd_id.toString(),
     name: `${tradd.tradd_street || ""}, ${tradd.tradd_sitio || ""}, ${tradd.tradd_barangay || ""}, ${tradd.tradd_city || ""}, ${tradd.tradd_province || ""}`.trim(),
-  }))
+  })) : []
 
   const handleTransientAddressSelection = (selectedValue: string) => {
     const id = Number(selectedValue)

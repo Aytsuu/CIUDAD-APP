@@ -18,9 +18,10 @@ export interface PrenatalRecord {
     spouse_dob: string | null
   }
   body_measurement: {
+    age: string | null
     weight: number | null
     height: number | null
-    bmi: number | null
+    // bmi: number | null
   }
   obstetrical_history?: {
     obs_ch_born_alive: number | null
@@ -36,7 +37,7 @@ export interface PrenatalRecord {
   }
   previous_hospitalizations: Array<{
     prev_hospitalization: string
-    prev_hospitalization_date: number | null
+    prev_hospitalization_year: number | null
   }>
   previous_pregnancy_data?: {
     date_of_delivery: string | null
@@ -98,8 +99,8 @@ export interface PrenatalRecord {
   }
   prenatal_care_data: Array<{
     pfpc_date: string
-    pfpc_aog_wks: number
-    pfpc_aog_days: number
+    pfpc_aog_wks: number | null
+    pfpc_aog_days: number | null
     pfpc_fundal_ht: string | null
     pfpc_fetal_hr: string | null
     pfpc_fetal_pos: string | ""

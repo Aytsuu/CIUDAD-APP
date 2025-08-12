@@ -20,6 +20,12 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries" 
 import type { PrenatalRecord } from "../../restful-api/maternalPOST" 
 
+interface TTStatusRecord {
+  tts_status: string
+  tts_date_given: string | null
+  tts_tdap: boolean
+}
+
 export default function PrenatalForm() {
   const defaultValues = generateDefaultValues(PrenatalFormSchema)
   const [currentPage, setCurrentPage] = useState(1)
@@ -56,7 +62,6 @@ export default function PrenatalForm() {
   })
 
   const transformData = (data: z.infer<typeof PrenatalFormSchema>): PrenatalRecord => {
-    // Helper to convert empty strings to null for optional date fields
     const toNullIfEmpty = (value: string | null | undefined) => (value === "" ? null : value)
 
     // Helper to check if an object has any non-empty/non-null values
@@ -112,25 +117,40 @@ export default function PrenatalForm() {
         }
       : undefined
 
-    // Construct tt_statuses as an array of objects
-    const ttStatusesArray = []
-    if (
-      data.prenatalVaccineInfo.ttStatus ||
-      data.prenatalVaccineInfo.ttDateGiven ||
-      data.prenatalVaccineInfo.isTDAPAdministered
-    ) {
-      ttStatusesArray.push({
-        tts_status: data.prenatalVaccineInfo.ttStatus || null, // Ensure null if empty
-        tts_date_given: toNullIfEmpty(data.prenatalVaccineInfo.ttDateGiven) ?? null,
-        tts_tdap:
-          typeof data.prenatalVaccineInfo.isTDAPAdministered === "boolean"
-            ? data.prenatalVaccineInfo.isTDAPAdministered
-            : data.prenatalVaccineInfo.isTDAPAdministered === "true"
-              ? true
-              : data.prenatalVaccineInfo.isTDAPAdministered === "false"
-                ? false
-                : null,
+    const ttStatusesArray: TTStatusRecord[] = []
+
+    if (data.prenatalVaccineInfo.ttRecordsHistory && data.prenatalVaccineInfo.ttRecordsHistory.length > 0) {
+      data.prenatalVaccineInfo.ttRecordsHistory.forEach((record) => {
+        if (record.ttStatus && record.ttStatus.trim() !== '') {
+          ttStatusesArray.push({
+            tts_status: record.ttStatus.trim(),
+            tts_date_given: toNullIfEmpty(record.ttDateGiven) ?? null,
+            tts_tdap: record.isTDAPAdministered === false ? false : true,
+          })
+        }
       })
+    }
+    
+    if (data.prenatalVaccineInfo.ttStatus && data.prenatalVaccineInfo.ttStatus.trim() !== '') {
+      const currentTTRecord = {
+        tts_status: data.prenatalVaccineInfo.ttStatus.trim(),
+        tts_date_given: toNullIfEmpty(data.prenatalVaccineInfo.ttDateGiven) ?? null,
+        tts_tdap: data.prenatalVaccineInfo.isTDAPAdministered === true
+      }
+      
+      const isDuplicateOfHistory = ttStatusesArray.some(existingRecord => 
+        existingRecord.tts_status === currentTTRecord.tts_status && 
+        existingRecord.tts_date_given === currentTTRecord.tts_date_given
+      )
+      
+      if (!isDuplicateOfHistory) {
+        ttStatusesArray.push(currentTTRecord)
+        console.log("Adding current form TT record:", currentTTRecord)
+      } else {
+        console.log("Skipping current form TT record (already in history):", currentTTRecord)
+      }
+    } else {
+      console.log("No current TT record to add (empty or missing)")
     }
 
     return {
@@ -143,9 +163,10 @@ export default function PrenatalForm() {
       spouse_data: spouseData,
 
       body_measurement: {
+        age: data.motherPersonalInfo.motherAge || null,
         weight: data.motherPersonalInfo.motherWt || null,
         height: data.motherPersonalInfo.motherHt || null,
-        bmi: data.motherPersonalInfo.motherBMI || null,
+        // bmi: data.motherPersonalInfo.motherBMI || null,
       },
 
       obstetrical_history: {
@@ -164,18 +185,18 @@ export default function PrenatalForm() {
       previous_hospitalizations:
         data.medicalHistory.prevHospitalizationData?.map((item) => ({
           prev_hospitalization: item.prevHospitalization ?? "",
-          prev_hospitalization_date: item.prevHospitalizationYr || null,
+          prev_hospitalization_year: item.prevHospitalizationYr || null,
         })) || [],
 
       previous_pregnancy_data: previousPregnancyData,
 
-      tt_statuses: ttStatusesArray, // Now an array
+      tt_statuses: ttStatusesArray, 
 
       lab_results_data:
         data.labResults?.labResultsData?.map((result) => ({
           lab_type: result.lab_type,
-          result_date: toNullIfEmpty(result.resultDate) ?? null, // Allow null for "to be followed" cases
-          to_be_followed: result.toBeFollowed ?? false, // Ensure boolean
+          result_date: toNullIfEmpty(result.resultDate) ?? null, // allow null for "to be followed" cases
+          to_be_followed: result.toBeFollowed ?? false, // ensure boolean
           document_path: result.documentPath || "",
           remarks: result.labRemarks || "",
           images: result.images || [],
@@ -202,8 +223,8 @@ export default function PrenatalForm() {
       },
 
       birth_plan_data: {
-        place_of_delivery_plan: data.pregnancyPlan.planPlaceOfDel || "", // Ensure null if empty
-        newborn_screening_plan: data.pregnancyPlan.planNewbornScreening ?? false, // Should be boolean
+        place_of_delivery_plan: data.pregnancyPlan.planPlaceOfDel || "", 
+        newborn_screening_plan: data.pregnancyPlan.planNewbornScreening ?? false, 
       },
 
       obstetric_risk_code_data: {
@@ -215,18 +236,22 @@ export default function PrenatalForm() {
       prenatal_care_data:
         data.prenatalCare?.map((item) => ({
           pfpc_date: item.date,
-          pfpc_aog_wks: Number(item.aog.aogWeeks),
-          pfpc_aog_days: Number(item.aog.aogDays),
+          pfpc_aog_wks: item.aog.aogWeeks != null && !isNaN(Number(item.aog.aogWeeks)) ? Number(item.aog.aogWeeks) : null,
+          pfpc_aog_days: item.aog.aogDays != null && !isNaN(Number(item.aog.aogDays)) ? Number(item.aog.aogDays) : null,
           pfpc_fundal_ht: item.leopoldsFindings.fundalHeight || null,
           pfpc_fetal_hr: item.leopoldsFindings.fetalHeartRate || null,
           pfpc_fetal_pos: item.leopoldsFindings.fetalPosition || "", 
-          pfpc_complaints: item.notes.complaints || null, // Ensure null if empty
-          pfpc_advises: item.notes.advises || null, // Ensure null if empty
+          pfpc_complaints: item.notes.complaints || null, 
+          pfpc_advises: item.notes.advises || null, 
         })) || [],
 
       // Extract BP values from the first prenatal care entry for VitalSigns
-      vital_bp_systolic: data.prenatalCare?.[0]?.bp.systolic || null ,
-      vital_bp_diastolic: data.prenatalCare?.[0]?.bp.diastolic || null,
+      vital_bp_systolic: (data.prenatalCare?.[0]?.bp.systolic != null && !isNaN(data.prenatalCare[0].bp.systolic)) 
+        ? data.prenatalCare[0].bp.systolic 
+        : null,
+      vital_bp_diastolic: (data.prenatalCare?.[0]?.bp.diastolic != null && !isNaN(data.prenatalCare?.[0]?.bp.diastolic))
+        ? data.prenatalCare[0].bp.diastolic
+        : null,
     }
   }
 
@@ -286,7 +311,7 @@ export default function PrenatalForm() {
       isValid = await form.trigger("prenatalCare")
       console.log(`Page 4 validation result: ${isValid}`)
 
-      if(isValid){
+      // if(isValid){
         const formData = form.getValues()
         await handleFinalSubmit(formData)
         console.log("Page 4 validation passed, form submitted successfully.")
@@ -294,7 +319,7 @@ export default function PrenatalForm() {
         navigate(-1)
         
         return;
-      }
+      // }
     }
 
     if (!isValid) {

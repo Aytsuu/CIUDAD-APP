@@ -9,13 +9,16 @@ export const positiveNumberSchema = z
     z.undefined(), // undefined values
   ])
   .transform((val, ctx) => {
-    // handle null, undefined, or empty string - all become undefined
     if (val === null || val === undefined || val === "") {
       return undefined
     }
     
     // If it's already a number, validate it
     if (typeof val === "number") {
+      if(!isFinite(val)){
+        return undefined
+      }
+
       if (val < 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -23,31 +26,20 @@ export const positiveNumberSchema = z
         })
         return z.NEVER
       }
-      if (isNaN(val)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Invalid number",
-        });
-        return z.NEVER;
-      }
+
       return val
     }
     
     // Handle string input
     if (typeof val === "string") {
-      // Empty string becomes undefined
       if (val.trim() === "") {
         return undefined
       }
       
       // Try to parse as number
       const num = Number.parseFloat(val)
-      if (isNaN(num)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Invalid number"
-        })
-        return z.NEVER
+      if (!isFinite(num)) {
+        return undefined
       }
       
       if (num < 0) {
@@ -61,26 +53,22 @@ export const positiveNumberSchema = z
       return num
     }
     
-    // If we get here, it's an unexpected type
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Invalid input type"
-    })
-    return z.NEVER
+    return undefined
   })
-
+  
+  
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD.");
 
 export const optionalDateSchema = z.preprocess(
-  (val) => (val === "" ? undefined : val), // Convert empty string to undefined
-  dateSchema.optional(), // Apply base date schema, then make optional
+  (val) => (val === "" ? undefined : val), 
+  dateSchema.optional(), 
 )
 
 export const PrenatalCareEntrySchema = z.object({
   date: dateSchema,
   aog: z.object({
     aogWeeks: positiveNumberSchema.optional(), 
-    aogDays: positiveNumberSchema.optional(), // Keep as string for form input, transform later if needed
+    aogDays: positiveNumberSchema.optional(), 
   }),
   wt: positiveNumberSchema, // Keep as string for form input, transform later if needed
   bp: z.object({
@@ -100,13 +88,14 @@ export const PrenatalCareEntrySchema = z.object({
 
 // mother's basic info
 export const PrenatalFormSchema = z.object({
+    pregnancy_id: z.string().optional(),
     pat_id: z.string().optional(),
     motherPersonalInfo: z.object({
         familyNo: z.string().optional(),
         motherLName: z.string().min(1, 'Last name is required'),
         motherFName: z.string().min(1, 'First name is required'),
         motherMName: z.string().optional().default(''),
-        motherAge: positiveNumberSchema.refine((val) => val !== undefined && val >= 1, { message: "Value must be at least 1" }),
+        motherAge: z.string().optional(),
         motherDOB: dateSchema,
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
@@ -169,8 +158,14 @@ export const PrenatalFormSchema = z.object({
         vaccineType: z.string().optional(),
         ttStatus: z.string().optional(),
         ttDateGiven: z.string().optional(),
-        fullyImmunized: z.boolean().optional(),
-        isTDAPAdministered: z.string().optional()
+        // fullyImmunized: z.boolean().optional(),
+        isTDAPAdministered: z.boolean().optional(),
+        ttRecordsHistory: z.array(z.object({
+          ttStatus: z.string().optional(),
+          ttDateGiven: z.string().optional(),
+          isTDAPAdministered: z.boolean().optional(),
+          vaccineType: z.string().optional(),
+        })).optional(),
     }),
 
     // present pregnancy

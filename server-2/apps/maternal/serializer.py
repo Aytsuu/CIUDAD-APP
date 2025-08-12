@@ -34,7 +34,7 @@ class ObstetricalHistorySerializer(serializers.ModelSerializer):
 class BodyMeasurementReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = BodyMeasurement
-        fields = ['age', 'weight', 'height']
+        fields = ['age', 'weight', 'height', 'created_at']
 
 
 class SpouseCreateSerializer(serializers.ModelSerializer):
@@ -53,7 +53,7 @@ class VitalSignsCreateSerializer(serializers.ModelSerializer):
 class BodyMeasurementCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = BodyMeasurement
-        fields = ['weight', 'height'] 
+        fields = ['age', 'weight', 'height'] 
 
 class ObstetricalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -141,11 +141,13 @@ class PrenatalCareCreateSerializer(serializers.ModelSerializer):
             'pfpc_fetal_hr', 'pfpc_fetal_pos', 'pfpc_complaints', 'pfpc_advises'
         ]
         extra_kwargs = {
+            'pfpc_aog_wks': {'required': False, 'allow_null': True},
+            'pfpc_aog_days': {'required': False, 'allow_null': True},
             'pfpc_fundal_ht': {'required': False, 'allow_null': True},
             'pfpc_fetal_hr': {'required': False, 'allow_null': True},
             'pfpc_fetal_pos': {'required': False, 'allow_blank': True},
-            'pfpc_complaints': {'required': False, 'allow_blank': True},
-            'pfpc_advises': {'required': False, 'allow_blank': True},
+            'pfpc_complaints': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'pfpc_advises': {'required': False, 'allow_blank': True, 'allow_null': True},
         }
 
 class PrenatalCareDetailSerializer(serializers.ModelSerializer):
@@ -413,7 +415,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             'patient_details', 'pregnancy_details', 'vital_signs_details', 
             'body_measurement_details', 'spouse_details', 'follow_up_visit_details',
             'staff_details', 'previous_hospitalizations', 'laboratory_results',
-            'anc_visit_guide', 'checklist_data', 'birth_plan_details', 
+            'anc_visit_guide', 'checklist_data', 'birth_plan_details',
             'obstetric_risk_codes', 'prenatal_care_entries'
         ]
     
@@ -627,7 +629,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             'to_be_followed': lab.to_be_followed,
             'is_completed': lab.is_completed,
         } for lab in lab_results]
-    
+
     def get_anc_visit_guide(self, obj):
         anc_visit = obj.pf_anc_visit.first()
         if anc_visit:
@@ -704,7 +706,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     lab_results_data = LaboratoryResultCreateSerializer(many=True, required=False, write_only=True)
     
     # Single nested objects
-    # lab_remarks_data = LabRemarksCreateSerializer(required=False, write_only=True)
     anc_visit_data = Guide4ANCVisitCreateSerializer(required=False, write_only=True)
     checklist_data = ChecklistCreateSerializer(required=False, write_only=True)
     birth_plan_data = BirthPlanCreateSerializer(required=False, write_only=True)
@@ -712,11 +713,11 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     prenatal_care_data = PrenatalCareCreateSerializer(many=True, required=False, write_only=True) # New
 
     # Vital signs for current visit (from prenatalCare.bp)
-    vital_bp_systolic = serializers.IntegerField(write_only=True, required=False)
-    vital_bp_diastolic = serializers.IntegerField(write_only=True, required=False)
+    vital_bp_systolic = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    vital_bp_diastolic = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     # Follow-up visit data
-    followup_date = serializers.DateField(write_only=True, required=False)
+    followup_date = serializers.DateField(write_only=True, required=False, allow_null=True)
     followup_description = serializers.CharField(default="Prenatal Follow-up Visit", write_only=True, required=False, allow_blank=True)
 
     # Assessed by staff
@@ -732,10 +733,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             'obstetric_risk_code_data', 'prenatal_care_data', 'vital_bp_systolic', 
             'vital_bp_diastolic', 'followup_date', 'followup_description', 'assessed_by'
         ]
-        # extra_kwargs = {
-        #     'pf_lmp': {'required': True},
-        #     'pf_edc': {'required': True},
-        # }
 
     def validate_pat_id(self, value):
         """Validate patient ID exists and is not null"""
@@ -765,9 +762,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         return value
 
     def handle_spouse_logic(self, patient, spouse_data):
-        """
-        Handle spouse creation logic using your existing business rules
-        """
         if not spouse_data:
             return None
         
@@ -811,6 +805,87 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             except Exception as create_error:
                 print(f"Error creating spouse: {str(create_error)}")
                 return None
+
+    def create_tt_status_logic(self, prenatal_form, tt_statuses_data, patient):
+        if not tt_statuses_data:
+            return
+        
+        try:
+            created_count = 0
+
+            # check for existing tt records
+            existing_tt = TT_Status.objects.filter(
+                pf_id__patrec_id__pat_id=patient.pat_id
+            ).values('tts_status', 'tts_date_given')
+
+            # create set of existing tt records for faster lookup
+            existing_tt_set = set()
+            for record in existing_tt:
+                tt_key = (record['tts_status'], record['tts_date_given'])
+                existing_tt_set.add(tt_key)
+
+            for tt_data in tt_statuses_data:
+                if not tt_data.get('tts_status'):
+                    continue
+                
+                tt_key = (tt_data['tts_status'], tt_data.get('tts_date_given'))
+
+                if tt_key in existing_tt_set:
+                    print(f'TT Record already exists')
+                    continue
+                
+                TT_Status.objects.create(
+                    pf_id=prenatal_form,
+                    tts_status=tt_data.get('tts_status'),
+                    tts_date_given=tt_data.get('tts_date_given'),
+                    tts_tdap=tt_data.get('tts_tdap', False)
+                )
+
+                created_count += 1
+                print(f'Created {created_count} TT Record')
+
+        except Exception as e:
+            print(f'Error creating TT Record: {str(e)}')
+            raise
+    
+    def create_previous_hospitalization_logic(self, prenatal_form, previous_hospitalizations_data, patient):
+        if not previous_hospitalizations_data:
+            return
+        
+        try:
+            created_count = 0
+
+            existing_ph = Previous_Hospitalization.objects.filter(
+                pf_id__patrec_id__pat_id=patient.pat_id
+            ).values('prev_hospitalization', 'prev_hospitalization_year')
+
+            existing_ph_set = set()
+            for record in existing_ph:
+                ph_key = (record['prev_hospitalization'], record['prev_hospitalization_year'])
+                existing_ph_set.add(ph_key)
+            
+            for ph_data in previous_hospitalizations_data:
+                if not ph_data.get('prev_hospitalization'):
+                    continue
+
+                ph_key = (ph_data.get('prev_hospitalization'), ph_data.get('prev_hospitalization_year'))
+
+                if ph_key in existing_ph_set:
+                    print(f'Previous hospitalization data already exists')
+                    continue
+                
+                Previous_Hospitalization.objects.create(
+                    pf_id=prenatal_form,
+                    prev_hospitalization=ph_data.get('prev_hospitalization'),
+                    prev_hospitalization_year=ph_data.get('prev_hospitalization_year')
+                )
+
+                created_count =+ 1
+                print(f'Created {created_count} hospitalizations record/s')
+        
+        except Exception as e:
+            print(f'Error creating hospitalization records: {str(e)}')
+            raise
 
     def create(self, validated_data):
         print(f"Creating prenatal record with validated data: {validated_data}")
@@ -960,22 +1035,22 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     bm_id=body_measurement,
                     followv_id=follow_up_visit,
                     staff_id=staff,
-                    **validated_data # This will include pf_lmp, pf_edc, and pf_occupation
+                    **validated_data 
                 )
                 print(f"Created prenatal form: {prenatal_form.pf_id}")
 
                 # create Previous_Hospitalization records
-                for hosp_data in previous_hospitalizations_data:
-                    Previous_Hospitalization.objects.create(pf_id=prenatal_form, **hosp_data)
+                # for hosp_data in previous_hospitalizations_data:
+                #     Previous_Hospitalization.objects.create(pf_id=prenatal_form, **hosp_data)
                 if previous_hospitalizations_data:
+                    self.create_previous_hospitalization_logic(prenatal_form, previous_hospitalizations_data, patient)
                     print(f"Created {len(previous_hospitalizations_data)} previous hospitalization records.")
 
                 # create TT_Status records
-                for tt_data in tt_statuses_data:
-                    # If vaccineType was passed, you might need to create/link VaccinationRecord here
-                    # For now, directly create TT_Status
-                    TT_Status.objects.create(pf_id=prenatal_form, **tt_data)
+                # for tt_data in tt_statuses_data:
+                #     TT_Status.objects.create(pf_id=prenatal_form, **tt_data)
                 if tt_statuses_data:
+                    self.create_tt_status_logic(prenatal_form, tt_statuses_data, patient)
                     print(f"Created {len(tt_statuses_data)} TT status records.")
 
                 # create LaboratoryResult and LaboratoryResultImg records
@@ -1038,18 +1113,22 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         # Add IDs of related objects for confirmation
         if instance.pregnancy_id:
             representation['pregnancy_id'] = instance.pregnancy_id.pregnancy_id
+
         if instance.vital_id:
             representation['vital_id'] = instance.vital_id.vital_id
+
         if instance.spouse_id:
             representation['spouse_id'] = instance.spouse_id.spouse_id
+
         if instance.bm_id:
             representation['bm_id'] = instance.bm_id.bm_id
+
         if instance.followv_id:
             representation['followv_id'] = instance.followv_id.followv_id
+
         if instance.staff_id:
             representation['staff_id'] = instance.staff_id.staff_id
         
-        # New fields for representation
         if hasattr(instance, 'pf_obstetric_risk_code') and instance.pf_obstetric_risk_code.exists():
             representation['obstetric_risk_code_id'] = instance.pf_obstetric_risk_code.first().pforc_id
         else:
@@ -1058,10 +1137,10 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         representation['prenatal_care_count'] = instance.pf_prenatal_care.count()
 
 
-        # You might want to add counts or IDs for nested lists if needed for response
-        representation['previous_hospitalizations_count'] = instance.pf_previous_hospitalization.count()
-        representation['tt_statuses_count'] = instance.tt_status.count()
-        representation['lab_results_count'] = instance.lab_result.count()
+        # # You might want to add counts or IDs for nested lists if needed for response
+        # representation['previous_hospitalizations_count'] = instance.pf_previous_hospitalization.count()
+        # representation['tt_statuses_count'] = instance.tt_status.count()
+        # representation['lab_results_count'] = instance.lab_result.count()
 
         return representation
 
@@ -1085,7 +1164,6 @@ class PrenatalPatientObstetricalHistorySerializer(serializers.ModelSerializer):
             return None
 
 
-# Renamed from PrenatalFormSerializer to PrenatalDetailViewSerializer for clarity
 class PrenatalDetailViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
@@ -1121,9 +1199,6 @@ class PostpartumAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostpartumAssessment
         fields = ['ppa_date_of_visit', 'ppa_feeding', 'ppa_findings', 'ppa_nurses_notes']
-
-
-
 
 
 class PostpartumCompleteSerializer(serializers.ModelSerializer):
@@ -1268,9 +1343,6 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
 
 
     def handle_spouse_logic(self, patient, spouse_data):
-        """
-        Handle spouse creation logic using your existing business rules
-        """
         if not spouse_data:
             return None
         
