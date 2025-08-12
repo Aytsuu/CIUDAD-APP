@@ -3,6 +3,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { useState } from "react";
 import { useUpdateWasteReport } from "./queries/waste-ReportUpdateQueries";
+import { Loader2 } from "lucide-react";
 
 interface WasteReportResolvedProps{
     rep_id: number
@@ -15,7 +16,7 @@ function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportRes
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
 
-    const { mutate: updateRep } = useUpdateWasteReport(rep_id, onSuccess);
+    const { mutate: updateRep, isPending } = useUpdateWasteReport(rep_id, onSuccess);
 
 
     const handleMarkAsResolved = () => {
@@ -52,9 +53,16 @@ function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportRes
                 <ConfirmationModal
                     trigger={
                         <Button 
-                            disabled={is_resolve}
+                            disabled={is_resolve || isPending} // Disable during loading
                         >
-                            Submit
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Submitting...
+                                </>
+                            ) : (
+                                "Submit"
+                            )}
                         </Button>
                     }
                     title="Mark as resolved"
