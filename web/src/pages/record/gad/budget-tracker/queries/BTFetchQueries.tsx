@@ -22,11 +22,11 @@ const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
       ? Array.isArray(entry.gbud_exp_particulars) 
         ? entry.gbud_exp_particulars 
         : undefined
-      : undefined
+      : undefined,
+    files: entry.files || [],
   };
 };
 
-// React Query hooks
 export const useGADBudgets = (year?: string) => {
     return useQuery({
         queryKey: ['gad-budgets', year],

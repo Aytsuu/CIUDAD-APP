@@ -66,55 +66,27 @@ class GAD_Budget_YearView(generics.ListCreateAPIView):
     serializer_class = GADBudgetYearSerializer
 
 class GADBudgetFileView(generics.ListCreateAPIView):
+    serializer_class = GADBudgetFileSerializer
+    queryset = GAD_Budget_File.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        gbud_num = request.data.get('gbud_num')
+        if not gbud_num:
+            return Response({"error": "gbud_num is required"}, status=400)
+
+        files = request.data.get('files', [])
+
+        if not files:
+            return Response({"status": "No files uploaded"}, status=201)
+
+        serializer = self.get_serializer()
+        serializer._upload_files(files, gbud_num=gbud_num)
+        return Response({"status": "Files uploaded successfully"}, status=201)
+
+class GADBudgetFileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_File.objects.all()
     serializer_class = GADBudgetFileSerializer
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['request'] = self.request
-        return context
-
-    def perform_create(self, serializer):
-        gbud_num = self.request.data.get('gbud')
-        try:
-            budget_tracker = GAD_Budget_Tracker.objects.get(gbud_num=gbud_num)
-            serializer.save(gbud=budget_tracker)
-        except GAD_Budget_Tracker.DoesNotExist:
-            raise serializers.ValidationError("Invalid budget tracker ID")
     
-    def delete(self, request, *args, **kwargs):
-        gbf_ids = request.data.get('gbf_ids', [])
-        gbud_num = request.data.get('gbud_num')
-        
-        if not gbf_ids:
-            return Response({"detail": "No file IDs provided"}, status=400)
-
-        try:
-            # Verify files belong to the specified budget entry
-            files_to_delete = GAD_Budget_File.objects.filter(
-                gbf_id__in=gbf_ids,
-                gbud__gbud_num=gbud_num
-            )
-            
-            # Delete files from storage first
-            for file in files_to_delete:
-                if file.gbf_path:  # If using storage like S3 or local
-                    default_storage.delete(file.gbf_path)
-            
-            # Then delete DB records
-            count = files_to_delete.delete()[0]
-            
-            return Response({
-                "detail": f"Successfully deleted {count} files",
-                "deleted_ids": gbf_ids
-            }, status=200)
-            
-        except Exception as e:
-            return Response({
-                "detail": f"Error deleting files: {str(e)}",
-                "error": True
-            }, status=400)
-
 class GADBudgetLogListView(generics.ListCreateAPIView):
     def get(self, request, year):
         logs = GADBudgetLog.objects.filter(
@@ -126,10 +98,6 @@ class GADBudgetLogListView(generics.ListCreateAPIView):
         
         serializer = GADBudgetLogSerializer(logs, many=True)
         return Response({"data": serializer.data})
-
-class GADBudgetFileDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = GAD_Budget_File.objects.all()
-    serializer_class = GADBudgetFileSerializer
 
 class ProjectProposalView(generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer
@@ -275,26 +243,23 @@ class UpdateProposalStatusView(generics.GenericAPIView):
 class ProposalSuppDocCreateView(generics.ListCreateAPIView):
     serializer_class = ProposalSuppDocSerializer
     queryset = ProposalSuppDoc.objects.all()
-    
+
     def get_queryset(self):
         return self.queryset.filter(gpr_id=self.kwargs['proposal_id'])
-    
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        try:
-            context['proposal'] = ProjectProposal.objects.get(pk=self.kwargs['proposal_id'])
-        except ProjectProposal.DoesNotExist:
-            raise Response("Project proposal not found")
-        return context
 
-    def perform_create(self, serializer):
-        # Ensure gpr_id is set from URL parameter
-        serializer.save(gpr_id=self.kwargs['proposal_id'])
-    
-    def perform_destroy(self, instance):
-        """Soft delete by archiving"""
-        instance.psd_is_archive = True
-        instance.save() 
+    def create(self, request, *args, **kwargs):
+        gpr_id = self.kwargs.get('proposal_id') or request.data.get('gpr_id')
+        if not gpr_id:
+            return Response({"error": "gpr_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        files = request.data.get('files', [])
+        if not files:
+            return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer()
+        serializer._upload_files(files, gpr_id=gpr_id)
+
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
 
 class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProposalSuppDocSerializer

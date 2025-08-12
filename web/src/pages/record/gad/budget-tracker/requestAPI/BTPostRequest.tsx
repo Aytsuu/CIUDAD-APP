@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { MediaUploadType } from '@/components/ui/media-upload';
 import { GADBudgetCreatePayload } from "../budget-tracker-types";
 
 export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
@@ -7,27 +6,29 @@ export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
   return response.data;
 };
 
-export const createGADBudgetFile = async (media: MediaUploadType[number], gbud_num: number) => {
-  if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-    throw new Error('File upload incomplete: missing URL or path');
-  }
-
-  const formData = new FormData();
-  formData.append('file', media.file);
-  formData.append('gbud', gbud_num.toString());
-  formData.append('gbf_name', media.file.name);
-  formData.append('gbf_type', media.file.type || 'application/octet-stream');
-  formData.append('gbf_path', media.storagePath);
-  formData.append('gbf_url', media.publicUrl);
-
+export const createGADBudgetFile = async (gbud_num: number, files: Array<{ id: string; name: string; type: string; file?: string }>) => {
   try {
-    const response = await api.post('/gad/gad-budget-files/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    console.log('Received files in createGADBudgetFile:', files);
+
+    const payload = {
+      gbud_num,
+      files: files.map(file => ({
+        name: file.name,
+        type: file.type,
+        file: file.file
+      }))
+    };
+
+    if (files.length === 0) {
+      console.warn('No files provided. Skipping file upload.');
+      return { status: 'No files uploaded' };
+    }
+
+    const response = await api.post('/gad/gad-budget-files/', payload);
+    console.log('File upload response:', response.data);
     return response.data;
   } catch (error: any) {
+    console.error(`Failed to create file ${files[0]?.name || 'unknown'}:`, error);
     throw error;
   }
 };

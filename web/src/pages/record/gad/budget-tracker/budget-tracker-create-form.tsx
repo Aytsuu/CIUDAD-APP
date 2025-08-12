@@ -16,7 +16,9 @@ import {
 } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { useCreateGADBudget } from "./queries/BTAddQueries";
-import GADAddEntrySchema, {FormValues} from "@/form-schema/gad-budget-track-create-form-schema";
+import GADAddEntrySchema, {
+  FormValues,
+} from "@/form-schema/gad-budget-track-create-form-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { removeLeadingZeros } from "@/helpers/removeLeadingZeros";
@@ -24,8 +26,12 @@ import { removeLeadingZeros } from "@/helpers/removeLeadingZeros";
 function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   const { year } = useParams<{ year: string }>();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
-  const [selectedBudgetItems, setSelectedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
-  const [recordedBudgetItems, setRecordedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
+  const [selectedBudgetItems, setSelectedBudgetItems] = useState<
+    { name: string; pax: string; amount: number }[]
+  >([]);
+  const [recordedBudgetItems, setRecordedBudgetItems] = useState<
+    { name: string; pax: string; amount: number }[]
+  >([]);
   const {
     data: yearBudgets,
     isLoading: yearBudgetsLoading,
@@ -54,13 +60,13 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   const proposedBudget = removeLeadingZeros(
-  selectedBudgetItems
-    .filter(item => !recordedBudgetItems.some(r => r.name === item.name))
-    .reduce((sum, item) => {
-      const pax = parseInt(item.pax) || 1; // Default to 1 if pax is not a number
-      return sum + (item.amount * pax);
-    }, 0)
-);
+    selectedBudgetItems
+      .filter((item) => !recordedBudgetItems.some((r) => r.name === item.name))
+      .reduce((sum, item) => {
+        const pax = parseInt(item.pax) || 1; // Default to 1 if pax is not a number
+        return sum + item.amount * pax;
+      }, 0)
+  );
 
   // Form setup
   const form = useForm<FormValues>({
@@ -189,8 +195,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     });
   };
 
-  // Form submission
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     const inputDate = new Date(values.gbud_datetime);
     const inputYear = inputDate.getFullYear().toString();
 
@@ -225,6 +230,21 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       }
     }
 
+    const files = mediaFiles.map((media) => ({
+      id: media.id,
+      name: media.name,
+      type: media.type,
+      file: media.file, // Base64 string
+    }));
+
+    if (mediaFiles.length > 0 && files.every((file) => !file.file)) {
+      form.setError("root", {
+        type: "manual",
+        message: "At least one valid file is required for expense entries",
+      });
+      return;
+    }
+
     const budgetData = {
       gbud_type: values.gbud_type,
       gbud_datetime: new Date(values.gbud_datetime).toISOString(),
@@ -246,18 +266,19 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       gbudy: values.gbudy,
     };
 
-    createBudget(
-      { budgetData, files: mediaFiles },
-      {
-        onSuccess: () => {
-          refetchYearBudgets();
-          onSuccess?.();
-        },
-        onError: (error) => {
-          console.error("Create Budget Failed:", error);
-        },
-      }
-    );
+    try {
+      await createBudget(
+        { budgetData, files },
+        {
+          onSuccess: () => {
+            refetchYearBudgets();
+            onSuccess?.();
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Submission error:", error);
+    }
   };
 
   const hasUnrecordedItems = () => {
@@ -417,7 +438,9 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                 {(recordedBudgetItems.length > 0 ||
                   selectedBudgetItems.length > 0) && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-black/70">Budget Items</label>
+                    <label className="text-sm font-medium text-black/70">
+                      Budget Items
+                    </label>
                     <div className="border rounded p-4">
                       {selectedBudgetItems.map((item, index) => {
                         const isRecorded = recordedBudgetItems.some(
@@ -495,9 +518,13 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                     title="Supporting Documents"
                     description="Upload proof of transaction"
                     mediaFiles={mediaFiles}
-                    setMediaFiles={setMediaFiles}
+                    setMediaFiles={(newFiles) => {
+                      setMediaFiles(newFiles);
+                    }}
                     activeVideoId={activeVideoId}
                     setActiveVideoId={setActiveVideoId}
+                    acceptableFiles="all"
+                    maxFiles={5}
                   />
                   {currentYearBudget && (
                     <div className="p-4 border rounded bg-gray-50">

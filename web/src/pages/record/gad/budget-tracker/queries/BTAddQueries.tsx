@@ -6,10 +6,10 @@ import { createGADBudget, createGADBudgetFile } from "../requestAPI/BTPostReques
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { BudgetYear, BudgetEntry, GADBudgetCreatePayload } from "../budget-tracker-types";
 
-export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: BudgetEntry[]) => {
+export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: BudgetEntry[]) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  
+
   return useMutation({
     mutationFn: async (data: {
       budgetData: GADBudgetCreatePayload;
@@ -33,25 +33,24 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
 
       // Create budget entry
       const budgetEntry = await createGADBudget(data.budgetData);
-      
-      // Validate and create files
+
+      // Create files in parallel
       if (data.files.length > 0) {
-        const validFiles = data.files.filter(
-          (media) =>
-            media.status === "uploaded" &&
-            media.publicUrl &&
-            media.storagePath &&
-            media.file?.name &&
-            media.file?.type
-        );
-        if (validFiles.length === 0) {
-          throw new Error("No valid files have finished uploading");
-        }
         await Promise.all(
-          validFiles.map((file) => createGADBudgetFile(file, budgetEntry.gbud_num))
+          data.files.map(file =>
+            createGADBudgetFile(budgetEntry.gbud_num, [{
+              id: file.id,
+              name: file.name,
+              type: file.type,
+              file: file.file
+            }]).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
+            })
+          )
         );
       }
-      
+
       return budgetEntry;
     },
     onSuccess: (data, variables) => {
@@ -59,11 +58,14 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
       queryClient.invalidateQueries({
         queryKey: ['gad-budgets', year],
       });
-      
+      queryClient.invalidateQueries({
+        queryKey: ['gad-budget-files', data.gbud_num],
+      });
+
       toast.success('Budget entry created successfully', {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
       });
-      
+
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
     },
     onError: (error: any) => {

@@ -133,225 +133,235 @@ function BudgetTracker() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-  
-const getLatestRemainingBalance = (): number => {
-  // If no entries, return the initial budget
-  if (!budgetEntries || budgetEntries.length === 0) {
-    return currentYearBudget ? Number(currentYearBudget) : 0;
-  }
 
-  // Filter active (unarchived) entries
-  const activeEntries = budgetEntries.filter((entry) => !entry.gbud_is_archive);
-
-  // If no active entries, return initial budget
-  if (activeEntries.length === 0) {
-    return currentYearBudget ? Number(currentYearBudget) : 0;
-  }
-
-  // Calculate balance from scratch using only gbud_actual_expense
-  let balance = currentYearBudget ? Number(currentYearBudget) : 0;
-
-  activeEntries.forEach((entry) => {
-    if (entry.gbud_type === "Expense" && entry.gbud_actual_expense !== null) {
-      const amount = Number(entry.gbud_actual_expense) || 0;
-      balance -= amount;
+  const getLatestRemainingBalance = (): number => {
+    // If no entries, return the initial budget
+    if (!budgetEntries || budgetEntries.length === 0) {
+      return currentYearBudget ? Number(currentYearBudget) : 0;
     }
-  });
 
-  return balance;
-};
+    // Filter active (unarchived) entries
+    const activeEntries = budgetEntries.filter(
+      (entry) => !entry.gbud_is_archive
+    );
 
-const columns: ColumnDef<GADBudgetEntry>[] = [
-  {
-    accessorKey: "gbud_datetime",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Date & Time
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="">
-        {new Date(row.getValue("gbud_datetime")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "gbud_type",
-    header: "Type",
-  },
-  {
-    id: "particulars",
-    header: "Particular",
-    cell: ({ row }) => {
-      const { gbud_inc_particulars, gbud_exp_particulars, gbud_type } = row.original;
-      let displayParticulars = "";
-      if (gbud_type === "Income") {
-        displayParticulars = gbud_inc_particulars || "N/A";
-      } else if (gbud_type === "Expense" && Array.isArray(gbud_exp_particulars)) {
-        displayParticulars = gbud_exp_particulars
-          .map((item: { name: string; pax: string; amount: number }) => item.name)
-          .join(", ") || "No items";
+    // If no active entries, return initial budget
+    if (activeEntries.length === 0) {
+      return currentYearBudget ? Number(currentYearBudget) : 0;
+    }
+
+    // Calculate balance from scratch using only gbud_actual_expense
+    let balance = currentYearBudget ? Number(currentYearBudget) : 0;
+
+    activeEntries.forEach((entry) => {
+      if (entry.gbud_type === "Expense" && entry.gbud_actual_expense !== null) {
+        const amount = Number(entry.gbud_actual_expense) || 0;
+        balance -= amount;
       }
-      return <div>{displayParticulars}</div>;
-    },
-  },
-  {
-    accessorKey: "gbud_amount",
-    header: "Amount",
-    cell: ({ row }) => {
-      const {
-        gbud_type,
-        gbud_inc_amt,
-        gbud_actual_expense,
-        gbud_proposed_budget,
-      } = row.original;
-      const num = (val: any) =>
-        val !== undefined && val !== null ? +val : undefined;
+    });
 
-      let amount: number = 0;
+    return balance;
+  };
 
-      if (gbud_type === "Income") {
-        amount = num(gbud_inc_amt) ?? 0;
-      } else {
-        const actual = num(gbud_actual_expense);
-        const proposed = num(gbud_proposed_budget);
-        amount = actual && actual > 0 ? actual : proposed ?? 0;
-      }
-      return <div>Php {amount.toFixed(2)}</div>;
-    },
-  },
-  {
-    accessorKey: "files",
-    header: "Supporting Docs",
-    cell: ({ row }) => {
-      const entry = row.original;
-      const files = entry.files || [];
-      const hasReferenceNum = !!entry.gbud_reference_num;
-      const hasFiles = files.length > 0;
-
-      return (
-        <div className="flex justify-center gap-2">
-          {entry.gbud_type === "Expense" &&
-          (!hasReferenceNum || !hasFiles) ? (
-            <span className="text-red-500">
-              Missing
-              {!hasReferenceNum && " Reference Number"}
-              {!hasReferenceNum && !hasFiles && " and"}
-              {!hasFiles && " Supporting Docs"}
-            </span>
-          ) : files.length > 0 ? (
-            <div
-              className="text-sky-500 underline cursor-pointer"
-              onClick={() => {
-                setSelectedRowFiles(files);
-                setIsSuppDocDialogOpen(true);
-              }}
-            >
-              View All Docs ({files.length})
-            </div>
-          ) : (
-            <span>No docs</span>
-          )}
+  const columns: ColumnDef<GADBudgetEntry>[] = [
+    {
+      accessorKey: "gbud_datetime",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date & Time
+          <ArrowUpDown size={14} />
         </div>
-      );
+      ),
+      cell: ({ row }) => (
+        <div className="">
+          {new Date(row.getValue("gbud_datetime")).toLocaleString()}
+        </div>
+      ),
     },
-  },
-  {
-    id: "action",
-    header: "Action",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-1">
-        <TooltipLayout
-          trigger={
-            <DialogLayout
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Eye size={16} />
-                </div>
-              }
-              className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-              title="Entry Details"
-              description="View detailed information about this budget entry."
-              mainContent={
-                <div className="w-full h-full">
-                  <GADEditEntryForm
-                    gbud_num={row.original.gbud_num!}
-                    onSaveSuccess={refetch}
-                  />
-                </div>
-              }
-            />
-          }
-          content="View"
-        />
-        <TooltipLayout
-          trigger={
-            <ConfirmationModal
-              trigger={
-                <Button variant="destructive">
-                  <Archive size={16} />
-                </Button>
-              }
-              title="Archive Entry"
-              description="This will move the entry to archive. Continue?"
-              actionLabel="Archive"
-              onClick={() => handleArchive(row.original.gbud_num!)}
-            />
-          }
-          content="Archive"
-        />
-      </div>
-    ),
-  },
-];
+    {
+      accessorKey: "gbud_type",
+      header: "Type",
+    },
+    {
+      id: "particulars",
+      header: "Particular",
+      cell: ({ row }) => {
+        const { gbud_inc_particulars, gbud_exp_particulars, gbud_type } =
+          row.original;
+        let displayParticulars = "";
+        if (gbud_type === "Income") {
+          displayParticulars = gbud_inc_particulars || "N/A";
+        } else if (
+          gbud_type === "Expense" &&
+          Array.isArray(gbud_exp_particulars)
+        ) {
+          displayParticulars =
+            gbud_exp_particulars
+              .map(
+                (item: { name: string; pax: string; amount: number }) =>
+                  item.name
+              )
+              .join(", ") || "No items";
+        }
+        return <div>{displayParticulars}</div>;
+      },
+    },
+    {
+      accessorKey: "gbud_amount",
+      header: "Amount",
+      cell: ({ row }) => {
+        const {
+          gbud_type,
+          gbud_inc_amt,
+          gbud_actual_expense,
+          gbud_proposed_budget,
+        } = row.original;
+        const num = (val: any) =>
+          val !== undefined && val !== null ? +val : undefined;
+
+        let amount: number = 0;
+
+        if (gbud_type === "Income") {
+          amount = num(gbud_inc_amt) ?? 0;
+        } else {
+          const actual = num(gbud_actual_expense);
+          const proposed = num(gbud_proposed_budget);
+          amount = actual && actual > 0 ? actual : proposed ?? 0;
+        }
+        return <div>Php {amount.toFixed(2)}</div>;
+      },
+    },
+    {
+      accessorKey: "files",
+      header: "Supporting Docs",
+      cell: ({ row }) => {
+        const entry = row.original;
+        const files = entry.files || [];
+        const hasReferenceNum = !!entry.gbud_reference_num;
+        const hasFiles = files.length > 0;
+
+        return (
+          <div className="flex justify-center gap-2">
+            {entry.gbud_type === "Expense" &&
+            (!hasReferenceNum || !hasFiles) ? (
+              <span className="text-red-500">
+                Missing
+                {!hasReferenceNum && " Reference Number"}
+                {!hasReferenceNum && !hasFiles && " and"}
+                {!hasFiles && " Supporting Docs"}
+              </span>
+            ) : files.length > 0 ? (
+              <div
+                className="text-sky-500 underline cursor-pointer"
+                onClick={() => {
+                  setSelectedRowFiles(files);
+                  setIsSuppDocDialogOpen(true);
+                }}
+              >
+                View All Docs ({files.length})
+              </div>
+            ) : (
+              <span>No docs</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-1">
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                    <Eye size={16} />
+                  </div>
+                }
+                className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                title="Entry Details"
+                description="View detailed information about this budget entry."
+                mainContent={
+                  <div className="w-full h-full">
+                    <GADEditEntryForm
+                      gbud_num={row.original.gbud_num!}
+                      onSaveSuccess={refetch}
+                    />
+                  </div>
+                }
+              />
+            }
+            content="View"
+          />
+          <TooltipLayout
+            trigger={
+              <ConfirmationModal
+                trigger={
+                  <Button variant="destructive">
+                    <Archive size={16} />
+                  </Button>
+                }
+                title="Archive Entry"
+                description="This will move the entry to archive. Continue?"
+                actionLabel="Archive"
+                onClick={() => handleArchive(row.original.gbud_num!)}
+              />
+            }
+            content="Archive"
+          />
+        </div>
+      ),
+    },
+  ];
 
   const archiveColumns: ColumnDef<GADBudgetEntry>[] = [
-  ...columns.filter((col) => col.id !== "action"),
-  {
-    id: "action",
-    header: "Action",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-1">
-        <TooltipLayout
-          trigger={
-            <ConfirmationModal
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <ArchiveRestore size={16} />
-                </div>
-              }
-              title="Restore Entry"
-              description="This will move the entry back to active. Continue?"
-              actionLabel="Restore"
-              onClick={() => handleRestore(row.original.gbud_num!)}
-            />
-          }
-          content="Restore"
-        />
-        <TooltipLayout
-          trigger={
-            <ConfirmationModal
-              trigger={
-                <Button variant="destructive">
-                  <Trash size={16} />
-                </Button>
-              }
-              title="Permanently Delete"
-              description="This cannot be undone. The entry will be permanently deleted."
-              actionLabel="Delete"
-              onClick={() => handlePermanentDelete(row.original.gbud_num!)}
-            />
-          }
-          content="Delete Permanently"
-        />
-      </div>
-    ),
-  },
-];
+    ...columns.filter((col) => col.id !== "action"),
+    {
+      id: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-1">
+          <TooltipLayout
+            trigger={
+              <ConfirmationModal
+                trigger={
+                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                    <ArchiveRestore size={16} />
+                  </div>
+                }
+                title="Restore Entry"
+                description="This will move the entry back to active. Continue?"
+                actionLabel="Restore"
+                onClick={() => handleRestore(row.original.gbud_num!)}
+              />
+            }
+            content="Restore"
+          />
+          <TooltipLayout
+            trigger={
+              <ConfirmationModal
+                trigger={
+                  <Button variant="destructive">
+                    <Trash size={16} />
+                  </Button>
+                }
+                title="Permanently Delete"
+                description="This cannot be undone. The entry will be permanently deleted."
+                actionLabel="Delete"
+                onClick={() => handlePermanentDelete(row.original.gbud_num!)}
+              />
+            }
+            content="Delete Permanently"
+          />
+        </div>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -477,11 +487,11 @@ const columns: ColumnDef<GADBudgetEntry>[] = [
               }}
             />
           </div>
-           <Link to={`/gad-budget-log/${gbudy_year}`}>
-              <Button variant="link" className="mr-1 w-20 underline text-sky-600">
-                View Logs
-              </Button>
-            </Link>
+          <Link to={`/gad-budget-log/${gbudy_year}`}>
+            <Button variant="link" className="mr-1 w-20 underline text-sky-600">
+              View Logs
+            </Button>
+          </Link>
         </div>
         <div>
           <DialogLayout
@@ -580,33 +590,53 @@ const columns: ColumnDef<GADBudgetEntry>[] = [
         mainContent={
           <div className="flex-1 overflow-y-auto space-y-6">
             {selectedRowFiles && selectedRowFiles.length > 0 ? (
-              selectedRowFiles.map((file, index) => (
-                <div key={file.gbf_id} className="flex flex-col items-center">
-                  {file.gbf_type?.startsWith("image/") && file.gbf_url ? (
-                    <img
-                      src={file.gbf_url}
-                      alt={file.gbf_name || `Document ${index + 1}`}
-                      className="max-h-[70vh] max-w-full object-contain mx-auto"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "/placeholder-image.png";
-                      }}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg text-center">
-                      <p className="mt-2 text-sm text-gray-600">
-                        {file.gbf_name || "No file name"}
-                      </p>
-                      <p className="mt-2 text-sm text-red-500">
-                        Image preview not available
-                      </p>
-                    </div>
-                  )}
-                  <p className="mt-2 text-sm text-gray-500">
-                    {file.gbf_name || `Document ${index + 1}`}
-                  </p>
-                </div>
-              ))
+              selectedRowFiles.map((file, index) => {
+                // Infer type and name if missing
+                const inferredType =
+                  file.gbf_url?.includes(".jpg") ||
+                  file.gbf_url?.includes(".jpeg")
+                    ? "image/jpeg"
+                    : file.gbf_url?.includes(".png")
+                    ? "image/png"
+                    : "application/octet-stream";
+                const inferredName =
+                  file.gbf_url?.split("/").pop() || `Document ${index + 1}`;
+
+                return (
+                  <div key={file.gbf_id} className="flex flex-col items-center">
+                    {(inferredType.startsWith("image/") || !file.gbf_type) &&
+                    file.gbf_url ? (
+                      <img
+                        src={file.gbf_url}
+                        alt={file.gbf_name || inferredName}
+                        className="max-h-[70vh] max-w-full object-contain mx-auto"
+                        onError={(e) => {
+                          console.error("Image load failed:", {
+                            url: file.gbf_url,
+                            inferredType,
+                            inferredName,
+                          });
+                          (e.target as HTMLImageElement).src =
+                            "/placeholder-image.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg text-center">
+                        <p className="mt-2 text-sm text-gray-600">
+                          {file.gbf_name || inferredName}
+                        </p>
+                        <p className="mt-2 text-sm text-red-500">
+                          Image preview not available (Type:{" "}
+                          {file.gbf_type || inferredType})
+                        </p>
+                      </div>
+                    )}
+                    <p className="mt-2 text-sm text-gray-500">
+                      {file.gbf_name || inferredName}
+                    </p>
+                  </div>
+                );
+              })
             ) : (
               <p className="text-gray-500 text-center py-8">
                 No supporting documents available.

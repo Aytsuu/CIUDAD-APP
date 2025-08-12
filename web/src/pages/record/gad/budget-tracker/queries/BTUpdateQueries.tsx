@@ -3,8 +3,8 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { updateGADBudget, createGADBudgetFile } from "../requestAPI/BTPutRequest";
-import { MediaUploadType } from "@/components/ui/media-upload";
 import { deleteGADBudgetFiles } from "../requestAPI/BTDelRequest";
+import { api } from "@/api/api";
 import { BudgetYear, GADBudgetUpdatePayload } from "../budget-tracker-types";
 
 export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
@@ -15,36 +15,29 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
     mutationFn: async (data: {
       gbud_num: number;
       budgetData: Record<string, any>;
-      files: MediaUploadType;
+      files: Array<{ id: string; name: string; type: string; file: string | File }>;
       filesToDelete: string[];
-      remainingBalance: number; // Add remainingBalance
+      remainingBalance: number;
     }) => {
-      // Validate remaining balance for Expense
+      // Validate remaining balance (existing logic)
       if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
         const currentYearBudget = yearBudgets.find(
           (b) => b.gbudy_year === new Date(data.budgetData.gbud_datetime).getFullYear().toString()
         );
-        if (!currentYearBudget) {
-          throw new Error("No budget found for the selected year");
-        }
-        const remainingBalance = data.remainingBalance; // Use passed remainingBalance
+        if (!currentYearBudget) throw new Error("No budget found for the selected year");
+        const remainingBalance = data.remainingBalance;
         if (data.budgetData.gbud_actual_expense > remainingBalance) {
-          throw new Error(
-            `Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`
-          );
+          throw new Error(`Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`);
         }
-        // Validate gbud_remaining_bal if provided
         if (data.budgetData.gbud_remaining_bal !== undefined) {
           const expectedRemaining = remainingBalance - data.budgetData.gbud_actual_expense;
           if (Math.abs(data.budgetData.gbud_remaining_bal - expectedRemaining) > 0.01) {
-            throw new Error(
-              `Remaining balance mismatch: expected ₱${expectedRemaining.toLocaleString()}, got ₱${data.budgetData.gbud_remaining_bal.toLocaleString()}`
-            );
+            throw new Error(`Remaining balance mismatch: expected ₱${expectedRemaining.toLocaleString()}, got ₱${data.budgetData.gbud_remaining_bal.toLocaleString()}`);
           }
         }
       }
 
-      // Delete removed files
+      // // Delete removed files
       if (data.filesToDelete.length > 0) {
         await deleteGADBudgetFiles(data.filesToDelete, data.gbud_num);
       }
@@ -55,25 +48,17 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
         data.budgetData as GADBudgetUpdatePayload
       );
 
-      // Validate and create new files
-      if (data.files.length > 0) {
-        const validFiles = data.files.filter(
-          (media) =>
-            media.status === "uploaded" &&
-            media.publicUrl &&
-            media.storagePath &&
-            media.file?.name &&
-            media.file?.type &&
-            !media.id?.startsWith("receipt-")
-        );
-        if (validFiles.length > 0) {
-          await Promise.all(
-            validFiles.map((file) => createGADBudgetFile(file, data.gbud_num))
-          );
-        }
+      // Fetch current files and sync
+      const currentFilesRes = await api.get(`/gad/gad-budget-tracker-entry/${data.gbud_num}/`);
+      const currentFiles = currentFilesRes.data.files || [];
+
+      // Add new files
+      const newFiles = data.files.filter(file => !file.id.startsWith('existing-'));
+      if (newFiles.length > 0) {
+        await createGADBudgetFile(data.gbud_num, newFiles);
       }
 
-      return budgetEntryResponse;
+      return { ...budgetEntryResponse, files: currentFiles };
     },
     onSuccess: (_data, variables) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
@@ -88,11 +73,9 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
     },
     onError: (error: any, _variables) => {
-  console.error('Error response:', error.response?.data);
-  const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
-  toast.error('Failed to update budget entry', {
-    description: errorMessage,
-  });
-},
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
+      toast.error('Failed to update budget entry', { description: errorMessage });
+    },
   });
 };
