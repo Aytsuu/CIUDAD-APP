@@ -1,29 +1,3 @@
-// import {api} from "@/api/api";
-// import { formatDate } from '@/helpers/dateFormatter';
-
-// export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
-
-//     try{
-//         console.log({
-//             rep_status: wasteReportInfo.rep_status,
-//             rep_resolved_img: wasteReportInfo.rep_resolved_img,
-//             rep_date_resolved: formatDate(new Date().toISOString().split('T')[0]),
-//         })
-
-//         const res = await api.put(`waste/update-waste-report/${rep_id}/`,{
-//             rep_status: wasteReportInfo.rep_status,
-//             rep_resolved_img: wasteReportInfo.rep_resolved_img,
-//             rep_date_resolved: formatDate(new Date().toISOString().split('T')[0]),
-//         })
-
-//         return res.data;
-//     }
-//     catch (err){
-//         console.error(err);
-//     }
-// }
-
-
 import { api } from "@/api/api";
 
 export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
@@ -51,31 +25,29 @@ export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<
 
 
 
-
-interface UploadResolvedImageParams {
+export const uploadResolvedImage = async (data: {
   rep_id: number;
-  wrsf_name: string;
-  wrsf_type: string;
-  wrsf_path: string;
-  wrsf_url: string;
+  file_data: {
+    name: string;
+    type: string;
+    file: any;
+  };
+}) => {
+  try {
+    // Create the payload that matches your serializer's _upload_files method
+    const payload = {
+      rep_id: data.rep_id,
+      files: [{
+        name: data.file_data.name,
+        type: data.file_data.type,
+        file: data.file_data.file // The actual file object
+      }]
+    };
+
+    const res = await api.post('waste/waste-rep-rslv-file/', payload);
+    return res.data;
+  } catch (err) {
+    console.error(`Failed to create file ${data.file_data.name}:`, err);
+    throw err;
+  }
 }
-
-export const uploadResolvedImage = async (params: UploadResolvedImageParams) => {
-
-    console.log("NI SUD SA QUERY: ",{
-        rep_id: params.rep_id,
-        wrsf_name: params.wrsf_name,
-        wrsf_type: params.wrsf_type,
-        wrsf_path: params.wrsf_path,
-        wrsf_url: params.wrsf_url,
-    })
-
-  const response = await api.post('waste/waste-rep-rslv-file/', {
-    rep_id: params.rep_id,
-    wrsf_name: params.wrsf_name,
-    wrsf_type: params.wrsf_type,
-    wrsf_path: params.wrsf_path,
-    wrsf_url: params.wrsf_url,
-  });
-  return response.data;
-};

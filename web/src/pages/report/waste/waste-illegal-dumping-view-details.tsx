@@ -125,7 +125,7 @@ function WasteIllegalDumpingDetails({
           {waste_report_file.length > 0 && (
             <div className="w-full relative">
               <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700 z-10">
-                Report Evidence ({currentImageIndex + 1}/{waste_report_file.length})
+                Proof of Report ({currentImageIndex + 1}/{waste_report_file.length})
               </span>
               
               <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2 relative">
@@ -167,7 +167,7 @@ function WasteIllegalDumpingDetails({
           {waste_report_rslv_file.length > 0 && (
             <div className="w-full relative">
               <span className="absolute top-2 left-2 bg-white bg-opacity-80 px-2 text-sm font-medium text-gray-700 z-10">
-                Resolution Evidence ({currentImageResIndex + 1}/{waste_report_rslv_file.length})
+                Proof of Completion ({currentImageResIndex + 1}/{waste_report_rslv_file.length})
               </span>
               
               <div className="w-full aspect-video bg-gray-100 rounded-md overflow-hidden mt-2 relative">
@@ -274,7 +274,7 @@ function WasteIllegalDumpingDetails({
                 className="max-w-[30%] h-[340px] flex flex-col overflow-auto"
                 title="Proof of Resolution"
                 description="Please provide an image"
-mainContent={<WasteReportResolved rep_id={rep_id} is_resolve={isResolved} onSuccess={() => setIsDialogOpen(false)}/>}
+                mainContent={<WasteReportResolved rep_id={rep_id} is_resolve={isResolved} onSuccess={() => setIsDialogOpen(false)}/>}
               />
             </div>
           </div>

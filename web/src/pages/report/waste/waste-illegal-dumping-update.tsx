@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUpdateWasteReport } from "./queries/waste-ReportUpdateQueries";
 
 interface WasteReportResolvedProps{
@@ -10,46 +10,27 @@ interface WasteReportResolvedProps{
     onSuccess?: () => void;
 }
 
-interface ResolvedImage {
-    name: string;
-    type: string;
-    path: string;
-    url: string;
-}
-
 function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportResolvedProps){
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const [resolvedImages, setResolvedImages] = useState<ResolvedImage[]>([]);
 
 
     const { mutate: updateRep } = useUpdateWasteReport(rep_id, onSuccess);
 
-    // Update form when media files change
-    useEffect(() => {
-        if (mediaFiles.length > 0) {
-            const validImages = mediaFiles
-                .filter(file => file.publicUrl)
-                .map(file => ({
-                    name: file.file?.name || '',
-                    type: file.file?.type || '',
-                    path: file.storagePath || '',
-                    url: file.publicUrl || ''
-                }));
-            
-            setResolvedImages(validImages);
-        } else {
-            setResolvedImages([]);
-        }
-    }, [mediaFiles]);
-
 
     const handleMarkAsResolved = () => {
+        const files = mediaFiles.map((media) => ({
+            'id': media.id,
+            'name': media.name,
+            'type': media.type,
+            'file': media.file
+        }))             
+
 
         // Prepare the update data
         const updateData = {
             rep_status: "resolved",
-            rep_resolved_img: resolvedImages 
+            files: files
         };
         
         updateRep(updateData);
