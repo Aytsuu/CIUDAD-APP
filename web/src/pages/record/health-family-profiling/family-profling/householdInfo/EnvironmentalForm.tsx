@@ -2,6 +2,7 @@ import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { FormInput } from "@/components/ui/form/form-input";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
@@ -33,6 +34,7 @@ export default function EnvironmentalForm({
   const selectedFacilityType = form.watch("environmentalForm.facilityType");
   const selectedWaterSupply = form.watch("environmentalForm.waterSupply");
   const selectedHouseholdId = form.watch("demographicInfo.householdNo");
+  const selectedWasteManagement = form.watch("environmentalForm.wasteManagement");
 
   React.useEffect(() => {
     // Clear the specific facility type when switching between sanitary/unsanitary
@@ -43,6 +45,13 @@ export default function EnvironmentalForm({
     }
     setFacilityType(selectedFacilityType);
   }, [selectedFacilityType, form]);
+
+  // Clear others field when waste management is not "others"
+  React.useEffect(() => {
+    if (selectedWasteManagement !== "others") {
+      form.setValue("environmentalForm.wasteManagementOthers", "");
+    }
+  }, [selectedWasteManagement, form]);
 
   // Debug logging
   React.useEffect(() => {
@@ -188,9 +197,19 @@ export default function EnvironmentalForm({
                 { id: "recycling", name: "Recyling/Reuse" },
                 { id: "collectedbycity", name: "Collected by City Collection and Disposal System" },
                 { id: "burning", name: "Burning/Burying" },
-                { id: "others", name: "Others.."}
+                { id: "others", name: "Others"}
               ]}
             />
+            
+            {/* Show "Others" input field when "others" is selected */}
+            {selectedWasteManagement === "others" && (
+              <FormInput
+                control={form.control}
+                name={`${prefix}.wasteManagementOthers`}
+                label="Please specify"
+                placeholder="Enter waste management type"
+              />
+            )}
           </div>
         </form>
       </Form>

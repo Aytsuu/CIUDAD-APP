@@ -109,25 +109,46 @@ export const personInfoSchema = z.object({
 
 export const environmentalFormSchema = z.object({
   waterSupply: z.string().min(1, "Water supply type is required"),
-  facilityType: z.string().min(1, "At least one sanitary facility must be selected"),
+  facilityType: z.string().min(1, "Facility type is required"),
   sanitaryFacilityType: z.string().optional(),
   unsanitaryFacilityType: z.string().optional(),
-  toiletFacilityType: z.string(),
-  wasteManagement: z.string().min(1, )
-
+  toiletFacilityType: z.string().min(1, "Toilet facility type is required"),
+  wasteManagement: z.string().min(1, "Waste management type is required"),
+  wasteManagementOthers: z.string().optional(), // For "others" option
 });
 
-export const ncdFormSchema = z.object({
-  riskClassAgeGroup: z.string(),
-  comorbidities: z.string(),
-  lifestyleRisk: z.string(),
-  inMaintenance: z.string(),
+// Base schemas for NCD and TB (optional by default)
+export const ncdFormBaseSchema = z.object({
+  riskClassAgeGroup: z.string().optional(),
+  comorbidities: z.string().optional(),
+  comorbiditiesOthers: z.string().optional(), // For "others" option
+  lifestyleRisk: z.string().optional(),
+  lifestyleRiskOthers: z.string().optional(), // For "others" option
+  inMaintenance: z.string().optional(),
 })
-export const tbSurveilanceSchema = z.object({
-  srcAntiTBmeds: z.string(),
-  noOfDaysTakingMeds: z.string(),
-  tbStatus: z.string(),
 
+export const tbSurveilanceBaseSchema = z.object({
+  srcAntiTBmeds: z.string().optional(),
+  srcAntiTBmedsOthers: z.string().optional(), // For "others" option
+  noOfDaysTakingMeds: z.string().optional(),
+  tbStatus: z.string().optional(),
+})
+
+// Required schemas when resident is selected
+export const ncdFormSchema = z.object({
+  riskClassAgeGroup: z.string().min(1, "Risk class age group is required"),
+  comorbidities: z.string().min(1, "Comorbidities is required"),
+  comorbiditiesOthers: z.string().optional(), // For "others" option
+  lifestyleRisk: z.string().min(1, "Lifestyle risk is required"),
+  lifestyleRiskOthers: z.string().optional(), // For "others" option
+  inMaintenance: z.string().min(1, "Maintenance status is required"),
+})
+
+export const tbSurveilanceSchema = z.object({
+  srcAntiTBmeds: z.string().min(1, "Source of anti-TB medication is required"),
+  srcAntiTBmedsOthers: z.string().optional(), // For "others" option
+  noOfDaysTakingMeds: z.string().min(1, "Number of days taking medication is required"),
+  tbStatus: z.string().min(1, "TB status is required"),
 })
 
 
@@ -156,7 +177,7 @@ export const familyFormSchema = z.object({
       ncdFormSchema: ncdFormSchema.optional()
     })).default([]),
     new: personInfoSchema.extend({
-      ncdFormSchema: ncdFormSchema.optional()
+      ncdFormSchema: ncdFormBaseSchema.optional()
     })
   }),
   tbRecords: z.object({
@@ -164,7 +185,7 @@ export const familyFormSchema = z.object({
       tbSurveilanceSchema: tbSurveilanceSchema.optional()
     })).default([]),
     new: personInfoSchema.extend({
-      tbSurveilanceSchema: tbSurveilanceSchema.optional()
+      tbSurveilanceSchema: tbSurveilanceBaseSchema.optional()
     })
   }),
 });

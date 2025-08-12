@@ -13,6 +13,7 @@ from .views.environmental_form_views import *
 from .views.ncd_views import *
 from .views.tb_views import *
 from .views.health_records_form_views import *
+from .views.family_health_profiling_views import *
 from .views.survey_views import *
 from .views.survey_form_views import *
 # from .views_deprecated import * # To be removed
@@ -128,6 +129,10 @@ urlpatterns = [
     # Combined Health Records Form URLs
     path("health-records/submit/", HealthRecordsFormSubmitView.as_view(), name="health-records-form-submit"),
     path("health-records/family/<str:fam_id>/", HealthRecordsByFamilyView.as_view(), name="health-records-by-family"),
+    
+    # Comprehensive Family Health Profiling Views
+    path("family-health-profiling/<str:fam_id>/", FamilyHealthProfilingDetailView.as_view(), name="family-health-profiling-detail"),
+    path("family-health-profiling/summary/all/", FamilyHealthProfilingSummaryView.as_view(), name="family-health-profiling-summary"),
 
     # Survey Identification URLs
     path("survey-identification/list/", SurveyIdentificationListView.as_view(), name="survey-identification-list"),

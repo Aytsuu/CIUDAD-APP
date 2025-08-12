@@ -8,12 +8,11 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Plus, Check } from "lucide-react";
 import { Card } from "@/components/ui/card/card";
+import { toast } from "sonner";
 
 export default function NonComDiseaseForm({
   residents,
   form,
-  selectedResidentId,
-  onSelect,
   prefix,
   title,
 }: {
@@ -25,6 +24,23 @@ export default function NonComDiseaseForm({
   title: string;
 }) {
   const [selectedMember, setSelectedMember] = React.useState<string>(""); // Changed to single selection
+  
+  // Watch for "others" selections
+  const selectedComorbidities = form.watch(`${prefix}.new.ncdFormSchema.comorbidities`);
+  const selectedLifestyleRisk = form.watch(`${prefix}.new.ncdFormSchema.lifestyleRisk`);
+  
+  // Clear "others" fields when selection changes
+  React.useEffect(() => {
+    if (selectedComorbidities !== "Others") {
+      form.setValue(`${prefix}.new.ncdFormSchema.comorbiditiesOthers`, "");
+    }
+  }, [selectedComorbidities, form, prefix]);
+
+  React.useEffect(() => {
+    if (selectedLifestyleRisk !== "Others") {
+      form.setValue(`${prefix}.new.ncdFormSchema.lifestyleRiskOthers`, "");
+    }
+  }, [selectedLifestyleRisk, form, prefix]);
   
   // Watch the current records list to filter out already added members
   const currentRecords = form.watch(`${prefix}.list`) || [];
@@ -125,7 +141,39 @@ export default function NonComDiseaseForm({
       return; // Don't add incomplete records
     }
     
-    append(newPatient);
+    // Validate NCD form fields when resident is selected
+    const ncdData = newPatient.ncdFormSchema;
+    if (!ncdData?.riskClassAgeGroup || !ncdData?.comorbidities || 
+        !ncdData?.lifestyleRisk || !ncdData?.inMaintenance) {
+      toast.error("Please fill all required NCD fields");
+      return;
+    }
+
+    // Validate "others" fields if "Others" is selected
+    if (ncdData.comorbidities === "Others" && !ncdData.comorbiditiesOthers?.trim()) {
+      toast.error("Please specify comorbidities");
+      return;
+    }
+
+    if (ncdData.lifestyleRisk === "Others" && !ncdData.lifestyleRiskOthers?.trim()) {
+      toast.error("Please specify lifestyle risk");
+      return;
+    }
+    
+    // Create properly typed patient object for the list
+    const patientForList = {
+      ...newPatient,
+      ncdFormSchema: {
+        riskClassAgeGroup: ncdData.riskClassAgeGroup,
+        comorbidities: ncdData.comorbidities,
+        comorbiditiesOthers: ncdData.comorbiditiesOthers || "",
+        lifestyleRisk: ncdData.lifestyleRisk,
+        lifestyleRiskOthers: ncdData.lifestyleRiskOthers || "",
+        inMaintenance: ncdData.inMaintenance
+      }
+    };
+    
+    append(patientForList);
     
     // Clear selection and reset form
     setSelectedMember("");
@@ -141,7 +189,9 @@ export default function NonComDiseaseForm({
       ncdFormSchema: {
         riskClassAgeGroup: "",
         comorbidities: "",
+        comorbiditiesOthers: "",
         lifestyleRisk: "",
+        lifestyleRiskOthers: "",
         inMaintenance: ""
       }
     });
@@ -264,8 +314,20 @@ export default function NonComDiseaseForm({
                 { id: "CKD", name: "Chronic Kidney Disease" },
                 { id: "Cancer", name: "Cancer" },
                 { id: "MHI", name: "Mental Health Illness" },
+                { id: "Others", name: "Others" },
               ]}
             />
+            
+            {/* Show "Others" input field when "Others" is selected for comorbidities */}
+            {selectedComorbidities === "Others" && (
+              <FormInput
+                control={form.control}
+                name={`${prefix}.new.ncdFormSchema.comorbiditiesOthers`}
+                label="Please specify comorbidities"
+                placeholder="Enter comorbidities"
+              />
+            )}
+            
             <FormSelect
               control={form.control}
               name={`${prefix}.new.ncdFormSchema.lifestyleRisk`}
@@ -277,6 +339,16 @@ export default function NonComDiseaseForm({
                 { id: "Others", name: "Others" },
               ]}
             />
+            
+            {/* Show "Others" input field when "Others" is selected for lifestyle risk */}
+            {selectedLifestyleRisk === "Others" && (
+              <FormInput
+                control={form.control}
+                name={`${prefix}.new.ncdFormSchema.lifestyleRiskOthers`}
+                label="Please specify lifestyle risk"
+                placeholder="Enter lifestyle risk"
+              />
+            )}
             <FormSelect
               control={form.control}
               name={`${prefix}.new.ncdFormSchema.inMaintenance`}

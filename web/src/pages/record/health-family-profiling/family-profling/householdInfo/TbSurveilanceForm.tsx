@@ -8,12 +8,11 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Plus, Check } from "lucide-react";
 import { Card } from "@/components/ui/card/card";
+import { toast } from "sonner";
 
 export default function TbSurveilanceForm({
   residents,
   form,
-  selectedResidentId,
-  onSelect,
   prefix,
   title,
 }: {
@@ -25,6 +24,16 @@ export default function TbSurveilanceForm({
   title: string;
 }) {
   const [selectedMember, setSelectedMember] = React.useState<string>(""); // Changed to single selection
+  
+  // Watch for "others" selection
+  const selectedSrcAntiTBmeds = form.watch(`${prefix}.new.tbSurveilanceSchema.srcAntiTBmeds`);
+  
+  // Clear "others" field when selection changes
+  React.useEffect(() => {
+    if (selectedSrcAntiTBmeds !== "Others") {
+      form.setValue(`${prefix}.new.tbSurveilanceSchema.srcAntiTBmedsOthers`, "");
+    }
+  }, [selectedSrcAntiTBmeds, form, prefix]);
   
   // Watch the current records list to filter out already added members
   const currentRecords = form.watch(`${prefix}.list`) || [];
@@ -161,7 +170,31 @@ export default function TbSurveilanceForm({
       return; // Don't add incomplete records
     }
     
-    append(newPatient);
+    // Validate TB form fields when resident is selected
+    const tbData = newPatient.tbSurveilanceSchema;
+    if (!tbData?.srcAntiTBmeds || !tbData?.noOfDaysTakingMeds || !tbData?.tbStatus) {
+      toast.error("Please fill all required TB surveillance fields");
+      return;
+    }
+
+    // Validate "others" field if "Others" is selected
+    if (tbData.srcAntiTBmeds === "Others" && !tbData.srcAntiTBmedsOthers?.trim()) {
+      toast.error("Please specify source of anti-TB medication");
+      return;
+    }
+    
+    // Create properly typed patient object for the list
+    const patientForList = {
+      ...newPatient,
+      tbSurveilanceSchema: {
+        srcAntiTBmeds: tbData.srcAntiTBmeds,
+        srcAntiTBmedsOthers: tbData.srcAntiTBmedsOthers || "",
+        noOfDaysTakingMeds: tbData.noOfDaysTakingMeds,
+        tbStatus: tbData.tbStatus
+      }
+    };
+    
+    append(patientForList);
     
     // Reset selection and form fields for new patient
     setSelectedMember("");
@@ -176,6 +209,7 @@ export default function TbSurveilanceForm({
       contact: '',
       tbSurveilanceSchema: {
         srcAntiTBmeds: "",
+        srcAntiTBmedsOthers: "",
         noOfDaysTakingMeds: "",
         tbStatus: ""
       }
@@ -273,9 +307,20 @@ export default function TbSurveilanceForm({
                 { id: "Private Clinic", name: "Private Clinic" },
                 { id: "Government", name: "Government Hospital" },
                 { id: "Private Hospital", name: "Private Hospital" },
-                { id: "Other", name: "Other" },
+                { id: "Others", name: "Others" },
               ]}
             />
+            
+            {/* Show "Others" input field when "Others" is selected */}
+            {selectedSrcAntiTBmeds === "Others" && (
+              <FormInput
+                control={form.control}
+                name={`${prefix}.new.tbSurveilanceSchema.srcAntiTBmedsOthers`}
+                label="Please specify source"
+                placeholder="Enter source of Anti TB Meds"
+              />
+            )}
+            
             <FormInput 
               control={form.control} 
               name={`${prefix}.new.tbSurveilanceSchema.noOfDaysTakingMeds`}
