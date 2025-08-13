@@ -217,7 +217,7 @@ function EmptyState() {
                     No Documents Yet
                 </h3>
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                    Upload supporting documents to keep track of your budget plan details.
+                    Upload supporting documents like receipts, invoices, or images to keep track of your budget plan details.
                 </p>
                 
                 {/* Features */}
@@ -228,7 +228,7 @@ function EmptyState() {
                     </div>
                     <div className="flex items-center justify-center">
                         <Eye className="h-4 w-4 mr-2 text-blue-500" />
-                        Easy preview
+                        Easy preview and download
                     </div>
                 </div>
             </div>

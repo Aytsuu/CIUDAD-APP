@@ -70,21 +70,14 @@ export const useAddBudgetPlanSuppDoc = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (files: Array<{
-            publicUrl: string;
-            storagePath: string;
-            type: "image" | "video" | "document";
-            name: string;
+        mutationFn: async (data: {
             plan_id: number;
+            file: { name: string; type: string; file: string | undefined}[];
             description: string;
-        }>) => {
-            if (files.length === 0) {
-                throw new Error('No files to upload');
-            }
-            return addBudgetPlanSuppDoc(files);
+        }) => {
+            return addBudgetPlanSuppDoc(data.plan_id, data.file, data.description);
         },
         onSuccess: () => {
-            toast.loading('Uploading documents...', { id: "uploadBudgetDocs" });
             queryClient.invalidateQueries({ queryKey: ['budgetPlanFiles'] });
             
             toast.success('Documents uploaded successfully!', {
