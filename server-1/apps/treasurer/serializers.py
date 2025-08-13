@@ -1,7 +1,11 @@
 from rest_framework import serializers
 from .models import *
 from apps.clerk.models import ClerkCertificate, Invoice
-from apps.profiling.models import ResidentProfile
+from django.utils import timezone
+from django.db import transaction
+from utils.supabase_client import upload_to_storage
+from apps.profiling.serializers.business_serializers import FileInputSerializer
+
 
 class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,10 +28,58 @@ class BudgetPlanSerializer(serializers.ModelSerializer):
         return Budget_Plan_DetailSerializer(obj.budget_detail.all(), many=True).data
     
 
-class BudgetPlanFileSerializer(serializers.ModelSerializer):
+class BudgetPlanFileCreateSerializer(serializers.ModelSerializer):
+    files = FileInputSerializer(write_only=True, required=False, many=True)
+
     class Meta:
         model = BudgetPlan_File
         fields = '__all__'
+        extra_kwargs={
+            'bpf_upload_date': {'read_only': True},
+            'bpf_url': {'read_only': True}
+        }
+
+    @transaction.atomic
+    def create(self, validated_data):   
+        files_data = validated_data.pop('files', [])
+        if not files_data:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        bpf_description = validated_data.pop('bpf_description', '')
+        plan_id = validated_data.pop('plan_id')
+        created_files = self._upload_files(bpf_description, files_data, plan_id)
+
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
+
+        return created_files[0]
+
+    def _upload_files(self, bpf_description, files_data, plan_id):
+        bpf_files = []
+        for file_data in files_data:
+            bpf_file = BudgetPlan_File(
+                bpf_name = file_data['name'],
+                bpf_type = file_data['type'],
+                bpf_path = file_data['name'],
+                bpf_description =bpf_description,
+                bpf_upload_date =timezone.now(),
+                plan_id= plan_id
+            )
+
+            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            bpf_file.bpf_url = url
+            bpf_files.append(bpf_file)
+
+        if bpf_files:
+            return BudgetPlan_File.objects.bulk_create(bpf_files)
+        return []
+    
+
+class BudgetPlanFileViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BudgetPlan_File
+        fields='__all__'
+
 
 class BudgetPlanHistorySerializer(serializers.ModelSerializer):
     class Meta: 

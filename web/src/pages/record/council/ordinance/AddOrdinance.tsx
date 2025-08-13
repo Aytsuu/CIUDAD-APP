@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 function AddOrdinancePage() {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [showDialog, setShowDialog] = useState(false);
+    const [_showDialog, _setShowDialog] = useState(false);
 
     const form = useForm<z.infer<typeof ordinanceFormSchema>>({
         resolver: zodResolver(ordinanceFormSchema),

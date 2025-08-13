@@ -49,10 +49,10 @@ function RatesPage2() {
 
     const personalAndOthersData = fetchedData.filter(row => row.pr_category === "Personal And Others")
 
-    const { filtered: filteredActive, paginated: paginatedActive, total: totalActive } =
+    const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive } =
         filterAndPaginate(personalAndOthersData.filter(row => !row.pr_is_archive), searchQueryActive, currentPageActive, pageSizeActive)
 
-    const { filtered: filteredHistory, paginated: paginatedHistory, total: totalHistory } =
+    const { filtered: _filteredHistory, paginated: paginatedHistory, total: totalHistory } =
         filterAndPaginate(personalAndOthersData, searchQueryHistory, currentPageHistory, pageSizeHistory)
 
     const activeColumns: ColumnDef<PurposeAndRate>[] = [
@@ -79,7 +79,6 @@ function RatesPage2() {
         {
             accessorKey: "action", header: "Action",
             cell: ({ row }) => {
-                const prId = row.original.pr_id
                 return (
                     <div className="flex justify-center gap-2">
                         <TooltipLayout

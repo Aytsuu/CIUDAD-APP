@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ArrowUpDown, Loader2 } from "lucide-react";
+import { Search, ArrowUpDown } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-import { DataTable } from "@/components/ui/table/data-table";
+// import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 // import AddBusinessDocument from "@/pages/record/clearances/CreateBusinessModal";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -172,7 +172,7 @@ function BusinessDocumentPage() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
+          {/* {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
             </div>
@@ -180,7 +180,7 @@ function BusinessDocumentPage() {
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
             <DataTable columns={columns} data={businessDocuments || []} onRowClick={handleRowClick} header={true} />
-          )}
+          )} */}
         </div>
       </div>
 

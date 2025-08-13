@@ -6,11 +6,11 @@ import { createAnnualDevPlan } from "./restful-api/annualPostAPI";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
-interface BudgetItem {
-  gdb_name: string;
-  gdb_pax: string;
-  gdb_price: string;
-}
+// interface BudgetItem {
+//   gdb_name: string;
+//   gdb_pax: string;
+//   gdb_price: string;
+// }
 
 export default function AnnualDevelopmentPlanCreate() {
   const navigate = useNavigate();

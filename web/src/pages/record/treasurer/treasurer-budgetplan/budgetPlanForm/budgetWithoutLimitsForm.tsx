@@ -15,14 +15,12 @@ const styles = {
 
 interface BudgetPlanWithoutLimitProps {
   form: UseFormReturn<z.infer<typeof BudgetPlanStep3Schema>>
-  updateFormData: (data: Partial<z.infer<typeof BudgetPlanStep3Schema>>) => void
   budgetLimit: number
   onPrevious: () => void
 }
 
 function CreateBudgetPlanWithoutLimits({
   form,
-  updateFormData,
   budgetLimit,
   onPrevious,
 }: BudgetPlanWithoutLimitProps) {
@@ -51,8 +49,8 @@ function CreateBudgetPlanWithoutLimits({
   ]
 
   const [total, setTotal] = useState(0)
-  const [balance, setBalance] = useState(0)
-  const [isOverLimit, setIsOverLimit] = useState(false)
+  const [_balance, setBalance] = useState(0)
+  const [_isOverLimit, setIsOverLimit] = useState(false)
   const budgetToast = useRef<string | number | null>(null)
 
   const { watch } = form

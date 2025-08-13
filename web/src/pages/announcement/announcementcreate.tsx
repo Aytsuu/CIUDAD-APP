@@ -37,13 +37,13 @@ import React from "react";
 import { postAnnouncementFile as postAnnouncementFileApi } from "./restful-api/announcementPostRequest";
 import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "../record/administration/queries/administrationFetchQueries";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 
 const AnnouncementCreate = () => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const { mutateAsync: postAnnouncement } = usePostAnnouncement();
   const { mutate: postAnnouncementRecipient } = usePostAnnouncementRecipient();
-  const { mutate: postAnnouncementFile } = postAnnouncementFileApi();
+  const { mutate: _postAnnouncementFile } = postAnnouncementFileApi();
 
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
@@ -112,24 +112,24 @@ const AnnouncementCreate = () => {
   recipients: positionRecipients,
 });
 
-const files = mediaFiles.map((media) => ({
-  af_name: media.file.name,
-  af_type: media.file.type,
-  af_path: media.storagePath,
-  af_url: media.publicUrl,
-  ann: createdAnnouncement?.ann_id,
-  staff: user?.staff?.staff_id
-}));
+// const files = mediaFiles.map((media) => ({
+//   af_name: media.file.name,
+//   af_type: media.file.type,
+//   af_path: media.storagePath,
+//   af_url: media.publicUrl,
+//   ann: createdAnnouncement?.ann_id,
+//   staff: user?.staff?.staff_id
+// }));
 
-postAnnouncementFile(files, {
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ["announcements"] });
-    await queryClient.invalidateQueries({ queryKey: ["recipients"] });
-  },
-  onError: (error) => {
-    console.error("File upload failed", error);
-  }
-});
+// postAnnouncementFile(files, {
+//   onSuccess: async () => {
+//     await queryClient.invalidateQueries({ queryKey: ["announcements"] });
+//     await queryClient.invalidateQueries({ queryKey: ["recipients"] });
+//   },
+//   onError: (error) => {
+//     console.error("File upload failed", error);
+//   }
+// });
 
     } catch (err) {
       console.error("Error during announcement creation:", err);
@@ -231,7 +231,7 @@ postAnnouncementFile(files, {
                     name="ann_start_at"
                     label=""
                     type="datetime-local"
-                    disabled={!["event", "urgent"].includes(annType)}
+                    // disabled={!["event", "urgent"].includes(annType)}
                   />
                 </div>
 
@@ -252,7 +252,7 @@ postAnnouncementFile(files, {
                     name="ann_end_at"
                     label=""
                     type="datetime-local"
-                    disabled={!["event", "urgent"].includes(annType)}
+                    // disabled={!["event", "urgent"].includes(annType)}
                   />
                 </div>
               </CardContent>

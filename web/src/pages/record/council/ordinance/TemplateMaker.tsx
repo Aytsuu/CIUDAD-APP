@@ -116,12 +116,12 @@ function TemplateMaker() {
         withSignature: false, // Remove signature requirement
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [headerMedia, setHeaderMedia] = useState<File | null>(null);
+    const [_headerMedia, setHeaderMedia] = useState<File | null>(null);
     const [showAISuggestions, setShowAISuggestions] = useState(false);
-    const [selectedSuggestion, setSelectedSuggestion] = useState<AISuggestion | null>(null);
-    const [showPDFPreview, setShowPDFPreview] = useState(false);
+    const [_selectedSuggestion, setSelectedSuggestion] = useState<AISuggestion | null>(null);
+    const [_showPDFPreview, _setShowPDFPreview] = useState(false);
 
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams, _setSearchParams] = useSearchParams();
     const templateId = searchParams.get('id');
 
     useEffect(() => {

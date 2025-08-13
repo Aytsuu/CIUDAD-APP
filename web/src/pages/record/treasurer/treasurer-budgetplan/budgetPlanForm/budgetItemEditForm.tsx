@@ -27,13 +27,32 @@ export default function BudgetItemEditForm({
 }) {
   const { mutate: updateItems, isPending } = useUpdateBudgetItem(onSuccess);
   
-    const fromOptions = [
-    ...(Number(balanceUnappropriated) !== 0 ? [{
+  // Source items (from) - exclude items with 0 amount (including unappropriated if 0)
+  const fromOptions = [
+    ...(Number(balanceUnappropriated) > 0 ? [{
       id: "unappropriated",
       name: "Balance Unappropriated",
       value: "unappropriated",
       amount: balanceUnappropriated,
     }] : []),
+    ...budgetItems
+      .filter(item => Number(item.dtl_proposed_budget) > 0)
+      .map((item) => ({
+        id: item.dtl_id?.toString() || "",
+        name: item.dtl_budget_item,
+        value: item.dtl_id?.toString() || "",
+        amount: item.dtl_proposed_budget,
+      }))
+  ];
+
+  // Destination items (to) - always include unappropriated regardless of amount
+  const toOptions = [
+    {
+      id: "unappropriated",
+      name: "Balance Unappropriated",
+      value: "unappropriated",
+      amount: balanceUnappropriated,
+    },
     ...budgetItems.map((item) => ({
       id: item.dtl_id?.toString() || "",
       name: item.dtl_budget_item,
@@ -41,13 +60,6 @@ export default function BudgetItemEditForm({
       amount: item.dtl_proposed_budget,
     }))
   ];
-
-  const toOptions = budgetItems.map((item) => ({
-    id: item.dtl_id?.toString() || "",
-    name: item.dtl_budget_item,
-    value: item.dtl_id?.toString() || "",
-    amount: item.dtl_proposed_budget,
-  }));
 
   const form = useForm<z.infer<typeof BudgetItemsSchema>>({
     resolver: zodResolver(BudgetItemsSchema),
@@ -69,7 +81,20 @@ export default function BudgetItemEditForm({
 
   const formValues = form.watch();
 
-  // Get all selected items except current row
+  const hasSameFromAndTo = () => {
+    return formValues.items.some(item => item.from && item.to && item.from === item.to);
+  };
+
+  const hasNegativeAvailableAmount = () => {
+    return formValues.items.some((item, _index) => {
+      const fromValue = item.from;
+      const amountValue = item.amount;
+      const fromAmount = fromValue ? Number(getAmountFromSelection(fromValue)) : 0;
+      const enteredAmount = Number.parseFloat(amountValue) || 0;
+      return (fromAmount - enteredAmount) < 0;
+    });
+  };
+
   const getSelectedItems = (currentIndex: number) => {
     return formValues.items
       .filter((_, idx) => idx !== currentIndex)
@@ -77,16 +102,21 @@ export default function BudgetItemEditForm({
       .filter(Boolean);
   };
 
-  // Get available from options for current row
   const getAvailableFromOptions = (currentIndex: number) => {
     const selectedItems = getSelectedItems(currentIndex);
-    return fromOptions.filter((option) => !selectedItems.includes(option.value));
+    return fromOptions.map((option) => ({
+      ...option,
+      disabled: selectedItems.includes(option.value)
+    }));
   };
 
-  // Get available to options for current row
   const getAvailableToOptions = (currentIndex: number) => {
     const selectedItems = getSelectedItems(currentIndex);
-    return toOptions.filter((option) => !selectedItems.includes(option.value));
+    return toOptions.map((option) => ({
+      ...option,
+      disabled: selectedItems.includes(option.value) || 
+               formValues.items[currentIndex]?.from === option.value
+    }));
   };
 
   useEffect(() => {
@@ -95,7 +125,6 @@ export default function BudgetItemEditForm({
       const toValue = formValues.items?.[index]?.to;
       const amountValue = formValues.items?.[index]?.amount;
 
-      // Validate same item selection
       if (fromValue && toValue && fromValue === toValue) {
         form.setError(`items.${index}.to`, {
           type: "manual",
@@ -105,7 +134,6 @@ export default function BudgetItemEditForm({
         form.clearErrors(`items.${index}.to`);
       }
 
-      // Validate amount
       if (fromValue && amountValue) {
         const fromAmount = getAmountFromSelection(fromValue);
         const enteredAmount = Number.parseFloat(amountValue) || 0;
@@ -127,11 +155,28 @@ export default function BudgetItemEditForm({
       if (!item.from || !item.to || !item.amount) return [];
 
       const amount = Number.parseFloat(item.amount) || 0;
-      const toItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.to);
+      
+      if (item.to === "unappropriated") {
+        const fromItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.from);
+        if (!fromItem?.dtl_id) return [];
 
-      if (!toItem?.dtl_id) return [];
-
+        return [
+          {
+            dtl_id: fromItem.dtl_id,
+            dtl_proposed_budget: Number(fromItem.dtl_proposed_budget) - amount,
+          },
+          {
+            dtl_id: -1,   
+            dtl_proposed_budget: Number(balanceUnappropriated) + amount,
+            plan_budgetaryObligations: Number(budgetaryObligations) - amount,
+          },
+        ];
+      }
+      
       if (item.from === "unappropriated") {
+        const toItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.to);
+        if (!toItem?.dtl_id) return [];
+
         return [
           {
             dtl_id: toItem.dtl_id,
@@ -143,36 +188,53 @@ export default function BudgetItemEditForm({
             plan_budgetaryObligations: Number(budgetaryObligations) + amount,
           },
         ];
-      } else {
-        const fromItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.from);
-        if (!fromItem?.dtl_id) return [];
-
-        return [
-          {
-            dtl_id: fromItem.dtl_id,
-            dtl_proposed_budget: Number(fromItem.dtl_proposed_budget) - amount,
-          },
-          {
-            dtl_id: toItem.dtl_id,
-            dtl_proposed_budget: Number(toItem.dtl_proposed_budget) + amount,
-          },
-        ];
       }
+      
+      const fromItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.from);
+      const toItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.to);
+      if (!fromItem?.dtl_id || !toItem?.dtl_id) return [];
+
+      return [
+        {
+          dtl_id: fromItem.dtl_id,
+          dtl_proposed_budget: Number(fromItem.dtl_proposed_budget) - amount,
+        },
+        {
+          dtl_id: toItem.dtl_id,
+          dtl_proposed_budget: Number(toItem.dtl_proposed_budget) + amount,
+        },
+      ];
     });
 
     const historyRecords = data.items.flatMap((item) => {
       if (!item.from || !item.to || !item.amount) return [];
 
       const amount = Number.parseFloat(item.amount) || 0;
-      const toItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.to);
 
+      if (item.to === "unappropriated") {
+        const fromItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.from);
+        if (!fromItem) return [];
+
+        return {
+          bph_source_item: fromItem.dtl_budget_item,
+          bph_to_item: "Balance Unappropriated",
+          bph_from_new_balance: Number(fromItem.dtl_proposed_budget) - amount,
+          bph_to_new_balance: Number(balanceUnappropriated) + amount,
+          bph_to_prev_balance: balanceUnappropriated,
+          bph_from_prev_balance: Number(fromItem.dtl_proposed_budget),
+          bph_transfer_amount: amount,
+          plan: planId,
+        };
+      }
+
+      const toItem = budgetItems.find((bi) => bi.dtl_id?.toString() === item.to);
       if (!toItem) return [];
 
       if (item.from === "unappropriated") {
         return {
           bph_source_item: "Balance Unappropriated",
           bph_to_item: toItem.dtl_budget_item,
-          bph_from_new_balance: balanceUnappropriated - amount,
+          bph_from_new_balance: Number(balanceUnappropriated) - amount,
           bph_to_new_balance: Number(toItem.dtl_proposed_budget) + amount,
           bph_to_prev_balance: Number(toItem.dtl_proposed_budget),
           bph_from_prev_balance: balanceUnappropriated,
@@ -252,16 +314,21 @@ export default function BudgetItemEditForm({
             {fields.map((field, index) => {
               const toValue = formValues.items?.[index]?.to;
               const amountValue = formValues.items?.[index]?.amount;
+              const fromValue = formValues.items?.[index]?.from;
               const toAmount = toValue ? Number(getAmountFromSelection(toValue)) : 0;
               const enteredAmount = Number.parseFloat(amountValue) || 0;
               const updatedToValue = toAmount + enteredAmount;
               const availableAmount = calculateAvailableAmount(index);
               const hasError = form.formState.errors.items?.[index]?.amount;
+              const isAmountInputDisabled = !fromValue || !toValue;
+              const hasSameValues = fromValue && toValue && fromValue === toValue;
 
               return (
                 <div
                   key={field.id}
-                  className="grid grid-cols-12 gap-4 items-center p-2 rounded-lg hover:bg-gray-50"
+                  className={`grid grid-cols-12 gap-4 items-center p-2 rounded-lg hover:bg-gray-50 ${
+                    Number(availableAmount) < 0 || hasSameValues ? "bg-red-50" : ""
+                  }`}
                 >
                   <div className="col-span-3">
                     <Controller
@@ -280,6 +347,7 @@ export default function BudgetItemEditForm({
                               <SelectItem
                                 key={option.value}
                                 value={option.value}
+                                disabled={option.disabled}
                               >
                                 {option.name}
                               </SelectItem>
@@ -317,9 +385,7 @@ export default function BudgetItemEditForm({
                               <SelectItem
                                 key={option.value}
                                 value={option.value}
-                                disabled={
-                                  formValues.items[index]?.from === option.value
-                                }
+                                disabled={option.disabled}
                               >
                                 {option.name}
                               </SelectItem>
@@ -341,6 +407,7 @@ export default function BudgetItemEditForm({
                       name={`items.${index}.amount`}
                       placeholder="0.00"
                       type="number"
+                      readOnly={isAmountInputDisabled}
                     />
                     {hasError && (
                       <p className="text-xs text-red-600 mt-1">
@@ -375,7 +442,7 @@ export default function BudgetItemEditForm({
         <div className="flex justify-end mt-3 pt-2 border-t">
           <Button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || hasNegativeAvailableAmount() || hasSameFromAndTo()}
             onClick={form.handleSubmit(handleSubmit)}
           >
             {isPending ? "Updating..." : "Update"}
