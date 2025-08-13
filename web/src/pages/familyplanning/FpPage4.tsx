@@ -5,7 +5,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button/button"
 import { page4Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
-import { useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { formatDate } from "@/helpers/dateFormatter"
 

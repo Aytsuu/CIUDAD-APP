@@ -36,12 +36,11 @@ const FamilyPlanningHistoryPage: React.FC = () => {
     isLoading,
     isError,
     error,
-    refetch: refetchFPRecords,
+    // refetch: fetchCompleteRecord,
   } = useQuery<FPRecordDisplay[]>({
     queryKey: ["fpRecordsByPatient", patientId],
     queryFn: async () => {
       const records = await getFPRecordsForPatient(patientId!);
-      // Map IndividualFPRecordDetail[] to FPRecordDisplay[]
       return records.map((rec: any) => ({
         fprecord_id: rec.fprecord_id,
         patient_name: rec.patient_name,

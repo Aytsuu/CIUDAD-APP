@@ -8,7 +8,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, Home, Loader2, Search, UserCog, Users } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { FPPatientsCount, getFPPatientsCounts, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
 import CardLayout from "@/components/ui/card/card-layout"
 import { useNavigate } from "react-router-dom"
@@ -36,14 +36,14 @@ interface FPRecord {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFilter, setSelectedFilter] = useState("all")
 
-  const queryClient = useQueryClient()
+  // const queryClient = useQueryClient()
 
   const {
     data: fpRecords = [],
     isLoading,
     isError,
     error,
-    refetch,
+    // refetch,
   } = useQuery<FPRecord[], Error>({
     queryKey: ["fpRecordsList"],
     queryFn: getFPRecordsList,
@@ -102,10 +102,6 @@ interface FPRecord {
     setCurrentPage(1)
   }
 
-  const handleRefresh = () => {
-    refetch() // Refetch FP records
-    queryClient.invalidateQueries({ queryKey: ["fpPatientCounts"] }); // Refetch counts
-  }
 
    const columns = useMemo<ColumnDef<FPRecord>[]>(
     () => [

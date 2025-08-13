@@ -958,21 +958,7 @@ def get_patient_details_data(request, patient_id):
         import traceback
         traceback.print_exc()
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-# @api_view(["GET"])
-# def get_patient_details(patient_id):
-#     try:
-#         fp_form_data = get_patient_details_data(patient_id)
-#         return Response(fp_form_data, status=status.HTTP_200_OK)
-#     except Patient.DoesNotExist:
-#         return Response(
-#             {"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND
-#         )
-#     except Exception as e:
-#         import traceback
-#         traceback.print_exc()
-#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 @api_view(["GET"])
 def get_latest_fp_record_for_patient(request, patient_id):
     try:
@@ -2816,9 +2802,9 @@ def get_all_fp_records_for_patient(request, patient_id):
 
             # Fetch and serialize FP_Service_Provision data
             try:
-                service_provision = FP_Service_Provision.objects.get(fprecord_id=record.fprecord_id)
-                record_data['service_provision'] = FPServiceProvisionSerializer(service_provision).data
-            except FP_Service_Provision.DoesNotExist:
+                service_provision = FP_Assessment_Record.objects.get(fprecord_id=record.fprecord_id)
+                record_data['service_provision'] = FPAssessmentSerializer(service_provision).data
+            except FP_Assessment_Record.DoesNotExist:
                 record_data['service_provision'] = {}
             
             # Fetch and serialize FP_Assessment_Record data

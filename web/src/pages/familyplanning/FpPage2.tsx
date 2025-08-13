@@ -151,12 +151,8 @@ export default function FamilyPlanningForm2({
 
   const onSubmit = async (data: FormData) => {
 
-  let customDisabilityIllnessId: number | null = null;
+  // let customDisabilityIllnessId: number | null = null;
   if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
-    // Instead of directly creating here, we'll pass the string to the backend.
-    // The backend will handle checking if it exists or creating it.
-    // We'll add a new field to the formData for this.
-    // For now, ensure the 'disability' checkbox is treated as selected if details are provided.
     const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
     if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
         selectedIllnesses.push(disabilityIllness.ill_id);

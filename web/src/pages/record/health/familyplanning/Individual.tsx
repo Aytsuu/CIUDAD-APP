@@ -16,9 +16,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 
 interface IndividualFPRecordDetail {
+  otherMethod: any;
   patient_id: any;
   fprecord: any;
-  otherMethod: any;
   patrec_id: any;
   client_id: string;
   patient_name: string;
@@ -284,7 +284,7 @@ const IndividualFamPlanningTable: React.FC = () => {
         header: "Method Used",
         cell: ({ row }) => {
           const method = row.original.method_used;
-          const otherMethod = row.original.other_method;
+          const otherMethod = row.original.otherMethod;
           return method === "Others" && otherMethod ? otherMethod : method || "N/A";
         },
       },
@@ -305,7 +305,7 @@ const IndividualFamPlanningTable: React.FC = () => {
         header: "Follow-up Status",
         cell: ({ row }) => {
           const date = row.original.dateOfFollowUp;
-          const { status, days } = getFollowUpStatus(date);
+          const { status, days } = getFollowUpStatus(date ?? "");
 
           if (!date || date === "N/A") {
             return <span className="text-gray-500">No Follow-up</span>;
