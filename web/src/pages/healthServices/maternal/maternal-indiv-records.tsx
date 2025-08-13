@@ -434,13 +434,24 @@ export default function MaternalIndivRecords() {
                       params : {
                         pregnancyData: selectedPatient, 
                         pregnancyId: pregnancyGroups.find(group => group.status === "Active")?.pregnancyId || null
-                      }}}
+                      }
+                    }}
                   >
                     Prenatal
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="/postpartumform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Postpartum</Link>
+                  <Link 
+                    to="/postpartumform" 
+                    state={{ 
+                      params : {
+                        pregnancyData: selectedPatient, 
+                        pregnancyId: pregnancyGroups.find(group => group.status === "Completed" || group.status === "Active")?.pregnancyId || null
+                      }
+                    }}
+                  >
+                    Postpartum
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

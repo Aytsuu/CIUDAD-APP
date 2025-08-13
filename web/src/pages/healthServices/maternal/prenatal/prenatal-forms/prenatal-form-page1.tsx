@@ -59,7 +59,33 @@ export default function PrenatalFormFirstPg({
   preselectedPatient?: Patient | null
   activePregnancyId?: string | null
 }) {
-  const { control, trigger, setValue, getValues, watch } = useFormContext<z.infer<typeof PrenatalFormSchema>>() // useFormContext to access the form methods
+
+
+  type previousIllness = {
+    prevIllness: string
+    prevIllnessYr?: number
+  }
+
+  type previousHospitalization = {
+    prevHospitalization: string
+    prevHospitalizationYr?: number
+  }
+
+  const { control, trigger, setValue, getValues, watch } = useFormContext<z.infer<typeof PrenatalFormSchema>>()
+  const [prevIllnessData, setPrevIllnessData] = useState<previousIllness[]>([])
+  const [prevHospitalizationData, setPrevHospitalizationData] = useState<previousHospitalization[]>([])
+  const [openRowId, setOpenRowId] = useState<string | null>(null)
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("")
+  const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
+
+   // patient data fetching
+  const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId) //medical history
+  const { data: prevHospData, isLoading: prevHospLoading, error: prevHospError } = usePrenatalPatientPrevHospitalization(selectedPatientId) //previous hospitalization
+  const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId) //obstetric history
+  const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId) //body measurement
+  const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId) //tt status
+  const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord && activePregnancyId ?  selectedPatientId : "") //latest prenatal record
+ 
 
   // This function will only be called by form.handleSubmit if validation passes
   const handleNext = async () => {
@@ -102,32 +128,7 @@ export default function PrenatalFormFirstPg({
       }
     }
   }
-  
-  type previousIllness = {
-    prevIllness: string
-    prevIllnessYr?: number
-  }
-
-  type previousHospitalization = {
-    prevHospitalization: string
-    prevHospitalizationYr?: number
-  }
-
-  
-  const [prevIllnessData, setPrevIllnessData] = useState<previousIllness[]>([])
-  const [prevHospitalizationData, setPrevHospitalizationData] = useState<previousHospitalization[]>([])
-  const [openRowId, setOpenRowId] = useState<string | null>(null) // open row id
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("")
-  const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
-
-   // patient data fetching
-  const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId)
-  const { data: prevHospData, isLoading: prevHospLoading, error: prevHospError } = usePrenatalPatientPrevHospitalization(selectedPatientId)
-  const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId)
-  const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId)
-  const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord && activePregnancyId ?  selectedPatientId : "")
-  const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId)
-
+ 
 
   // populate with the preselected patient if available
   useEffect(() => {
@@ -141,7 +142,6 @@ export default function PrenatalFormFirstPg({
       handlePatientSelection(preselectedPatient, preselectedPatient.pat_id)
     }
   }, [isFromIndividualRecord, preselectedPatient, activePregnancyId])
-
 
   // use to populate form with latest prenatal data if available 
   useEffect(() => { 
@@ -204,57 +204,14 @@ export default function PrenatalFormFirstPg({
           setValue("pregnancyPlan.planPlaceOfDel", birthPlan.place_of_delivery_plan)
           setValue("pregnancyPlan.planNewbornScreening", birthPlan.newborn_screening_plan)
         }
-
-        // prenatal care 
-        // if(latestPF.prenatal_care_entries && latestPF.prenatal_care_entries.length > 0) {
-        //   const transformedPrenatalCare = latestPF.prenatal_care_entries.map((entry: any) => ({
-        //     date: entry.pfpc_date || "",
-        //     aog: {
-        //       aogWeeks: entry.pfpc_aog_wks || undefined,
-        //       aogDays: entry.pfpc_aog_days || undefined
-        //     },
-        //     wt: entry.pfpc_weight || undefined,
-        //     bp: {
-        //       systolic: entry.pfpc_bp_systolic || undefined,
-        //       diastolic: entry.pfpc_bp_diastolic || undefined
-        //     },
-        //     leopoldsFindings: {
-        //       fundalHeight: entry.pfpc_fundal_height || "",
-        //       fetalHeartRate: entry.pfpc_fetal_heart_rate || "",
-        //       fetalPosition: entry.pfpc_fetal_position || ""
-        //     },
-        //     notes: {
-        //       complaints: entry.pfpc_complaints || "",
-        //       advises: entry.pfpc_advises || ""
-        //     }
-        // }))
-        
-        //   setValue("prenatalCare", transformedPrenatalCare)
-          
-        // } else {
-        //   setValue("prenatalCare", [])
-        // }
       }
     }
   })
 
-  useEffect(() => {
-    const ttStatus = ttStatusData?.tt_status
-    if (ttStatus && !ttStatusLoading && ttStatus?.length > 0) {
-      const ttRecords = ttStatus?.map((tt: any) => ({
-        ttStatus: tt.tts_status,
-        ttDateGiven: tt.tts_date_given,
-        isTDAPAdministered: tt.tts_tdap === true ? true : false,
-        // vaccineType: tt.vaccine_type,
-      }))
-      setValue("prenatalVaccineInfo.ttRecordsHistory", ttRecords)
-    } else {
-      setValue("prenatalVaccineInfo.ttRecordsHistory", [])
-    }
-  }, [ttStatusData, form])
 
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
+    console.log("Selected Patient ID:", patientId)
 
     if (!patient) {
       setSelectedPatientId("")
@@ -492,7 +449,8 @@ export default function PrenatalFormFirstPg({
     }
   }, [bodyMeasurementData, bmLoading, setValue])
 
-// ph date and ph time 
+
+  // ph date and ph time //
   const created_at = bodyMeasurementData?.body_measurement?.created_at
   const date = new Date(created_at)
 
@@ -509,7 +467,8 @@ export default function PrenatalFormFirstPg({
     second: "2-digit",
     hour12: true,
   })
-// ///////////////////////////////////////////////////////////////
+  // end of ph date and ph time //
+
 
   // obstetric history fetching
   useEffect(() => {
@@ -615,7 +574,23 @@ export default function PrenatalFormFirstPg({
     }))
   }
 
+  // tt status data fetching
+  useEffect(() => {
+      const ttStatus = ttStatusData?.tt_status
+      if (ttStatus && !ttStatusLoading && ttStatus?.length > 0) {
+        const ttRecords = ttStatus?.map((tt: any) => ({
+          ttStatus: tt.tts_status,
+          ttDateGiven: tt.tts_date_given,
+          isTDAPAdministered: tt.tts_tdap === true ? true : false,
+          // vaccineType: tt.vaccine_type,
+        }))
+        setValue("prenatalVaccineInfo.ttRecordsHistory", ttRecords)
+      } else {
+        setValue("prenatalVaccineInfo.ttRecordsHistory", [])
+      }
+    }, [ttStatusData, form])
 
+  // illness column definition
   const illnessColumn: ColumnDef<previousIllness>[] = [
     {
       accessorKey: "prevIllness",
@@ -639,7 +614,7 @@ export default function PrenatalFormFirstPg({
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => {
-        const isDialogOpen = openRowId === row.original.prevIllness // Check if this row's dialog is open
+        const isDialogOpen = openRowId === row.original.prevIllness // check if this row's dialog is open
 
         return (
           <div className="flex justify-center">

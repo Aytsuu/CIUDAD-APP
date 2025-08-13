@@ -376,18 +376,17 @@ def get_latest_patient_prenatal_record(request, pat_id):
 
 @api_view(['GET'])
 def get_latest_patient_postpartum_records(request, pat_id):
-    """Get all postpartum records for a specific patient"""
+    """ Get all postpartum records for a specific patient """
     try:
         patient = Patient.objects.get(pat_id=pat_id)
         
-        # Get the latest postpartum record (without checking pregnancy status)
         latest_record = PostpartumRecord.objects.filter(
             patrec_id__pat_id=patient
         ).select_related(
-            'patrec_id', 'vital_id', 'spouse_id', 'followv_id'
+            'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'pregnancy_id'
         ).prefetch_related(
             'postpartum_delivery_record', 'postpartum_assessment'
-        ).order_by('-created_at').first()  # Get the most recent record
+        ).order_by('-created_at').first()
 
         if not latest_record:
             return Response({
@@ -723,7 +722,6 @@ def get_prenatal_records_with_care(request, pat_id):
 def get_prenatal_form_complete(request, pf_id):
     """Get complete prenatal form data by prenatal form ID"""
     try:
-        # Get the prenatal form with all related data - fixed select_related
         prenatal_form = Prenatal_Form.objects.select_related(
             'patrec_id__pat_id__rp_id__per',
             'patrec_id__pat_id__trans_id', 

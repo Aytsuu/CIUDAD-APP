@@ -5,8 +5,7 @@ import { FormProvider } from "react-hook-form"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useNavigate } from "react-router"
-import { useLocation } from "react-router"
+import { useNavigate, useLocation } from "react-router"
 
 import { type Patient } from "@/components/ui/patientSearch"
 
@@ -32,6 +31,7 @@ export default function PrenatalForm() {
   const [isFromIndividualRecord, setIsFromIndividualRecord] = useState(false)
   const [preselectedPatient, setPreselectedPatient] = useState<Patient | null>(null)
   const [activePregnancyId, setActivePregnancyId] = useState<string | null>(null)
+
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -45,9 +45,7 @@ export default function PrenatalForm() {
         setIsFromIndividualRecord(true)
         setPreselectedPatient(pregnancyData)
         setActivePregnancyId(pregnancyId)
-        
-        console.log("Coming from individual record:", pregnancyData)
-        console.log("Active pregnancy ID:", pregnancyId)
+
       } else {
         setIsFromIndividualRecord(false)
         setPreselectedPatient(null)
@@ -64,7 +62,7 @@ export default function PrenatalForm() {
   const transformData = (data: z.infer<typeof PrenatalFormSchema>): PrenatalRecord => {
     const toNullIfEmpty = (value: string | null | undefined) => (value === "" ? null : value)
 
-    // Helper to check if an object has any non-empty/non-null values
+    // helper to check if an object has any non-empty/non-null values
     const hasMeaningfulData = (obj: any) => {
       if (!obj) return false
       for (const key in obj) {
@@ -92,17 +90,17 @@ export default function PrenatalForm() {
           spouse_mname: data.motherPersonalInfo.husbandMName || "",
           spouse_lname: data.motherPersonalInfo.husbandLName || "",
           spouse_dob: toNullIfEmpty(data.motherPersonalInfo.husbandDob) ?? null,
-          spouse_occupation: data.motherPersonalInfo.occupation || "N/A", // Use mother's occupation if husband's is not available
+          spouse_occupation: data.motherPersonalInfo.occupation || "N/A", // use mother's occupation if husband's is not available
         }
       : undefined
 
     const previousPregnancyData = hasMeaningfulData(data.previousPregnancy)
       ? {
           date_of_delivery: toNullIfEmpty(data.previousPregnancy.dateOfDelivery) ?? null,
-          outcome: data.previousPregnancy.outcome || null, // Ensure null if empty
-          type_of_delivery: data.previousPregnancy.typeOfDelivery || null, // Ensure null if empty
+          outcome: data.previousPregnancy.outcome || null, 
+          type_of_delivery: data.previousPregnancy.typeOfDelivery || null,
           babys_wt: data.previousPregnancy.babysWt ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
-          gender: data.previousPregnancy.gender || null, // Ensure null if empty
+          gender: data.previousPregnancy.gender || null,
           ballard_score: data.previousPregnancy.ballardScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
           apgar_score: data.previousPregnancy.apgarScore ? parseFloat(data.previousPregnancy.apgarScore.toString()) : null,
         }

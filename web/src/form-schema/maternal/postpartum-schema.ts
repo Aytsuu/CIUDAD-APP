@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const PostPartumSchema = z.object({
+    pregnancy_id: z.string().optional(),
     mothersPersonalInfo: z.object({
         familyNo: z.string().optional(),
         motherLName: z.string().min(1, 'Last name is required'),

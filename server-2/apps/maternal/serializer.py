@@ -1565,10 +1565,10 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(error_msg)
 
     def to_representation(self, instance):
-        # Get the base representation but exclude the nested fields that don't exist on the instance
+        # get the base representation but exclude the nested fields that don't exist on the instance
         representation = super().to_representation(instance)
         
-        # Only include fields that actually exist on the PostpartumRecord instance
+        # only include fields that actually exist on the PostpartumRecord instance
         for field_name, field in self.fields.items():
             if field_name in ['delivery_record', 'assessments', 'spouse_data', 
 				'vital_bp_systolic', 'vital_bp_diastolic', 
@@ -1594,10 +1594,8 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         else:
             representation['pregnancy'] = None
         
-        # Add the created patrec_id to the response
         representation['patrec_id'] = instance.patrec_id.patrec_id if instance.patrec_id else None
         
-        # Add delivery records using the correct related name
         try:
             delivery_records = instance.postpartum_delivery_record.all()
             representation['delivery_records'] = PostpartumDeliveryRecordSerializer(
@@ -1635,6 +1633,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 'spouse_lname': instance.spouse_id.spouse_lname,
                 'spouse_fname': instance.spouse_id.spouse_fname,
                 'spouse_mname': instance.spouse_id.spouse_mname,
+                'spouse_dob': instance.spouse_id.spouse_dob,
                 'spouse_occupation': instance.spouse_id.spouse_occupation
             }
         else:
