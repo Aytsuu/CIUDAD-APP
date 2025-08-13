@@ -1,4 +1,3 @@
-"use client"
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button/button';
 import { Input } from '@/components/ui/input';
@@ -150,13 +149,13 @@ function TemplateMaker() {
         loadTemplate();
     }, [templateId]);
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setHeaderMedia(file);
-            setTemplateData(prev => ({ ...prev, headerMedia: file }));
-        }
-    };
+    // const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    //     const file = event.target.files?.[0];
+    //     if (file) {
+    //         setHeaderMedia(file);
+    //         setTemplateData(prev => ({ ...prev, headerMedia: file }));
+    //     }
+    // };
 
     const handleAISuggestion = (suggestion: AISuggestion) => {
         setSelectedSuggestion(suggestion);

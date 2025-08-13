@@ -9,7 +9,6 @@ import { minutesOfMeetingFormSchema } from '@/form-schema/council/minutesOfMeeti
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
-import { useEffect } from 'react';
 import { useInsertMinutesOfMeeting } from './queries/MOMInsertQueries';
 
 
