@@ -43,7 +43,7 @@ export default function MedicineRequestForm() {
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } =
+  const { mutateAsync: submitMedicineRequest } =
     useMedicineRequestMutation();
 
   // Initialize patient data based on mode

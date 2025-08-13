@@ -22,7 +22,7 @@ export type VaccineRecords = {
   }[];
 };
 export const VaccineColumns = (
-  setIsDialog: (isOpen: boolean) => void,
+  // setIsDialog: (isOpen: boolean) => void,
   setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>
 ): ColumnDef<VaccineRecords>[] => [

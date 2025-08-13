@@ -1,11 +1,10 @@
-import React from "react";
 import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
@@ -21,8 +20,8 @@ export default function MedicineList() {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
   const [medToDelete, setMedToDelete] = useState<string | null>(null);
-  const [isDialog, setIsDialog] = useState(false);
-  const queryClient = useQueryClient();
+  // const [isDialog, setIsDialog] = useState(false);
+  // const queryClient = useQueryClient();
   const columns = Medcolumns(
     setMedToDelete,
     setIsDeleteConfirmationOpen
