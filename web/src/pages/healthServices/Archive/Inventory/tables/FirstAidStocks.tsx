@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFirstAidStocks } from "../restful-api/getAPI"
 import { getColumns } from "../tables/columns/FirstAidCol";
@@ -58,14 +58,14 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 };
 
 export default function FirstAidStocks() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [firstAidToArchive, setFirstAidToArchive] = useState<string | null>(null);
-  const [isDialog, setIsDialog] = useState(false);
+  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
+  // const [firstAidToArchive, setFirstAidToArchive] = useState<string | null>(null);
+  // const [isDialog, setIsDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const { data: firstAidStocks, isLoading: isLoadingFirstAid } = useQuery({
     queryKey: ["firstaidinventorylist"],

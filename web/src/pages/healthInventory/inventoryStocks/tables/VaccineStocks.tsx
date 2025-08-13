@@ -101,7 +101,7 @@ export default function CombinedStockTable() {
 
       const availableStock = record.availableStock
       const expiryDate = record.expiryDate
-      const created_at=record.created_at
+      // const created_at=record.created_at
 
       const isItemExpired = isExpired(expiryDate)
       const isItemLowStock = isLowStock(availableStock) // Using the component's isLowStock
