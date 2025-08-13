@@ -59,11 +59,11 @@ class BudgetPlanHistoryView(generics.ListCreateAPIView):
 
         
 class BudgetPlanFileView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileCreateSerializer
     queryset = BudgetPlan_File.objects.all()
 
 class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileViewSerializer
 
     def get_queryset(self):
         plan_id = self.kwargs.get('plan_id')
@@ -105,7 +105,7 @@ class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
     
 class DeleteBudgetPlanFile(generics.RetrieveDestroyAPIView):
     queryset = BudgetPlan_File.objects.all()
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileViewSerializer
     lookup_field = 'bpf_id'
 
 class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):

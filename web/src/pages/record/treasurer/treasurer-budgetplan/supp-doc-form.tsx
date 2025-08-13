@@ -26,18 +26,18 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
         }
     })
 
-     useEffect(() => {
-        const uploadedFiles = mediaFiles
-            .filter(file => file.status === 'uploaded' && file.publicUrl && file.storagePath)
-            .map(file => ({
-                publicUrl: file.publicUrl!,
-                storagePath: file.storagePath!,
-                type: file.type,
-                name: file.file.name
-            }));
+    //  useEffect(() => {
+    //     const uploadedFiles = mediaFiles
+    //         .filter(file => file.status === 'uploaded' && file.publicUrl && file.storagePath)
+    //         .map(file => ({
+    //             publicUrl: file.publicUrl!,
+    //             storagePath: file.storagePath!,
+    //             type: file.type,
+    //             name: file.file.name
+    //         }));
         
-        form.setValue('files', uploadedFiles);
-    }, [mediaFiles, form]);
+    //     form.setValue('files', uploadedFiles);
+    // }, [mediaFiles, form]);
 
     const onSubmit = (values: z.infer<typeof BudgetPlanSuppDocSchema>) => {
         const payload = values.files.map(file => ({

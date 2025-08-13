@@ -6,20 +6,20 @@ import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { useForm } from "react-hook-form";
 import {z} from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAddSuppDoc } from "./queries/summonInsertQueries";
 
-export default function SummonSuppDocForm({ca_id, onSuccess}: {
-    ca_id: string;
+export default function SummonSuppDocForm({onSuccess}: {
+    // ca_id: string;
     onSuccess: () => void;
 }) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const {mutate: addDocs, isPending} = useAddSuppDoc(onSuccess);
+    const {mutate: _addDocs, isPending} = useAddSuppDoc(onSuccess);
 
     // Check if media is still uploading
-    const isMediaUploading = mediaFiles.some(file => file.status === 'uploading');
-    const isSubmitDisabled = isPending || isMediaUploading;
+    // const isMediaUploading = mediaFiles.some(file => file.status === 'uploading');
+    const isSubmitDisabled = isPending;
 
     const form = useForm<z.infer<typeof SummonSuppDocSchema>>({
         resolver: zodResolver(SummonSuppDocSchema),
@@ -29,25 +29,25 @@ export default function SummonSuppDocForm({ca_id, onSuccess}: {
         },
     });
 
-    useEffect(() => {
-        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-            form.setValue('supp_doc', mediaFiles[0].publicUrl);
-        } else {
-            form.setValue('supp_doc', '');
-        }
-    }, [mediaFiles, form]);
+    // useEffect(() => {
+    //     if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+    //         form.setValue('supp_doc', mediaFiles[0].publicUrl);
+    //     } else {
+    //         form.setValue('supp_doc', '');
+    //     }
+    // }, [mediaFiles, form]);
     
-    const onSubmit = (values: z.infer<typeof SummonSuppDocSchema>) => {
-        if (!mediaFiles[0]?.publicUrl) {
-            form.setError('supp_doc', {message: 'Please upload a document'});
-            return;
-        }
+    const onSubmit = (_values: z.infer<typeof SummonSuppDocSchema>) => {
+        // if (!mediaFiles[0]?.publicUrl) {
+        //     form.setError('supp_doc', {message: 'Please upload a document'});
+        //     return;
+        // }
 
-        addDocs({
-            ...values,
-            ca_id: ca_id,
-            media: mediaFiles[0]
-        });
+        // addDocs({
+        //     ...values,
+        //     ca_id: ca_id,
+        //     media: mediaFiles[0]
+        // });
     }
 
     return(

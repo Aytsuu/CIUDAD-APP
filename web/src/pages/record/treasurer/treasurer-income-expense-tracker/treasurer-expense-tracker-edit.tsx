@@ -676,12 +676,12 @@ interface IncomeandExpenseEditProps{
 
 
 
-function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_actual_amount, iet_additional_notes, iet_receipt_image, inv_num, year, files, onSuccess} : IncomeandExpenseEditProps) {    
+function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_actual_amount, iet_additional_notes, year, files, onSuccess} : IncomeandExpenseEditProps) {    
     
     const inputCss = "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
     const years = Number(year)
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [formValues, setFormValues] = useState<z.infer<typeof IncomeExpenseEditFormSchema>>();
+    const [_isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [_formValues, setFormValues] = useState<z.infer<typeof IncomeExpenseEditFormSchema>>();
 
     const [mediaFiles, setMediaFiles] = useState<any[]>(() => {
         return files?.map(file => ({
@@ -698,10 +698,10 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_en
 
 
 
-    const entrytypeSelector = [
-        { id: "0", name: "Income"},
-        { id: "1", name: "Expense"}
-    ];
+    // const entrytypeSelector = [
+    //     { id: "0", name: "Income"},
+    //     { id: "1", name: "Expense"}
+    // ];
 
 
     const { data: budgetItems = [] } = useBudgetItems(years);

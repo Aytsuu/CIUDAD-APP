@@ -50,7 +50,11 @@ export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
           }
           title="Add Supporting Document"
           description="Upload relevant photos to support this case activity."
-          mainContent={<SummonSuppDocForm ca_id={ca_id} onSuccess={() => setIsDialogOpen(false)} />}
+          mainContent={
+              <SummonSuppDocForm 
+                // ca_id={ca_id} 
+                onSuccess={() => setIsDialogOpen(false)} 
+              />}
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}
         />

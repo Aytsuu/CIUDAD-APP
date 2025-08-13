@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
-import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
+// import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
 import { minutesOfMeetingEditFormSchema } from '@/form-schema/council/minutesOfMeetingSchema';
 import { useUpdateMinutesOfMeeting } from './queries/MOMUpdateQueries';
@@ -23,20 +23,20 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
 }) {
 
 
-    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
-        return file_url ? [{
-            id: `existing-${file_id || 'default'}`,
-            type: 'document',
-            status: 'uploaded' as const,
-            publicUrl: file_url,
-            previewUrl: file_url,
-            storagePath: '',
-            file: new File([], file_url.split('/').pop() || 'document')
-        }] : [];
-    });
-    const [activeVideoId, setActiveVideoId] = useState<string>("");
+    // const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
+    //     return file_url ? [{
+    //         id: `existing-${file_id || 'default'}`,
+    //         type: 'document',
+    //         status: 'uploaded' as const,
+    //         publicUrl: file_url,
+    //         previewUrl: file_url,
+    //         storagePath: '',
+    //         file: new File([], file_url.split('/').pop() || 'document')
+    //     }] : [];
+    // });
+    const [_activeVideoId, _setActiveVideoId] = useState<string>("");
 
-    const{mutate: editMOM} = useUpdateMinutesOfMeeting(onSuccess);
+    const{mutate: _editMOM} = useUpdateMinutesOfMeeting(onSuccess);
     const form = useForm<z.infer<typeof minutesOfMeetingEditFormSchema>>({
         resolver: zodResolver(minutesOfMeetingEditFormSchema),
         defaultValues: {
@@ -59,18 +59,18 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingEditFormSchema>) => {
         console.log('Values:', values)
-        editMOM({
-            mom_id: Number(values.mom_id),
-            momf_id: Number(values.momf_id),
-            values: {
-                meetingTitle: values.meetingTitle,
-                meetingAgenda: values.meetingAgenda,
-                meetingDate: values.meetingDate,
-                meetingAreaOfFocus: values.meetingAreaOfFocus,
-                meetingFile: [], // submit empty because its not needed
-            },
-            mediaFiles
-        });
+        // editMOM({
+        //     mom_id: Number(values.mom_id),
+        //     momf_id: Number(values.momf_id),
+        //     values: {
+        //         meetingTitle: values.meetingTitle,
+        //         meetingAgenda: values.meetingAgenda,
+        //         meetingDate: values.meetingDate,
+        //         meetingAreaOfFocus: values.meetingAreaOfFocus,
+        //         meetingFile: [], // submit empty because its not needed
+        //     },
+        //     mediaFiles
+        // });
     };
 
 
@@ -107,14 +107,14 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
                         render={({ }) => (
                             <FormItem>
                                 <FormControl>
-                                    <MediaUpload
+                                    {/* <MediaUpload
                                         title="Meeting File"
                                         description="Upload meeting documentation"
                                         mediaFiles={mediaFiles}
                                         setMediaFiles={setMediaFiles}
                                         activeVideoId={activeVideoId}
                                         setActiveVideoId={setActiveVideoId}
-                                    />
+                                    /> */}
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

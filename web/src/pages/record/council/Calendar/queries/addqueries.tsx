@@ -9,7 +9,7 @@ export const useAddCouncilEvent = () => {
   
   return useMutation({
     mutationFn: (eventData: CouncilEventInput) => postCouncilEvent(eventData),
-    onSuccess: (ce_id) => {
+    onSuccess: (_ce_id) => {
       toast.success("Council event added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000
@@ -29,7 +29,7 @@ export const useAddAttendee = () => {
   
   return useMutation({
     mutationFn: (attendeeData: AttendeeInput) => postAttendee(attendeeData),
-    onSuccess: (atn_id) => {
+    onSuccess: (_atn_id) => {
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
     },
   });
@@ -40,7 +40,7 @@ export const useAddAttendanceSheet = () => {
 
   return useMutation({
     mutationFn: (attendanceData: AttendanceSheetInput) => postAttendanceSheet(attendanceData),
-    onSuccess: (att_id) => {
+    onSuccess: (_att_id) => {
       toast.success("Attendance sheet added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000

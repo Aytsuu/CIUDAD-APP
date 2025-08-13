@@ -193,7 +193,7 @@
 import React from "react";
 import { useGetUpcomingHotspots, type UpcomingHotspots } from "./waste-sidebar-analytics-query";
 // import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "./your-waste-collection-query-path";
-import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "@/pages/record/waste-scheduling/waste-colllection/queries/wasteColFetchQueries";
+import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "@/pages/record/waste-scheduling/waste-collection/queries/wasteColFetchQueries";
 import { Card } from "@/components/ui/card/card";
 import { Clock, ChevronRight, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button/button";

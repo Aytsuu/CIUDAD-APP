@@ -4,10 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateWasteReport } from "../request/waste-ReportPutRequest";
 import { uploadResolvedImage } from "../request/waste-ReportPutRequest";
 
-interface UpdateWasteReportData {
-  rep_status: string;
-  rep_resolved_img?: string;
-}
+// interface UpdateWasteReportData {
+//   rep_status: string;
+//   rep_resolved_img?: string;
+// }
 
 interface ResolvedImage {
     name: string;

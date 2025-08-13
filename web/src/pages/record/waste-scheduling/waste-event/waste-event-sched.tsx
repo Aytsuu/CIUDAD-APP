@@ -44,9 +44,9 @@ function WasteEventSched() {
         },
     });
 
-    const handleResetAnnouncements = () => {
-        form.setValue('selectedAnnouncements', []);
-    };
+    // const handleResetAnnouncements = () => {
+    //     form.setValue('selectedAnnouncements', []);
+    // };
 
     const onSubmit = async (values: z.infer<typeof WasteEventSchedSchema>) => {
         try {
