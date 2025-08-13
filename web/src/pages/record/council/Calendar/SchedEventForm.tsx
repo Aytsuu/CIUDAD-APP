@@ -16,22 +16,16 @@ import { useAddCouncilEvent, useAddAttendee } from "./queries/addqueries";
 import { useGetStaffList } from "./queries/fetchqueries";
 import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-
-interface SchedEventFormProps {
-  onSuccess?: () => void;
-}
+import { SchedEventFormProps } from "./ce-att-types";
 
 function SchedEventForm({ onSuccess }: SchedEventFormProps) {
-  const [selectedAttendees, setSelectedAttendees] = useState<
-    { name: string; designation: string }[]
-  >([]);
+  const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string }[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [ceId, setCeId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const { mutate: addEvent } = useAddCouncilEvent();
   const { mutate: addAttendee } = useAddAttendee();
-  const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
+  const { data: staffList = []} = useGetStaffList();
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -141,14 +135,6 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
     setIsPreviewOpen(false);
     handleSave();
   };
-
-  const allAttendees = useMemo(() => {
-    const attendees = new Map<string, string>();
-    staffOptions.forEach((option) => {
-      attendees.set(option.id, option.name);
-    });
-    return attendees;
-  }, [staffOptions]);
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
@@ -289,14 +275,6 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
                   actionLabel="Confirm"
                   onClick={form.handleSubmit(handleSubmitEvent)}
                 />
-                {/* <Button 
-                  type="button" 
-                  className=""
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : "Save"}
-                </Button> */}
               </>
             )}
           </div>

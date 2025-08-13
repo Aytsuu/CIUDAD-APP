@@ -520,8 +520,14 @@ function IncomeTracking() {
                     <ArrowUpDown size={14}/>
                 </div>
             ),
-            cell: ({row}) => (
-                <div className="text-center">{new Date(row.getValue("inc_datetime")).toLocaleString()}</div>
+            cell: ({ row }) => (
+                <div className="text-center">
+                    {new Date(row.getValue("inc_datetime")).toLocaleString("en-US", {
+                        timeZone: "UTC",
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                    })}
+                </div>
             )
         },
         { 

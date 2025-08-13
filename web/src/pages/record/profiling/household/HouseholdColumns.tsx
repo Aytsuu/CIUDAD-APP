@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
+import { HouseholdFamRecord, HouseholdRecord } from "../ProfilingTypes";
 import { Label } from "@/components/ui/label";
 import { useLoading } from "@/context/LoadingContext";
 import { getFamFilteredByHouse, getFamilyData, getFamilyMembers, getHouseholdList } from "../restful-api/profilingGetAPI";
@@ -10,7 +10,7 @@ import ViewButton from "@/components/ui/view-button";
 import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useFamFilteredByHouse } from "../queries/profilingFetchQueries";
-import { formatFamiles } from "../profilingFormats";
+import { formatFamiles } from "../ProfilingFormats";
 import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { capitalize } from "@/helpers/capitalize";
@@ -166,7 +166,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         showLoading();
         try {
           const families = await getFamFilteredByHouse(row.original.hh_id);
-          navigate("/household/view", {
+          navigate("/profiling/household/view", {
             state: {
               params: {
                 families: families,
@@ -208,7 +208,7 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
             getHouseholdList()
           ]);
           
-          navigate("/family/view", {
+          navigate("/profiling/family/view", {
             state: {
               params: {
                 family: {

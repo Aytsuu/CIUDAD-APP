@@ -47,6 +47,7 @@ class StaffTableView(generics.ListCreateAPIView):
 
     return queryset
   
+  
 class StaffUpdateView(generics.UpdateAPIView):
   serializer_class = StaffBaseSerializer
   queryset = Staff.objects.all()

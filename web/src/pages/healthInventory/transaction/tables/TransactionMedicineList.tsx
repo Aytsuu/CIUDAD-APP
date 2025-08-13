@@ -1,78 +1,74 @@
-import React from "react";
-import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/input";
-import { Search, FileInput } from "lucide-react";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { handleDeleteMedicineList } from "../requests/DeleteRequest";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { Skeleton } from "@/components/ui/skeleton";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { MedicineRecords } from "./MedicineListColumsn";
-import { Medcolumns } from "./MedicineListColumsn";
-import { getTransactionMedicines } from "../requests/GetRequest";
+"use client"
+
+import React from "react"
+import { DataTable } from "@/components/ui/table/data-table"
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
+import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { Skeleton } from "@/components/ui/skeleton"
+import type { MedicineRecords } from "./type"
+import { Medcolumns } from "./columns/MedicineListColumsn"
+import { useMedicine } from "../queries/FetchQueries"
+import { ExportButton } from "@/components/ui/export"
+
 export default function MedicineList() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    React.useState(false);
-  const [medToDelete, setMedToDelete] = React.useState<number | null>(null);
-  const queryClient = useQueryClient();
-
-  // Pass the necessary functions to Medcolumns
-  const columns = Medcolumns();
-
-  // Fetch medicines using useQuery
-  const { data: medicines, isLoading: isLoadingMedicines } = useQuery({
-    queryKey: ["transactionmedicines"],
-    queryFn: getTransactionMedicines,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const [searchQuery, setSearchQuery] = React.useState("")
+  const [pageSize, setPageSize] = React.useState(10)
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const columns = Medcolumns()
+  const { data: medicines, isLoading: isLoadingMedicines } = useMedicine()
 
   const formatMedicineData = React.useCallback((): MedicineRecords[] => {
-    if (!medicines) return [];
-    return medicines.map((medicine: any) => ({
-      mdt_id: medicine.mdt_id,
-      med_detail: {
-        med_name: medicine.med_name,
-        minv_dsg: medicine.minv_detail?.minv_dsg,
-        minv_dsg_unit: medicine.minv_detail?.minv_dsg_unit,
-        minv_form: medicine.minv_detail?.minv_form,
-      },
-      mdt_qty: medicine.mdt_qty,
-      mdt_action: medicine.mdt_action,
-      staff: medicine.staff,
-      created_at: new Date(medicine.created_at).toLocaleDateString()
-    }));
-  }, [medicines]);
+    if (!medicines) return []
+    return medicines.map((medicine: any) => {
+      const staffFirstName = medicine.staff_detail?.rp?.per?.per_fname || ""
+      const staffLastName = medicine.staff_detail?.rp?.per?.per_lname || ""
+      const staffFullName = `${staffFirstName} ${staffLastName}`.trim()
+
+      return {
+        mdt_id: medicine.mdt_id,
+        med_detail: {
+          med_name: medicine.med_name,
+          minv_dsg: medicine.minv_detail?.minv_dsg,
+          minv_dsg_unit: medicine.minv_detail?.minv_dsg_unit,
+          minv_form: medicine.minv_detail?.minv_form,
+        },
+        inv_id:medicine.minv_detail?.inv_detail?.inv_id,
+        mdt_qty: medicine.mdt_qty,
+        mdt_action: medicine.mdt_action,
+        staff: staffFullName || medicine.staff, // Use full name, fallback to staff ID if names are not available
+        created_at: new Date(medicine.created_at).toLocaleDateString(),
+      }
+    })
+  }, [medicines])
 
   const filteredMedicines = React.useMemo(() => {
     return formatMedicineData().filter((record) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, formatMedicineData]);
+      Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+  }, [searchQuery, formatMedicineData])
 
-  const totalPages = Math.ceil(filteredMedicines.length / pageSize);
-  const paginatedMedicines = filteredMedicines.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const totalPages = Math.ceil(filteredMedicines.length / pageSize)
+  const paginatedMedicines = filteredMedicines.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-  const handleDelete = () => {
-    if (medToDelete !== null) {
-      handleDeleteMedicineList(medToDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["medicines"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setMedToDelete(null);
-    }
-  };
+  const exportColumns = [
+    { key: "mdt_id", header: "ID" },
+    { key: "med_detail.med_name", header: "Medicine Name" },
+    {
+      key: "med_detail.minv_dsg",
+      header: "Dosage",
+      format: (value: any) => `${value || ""} ${(value?.med_detail?.minv_dsg_unit || "")}`,
+    },
+    { key: "med_detail.minv_form", header: "Form" },
+    {
+      key: "mdt_qty",
+      header: "Quantity",
+      format: (value: any) => value || 0,
+    },
+    { key: "mdt_action", header: "Action" },
+    { key: "staff", header: "Staff" },
+    { key: "created_at", header: "Date" },
+  ]
 
   if (isLoadingMedicines) {
     return (
@@ -82,18 +78,14 @@ export default function MedicineList() {
         <Skeleton className="h-10 w-full mb-4" />
         <Skeleton className="h-4/5 w-full mb-4" />
       </div>
-    );
+    )
   }
-
   return (
     <div>
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-              size={17}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
               placeholder="Search..."
               className="pl-10 bg-white w-full"
@@ -103,7 +95,6 @@ export default function MedicineList() {
           </div>
         </div>
       </div>
-
       <div className="bg-white rounded-md">
         <div className="flex justify-between p-3">
           <div className="flex items-center gap-2">
@@ -113,56 +104,32 @@ export default function MedicineList() {
               className="w-14 h-6"
               value={pageSize}
               onChange={(e) => {
-                const value = +e.target.value;
+                const value = +e.target.value
                 if (value >= 1) {
-                  setPageSize(value);
+                  setPageSize(value)
                 } else {
-                  setPageSize(1); // Reset to 1 if invalid
+                  setPageSize(1) // Reset to 1 if invalid
                 }
               }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
-          />
+          <ExportButton data={filteredMedicines} filename="medicine-transactions" columns={exportColumns} />
         </div>
         <div className="overflow-x-auto">
           <DataTable columns={columns} data={paginatedMedicines} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredMedicines.length)} of{" "}
+            Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredMedicines.length)} of{" "}
             {filteredMedicines.length} rows
           </p>
           {paginatedMedicines.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           )}
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={handleDelete}
-        title="Delete Medicine"
-        description="Are you sure you want to delete this medicine? This action cannot be undone."
-      />
     </div>
-  );
+  )
 }

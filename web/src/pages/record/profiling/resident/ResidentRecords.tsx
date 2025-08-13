@@ -366,7 +366,7 @@ export default function ResidentRecords() {
                     ]}
                   />
 
-                <Link to="/request/pending/individual" className="flex-1 sm:flex-none">
+                <Link to="/profiling/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending
@@ -381,7 +381,7 @@ export default function ResidentRecords() {
                 </Link>
 
                 <Link
-                  to="/resident/registration"
+                  to="/profiling/resident/registration"
                   state={{
                     params: {
                       origin: "create",

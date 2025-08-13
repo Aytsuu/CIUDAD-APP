@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { jsPDF } from "jspdf";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Wallet } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,24 +9,9 @@ import {
 } from "@/components/ui/dialog/dialog";
 import {
   useAddProjectProposal,
-  useAddSupportDocument,
+  // useAddSupportDocument,
 } from "./queries/addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useGetStaffList } from "./queries/fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -37,61 +21,59 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { Wallet } from "lucide-react";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
-
-export interface ProjectProposalFormProps {
-  onSuccess: () => void;
-  existingProposal?: any;
-}
-
-export interface Signatory {
-  name: string;
-  position: string;
-  type: "prepared" | "approved";
-}
+import { generateProposalPdf } from "./personalized-compo/pdfGenerator";
+import { Signatory, ProjectProposalFormProps } from "./projprop-types";
+import { ComboboxInput } from "@/components/ui/form/form-combo-box";
 
 export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
-  onSuccess,
   existingProposal,
 }) => {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
-  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
+  const [headerImageUrl, _setHeaderImageUrl] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const addSupportDocMutation = useAddSupportDocument();
+  // const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
 
-  // Display remaining balance from budget tracker
-  const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
+  const {
+    data: budgetEntries = [],
+    isLoading: isBudgetLoading,
+  } = useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
   const currentYearBudget = yearBudgets?.find(
     (budget) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
 
-const latestExpenseWithBalance = budgetEntries
-  .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
-  .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
+  const latestExpenseWithBalance = budgetEntries
+    .filter(
+      (entry) =>
+        entry.gbud_type === "Expense" &&
+        !entry.gbud_is_archive &&
+        entry.gbud_remaining_bal != null
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.gbud_datetime).getTime() -
+        new Date(a.gbud_datetime).getTime()
+    )[0];
 
-const availableBudget = latestExpenseWithBalance
-  ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
-    ? currentYearBudget 
-      ? Number(currentYearBudget)
-      : 0
-    : Number(latestExpenseWithBalance.gbud_remaining_bal)
-  : currentYearBudget
+  const availableBudget = latestExpenseWithBalance
+    ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
+      ? currentYearBudget
+        ? Number(currentYearBudget)
+        : 0
+      : Number(latestExpenseWithBalance.gbud_remaining_bal)
+    : currentYearBudget
     ? Number(currentYearBudget)
     : 0;
-  
 
-  // Initialize react-hook-form
   const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
@@ -112,7 +94,6 @@ const availableBudget = latestExpenseWithBalance
 
   const { control, setValue, watch, handleSubmit } = form;
 
-  // Sync local state with form state
   const projectTitle = watch("projectTitle");
   const background = watch("background");
   const objectives = watch("objectives");
@@ -202,366 +183,31 @@ const availableBudget = latestExpenseWithBalance
   };
 
   const generatePDF = async (preview = false) => {
-    const pageSize = {
-      a4: [595.28, 841.89],
-      letter: [612, 792],
-      legal: [612, 1008],
-    }[paperSize] || [595.28, 841.89];
+    try {
+      const pdfUrl = await generateProposalPdf(
+        {
+          projectTitle,
+          background,
+          objectives,
+          participants,
+          date,
+          venue,
+          budgetItems,
+          monitoringEvaluation,
+          signatories,
+          paperSize,
+          headerImage: headerImageUrl,
+        },
+        preview
+      );
 
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "pt",
-      format: pageSize,
-    });
-
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
-
-    const margin = 72;
-    let yPos = margin;
-    const pageWidth = pageSize[0];
-    const pageHeight = pageSize[1] - margin * 2;
-    const lineHeight = 14;
-    const sectionGap = 20;
-    const signatureColumnWidth = 200;
-
-    const addTextWithPageBreak = (
-      text: string,
-      x: number,
-      y: number,
-      maxWidth: number
-    ) => {
-      const displayText = text || "N/A";
-      const splitText = doc.splitTextToSize(displayText, maxWidth);
-      for (let i = 0; i < splitText.length; i++) {
-        if (y + lineHeight > pageHeight) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(splitText[i], x, y);
-        y += lineHeight;
+      if (preview && pdfUrl) {
+        setPdfPreview(pdfUrl);
+        setIsPreviewOpen(true);
       }
-      return y;
-    };
-
-    const addSectionTitle = (title: string, y: number) => {
-      doc.setFont("times", "bold");
-      y = addTextWithPageBreak(title, margin, y, pageWidth - margin * 2);
-      doc.setFont("times", "normal");
-      return y + lineHeight;
-    };
-
-    if (headerImageUrl) {
-      try {
-        let dataUrl = headerImageUrl;
-        if (!headerImageUrl.startsWith("data:image")) {
-          const response = await fetch(headerImageUrl, {
-            mode: "cors",
-            headers: {
-              Accept: "image/*",
-            },
-          });
-          if (!response.ok)
-            throw new Error(`Failed to fetch image: ${response.statusText}`);
-          const blob = await response.blob();
-          dataUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = () => resolve("");
-            reader.readAsDataURL(blob);
-          });
-        }
-
-        if (dataUrl && dataUrl.startsWith("data:image")) {
-          const img = new Image();
-          img.src = dataUrl;
-          await new Promise<void>((resolve) => {
-            img.onload = () => {
-              const imgWidth = pageWidth - margin * 2;
-              const imgHeight = (img.height / img.width) * imgWidth;
-              const maxHeight = 80;
-              const scaleFactor = Math.min(1, maxHeight / imgHeight);
-              const finalHeight = imgHeight * scaleFactor;
-              doc.addImage(
-                dataUrl,
-                "JPEG",
-                margin,
-                margin,
-                imgWidth,
-                finalHeight
-              );
-              yPos += finalHeight + 20;
-              resolve();
-            };
-            img.onerror = () => resolve();
-          });
-        }
-      } catch (e) {
-        console.error("Error processing header image for PDF:", e);
-      }
-    }
-
-    doc.setFont("times", "bold");
-    doc.setFontSize(20);
-    const titleWidth = doc.getTextWidth("PROJECT PROPOSAL");
-    doc.text("PROJECT PROPOSAL", (pageWidth - titleWidth) / 2, yPos);
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
-    yPos += sectionGap + lineHeight;
-
-    yPos = addSectionTitle("Project Title:", yPos);
-    yPos = addTextWithPageBreak(
-      projectTitle || "Untitled",
-      margin,
-      yPos,
-      pageWidth - margin * 2
-    );
-    yPos += sectionGap;
-
-    yPos = addSectionTitle("Background:", yPos);
-    yPos = addTextWithPageBreak(
-      background || "No background provided",
-      margin,
-      yPos,
-      pageWidth - margin * 2
-    );
-    yPos += sectionGap;
-
-    yPos = addSectionTitle("Objectives:", yPos);
-    if (objectives.length === 0 || objectives.every((obj) => !obj.trim())) {
-      yPos = addTextWithPageBreak(
-        "No objectives provided",
-        margin + 10,
-        yPos,
-        pageWidth - margin * 2 - 10
-      );
-    } else {
-      objectives.forEach((obj) => {
-        if (obj.trim()) {
-          yPos = addTextWithPageBreak(
-            `• ${obj}`,
-            margin + 10,
-            yPos,
-            pageWidth - margin * 2 - 10
-          );
-        }
-      });
-    }
-    yPos += sectionGap;
-
-    yPos = addSectionTitle("Participants:", yPos);
-    if (
-      participants.length === 0 ||
-      participants.every((p) => !p.category.trim())
-    ) {
-      yPos = addTextWithPageBreak(
-        "No participants provided",
-        margin,
-        yPos,
-        pageWidth - margin * 2
-      );
-    } else {
-      participants.forEach((participant) => {
-        if (participant.category.trim()) {
-          const text = `${participant.count || "0"} ${participant.category}`;
-          yPos = addTextWithPageBreak(
-            text,
-            margin,
-            yPos,
-            pageWidth - margin * 2
-          );
-        }
-      });
-    }
-    yPos += sectionGap;
-
-    yPos = addSectionTitle("Date and Venue:", yPos);
-    yPos = addTextWithPageBreak(
-      date || "No date provided",
-      margin,
-      yPos,
-      pageWidth - margin * 2
-    );
-    yPos = addTextWithPageBreak(
-      venue || "No venue provided",
-      margin,
-      yPos,
-      pageWidth - margin * 2
-    );
-    yPos += sectionGap;
-
-    yPos = addSectionTitle("Budgetary Requirements:", yPos);
-    const tableCols = [200, 80, 80, 80];
-    const tableStartX = margin;
-
-    const addTableRow = (
-      row: string[],
-      y: number,
-      isHeader: boolean = false
-    ) => {
-      if (y + lineHeight > pageHeight) {
-        doc.addPage();
-        y = margin;
-      }
-
-      if (isHeader) doc.setFont("times", "bold");
-
-      let x = tableStartX;
-      let maxCellHeight = lineHeight;
-      const cellHeights = row.map((cell, i) => {
-        const colWidth = tableCols[i];
-        const text = doc.splitTextToSize(cell, colWidth - 10);
-        return text.length * lineHeight;
-      });
-      maxCellHeight = Math.max(...cellHeights, lineHeight);
-
-      row.forEach((cell, i) => {
-        const colWidth = tableCols[i];
-        const text = doc.splitTextToSize(cell, colWidth - 10);
-        let textY = y;
-        text.forEach((line: string, lineIndex: number) => {
-          if (lineIndex > 0 && textY + lineHeight > pageHeight) {
-            doc.addPage();
-            textY = margin;
-          }
-          doc.text(line, x + 5, textY + lineIndex * lineHeight);
-        });
-        doc.rect(x, y - lineHeight + 2, colWidth, maxCellHeight, "S");
-        x += colWidth;
-      });
-
-      if (isHeader) doc.setFont("times", "normal");
-
-      return y + maxCellHeight;
-    };
-
-    yPos = addTableRow(["Name", "Pax", "Amount", "Total"], yPos, true);
-
-    let grandTotal = 0;
-    if (
-      budgetItems.length === 0 ||
-      budgetItems.every((item) => !item.name.trim())
-    ) {
-      yPos = addTableRow(["No budget items provided", "", "", ""], yPos);
-    } else {
-      budgetItems.forEach((item) => {
-        if (item.name.trim()) {
-          const amount = parseFloat(item.amount) || 0;
-          const paxCount =
-            item.pax.trim() && item.pax.includes("pax")
-              ? parseInt(item.pax) || 1
-              : 1;
-          const total = paxCount * amount;
-          grandTotal += total;
-          yPos = addTableRow(
-            [
-              item.name,
-              item.pax || "N/A",
-              amount ? `(${amount.toFixed(2)})` : "(0.00)",
-              total.toLocaleString(),
-            ],
-            yPos
-          );
-        }
-      });
-    }
-
-    doc.setFont("times", "bold");
-    yPos = addTableRow(
-      [
-        "",
-        "",
-        "TOTAL",
-        grandTotal
-          ? `P ${grandTotal.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-            })}`
-          : "P 0.00",
-      ],
-      yPos
-    );
-    doc.setFont("times", "normal");
-    yPos += sectionGap;
-
-    yPos = addSectionTitle("Monitoring Evaluation:", yPos);
-    yPos = addTextWithPageBreak(
-      monitoringEvaluation || "No evaluation provided",
-      margin,
-      yPos,
-      pageWidth - margin * 2
-    );
-    yPos += sectionGap;
-
-    const preparedBy = signatories.filter((s) => s.type === "prepared");
-    const approvedBy = signatories.filter((s) => s.type === "approved");
-
-    const preparedHeight = preparedBy.length * 60;
-    const approvedHeight =
-      approvedBy.length * 60 +
-      (approvedBy.length > 1 ? (approvedBy.length - 1) * 40 : 0);
-    const maxSignatureHeight = Math.max(preparedHeight, approvedHeight);
-
-    if (yPos + maxSignatureHeight + 20 > pageHeight) {
-      doc.addPage();
-      yPos = margin;
-    }
-
-    doc.setFont("times", "bold");
-    doc.text("Prepared by:", margin, yPos);
-    doc.text("Approved by:", margin + 250, yPos);
-    yPos += 40;
-
-    if (preparedBy.length === 0) {
-      doc.setFont("times", "normal");
-      doc.text("No preparers assigned", margin, yPos);
-    } else {
-      preparedBy.forEach((sig, i) => {
-        if (sig.name.trim()) {
-          const nameWidth = doc.getTextWidth(sig.name);
-          const positionWidth = doc.getTextWidth(sig.position);
-          doc.setFont("times", "normal");
-          const nameX = margin + (signatureColumnWidth - nameWidth) / 2;
-          doc.text(sig.name, nameX, yPos + i * 60);
-          doc.setFont("times", "bold");
-          const positionX = margin + (signatureColumnWidth - positionWidth) / 2;
-          doc.text(sig.position || "N/A", positionX, yPos + i * 60 + 20);
-          doc.setDrawColor(200, 200, 200);
-        }
-      });
-    }
-
-    if (approvedBy.length === 0) {
-      doc.setFont("times", "normal");
-      doc.text("No approvers assigned", margin + 250, yPos);
-    } else {
-      approvedBy.forEach((sig, i) => {
-        if (sig.name.trim()) {
-          const nameWidth = doc.getTextWidth(sig.name);
-          const positionWidth = doc.getTextWidth(sig.position);
-          doc.setFont("times", "normal");
-          const nameX = margin + 250 + (signatureColumnWidth - nameWidth) / 2;
-          doc.text(sig.name, nameX, yPos + i * 60);
-          doc.setFont("times", "bold");
-          const positionX =
-            margin + 250 + (signatureColumnWidth - positionWidth) / 2;
-          doc.text(sig.position || "N/A", positionX, yPos + i * 60 + 20);
-          doc.setDrawColor(200, 200, 200);
-        }
-      });
-    }
-
-    if (preview) {
-      const pdfUrl = URL.createObjectURL(
-        new Blob([doc.output("blob")], { type: "application/pdf" })
-      );
-      setPdfPreview(pdfUrl);
-      setIsPreviewOpen(true);
-    } else {
-      doc.save(
-        `${(projectTitle || "proposal")
-          .replace(/[^a-z0-9]/gi, "_")
-          .toLowerCase()}_proposal.pdf`
-      );
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      setErrorMessage("Failed to generate PDF preview. Please try again.");
     }
   };
 
@@ -570,70 +216,67 @@ const availableBudget = latestExpenseWithBalance
     setIsPreviewOpen(false);
   };
 
-  const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
-    try {
-      setErrorMessage(null);
+  const handleSave = async (_data: z.infer<typeof ProjectProposalSchema>) => {
+    // try {
+    //   setErrorMessage(null);
 
-      const headerImage =
-        mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+    //   const headerImage =
+    //     mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
 
-      // Process supporting documents
-      const validSupportDocs = supportingDocs.filter(
-        (doc) =>
-          doc.status === "uploaded" &&
-          doc.publicUrl &&
-          doc.storagePath &&
-          doc.file?.name &&
-          doc.file?.type
-      );
+    //   const validSupportDocs = supportingDocs.filter(
+    //     (doc) =>
+    //       doc.status === "uploaded" &&
+    //       doc.publicUrl &&
+    //       doc.storagePath &&
+    //       doc.file?.name &&
+    //       doc.file?.type
+    //   );
 
-      const proposalData = {
-        projectTitle: data.projectTitle,
-        background: data.background,
-        objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-        participants: data.participants.filter((p) => p.category.trim() !== ""),
-        date: data.date,
-        venue: data.venue,
-        budgetItems: data.budgetItems.filter((item) => item.name.trim() !== ""),
-        monitoringEvaluation: data.monitoringEvaluation,
-        signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-        gpr_header_img: headerImage,
-        paperSize: paperSize,
-        staff_id: null,
-      };
+    //   const proposalData = {
+    //     projectTitle: data.projectTitle,
+    //     background: data.background,
+    //     objectives: data.objectives.filter((obj) => obj.trim() !== ""),
+    //     participants: data.participants.filter((p) => p.category.trim() !== ""),
+    //     date: data.date,
+    //     venue: data.venue,
+    //     budgetItems: data.budgetItems.filter((item) => item.name.trim() !== ""),
+    //     monitoringEvaluation: data.monitoringEvaluation,
+    //     signatories: data.signatories.filter((s) => s.name.trim() !== ""),
+    //     gpr_header_img: headerImage,
+    //     paperSize: paperSize,
+    //     staff_id: null,
+    //   };
 
-      // First create the proposal
-      const proposalResponse = await addMutation.mutateAsync(proposalData);
+    //   const proposalResponse = await addMutation.mutateAsync(proposalData);
 
-      // Then add support docs if any
-      if (validSupportDocs.length > 0) {
-        await Promise.all(
-          validSupportDocs.map((doc) => {
-            const fileData = {
-              psd_url: doc.publicUrl!,
-              psd_path: doc.storagePath!,
-              psd_name: doc.file.name,
-              psd_type: doc.file.type,
-            };
-            return addSupportDocMutation.mutateAsync({
-              gprId: proposalResponse.gprId,
-              fileData,
-            });
-          })
-        );
-      }
+    //   if (validSupportDocs.length > 0) {
+    //     await Promise.all(
+    //       validSupportDocs.map((doc) => {
+    //         const fileData = {
+    //           psd_url: doc.publicUrl!,
+    //           psd_path: doc.storagePath!,
+    //           psd_name: doc.file.name,
+    //           psd_type: doc.file.type,
+    //         };
+    //         return addSupportDocMutation.mutateAsync({
+    //           gprId: proposalResponse.gprId,
+    //           fileData,
+    //         });
+    //       })
+    //     );
+    //   }
 
-      form.reset();
-      setMediaFiles([]);
-      setSupportingDocs([]);
-      setHeaderImageUrl(null);
-      onSuccess();
-    } catch (error) {
-      console.error("Error in handleSave:", error);
-      setErrorMessage(
-        "Failed to save proposal. Please check the form data and try again."
-      );
-    }
+    //   form.reset();
+    //   setMediaFiles([]);
+    //   setSupportingDocs([]);
+    //   setHeaderImageUrl(null);
+    //   onSuccess();
+    // } catch (error) {
+    //   console.error("Error in handleSave:", error);
+    //   setErrorMessage(
+    //     "Failed to save proposal. Please check the form data and try again."
+    //   );
+    // }
   };
 
   useEffect(() => {
@@ -650,19 +293,19 @@ const availableBudget = latestExpenseWithBalance
 
       setSupportingDocs(suppDocs);
 
-      if (existingProposal?.gpr_header_img) {
-        setHeaderImageUrl(existingProposal.gpr_header_img);
-        setMediaFiles([
-          {
-            id: "existing",
-            type: "image",
-            file: new File([], "existing.jpg"),
-            publicUrl: existingProposal.gpr_header_img,
-            status: "uploaded",
-            previewUrl: existingProposal.gpr_header_img,
-          },
-        ]);
-      }
+      // if (existingProposal?.gpr_header_img) {
+      //   setHeaderImageUrl(existingProposal.gpr_header_img);
+      //   setMediaFiles([
+      //     {
+      //       id: "existing",
+      //       type: "image",
+      //       file: new File([], "existing.jpg"),
+      //       publicUrl: existingProposal.gpr_header_img,
+      //       status: "uploaded",
+      //       previewUrl: existingProposal.gpr_header_img,
+      //     },
+      //   ]);
+      // }
     }
   }, [existingProposal]);
 
@@ -741,36 +384,15 @@ const availableBudget = latestExpenseWithBalance
                       typeof filesOrUpdater === "function"
                         ? filesOrUpdater(prev)
                         : filesOrUpdater;
-                    const imageUrl =
-                      newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
-                    setHeaderImageUrl(imageUrl);
+                    // const imageUrl =
+                    //   newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
+                    // setHeaderImageUrl(imageUrl);
                     return newFiles;
                   });
                 }}
                 setActiveVideoId={setActiveVideoId}
                 maxFiles={1}
               />
-              {/* {headerImageUrl && (
-                <div className="mt-2 flex flex-col sm:flex-row gap-2 items-center">
-                  <img
-                    src={headerImageUrl}
-                    alt="Header preview"
-                    className="max-h-40"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setMediaFiles([]);
-                      setHeaderImageUrl(null);
-                    }}
-                    className="mt-2 sm:mt-0"
-                  >
-                    Remove Image
-                  </Button>
-                </div>
-              )} */}
             </div>
 
             <div>
@@ -919,7 +541,9 @@ const availableBudget = latestExpenseWithBalance
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium">Budgetary Requirements</label>
+                <label className="block text-sm font-medium">
+                  Budgetary Requirements
+                </label>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Wallet className="h-4 w-4 text-blue-600" />
                   <span>Available Funds:</span>
@@ -927,7 +551,8 @@ const availableBudget = latestExpenseWithBalance
                     <span className="text-gray-500">Loading...</span>
                   ) : availableBudget != null ? (
                     <span className="font-mono text-red-500">
-                      ₱{availableBudget.toLocaleString("en-US", {
+                      ₱
+                      {availableBudget.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -1012,7 +637,7 @@ const availableBudget = latestExpenseWithBalance
                 <div className="space-y-2">
                   {signatories
                     .filter((s) => s.type === "prepared")
-                    .map((sig, index) => {
+                    .map((sig) => {
                       const globalIndex = signatories.findIndex(
                         (s) => s === sig
                       );
@@ -1021,102 +646,28 @@ const availableBudget = latestExpenseWithBalance
                           key={globalIndex}
                           className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
                         >
-                          <div className="flex-1">
-                            <Popover
-                              open={openCombobox === globalIndex}
-                              onOpenChange={(open) =>
-                                setOpenCombobox(open ? globalIndex : null)
-                              }
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openCombobox === globalIndex}
-                                  className="w-full h-10 justify-between truncate"
-                                  disabled={isStaffLoading}
-                                >
-                                  <span className="truncate">
-                                    {isStaffLoading
-                                      ? "Loading staff..."
-                                      : sig.name || "Select staff..."}
-                                  </span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[200px] p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder="Search staff..."
-                                    onValueChange={(value) => {
-                                      if (
-                                        !staffList.some((staff) =>
-                                          staff.full_name
-                                            .toLowerCase()
-                                            .includes(value.toLowerCase())
-                                        )
-                                      ) {
-                                        updateSignatory(
-                                          globalIndex,
-                                          "name",
-                                          value
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <CommandList
-                                    className="max-h-64 overflow-auto"
-                                    onWheel={(e) => {
-                                      e.stopPropagation();
-                                      const el = e.currentTarget;
-                                      if (
-                                        e.deltaY > 0 &&
-                                        el.scrollTop >=
-                                          el.scrollHeight - el.clientHeight
-                                      ) {
-                                        return;
-                                      }
-                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
-                                        return;
-                                      }
-                                      e.preventDefault();
-                                      el.scrollTop += e.deltaY;
-                                    }}
-                                  >
-                                    <CommandEmpty>
-                                      No staff found. Enter name manually.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {staffList.map((staff) => (
-                                        <CommandItem
-                                          key={staff.staff_id}
-                                          value={staff.full_name}
-                                          onSelect={() => {
-                                            updateSignatory(
-                                              globalIndex,
-                                              "name",
-                                              staff.full_name,
-                                              staff.position
-                                            );
-                                            setOpenCombobox(null);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              sig.name === staff.full_name
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {staff.full_name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
+                          <ComboboxInput
+                            value={sig.name}
+                            options={staffList}
+                            isLoading={isStaffLoading}
+                            label=""
+                            placeholder="Select staff..."
+                            emptyText="No staff found. Enter name manually."
+                            onSelect={(value, item) => {
+                              updateSignatory(
+                                globalIndex,
+                                "name",
+                                value,
+                                item?.position
+                              );
+                            }}
+                            onCustomInput={(value) => {
+                              updateSignatory(globalIndex, "name", value);
+                            }}
+                            displayKey="full_name"
+                            valueKey="staff_id"
+                            additionalDataKey="position"
+                          />
                           <div className="flex-1">
                             <FormInput
                               control={control}
@@ -1124,7 +675,7 @@ const availableBudget = latestExpenseWithBalance
                               label=""
                               placeholder=""
                               type="text"
-                              className=" p-0"
+                              className="p-0"
                             />
                           </div>
                           <Button
@@ -1158,7 +709,7 @@ const availableBudget = latestExpenseWithBalance
                 <div className="space-y-2">
                   {signatories
                     .filter((s) => s.type === "approved")
-                    .map((sig, index) => {
+                    .map((sig) => {
                       const globalIndex = signatories.findIndex(
                         (s) => s === sig
                       );
@@ -1167,102 +718,28 @@ const availableBudget = latestExpenseWithBalance
                           key={globalIndex}
                           className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
                         >
-                          <div className="flex-1">
-                            <Popover
-                              open={openCombobox === globalIndex}
-                              onOpenChange={(open) =>
-                                setOpenCombobox(open ? globalIndex : null)
-                              }
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openCombobox === globalIndex}
-                                  className="w-full h-10 justify-between truncate"
-                                  disabled={isStaffLoading}
-                                >
-                                  <span className="truncate">
-                                    {isStaffLoading
-                                      ? "Loading staff..."
-                                      : sig.name || "Select staff..."}
-                                  </span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[200px] p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder="Search staff..."
-                                    onValueChange={(value) => {
-                                      if (
-                                        !staffList.some((staff) =>
-                                          staff.full_name
-                                            .toLowerCase()
-                                            .includes(value.toLowerCase())
-                                        )
-                                      ) {
-                                        updateSignatory(
-                                          globalIndex,
-                                          "name",
-                                          value
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <CommandList
-                                    className="max-h-64 overflow-auto"
-                                    onWheel={(e) => {
-                                      e.stopPropagation();
-                                      const el = e.currentTarget;
-                                      if (
-                                        e.deltaY > 0 &&
-                                        el.scrollTop >=
-                                          el.scrollHeight - el.clientHeight
-                                      ) {
-                                        return;
-                                      }
-                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
-                                        return;
-                                      }
-                                      e.preventDefault();
-                                      el.scrollTop += e.deltaY;
-                                    }}
-                                  >
-                                    <CommandEmpty>
-                                      No staff found. Enter name manually.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {staffList.map((staff) => (
-                                        <CommandItem
-                                          key={staff.staff_id}
-                                          value={staff.full_name}
-                                          onSelect={() => {
-                                            updateSignatory(
-                                              globalIndex,
-                                              "name",
-                                              staff.full_name,
-                                              staff.position
-                                            );
-                                            setOpenCombobox(null);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              sig.name === staff.full_name
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {staff.full_name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
+                          <ComboboxInput
+                            value={sig.name}
+                            options={staffList}
+                            isLoading={isStaffLoading}
+                            label=""
+                            placeholder="Select staff..."
+                            emptyText="No staff found. Enter name manually."
+                            onSelect={(value, item) => {
+                              updateSignatory(
+                                globalIndex,
+                                "name",
+                                value,
+                                item?.position
+                              );
+                            }}
+                            onCustomInput={(value) => {
+                              updateSignatory(globalIndex, "name", value);
+                            }}
+                            displayKey="full_name"
+                            valueKey="staff_id"
+                            additionalDataKey="position"
+                          />
                           <div className="flex-1">
                             <FormInput
                               control={control}

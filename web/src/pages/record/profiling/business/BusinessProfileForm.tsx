@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label"
 import type { UseFormReturn } from "react-hook-form"
 import type { businessFormSchema } from "@/form-schema/profiling-schema"
 import { MediaUpload, type MediaUploadType } from "@/components/ui/media-upload"
-import { renderActionButton } from "../profilingActionConfig"
-import { Type } from "../profilingEnums"
+import { renderActionButton } from "../ProfilingActionConfig"
+import { Type } from "../ProfilingEnums"
 import {
   CheckCircle2,
   Plus,
@@ -463,7 +463,7 @@ export default function BusinessProfileForm({
           description={
             formType !== Type.Viewing
               ? "Upload documents that verify your reported business information"
-              : "Review uploaded supporting documents"
+              : "View uploaded supporting documents"
           }
           isRequired={false}
         />
@@ -500,12 +500,6 @@ export default function BusinessProfileForm({
           </div>
         ) : (
           <div className="grid gap-4">
-            <div className="flex items-center gap-2 text-green-700 bg-green-50 p-3 rounded-lg">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">
-                {mediaFiles.length} supporting document{mediaFiles.length !== 1 ? "s" : ""} available
-              </span>
-            </div>
             <MediaGallery mediaFiles={mediaFiles} />
           </div>
         )}

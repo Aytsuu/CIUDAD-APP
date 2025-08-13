@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useInstantFileUpload } from "@/hooks/use-file-upload";
 import { CircleAlert, Loader2, Pen, Printer, Upload, X } from "lucide-react";
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
@@ -12,9 +11,11 @@ import { useGetSpecificTemplate } from "../queries/reportFetch";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Card, CardContent } from "@/components/ui/card/card";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
-import { formatStaffs } from "../../administration/administrationFormats";
 import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
+import { formatStaffs } from "../../administration/AdministrationFormats";
+import { fileToBase64 } from "@/helpers/fileHelpers";
+import { showErrorToast } from "@/components/ui/toast";
 
 const header = [
   {
@@ -46,7 +47,7 @@ export const WARDocTemplate = ({
   data: any;
   reportPeriod: string;
 }) => {
-  const { uploadFile } = useInstantFileUpload({});
+  //------------------- STATE INITIALIZATION ---------------------
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { data: reportTemplate, isLoading: isLoadingTemplate } = useGetSpecificTemplate('WAR');  
   const { data: staffByTitle, isLoading: isLoadingStaffByTitle } = useGetStaffByTitle('all');
@@ -59,20 +60,30 @@ export const WARDocTemplate = ({
   , [isLoadingTemplate, isLoadingStaffByTitle])
 
   const prepared_by = React.useMemo(() => 
-    reportTemplate?.rte_prepared_by.split("-")[1] || 'Not Added' ,[reportTemplate]);
+    reportTemplate?.rte_prepared_by?.split("-")[1] || 'Not Added' ,[reportTemplate]);
   const recommended_by = React.useMemo(() => 
     reportTemplate?.rte_recommended_by || 'Not Added' ,[reportTemplate]);
   const approved_by = React.useMemo(() => 
     reportTemplate?.rte_approved_by || 'Not Added' ,[reportTemplate]);
 
+  //------------------- SIDE EFFECTS ---------------------
   React.useEffect(() => {
     if(prepared_by) {
-      const group = reportTemplate?.rte_prepared_by.split("-")[0]
+      const group = reportTemplate?.rte_prepared_by?.split("-")[0]
       const crewMembers = staffByTitle?.filter((staff: any) => staff.group == group);
       if(crewMembers) setCrew(crewMembers);
     }
   }, [prepared_by, staffByTitle, reportTemplate])
 
+  React.useEffect(() => {
+    return (() => {
+      if(pdfBlob) {
+        URL.revokeObjectURL(pdfBlob);
+      }
+    })
+  }, [])
+
+  //------------------- HANDLERS ---------------------
   const handlePrintClick = async () => {
     // Generate PDF blob
     const blob = await pdf(
@@ -98,27 +109,32 @@ export const WARDocTemplate = ({
     setPdfBlob(pdfUrl);
   }
 
-  React.useEffect(() => {
-    return (() => {
-      if(pdfBlob) {
-        URL.revokeObjectURL(pdfBlob);
-      }
-    })
-  }, [])
+  const handleImageUpload = React.useCallback(async (files: any[]) => {
+    if (files.length === 0) return;
+    const base64 = await fileToBase64(files[0]);
+    const file = {
+      name: `media_${files[0].name}_${Date.now()}.${files[0].type.split('/')[1]}${Math.random().toString(36).substring(2, 8)}`,
+      type: files[0].type, 
+      file: base64,
+    }
+    return file;
+  }, []);
     
   const handleLeftLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     try {
-      const publicUrl = await handleImageUpload(files);
-      if(publicUrl){
+      const file = await handleImageUpload(files);
+      console.log
+      if(file){
         updateTemplate({
           data: {
-            rte_logoLeft: publicUrl
+            logo_left: file
           },
           type: 'WAR'  
         })
       }
     } catch (err) {
+      showErrorToast("Failed to upload logo. Please try again.");
       throw err;
     }
   }
@@ -126,55 +142,19 @@ export const WARDocTemplate = ({
   const handleRightLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     try {
-      const publicUrl = await handleImageUpload(files);
-      if(publicUrl){
+      const file = await handleImageUpload(files);
+      if(file){
         updateTemplate({
           data: {
-            rte_logoRight: publicUrl
+            logo_right: file
           },
           type: 'WAR'  
         })
       }
     } catch (err) {
+      showErrorToast("Failed to upload logo. Please try again.");
       throw err;
     }
-  }
-
-  const handleImageUpload = React.useCallback(async (files: any[]) => {
-    if (files.length === 0) return;
-
-    const newFile = {
-      type: files[0].type.startsWith("image/")
-        ? "image"
-        : files[0].type.startsWith("video/")
-        ? "video"
-        : ("document" as "image" | "video" | "document"),
-      file: files[0],
-      status: "uploading" as const,
-      previewUrl: URL.createObjectURL(files[0]),
-    };
-
-    const { publicUrl } = await uploadFile(newFile.file);
-    if (publicUrl) {
-      return publicUrl
-    }
-    return null;
-  }, []);
-
-  const errorFeedback = () => {
-    toast("Failed to change signer. Please try again.", {
-      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      style: {
-        border: '1px solid rgb(225, 193, 193)',
-        padding: '16px',
-        color: '#b91c1c',
-        background: '#fef2f2',
-      },
-      action: {
-        label: <X size={14} className="bg-transparent"/>,
-        onClick: () => toast.dismiss(),
-      },
-    });
   }
 
   const getName = (value: string) => {
@@ -199,7 +179,7 @@ export const WARDocTemplate = ({
           setCrew(crewMembers)
         },
         onError: ()  => {
-          errorFeedback();
+          showErrorToast("Failed to change signer. Please try again.");
         }
       })
     }
@@ -215,7 +195,7 @@ export const WARDocTemplate = ({
         type: 'WAR'
       }, {
         onError: ()  => {
-          errorFeedback();
+          showErrorToast("Failed to change signer. Please try again.");
         }
       });
     }
@@ -231,11 +211,61 @@ export const WARDocTemplate = ({
         type: 'WAR'
       }, {
         onError: ()  => {
-          errorFeedback();
+          showErrorToast("Failed to change signer. Please try again.");
         }
       })
     }
   }
+
+  // Logo component (copied from ARDocTemplate)
+  const LogoUpload = ({ 
+    logoUrl, 
+    onLogoChange, 
+    inputId, 
+  }: { 
+    logoUrl?: string; 
+    onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void; 
+    inputId: string; 
+    alt: string; 
+  }) => (
+    <div className="flex flex-col items-center relative">
+      <Input
+        type="file"
+        ref={fileInputRef}
+        onChange={onLogoChange}
+        accept="image/*"
+        className="hidden"
+        id={inputId}
+      />
+
+      <label htmlFor={inputId} className="relative cursor-pointer group">
+        {logoUrl ? (
+          <>
+            <img
+              src={logoUrl}
+              className="w-[70px] h-[70px] rounded-full object-cover bg-gray-100 border-2 border-gray-200"
+            />
+            {/* Hover overlay for existing logo */}
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <Upload size={16} className="text-white mb-1" />
+              <span className="text-white text-xs font-medium">Change</span>
+            </div>
+          </>
+        ) : (
+          <div className="w-[70px] h-[70px] rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center group-hover:border-gray-500 group-hover:bg-gray-200 transition-all duration-200">
+            <Upload size={20} className="text-gray-500 group-hover:text-gray-600 mb-1" />
+            <span className="text-gray-600 text-xs font-medium group-hover:text-gray-700">Logo</span>
+          </div>
+        )}
+      </label>
+      
+      {!logoUrl && (
+        <div className="mt-2 text-center">
+          <p className="text-xs font-medium text-gray-600">Click to upload logo</p>
+        </div>
+      )}
+    </div>
+  );
 
   if(isLoading) {
     return (
@@ -277,28 +307,14 @@ export const WARDocTemplate = ({
           content={"Print/Pdf"}
         />
         <div className="w-full h-full flex flex-col items-center gap-2">
-          <div className="w-[50%] flex justify-between ">
-            <div className="flex flex-col items-center relative">
-              <Input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleLeftLogoChange}
-                accept="image/*"
-                className="hidden"
-                id="logo-1"
-              />
-
-              <label htmlFor="logo-1" className="relative cursor-pointer">
-                <img
-                  src={reportTemplate?.rte_logoLeft}
-                  alt="Profile"
-                  className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Upload size={24} className="text-white" />
-                </div>
-              </label>
-            </div>
+          <div className="w-[57%] flex justify-between ">
+            <LogoUpload
+              logoUrl={reportTemplate?.rte_logoLeft}
+              onLogoChange={handleLeftLogoChange}
+              inputId="logo-1"
+              alt="Left Logo"
+            />
+            
             <div className="flex flex-col gap-2 text-center">
               <Label>REPUBLIC OF THE PHILIPPINES</Label>
               <Label>CITY OF CEBU</Label>
@@ -306,27 +322,13 @@ export const WARDocTemplate = ({
               <Label>Weekly Accomplishment Report <span className="underline ml-1">{reportPeriod}</span></Label>
               <Label>BARANGAY SAN ROQUE (CIUDAD) </Label>
             </div>
-            <div className="flex flex-col items-center relative">
-              <Input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleRightLogoChange}
-                accept="image/*"
-                className="hidden"
-                id="logo-2"
-              />
-
-              <label htmlFor="logo-2" className="relative cursor-pointer">
-                <img
-                  src={reportTemplate?.rte_logoRight}
-                  alt="Profile"
-                  className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Upload size={24} className="text-white" />
-                </div>
-              </label>
-            </div>
+            
+            <LogoUpload
+              logoUrl={reportTemplate?.rte_logoRight}
+              onLogoChange={handleRightLogoChange}
+              inputId="logo-2"
+              alt="Right Logo"
+            />
           </div>
           <div className="w-full h-full flex flex-col">
             <div className="w-full">
@@ -398,6 +400,7 @@ export const WARDocTemplate = ({
                       onChange={(value) => changePreparedBy(value)}
                       options={formattedStaffs}
                       emptyMessage="No staff available"
+                      size={1000}
                     />
                     <Label className="w-full text-center">{prepared_by}</Label>
                   </div>
@@ -413,6 +416,7 @@ export const WARDocTemplate = ({
                       onChange={(value) => changeRecommendedBy(value)}
                       options={formattedStaffs}
                       emptyMessage="No staff available"
+                      size={700}
                     />
                     <Label className="w-full text-center">{recommended_by}</Label>
                   </div>
@@ -428,6 +432,7 @@ export const WARDocTemplate = ({
                       onChange={(value) => changeApprovedBy(value)}
                       options={formattedStaffs}
                       emptyMessage="No staff available"
+                      size={700}
                     />
                     <Label className="w-full text-center">{approved_by}</Label>
                   </div>

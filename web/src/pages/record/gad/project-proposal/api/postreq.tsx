@@ -21,11 +21,6 @@ export const postProjectProposal = async (proposalInfo: Record<string, any>) => 
     const res = await api.post('gad/project-proposals/', payload);
     return res.data;
   } catch (err: any) {
-   console.error('Error posting project proposal:', {
-    status: err.response?.status,
-      data: JSON.stringify(err.response?.data, null, 2),
-      message: err.message,
-  });
     throw err;
   }
 };
@@ -48,7 +43,6 @@ export const addSupportDocument = async (gprId: number, fileData: {
     });
     return res.data;
   } catch (error) {
-    console.error("Error adding support document:", error);
     throw error;
   }
 };

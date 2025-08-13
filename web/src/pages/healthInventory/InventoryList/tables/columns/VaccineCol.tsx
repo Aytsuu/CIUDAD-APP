@@ -2,8 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Edit, Trash } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import EditVaccineListModal from "../../editListModal/EditVaccineModal";
-import EditImmunizationSupplies from "../../editListModal/EditImmunizationSuppies";
+import { Link } from "react-router-dom";
 
 export type VaccineRecords = {
   id: number;
@@ -23,7 +22,7 @@ export type VaccineRecords = {
   }[];
 };
 export const VaccineColumns = (
-  setIsDialog: (isOpen: boolean) => void,
+  // setIsDialog: (isOpen: boolean) => void,
   setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>
 ): ColumnDef<VaccineRecords>[] => [
@@ -137,15 +136,11 @@ export const VaccineColumns = (
             }
             mainContent={
               isVaccine ? (
-                <EditVaccineListModal
-                  vaccineData={vaccine}
-                  setIsDialog={setIsDialog}
-                />
+                <Link to="/editVaccineModal"></Link>
+
               ) : (
-                <EditImmunizationSupplies
-                  initialData={vaccine}
-                  setIsDialog={setIsDialog}
-                />
+                <Link to="/editImmunizationSupplies"></Link>
+
               )
             }
           />

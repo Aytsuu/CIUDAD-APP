@@ -5,7 +5,7 @@ import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
 import { useAuth } from "@/context/AuthContext";
-import { Origin, Type } from "../../profilingEnums";
+import { Origin, Type } from "../../ProfilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
 import { capitalizeAllFields } from "@/helpers/capitalize";
@@ -22,7 +22,7 @@ import {
   useResidentsListHealth,
   useSitioListHealth,
 } from "../../../health-family-profiling/family-profling/queries/profilingFetchQueries";
-import { formatResidents, formatSitio } from "../../profilingFormats";
+import { formatResidents, formatSitio } from "../../ProfilingFormats";
 import { useLoading } from "@/context/LoadingContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";

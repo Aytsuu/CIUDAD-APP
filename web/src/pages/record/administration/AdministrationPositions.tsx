@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/c
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { useNavigate } from "react-router"
-import { Action, Type } from "./administrationEnums"
+import { Action, Type } from "./AdministrationEnums"
 import { useDeletePosition } from "./queries/administrationDeleteQueries"
 import { ChevronRight, ChevronDown, Ellipsis, Trash, Loader2, Plus, Pen, Users, FolderOpen } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"

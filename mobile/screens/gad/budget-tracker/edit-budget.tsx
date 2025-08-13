@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
-import { useExpenseParticulars, useIncomeParticulars } from "./queries/fetch";
+import { useExpenseParticulars, useIncomeParticulars, useGADBudgetEntry } from "./queries/fetch";
 import { useGetGADYearBudgets } from "./queries/yearqueries";
 import { useUpdateGADBudget } from "./queries/update";
 import _ScreenLayout from "@/screens/_ScreenLayout";
@@ -15,64 +15,25 @@ import MultiImageUploader, { MediaFileType } from "@/components/ui/multi-media-u
 import BudgetTrackerSchema from "@/form-schema/gad-budget-tracker-schema";
 import { ChevronLeft, Loader2 } from "lucide-react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { Modal } from "react-native";
-import { z } from "zod";
-
-type FormValues = z.infer<typeof BudgetTrackerSchema>;
+import PageLayout from "@/screens/_PageLayout";
+import { FormValues } from "./bt-types";
 
 function GADViewEditEntryForm() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
-
   const gbud_num = Number(params.gbud_num) || undefined;
-  const gbud_datetime = params.gbud_datetime as string | undefined;
-  const gbud_type = params.gbud_type as "Income" | "Expense" | undefined;
-  const gbud_add_notes = params.gbud_add_notes as string | undefined;
-  const gbud_particulars = params.gbud_particulars as string | undefined;
-  const gbud_amount = params.gbud_actual_expense != null 
-    ? Number(params.gbud_actual_expense) 
-    : Number(params.gbud_proposed_budget) || undefined;
-  const gbud_proposed_budget = params.gbud_proposed_budget ? Number(params.gbud_proposed_budget) : undefined;
-  const gbud_actual_expense = params.gbud_actual_expense ? Number(params.gbud_actual_expense) : undefined;
-  const gbud_reference_num = params.gbud_reference_num as string | undefined;
-  const gbud_inc_amt = params.gbud_inc_amt ? Number(params.gbud_inc_amt) : undefined;
-  const gdb_id = params.gdb_id ? Number(params.gdb_id) : undefined;
-  const gbud_is_archive = params.gbud_is_archive
-
-  // Parse files
-  let parsedFiles: any[] = [];
-  if (params.files) {
-    try {
-      parsedFiles = typeof params.files === "string" ? JSON.parse(params.files) : params.files;
-      if (!Array.isArray(parsedFiles)) {
-        console.error("Parsed params.files is not an array:", parsedFiles);
-        parsedFiles = [];
-      }
-      console.log("Parsed params.files:", parsedFiles);
-    } catch (error) {
-      console.error("Error parsing params.files:", error);
-      parsedFiles = [];
-    }
-  }
 
   const [isEditing, setIsEditing] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>(
-    parsedFiles.map((file: any, index: number) => ({
-      id: file.gbf_id ? `existing-${file.gbf_id}` : `temp-${index}`,
-      name: file.gbf_name || `file-${index}`,
-      type: file.gbf_type || "image",
-      uri: file.gbf_url || "",
-      path: file.gbf_path || "",
-      publicUrl: file.gbf_url || "",
-      status: "uploaded" as const,
-    }))
-  );
+  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
+  const [removedFiles, setRemovedFiles] = useState<string[]>([]);
   const [showIncomeParticularsModal, setShowIncomeParticularsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
 
-  const { data: yearBudgets, isLoading, error } = useGetGADYearBudgets();
+  // Data hooks
+  const { data: yearBudgets, isLoading: yearBudgetsLoading, refetch: refetchYearBudgets } = useGetGADYearBudgets();
+  const { data: budgetEntry, isLoading: entryLoading } = useGADBudgetEntry(gbud_num);
   const { data: expenseItems = [] } = useExpenseParticulars();
   const { data: incomeParticulars = [], isLoading: incomeParticularsLoading } = useIncomeParticulars(year);
   const { mutate: updateBudget, isPending } = useUpdateGADBudget(yearBudgets || []);
@@ -92,164 +53,138 @@ function GADViewEditEntryForm() {
 
   const isUploading = mediaFiles.some((file) => file.status === "uploading");
 
-  if (!year || !gbud_num) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Error: Year and entry ID are required. Received: year={year}, gbud_num={gbud_num}</Text>
-        <Button onPress={() => router.back()}>
-          <Text>Go Back</Text>
-        </Button>
-      </View>
-    );
-  }
+  // Calculate remaining balance
+  const calculateRemainingBalance = (): number => {
+    if (!yearBudgets || !year) return 0;
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Loading budgets...</Text>
-      </View>
-    );
-  }
+    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    if (!currentYearBudget) return 0;
 
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Error loading budgets: {error.message}</Text>
-        <Button onPress={() => router.back()}>
-          <Text>Go Back</Text>
-        </Button>
-      </View>
-    );
-  }
+    const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
+    const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
+    const currentExpense = budgetEntry?.gbud_type === "Expense"
+      ? Number(budgetEntry.gbud_amount) || 0
+      : 0;
 
-  const currentYearBudget = Array.isArray(yearBudgets)
-    ? yearBudgets.find((b) => b.gbudy_year === year)
-    : undefined;
-
-  if (!currentYearBudget) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Error: No budget found for year {year}</Text>
-        <Button onPress={() => router.back()}>
-          <Text>Go Back</Text>
-        </Button>
-      </View>
-    );
-  }
-
-  const calculateRemainingBalance = () => {
-  if (!currentYearBudget) {
-    console.log("No currentYearBudget available");
-    return 0;
-  }
-  const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
-  const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-  const totalIncome = Number(currentYearBudget.gbudy_income) || 0; // Include income if applicable
-  const isActualExpense = gbud_actual_expense != null && gbud_type === "Expense";
-  const currentExpense = isActualExpense
-    ? Number(gbud_actual_expense) || 0
-    : Number(gbud_proposed_budget) || 0;
-
-  // If editing an existing entry, adjust for the old expense
-  const oldExpense = params.gbud_actual_expense != null
-    ? Number(params.gbud_actual_expense) || 0
-    : Number(params.gbud_proposed_budget) || 0;
-
-  // Calculate base balance: initial budget + income - total expenses + old expense (to revert its effect)
-  let result = initialBudget - (totalExpenses - oldExpense);
-
-  // Subtract the current expense (actual or proposed)
-  result = result - currentExpense;
-
-  console.log("Remaining Balance Calculation:", {
-    initialBudget,
-    totalIncome,
-    totalExpenses,
-    oldExpense,
-    currentExpense,
-    isActualExpense,
-    result
-  });
-
-  return Number(result.toFixed(2));
-};
+    return initialBudget - (totalExpenses - currentExpense);
+  };
 
   const remainingBalance = calculateRemainingBalance();
 
-  const formatNumericValue = (value: number | undefined) => {
-    return value != null ? value.toFixed(2) : "";
-  };
-
+  // Form setup
   const form = useForm<FormValues>({
     resolver: zodResolver(BudgetTrackerSchema),
     defaultValues: {
-      gbud_type: gbud_type || "Expense",
-      gbud_datetime: gbud_datetime || new Date().toISOString(),
-      gbud_files: [],
-      gbud_add_notes: gbud_add_notes || null,
-      gbud_inc_particulars: gbud_type === "Income" ? gbud_particulars || null : null,
-      gbud_inc_amt: gbud_type === "Income" ? formatNumericValue(gbud_inc_amt) : null,
-      gbud_exp_particulars: gbud_type === "Expense" ? gbud_particulars || null : null,
-      gbud_proposed_budget: gbud_type === "Expense" ? formatNumericValue(gbud_proposed_budget) : null,
-      gbud_actual_expense: gbud_type === "Expense" ? formatNumericValue(gbud_actual_expense) : null,
-      gbud_reference_num: gbud_reference_num || null,
+      gbud_type: "Expense",
+      gbud_datetime: new Date().toISOString(),
+      gbud_add_notes: null,
+      gbud_inc_particulars: null,
+      gbud_inc_amt: null,
+      gbud_exp_particulars: null,
+      gbud_proposed_budget: null,
+      gbud_actual_expense: null,
+      gbud_reference_num: null,
       gbud_remaining_bal: null,
-      gbudy: currentYearBudget.gbudy_num,
-      gdb_id: gdb_id ?? null,
+      gbudy: 0,
+      gdb_id: null,
     },
   });
 
-  const initialFormValues = {
-    gbud_type: gbud_type || "Expense",
-    gbud_datetime: gbud_datetime || new Date().toISOString(),
-    gbud_files: [],
-    gbud_add_notes: gbud_add_notes || null,
-    gbud_inc_particulars: gbud_type === "Income" ? gbud_particulars || null : null,
-    gbud_inc_amt: gbud_type === "Income" ? formatNumericValue(gbud_inc_amt) : null,
-    gbud_exp_particulars: gbud_type === "Expense" ? gbud_particulars || null : null,
-    gbud_proposed_budget: gbud_type === "Expense" ? formatNumericValue(gbud_proposed_budget) : null,
-    gbud_actual_expense: gbud_type === "Expense" ? formatNumericValue(gbud_actual_expense) : null,
-    gbud_reference_num: gbud_reference_num || null,
-    gbud_remaining_bal: null,
-    gbudy: currentYearBudget.gbudy_num,
-    gdb_id: gdb_id ?? null,
-  };
-
+  // Populate form when data is loaded
   useEffect(() => {
-    console.log("Form state:", form.formState);
-    console.log("Form errors:", form.formState.errors);
-    console.log("Form values:", form.getValues());
-  }, [form.formState, form.watch()]);
+    if (budgetEntry && yearBudgets) {
+      const formattedDate = budgetEntry.gbud_datetime
+        ? budgetEntry.gbud_datetime
+        : new Date().toISOString();
 
-  useEffect(() => {
-    const filesForForm = mediaFiles
-      .filter((file) => file.status === "uploaded" && file.publicUrl)
-      .map((file) => ({
-        name: file.name,
-        type: file.type,
-        path: file.path,
-        uri: file.publicUrl || file.uri,
-      }));
-    console.log("Setting gbud_files:", filesForForm);
-    form.setValue("gbud_files", filesForForm);
+      const formValues: FormValues = {
+        gbud_type: (budgetEntry.gbud_type as "Income" | "Expense") || "Expense",
+        gbud_datetime: formattedDate,
+        gbud_add_notes: budgetEntry.gbud_add_notes || null,
+        gbud_inc_particulars: budgetEntry.gbud_inc_particulars || null,
+        gbud_inc_amt: budgetEntry.gbud_inc_amt
+          ? Number(budgetEntry.gbud_inc_amt)
+          : null,
+        gbud_exp_particulars: budgetEntry.gbud_exp_particulars || null,
+        gbud_proposed_budget: budgetEntry.gbud_proposed_budget
+          ? Number(budgetEntry.gbud_proposed_budget)
+          : null,
+        gbud_actual_expense: budgetEntry.gbud_actual_expense
+          ? Number(budgetEntry.gbud_actual_expense)
+          : null,
+        gbud_reference_num: budgetEntry.gbud_reference_num || null,
+        gbud_remaining_bal: budgetEntry.gbud_remaining_bal
+          ? Number(budgetEntry.gbud_remaining_bal)
+          : null,
+        gbudy: yearBudgets.find((b) => b.gbudy_year === year)?.gbudy_num || 0,
+        gdb_id: budgetEntry.gdb?.gdb_id || null,
+      };
 
-    const errorFiles = mediaFiles.filter((file) => file.status === "error");
-    if (errorFiles.length > 0) {
-      setFileUploadError(`Upload failed for: ${errorFiles.map((f) => f.name).join(", ")}`);
-    } else {
-      setFileUploadError(null);
+      form.reset(formValues);
+
+      if (budgetEntry.files?.length) {
+        const files = budgetEntry.files.map((file) => ({
+          id: `existing-${file.gbf_id}`,
+          name: file.gbf_name || `file-${file.gbf_id}`,
+          type: file.gbf_type || "image",
+          uri: file.gbf_url || "",
+          path: file.gbf_path || "",
+          publicUrl: file.gbf_url || "",
+          status: "uploaded" as const,
+        }));
+        setMediaFiles(files);
+        setRemovedFiles([]);
+      } else {
+        setMediaFiles([]);
+        setRemovedFiles([]);
+      }
     }
-  }, [mediaFiles, form]);
+  }, [budgetEntry, yearBudgets, year, form]);
 
+  // Set year budget
+  useEffect(() => {
+    if (yearBudgets && !yearBudgetsLoading && year) {
+      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      if (currentYearBudget) {
+        form.setValue("gbudy", currentYearBudget.gbudy_num);
+      } else {
+        form.setError("gbudy", {
+          type: "manual",
+          message: "No budget found for the selected year",
+        });
+      }
+    }
+  }, [yearBudgets, yearBudgetsLoading, year, form]);
+
+  // Validate budget fields
   const typeWatch = form.watch("gbud_type");
   const actualExpenseWatch = form.watch("gbud_actual_expense");
   const proposedBudgetWatch = form.watch("gbud_proposed_budget");
 
-  const normalizeNumericInput = (value: string | null | number | undefined) => {
-    if (value == null) return null;
-    const num = parseFloat(value.toString());
-    return isNaN(num) ? null : Number(num.toFixed(2));
-  };
+  useEffect(() => {
+    if (typeWatch === "Expense") {
+      const actualExpense = form.getValues("gbud_actual_expense");
+      const proposedBudget = form.getValues("gbud_proposed_budget");
+
+      if (actualExpense && actualExpense > remainingBalance) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`,
+        });
+      } else {
+        form.clearErrors("gbud_actual_expense");
+      }
+
+      if (proposedBudget && proposedBudget > remainingBalance) {
+        form.setError("gbud_proposed_budget", {
+          type: "manual",
+          message: `Proposed budget cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`,
+        });
+      } else {
+        form.clearErrors("gbud_proposed_budget");
+      }
+    }
+  }, [form, remainingBalance, typeWatch, actualExpenseWatch, proposedBudgetWatch]);
 
   const filteredIncomeParticulars = incomeParticulars.filter((item) =>
     item.toLowerCase().includes(searchTerm.toLowerCase())
@@ -297,45 +232,31 @@ function GADViewEditEntryForm() {
       return;
     }
 
-    let gbud_remaining_bal = null;
-    if (values.gbud_type === "Expense") {
-      const currentExpense = values.gbud_actual_expense != null 
-        ? Number(values.gbud_actual_expense) 
-        : Number(values.gbud_proposed_budget) || 0;
-      gbud_remaining_bal = Number(
-        (remainingBalance - currentExpense).toFixed(2)
-      );
-      console.log("gbud_remaining_bal Calculation:", {
-        remainingBalance,
-        currentExpense,
-        gbud_actual_expense: values.gbud_actual_expense,
-        gbud_proposed_budget: values.gbud_proposed_budget,
-        gbud_remaining_bal,
-      });
-    }
+    const newRemainingBalance = values.gbud_type === "Expense"
+      ? remainingBalance - (values.gbud_actual_expense || 0)
+      : null;
 
+  if (typeof gbud_num !== "number") {
+    return;
+  }
     const payload = {
-      gbud_num: gbud_num,
+      gbud_num,
       budgetData: {
         ...values,
-        gbud_proposed_budget:
-          values.gbud_type === "Income" ? null : normalizeNumericInput(values.gbud_proposed_budget),
-        gbud_actual_expense:
-          values.gbud_type === "Income" ? null : normalizeNumericInput(values.gbud_actual_expense),
-        gbud_inc_amt:
-          values.gbud_type === "Income" ? normalizeNumericInput(values.gbud_inc_amt) : null,
-        gbud_inc_particulars:
-          values.gbud_type === "Income" ? values.gbud_inc_particulars || null : null,
-        gbud_exp_particulars:
-          values.gbud_type === "Expense" ? values.gbud_exp_particulars || null : null,
-        gbud_reference_num: values.gbud_reference_num || null,
-        gbudy: currentYearBudget.gbudy_num,
+        gbud_proposed_budget: values.gbud_type === "Income" ? null : values.gbud_proposed_budget,
+        gbud_actual_expense: values.gbud_type === "Income" ? null : values.gbud_actual_expense,
+        gbud_inc_amt: values.gbud_type === "Income" ? values.gbud_inc_amt : null,
+        gbud_inc_particulars: values.gbud_type === "Income" ? values.gbud_inc_particulars : null,
+        gbud_exp_particulars: values.gbud_type === "Expense" ? values.gbud_exp_particulars : null,
+        gbud_reference_num: values.gbud_reference_num,
+        gbudy: currentYearBudget?.gbudy_num,
         gbud_files: undefined,
-        gdb_id: values.gdb_id || null,
-        gbud_remaining_bal,
+        gdb_id: values.gdb_id,
+        gbud_remaining_bal: newRemainingBalance,
       },
       files: mediaFiles.filter((file) => file.status === "uploaded" && file.publicUrl),
-      filesToDelete: [],
+      filesToDelete: removedFiles.filter(id => id.startsWith("existing-")).map(id => id.replace("existing-", "")),
+      remainingBalance: currentYearBudget?.gbud_remaining_bal ?? 0,
     };
 
     console.log("Submission payload:", JSON.stringify(payload, null, 2));
@@ -343,6 +264,7 @@ function GADViewEditEntryForm() {
     updateBudget(payload, {
       onSuccess: () => {
         setIsEditing(false);
+        refetchYearBudgets();
         router.back();
       },
       onError: (error: any) => {
@@ -363,6 +285,39 @@ function GADViewEditEntryForm() {
       },
     });
   };
+
+  if (entryLoading || yearBudgetsLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Loading budget data...</Text>
+      </View>
+    );
+  }
+
+  if (!budgetEntry || !yearBudgets) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>No budget entry found or error loading data.</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+  if (!currentYearBudget) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Error: No budget found for year {year}</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const initialFormValues = form.getValues();
 
   return (
     <_ScreenLayout
@@ -599,11 +554,7 @@ function GADViewEditEntryForm() {
                     label: item.gdb_name,
                     value: item.gdb_name,
                   }))}
-                  onSelect={(value: string) => {
-                    const selected = expenseItems.find((item) => item.gdb_name === value);
-                    form.setValue("gdb_id", selected?.gdb_id || null);
-                    form.setValue("gbud_exp_particulars", value);
-                  }}
+
                   disabled={!isEditing}
                 />
               </View>
@@ -696,5 +647,4 @@ function GADViewEditEntryForm() {
     </_ScreenLayout>
   );
 }
-
 export default GADViewEditEntryForm;

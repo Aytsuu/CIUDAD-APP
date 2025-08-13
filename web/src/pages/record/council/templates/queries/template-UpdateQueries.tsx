@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateTemplateRec } from "../request/template-PutRequest";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
+import documentTemplateFormSchema from "@/form-schema/council/documentTemplateSchema";
 import { z } from "zod";
 
 

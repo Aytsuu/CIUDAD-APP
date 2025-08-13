@@ -22,7 +22,7 @@ export const FormDateTimeInput = React.memo(
     name: string;
     label: string;
     readOnly?: boolean;
-    type: "date" | "time";
+    type: "date" | "time" | "datetime-local" | "month";
     min?: string;
     max?: string;
   }) => (
@@ -39,7 +39,6 @@ export const FormDateTimeInput = React.memo(
               {...field}
               value={field.value ?? ""}
               onChange={(e) => field.onChange(e.target.value)}
-
               readOnly={readOnly}
               min={min}
               max={max}

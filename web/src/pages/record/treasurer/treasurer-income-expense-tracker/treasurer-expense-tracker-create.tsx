@@ -417,7 +417,11 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                 message: `Date must be in the year ${years}`
             });
             return; 
-        }        
+        }
+        
+        if(!values.iet_additional_notes){
+            values.iet_additional_notes = "None";
+        }
 
         if(amount && actualAmount){
             totalBudget = totBUDGET - actualAmount;

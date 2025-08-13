@@ -63,7 +63,6 @@ export const updateHousehold = async (householdInfo: Record<string, any>) => {
 
 export const updateBusiness = async (data: Record<string, any>, businessId: string) => {
   try {
-    console.log(data)
     const res = await api.put(`profiling/business/${businessId}/update/`, data);
    
    

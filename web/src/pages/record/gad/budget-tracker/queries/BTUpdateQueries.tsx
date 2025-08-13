@@ -2,16 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
-import { updateGADBudget, createGADBudgetFile } from "../requestAPI/BTPutRequest";
+import { updateGADBudget } from "../requestAPI/BTPutRequest";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { deleteGADBudgetFiles } from "../requestAPI/BTDelRequest";
-
-type BudgetYear = {
-  gbudy_year: string;
-  gbudy_budget: number;
-  gbudy_expenses: number;
-  gbudy_income: number;
-};
+import { BudgetYear, GADBudgetUpdatePayload } from "../budget-tracker-types";
 
 export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
   const queryClient = useQueryClient();
@@ -25,8 +19,6 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       filesToDelete: string[];
       remainingBalance: number; // Add remainingBalance
     }) => {
-      console.log("Files to Delete:", data.filesToDelete);
-      console.log("Received remainingBalance:", data.remainingBalance);
       // Validate remaining balance for Expense
       if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
         const currentYearBudget = yearBudgets.find(
@@ -58,29 +50,32 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       }
 
       // Update budget entry
-      const budgetEntryResponse = await updateGADBudget(data.gbud_num, data.budgetData);
+      const budgetEntryResponse = await updateGADBudget(
+        data.gbud_num,
+        data.budgetData as GADBudgetUpdatePayload
+      );
 
       // Validate and create new files
-      if (data.files.length > 0) {
-        const validFiles = data.files.filter(
-          (media) =>
-            media.status === "uploaded" &&
-            media.publicUrl &&
-            media.storagePath &&
-            media.file?.name &&
-            media.file?.type &&
-            !media.id?.startsWith("receipt-")
-        );
-        if (validFiles.length > 0) {
-          await Promise.all(
-            validFiles.map((file) => createGADBudgetFile(file, data.gbud_num))
-          );
-        }
-      }
+      // if (data.files.length > 0) {
+      //   const validFiles = data.files.filter(
+      //     (media) =>
+      //       media.status === "uploaded" &&
+      //       media.publicUrl &&
+      //       media.storagePath &&
+      //       media.file?.name &&
+      //       media.file?.type &&
+      //       !media.id?.startsWith("receipt-")
+      //   );
+      //   if (validFiles.length > 0) {
+      //     await Promise.all(
+      //       validFiles.map((file) => createGADBudgetFile(file, data.gbud_num))
+      //     );
+      //   }
+      // }
 
       return budgetEntryResponse;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.gbud_num] });
@@ -92,17 +87,10 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
 
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
     },
-    onError: (error: any, variables) => {
+    onError: (error: any, _variables) => {
       const errorMessage = error.response?.data?.detail || error.message || 'Unknown error';
       toast.error('Failed to update budget entry', {
         description: errorMessage,
-      });
-      console.error('Update informational:', {
-        errorMessage,
-        response: error.response?.data,
-        filesToDelete: variables.filesToDelete,
-        gbud_num: variables.gbud_num,
-        remainingBalance: variables.remainingBalance,
       });
     },
   });

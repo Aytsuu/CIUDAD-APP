@@ -74,29 +74,34 @@ export const ARColumns = (
     header: ({ table }) => {
       if (isCreatingWeeklyAR) {
         return (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) => {
-              table.toggleAllPageRowsSelected(!!value)
-            }}
-            aria-label="Select all"
-            className="border border-gray w-5 h-5"
-          />
+          <div className="w-full h-full flex justify-center items-center">
+            <Checkbox
+              checked={
+                table.getIsAllPageRowsSelected() ||
+                (table.getIsSomePageRowsSelected() && "indeterminate")
+              }
+              onCheckedChange={(value) => {
+                table.toggleAllPageRowsSelected(!!value)
+              }}
+              aria-label="Select all"
+              className="border border-gray-400 w-5 h-5"
+            />
+          </div>
         );
       }
     },
     cell: ({ row }) => {
-      if (isCreatingWeeklyAR) {
+      const files = row.original.ar_files;
+      const docs = files.filter((file: any) => file.arf_type.startsWith('application/'))
+      const unsigned = docs.length === 0
 
+      if (isCreatingWeeklyAR) {
         React.useEffect(() => {
           selectionValidator();
         }, [isCreatingWeeklyAR, row.getIsSelected()])
 
         const selectionValidator = React.useCallback(() => {
-          if(row.getIsSelected() && row.original.status === 'Unsigned') {
+          if(row.getIsSelected() && unsigned) {
             toast(`Report No. ${row.original.id} is Unsigned`, {
               icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
               style: {
@@ -129,7 +134,7 @@ export const ARColumns = (
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(value) => {
-              if(row.original.status === 'Unsigned') {
+              if(unsigned) {
                 toast("Cannot add unsigned reports", {
                   icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
                   style: {
@@ -177,6 +182,17 @@ export const ARColumns = (
   {
     accessorKey: "status",
     header: "Status",
+    cell: ({row}) => {
+      const status = row.original.status
+
+      return (
+        <Badge className={`${status === 'Signed' ? 
+          "bg-green-100 text-green-700 hover:bg-green-100 shadow-none" : 
+          "bg-amber-100 text-amber-700 hover:bg-amber-100 shadow-none"}`}>
+          {status}
+        </Badge>
+      )
+    }
   },
   {
     header: "Action",
@@ -188,7 +204,9 @@ export const ARColumns = (
           state: {
             params: {
               type: "AR",
-              data: row.original,
+              data: {
+                id: row.original.id
+              },
             },
           },
         });

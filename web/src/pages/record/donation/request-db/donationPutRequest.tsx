@@ -16,6 +16,5 @@ export const putdonationreq = async (don_num: string, donationInfo: Record<strin
         return res.data;
     }
     catch (err){
-        console.error(err);
     }
 }

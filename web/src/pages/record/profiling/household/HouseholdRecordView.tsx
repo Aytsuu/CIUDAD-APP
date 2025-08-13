@@ -3,7 +3,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useLocation, useNavigate } from "react-router";
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/table/data-table";
-import { HouseholdFamRecord } from "../profilingTypes";
+import { HouseholdFamRecord } from "../ProfilingTypes";
 import { householdFamColumns } from "./HouseholdColumns";
 import { Card } from "@/components/ui/card/card";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -50,7 +50,7 @@ export default function HouseholdRecordView() {
     const personalInfo = await getPersonalInfo(household.head_id);
     const familyId = await getFamilyID(household.head_id)
 
-    navigate("/resident/view", {
+    navigate("/profiling/resident/view", {
       state: {
         params: {
           type: 'viewing',

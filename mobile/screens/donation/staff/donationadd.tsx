@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,16 +6,14 @@ import {
 } from 'react-native';
 import { DonorSelect } from '../personalizedCompo/search_input';
 import { useRouter } from 'expo-router';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Loader2, Check, ChevronLeft } from 'lucide-react-native';
+import {  ChevronLeft } from 'lucide-react-native';
 import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
-import { useAddDonation, Personal, useGetPersonalList } from './queries';
+import { useAddDonation, useGetPersonalList } from './queries';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import PageLayout from '@/screens/_PageLayout';
 
@@ -47,38 +45,6 @@ const DonationAdd = () => {
     }
   }, [donCategory, setValue]);
 
-  // Convert personalList to options format
-  const donorOptions = personalList.map((person: Personal) => ({
-    id: person.per_id.toString(),
-    name: person.full_name,
-  }));
-
-  // Add Anonymous option
-  const allDonorOptions = [
-    { id: 'anonymous', name: 'Anonymous' },
-    ...donorOptions,
-  ];
-
-  const handleAddDonor = (newDonorName: string) => {
-    setValue('don_donor', newDonorName);
-    setValue('per_id', null);
-  };
-
-  const handleSelectDonor = (selectedId: string) => {
-    if (selectedId === 'anonymous') {
-      setValue('don_donor', 'Anonymous');
-      setValue('per_id', null);
-    } else {
-      const selectedPerson = personalList.find(
-        (person) => person.per_id.toString() === selectedId
-      );
-      if (selectedPerson) {
-        setValue('don_donor', selectedPerson.full_name);
-        setValue('per_id', selectedPerson.per_id);
-      }
-    }
-  };
-
   const onSubmit = async (formData: any) => {
     const isValid = await trigger();
     if (!isValid) {
@@ -101,7 +67,6 @@ const DonationAdd = () => {
       setIsSubmitting(false);
     }
   };
-
 
   return (
     <PageLayout
@@ -203,7 +168,6 @@ const DonationAdd = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={20} color="white" className="animate-spin mr-2" />
                     <Text className="text-white text-base font-semibold text-center">Saving...</Text>
                   </>
                 ) : (

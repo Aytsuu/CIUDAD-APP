@@ -3,28 +3,17 @@ import { useToastContext } from "@/components/ui/toast";
 import { updateGADBudget, createGADBudgetFile } from "../request/put";
 import { deleteGADBudgetFiles } from "../request/delete";
 import { api } from "@/api/api";
+import { BudgetYear, MediaFileType, GADBudgetUpdatePayload } from "../bt-types";
 
-type BudgetYear = {
-  gbudy_year: string;
-  gbudy_budget: number;
-  gbudy_expenses: number;
-  gbudy_income: number;
-};
-
-export type MediaFileType = {
-  id: string;
-  uri: string;
-  name: string;
-  type: string;
-  path: string;
-  publicUrl?: string;
-  status: "uploading" | "uploaded" | "error";
-};
-
-const handleFileUpdates = async (gbud_num: number, mediaFiles: MediaFileType[]) => {
+const handleFileUpdates = async (
+  gbud_num: number,
+  mediaFiles: MediaFileType[]
+) => {
   try {
     // Get current files from server
-    const currentFilesRes = await api.get(`/gad/gad-budget-files/?gbud_num=${gbud_num}`);
+    const currentFilesRes = await api.get(
+      `/gad/gad-budget-files/?gbud_num=${gbud_num}`
+    );
     const currentFiles = currentFilesRes.data || [];
 
     // Determine files to keep and delete
@@ -41,12 +30,17 @@ const handleFileUpdates = async (gbud_num: number, mediaFiles: MediaFileType[]) 
     }
 
     // Add new files
-    const filesToAdd = mediaFiles.filter((file) => !file.id?.startsWith("existing-"));
-    const validFilesToAdd = filesToAdd.filter((file) => file.status === "uploaded" && file.publicUrl);
+    const filesToAdd = mediaFiles.filter(
+      (file) => !file.id?.startsWith("existing-")
+    );
+    const validFilesToAdd = filesToAdd.filter(
+      (file) => file.status === "uploaded" && file.publicUrl
+    );
 
     if (filesToAdd.length !== validFilesToAdd.length) {
-      const invalidFiles = filesToAdd.filter((file) => file.status !== "uploaded" || !file.publicUrl);
-      console.warn("Skipping invalid files:", invalidFiles.map((f) => ({ name: f.name, status: f.status, publicUrl: f.publicUrl })));
+      const invalidFiles = filesToAdd.filter(
+        (file) => file.status !== "uploaded" || !file.publicUrl
+      );
     }
 
     await Promise.all(
@@ -63,7 +57,6 @@ const handleFileUpdates = async (gbud_num: number, mediaFiles: MediaFileType[]) 
       )
     );
   } catch (err) {
-    console.error("Error updating files:", err);
     throw err;
   }
 };
@@ -78,20 +71,22 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       budgetData: Record<string, any>;
       files: MediaFileType[];
       filesToDelete: string[];
+      remainingBalance: number | string;
     }) => {
       // Fetch current entry
-      const currentEntryRes = await api.get(`/gad/gad-budget-tracker-entry/${data.gbud_num}/`);
+      const currentEntryRes = await api.get(
+        `/gad/gad-budget-tracker-entry/${data.gbud_num}/`
+      );
       const currentEntry = currentEntryRes.data;
 
-      // Get old values (default to 0 if null/undefined)
-      const oldActualExpense = Number(currentEntry.gbud_actual_expense) || 0;
-      const oldProposedBudget = Number(currentEntry.gbud_proposed_budget) || 0;
-      const oldExpense = oldActualExpense || oldProposedBudget;
-
-      // Validate remaining balance for Expense entries
-      if (data.budgetData.gbud_type === "Expense") {
+      if (
+        data.budgetData.gbud_type === "Expense" &&
+        data.budgetData.gbud_actual_expense
+      ) {
         const currentYearBudget = yearBudgets.find(
-          (b) => b.gbudy_year === new Date(data.budgetData.gbud_datetime).getFullYear().toString()
+          (b) =>
+            b.gbudy_year ===
+            new Date(data.budgetData.gbud_datetime).getFullYear().toString()
         );
         
         if (!currentYearBudget) {
@@ -117,31 +112,18 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
           );
         }
 
-        // Calculate expected remaining balance
-        const expectedRemaining = currentAvailable - newExpenseValue;
+        const numericRemaining =
+          typeof data.remainingBalance === "string"
+            ? parseFloat(data.remainingBalance)
+            : data.remainingBalance;
 
-        // Only validate remaining balance if explicitly provided
-        if (data.budgetData.gbud_remaining_bal != null) {
-          // Allow 1% tolerance for floating point differences
-          const tolerance = currentAvailable * 0.01;
-          const difference = Math.abs(Number(data.budgetData.gbud_remaining_bal) - expectedRemaining);
-          
-          if (difference > tolerance) {
-            console.log("Budget Calculation Details:", {
-              initialBudget,
-              totalExpenses,
-              totalIncome,
-              oldActualExpense,
-              oldProposedBudget,
-              oldExpense,
-              currentAvailable,
-              newExpenseValue,
-              expectedRemaining,
-              receivedRemaining: data.budgetData.gbud_remaining_bal,
-              difference,
-              tolerance
-            });
-            
+        if (data.budgetData.gbud_remaining_bal !== undefined) {
+          const expectedRemaining =
+            numericRemaining - data.budgetData.gbud_actual_expense;
+          if (
+            Math.abs(data.budgetData.gbud_remaining_bal - expectedRemaining) >
+            0.01
+          ) {
             throw new Error(
               `Remaining balance mismatch: expected ₱${expectedRemaining.toFixed(2)}, got ₱${Number(data.budgetData.gbud_remaining_bal).toFixed(2)}`
             );
@@ -153,7 +135,10 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       }
 
       // Update budget entry
-      const budgetEntry = await updateGADBudget(data.gbud_num, data.budgetData);
+      const budgetEntry = await updateGADBudget(
+        data.gbud_num,
+        data.budgetData as GADBudgetUpdatePayload
+      );
 
       // Handle file updates
       await handleFileUpdates(data.gbud_num, data.files);
@@ -161,22 +146,22 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       return budgetEntry;
     },
     onSuccess: (data, variables) => {
-      const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
+      const year = new Date(variables.budgetData.gbud_datetime)
+        .getFullYear()
+        .toString();
       queryClient.invalidateQueries({ queryKey: ["gad-budgets", year] });
-      queryClient.invalidateQueries({ queryKey: ["gad-budgets", variables.gbud_num] });
+      queryClient.invalidateQueries({
+        queryKey: ["gad-budgets", variables.gbud_num],
+      });
       queryClient.invalidateQueries({ queryKey: ["gad-budgets"] });
 
       toast.success("Budget entry updated successfully");
     },
     onError: (error: any, variables) => {
-      const errorMessage = error.message || JSON.stringify(error.response?.data || "Unknown error");
+      const errorMessage =
+        error.message ||
+        JSON.stringify(error.response?.data || "Unknown error");
       toast.error("Failed to update budget entry");
-      console.error("Update Error:", {
-        errorMessage,
-        response: error.response?.data,
-        filesToDelete: variables.filesToDelete,
-        gbud_num: variables.gbud_num,
-      });
     },
   });
 };

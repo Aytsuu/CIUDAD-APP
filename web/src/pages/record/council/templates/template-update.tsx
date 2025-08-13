@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -19,8 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
+// import { MediaUpload } from "@/components/ui/media-upload";
+import documentTemplateFormSchema from "@/form-schema/council/documentTemplateSchema";
 import TemplatePreview from "./template-preview";
 import { useUpdateTemplate } from "./queries/template-UpdateQueries";
 import { useGetPurposeRates } from "./queries/template-FetchQueries";
@@ -65,26 +65,26 @@ function TemplateUpdateForm({
     onClose 
   } : TemplateUpdateFormProps) {
 
-  const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [formValues, setFormValues] = useState<z.infer<typeof documentTemplateFormSchema>>();
+  const [_activeVideoId, _setActiveVideoId] = useState<string>("");
+  const [_isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [_formValues, setFormValues] = useState<z.infer<typeof documentTemplateFormSchema>>();
 
 
-  const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
-    // Initialize with existing image if available
-    if (temp_header && temp_header !== 'no-image-url-fetched') {
-      return [{
-        id: `header-${temp_id}`,
-        type: "image" as const,
-        file: new File([], `header-${temp_id}.jpg`), // Dummy file
-        publicUrl: temp_header,
-        status: "uploaded" as const,
-        previewUrl: temp_header,
-        storagePath: ""
-      }];
-    }
-    return [];
-  });
+  // const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
+  //   // Initialize with existing image if available
+  //   if (temp_header && temp_header !== 'no-image-url-fetched') {
+  //     return [{
+  //       id: `header-${temp_id}`,
+  //       type: "image" as const,
+  //       file: new File([], `header-${temp_id}.jpg`), // Dummy file
+  //       publicUrl: temp_header,
+  //       status: "uploaded" as const,
+  //       previewUrl: temp_header,
+  //       storagePath: ""
+  //     }];
+  //   }
+  //   return [];
+  // });
 
   const form = useForm<z.infer<typeof documentTemplateFormSchema>>({
     resolver: zodResolver(documentTemplateFormSchema),
@@ -107,13 +107,13 @@ function TemplateUpdateForm({
 
   const isSummonChecked = form.watch('temp_w_summon');
 
-  useEffect(() => {
-    if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-      form.setValue('temp_header', mediaFiles[0].publicUrl);
-    } else {
-      form.setValue('temp_header', 'no-image-url-fetched');
-    }
-  }, [mediaFiles, form]);
+  // useEffect(() => {
+  //   if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+  //     form.setValue('temp_header', mediaFiles[0].publicUrl);
+  //   } else {
+  //     form.setValue('temp_header', 'no-image-url-fetched');
+  //   }
+  // }, [mediaFiles, form]);
 
 
   // const { mutate: updateTemplateRecord } = useUpdateTemplate(temp_id, onSuccess);
@@ -201,14 +201,14 @@ function TemplateUpdateForm({
                   {/* Document Header */}
                   <div className="flex flex-col gap-2 w-3/5">
                     <Label className="mb-1">Document Header</Label>
-                    <MediaUpload
+                    {/* <MediaUpload
                       title=""
                       description=""
                       mediaFiles={mediaFiles}
                       activeVideoId={activeVideoId}
                       setMediaFiles={setMediaFiles}
                       setActiveVideoId={setActiveVideoId}
-                    />
+                    /> */}
                   </div>                  
 
                   {/* Document Footer */}

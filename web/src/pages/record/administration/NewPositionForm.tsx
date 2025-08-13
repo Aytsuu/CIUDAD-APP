@@ -13,9 +13,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useAddPosition } from "./queries/administrationAddQueries";
 import { useEditPosition } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./administrationActionConfig";
-import { Type } from "./administrationEnums";
+import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { formatPositionGroups } from "./AdministrationFormats";
 import { formatPositionGroups } from "./AdministrationFormats";
 
 export default function NewPositionForm() {

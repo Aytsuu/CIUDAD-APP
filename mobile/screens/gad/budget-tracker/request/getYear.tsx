@@ -1,6 +1,5 @@
 import { api } from "@/api/api";
 
-
 export const getbudgetyearreq = async () => {
     try {
         const res = await api.get('gad/gad-budget-tracker-main/');
@@ -10,7 +9,6 @@ export const getbudgetyearreq = async () => {
             : [];
         return filteredData;
     } catch (err) {
-        console.error("API Error:", err);
         return [];  // Always return an array
     }
 };

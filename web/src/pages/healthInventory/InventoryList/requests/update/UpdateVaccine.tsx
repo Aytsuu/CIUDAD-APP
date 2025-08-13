@@ -1,6 +1,6 @@
 
   // API Service functions (in separate file like vaccineApiService.ts)
-  import api from "@/pages/api/api";
+  import { api2 } from "@/api/api";
   import { toTitleCase } from "../case";
 
 
@@ -12,7 +12,7 @@
     specify_age: string;
   }) => {
     try {
-      const response = await api.put(`inventory/vaccines/${vaccineId}/`, {
+      const response = await api2.put(`inventory/vaccines/${vaccineId}/`, {
         ...data,
         updated_at: new Date().toISOString()
       });
@@ -30,12 +30,12 @@
   }>) => {
     try {
       // First delete existing intervals
-      await api.delete(`inventory/vaccines/${vaccineId}/`);
+      await api2.delete(`inventory/vaccines/${vaccineId}/`);
       
       // Then create new ones
       const responses = await Promise.all(
         intervals.map(interval => 
-          api.post(`/vaccines/${vaccineId}/intervals/`, interval)
+          api2.post(`/vaccines/${vaccineId}/intervals/`, interval)
         )
       );
       return responses.map(r => r.data);
@@ -50,7 +50,7 @@
     time_unit: string;
   }) => {
     try {
-      const response = await api.put(`inventory/vaccines/${vaccineId}/`, {
+      const response = await api2.put(`inventory/vaccines/${vaccineId}/`, {
         dose_number: 1,
         ...data
       });
@@ -69,7 +69,7 @@
     expiry_date?: string;
   }) => {
     try {
-      const res = await api.put(`inventory/imz_supplies/${imz_id}/`, {
+      const res = await api2.put(`inventory/imz_supplies/${imz_id}/`, {
         ...data,
         supply_name: toTitleCase(data.supply_name),
         updated_at: new Date().toISOString(),
@@ -88,7 +88,7 @@
     category_id?: number;
   }) => {
     try {
-      const res = await api.put(`inventory/vac_list/${vac_id}/`, {
+      const res = await api2.put(`inventory/vac_list/${vac_id}/`, {
         ...data,
         vac_name: toTitleCase(data.vac_name),
         updated_at: new Date().toISOString(),
@@ -106,7 +106,7 @@
     time_unit: string;
   }) => {
     try {
-      const res = await api.put(`inventory/vac_intervals/${vacInt_id}/`, {
+      const res = await api2.put(`inventory/vac_intervals/${vacInt_id}/`, {
         ...data,
         updated_at: new Date().toISOString(),
       });
@@ -122,7 +122,7 @@
     time_unit: string;
   }) => {
     try {
-      const res = await api.put(`inventory/routine_freq/${routineF_id}/`, {
+      const res = await api2.put(`inventory/routine_freq/${routineF_id}/`, {
         ...data,
         updated_at: new Date().toISOString(),
       });

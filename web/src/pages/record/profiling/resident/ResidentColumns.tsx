@@ -328,7 +328,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/resident/view", {
+        navigate("/profiling/resident/view", {
           state: {
             params: {
               type: 'viewing',
@@ -389,7 +389,7 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/resident/view", {
+        navigate("/profiling/resident/view", {
           state: {
             params: {
               type: 'viewing',
@@ -450,7 +450,7 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/business/form", {
+        navigate("/profiling/business/form", {
           state: {
             params: {
               type: "viewing",

@@ -73,7 +73,8 @@ export const addPickupAssignmentandCollectors = async (garb_id: string, assignme
             garb_id: garb_id,
         });
 
-        return res.data.pick_id; 
+
+        return res.data.pick_id, res2.data; 
 
     } catch(err) {
         console.error(err);

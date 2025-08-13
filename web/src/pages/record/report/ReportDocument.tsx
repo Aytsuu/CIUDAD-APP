@@ -2,128 +2,152 @@ import React from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { ARDocTemplate } from "./template/ARDocTemplate"
 import { WARDocTemplate } from "./template/WARDocTemplate"
-import { CircleAlert, FileText, Upload, CircleCheck, X } from "lucide-react"
+import { CircleAlert, CircleCheck, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
-import { Input } from "@/components/ui/input"
-import { useInstantFileUpload } from "@/hooks/use-file-upload"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useLocation } from "react-router"
 import { getDateTimeFormat } from "@/helpers/dateHelper"
 import { useAddARFile, useAddWARFile } from "./queries/reportAdd"
-import { useAuth } from "@/context/AuthContext"
-import { toast } from "sonner"
-import { LoadButton } from "@/components/ui/button/load-button"
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload"
+import { useGetARInfo, useGetWARInfo } from "./queries/reportFetch"
+import { useLoading } from "@/context/LoadingContext"
+import { useDeleteARFile, useDeleteWARFile } from "./queries/reportDelete"
+import { useUpdateAR, useUpdateWAR } from "./queries/reportUpdate"
 
 export default function ReportDocument() {
-  const { user } = useAuth();
+  // ----------------- STATE INITIALIZATION ---------------------
   const location = useLocation();
-  const params = React.useMemo(() => location.state?.params, [location.state]);
-  const { uploadFile } = useInstantFileUpload({});
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const params = React.useMemo(() => location.state?.params, [location.state] );
   const data = React.useMemo(() => params?.data, [params]);
   const type = React.useMemo(() => params?.type, [params]);
-  const [ isUploading, setIsUploading ] = React.useState<boolean>(false);
+  const { showLoading, hideLoading } = useLoading();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [isRemoving, setIsRemoving] = React.useState<boolean>(false);
+  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([])
 
   // For Acknolwedgement Report Document
   const { mutateAsync: addARFile } = useAddARFile();
-  const images = React.useMemo(() => data?.ar_files?.filter((file: any) => 
-    file.arf_type.startsWith('image/')), [data]);
-  const arDocs = React.useMemo(() => data?.ar_files?.filter((file: any) => 
-    file.arf_type.startsWith('application/')), [data])
+  const { mutateAsync: deleteARFile } = useDeleteARFile();
+  const { mutateAsync: updateAR } = useUpdateAR();
+  const { data: ARInfo, isLoading: isLoadingARInfo } = useGetARInfo(type === 'AR' ? data.id : null) 
+  const images = React.useMemo(() => ARInfo?.ar_files?.filter((file: any) =>   
+    file.arf_type.startsWith('image/')), [ARInfo]);
+  const arDocs = React.useMemo(() => ARInfo?.ar_files?.filter((file: any) => 
+    file.arf_type.startsWith('application/')), [ARInfo])
+
 
   // For Weekly Accomplishment Report Document
   const { mutateAsync: addWARFile } = useAddWARFile();
-  const compositions = React.useMemo(() => data?.war_composition || [], [data])
-  const warDocs = React.useMemo(() => data?.war_files, [data]);
+  const { mutateAsync: deleteWARFile } = useDeleteWARFile();
+  const { mutateAsync: updateWAR } = useUpdateWAR();
+  const { data: WARInfo, isLoading: isLoadingWARInfo } = useGetWARInfo(type !== 'AR' ? data.id : null)
+  const compositions = React.useMemo(() => WARInfo?.war_composition || [], [WARInfo])
+  const warDocs = React.useMemo(() => WARInfo?.war_files, [WARInfo]);
 
-  const handleOpenDocument = () => { 
-    // Open document in new tab
-    window.open(type ==="AR" ? 
-      arDocs[0].arf_url: warDocs[0].warf_url
-    , '_blank');
-  };
+  // Determine current info
+  const isLoadingDetails = type === "AR" ? isLoadingARInfo : isLoadingWARInfo;
+  const currentInfo = type === "AR" ? ARInfo : WARInfo; 
+  const currentDocs = type === "AR" ? arDocs : warDocs; 
+  const signed = currentInfo?.status === 'Signed' || currentDocs?.length > 0
+  console.log(currentInfo?.status)
+  const formatDocs = React.useMemo(() => currentDocs?.map((doc: any) => ({
+    id: doc.warf_id || doc.arf_id,
+    name: doc.warf_name || doc.arf_name,
+    type: doc.warf_type || doc.arf_type,
+    file: null,
+    url: doc.warf_url || doc.arf_url,
+  })), [currentDocs])
 
-  const successFeedback = () => {
-    toast("Document uploaded successfully", {
-      icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-    });
-    data.status = "Signed";
-    setIsUploading(false);
-  }
+  // ----------------- SIDE EFFECTS ---------------------
+  React.useEffect(() => {
+    if(isLoadingARInfo || isLoadingWARInfo) showLoading();
+    else hideLoading();
+  }, [isLoadingARInfo, isLoadingWARInfo])
 
-  const errorFeedback = () => {
-    toast("Failed to upload document. Please try again.", {
-      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      style: {
-        border: '1px solid rgb(225, 193, 193)',
-        padding: '16px',
-        color: '#b91c1c',
-        background: '#fef2f2',
-      },
-      action: {
-        label: <X size={14} className="bg-transparent"/>,
-        onClick: () => toast.dismiss(),
-      },
-    });
-    setIsUploading(false);
-  }
+  React.useEffect(() => {
+    if(!formatDocs || formatDocs.length === 0) return;
+    setMediaFiles(formatDocs);
+  }, [formatDocs])
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsUploading(true);
-    const files = Array.from(e.target.files || []);
+  React.useEffect(() => {
+    const files = mediaFiles?.map((media: any) => ({
+      'name': media.name,
+      'type': media.type,
+      'file': media.file
+    })).filter((media) => media.file);
+
     if(files.length === 0) return;
-    const newFile = {
-      type: files[0].type.startsWith("image/")
-        ? "image"
-        : files[0].type.startsWith("video/")
-        ? "video"
-        : ("document" as "image" | "video" | "document"),
-      file: files[0],
-      status: "uploading" as const,
-      previewUrl: URL.createObjectURL(files[0]),
-    };
-
-    const { publicUrl, storagePath } = await uploadFile(newFile.file);
-    if (publicUrl) {
-      
+    setIsSubmitting(true);
+    try {
       if (type === "AR") {
         // Adding signed document for acknolwedgement report
-        addARFile([{
-          'arf_name': newFile.file.name,
-          'arf_type': newFile.file.type,
-          'arf_path': storagePath,
-          'arf_url': publicUrl,
-          'ar': data.id,
-          'staff': user?.staff?.staff_id
-        }], {
+        addARFile({
+          'files': files,
+          'ar_id': ARInfo?.id
+        }, {
           onSuccess: () => {
-            successFeedback();
-          },
-          onError: () => {
-            errorFeedback()
+            showSuccessToast("Document uploaded successfully");
+            setIsSubmitting(false)
           }
         })
       } else {
         // Adding signed document for weekly accomplishment report
-        addWARFile([{
-          'warf_name': newFile.file.name,
-          'warf_type': newFile.file.type,
-          'warf_path': storagePath,
-          'warf_url': publicUrl,
-          'war': data.id,
-          'staff': user?.staff?.staff_id
-        }], {
+        addWARFile({
+          'files': files,
+          'war_id': WARInfo?.id
+        }, {
           onSuccess: () => {
-            successFeedback();
-          },
-          onError: () => {
-            errorFeedback()
+            showSuccessToast("Document uploaded successfully");
+            setIsSubmitting(false)
           }
         })
       }
+    } catch (err) {
+      setIsSubmitting(false);
+      setMediaFiles([]);
+      showErrorToast("Failed to upload document. Please try again.");
+    }
+    
+  }, [mediaFiles, type])
+
+  // ----------------- HANDLERS ---------------------
+  const removeDocument = async (id: string) => {
+    setIsSubmitting(true);
+    setIsRemoving(true);
+    try {
+      if(type == "AR") {
+        await deleteARFile(id);
+        await updateAR({
+          data: {
+            ar_status: 'Unsigned'
+          },
+          ar_id: currentInfo.id
+        });
+      }
+      else {
+        await deleteWARFile(id);
+        await updateWAR({
+          data: {
+            war_status: 'Unsigned'
+          },
+          war_id: currentInfo.id
+        });
+      }
+
+      showSuccessToast("Document deleted successfully");
+      setIsSubmitting(false);
+      setIsRemoving(false);
+    } catch (err) {
+      setIsSubmitting(false);
+      setIsRemoving(false);
+      setMediaFiles(formatDocs)
+      showErrorToast("Failed to delete document. Please try again.")
     }
   }
 
+  // ----------------- RENDER ---------------------
   return (
     <LayoutWithBack 
       title={type === "AR" ? "Acknowledgement Report Document" : "Weekly AR Document"} 
@@ -133,68 +157,103 @@ export default function ReportDocument() {
       }
     >
       <div className="w-full h-full flex">
-        <div className="w-80 pr-6">
+        {/* Sidebar document details */}
+        <div className="w-80 mr-4">
           <Card className="rounded-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">Document Details</CardTitle>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                Document Details
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Status Section */}
               <div className="space-y-2">
                 <h3 className="text-sm font-medium">Status</h3>
-                <div className="flex items-center gap-2">
-                  <CircleAlert className="h-4 w-4 text-amber-500" />
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                    {data.status}
-                  </Badge>
-                </div>
-                {data.status === "Unsigned" && <p className="text-xs text-muted-foreground">
-                  Status will update to <span className="font-medium text-red-500">LAPSED</span> by the end of the week
-                  if no document is uploaded.
-                </p>}
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <h3 className="text-sm font-medium">Actions</h3>
-                {data.status === "Unsigned" ? (!isUploading ? (<>
-                  <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label htmlFor="file-upload" 
-                    className="flex justify-center items-center cursor-pointer bg-buttonBlue 
-                            text-white px-3 py-2 gap-2 rounded-lg"
-                  >
-                      <Upload className="h-4 w-4" />
-                      <span className="text-[13px] font-medium">Upload signed document</span>
-                  </label>
-                </>) : (
-                  <LoadButton className="w-full">Uploading...</LoadButton> 
-                )) : (
+                {isLoadingDetails ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-4 rounded-full" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                ) : (
                   <>
-                    <label 
-                      className="flex justify-center items-center cursor-pointer bg-buttonBlue 
-                              text-white px-3 py-2 gap-2 rounded-lg"
-                      onClick={handleOpenDocument}
-                    >
-                        <FileText className="h-4 w-4" />
-                        <span className="text-[13px] font-medium">Open document</span>
-                    </label>
+                    <div className="flex items-center gap-2 transition-all">
+                      {signed ? <CircleCheck className="h-5 w-5 fill-green-500 stroke-white"/> :
+                        <CircleAlert className="h-4 w-4 text-amber-500" />
+                      }
+                      <Badge variant="outline" className={
+                        signed ? "bg-green-50 text-green-700 border-green-200" :
+                                "bg-amber-50 text-amber-700 border-amber-200"
+                      }>
+                        {signed ? "Signed" : "Unsigned"}
+                      </Badge>
+                    </div>
+                    {!signed && (
+                      <p className="text-xs text-muted-foreground">
+                        Status will update to <span className="font-medium text-red-500">LAPSED</span> by the end of the week
+                        if no document is uploaded.
+                      </p>
+                    )}
                   </>
                 )}
               </div>
 
+              {/* Actions Section */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-sm font-medium">Actions</h3>
+                {isLoadingDetails ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {isSubmitting && (
+                      <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-md">
+                        <div className="flex items-center gap-2 text-sm text-blue-600">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {isRemoving ? "Removing..." : "Uploading..."}
+                        </div>
+                      </div>
+                    )}
+                    <MediaUpload 
+                      title={signed ? "Supporting Document" :
+                        "Mark as Signed"
+                      }
+                      description={signed ? "uploaded signed document" :
+                          "Upload signed document"}
+                      mediaFiles={mediaFiles}
+                      setMediaFiles={setMediaFiles}
+                      maxFiles={1}
+                      viewMode="list"
+                      acceptableFiles="document"
+                      onRemoveMedia={removeDocument}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Document Info Section */}
               <div className="space-y-2 pt-2">
                 <h3 className="text-sm font-medium">Document Info</h3>
-                <div className="grid grid-cols-2 gap-1 text-xs">
-                  <span className="text-muted-foreground">Created:</span>
-                  <span>{data.created_at || data.date}</span>
-                  <span className="text-muted-foreground">Document ID:</span>
-                  <span>{data.id}</span>
-                </div>
+                {isLoadingDetails ? (
+                  <div className="grid grid-cols-2 gap-1 text-xs">
+                    <span className="text-muted-foreground">Created:</span>
+                    <Skeleton className="h-3 w-16" />
+                    <span className="text-muted-foreground">Document ID:</span>
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-1 text-xs">
+                    <span className="text-muted-foreground">Created:</span>
+                    <span>{type === "AR" ? ARInfo?.date : WARInfo?.created_at}</span>
+                    <span className="text-muted-foreground">Document ID:</span>
+                    <span>{type === "AR" ? ARInfo?.id : WARInfo?.id}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -204,10 +263,10 @@ export default function ReportDocument() {
         <div className="w-full flex flex-col gap-4">
           {type === "AR" ? 
             <ARDocTemplate
-              incident={data.ar_title}
-              dateTime={getDateTimeFormat(`${data.ar_date_completed} ${data.ar_time_completed}`)}
-              location={`Sitio ${data.ar_sitio}, ${data.ar_street}`}
-              act_taken={data.ar_action_taken}
+              incident={ARInfo?.ar_title}
+              dateTime={getDateTimeFormat(`${ARInfo?.ar_date_completed} ${ARInfo?.ar_time_completed}`)}
+              location={`Sitio ${ARInfo?.ar_sitio}, ${ARInfo?.ar_street}`}
+              act_taken={ARInfo?.ar_action_taken}
               images={images}
             /> : 
             <WARDocTemplate 

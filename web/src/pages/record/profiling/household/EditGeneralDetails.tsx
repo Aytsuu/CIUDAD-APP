@@ -11,11 +11,11 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { formatResidents } from "../profilingFormats";
+import { formatResidents } from "../ProfilingFormats";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { useUpdateHousehold } from "../queries/profilingUpdateQueries";
-import { useUpdateHouseholdHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
 
 export default function EditGeneralDetails({
   residents,

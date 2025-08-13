@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {api} from "@/api/api";
 import { useQueryClient } from '@tanstack/react-query';
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 interface Option {
     id: string;
@@ -11,7 +11,7 @@ interface Option {
 
 export const useDeleteParticular = () => {
 
-    const [particulars, setParticulars] = useState<Option[]>([]);
+    const [_particulars, setParticulars] = useState<Option[]>([]);
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
     const [particularToDelete, setParticularToDelete] = useState<number | null>(null);
     const queryClient = useQueryClient();

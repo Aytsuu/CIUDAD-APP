@@ -2,7 +2,7 @@ import React from "react";
 import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
-import { Type } from "../../profilingEnums";
+import { Type } from "../../ProfilingEnums";
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import { CircleAlert, FileText, MapPin, Shield, User, UserRoundPlus } from "luci
 import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
 import { useUpdateAccount } from "../../queries/profilingUpdateQueries";
 import { useSitioList } from "../../queries/profilingFetchQueries";
-import { formatSitio } from "../../profilingFormats";
+import { formatSitio } from "../../ProfilingFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRequestExpiration } from "../useRequestExpiration";
@@ -26,7 +26,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: deleteRequest } = useDeleteRequest();
   const { mutateAsync: updateAccount } = useUpdateAccount();
-  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+  const { data: sitioList } = useSitioList();
   const { form } = useResidentForm(params.data);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { 

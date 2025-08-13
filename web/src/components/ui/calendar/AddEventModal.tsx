@@ -93,14 +93,13 @@ import {
   Button,
   Box,
 } from "@mui/material";
-import { EventFormData } from "./EventCalendar";
 import { HexColorPicker } from "react-colorful";
 
 interface IProps {
   open: boolean;
   handleClose: Dispatch<SetStateAction<void>>;
-  eventFormData: EventFormData;
-  setEventFormData: Dispatch<SetStateAction<EventFormData>>;
+  eventFormData: any;
+  setEventFormData: Dispatch<SetStateAction<any>>;
   onAddEvent: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -111,7 +110,7 @@ const AddEventModal = ({ open, handleClose, eventFormData, setEventFormData, onA
 
   // Handle changes to the description field
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setEventFormData((prevState) => ({
+    setEventFormData((prevState: any) => ({
       ...prevState,
       [event.target.name]: event.target.value,
     }));
@@ -119,7 +118,7 @@ const AddEventModal = ({ open, handleClose, eventFormData, setEventFormData, onA
 
   // Handle changes to the selected color
   const handleColorChange = (newColor: string) => {
-    setEventFormData((prevState) => ({
+    setEventFormData((prevState: any) => ({
       ...prevState,
       color: newColor, // Update the color in eventFormData
     }));

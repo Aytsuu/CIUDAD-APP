@@ -1,11 +1,11 @@
 
-import api from "@/pages/api/api";
+import { api2 } from "@/api/api";
 import { toTitleCase } from "../case";
 
 export const updateFirstAid = async (fa_id: number, firstAidName: string) => {
   
     try {
-      const res = await api.put(`inventory/update_firstaidlist/${fa_id}/`, {
+      const res = await api2.put(`inventory/update_firstaidlist/${fa_id}/`, {
         fa_name: toTitleCase(firstAidName),
         updated_at: new Date().toISOString(),
       });

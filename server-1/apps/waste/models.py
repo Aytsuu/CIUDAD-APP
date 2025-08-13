@@ -17,6 +17,8 @@ class WasteEvent(models.Model):
     we_description = models.CharField(max_length=200, null=True)
     we_organizer = models.CharField(max_length=100, null=True)
     we_invitees = models.CharField(max_length=100, null=True)
+    we_is_archive = models.BooleanField(default=False)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
     
     class Meta:
         db_table = 'waste_event'

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
@@ -150,7 +148,6 @@ const staffMembers = [
 ]
 
 export default function Health() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [appointmentForm, setAppointmentForm] = useState({
     name: "",
     phone: "",

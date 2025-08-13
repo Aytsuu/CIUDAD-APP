@@ -8,7 +8,6 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useState } from "react"
 import { useGetPurposeAndRate, type PurposeAndRate } from "./queries/RatesFetchQueries"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDeletePurposeAndRate } from "./queries/RatesDeleteQueries"
 import RatesEditFormPage2 from "./edit-forms/rates-edit-form-2"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -18,7 +17,6 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import React from "react"
 
 function RatesPage2() {
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
 
@@ -32,9 +30,6 @@ function RatesPage2() {
     const [currentPageHistory, setCurrentPageHistory] = useState(1)
 
     const { data: fetchedData = [], isLoading } = useGetPurposeAndRate()
-    const { mutate: deletePersonalAndOthers } = useDeletePurposeAndRate()
-
-    const handleDelete = (prId: number) => deletePersonalAndOthers(prId)
 
     const formatNumber = (value: string) =>
         `₱${Number(value).toLocaleString(undefined, {
@@ -54,10 +49,10 @@ function RatesPage2() {
 
     const personalAndOthersData = fetchedData.filter(row => row.pr_category === "Personal And Others")
 
-    const { filtered: filteredActive, paginated: paginatedActive, total: totalActive } =
+    const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive } =
         filterAndPaginate(personalAndOthersData.filter(row => !row.pr_is_archive), searchQueryActive, currentPageActive, pageSizeActive)
 
-    const { filtered: filteredHistory, paginated: paginatedHistory, total: totalHistory } =
+    const { filtered: _filteredHistory, paginated: paginatedHistory, total: totalHistory } =
         filterAndPaginate(personalAndOthersData, searchQueryHistory, currentPageHistory, pageSizeHistory)
 
     const activeColumns: ColumnDef<PurposeAndRate>[] = [
@@ -84,7 +79,6 @@ function RatesPage2() {
         {
             accessorKey: "action", header: "Action",
             cell: ({ row }) => {
-                const prId = row.original.pr_id
                 return (
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
@@ -109,21 +103,6 @@ function RatesPage2() {
                             }
                             content="Edit"
                         />
-
-                        {/* <TooltipLayout
-                            trigger={
-                                <div>
-                                    <ConfirmationModal
-                                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
-                                        title="Confirm Delete"
-                                        description="Are you sure you want to delete this record? This will permanently remove the record from active use."
-                                        actionLabel="Confirm"
-                                        onClick={() => handleDelete(Number(prId))}
-                                    />
-                                </div>
-                            }
-                            content="Delete"
-                        /> */}
                     </div>
                 )
             }
@@ -174,16 +153,6 @@ function RatesPage2() {
                             <h2 className='font-bold'>BARANGAY CLEARANCE FOR PERSONAL AND OTHER PURPOSES:</h2>
                             <Label>- For non-residents</Label>
                         </div>
-                        {/* <div className='flex justify-end w-[32rem]'>
-                            <DialogLayout
-                                trigger={<Button>+ Add</Button>}
-                                title='Add New Purpose and Fee for Personal Clearance'
-                                description="Define a new purpose and its corresponding fee for personal clearance applications."
-                                mainContent={<RatesFormPage2 onSuccess={() => setIsDialogOpen(false)} />}
-                                isOpen={isDialogOpen}
-                                onOpenChange={setIsDialogOpen}
-                            />
-                        </div> */}
                     </div>
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>

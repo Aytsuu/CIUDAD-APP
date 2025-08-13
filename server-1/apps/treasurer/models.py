@@ -1,7 +1,5 @@
 from django.db import models
-from datetime import date, datetime
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
+from datetime import date
 
 
 class Budget_Plan(models.Model): 
@@ -17,11 +15,6 @@ class Budget_Plan(models.Model):
     plan_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
     plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
-    plan_personalService_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_miscExpense_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_localDev_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_skFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
-    plan_calamityFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
     plan_is_archive = models.BooleanField(default=False)
 
     class Meta:
@@ -40,6 +33,7 @@ class Budget_Plan_Detail(models.Model):
 class BudgetPlan_File(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
     bpf_upload_date = models.DateTimeField(auto_now_add=True)
+    bpf_description = models.CharField(max_length=500   )
     bpf_type = models.CharField(max_length=100, null=True)
     bpf_name = models.CharField(max_length=255, null=True)
     bpf_path = models.CharField(max_length=500, null=True)
@@ -67,44 +61,19 @@ class BudgetPlan_File(models.Model):
 
 class Budget_Plan_History(models.Model):
     bph_id = models.BigAutoField(primary_key=True)
+    bph_date_updated = models.DateTimeField(default = date.today)
+    bph_source_item = models.CharField(default="None")
+    bph_to_item = models.CharField(default = "None")
+    bph_from_new_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_from_prev_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_to_new_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_to_prev_balance = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
+    bph_transfer_amount = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 )
     plan = models.ForeignKey('Budget_Plan', on_delete=models.CASCADE, related_name='history')
-    bph_change_date = models.DateTimeField(default=datetime.now)
-
-    bph_year = models.CharField(max_length=4)
-    bph_actual_income = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_rpt_income = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_balance = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_tax_share = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_tax_allotment = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_cert_fees = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_other_income = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_personalService_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_miscExpense_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_localDev_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_skFund_limit = models.DecimalField(max_digits=10, decimal_places=2)
-    bph_calamityFund_limit = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         db_table = 'budget_plan_history'
-        ordering = ['-bph_change_date']
-
-
-class Budget_Plan_Detail_History(models.Model):
-    bpdh_id = models.BigAutoField(primary_key=True)
-    bph = models.ForeignKey('Budget_Plan_History', on_delete=models.CASCADE, related_name='history')
-
-    # Snapshot fields
-    bpdh_budget_item = models.CharField(max_length=200)
-    bpdh_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2)
-    bpdh_budget_category = models.CharField(max_length=200)
-    bpdh_is_changed = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'budget_plan_detail_history'
-    
-
+        ordering = ['-bph_date_updated']
 
 
 #=======================================================================================
@@ -241,6 +210,13 @@ class Income_Expense_Tracking(models.Model):
     iet_receipt_image = models.CharField(null=True, blank=True)
     iet_is_archive = models.BooleanField(default=False)
     exp_id = models.ForeignKey('expense_particular', on_delete=models.CASCADE, null=True)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = "income_expense_tracking"
@@ -267,6 +243,13 @@ class Income_Tracking(models.Model):
     inc_is_archive = models.BooleanField(default=False)
     # inv_num = models.ForeignKey( 'invoice', on_delete=models.CASCADE, null=True, blank=True)
     incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = "income_tracking"

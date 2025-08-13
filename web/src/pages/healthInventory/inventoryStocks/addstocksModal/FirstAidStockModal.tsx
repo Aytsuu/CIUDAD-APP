@@ -1,126 +1,96 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form/form";
+import { Form, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FirstAidStockSchema,
   FirstAidStockType,
-} from "@/form-schema/inventory/inventoryStocksSchema";
-import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { fetchFirstAid } from "../REQUEST/fetch";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
-// import { submitFirstAidStock } from "../REQUEST/FirstAid/FirstAidSubmit";
+} from "@/form-schema/inventory/stocks/inventoryStocksSchema";
+import { fetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidFetchAPI";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import {useSubmitFirstAidStock} from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
-interface FirstAidStockFormProps {
-  setIsDialog: (isOpen: boolean) => void;
-}
+import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
+import { Label } from "@/components/ui/label";
+import { Pill } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-export default function FirstAidStockForm({
-  setIsDialog,
-}: FirstAidStockFormProps) {
-  UseHideScrollbar();
+export default function () {
+  const {user}=useAuth()
+  const staff_id = user?.staff?.staff_id
   const form = useForm<FirstAidStockType>({
     resolver: zodResolver(FirstAidStockSchema),
     defaultValues: {
       fa_id: "",
-      cat_id: "",
+      category: "",
       finv_qty_unit: "boxes",
       finv_qty: undefined,
       finv_pcs: undefined,
       expiryDate: new Date().toISOString().split("T")[0],
     },
   });
-
   const firstaid = fetchFirstAid();
-  
-  const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [submissionData, setSubmissionData] =
-    useState<FirstAidStockType | null>(null);
-
-  const { mutate: submitFirstAidStock, isPending: isSubmitting } = useSubmitFirstAidStock();
-
-  const {
-    categories,
-    handleDeleteConfirmation,
-    categoryHandleAdd,
-    ConfirmationDialogs,
-  } = useCategoriesFirstAid();
-
-  const handleSubmit = (data: FirstAidStockType) => {
-    submitFirstAidStock(data, {
-      onSuccess: () => {
-        setIsDialog(false);
-      }
-    });
-  };
-  
-  const onSubmit = (data: FirstAidStockType) => {
-    setSubmissionData(data);
-    setIsAddConfirmationOpen(true);
-  };
-  
-  const confirmAdd = () => {
-    if (submissionData) {
-      setIsAddConfirmationOpen(false);
-      handleSubmit(submissionData);
-    }
-  }
+  const [formData, setformData] = useState<FirstAidStockType | null>(null);
+  const { mutate: submit, isPending } = useSubmitFirstAidStock();
   const currentUnit = form.watch("finv_qty_unit");
   const qty = form.watch("finv_qty") || 0;
   const pcs = form.watch("finv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
 
+  // Watch for com_id changes and update category
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "fa_id" && value.fa_id) {
+        const selectedFirstAid = firstaid.find((fa) => fa.id === value.fa_id);
+        if (selectedFirstAid) {
+          form.setValue("category", selectedFirstAid.category);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, firstaid]);
+
+  const onSubmit = (data: FirstAidStockType) => {
+    setformData(data);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmAdd = () => {
+    if (!formData) return;
+    setIsAddConfirmationOpen(false);
+    submit({ data: formData, staff_id });
+    
+  };
+
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
+    <div className="w-full flex items-center justify-center p-4 sm:p-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-5"
+        >
+          <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
+            <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+            Add First Aid Stocks
+          </Label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormSelect
               control={form.control}
               name="fa_id"
-              label="Unit"
+              label="First Aid Item"
               options={firstaid}
             />
-            <FormField
+
+            <FormInput
               control={form.control}
-              name="cat_id"
-              render={({ field }) => ( 
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <SelectLayoutWithAdd
-                      placeholder="select"
-                      label="Select a Category"
-                      options={categories}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onAdd={(newCategoryName) => {
-                        categoryHandleAdd(newCategoryName, (newId) => {
-                          field.onChange(newId);
-                        });
-                      }}
-                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              name="category"
+              label="Category"
+              readOnly
             />
           </div>
 
@@ -154,7 +124,7 @@ export default function FirstAidStockForm({
           </div>
 
           {currentUnit === "boxes" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormInput
                 control={form.control}
                 name="finv_pcs"
@@ -162,23 +132,31 @@ export default function FirstAidStockForm({
                 type="number"
                 placeholder="Pieces per box"
               />
-              <div>
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>Total Pieces</FormLabel>
-                  <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    {totalPieces.toLocaleString() } pieces
-                    <span className="ml-2 text-muted-foreground text-xs">
-                      ({qty} boxes × {pcs} pieces/box)
-                    </span>
-                  </div>
-                </FormItem>
-              </div>
+
+              <FormItem className="sm:col-span-2 w-full">
+                <FormLabel>Total Pieces</FormLabel>
+                <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  {totalPieces.toLocaleString()} pc/s
+                  <span className="ml-2 text-muted-foreground text-xs">
+                    ({qty} boxes × {pcs} pc/s)
+                  </span>
+                </div>
+              </FormItem>
             </div>
           )}
 
-          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
-              {isSubmitting ? (
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
+            <Button variant="outline" className="w-full">
+              <Link to="/mainInventoryStocks">Cancel</Link>
+            </Button>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isPending}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
@@ -190,13 +168,14 @@ export default function FirstAidStockForm({
           </div>
         </form>
       </Form>
-      {ConfirmationDialogs()}
+
+      {/* First Aid Add Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
-        title="Add First Aid"
-        description={`Are you sure you want to add the First Aid?`}
+        title="Add First Aid Item"
+        description={`Are you sure you want to add this first aid item?`}
       />
     </div>
   );

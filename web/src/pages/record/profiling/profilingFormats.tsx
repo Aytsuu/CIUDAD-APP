@@ -114,7 +114,11 @@ export const formatOwnedBusinesses = (businesses: any) => {
         <p className="text-[15px]">{bus.bus_name}</p>
         <div className="flex w-full justify-between items-center">
           <p className="text-xs text-gray-700">Gross Sales: {formatCurrency(bus.bus_gross_sales)}</p>
-          <Badge className={`${bus.bus_status == 'Pending' ? "bg-orange-500" : ""}`}>{bus.bus_status}</Badge>
+          <Badge className={`${bus.bus_status == 'Pending' ? 
+            "bg-amber-500 hover:bg-amber-500" : 
+            "bg-green-500 hover:bg-green-500"}`}>
+              {bus.bus_status}
+            </Badge>
         </div>
       </div>
     )

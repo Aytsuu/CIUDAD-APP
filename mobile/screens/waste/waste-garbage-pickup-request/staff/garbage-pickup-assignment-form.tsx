@@ -18,6 +18,8 @@ import { useAddPickupAssignmentandCollectors } from './queries/garbagePickupStaf
 export default function AcceptGarbagePickupForm() {
     const params = useLocalSearchParams();
     const garb_id = params.garb_id || '';
+    const pref_date = params.pref_date as string;
+    const pref_time = params.pref_time as string;
     const router = useRouter();
     const {data: trucks = [], isPending: pendingTrucks} = useGetTrucks()
     const {data: drivers = [], isPending: pendingDrivers} = useGetDrivers()
@@ -45,8 +47,8 @@ export default function AcceptGarbagePickupForm() {
         driver: '',
         collectors: [],
         truck: '',
-        date: '',
-        time: '',
+        date: pref_date,
+        time: pref_time,
       }
     });
     

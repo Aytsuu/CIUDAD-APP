@@ -22,7 +22,7 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             newBudgetHeader: BudgetPlan;
             newBudgetDetails: z.infer<typeof BudgetPlanDetailSchema>[];
         }) => {
-            toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
+            // toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
 
             try {
                 const validatedDetails = values.newBudgetDetails.map(detail => {
@@ -70,20 +70,14 @@ export const useAddBudgetPlanSuppDoc = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (files: Array<{
-            publicUrl: string;
-            storagePath: string;
-            type: "image" | "video" | "document";
-            name: string;
+        mutationFn: async (data: {
             plan_id: number;
-        }>) => {
-            if (files.length === 0) {
-                throw new Error('No files to upload');
-            }
-            return addBudgetPlanSuppDoc(files);
+            file: { name: string; type: string; file: string | undefined}[];
+            description: string;
+        }) => {
+            return addBudgetPlanSuppDoc(data.plan_id, data.file, data.description);
         },
         onSuccess: () => {
-            toast.loading('Uploading documents...', { id: "uploadBudgetDocs" });
             queryClient.invalidateQueries({ queryKey: ['budgetPlanFiles'] });
             
             toast.success('Documents uploaded successfully!', {

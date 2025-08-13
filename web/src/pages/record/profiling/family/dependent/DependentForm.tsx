@@ -9,10 +9,11 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { CircleAlert, Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
-import { DependentRecord } from '../../profilingTypes';
+import { DependentRecord } from '../../ProfilingTypes';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router';
+import { showErrorToast } from '@/components/ui/toast';
 
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -67,15 +68,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
     const newDependent = form.getValues('dependentsInfo.new');
     const isDefault = Object.values(newDependent).every((value) => value === '')
     if (isDefault) {
-      toast('Please select a resident to add as a dependent.', {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: '1px solid rgb(225, 193, 193)',
-          padding: '16px',
-          color: '#b91c1c',
-          background: '#fef2f2',
-        },
-      })
+      showErrorToast("Please select a resident to add as a dependent.")
       return;
     }
     append(newDependent);
@@ -114,7 +107,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">
                 <Label className="font-normal text-[13px]">No resident found.</Label>
-                <Link to="/resident/form">
+                <Link to="/profiling/resident/form">
                   <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
                     Register
                   </Label>

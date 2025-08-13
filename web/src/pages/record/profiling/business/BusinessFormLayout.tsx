@@ -3,7 +3,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import BusinessProfileForm from "./BusinessProfileForm"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { useLocation } from "react-router"
-import { formatResidents, formatSitio } from "../profilingFormats"
+import { formatResidents, formatSitio } from "../ProfilingFormats"
 import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -11,7 +11,7 @@ import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { FileText, MapPin, User, Database, Store, Loader2 } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
-import { Type } from "../profilingEnums"
+import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
 import { useAddAddress, useAddBusiness, useAddBusinessRespondent, useAddPerAddress, useAddPersonal } from "../queries/profilingAddQueries"
 import type { MediaUploadType } from "@/components/ui/media-upload"
@@ -103,6 +103,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       setMediaFiles(businessInfo?.files)
     }
   }, [businessInfo])
+  
+  console.log(businessInfo)
 
   // --------------------- HANDLERS -----------------------
 
@@ -154,7 +156,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     if (!businessInfo) return
 
     // If respondent is a resident
-    const resident = formattedResidents?.find((res: any) => res.id.split(" "[0] == params?.rpId));
+    // const resident = formattedResidents?.find((res: any) => res.id.split(" "[0] == params?.rpId));
 
     const fields = [
       // ...(businessInfo.rp
@@ -293,7 +295,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       "sitio"
     ])
 
-    if (validateRespondent !== "rp_id" && !validateAddresses(addresses)) {
+    if (validateRespondent !== "rp_id" && !validateAddresses(addresses) && formType == Type.Create) {
       setIsSubmitting(false);
       showErrorToast("Please fill out all required fields");
       return;

@@ -18,7 +18,6 @@ export const addSupportDocument = async (gprId: number, fileData: {
     });
     return res.data;
   } catch (error) {
-    console.error("Error adding support document:", error);
     throw error;
   }
 };

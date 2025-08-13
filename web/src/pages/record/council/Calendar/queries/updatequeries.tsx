@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useCallback, useRef } from 'react';
 import { CircleCheck } from "lucide-react";
 import { putCouncilEvent, putAttendee, putAttendanceSheet, updateAttendees } from "../api/putreq";
-import { CouncilEvent, CouncilEventInput, Attendee, AttendanceSheet, AttendanceSheetInput } from "./fetchqueries";
+import { CouncilEvent, CouncilEventInput, Attendee, AttendanceSheet, AttendanceSheetInput } from "../ce-att-types";
 
 export const useUpdateCouncilEvent = () => {
   const queryClient = useQueryClient();
@@ -44,50 +44,6 @@ export const useUpdateCouncilEvent = () => {
     }
   });
 };
-
-
-// export const useUpdateAttendee = () => {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: ({ atn_id, attendeeInfo }: { atn_id: number; attendeeInfo: { atn_present_or_absent: string } }) =>
-//       putAttendee(atn_id, attendeeInfo),
-//     onSuccess: (updatedData, variables) => {
-//       queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
-//         old.map((attendee) =>
-//           attendee.atn_id === variables.atn_id ? { ...attendee, ...updatedData } : attendee
-//         )
-//       );
-//       queryClient.invalidateQueries({ queryKey: ["attendees"] });
-//       toast.success("Attendee updated successfully", {
-//         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-//         duration: 2000,
-//       });
-//     },
-//     onError: (error: any) => {
-//       const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
-//       toast.error("Failed to update attendee", {
-//         description: errorMessage,
-//         duration: 2000,
-//       });
-//     },
-//     onMutate: async (variables) => {
-//       await queryClient.cancelQueries({ queryKey: ["attendees"] });
-//       const previousAttendees = queryClient.getQueryData(["attendees"]);
-//       queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
-//         old.map((attendee) =>
-//           attendee.atn_id === variables.atn_id
-//             ? { ...attendee, atn_present_or_absent: variables.attendeeInfo.atn_present_or_absent }
-//             : attendee
-//         )
-//       );
-//       return { previousAttendees };
-//     },
-//     onSettled: () => {
-//       queryClient.invalidateQueries({ queryKey: ["attendees"] });
-//     },
-//   });
-// };
 
 export const useUpdateAttendanceSheet = () => {
   const queryClient = useQueryClient();
@@ -135,14 +91,14 @@ export const useUpdateAttendees = () => { // New mutation
   return useMutation({
     mutationFn: ({ ce_id, attendees }: { ce_id: number; attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[] }) =>
       updateAttendees(ce_id, attendees),
-    onSuccess: (updatedData, variables) => {
+    onSuccess: (_updatedData, variables) => {
       queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) => 
         variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
       );
       queryClient.invalidateQueries({ queryKey: ["attendees", variables.ce_id] });
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
+    onError: (_error: any) => {
+      // const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
 
     },
     onMutate: async (variables) => {

@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('admin/', admin.site.urls),
+    path('administration/', include("apps.administration.urls")),
     path('inventory/', include('apps.inventory.urls')),
     path('health-profiling/', include("apps.healthProfiling.urls")),
     path('maternal/', include('apps.maternal.urls')),
@@ -30,11 +31,19 @@ urlpatterns = [
     path('vaccination/', include("apps.vaccination.urls")),
     path('family-planning/', include("apps.familyplanning.urls")),
     path('patientrecords/', include("apps.patientrecords.urls")),
+    path('medical-consultation/', include("apps.medicalConsultation.urls")),
+    path('medicine/', include("apps.medicineservices.urls")),
+    path('firstaid/',include("apps.firstaid.urls")),
+    path('child-health/',include("apps.childhealthservices.urls")),
+	path('servicescheduler/', include("apps.servicescheduler.urls")),
+    path('file/', include('apps.file.urls')),
+    path('reports/', include('apps.reports.urls')),
+    
+
     
     # path('user/', include('apps.account.urls')),
     # path('waste/', include('apps.waste.urls')),
     # path('profiling/', include("apps.profiling.urls")),
-    path('administration/', include("apps.administration.urls")),
     # path('file/', include('apps.file.urls')),
     # path('treasurer/', include('apps.treasurer.urls')),
     # path('donation/', include('apps.donation.urls')),
