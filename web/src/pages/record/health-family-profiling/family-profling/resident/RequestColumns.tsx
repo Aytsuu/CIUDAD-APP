@@ -1,6 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleChevronRight, MoveRight } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
+import { ArrowUpDown, CircleChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { RequestRecord } from "../../profilingTypes";
 import { Label } from "@/components/ui/label";

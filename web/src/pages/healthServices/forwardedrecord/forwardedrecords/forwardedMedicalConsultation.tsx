@@ -7,11 +7,9 @@ import { ArrowUpDown, Eye, Search, ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Toaster } from "sonner";
 import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { MedicalConsultationHistory } from "@/pages/healthServices/medicalconsultation/medicalhistory/table-history";
-import { medicalConsultation } from "@/routers/med-consultation";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FileInput } from "lucide-react";
 import {

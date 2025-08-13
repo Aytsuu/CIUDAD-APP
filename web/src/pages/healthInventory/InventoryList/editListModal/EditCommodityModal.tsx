@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
   Form,
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
@@ -16,13 +11,9 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getCommodity } from "../restful-api/commodity/CommodityFetchAPI";
 import { FormInput } from "@/components/ui/form/form-input";
-import { useCategoriesCommodity } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/CommodityCategory";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { toast } from "sonner";
 import { useUpdateCommodity } from "../queries/commodity/CommodityPutQueries";
-import { CircleCheck } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Package } from "lucide-react";

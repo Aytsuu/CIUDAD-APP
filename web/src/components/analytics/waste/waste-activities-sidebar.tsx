@@ -195,7 +195,7 @@ import { useGetUpcomingHotspots, type UpcomingHotspots } from "./waste-sidebar-a
 // import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "./your-waste-collection-query-path";
 import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "@/pages/record/waste-scheduling/waste-colllection/queries/wasteColFetchQueries";
 import { Card } from "@/components/ui/card/card";
-import { Clock, ChevronRight, Calendar, Info, Trash2 } from "lucide-react";
+import { Clock, ChevronRight, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { format, isSameDay, isWithinInterval, addDays } from "date-fns";

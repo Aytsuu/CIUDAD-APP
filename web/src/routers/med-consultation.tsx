@@ -1,4 +1,3 @@
-import path from "path";
 // import AllMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/AllRecords";
 // import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/IndividualRecords";
 // import AllMedicalForm from "@/pages/healthServices/medicalconsultation/PHmedForm";

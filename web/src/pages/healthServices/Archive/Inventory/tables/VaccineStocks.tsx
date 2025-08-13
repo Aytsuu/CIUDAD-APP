@@ -1,16 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import {
   Search,
-  Trash,
-  Plus,
   FileInput,
-  Minus,
-  Edit,
-  CircleCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,15 +13,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { getStockColumns } from "./columns/AntigenCol";
 import { StockRecords } from "./type";
-import { getCombinedStock } from "../restful-api/getAPI";
 import { useAntigenCombineStocks } from "../queries/fetch";
 
 

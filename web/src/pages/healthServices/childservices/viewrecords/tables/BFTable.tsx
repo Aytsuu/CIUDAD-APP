@@ -3,8 +3,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table/table";
 import { ChildHealthHistoryRecord } from "../types";

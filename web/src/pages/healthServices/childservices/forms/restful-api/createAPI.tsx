@@ -192,7 +192,6 @@
 //   }
 
 import { api2 } from "@/api/api";
-import { createMedicineRecord } from "@/pages/healthServices/medicineservices/restful-api/postAPI";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 
 

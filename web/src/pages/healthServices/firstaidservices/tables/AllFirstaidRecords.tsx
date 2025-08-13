@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, ChevronLeft, FileInput } from "lucide-react";
+import { ArrowUpDown, Search, FileInput } from "lucide-react";
 import { Link } from "react-router";
 import {
   DropdownMenu,

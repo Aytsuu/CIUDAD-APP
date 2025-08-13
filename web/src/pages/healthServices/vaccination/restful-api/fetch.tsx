@@ -2,12 +2,8 @@ import { useState, useEffect } from "react";
 import { api2 } from "@/api/api";
 import {
   getVaccintStocks,
-  getUnvaccinatedResidents,
-  getVaccinationRecords,
-  getVaccinationRecordById,
 } from "./get";
 import { useQuery } from "@tanstack/react-query";
-import { VaccinationRecord } from "../tables/columns/types";
 import { toast
 
  } from "sonner";

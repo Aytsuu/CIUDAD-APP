@@ -2,13 +2,9 @@ import { Button } from "@/components/ui/button/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card/card";
-import { ChevronLeft, ClipboardList, Stethoscope } from "lucide-react";
+import { ChevronLeft, Stethoscope } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";
 import {

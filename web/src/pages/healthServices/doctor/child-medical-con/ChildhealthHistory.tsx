@@ -1,17 +1,11 @@
 import { Button } from "@/components/ui/button/button";
-import { Card, CardContent } from "@/components/ui/card/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { api2 } from "@/api/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/select";
+
+
 import { Accordion } from "@/components/ui/accordion";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { getSupplementStatusesFields } from "../../childservices/viewrecords/Config";

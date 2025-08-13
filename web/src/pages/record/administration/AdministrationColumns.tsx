@@ -6,7 +6,6 @@ import {
   Ellipsis,
   Info,
   Loader2,
-  Lock,
   Pen,
   Trash,
   User,

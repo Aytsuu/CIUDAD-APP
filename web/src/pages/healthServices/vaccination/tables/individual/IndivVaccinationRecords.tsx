@@ -13,7 +13,6 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Syringe } from "lucide-react";
 import { IndivVaccineColumns } from "../columns/indiv_vac-col";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { PatientInfoCard } from "@/components/ui//patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { Patient } from "@/pages/healthServices/restful-api-patient/type";
@@ -77,7 +76,7 @@ export default function IndivVaccinationRecords() {
       const searchText =
         `${record.vachist_id} ${record.vaccine_name} ${record.batch_number} ${record.vachist_doseNo} ${record.vachist_status}`.toLowerCase();
       const matchesSearch = searchText.includes(searchQuery.toLowerCase());
-      let matchesFilter = true;
+      const matchesFilter = true;
       // if (filter !== "all") {
       //   const status = (record.vachist_status ?? "").toLowerCase();
       //   if (filter === "partially_vaccinated") {

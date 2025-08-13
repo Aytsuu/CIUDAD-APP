@@ -1,5 +1,5 @@
 import { api2 } from "@/api/api";
-import { updateInventoryTimestamp } from "../../InventoryAPIQueries"; // Adjust the path if needed
+// Adjust the path if needed
 
 export const updateVaccineStock = async (
 data:Record<string, any>

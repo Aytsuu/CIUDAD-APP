@@ -13,8 +13,6 @@ import {
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { useNavigate, Link } from "react-router";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";

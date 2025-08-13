@@ -20,15 +20,10 @@ import {
 } from "@tanstack/react-table"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../table/table"
 import { Button } from "@/components/ui/button/button"
-import { Input } from "@/components/ui/input"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ChevronLeft, ChevronRight, Search, ListFilter } from "lucide-react" // Added ArrowUpDown
+
+
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { ChevronLeft, ChevronRight } from "lucide-react" // Added ArrowUpDown
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select" // Added Select components
 
 interface DataTableProps<TData, TValue> {

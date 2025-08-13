@@ -1,19 +1,13 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import {
   Activity,
   ClipboardList,
   Package,
-  CheckCircle,
-  AlertCircle,
   Syringe,
-  Star,
   Eye,
-  Download,
-  Settings,
 } from "lucide-react";
 import { Link } from "react-router";
 

@@ -7,7 +7,6 @@ import { Pencil, Trash, Eye, Plus, Search } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"

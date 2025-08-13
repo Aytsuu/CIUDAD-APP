@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import { CircleAlert, Users, Badge, Hash, Info, CheckCircle } from "lucide-react";
+import { CircleAlert, Users, Badge, Info, CheckCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useAddPosition } from "./queries/administrationAddQueries";
@@ -17,7 +17,6 @@ import { useEditPositionHealth } from "../health/administration/queries/administ
 import { renderActionButton } from "./administrationActionConfig";
 import { Type } from "./administrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
-import { usePositionGroupsHealth } from "../health/administration/queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./administrationFormats";
 

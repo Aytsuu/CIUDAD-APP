@@ -5,7 +5,7 @@ import { CircleAlert, Loader2, Pen, Printer, Upload, X } from "lucide-react";
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { cn } from "@/lib/utils";
-import { pdf, PDFViewer } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { WARTemplatePDF } from "./WARTemplatePDF";
 import { useUpdateTemplate } from "../queries/reportUpdate";
 import { useGetSpecificTemplate } from "../queries/reportFetch";

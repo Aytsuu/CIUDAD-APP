@@ -9,14 +9,13 @@ import {
   AddFirstAidSchema,
   AddFirstAidStockType,
 } from "@/form-schema/inventory/stocks/RestockStocksSchema";
-import { toast } from "sonner";
-import { CircleCheck, Pill,Loader2 } from "lucide-react";
+import { Pill,Loader2 } from "lucide-react";
 import { useEditFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidUpdateQueries"; // adjust import path
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FirstAidStocksRecord } from "../tables/type";
 import { Label } from "@/components/ui/label";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 export default function EditFirstAidStock() {
   const location = useLocation();

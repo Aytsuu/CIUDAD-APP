@@ -87,7 +87,7 @@ export default function MaternalAllRecords() {
       const dateOfBirth = personalInfo?.per_dob || "";
 
       let age = 0;
-      let ageTime = "yrs";
+      const ageTime = "yrs";
 
       if (dateOfBirth) {
         age = Number.isNaN(calculateAge(dateOfBirth))

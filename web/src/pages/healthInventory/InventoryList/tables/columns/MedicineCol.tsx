@@ -1,8 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Edit, Trash, ArrowUpDown } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import MedicineListEdit from "../../editListModal/EditMedicineModal";
 import { Link } from "react-router";
 export type MedicineRecords = {
   id: string;
