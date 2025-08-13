@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:8000',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import { api } from "@/api/api";
 
 // Create a new annual development plan
 export const createAnnualDevPlan = async (data: any) => {

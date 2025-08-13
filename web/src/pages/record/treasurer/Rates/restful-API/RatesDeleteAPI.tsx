@@ -21,7 +21,8 @@ export const deletePurposeAndRate= async (pr_id: number) => {
         })
 
         const res2 = await api.delete(`council/delete-template-with-pr-id/${pr_id}/`)
-        return res.data
+
+        return res.data, res2.data
     } catch(error){
         console.error(error)
     }

@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getColumns } from "./columns/MedicineCol";
 import { Link } from "react-router";
@@ -23,16 +22,16 @@ type StockFilter =
 
 // Using your existing alert functions
 export default function MedicineStocks() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [medicineToArchive, setMedicineToArchive] = useState<string | null>(
-    null
-  );
+  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+  //   useState(false);
+  // const [medicineToArchive, setMedicineToArchive] = useState<string | null>(
+  //   null
+  // );
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const { data: medicineStocks, isLoading: isLoadingMedicines } =
     useMedicineStocks();
 

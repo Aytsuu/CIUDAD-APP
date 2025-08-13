@@ -1,9 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventCalendar from "@/components/ui/calendar/EventCalendar";
 import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main";
-import WasteCollectionMain from "./waste-colllection/waste-col-main";
+import WasteCollectionMain from "./waste-collection/waste-col-main";
 import { useGetHotspotRecords } from "./waste-hotspot/queries/hotspotFetchQueries";
-import { useGetWasteCollectionSchedFull } from "./waste-colllection/queries/wasteColFetchQueries";
+import { useGetWasteCollectionSchedFull } from "./waste-collection/queries/wasteColFetchQueries";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { hotspotColumns } from "./event-columns/event-cols";
@@ -23,7 +23,7 @@ const WasteMainScheduling = () => {
     queryKey: ['wasteEvents'],
     queryFn: getWasteEvents
   });
-  const [activeTab, setActiveTab] = useState("calendar");
+  const [_activeTab, setActiveTab] = useState("calendar");
   const { data: councilEvents = [] } = useGetCouncilEvents();
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
   console.log('Hotspots:', hotspotData)

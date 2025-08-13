@@ -2,7 +2,7 @@
   import { template_record } from "../request/template-PostRequest";
   import { toast } from "sonner";
   import { CircleCheck } from "lucide-react";;
-  import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
+  import documentTemplateFormSchema from "@/form-schema/council/documentTemplateSchema";
   import { z } from "zod";
 
 

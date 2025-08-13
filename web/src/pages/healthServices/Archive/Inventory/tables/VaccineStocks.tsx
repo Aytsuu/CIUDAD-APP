@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -46,11 +46,11 @@ export default function CombinedStockTable() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [inventoryToArchive, setInventoryToArchive] = useState<string | null>(
-    null
-  );
+  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+  //   useState(false);
+  // const [inventoryToArchive, setInventoryToArchive] = useState<string | null>(
+  //   null
+  // );
 
   const { data: stockData, isLoading, error } = useAntigenCombineStocks();
 
