@@ -387,7 +387,6 @@ import { ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
-// import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
 
 function ReceiptPage() {
   const { data: fetchedData = [], isLoading } = useInvoiceQuery();
@@ -464,7 +463,7 @@ function ReceiptPage() {
   const [selectedFilterId, setSelectedFilterId] = useState("all");
 
   // Filter data based on selected filter and search query
-  const filteredData = fetchedData.filter(item => {
+  const filteredData = fetchedData.filter((item: Receipt) => {
     const matchesFilter = selectedFilterId === "all" || 
       item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
     
