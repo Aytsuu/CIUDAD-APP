@@ -1,11 +1,10 @@
 from rest_framework import serializers
 from .models import *
 from apps.clerk.models import ClerkCertificate, Invoice
-from apps.profiling.models import ResidentProfile
-from apps.profiling.serializers import FileInputSerializer
 from django.utils import timezone
 from django.db import transaction
 from utils.supabase_client import upload_to_storage
+from apps.profiling.serializers.business_serializers import FileInputSerializer
 
 
 class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
