@@ -12,10 +12,10 @@ import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
 import { SetStateAction } from "react";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncomeExpense } from "./queries/treasurerIncomeExpenseAddQueries";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
-
+import { Loader2 } from "lucide-react";
 
 
 interface IncomeandExpenseCreateFormProps {
@@ -56,12 +56,11 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
             iet_amount: "",
             iet_actual_amount: "",
             iet_additional_notes: "",
-            // iet_receipt_image: undefined,
         },
     });
 
 
-    const { mutate: createExpense } = useCreateIncomeExpense(onSuccess);
+    const { mutate: createExpense, isPending } = useCreateIncomeExpense(onSuccess);
     const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
 
     const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
@@ -69,20 +68,6 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
     const totExp = matchedYearData?.ie_main_exp ?? 0;
 
     console.log("EXP REMAIN BAL CREATE: ", totBud)
-
-    // useEffect(() => {
-    //     console.log("Current mediaFiles:", mediaFiles);         
-    //     if (mediaFiles.length > 0 && mediaFiles[0].url) {
-    //         form.setValue('iet_receipt_image', mediaFiles.map(file => ({
-    //             name: file.name, 
-    //             type: file.type,  
-    //             path: file.id,    
-    //             url: file.url     
-    //         })));
-    //     } else {
-    //         form.setValue('iet_receipt_image', []);
-    //     }
-    // }, [mediaFiles, form]);
 
 
     const selectedParticularId = form.watch("iet_particulars");
@@ -373,7 +358,16 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                             <Button type="button" variant="outline" onClick={() => setCurrentStep(1)}>
                                 Back
                             </Button>
-                            <Button type="submit">Save Entry</Button>
+                            <Button type="submit" disabled={ isPending }>
+                                {isPending ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    "Save Entry"
+                                )}
+                            </Button>
                         </div>
                     </>
                 )}

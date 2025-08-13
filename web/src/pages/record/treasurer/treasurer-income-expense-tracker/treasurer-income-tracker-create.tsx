@@ -17,6 +17,7 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { useAddParticular } from "./request/particularsPostRequest";
 import { useDeleteParticular } from "./request/particularsDeleteRequest";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { Loader2 } from "lucide-react";
 
 
 interface IncomeCreateFormProps {
@@ -51,7 +52,7 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
     const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
 
     //Post mutation
-    const { mutate: createIncome } = useCreateIncome(onSuccess);
+    const { mutate: createIncome, isPending } = useCreateIncome(onSuccess);
 
     const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
     const totInc = matchedYearData?.ie_main_inc ?? 0;
@@ -186,31 +187,18 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
                     />
                 </div>
 
-                {/* <div className="pb-5">
-                    <FormField
-                        control={form.control}
-                        name="inc_receipt_image"
-                        render={() => (
-                            <FormItem>
-                                <FormLabel>Receipt Image</FormLabel>
-                                <FormControl>
-                                    <MediaUpload
-                                        title="Receipt Image"
-                                        description="Upload an image of your receipt as proof of transaction"
-                                        mediaFiles={mediaFiles}
-                                        activeVideoId={activeVideoId}
-                                        setMediaFiles={setMediaFiles}
-                                        setActiveVideoId={setActiveVideoId}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div> */}
 
                 <div className="flex justify-end mt-[20px] space-x-2">
-                    <Button type="submit">Save Entry</Button>
+                    <Button type="submit" disabled={ isPending }>
+                        {isPending ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            "Save Entry"
+                        )}
+                    </Button>
                 </div>
             </form>
             {ConfirmationDialogs()}

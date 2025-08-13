@@ -19,6 +19,7 @@ import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQ
 import { useIncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useAddParticular } from "./request/particularsPostRequest";
 import { useDeleteParticular } from "./request/particularsDeleteRequest";
+import { Loader2 } from "lucide-react";
 
 
 
@@ -71,7 +72,7 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
     const {  data: fetchedData = [] } = useIncomeExpenseMainCard();  
 
     //Put mutation
-    const { mutate: updateIncome } = useUpdateIncome(inc_num, onSuccess);
+    const { mutate: updateIncome, isPending } = useUpdateIncome(inc_num, onSuccess);
 
 
     const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
@@ -278,8 +279,16 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
                                 e.preventDefault();
                                 setIsEditing(true);
                             }}
+                            disabled={ isPending }
                         >
-                            Edit
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                "Edit"
+                            )}
                         </Button>
                     ) : (
                         <ConfirmationModal
