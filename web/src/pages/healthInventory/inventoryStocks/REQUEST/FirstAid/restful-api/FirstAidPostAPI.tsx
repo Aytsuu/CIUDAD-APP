@@ -1,4 +1,3 @@
-
 import {api2} from "@/api/api";
 
 // POST request for firstaidinventorylist model
@@ -35,14 +34,9 @@ export const addFirstAidInventory = async (
 };
 
 // POST request for firstaidtransaction model
-export const addFirstAidTransaction = async ( finv_id: number, string_qty: string, action: string, staffId: string) => {
+export const addFirstAidTransaction = async ( data:Record<string,any>) => {
   try {
-    const res = await api2.post("inventory/firstaidtransaction/", {
-      fat_qty: string_qty,
-      fat_action: action,
-      finv_id: finv_id,
-      staff: staffId,
-    });
+    const res = await api2.post("inventory/firstaidtransaction/",data);
     return res.data;
   } catch (err) {
     console.error(err);
