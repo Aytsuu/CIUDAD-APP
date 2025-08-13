@@ -25,8 +25,7 @@ import { GADEditEntryFormProps } from "./budget-tracker-types";
 function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   const { year } = useParams<{ year: string }>();
   const [isEditing, setIsEditing] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
-  const [removedFiles, setRemovedFiles] = useState<string[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => []);
   const [selectedBudgetItems, setSelectedBudgetItems] = useState<
     { name: string; pax: string; amount: number }[]
   >([]);
@@ -80,10 +79,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
 
   useEffect(() => {
     if (budgetEntry) {
-      console.log("Loaded budget entry:", {
-        projectTitle: budgetEntry.gbud_exp_project,
-        projectId: budgetEntry.gpr,
-      });
       const formattedDate = budgetEntry.gbud_datetime
         ? new Date(budgetEntry.gbud_datetime).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
@@ -98,9 +93,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
           : 0,
         gbud_exp_project: budgetEntry.gbud_exp_project || "",
         gbud_exp_particulars: budgetEntry.gbud_exp_particulars || [],
-        gbud_proposed_budget: budgetEntry.gbud_proposed_budget 
-        ? Number(budgetEntry.gbud_proposed_budget) 
-        : 0,
+        gbud_proposed_budget: budgetEntry.gbud_proposed_budget
+          ? Number(budgetEntry.gbud_proposed_budget)
+          : 0,
         gbud_actual_expense: budgetEntry.gbud_actual_expense
           ? Number(budgetEntry.gbud_actual_expense)
           : 0,
@@ -120,17 +115,12 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
 
       if (budgetEntry.files?.length) {
         const files = budgetEntry.files.map((file) => ({
-          id: `receipt-${file.gbf_id}`,
-          type: "image" as const,
-          file: new File([], file.gbf_name, {
-            type: file.gbf_type || "image/jpeg",
-          }),
-          publicUrl: file.gbf_url,
-          storagePath: file.gbf_path,
-          status: "uploaded" as const,
-          previewUrl: file.gbf_url,
+          id: `existing-${file.gbf_id}`,
+          name: `file-${file.gbf_id}`, // Simple name like expense form
+          type: "image/jpeg", // Default type
+          url: file.gbf_url,
         }));
-        // setMediaFiles(files);
+        setMediaFiles(files);
       }
 
       if (
@@ -144,7 +134,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   }, [budgetEntry, yearBudgets, year, form]);
 
   const handleConfirmSave = (values: FormValues) => {
-    console.log("Form submission data:", values);
     const inputDate = new Date(values.gbud_datetime);
     const inputYear = inputDate.getFullYear().toString();
 
@@ -154,6 +143,25 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         message: `Date must be in ${year}`,
       });
       return;
+    }
+
+    // Validate actual expense against remaining balance
+    if (values.gbud_type === "Expense" && values.gbud_actual_expense) {
+      const actualExpense = Number(values.gbud_actual_expense);
+      if (actualExpense > remainingBalance) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense exceeds remaining balance of ₱${remainingBalance.toLocaleString()}`,
+        });
+        return;
+      }
+      if (actualExpense < 0) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense cannot be negative`,
+        });
+        return;
+      }
     }
 
     const budgetData = {
@@ -177,20 +185,35 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       gbudy: values.gbudy,
     };
 
-    const filesToDelete = removedFiles.map((id) => id.replace("receipt-", ""));
+// Map removed files to gbf_id
+  const initialFiles = budgetEntry?.files || [];
+  const currentFileIds = mediaFiles
+    .filter((file) => file.id.startsWith("existing-"))
+    .map((file) => file.id.replace("existing-", ""));
+  const filesToDelete = initialFiles
+    .filter((file) => !currentFileIds.includes(file.gbf_id.toString()))
+    .map((file) => file.gbf_id.toString());
+
+    const newFiles = mediaFiles
+      .filter((file) => !file.id.startsWith("existing-") && file.file)
+      .map((file) => ({
+        id: file.id,
+        name: file.name,
+        type: file.type,
+        file: file.file as string | File,
+      }));
 
     updateBudget(
       {
         gbud_num,
         budgetData,
-        files: mediaFiles,
+        files: newFiles,
         filesToDelete,
         remainingBalance: calculateRemainingBalance(),
       },
       {
         onSuccess: () => {
           setIsEditing(false);
-          setRemovedFiles([]);
           refetchYearBudgets();
           if (onSaveSuccess) onSaveSuccess();
         },
@@ -368,7 +391,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     placeholder="Enter reference number"
                     readOnly={!isEditing}
                   />
-                   {isEditing ? (
+                  {isEditing ? (
                     <MediaUpload
                       title="Supporting Documents"
                       description="Upload proof of transaction"
@@ -376,9 +399,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       setMediaFiles={setMediaFiles}
                       activeVideoId={activeVideoId}
                       setActiveVideoId={setActiveVideoId}
-                      onFileRemoved={(removedId) => {
-                        setRemovedFiles((prev) => [...prev, removedId]);
-                      }}
                     />
                   ) : mediaFiles.length > 0 ? (
                     <div className="space-y-2">
@@ -388,9 +408,15 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       {mediaFiles.map((file) => (
                         <div key={file.id} className="border rounded-md p-2">
                           <img
-                            src={file.publicUrl}
-                            alt="Receipt"
-                            className="max-h-60 object-contain w-full"
+                            src={file.url}
+                            onError={(e) => {
+                              console.error("Failed to load image:", {
+                                url: file.url,
+                                encoded: encodeURI(file.url || ""),
+                                decoded: decodeURI(file.url || ""),
+                              });
+                              e.currentTarget.src = "/placeholder.jpg";
+                            }}
                           />
                         </div>
                       ))}
@@ -452,24 +478,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     type="button"
                     onClick={() => {
                       form.reset();
-                      setIsEditing(false);
-                      setRemovedFiles([]);
-                      if (budgetEntry.files?.length) {
-                        const files = budgetEntry.files.map((file) => ({
-                          id: `receipt-${file.gbf_id}`,
-                          type: "image" as const,
-                          file: new File([], file.gbf_name, {
-                            type: file.gbf_type || "image/jpeg",
-                          }),
-                          publicUrl: file.gbf_url,
-                          storagePath: file.gbf_path,
-                          status: "uploaded" as const,
-                          previewUrl: file.gbf_url,
-                        }));
-                        // setMediaFiles(files);
-                      } else {
-                        setMediaFiles([]);
-                      }
+                      setIsEditing(false);                     
                     }}
                     variant="outline"
                   >

@@ -2,9 +2,12 @@ from rest_framework import serializers
 from .models import *
 from django.apps import apps
 from decimal import Decimal
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import base64
+from utils.supabase_client import upload_to_storage
 
 Staff = apps.get_model('administration', 'Staff')
-File = apps.get_model('file', 'File')
 
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -23,11 +26,6 @@ class StaffSerializer(serializers.ModelSerializer):
     def get_position(self, obj):
         return obj.pos.pos_title if hasattr(obj, 'pos') and obj.pos else ""
 
-class FileUploadSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = File
-        fields = ['file_name', 'file_type', 'file_path', 'file_url']
-        read_only_fields = ['file_type', 'file_path', 'file_url']
 
 class GADBudgetFileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,18 +35,68 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
             'gbud': {'write_only': True}
         }
 
+    def _upload_files(self, files, gbud_num=None):
+        if not gbud_num:
+            raise serializers.ValidationError({"error": "gbud_num is required"})
+
+        try:
+            tracker_instance = GAD_Budget_Tracker.objects.get(pk=gbud_num)
+        except GAD_Budget_Tracker.DoesNotExist:
+            raise serializers.ValidationError(f"GAD_Budget_Tracker with id {gbud_num} does not exist")
+
+        gbf_files = []
+        for file_data in files:
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                continue
+
+            # Decode base64
+            header, data = file_data['file'].split(';base64,')
+            file_content = base64.b64decode(data)
+            file_obj = ContentFile(file_content, name=file_data['name'])
+
+            gbf_file = GAD_Budget_File(
+                gbf_name=file_data['name'],
+                gbf_type=file_data['type'],
+                gbf_path=f"Uploads/{file_data['name']}",  # Local or Supabase path
+                gbud=tracker_instance
+            )
+            # Use upload_to_storage to get the Supabase public URL
+            gbf_file.gbf_url = upload_to_storage(file_data, 'image-bucket', 'Uploads')
+            gbf_files.append(gbf_file)
+
+        if gbf_files:
+            GAD_Budget_File.objects.bulk_create(gbf_files)
+        else:
+            print('No valid files to save.')
+            
+    def get_gbf_url(self, obj):
+        # Ensure URL is properly encoded
+        import urllib.parse
+        return urllib.parse.quote(obj.gbf_url, safe=':/')
+
+class GADBudgetFileReadSerializer(serializers.ModelSerializer):
+    gbf_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = GAD_Budget_File
+        fields = ['gbf_id', 'gbf_url']  # Only what's needed for display
+
+    def get_gbf_url(self, obj):
+        return obj.gbf_url
+            
 class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
     gbudy = serializers.PrimaryKeyRelatedField(queryset=GAD_Budget_Year.objects.all())
     staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, default=None)
     gpr = serializers.PrimaryKeyRelatedField(queryset=ProjectProposal.objects.all(), allow_null=True, default=None)
-
+    files = serializers.SerializerMethodField()
+    
     class Meta:
         model = GAD_Budget_Tracker
         fields = [
             'gbud_num', 'gbud_datetime', 'gbud_type', 'gbud_add_notes', 'gbud_inc_particulars',
             'gbud_inc_amt', 'gbud_exp_particulars', 'gbud_exp_project', 'gbud_actual_expense',
             'gbud_remaining_bal', 'gbud_reference_num', 'gbud_is_archive',
-            'gbudy', 'staff', 'gpr', "gbud_proposed_budget",
+            'gbudy', 'staff', 'gpr', "gbud_proposed_budget", 'files'
         ]
         extra_kwargs = {
             'gbud_num': {'read_only': True},
@@ -75,8 +123,6 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"gpr": "Valid project ID is required for expense entries"})
             if not data.get("gbud_exp_particulars") or not isinstance(data["gbud_exp_particulars"], list):
                 raise serializers.ValidationError({"gbud_exp_particulars": "At least one budget item is required for expense entries"})
-            if 'gbud_reference_num' in data and data['gbud_reference_num'] is None:
-                data.pop('gbud_reference_num')
             
             # Only calculate proposed budget for new entries
             if not self.instance:
@@ -144,6 +190,11 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
             
         # Now perform the update (which may change actual_expense)
         return super().update(instance, validated_data)
+    
+    def get_files(self, obj):
+        if self.context.get('request') and self.context['request'].method in ['GET']:
+            return GADBudgetFileReadSerializer(obj.files.all(), many=True).data
+        return GADBudgetFileSerializer(obj.files.all(), many=True).data
 
 class GADBudgetYearSerializer(serializers.ModelSerializer):
     class Meta:
@@ -259,11 +310,39 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         }
 
 
-class ProposalSuppDocSerializer(serializers.ModelSerializer):   
+class ProposalSuppDocSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalSuppDoc
-        fields = ['psd_id', 'psd_is_archive', 'psd_url', 'psd_name', 'psd_type', 'psd_path']
+        fields = ['psd_id', 'psd_is_archive', 'psd_name', 'psd_type', 'psd_path', 'psd_url']
         extra_kwargs = {
-            'gpr': {'read_only': True},
+            'gpr': {'write_only': True},
             'psd_is_archive': {'default': False}
         }
+
+    def _upload_files(self, files, gpr_id=None):
+        if not gpr_id:
+            raise serializers.ValidationError({"error": "gpr_id is required"})
+
+        try:
+            proposal_instance = ProjectProposal.objects.get(pk=gpr_id)
+        except ProjectProposal.DoesNotExist:
+            raise serializers.ValidationError(f"ProjectProposal with id {gpr_id} does not exist")
+
+        psd_files = []
+        for file_data in files:
+            if 'file' not in file_data:
+                raise serializers.ValidationError({"error": "File data missing"})
+            psd_file = ProposalSuppDoc(
+                psd_name=file_data['name'],
+                psd_type=file_data['type'],
+                psd_path=f"uploads/{file_data['name']}",
+                gpr=proposal_instance
+            )
+            # Save file to storage
+            file_obj = file_data['file']
+            file_path = default_storage.save(f"uploads/{file_data['name']}", file_obj)
+            psd_file.psd_url = default_storage.url(file_path)
+            psd_files.append(psd_file)
+
+        if psd_files:
+            ProposalSuppDoc.objects.bulk_create(psd_files)

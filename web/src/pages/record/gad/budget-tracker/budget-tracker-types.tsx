@@ -15,6 +15,7 @@ export type GADBudgetEntryUI = GADBudgetEntry & {
   gbud_amount?: number | null;
   gbud_exp_project?: string | null;
   gbud_exp_particulars?: { name: string; pax: string; amount: number }[] | null;
+  files?: GADBudgetFile[];
 };
 
 export type GADBudgetYearEntry = {
@@ -60,7 +61,7 @@ export type GADBudgetFile = {
   gbf_type: string;
   gbf_path: string;
   gbf_url: string;
-  gbud_num: number;
+  gbud_num?: number;
 };
 
 export type GADBudgetCreatePayload = {

@@ -5,7 +5,7 @@ from rest_framework import serializers, generics
 from .models import *
 from .models import WasteTruck
 from apps.profiling.models import Sitio
-
+from utils.supabase_client import upload_to_storage
 from .models import WasteTruck
 from apps.profiling.models import Sitio
 
@@ -279,6 +279,33 @@ class WasteReportResolveFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteReportResolve_File
         fields = '__all__'        
+
+    def _upload_files(self, files, rep_id=None):
+
+        if not rep_id:
+            return
+        
+        try:
+            tracking_instance = WasteReport.objects.get(pk=rep_id)
+        except WasteReport.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {rep_id} does not exist")       
+        
+        rep_rslv_files = []
+        for file_data in files:
+            rep_rslv_file = WasteReportResolve_File(
+                wrsf_name =file_data['name'],
+                wrsf_type=file_data['type'],
+                wrsf_path=f"uploads/{file_data['name']}",
+                rep_id=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            rep_rslv_file.wrsf_url = url
+            rep_rslv_files.append(rep_rslv_file)
+
+        if rep_rslv_files:
+            WasteReportResolve_File.objects.bulk_create(rep_rslv_files)
 
         
 class WasteReportSerializer(serializers.ModelSerializer):

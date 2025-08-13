@@ -166,7 +166,10 @@ class DeleteHotspotView(generics.DestroyAPIView):
     def get_object(self):
         wh_num = self.kwargs.get('wh_num')
         return get_object_or_404(WasteHotspot, wh_num=wh_num) 
-    
+
+
+# ============================ ILLEGAL DUMPING ================================
+
 class WasteReportFileView(generics.ListCreateAPIView):
     serializer_class = WasteReportFileSerializer
     queryset = WasteReport_File.objects.all()
@@ -188,6 +191,22 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
         if rep_num:
             queryset = queryset.filter(rep_num=rep_num)
         return queryset
+    
+    def create(self, request, *args, **kwargs):
+        # Get iet_num from either query params or request data
+        rep_id = request.query_params.get('rep_id') or request.data.get('rep_id')
+        
+        if not rep_id:
+            return Response(
+                {"error": "rep_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, rep_id=rep_id)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
 
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer

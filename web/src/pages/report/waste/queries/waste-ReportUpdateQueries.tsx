@@ -6,17 +6,12 @@ import { z } from "zod";
 import { updateWasteReport } from "../request/waste-ReportPutRequest";
 import { uploadResolvedImage } from "../request/waste-ReportPutRequest";
 
-interface UpdateWasteReportData {
-  rep_status: string;
-  rep_resolved_img?: string;
-}
 
-interface ResolvedImage {
+type FileData = {
     name: string;
     type: string;
-    path: string;
-    url: string;
-}
+    file?: string;
+};
 
 
 export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
@@ -25,29 +20,32 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
   return useMutation({
     mutationFn: async (values: { 
       rep_status: string;
-      rep_resolved_img?: ResolvedImage[] 
+      files: FileData[]; 
     }) => {
       // 1. Update the main report status and date
       await updateWasteReport(rep_id, {
         rep_status: values.rep_status,
       });
       
-      console.log("GAWAS SA QUERY: ", values.rep_resolved_img)
-      // 2. Upload all resolution images in parallel (if any)
-      if (values.rep_resolved_img && values.rep_resolved_img.length > 0) {
-        console.log("NISUD SA QUERY: ", values.rep_resolved_img)
+      console.log("GAWAS SA QUERY: ", values.files)
+      // 2. Upload all resolution images
+      if (values.files && values.files.length > 0) {
         await Promise.all(
-          values.rep_resolved_img.map(image => 
+          values.files.map(file => 
             uploadResolvedImage({
               rep_id,
-              wrsf_name: image.name,
-              wrsf_type: image.type,
-              wrsf_path: image.path,
-              wrsf_url: image.url
+              file_data: {
+                name: file.name,
+                type: file.type,
+                file: file.file
+              }
+            }).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
             })
           )
         );
-      }
+      }  
       
       return rep_id;
     },  
