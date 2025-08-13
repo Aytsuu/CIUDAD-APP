@@ -164,7 +164,7 @@ const stats = calculatePatientStats()
             <div className="flex flex-col w-full">
               {/* Link to individual history using patient's pat_id */}
               <Link to={`/Animalbite_individual/${p.id}`} className="hover:text-blue-600 hover:underline">
-                <div className="font-medium truncate">{`${p.lname}, ${p.fname} ${p.mname || ''}`.trim()}</div>
+                <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
                 <div className="text-sm text-darkGray">
                   {p.gender}, {p.age} years old
                   {p.recordCount > 1 && (
@@ -336,7 +336,7 @@ const stats = calculatePatientStats()
 
       <DialogLayout
         isOpen={isReferralFormOpen}
-        onClose={handleReferralFormClose}
+        onOpenChange={handleReferralFormClose}
         className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
         title=""
         description=""

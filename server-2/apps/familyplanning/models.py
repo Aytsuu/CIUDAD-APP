@@ -205,7 +205,7 @@ class FP_Assessment_Record(models.Model):
     quantity = models.IntegerField(default=0)
     as_provider_signature = models.CharField(null=True,blank=True)
     as_provider_name = models.CharField(max_length=35, null=True,blank=True)
-    as_findings = models.CharField(max_length=100,default="None",blank=True,null=True)
+    as_findings = models.TextField(default="None",blank=True,null=True)
     
     fprecord = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
 

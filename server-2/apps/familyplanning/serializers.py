@@ -193,7 +193,7 @@ class ObstetricalHistoryForFpSerializer(serializers.ModelSerializer):
         
 
 class PatientComprehensiveFpSerializer(serializers.ModelSerializer):
-    clientID = serializers.CharField(source='client_id', read_only=True)
+    client_id = serializers.CharField(source='client_id', read_only=True)
     pat_id = serializers.CharField(read_only=True)
     personal_info = PersonalInfoForFpSerializer(source='rp_id.per', read_only=True, allow_null=True)
     # Address (from Address model, linked via PersonalAddress)
@@ -206,8 +206,8 @@ class PatientComprehensiveFpSerializer(serializers.ModelSerializer):
     philhealthNo = serializers.SerializerMethodField()
     nhts_status = serializers.SerializerMethodField()
     numOfLivingChildren = serializers.IntegerField(source='hrd.hrd_no_living_children', read_only=True, allow_null=True)
-    planToHaveMoreChildren = serializers.BooleanField(source='plan_more_children', read_only=True)
-    averageMonthlyIncome = serializers.CharField(source='avg_monthly_income', read_only=True)
+    plan_more_children = serializers.BooleanField(source='plan_more_children', read_only=True)
+    avg_monthly_income = serializers.CharField(source='avg_monthly_income', read_only=True)
     pantawid_4ps = serializers.BooleanField(source='fourps', read_only=True)
 
 

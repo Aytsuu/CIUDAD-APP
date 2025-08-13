@@ -1,7 +1,7 @@
 import { useFamilyPlanningFormSubmission, useFollowUpFamilyPlanningFormSubmission } from "./request-db/PostRequest"
 import { getFPCompleteRecord, getLatestCompleteFPRecordForPatient } from "./request-db/GetRequest"
 import { useCallback, useState, useEffect } from "react"
-import { useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { useParams, useSearchParams } from "react-router-dom"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema" // Ensure patrec_id is in this interface
 import FamilyPlanningForm from "./FpPage1"
 import FamilyPlanningForm2 from "./FpPage2"
@@ -16,11 +16,10 @@ import { useQuery } from "@tanstack/react-query"
 const initialFormData: FormData = {
   pat_id: "",
   patrec_id: "", // NEW: Added patrec_id to initial state
-  fpt_id: "",
-  clientID: "",
+  client_id: "",
   philhealthNo: "",
   nhts_status: false,
-  pantawid_4ps: false,
+  fourps: false,
   lastName: "",
   givenName: "",
   middleInitial: "",
@@ -31,15 +30,15 @@ const initialFormData: FormData = {
   address: { houseNumber: "", street: "", barangay: "", municipality: "", province: "" },
   spouse: { s_lastName: "", s_givenName: "", s_middleInitial: "", s_dateOfBirth: "", s_age: 0, s_occupation: "" },
   numOfLivingChildren: 0,
-  planToHaveMoreChildren: false,
-  averageMonthlyIncome: "",
+  plan_more_children: false,
+  avg_monthly_income: "",
   typeOfClient: "",
   subTypeOfClient: "",
   reasonForFP: "",
   otherReasonForFP: "",
   reason: "",
   otherReason: "",
-  methodCurrentlyUsed: undefined,
+  methodCurrentlyUsed: "",
   otherMethod: "",
   medicalHistory: {
     severeHeadaches: false,
@@ -84,7 +83,7 @@ const initialFormData: FormData = {
     unpleasantRelationship: false,
     partnerDisapproval: false,
     domesticViolence: false,
-    referredTo: undefined,
+    referredTo: "",
   },
   weight: 0,
   height: 0,
@@ -123,9 +122,6 @@ const initialFormData: FormData = {
 }
 
 export default function FamilyPlanningPage() {
-  const navigate = useNavigate()
-  // useParams will now correctly extract patientId if the route is /new-record/:patientId?
-  // and fprecordId if the route is /view/:fprecordId or /edit/:fprecordId
   const { patientId: routePatientId, fprecordId } = useParams<{ patientId?: string; fprecordId?: string }>()
   const [searchParams] = useSearchParams()
 
@@ -201,7 +197,7 @@ export default function FamilyPlanningPage() {
           guardianSignatureDate: new Date().toISOString().split("T")[0],
         },
         serviceProvisionRecords: [], // Clear service provision records for new visit
-        planToHaveMoreChildren: latestRecord.planToHaveMoreChildren, // Keep this from previous record
+        plan_more_children: latestRecord.plan_more_children, // Keep this from previous record
         pat_id: actualPatientId || latestRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: "", // Ensure patrec_id is cleared for new record set (will be created by backend)
       }
@@ -227,7 +223,7 @@ export default function FamilyPlanningPage() {
           guardianSignatureDate: new Date().toISOString().split("T")[0],
         },
         serviceProvisionRecords: [], // Clear service provision records for new visit
-        planToHaveMoreChildren: followUpPrefillRecord.planToHaveMoreChildren, // Keep this from previous record
+        plan_more_children: followUpPrefillRecord.plan_more_children, // Keep this from previous record
         pat_id: actualPatientId || followUpPrefillRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: patrecIdParam || followUpPrefillRecord.patrec_id, // Crucial: Use the patrecId from URL or fetched record
       }
@@ -268,7 +264,7 @@ export default function FamilyPlanningPage() {
     console.log("patrec_id:", formData.patrec_id);
     console.log("Current Mode:", currentMode); // Debug current mode
     console.log("General Information:", {
-      clientID: formData.clientID,
+      client_id: formData.client_id,
       philhealthNo: formData.philhealthNo,
       lastName: formData.lastName,
       givenName: formData.givenName,
@@ -329,14 +325,6 @@ export default function FamilyPlanningPage() {
         await submitNewRecordSet(finalFormData) // Use original mutation for new record set
         toast.success("Family Planning record submitted successfully!")
       }
-
-      // Navigate back to the individual patient page
-      // if (actualPatientId) { // Use actualPatientId for navigation
-      //   navigate(`/familyplanning/individual/${actualPatientId}`)
-      // } else {
-      //   // Fallback if patientId is not available (e.g., if coming from overall table)
-      //   navigate("/FamPlanning_table")
-      // }
     } catch (error) {
       toast.error("Failed to submit record. Please try again.")
       console.error("Submission error:", error)
@@ -392,7 +380,7 @@ export default function FamilyPlanningPage() {
             onNext2={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            mode={currentMode}
+            // mode={currentMode}
             isPatientPreSelected={!!actualPatientId && (prefillParam === "true" || currentMode === "followup")}
           />
         )}
@@ -402,7 +390,7 @@ export default function FamilyPlanningPage() {
             onNext3={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            mode={currentMode}
+            // mode={currentMode}
           />
         )}
         {currentPage === 3 && (
@@ -411,7 +399,7 @@ export default function FamilyPlanningPage() {
             onNext4={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            mode={currentMode}
+            // mode={currentMode}
           />
         )}
         {currentPage === 4 && (
@@ -420,7 +408,7 @@ export default function FamilyPlanningPage() {
             onNext5={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            mode={currentMode}
+            // mode={currentMode}
           />
         )}
         {currentPage === 5 && (
@@ -429,7 +417,7 @@ export default function FamilyPlanningPage() {
             onNext6={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            mode={currentMode}
+            // mode={currentMode}
             age={formData.age}
           />
         )}
@@ -440,7 +428,7 @@ export default function FamilyPlanningPage() {
             updateFormData={updateFormData}
             formData={formData}
             isSubmitting={isSubmitting}
-            mode={currentMode}
+            // mode={currentMode}
           />
         )}
       </div>

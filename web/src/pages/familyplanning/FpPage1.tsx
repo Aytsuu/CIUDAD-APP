@@ -129,121 +129,121 @@ export default function FamilyPlanningForm({
 
 
   const handlePatientSelection = async (id: string) => {
-  setSelectedPatientId(id);
-  try {
-    const response = await api2.get(`patientrecords/patient/${id}/`);
-    const patientData = response.data;
+    setSelectedPatientId(id);
+    try {
+      const response = await api2.get(`patientrecords/patient/${id}/`);
+      const patientData = response.data;
 
-    let spouseInfo = {
-      s_lastName: "",
-      s_givenName: "",
-      s_middleInitial: "",
-      s_dateOfBirth: "",
-      s_age: 0,
-      s_occupation: "",
-    };
-
-    // 3. Determine spouse based on patient gender and family head info
-    const gender = patientData.personal_info?.per_sex?.toLowerCase();
-    const familyHeads = patientData.family_head_info?.family_heads;
-    const spouseData = patientData.spouse_info?.spouse_info;
-
-    // First check if there's direct spouse info in the patient record
-    if (spouseData) {
-      spouseInfo = {
-        s_lastName: spouseData.spouse_lname || "",
-        s_givenName: spouseData.spouse_fname || "",
-        s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
-        s_dateOfBirth: spouseData.spouse_dob || "",
-        s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
-        s_occupation: spouseData.spouse_occupation || "",
-      };
-    } 
-    // If no direct spouse info, try to determine from family heads
-    else if (gender === 'female' && familyHeads?.father) {
-      // For female patients, use father as spouse
-      const father = familyHeads.father.personal_info;
-      spouseInfo = {
-        s_lastName: father.per_lname || "",
-        s_givenName: father.per_fname || "",
-        s_middleInitial: (father.per_mname ? father.per_mname[0] : "") || "",
-        s_dateOfBirth: father.per_dob || "",
-        s_age: father.per_dob ? calculateAge(father.per_dob) : 0,
+      let spouseInfo = {
+        s_lastName: "",
+        s_givenName: "",
+        s_middleInitial: "",
+        s_dateOfBirth: "",
+        s_age: 0,
         s_occupation: "",
       };
-    } else if (gender === 'male' && familyHeads?.mother) {
-      // For male patients, use mother as spouse
-      const mother = familyHeads.mother.personal_info;
-      spouseInfo = {
-        s_lastName: mother.per_lname || "",
-        s_givenName: mother.per_fname || "",
-        s_middleInitial: (mother.per_mname ? mother.per_mname[0] : "") || "",
-        s_dateOfBirth: mother.per_dob || "",
-        s_age: mother.per_dob ? calculateAge(mother.per_dob) : 0,
-        s_occupation: "",
+
+      // 3. Determine spouse based on patient gender and family head info
+      const gender = patientData.personal_info?.per_sex?.toLowerCase();
+      const familyHeads = patientData.family_head_info?.family_heads;
+      const spouseData = patientData.spouse_info?.spouse_info;
+
+      // First check if there's direct spouse info in the patient record
+      if (spouseData) {
+        spouseInfo = {
+          s_lastName: spouseData.spouse_lname || "",
+          s_givenName: spouseData.spouse_fname || "",
+          s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
+          s_dateOfBirth: spouseData.spouse_dob || "",
+          s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
+          s_occupation: spouseData.spouse_occupation || "",
+        };
+      }
+      // If no direct spouse info, try to determine from family heads
+      else if (gender === 'female' && familyHeads?.father) {
+        // For female patients, use father as spouse
+        const father = familyHeads.father.personal_info;
+        spouseInfo = {
+          s_lastName: father.per_lname || "",
+          s_givenName: father.per_fname || "",
+          s_middleInitial: (father.per_mname ? father.per_mname[0] : "") || "",
+          s_dateOfBirth: father.per_dob || "",
+          s_age: father.per_dob ? calculateAge(father.per_dob) : 0,
+          s_occupation: "",
+        };
+      } else if (gender === 'male' && familyHeads?.mother) {
+        // For male patients, use mother as spouse
+        const mother = familyHeads.mother.personal_info;
+        spouseInfo = {
+          s_lastName: mother.per_lname || "",
+          s_givenName: mother.per_fname || "",
+          s_middleInitial: (mother.per_mname ? mother.per_mname[0] : "") || "",
+          s_dateOfBirth: mother.per_dob || "",
+          s_age: mother.per_dob ? calculateAge(mother.per_dob) : 0,
+          s_occupation: "",
+        };
+      }
+
+      // 4. Fetch other required data
+      const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse, personalResponse] = await Promise.all([
+        api2.get(`familyplanning/body-measurements/${id}`),
+        api2.get(`familyplanning/obstetrical-history/${id}/`),
+        api2.get(`familyplanning/last-previous-pregnancy/${id}/`),
+        api2.get(`familyplanning/patient-details/${id}`)
+      ]);
+
+      const bodyMeasurementsData = bodyMeasurementsResponse.data || {};
+      const obsHistoryData = obsHistoryResponse.data || {};
+      const lastPrevPregData = lastPrevPregResponse.data || {};
+      const personalResponseData = personalResponse.data || {};
+
+      const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
+
+      // 5. Prepare the complete form data
+      const newFormData = {
+        ...formData,
+        ...patientData,
+        pat_id: patientData.pat_id,
+        lastName: patientData.personal_info?.per_lname || "",
+        givenName: patientData.personal_info?.per_fname || "",
+        client_id: patientData.client_id || "",
+        middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
+        dateOfBirth: patientData.personal_info?.per_dob || "",
+        gender: patientData.personal_info?.per_sex || "",
+        obstetricalHistory: obsHistoryData,
+        height: bodyMeasurementsData.height || 0,
+        weight: bodyMeasurementsData.weight || 0,
+        bodyMeasurementRecordedAt: bodyMeasurementsData.recorded_at || "",
+        philhealthNo: personalResponseData.philhealthNo || "",
+        nhts_status: personalResponseData.nhts_status || false,
+        fourps: personalResponseData.fourps || false,
+        educationalAttainment: personalResponseData.educationalAttainment || "",
+        occupation: personalResponseData.ocupation,
+        acknowledgement: {
+          ...formData.acknowledgement,
+          clientName: fullName,
+        },
+        address: {
+          houseNumber: personalResponseData.address?.houseNumber || "",
+          street: personalResponseData.address?.street || "",
+          barangay: personalResponseData.address?.barangay || "",
+          municipality: personalResponseData.address?.municipality || "",
+          province: personalResponseData.address?.province || "",
+        },
+        spouse: spouseInfo,
+        lastDeliveryDate: lastPrevPregData.last_delivery_date || "",
+        typeOfLastDelivery: lastPrevPregData.last_delivery_type || "",
       };
+
+      // 6. Update the form with the new data
+      form.reset(newFormData);
+      updateFormData(newFormData);
+      toast.success("Patient data loaded successfully");
+    } catch (error) {
+      console.error("Error fetching patient details:", error);
+      toast.error("Failed to load patient details");
     }
-
-    // 4. Fetch other required data
-    const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse, personalResponse] = await Promise.all([
-      api2.get(`familyplanning/body-measurements/${id}`),
-      api2.get(`familyplanning/obstetrical-history/${id}/`),
-      api2.get(`familyplanning/last-previous-pregnancy/${id}/`),
-      api2.get(`familyplanning/patient-details/${id}`)
-    ]);
-
-    const bodyMeasurementsData = bodyMeasurementsResponse.data || {};
-    const obsHistoryData = obsHistoryResponse.data || {};
-    const lastPrevPregData = lastPrevPregResponse.data || {};
-    const personalResponseData = personalResponse.data || {};
-
-    const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
-
-    // 5. Prepare the complete form data
-    const newFormData = {
-      ...formData,
-      ...patientData,
-      pat_id: patientData.pat_id,
-      lastName: patientData.personal_info?.per_lname || "",
-      givenName: patientData.personal_info?.per_fname || "",
-      clientID: patientData.clientID || "",
-      middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
-      dateOfBirth: patientData.personal_info?.per_dob || "",
-      gender: patientData.personal_info?.per_sex || "",
-      obstetricalHistory: obsHistoryData,
-      height: bodyMeasurementsData.height || 0,
-      weight: bodyMeasurementsData.weight || 0,
-      bodyMeasurementRecordedAt: bodyMeasurementsData.recorded_at || "",
-      philhealthNo: personalResponseData.philhealthNo || "",
-      nhts_status: personalResponseData.nhts_status || false,
-      pantawid_4ps: personalResponseData.pantawid_4ps || false,
-      educationalAttainment: personalResponseData.educationalAttainment || "",
-      occupation: personalResponseData.ocupation,
-      acknowledgement: {
-        ...formData.acknowledgement,
-        clientName: fullName,
-      },
-      address: {
-        houseNumber: personalResponseData.address?.houseNumber || "",
-        street: personalResponseData.address?.street || "",
-        barangay: personalResponseData.address?.barangay || "",
-        municipality: personalResponseData.address?.municipality || "",
-        province: personalResponseData.address?.province || "",
-      },
-      spouse: spouseInfo,
-      lastDeliveryDate: lastPrevPregData.last_delivery_date || "",
-      typeOfLastDelivery: lastPrevPregData.last_delivery_type || "",
-    };
-
-    // 6. Update the form with the new data
-    form.reset(newFormData);
-    updateFormData(newFormData);
-    toast.success("Patient data loaded successfully");
-  } catch (error) {
-    console.error("Error fetching patient details:", error);
-    toast.error("Failed to load patient details");
-  }
-};
+  };
 
 
   const dateOfBirth = form.watch("dateOfBirth")
@@ -255,8 +255,8 @@ export default function FamilyPlanningForm({
   const isChangingMethod =
     isCurrentUser &&
     (subTypeOfClient === "changingmethod" ||
-        subTypeOfClient === "changingclinic" ||
-        subTypeOfClient === "dropoutrestart");
+      subTypeOfClient === "changingclinic" ||
+      subTypeOfClient === "dropoutrestart");
 
   useEffect(() => {
     if (dateOfBirth) {
@@ -435,11 +435,11 @@ export default function FamilyPlanningForm({
                         <Label className="font-normal text-[13px]">
                           {loadingPatients ? "Loading..." : "No patient found."}
                         </Label>
-                         <Link to="/create-patients-record">
-                                      <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
-                                        Register New Patient
-                                      </Label>
-                                    </Link>
+                        <Link to="/create-patients-record">
+                          <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
+                            Register New Patient
+                          </Label>
+                        </Link>
                       </div>
                     }
                   />
@@ -471,43 +471,43 @@ export default function FamilyPlanningForm({
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <FormInput control={form.control} name="clientID" label="CLIENT ID:" {...inputProps} />
+              <FormInput control={form.control} name="client_id" label="CLIENT ID:" {...inputProps} />
               <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps} />
-
-          <FormField
-  control={form.control}
-  name="nhts_status"
-  render={({ field }) => (
-    <FormItem className="ml-5 mt-2 flex flex-col">
-      <FormLabel className="mb-2">NHTS?</FormLabel>
-      <div className="flex items-center space-x-2">
-        <FormControl>
-          <Checkbox
-            checked={field.value === true}
-            onCheckedChange={() => {}} // Empty function prevents changes
-            disabled={true} // Force disabled
-            className="cursor-not-allowed" // Visual indication
-          />
-        </FormControl>
-        <Label>Yes</Label>
-        <FormControl>
-          <Checkbox
-            className="ml-4 cursor-not-allowed"
-            checked={field.value === false}
-            onCheckedChange={() => {}} // Empty function prevents changes
-            disabled={true} // Force disabled
-          />
-        </FormControl>
-        <Label>No</Label>
-      </div>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
 
               <FormField
                 control={form.control}
-                name="pantawid_4ps"
+                name="nhts_status"
+                render={({ field }) => (
+                  <FormItem className="ml-5 mt-2 flex flex-col">
+                    <FormLabel className="mb-2">NHTS?</FormLabel>
+                    <div className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value === true}
+                          onCheckedChange={() => { }} // Empty function prevents changes
+                          disabled={true} // Force disabled
+                          className="cursor-not-allowed" // Visual indication
+                        />
+                      </FormControl>
+                      <Label>Yes</Label>
+                      <FormControl>
+                        <Checkbox
+                          className="ml-4 cursor-not-allowed"
+                          checked={field.value === false}
+                          onCheckedChange={() => { }} // Empty function prevents changes
+                          disabled={true} // Force disabled
+                        />
+                      </FormControl>
+                      <Label>No</Label>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="fourps"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel className="mb-2 mt-2">Pantawid Pamilya Pilipino (4Ps)</FormLabel>
@@ -573,9 +573,9 @@ export default function FamilyPlanningForm({
                 name="age"
                 label="Age"
                 type="number"
-                readOnly
                 className="col-span-1"
                 {...inputProps}
+                readOnly={true}
               />
               <FormInput
                 control={form.control}
@@ -679,9 +679,9 @@ export default function FamilyPlanningForm({
                 name="spouse.s_age"
                 label="Age"
                 type="number"
-                readOnly
                 className="col-span-1"
                 {...inputProps}
+                readOnly={true}
               />
               <FormInput
                 control={form.control}
@@ -703,7 +703,7 @@ export default function FamilyPlanningForm({
               />
               <FormField
                 control={form.control}
-                name="planToHaveMoreChildren"
+                name="plan_more_children"
                 render={({ field }) => (
                   <FormItem className="flex flex-col mt-3 ml-5">
                     <FormLabel className="mb-2">PLAN TO HAVE MORE CHILDREN?</FormLabel>
@@ -733,7 +733,7 @@ export default function FamilyPlanningForm({
               />
               <FormSelect
                 control={form.control}
-                name="averageMonthlyIncome"
+                name="avg_monthly_income"
                 label="AVERAGE MONTHLY INCOME"
                 options={INCOME_OPTIONS}
                 {...inputProps}
@@ -822,7 +822,6 @@ export default function FamilyPlanningForm({
                                 </Label>
                               </div>
                             }
-                            disabled={isReadOnly}
                           />
                           <FormMessage />
                         </FormItem>
@@ -855,7 +854,7 @@ export default function FamilyPlanningForm({
                                 </Label>
                               </div>
                             }
-                            disabled={isReadOnly}
+                          // readOnly={true}
                           />
                           <FormMessage />
                         </FormItem>

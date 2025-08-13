@@ -303,7 +303,7 @@ export default function FamilyPlanningForm2({
                     <FormField
                       key={item.name}
                       control={form.control}
-                      name={`medicalHistory.${item.name}`}
+                      name={`medicalHistory.${item.name}` as `medicalHistory.${keyof FormData["medicalHistory"] & string}`}
                       render={({ field }) => (
                         <FormItem className="flex justify-between items-center">
                           <Label className="mt-6">■ {item.label}</Label>

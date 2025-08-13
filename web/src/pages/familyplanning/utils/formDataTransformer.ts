@@ -1,10 +1,5 @@
 import { FormData } from "@/form-schema/FamilyPlanningSchema"; // Ensure this path is correct
 
-/**
- * Calculates age from a date string (YYYY-MM-DD).
- * @param dateString The date of birth in YYYY-MM-DD format.
- * @returns The calculated age or 0 if invalid date.
- */
 export const calculateAgeFromDateString = (dateString?: string | Date | null): number => {
   if (!dateString) return 0;
   try {
@@ -22,54 +17,48 @@ export const calculateAgeFromDateString = (dateString?: string | Date | null): n
   }
 };
 
-/**
- * Maps a given educational attainment string to a standardized form value.
- * @param education The raw education string from API.
- * @returns Standardized education string.
- */
-const mapEducationalAttainment = (education?: string | null): string => {
-  if (!education) return '';
-  const educationLower = education.toLowerCase();
-  if (educationLower.includes('elementary')) return 'elementary';
-  if (educationLower.includes('high school') && !educationLower.includes('senior')) return 'highschool';
-  if (educationLower.includes('senior high school') || educationLower.includes('shs')) return 'shs';
-  if (educationLower.includes('college level')) return 'collegelevel';
-  if (educationLower.includes('college graduate') || educationLower.includes('grad')) return 'collegegrad';
-  if (educationLower.includes('post graduate')) return 'postgrad';
-  return 'none';
-};
+// const mapEducationalAttainment = (education?: string | null): string => {
+//   if (!education) return '';
+//   const educationLower = education.toLowerCase();
+//   if (educationLower.includes('elementary')) return 'elementary';
+//   if (educationLower.includes('high school') && !educationLower.includes('senior')) return 'highschool';
+//   if (educationLower.includes('senior high school') || educationLower.includes('shs')) return 'shs';
+//   if (educationLower.includes('college level')) return 'collegelevel';
+//   if (educationLower.includes('college graduate') || educationLower.includes('grad')) return 'collegegrad';
+//   if (educationLower.includes('post graduate')) return 'postgrad';
+//   return 'none';
+// };
 
-/**
- * Transforms API data (from get_complete_fp_record) into the frontend FormData structure.
- * @param apiData The complete FP record data fetched from the backend.
- * @returns Transformed FormData object.
- */
+// /**
+//  * Transforms API data (from get_complete_fp_record) into the frontend FormData structure.
+//  * @param apiData The complete FP record data fetched from the backend.
+//  * @returns Transformed FormData object.
+//  */
 export const transformApiDataToFormData = (apiData: any): FormData => {
-  // Use a default empty object for nested structures if they are null from API
-  const patientInfo = apiData.patient_info || {};
-  const personalInfo = apiData.patient_info?.personal_info || {};
-  const addressInfo = apiData.patient_info?.address || {};
-  const fpType = apiData.fp_type || {};
-  const medicalHistory = apiData.medicalHistory || {}; // Note: backend now flattens this
-  const obstetricalHistory = apiData.obstetricalHistory || {}; // Note: backend now flattens this
-  const sexuallyTransmittedInfections = apiData.sexuallyTransmittedInfections || {}; // Flattened
-  const violenceAgainstWomen = apiData.violenceAgainstWomen || {}; // Flattened
-  const fpPhysicalExam = apiData.fp_physical_exam || {}; // Raw object if not flattened
-  const bodyMeasurement = apiData.body_measurement || {}; // Raw object if not flattened
-  const fpPelvicExam = apiData.fp_pelvic_exam || {}; // Raw object if not flattened
+  // const patientInfo = apiData.patient_info || {};
+  // const personalInfo = apiData.patient_info?.personal_info || {};
+  // const addressInfo = apiData.patient_info?.address || {};
+  // const fpType = apiData.fp_type || {};
+  // const medicalHistory = apiData.medicalHistory || {}; // Note: backend now flattens this
+  // const obstetricalHistory = apiData.obstetricalHistory || {}; // Note: backend now flattens this
+  // const sexuallyTransmittedInfections = apiData.sexuallyTransmittedInfections || {}; // Flattened
+  // const violenceAgainstWomen = apiData.violenceAgainstWomen || {}; // Flattened
+  // const fpPhysicalExam = apiData.fp_physical_exam || {}; // Raw object if not flattened
+  // const bodyMeasurement = apiData.body_measurement || {}; // Raw object if not flattened
+  // const fpPelvicExam = apiData.fp_pelvic_exam || {}; // Raw object if not flattened
   const acknowledgement = apiData.acknowledgement || {}; // Flattened
   const pregnancyCheck = apiData.pregnancyCheck || {}; // Flattened
   const serviceProvisionRecords = apiData.serviceProvisionRecords || []; // Flattened
-  const spouseInfo = apiData.spouse || {}; // Flattened spouse data
+  // const spouseInfo = apiData.spouse || {}; // Flattened spouse data
 
   return {
     // --- Page 1 ---
-    fprecord_id: apiData.fprecord_id || null, // Important for updates
+    // fprecord: apiData.fprecord_id || null, // Important for updates
     pat_id: apiData.pat_id || "",
-    clientID: apiData.client_id || "",
+    client_id: apiData.client_id || "",
     philhealthNo: apiData.philhealthNo || "",
     nhts_status: apiData.nhts_status || false,
-    pantawid_4ps: apiData.pantawid_4ps || false,
+    fourps: apiData.fourps || false,
     lastName: apiData.lastName || "",
     givenName: apiData.givenName || "",
     middleInitial: apiData.middleInitial || "",
@@ -93,8 +82,8 @@ export const transformApiDataToFormData = (apiData: any): FormData => {
       s_occupation: apiData.spouse?.s_occupation || "",
     },
     numOfLivingChildren: apiData.numOfLivingChildren || 0,
-    planToHaveMoreChildren: apiData.planToHaveMoreChildren || false,
-    averageMonthlyIncome: apiData.averageMonthlyIncome || "",
+    plan_more_children: apiData.plan_more_children || false,
+    avg_monthly_income: apiData.avg_monthly_income || "",
 
     typeOfClient: apiData.typeOfClient || "",
     subTypeOfClient: apiData.subTypeOfClient || "",
@@ -127,7 +116,7 @@ export const transformApiDataToFormData = (apiData: any): FormData => {
       fullTerm: apiData.obstetricalHistory?.fullTerm || 0,
       premature: apiData.obstetricalHistory?.premature || 0,
       abortion: apiData.obstetricalHistory?.abortion || 0,
-      livingChildren: apiData.obstetricalHistory?.livingChildren || 0,
+      numOfLivingChildren: apiData.obstetricalHistory?.numOfLivingChildren || 0,
       lastDeliveryDate: apiData.obstetricalHistory?.lastDeliveryDate || "",
       typeOfLastDelivery: apiData.obstetricalHistory?.typeOfLastDelivery || undefined,
       lastMenstrualPeriod: apiData.obstetricalHistory?.lastMenstrualPeriod || "",

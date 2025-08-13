@@ -351,8 +351,8 @@ def get_pelvic_exam_display_values(data):
     return {
         "pelvicExamination": display_map.get(data.get("pelvicExamination")),
         "cervicalConsistency": data.get("cervicalConsistency"),  # Assuming this is already readable
-        "cervicalTenderness": "Yes" if data.get("cervicalTenderness") else "No",
-        "cervicalAdnexal": "Yes" if data.get("cervicalAdnexal") else "No",
+        "cervicalTenderness": True if data.get("cervicalTenderness") else False,
+        "cervicalAdnexal": True if data.get("cervicalAdnexal") else False,
         "uterinePosition": data.get("uterinePosition"),
         "uterineDepth": data.get("uterineDepth"),  
     }    
@@ -710,7 +710,7 @@ def get_fp_records_for_patient(request, patient_id):
                     "dateOfFollowUp": (
                         follow_up_date.isoformat() if follow_up_date else "N/A"
                     ),
-                    "averageMonthlyIncome": record.avg_monthly_income or "N/A",
+                    "avg_monthly_income": record.avg_monthly_income or "N/A",
                 }
             )
 
@@ -795,10 +795,10 @@ def get_patient_details_data(request, patient_id):
         # Initialize default form data
         fp_form_data = {
             "pat_id": patient_data.get("pat_id", ""),
-            "clientID": patient_data.get("clientID", ""),
+            "client_id": patient_data.get("client_id", ""),
             "philhealthNo": "",
             "nhts_status": "",
-            "pantawid_4ps": "",
+            "fourps": "",
             "lastName": personal_info.get("per_lname", ""),
             "givenName": personal_info.get("per_fname", ""),
             "middleInitial": personal_info.get("per_mname", "")[:1] if personal_info.get("per_mname") else "",
@@ -822,8 +822,8 @@ def get_patient_details_data(request, patient_id):
                 "s_occupation": "",
             },
             "numOfLivingChildren": 0,
-            "planToHaveMoreChildren": False,
-            "averageMonthlyIncome": patient_data.get("avgmonthlyincome", ""),
+            "plan_more_children": False,
+            "avg_monthly_income": patient_data.get("avgmonthlyincome", ""),
             "weight": 0,
             "height": 0,
             "bodyMeasurementRecordedAt": None,
@@ -1024,9 +1024,9 @@ def get_complete_fp_record(request, fprecord_id):
         complete_data = FPRecordSerializer(fp_record).data
         print("Serialized FPRecord data:", complete_data)  # Debug
         complete_data["fprecord"] = fp_record.fprecord_id
-        complete_data["planToHaveMoreChildren"] = fp_record.plan_more_children
+        complete_data["plan_more_children"] = fp_record.plan_more_children
         complete_data["occupation"] = fp_record.occupation or "N/A"  # Set once
-        complete_data["averageMonthlyIncome"] = fp_record.avg_monthly_income or "N/A"
+        complete_data["avg_monthly_income"] = fp_record.avg_monthly_income or "N/A"
         
         print("Initial occupation set:", complete_data["occupation"])  # Debug
         
@@ -1066,7 +1066,7 @@ def get_complete_fp_record(request, fprecord_id):
 
             
             complete_data["pat_id"] = patient.pat_id
-            complete_data["clientID"] = fp_record.client_id
+            complete_data["client_id"] = fp_record.client_id
             # Initialize default values (exclude occupation to preserve earlier value)
             complete_data.update({
                 "lastName": "", "givenName": "", "middleInitial": "",
@@ -1546,9 +1546,9 @@ def get_complete_fp_record_data(request, fprecord_id):
         complete_data = FPRecordSerializer(fp_record).data
         print("Serialized FPRecord data:", complete_data)  # Debug
         complete_data["fprecord"] = fp_record.fprecord_id
-        complete_data["planToHaveMoreChildren"] = fp_record.plan_more_children
+        complete_data["plan_more_children"] = fp_record.plan_more_children
         complete_data["occupation"] = fp_record.occupation or "N/A"  # Set once
-        complete_data["averageMonthlyIncome"] = fp_record.avg_monthly_income or "N/A"
+        complete_data["avg_monthly_income"] = fp_record.avg_monthly_income or "N/A"
         print("Initial occupation set:", complete_data["occupation"])  # Debug
         
         try:
@@ -1583,8 +1583,8 @@ def get_complete_fp_record_data(request, fprecord_id):
                 raise Exception("No patient associated with this FP record")
 
             complete_data["pat_id"] = patient.pat_id
-            complete_data["clientID"] = fp_record.client_id
-            complete_data["pantawid_4ps"] = fp_record.fourps
+            complete_data["client_id"] = fp_record.client_id
+            complete_data["fourps"] = fp_record.fourps
             # Initialize default values (exclude occupation)
             complete_data.update({
                 "lastName": "", "givenName": "", "middleInitial": "",
@@ -2100,10 +2100,10 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
 
     # 2. Create FP Record
     fp_record_data = {
-        "client_id": data.get("clientID") or "",
-        "fourps": data.get("pantawid_4ps") or False,
-        "plan_more_children": data.get("planToHaveMoreChildren"),
-        "avg_monthly_income": data.get("averageMonthlyIncome") or "0",
+        "client_id": data.get("client_id") or "",
+        "fourps": data.get("fourps") or False,
+        "plan_more_children": data.get("plan_more_children"),
+        "avg_monthly_income": data.get("avg_monthly_income") or "0",
         "occupation": data.get("occupation") or None,
         "pat": patient_record_instance.pat_id.pat_id, # Link to the Patient object from the PatientRecord
         "hrd": data.get("hrd_id") or None, # This might need adjustment if HRD is linked to PatientRecord or Patient
@@ -2612,641 +2612,14 @@ def submit_follow_up_family_planning_form(request):
             status=status.HTTP_400_BAD_REQUEST
         )
         
-# @api_view(['POST'])
-# def submit_full_family_planning_form(request):
-#     data = request.data
-#     staff_id_from_request = request.user.id if request.user.is_authenticated else None
-#     obstetrical_history_data = data.get('obstetricalHistory', {})
-#     patrec_id = None
-#     fprecord_id = None
-
-#     try:
-#         with transaction.atomic():
-#             logger.info("Starting atomic transaction for full FP form submission.")
-#             print("\n--- Starting Full FP Form Submission ---") # Debugging line
-
-#             # 1. Create PatientRecord first
-#             print("DEBUG: Preparing PatientRecord data...") # Debugging line
-#             patient_record_data = {
-#                 "patrec_type": "Family Planning",
-#                 "pat_id": data.get("pat_id"),
-#             }
-#             patient_record_serializer = PatientRecordSerializer(data=patient_record_data)
-#             print("DEBUG: Validating PatientRecordSerializer...") # Debugging line
-#             patient_record_serializer.is_valid(raise_exception=True)
-#             patient_record_instance = patient_record_serializer.save()
-#             patrec_id = patient_record_instance.patrec_id
-#             logger.info(f"Created PatientRecord with ID: {patrec_id}")
-#             print(f"DEBUG: PatientRecord created with ID: {patrec_id}") # Debugging line
-
-#             # Spouse
-#             spouse_instance = None
-#             spouse_data = data.get("spouse", {})
-
-#             if any(v for k,v in spouse_data.items() if v not in [None, "", "null", "undefined"]):
-#                 print("DEBUG: Preparing Spouse data...") # Debugging line
-#                 try:
-#                     spouse_serializer = SpouseSerializer(data={
-#                         "spouse_lname": spouse_data.get("s_lastName") or None,
-#                         "spouse_fname": spouse_data.get("s_givenName") or None,
-#                         "spouse_mname": spouse_data.get("s_middleInitial") or None,
-#                         "spouse_dob": spouse_data.get("s_dateOfBirth") or None,
-#                         "spouse_occupation": spouse_data.get("s_occupation") or None,
-#                     })
-#                     print("DEBUG: Validating SpouseSerializer...") # Debugging line
-#                     spouse_serializer.is_valid(raise_exception=True)
-#                     spouse_instance = spouse_serializer.save()
-#                     logger.info(f"Created Spouse record with ID: {spouse_instance.pk}")
-#                     print(f"DEBUG: Spouse record created with ID: {spouse_instance.pk}") # Debugging line
-#                 except Exception as e:
-#                     logger.error(f"Error creating spouse record: {str(e)}")
-#                     raise
-#             else:
-#                 print("DEBUG: No Spouse data provided or data is empty.") # Debugging line
-
-
-#             # 2. Create FP Record
-#             print("DEBUG: Preparing FP Record data...") # Debugging line
-#             fp_record_data = {
-#                 "client_id": data.get("clientID") or "",
-#                 "fourps": data.get("pantawid_4ps") or False,
-#                 "plan_more_children": data.get("planToHaveMoreChildren"),
-#                 "avg_monthly_income": data.get("averageMonthlyIncome") or "0",
-#                 "occupation": data.get("occupation") or None,
-#                 "pat": data.get("pat_id"),
-#                 "hrd": data.get("hrd_id") or None,
-#                 "patrec": patient_record_instance.patrec_id,  # Using the ID
-#                 "spouse": spouse_instance.pk if spouse_instance else None,
-#             }
-#             print(f"DEBUG: fp_record_data for FPRecordSerializer: {fp_record_data}") # Add this line
-
-#             fp_record_serializer = FPRecordSerializer(data=fp_record_data)
-#             print("DEBUG: Validating FPRecordSerializer...") # Debugging line
-#             fp_record_serializer.is_valid(raise_exception=True)
-#             fp_record_instance = fp_record_serializer.save()
-#             fprecord_id = fp_record_instance.fprecord_id
-#             logger.info(f"Created FP Record with ID: {fprecord_id}")
-#             print(f"DEBUG: FP Record created with ID: {fprecord_id}") # Debugging line
-
-
-#             # 3. Create Medical History Records
-#             print("DEBUG: Handling Medical History records...") # Debugging line
-#             selected_illness_ids = data.get("selectedIllnessIds", [])
-#             custom_disability_details = data.get("customDisabilityDetails")
-
-#             if custom_disability_details:
-#                 custom_illness_description = f"User-specified disability: {custom_disability_details}"
-#                 # Assuming get_or_create_illness is defined and imported
-#                 custom_illness_instance = get_or_create_illness(
-#                     illname=custom_disability_details,
-#                     ill_description=custom_illness_description,
-#                     ill_code_prefix="FP"
-#                 )
-#                 if custom_illness_instance.ill_id not in selected_illness_ids:
-#                     selected_illness_ids.append(custom_illness_instance.ill_id)
-#                 logger.info(f"Handled custom disability: {custom_illness_instance.illname}")
-
-#             if selected_illness_ids:
-#                 MedicalHistory.objects.filter(patrec=patient_record_instance).delete()
-#                 logger.info(f"Deleted existing medical history for PatientRecord {patient_record_instance.patrec_id}.")
-#                 for illness_id in selected_illness_ids:
-#                     illness_instance = get_object_or_404(Illness, ill_id=illness_id)
-#                     # No serializer for MedicalHistory here, direct model creation
-#                     MedicalHistory.objects.create(
-#                         ill=illness_instance,
-#                         patrec=patient_record_instance
-#                     )
-#                 logger.info(f"Created {len(selected_illness_ids)} medical history records.")
-#             else:
-#                 MedicalHistory.objects.filter(patrec=patient_record_instance).delete()
-#                 logger.info(f"No illnesses selected, ensuring no medical history records for PatientRecord {patient_record_instance.patrec_id}.")
-            
-#             print("DEBUG: Medical History handled.") # Debugging line
-
-
-#             # 4. Create FP Type
-#             print("DEBUG: Preparing FP Type data...") # Debugging line
-#             fp_type_data = {
-#                 "fpt_client_type": data.get("typeOfClient") or "New Acceptor",
-#                 "fpt_subtype": data.get("subTypeOfClient") or None,
-#                 "fpt_reason_fp": data.get("reasonForFP") or None,
-#                 "fpt_reason": data.get("otherReasonForFP") or None,
-#                 "fpt_other_reason": data.get("otherReasonForFP") or None,
-#                 "fpt_method_used": data.get("methodCurrentlyUsed") or "None",
-#                 "fpt_other_method": data.get("otherMethod") or "",
-#                 "fprecord": fprecord_id,
-#             }
-#             fp_type_serializer = FPTypeSerializer(data=fp_type_data)
-#             print("DEBUG: Validating FPTypeSerializer...") # Debugging line
-#             fp_type_serializer.is_valid(raise_exception=True)
-#             fp_type_instance = fp_type_serializer.save()
-#             fpt_id = fp_type_instance.fpt_id
-#             logger.info(f"Created FP_type with ID: {fpt_id}")
-#             print(f"DEBUG: FP Type created with ID: {fpt_id}") # Debugging line
-
-
-#             #OBS MAIN
-#             print("DEBUG: Handling Obstetrical History (Main Obstetrical Record)...") # Debugging line
-#             main_obs_data_from_request = data.get("obstetricalHistory", {})
-#             main_obs_instance = None
-
-#             patient_id = data.get("pat_id")
-#             # Try to get the LATEST existing Obstetrical_History for this patient
-#             latest_existing_main_obs = Obstetrical_History.objects.filter(
-#                 patrec_id__pat_id=patient_id
-#             ).order_by('-patrec_id__created_at').first()
-
-#             main_obs_serializer_data = {
-#                 "obs_record_from": "Family Planning",
-#                 "patrec_id": patient_record_instance.patrec_id, # Link to the NEW PatientRecord
-#                 # Default values in case no existing record or no data from request
-#                 "obs_living_ch": 0, "obs_abortion": 0, "obs_gravida": 0, "obs_para": 0,
-#                 "obs_fullterm": 0, "obs_preterm": 0, "obs_ch_born_alive": 0,
-#                 "obs_lg_babies": 0, "obs_still_birth": 0,
-#             }
-
-#             if latest_existing_main_obs:
-#                 # If existing, copy its data
-#                 print(f"DEBUG: Found latest existing Obstetrical_History for pat_id {patient_id} (ID: {latest_existing_main_obs.obs_id}). Copying data.")
-#                 main_obs_serializer_data.update({
-#                     "obs_living_ch": latest_existing_main_obs.obs_living_ch,
-#                     "obs_abortion": latest_existing_main_obs.obs_abortion,
-#                     "obs_gravida": latest_existing_main_obs.obs_gravida,
-#                     "obs_para": latest_existing_main_obs.obs_para,
-#                     "obs_fullterm": latest_existing_main_obs.obs_fullterm,
-#                     "obs_preterm": latest_existing_main_obs.obs_preterm,
-#                 })
-#                 # Overlay with any data provided in the current request for potential updates/corrections
-#                 if main_obs_data_from_request:
-#                     main_obs_serializer_data.update({
-#                         "obs_living_ch": main_obs_data_from_request.get("numOfLivingChildren", main_obs_serializer_data["obs_living_ch"]),
-#                         "obs_abortion": main_obs_data_from_request.get("abortion", main_obs_serializer_data["obs_abortion"]),
-#                         "obs_gravida": main_obs_data_from_request.get("g_pregnancies", main_obs_serializer_data["obs_gravida"]),
-#                         "obs_para": main_obs_data_from_request.get("p_pregnancies", main_obs_serializer_data["obs_para"]),
-#                         "obs_fullterm": main_obs_data_from_request.get("fullTerm", main_obs_serializer_data["obs_fullterm"]),
-#                         "obs_preterm": main_obs_data_from_request.get("premature", main_obs_serializer_data["obs_preterm"]),
-#                         "obs_ch_born_alive": main_obs_data_from_request.get("childrenBornAlive", main_obs_serializer_data["obs_ch_born_alive"]),
-#                         "obs_lg_babies": main_obs_data_from_request.get("largeBabies", main_obs_serializer_data["obs_lg_babies"]),
-#                         "obs_still_birth": main_obs_data_from_request.get("stillBirth", main_obs_serializer_data["obs_still_birth"]),
-#                     })
-#             elif main_obs_data_from_request and any(main_obs_data_from_request.values()):
-#                 print("DEBUG: No existing Obstetrical_History. Creating new from request data.")
-#                 main_obs_serializer_data.update({
-#                     "obs_living_ch": main_obs_data_from_request.get("numOfLivingChildren") or 0,
-#                     "obs_abortion": main_obs_data_from_request.get("abortion") or 0,
-#                     "obs_gravida": main_obs_data_from_request.get("g_pregnancies") or 0,
-#                     "obs_para": main_obs_data_from_request.get("p_pregnancies") or 0,
-#                     "obs_fullterm": main_obs_data_from_request.get("fullTerm") or 0,
-#                     "obs_preterm": main_obs_data_from_request.get("premature") or 0,
-#                     "obs_ch_born_alive": main_obs_data_from_request.get("childrenBornAlive") or 0,
-#                     "obs_lg_babies": main_obs_data_from_request.get("largeBabies") or 0,
-#                     "obs_still_birth": main_obs_data_from_request.get("stillBirth") or 0,
-#                 })
-#             else:
-#                 # If no existing and no data from request, leave defaults (all zeros)
-#                 print("DEBUG: No existing Obstetrical_History and no data from request. Creating with default zeros.")
-
-
-#             main_obs_serializer = ObstetricalHistorySerializer(data=main_obs_serializer_data)
-#             print("DEBUG: Validating ObstetricalHistorySerializer...") # Debugging line
-#             main_obs_serializer.is_valid(raise_exception=True)
-#             main_obs_instance = main_obs_serializer.save()
-#             logger.info(f"Created new Obstetrical_History with ID: {main_obs_instance.obs_id} for PatientRecord {patient_record_instance.patrec_id}")
-#             print(f"DEBUG: New Obstetrical_History created with ID: {main_obs_instance.obs_id}") # Debugging line
-
-#             # 6. Handle FP-specific Obstetrical History (ALWAYS NEW)
-#             print("DEBUG: Handling FP-specific Obstetrical History (ALWAYS NEW)...") 
-#             fp_obstetrical_history_data = data.get('obstetricalHistory', {})
-            
-#             print(f"DEBUG: Content of fp_obstetrical_history_data: {fp_obstetrical_history_data}")
-
-#             if fp_obstetrical_history_data and fp_record_instance:
-#                 fpob_last_delivery_val = obstetrical_history_data.get('lastDeliveryDate')
-#                 if fpob_last_delivery_val == "":
-#                     fpob_last_delivery_val = None
-
-#                 fpob_type_last_delivery_val = obstetrical_history_data.get('typeOfLastDelivery')
-#                 if fpob_type_last_delivery_val == "":
-#                     fpob_type_last_delivery_val = None
-                    
-#                 # Create a NEW FP_Obstetrical_History record
-#                 fp_obs_serializer_data = {
-#                     # "fpob_last_delivery": fp_obstetrical_history_data.get('lastDeliveryDate') or None, 
-#                     # "fpob_type_last_delivery": fp_obstetrical_history_data.get('typeOfLastDelivery'), # Assuming this matches your model field
-#                     "fpob_last_delivery": fpob_last_delivery_val,
-#                     "fpob_type_last_delivery": fpob_type_last_delivery_val,
-#                     "fpob_last_period": fp_obstetrical_history_data.get('lastMenstrualPeriod'),
-#                     "fpob_previous_period": fp_obstetrical_history_data.get('previousMenstrualPeriod'),
-#                     "fpob_mens_flow": fp_obstetrical_history_data.get('menstrualFlow') or "Normal",
-#                     "fpob_dysme": fp_obstetrical_history_data.get('dysmenorrhea') or False,
-#                     "fpob_hydatidiform": fp_obstetrical_history_data.get('hydatidiformMole') or False,
-#                     "fpob_ectopic_pregnancy": fp_obstetrical_history_data.get('ectopicPregnancyHistory') or False,
-#                     "fprecord": fp_record_instance.fprecord_id,
-#                     "obs": main_obs_instance.obs_id if main_obs_instance else None,
-#                 }
-
-#                 fp_obs_serializer = FP_ObstetricalHistorySerializer(data=fp_obs_serializer_data)
-#                 print("DEBUG: Validating FP_Obstetrical_HistorySerializer (create new)...")
-#                 fp_obs_serializer.is_valid(raise_exception=True)
-#                 fp_obs_instance = fp_obs_serializer.save()
-#                 logger.info(f"Created new FP_Obstetrical_History with ID: {fp_obs_instance.fpob_id} for FPRecord {fp_record_instance.fprecord_id}")
-#                 print(f"DEBUG: New FP_Obstetrical_History created with ID: {fp_obs_instance.fpob_id}")
-#             else:
-#                 logger.info("No FP-specific obstetrical history data or FP_Record not available. Skipping FP_Obstetrical_History creation.")
-            
-#             if obstetrical_history_data:
-#                 last_delivery_date_for_prev_preg = obstetrical_history_data.get('lastDeliveryDate')
-#                 type_of_last_delivery_for_prev_preg = obstetrical_history_data.get('typeOfLastDelivery')
-
-#                     # Only create if valid date and type are provided
-#                 if last_delivery_date_for_prev_preg and type_of_last_delivery_for_prev_preg:
-#                     if last_delivery_date_for_prev_preg == "":
-#                         last_delivery_date_for_prev_preg = None
-#                     if type_of_last_delivery_for_prev_preg == "":
-#                         type_of_last_delivery_for_prev_preg = None
-
-#                 if last_delivery_date_for_prev_preg and type_of_last_delivery_for_prev_preg:
-#                         prev_pregnancy_data = {
-#                             "date_of_delivery": last_delivery_date_for_prev_preg,
-#                             "type_of_delivery": type_of_last_delivery_for_prev_preg,
-#                             "outcome": None,
-#                             "babys_wt": None,
-#                             "gender": None,
-#                             "ballard_score": None,
-#                             "apgar_score": None,
-#                             "patrec_id": patient_record_instance.patrec_id, # <--- LINKED HERE
-                                
-#                        }
-#                         prev_pregnancy_serializer = PreviousPregnancyCreateSerializer(data=prev_pregnancy_data)
-#                         if prev_pregnancy_serializer.is_valid():
-#                             prev_pregnancy_instance = prev_pregnancy_serializer.save()
-#                             logger.info(f"Created new Previous_Pregnancy record for last delivery: {prev_pregnancy_instance.pfpp_id}")
-#                             print(f"Created new Previous_Pregnancy record for last delivery: {prev_pregnancy_instance.pfpp_id}")
-#                         else:
-#                             logger.error(f"Error validating Previous_Pregnancy data: {prev_pregnancy_serializer.errors}")
-#                                 # Consider raising an exception here to prevent partial saves if this is critical
-#                 else:
-#                     logger.info("Skipping Previous_Pregnancy creation: 'lastDeliveryDate' or 'typeOfLastDelivery' not valid or provided.")
-#                     print("DEBUG: Skipping FP-specific Obstetrical History creation.")
-
-#             # 7. Create Risk STI
-#             print("DEBUG: Preparing Risk STI data...") # Debugging line
-#             risk_sti_data = data.get("sexuallyTransmittedInfections", {})
-#             risk_sti_payload = {
-#                 "abnormalDischarge": risk_sti_data.get("abnormalDischarge") or False,
-#                 "dischargeFrom": risk_sti_data.get("dischargeFrom") if risk_sti_data.get("abnormalDischarge") else None,
-#                 "sores": risk_sti_data.get("sores") or False,
-#                 "pain": risk_sti_data.get("pain") or False,
-#                 "history": risk_sti_data.get("history") or False,
-#                 "hiv": risk_sti_data.get("hiv") or False,
-#                 "fprecord": fprecord_id,
-#             }
-#             risk_sti_serializer = FPRiskStiSerializer(data=risk_sti_payload)
-#             print("DEBUG: Validating FPRiskStiSerializer...") # Debugging line
-#             risk_sti_serializer.is_valid(raise_exception=True)
-#             risk_sti_serializer.save()
-#             logger.info("Created FP_RiskSti.")
-#             print("DEBUG: FP_RiskSti created.") # Debugging line
-
-#             # 8. Create Risk VAW
-#             print("DEBUG: Preparing Risk VAW data...") # Debugging line
-#             risk_vaw_data = data.get("violenceAgainstWomen", {})
-#             risk_vaw_payload = {
-#                 "unpleasant_relationship": risk_vaw_data.get("unpleasantRelationship") or False,
-#                 "partner_disapproval": risk_vaw_data.get("partnerDisapproval") or False,
-#                 "domestic_violence": risk_vaw_data.get("domesticViolence") or False,
-#                 "referredTo": risk_vaw_data.get("referredTo") or None,
-#                 "fprecord": fprecord_id,
-#             }
-#             risk_vaw_serializer = FPRiskVawSerializer(data=risk_vaw_payload)
-#             print("DEBUG: Validating FPRiskVawSerializer...") # Debugging line
-#             risk_vaw_serializer.is_valid(raise_exception=True)
-#             risk_vaw_serializer.save()
-#             logger.info("Created FP_RiskVaw.")
-#             print("DEBUG: FP_RiskVaw created.") # Debugging line
-
-#             # 9. Handle Body Measurement (Update or Create)
-#             print("DEBUG: Handling Body Measurement...") # Debugging line
-#             bm_id = None
-#             current_weight = data.get("weight")
-#             current_height = data.get("height")
-
-#             existing_bm = BodyMeasurement.objects.filter(patrec=patient_record_instance).order_by('-created_at').first()
-
-#             if existing_bm:
-#                 weight_changed = current_weight is not None and float(current_weight) != existing_bm.weight
-#                 height_changed = current_height is not None and float(current_height) != existing_bm.height
-
-#                 if weight_changed or height_changed:
-#                     bm_data = {
-#                         "weight": float(current_weight) if current_weight is not None else existing_bm.weight,
-#                         "height": float(current_height) if current_height is not None else existing_bm.height,
-#                         "age": data.get("age") or 0,
-#                         "patrec": existing_bm.patrec.patrec_id if existing_bm.patrec else None,
-#                     }
-#                     bm_serializer = BodyMeasurementSerializer(instance=existing_bm, data=bm_data, partial=True)
-#                     print("DEBUG: Validating BodyMeasurementSerializer (update)...") # Debugging line
-#                     bm_serializer.is_valid(raise_exception=True)
-#                     updated_bm = bm_serializer.save()
-#                     bm_id = updated_bm.bm_id
-#                     logger.info(f"Updated existing BodyMeasurement with ID: {bm_id}")
-#                     print(f"DEBUG: Updated BodyMeasurement ID: {bm_id}") # Debugging line
-#                 else:
-#                     bm_id = existing_bm.bm_id
-#                     logger.info(f"Reusing existing BodyMeasurement with ID: {bm_id} (no changes)")
-#                     print(f"DEBUG: Reusing existing BodyMeasurement ID: {bm_id} (no changes)") # Debugging line
-#             else:
-#                 bm_data = {
-#                     "weight": float(current_weight) if current_weight is not None else 0,
-#                     "height": float(current_height) if current_height is not None else 0,
-#                     "age": data.get("age") or 0,
-#                     "patrec": patrec_id,
-#                 }
-#                 bm_serializer = BodyMeasurementSerializer(data=bm_data)
-#                 print("DEBUG: Validating BodyMeasurementSerializer (create)...") # Debugging line
-#                 bm_serializer.is_valid(raise_exception=True)
-#                 new_bm = bm_serializer.save()
-#                 bm_id = new_bm.bm_id
-#                 logger.info(f"Created new BodyMeasurement with ID: {bm_id}")
-#                 print(f"DEBUG: New BodyMeasurement created with ID: {bm_id}") # Debugging line
-
-
-#             # 10. Create Vital Signs
-#             print("DEBUG: Preparing Vital Signs data...") # Debugging line
-#             vital_bp_systolic = "N/A"
-#             vital_bp_diastolic = "N/A"
-#             if data.get("bloodPressure") and isinstance(data["bloodPressure"], str):
-#                 bp_parts = data["bloodPressure"].split("/")
-#                 if len(bp_parts) == 2:
-#                     vital_bp_systolic = bp_parts[0].strip()
-#                     vital_bp_diastolic = bp_parts[1].strip()
-#                 else:
-#                     vital_bp_systolic = data["bloodPressure"].strip()
-
-#             vital_signs_data = {
-#                 "vital_bp_systolic": vital_bp_systolic,
-#                 "vital_bp_diastolic": vital_bp_diastolic,
-#                 "vital_temp": data.get("temperature") or "N/A",
-#                 "vital_RR": data.get("respiratoryRate") or "N/A",
-#                 "vital_o2": data.get("oxygenSaturation") or "N/A",
-#                 "vital_pulse": data.get("pulseRate") or "N/A",
-#                 "patrec": patrec_id,
-#                 # "staff": staff_id_from_request or None,
-#             }
-#             vital_signs_serializer = VitalSignsSerializer(data=vital_signs_data)
-#             print("DEBUG: Validating VitalSignsSerializer...") # Debugging line
-#             vital_signs_serializer.is_valid(raise_exception=True)
-#             vital_signs_instance = vital_signs_serializer.save()
-#             vital_id = vital_signs_instance.vital_id
-#             logger.info(f"Created VitalSigns with ID: {vital_id}")
-#             print(f"DEBUG: VitalSigns created with ID: {vital_id}") # Debugging line
-
-
-#             # 11. Create Physical Exam
-#             print("DEBUG: Preparing Physical Exam data...") # Debugging line
-#             physical_exam_data = {
-#                 "skinExamination": data.get("skinExamination") or "normal",
-#                 "conjunctivaExamination": data.get("conjunctivaExamination") or "normal",
-#                 "neckExamination": data.get("neckExamination") or "normal",
-#                 "breastExamination": data.get("breastExamination") or "normal",
-#                 "abdomenExamination": data.get("abdomenExamination") or "normal",
-#                 "extremitiesExamination": data.get("extremitiesExamination") or "normal",
-#                 "fprecord": fprecord_id,
-#                 "bm": bm_id,
-#                 "vital": vital_id,
-#             }
-#             physical_exam_serializer = FPPhysicalExamSerializer(data=physical_exam_data)
-#             print("DEBUG: Validating FPPhysicalExamSerializer...") # Debugging line
-#             physical_exam_serializer.is_valid(raise_exception=True)
-#             physical_exam_serializer.save()
-#             logger.info("Created FP_Physical_Exam.")
-#             print("DEBUG: FP_Physical_Exam created.") # Debugging line
-
-            
-#             print("DEBUG: Handling Pelvic Exam (IUD method check)...") # Debugging line
-#             is_iud_selected = "IUD" in (data.get("methodCurrentlyUsed") or "")
-#             if is_iud_selected:
-#                 print("DEBUG: IUD method detected, creating pelvic exam...") # Debugging line
-                
-#                 # Map frontend values to backend expected values
-#                 uterine_position = data.get("uterinePosition", "")
-#                 if uterine_position == "middle":
-#                     uterine_position = "Middle"
-#                 elif uterine_position == "anteflexed":
-#                     uterine_position = "Anteflexed"
-#                 elif uterine_position == "retroflexed":
-#                     uterine_position = "Retroflexed"
-                
-#                 pelvic_exam_data = {
-#                     "pelvicExamination": data.get("pelvicExamination") or "normal",
-#                     "cervicalConsistency": data.get("cervicalConsistency") or "firm",
-#                     "cervicalTenderness": data.get("cervicalTenderness") or False,
-#                     "cervicalAdnexal": data.get("cervicalAdnexal") or False,
-#                     "uterinePosition": uterine_position,
-#                     "uterineDepth": data.get("uterineDepth") or "",
-#                     "fprecord": fprecord_id,
-#                 }
-                
-#                 print(f"DEBUG: Pelvic exam data to be saved: {pelvic_exam_data}") # Debugging line
-
-#                 pelvic_exam_serializer = PelvicExamSerializer(data=pelvic_exam_data)
-#                 print("DEBUG: Validating PelvicExamSerializer...") # Debugging line
-#                 pelvic_exam_serializer.is_valid(raise_exception=True)
-#                 pelvic_exam_serializer.save()
-#                 logger.info("Created FP_Pelvic_Exam (IUD method).")
-#                 print("DEBUG: FP_Pelvic_Exam (IUD method) created.") # Debugging line
-#             else:
-#                 logger.info("Skipping FP_Pelvic_Exam (not IUD method).")
-#                 print("DEBUG: Skipping Pelvic Exam.") # Debugging line
-
-
-#             # 13. Create Acknowledgement
-#             print("DEBUG: Preparing Acknowledgement data...") # Debugging line
-#             acknowledgement_data = data.get("acknowledgement", {})
-#             client_full_name = f"{data.get('lastName')}, {data.get('givenName')} {data.get('middleInitial') or ''}".strip()
-#             acknowledgement_payload = {
-#                 "ack_clientSignature": acknowledgement_data.get("clientSignature") or "",
-#                 "ack_clientSignatureDate": acknowledgement_data.get("clientSignatureDate") or date.today().isoformat(),
-#                 "client_name": client_full_name,
-#                 "guardian_signature": acknowledgement_data.get("guardianSignature") or "",
-#                 "guardian_signature_date": acknowledgement_data.get("guardianSignatureDate") or None,
-#                 "fprecord": fprecord_id,
-#                 "type": fpt_id,
-#             }
-#             acknowledgement_serializer = AcknowledgementSerializer(data=acknowledgement_payload)
-#             print("DEBUG: Validating AcknowledgementSerializer...") # Debugging line
-#             acknowledgement_serializer.is_valid(raise_exception=True)
-#             acknowledgement_serializer.save()
-#             logger.info("Created FP_Acknowledgement.")
-#             print("DEBUG: FP_Acknowledgement created.") # Debugging line
-
-#             # 14. Create Pregnancy Check
-#             print("DEBUG: Preparing Pregnancy Check data...") # Debugging line
-#             pregnancy_check_data = data.get("pregnancyCheck", {})
-#             pregnancy_check_payload = {
-#                 "breastfeeding": pregnancy_check_data.get("breastfeeding") or False,
-#                 "abstained": pregnancy_check_data.get("abstained") or False,
-#                 "recent_baby": pregnancy_check_data.get("recent_baby") or False,
-#                 "recent_period": pregnancy_check_data.get("recent_period") or False,
-#                 "recent_abortion": pregnancy_check_data.get("recent_abortion") or False,
-#                 "using_contraceptive": pregnancy_check_data.get("using_contraceptive") or False,
-#                 "fprecord": fprecord_id,
-#             }
-#             pregnancy_check_serializer = FP_PregnancyCheckSerializer(data=pregnancy_check_payload)
-#             print("DEBUG: Validating FP_PregnancyCheckSerializer...") # Debugging line
-#             pregnancy_check_serializer.is_valid(raise_exception=True)
-#             pregnancy_check_serializer.save()
-#             logger.info("Created FP_pregnancy_check.")
-#             print("DEBUG: FP_pregnancy_check created.") # Debugging line
-
-
-#             # 15. Create Assessment and handle stock deduction
-#             print("DEBUG: Handling Assessment and Stock Deduction...") # Debugging line
-#             service_records = data.get("serviceProvisionRecords", [])
-#             if service_records:
-#                 latest_record = service_records[-1]
-#                 method_accepted = latest_record.get('methodAccepted')
-#                 method_quantity_str = latest_record.get('methodQuantity')
-
-#                 method_quantity = 0
-#                 if method_quantity_str:
-#                     try:
-#                         method_quantity = int(method_quantity_str)
-#                     except (ValueError, TypeError):
-#                         logger.error(f"Invalid quantity provided: {method_quantity_str}. Defaulting to 0.")
-
-#                 # Create Follow-up Visit
-#                 print("DEBUG: Preparing Follow-up Visit data...") # Debugging line
-#                 follow_up_data = {
-#                     "patrec": patrec_id,
-#                     "followv_date": latest_record.get("dateOfFollowUp") or None,
-#                     "followv_status": "pending",
-#                     "followv_description": "Family Planning Follow up",
-#                 }
-#                 follow_up_serializer = FollowUpVisitSerializer(data=follow_up_data)
-#                 print("DEBUG: Validating FollowUpVisitSerializer...") # Debugging line
-#                 follow_up_serializer.is_valid(raise_exception=True)
-#                 follow_up_instance = follow_up_serializer.save()
-#                 followv_id = follow_up_instance.followv_id
-#                 logger.info(f"Created FollowUpVisit with ID: {followv_id}")
-#                 print(f"DEBUG: FollowUpVisit created with ID: {followv_id}") # Debugging line
-
-#                 # Deduct stock and log transaction if quantity > 0 and method is a commodity
-#                 if method_accepted and method_quantity > 0:
-#                     try:
-#                         print(f"DEBUG: Attempting stock deduction for {method_accepted} (qty: {method_quantity})...") # Debugging line
-#                         commodity = CommodityList.objects.get(com_name=method_accepted)
-
-#                         print(f"DEBUG: Looking for inventory for commodity {commodity.com_name} with at least {method_quantity} units")
-#                         all_items = CommodityInventory.objects.filter(com_id=commodity)
-#                         print(f"DEBUG: Found {all_items.count()} inventory items for commodity.")
-
-#                         for item in all_items:
-#                             print(f"Item: qty={item.cinv_qty_avail}, archived={item.inv_id.is_Archived}, expiry={item.inv_id.expiry_date}")
-
-#                         commodity_inventory_item = CommodityInventory.objects.filter(
-#                             com_id=commodity,
-#                             cinv_qty_avail__gte=method_quantity,
-#                             inv_id__is_Archived=False
-#                         ).order_by('inv_id__expiry_date').first()
-
-#                         if not commodity_inventory_item:
-#                             raise ValueError(f"Insufficient stock ({method_quantity}) for commodity '{method_accepted}' or no suitable inventory item found.")
-
-#                         # Deduct the stock
-#                         commodity_inventory_item.cinv_qty_avail -= method_quantity
-#                         commodity_inventory_item.save()
-
-#                         # --- START OF NEW LOGIC TO FIX THE comt_qty ---
-#                         # Get the unit from the inventory item
-#                         original_unit = commodity_inventory_item.cinv_qty_unit
-#                         transaction_unit = original_unit
-
-#                         # Check if the unit is 'boxes' and change it to 'pc/s'
-#                         if original_unit == "boxes":
-#                             transaction_unit = "pc/s"
-
-#                         # Construct the final quantity string to be saved in the transaction
-#                         final_comt_qty = f"{method_quantity} {transaction_unit}"
-#                         # --- END OF NEW LOGIC ---
-
-#                         CommodityTransaction.objects.create(
-#                             cinv_id=commodity_inventory_item,
-#                             comt_qty=final_comt_qty, # Use the new formatted string here
-#                             comt_action="Deducted for FP Service",
-#                             staff = staff_id_from_request or None
-#                         )
-#                         logger.info(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
-#                         print(f"DEBUG: Stock deducted successfully for {method_accepted}. Transaction quantity logged as: {final_comt_qty}") # Debugging line
-
-#                     except CommodityList.DoesNotExist:
-#                         # ... (your existing exception handling) ...
-#                         logger.warning(f"Commodity '{method_accepted}' not found in CommodityList. Stock not deducted.")
-#                         print(f"DEBUG: Commodity '{method_accepted}' not found for stock deduction.") # Debugging line
-#                         raise # Re-raise to trigger rollback if commodity not found
-#                     except ValueError as ve:
-#                         logger.error(f"Stock deduction error for {method_accepted}: {ve}", exc_info=True)
-#                         raise
-#                     except Exception as e:
-#                         logger.error(f"Unexpected error during stock deduction for {method_accepted}: {e}", exc_info=True)
-#                         raise
-
-#                 # Create FP Assessment
-#                 print("DEBUG: Preparing FP Assessment data...") # Debugging line
-#                 assessment_data = {
-#                     "quantity": method_quantity,
-#                     "as_provider_signature": latest_record.get("serviceProviderSignature") or "",
-#                     "as_provider_name": latest_record.get("nameOfServiceProvider") or "",
-#                     "as_findings": latest_record.get("medicalFindings") or "None",
-#                     "followv": followv_id,
-#                     "fprecord": fprecord_id,
-#                     "fpt": fpt_id,
-#                     "bm": bm_id,
-                   
-#                 }
-#                 assessment_serializer = FPAssessmentSerializer(data=assessment_data)
-#                 print("DEBUG: Validating FPAssessmentSerializer...") # Debugging line
-#                 assessment_serializer.is_valid(raise_exception=True)
-#                 assessment_serializer.save()
-#                 logger.info("Created FP_Assessment_Record.")
-#                 print("DEBUG: FP_Assessment_Record created.") # Debugging line
-#             else:
-#                 logger.info("No service provision records found, skipping assessment and stock deduction.")
-#                 print("DEBUG: Skipping Assessment and Stock Deduction.") # Debugging line
-
-#             logger.info("Full FP form submission completed successfully.")
-#             print("--- Full FP Form Submission Completed Successfully! ---") # Debugging line
-#             return Response(
-#                 {"message": "Family Planning record created successfully!", "fprecord": fprecord_id},
-#                 status=status.HTTP_201_CREATED
-#             )
-
-#     except Exception as e:
-#         logger.error(f"Full FP form submission failed: {e}", exc_info=True)
-#         print(f"ERROR: Full FP form submission failed. Details: {str(e)}") # Debugging line
-#         return Response(
-#             {"detail": f"Failed to submit Family Planning record: {str(e)}"},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-
 # FP Record CRUD
 class FP_RecordListCreateView(generics.ListCreateAPIView):
     serializer_class = FPRecordSerializer
     queryset = FP_Record.objects.all()
 
-
-# class FP_RecordDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = FPRecordSerializer
-#     queryset = FP_Record.objects.all()
-#     lookup_field = "fprecord_id"
-
-
-# View for creating PatientRecord instances (if applicable, possibly shared with other apps)
 class PatientRecordCreateView(generics.CreateAPIView):
     serializer_class = PatientRecordSerializer
     queryset = PatientRecord.objects.all()
-
 
 # FP Type CRUD
 class FP_TypeListCreateView(generics.ListCreateAPIView):
@@ -3406,3 +2779,61 @@ class ObstetricalHistoryByPatientView(generics.RetrieveAPIView):
                 {"detail": f"Internal server error: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+@api_view(['GET'])
+def get_all_fp_records_for_patient(request, patient_id):
+    """
+    Fetches all FP records for a given patient, including
+    details for service provision and assessment records.
+    """
+    try:
+        # Get all FP records for the patient, ordered from newest to oldest
+        fp_records = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at')
+
+        if not fp_records.exists():
+            return Response([], status=status.HTTP_200_OK)
+
+        all_records_data = []
+
+        for record in fp_records:
+            record_data = {
+                'fprecord_id': record.fprecord_id,
+                'created_at': record.created_at,
+                'client_id': record.client_id,
+                'patrec_id': record.patrec_id,
+                'fp_type': {},
+                'service_provision': {},
+                'assessment_records': {},
+            }
+            
+            # Fetch and serialize FP_type data
+            try:
+                fp_type = FP_type.objects.get(fprecord_id=record.fprecord_id)
+                record_data['fp_type'] = FPTypeSerializer(fp_type).data
+            except FP_type.DoesNotExist:
+                record_data['fp_type'] = {}
+
+            # Fetch and serialize FP_Service_Provision data
+            try:
+                service_provision = FP_Service_Provision.objects.get(fprecord_id=record.fprecord_id)
+                record_data['service_provision'] = FPServiceProvisionSerializer(service_provision).data
+            except FP_Service_Provision.DoesNotExist:
+                record_data['service_provision'] = {}
+            
+            # Fetch and serialize FP_Assessment_Record data
+            try:
+                assessment_record = FP_Assessment_Record.objects.get(fprecord_id=record.fprecord_id)
+                record_data['assessment_records'] = FPAssessmentSerializer(assessment_record).data
+            except FP_Assessment_Record.DoesNotExist:
+                record_data['assessment_records'] = {}
+
+            all_records_data.append(record_data)
+
+        return Response(all_records_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {"detail": f"Error fetching patient's FP records: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

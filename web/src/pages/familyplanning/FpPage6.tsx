@@ -13,7 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import SignatureCanvas from "react-signature-canvas"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { page6Schema,ServiceProvisionRecordSchema, type FormData, type ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
+import { Checkbox } from "@/components/ui/checkbox" // Assuming you have a Checkbox component
+import { page6Schema, ServiceProvisionRecordSchema, type FormData, type ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
 import { api2 } from "@/api/api" // Import your API instance
 import { toast } from "sonner"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
@@ -24,6 +25,11 @@ const methods = [
   "COC", "POP", "Injectable", "Implant", "Condom",
   "BOM/CMM", "BBT", "STM", "DMPA", "SDM", "Pills", "LAM", "IUD-Interval",
   "Lactating Amenorrhea", "IUD-Post Partum", "Bilateral Tubal Ligation", "Vasectomy",
+];
+
+// Initial list of common medical findings (fallback if localStorage is empty)
+const initialCommonFindings: string[] = [
+  "In for FP method","No complaint","In fair looking","Pale looking","Vital signs taken","Remind for next visit","No vitamin taken"
 ];
 
 const mapMethodFromPage1ToPage6 = (methodFromPage1: string, otherMethod?: string): string => {
@@ -50,8 +56,6 @@ const mapMethodFromPage1ToPage6 = (methodFromPage1: string, otherMethod?: string
   if (methodFromPage1 === "Others" && otherMethod) {
     return otherMethod;
   }
-
-  // Use the direct value if no specific mapping is found, assuming it's a commodity name
   return methodMapping[methodFromPage1.toLowerCase()] || methodFromPage1;
 };
 
@@ -92,10 +96,12 @@ export default function FamilyPlanningForm6({
 }: Props) {
   const isReadOnly = mode === "view"
   const [records, setRecords] = useState(formData.serviceProvisionRecords || [])
-  const [availableStock, setAvailableStock] = useState<number | null>(null); // New state for available stock
-  const [fetchingStock, setFetchingStock] = useState(false); // New state for loading indicator
+  const [availableStock, setAvailableStock] = useState<number | null>(null);
+  const [fetchingStock, setFetchingStock] = useState(false);
+  const [commonFindings, setCommonFindings] = useState<string[]>(initialCommonFindings);
+  const [selectedFindings, setSelectedFindings] = useState<string[]>([]);
+  // const [newFinding, setNewFinding] = useState("");
 
-  // Get method from Page 1 and auto-populate
   const getMethodFromPage1 = (): string => {
     if (formData?.methodCurrentlyUsed) {
       return mapMethodFromPage1ToPage6(formData.methodCurrentlyUsed, formData.otherMethod);
@@ -112,8 +118,8 @@ export default function FamilyPlanningForm6({
     serviceProviderSignature: "",
     medicalFindings: "",
     weight: formData?.weight || 0,
-    bp_systolic: parseBloodPressure(formData?.bloodPressure).systolic, // Parse systolic
-    bp_diastolic: parseBloodPressure(formData?.bloodPressure).diastolic, // Parse diastolic
+    bp_systolic: parseBloodPressure(formData?.bloodPressure).systolic,
+    bp_diastolic: parseBloodPressure(formData?.bloodPressure).diastolic,
   })
 
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -132,6 +138,19 @@ export default function FamilyPlanningForm6({
   })
   const pregnancyCheckValues = form.watch("pregnancyCheck");
 
+  // Load common findings from localStorage on mount
+  useEffect(() => {
+    const storedFindings = localStorage.getItem('commonMedicalFindings');
+    if (storedFindings) {
+      setCommonFindings(JSON.parse(storedFindings));
+    }
+  }, []);
+
+  // Save common findings to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('commonMedicalFindings', JSON.stringify(commonFindings));
+  }, [commonFindings]);
+
   useEffect(() => {
     updateFormData({ pregnancyCheck: pregnancyCheckValues });
   }, [pregnancyCheckValues, updateFormData]);
@@ -144,35 +163,30 @@ export default function FamilyPlanningForm6({
         methodAccepted: methodFromPage1,
       }))
     }
-  }, [formData?.methodCurrentlyUsed, formData?.otherMethod]) // Added otherMethod to dependencies
+  }, [formData?.methodCurrentlyUsed, formData?.otherMethod])
 
-  // New useEffect to fetch commodity stock
   useEffect(() => {
     const fetchCommodityStock = async () => {
       const selectedMethod = record.methodAccepted;
-
-      // Only fetch if a method is selected and it's not "Others" (or if "Others" is specified in otherMethod)
       if (selectedMethod && selectedMethod !== "Others") {
         setFetchingStock(true);
         try {
-          // Encode the commodity name to handle spaces or special characters in the URL
           const encodedCommodityName = encodeURIComponent(selectedMethod);
           const response = await api2.get(`familyplanning/commodity-stock/${encodedCommodityName}/`);
           setAvailableStock(response.data.available_stock);
         } catch (error) {
           console.error("Error fetching commodity stock:", error);
-          setAvailableStock(null); // Reset stock if fetching fails
-          toast.error("Failed to fetch commodity stock."); // You might want to show a toast
+          setAvailableStock(null);
+          toast.error("Failed to fetch commodity stock.");
         } finally {
           setFetchingStock(false);
         }
       } else {
-        setAvailableStock(null); // Clear stock if no method or "Others" is selected
+        setAvailableStock(null);
       }
     };
-
     fetchCommodityStock();
-  }, [record.methodAccepted]); // Re-fetch when the selected method changes
+  }, [record.methodAccepted]);
 
   useEffect(() => {
     updateFormData({ serviceProvisionRecords: records })
@@ -184,43 +198,66 @@ export default function FamilyPlanningForm6({
     setValidationError(null)
   }
 
- const addRecord = () => {
-  try {
-    const validatedData = ServiceProvisionRecordSchema.parse(record);
-    
-    if (availableStock !== null && Number(record.methodQuantity) > availableStock) {
-      setValidationError(`Quantity cannot exceed available stock: ${availableStock}`);
-      return;
-    }
+  // Update medicalFindings when selectedFindings change
+  useEffect(() => {
+    const concatenated = selectedFindings.map(f => `${f}.`).join(' ');
+    setRecord((prev) => ({ ...prev, medicalFindings: concatenated }));
+  }, [selectedFindings]);
 
-    setRecords((prev) => [...prev, validatedData]);
-    
-    setRecord({
-      dateOfVisit: new Date().toISOString().split("T")[0],
-      methodAccepted: getMethodFromPage1(),
-      nameOfServiceProvider: "",
-      dateOfFollowUp: "",
-      methodQuantity: "",
-      serviceProviderSignature: "",
-      medicalFindings: "",
-      weight: 0,
-      bp_systolic: 0,
-      bp_diastolic: 0,
-    });
-    setValidationError(null);
-    
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      setValidationError(`${firstError.path.join('.')}: ${firstError.message}`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      setValidationError("An unexpected error occurred");
-      console.error(error);
-    }
-  }
-};
+  const toggleFinding = (finding: string) => {
+    setSelectedFindings((prev) =>
+      prev.includes(finding)
+        ? prev.filter((f) => f !== finding)
+        : [...prev, finding]
+    );
+  };
 
+  // const addNewFinding = () => {
+  //   if (newFinding && !commonFindings.includes(newFinding)) {
+  //     setCommonFindings((prev) => [...prev, newFinding]);
+  //     setNewFinding("");
+  //     // Optionally add to selected if desired
+  //     // toggleFinding(newFinding);
+  //   }
+  // };
+
+  const addRecord = () => {
+    try {
+      const validatedData = ServiceProvisionRecordSchema.parse(record);
+      
+      if (availableStock !== null && Number(record.methodQuantity) > availableStock) {
+        setValidationError(`Quantity cannot exceed available stock: ${availableStock}`);
+        return;
+      }
+
+      setRecords((prev) => [...prev, validatedData]);
+      
+      setRecord({
+        dateOfVisit: new Date().toISOString().split("T")[0],
+        methodAccepted: getMethodFromPage1(),
+        nameOfServiceProvider: "",
+        dateOfFollowUp: "",
+        methodQuantity: "",
+        serviceProviderSignature: "",
+        medicalFindings: "",
+        weight: 0,
+        bp_systolic: 0,
+        bp_diastolic: 0,
+      });
+      setSelectedFindings([]); // Reset selected findings after adding record
+      setValidationError(null);
+      
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        setValidationError(`${firstError.path.join('.')}: ${firstError.message}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setValidationError("An unexpected error occurred");
+        console.error(error);
+      }
+    }
+  };
 
   const removeRecord = (index: number) => {
     setRecords((prev) => prev.filter((_, i) => i !== index))
@@ -235,11 +272,10 @@ export default function FamilyPlanningForm6({
     const complete = record.methodAccepted && record.nameOfServiceProvider
     const finalRecords = complete ? [...records, record] : records
 
-    const latestFollowUpDate = finalRecords.length > 0
-      ? finalRecords[finalRecords.length - 1].dateOfFollowUp
-      : "";
+    // const latestFollowUpDate = finalRecords.length > 0
+    //   ? finalRecords[finalRecords.length - 1].dateOfFollowUp
+    //   : "";
 
-    // Optional: Add validation here for the final submission
     if (availableStock !== null && Number(record.methodQuantity) > availableStock) {
       setValidationError(`Quantity cannot exceed available stock: ${availableStock}`);
       return;
@@ -248,16 +284,14 @@ export default function FamilyPlanningForm6({
     updateFormData({
       serviceProvisionRecords: finalRecords,
       pregnancyCheck: formData.pregnancyCheck,
-      latestFollowUpDate: latestFollowUpDate
+      // latestFollowUpDate: latestFollowUpDate 
     });
     onSubmitFinal()
-    // navigate("/FamPlanning_table")
   })
 
   return (
     <Card>
       <CardHeader>
-        {/* <h5 className="text-lg text-right font-semibold mb-7">Page 6</h5> */}
         <CardTitle>Service Provision Record</CardTitle>
       </CardHeader>
 
@@ -266,7 +300,6 @@ export default function FamilyPlanningForm6({
           <form>
             {validationError && <p className="text-red-600 mb-4">{validationError}</p>}
 
-            {/* Display info about auto-populated method */}
             {formData?.methodCurrentlyUsed && (
               <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
                 <strong>Note:</strong> Method automatically selected based on your choice from Page 1:{" "}
@@ -276,7 +309,6 @@ export default function FamilyPlanningForm6({
               </div>
             )}
 
-            {/* Service Record Inputs */}
             <div className="grid md:grid-cols-4 gap-4 mt-8">
               <div className="flex flex-col space-y-1 mb-2">
                 <Label htmlFor="methodAccepted" className="mt-1">
@@ -309,7 +341,7 @@ export default function FamilyPlanningForm6({
                     onChange={(e) => handleChange("methodQuantity", e.target.value)}
                     className="rounded-r-none"
                     placeholder={fetchingStock ? "Loading stock..." : (availableStock !== null ? `Available: ${availableStock}` : "Enter quantity")}
-                    disabled={isReadOnly || fetchingStock || availableStock === 0} // Added availableStock === 0 condition
+                    disabled={isReadOnly || fetchingStock || availableStock === 0}
                   />
                 </div>
               </div>
@@ -347,6 +379,43 @@ export default function FamilyPlanningForm6({
                   onChange={(e) => handleChange("medicalFindings", e.target.value)}
                   disabled={isReadOnly}
                 />
+                {!isReadOnly && (
+                  <div className="mt-4">
+                    {/* <Label>Common Findings</Label> */}
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {commonFindings.map((finding) => (
+                        <div key={finding} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={finding}
+                            checked={selectedFindings.includes(finding)}
+                            onCheckedChange={() => toggleFinding(finding)}
+                          />
+                          <label
+                            htmlFor={finding}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {finding}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      {/* <Input
+                        value={newFinding}
+                        onChange={(e) => setNewFinding(e.target.value)}
+                        placeholder="Add new finding"
+                        disabled={isReadOnly}
+                      /> */}
+                      {/* <Button
+                        type="button"
+                        onClick={addNewFinding}
+                        disabled={isReadOnly || !newFinding}
+                      >
+                        Add
+                      </Button> */}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="md:col-span-2">
@@ -377,7 +446,6 @@ export default function FamilyPlanningForm6({
               </Button>
             </div>
 
-            {/* Table */}
             <Table className="mt-6">
               <TableHeader>
                 <TableRow>
@@ -422,7 +490,6 @@ export default function FamilyPlanningForm6({
               </TableBody>
             </Table>
 
-            {/* Pregnancy Check */}
             <Separator className="my-8" />
             <h3 className="text-lg font-semibold mb-4">How to be Reasonably Sure a Client is Not Pregnant</h3>
             <div className="grid gap-4">
@@ -466,7 +533,6 @@ export default function FamilyPlanningForm6({
               </div>
             </div>
 
-            {/* Confirmation & Navigation */}
             <div className="flex justify-end mt-6 space-x-4">
               <Button type="button" variant="outline" onClick={onPrevious5} disabled={isReadOnly}>
                 Previous

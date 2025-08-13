@@ -36,10 +36,10 @@ const FamilyPlanningBaseSchema = z.object({
   pat_id: z.string().optional(),
   patrec_id: z.string().optional(),
   // fpt_id: z.string().optional(),
-  clientID: z.string().optional(),
+  client_id: z.string().optional(),
   philhealthNo: z.string().optional(),
   nhts_status: z.boolean().optional(),
-  pantawid_4ps: z.boolean().optional(),
+  fourps: z.boolean().optional(),
 
   lastName: z.string().nonempty("Last name is required"),
   givenName: z.string().nonempty("Given name is required"),
@@ -67,8 +67,8 @@ const FamilyPlanningBaseSchema = z.object({
   }).optional(),
 
   numOfLivingChildren: z.coerce.number().min(0).optional(),
-  planToHaveMoreChildren: z.boolean(),
-  averageMonthlyIncome: z.string().nonempty("Average monthly income is required"),
+  plan_more_children: z.boolean(),
+  avg_monthly_income: z.string().nonempty("Average monthly income is required"),
 
   typeOfClient: z.string().nonempty("Type of client is required"),
   subTypeOfClient: z.string().optional(), 
@@ -129,7 +129,7 @@ const FamilyPlanningBaseSchema = z.object({
     unpleasantRelationship: z.boolean(),
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
-    referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]),
+    referredTo: z.string().optional(),
     otherReferral: z.string().optional()
   }),
 
@@ -190,10 +190,10 @@ const FamilyPlanningBaseSchema = z.object({
 
 export const page1Schema = FamilyPlanningBaseSchema.pick({
   pat_id: true,
-  clientID: true,
+  client_id: true,
   philhealthNo: true,
   nhts_status: true,
-  pantawid_4ps: true,
+  fourps: true,
   lastName: true,
   givenName: true,
   middleInitial: true,
@@ -204,8 +204,8 @@ export const page1Schema = FamilyPlanningBaseSchema.pick({
   address: true,
   // spouse: false,
   numOfLivingChildren: true,
-  planToHaveMoreChildren: true,
-  averageMonthlyIncome: true,
+  plan_more_children: true,
+  avg_monthly_income: true,
   typeOfClient: true,
   subTypeOfClient: true,
   reasonForFP: true,

@@ -9,14 +9,6 @@ import MultiRecordComparisonPage from "@/pages/familyplanning/ComparisonPage"
 import FamilyPlanningView2 from "@/pages/familyplanning/ViewPage2"
 
 export const famplanning_route = [
-  // {
-  //   path: "/FamPlanning_view2",
-  //   element: <FamilyPlanningView2 />,
-  // },
-  // {
-  //   path: "/FamPlanning_view",
-  //   element: <FamilyPlanningView />,
-  // },
   {
     path: "/FamPlanning_main",
     element: <FamilyPlanningMain />,
@@ -25,19 +17,13 @@ export const famplanning_route = [
     path: "/FamPlanning_table",
     element: <FamPlanning_table />,
   },
-  // {
-  //   path: "/familyplanning/patient/:patientId",
-  //   element: <IndividualFamPlanningTable />,
-  // },
-  // Route for creating a new Family Planning Record (blank form)
   {
     path: "/familyplanning/new-record",
-    element: <FamilyPlanningPage mode="create" />,
+    element: <FamilyPlanningPage/>,
   },
-  // NEW: Route for creating a new record with patient pre-selected and pre-filled
   {
     path: "/familyplanning/new-record/:patientId",
-    element: <FamilyPlanningPage />, // Mode will be determined by query params
+    element: <FamilyPlanningPage />,
   },
   {
     path: "/familyplanning/compare-multiple",

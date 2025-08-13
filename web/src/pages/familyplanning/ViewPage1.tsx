@@ -293,26 +293,34 @@ const FamilyPlanningView: React.FC = () => {
         <div className="w-full border border-black p-3 mt-4">
           <Label className="font-bold block mb-2">MEDICAL HISTORY:</Label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-          {[
-            { label: "severe headaches / migraine", key: "severeHeadaches" },
-            { label: "history of stroke / heart attack / hypertension", key: "strokeHeartAttackHypertension" },
-            { label: "non-traumatic hematoma / frequent bruising or gum bleeding", key: "hematomaBruisingBleeding" },
-            { label: "current or history of breast cancer / breast mass", key: "breastCancerHistory" },
-            { label: "severe chest pain", key: "severeChestPain" },
-            { label: "cough for more than 14 days", key: "cough" },
-            { label: "jaundice", key: "jaundice" },
-            { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
-            { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
-            { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
-            { label: "Is this client a SMOKER?", key: "smoker" },
-            { label: "With Disability/Others?", key: "disability" },
-          ].map((item, index) => (
+          {(
+            [
+              { label: "severe headaches / migraine", key: "severeHeadaches" },
+              { label: "history of stroke / heart attack / hypertension", key: "strokeHeartAttackHypertension" },
+              { label: "non-traumatic hematoma / frequent bruising or gum bleeding", key: "hematomaBruisingBleeding" },
+              { label: "current or history of breast cancer / breast mass", key: "breastCancerHistory" },
+              { label: "severe chest pain", key: "severeChestPain" },
+              { label: "cough for more than 14 days", key: "cough" },
+              { label: "jaundice", key: "jaundice" },
+              { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
+              { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
+              { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
+              { label: "Is this client a SMOKER?", key: "smoker" },
+              { label: "With Disability/Others?", key: "disability" },
+            ] as const
+          ).map((item, index) => (
             <div key={index} className="flex items-center justify-between">
               <Label className="text-sm">{item.label}</Label>
               {/* NEW: Wrap Yes/No checkboxes in a flex container */}
-              <div className="flex items-center gap-4"> {/* Added this div */}
-                <YesNoCheckbox label="Yes" checked={recordData.medicalHistory?.[item.key] === true} />
-                <YesNoCheckbox label="No" checked={recordData.medicalHistory?.[item.key] === false} />
+              <div className="flex items-center gap-4">
+                <YesNoCheckbox
+                  label="Yes"
+                  checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === true}
+                />
+                <YesNoCheckbox
+                  label="No"
+                  checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === false}
+                />
               </div>
             </div>
           ))}

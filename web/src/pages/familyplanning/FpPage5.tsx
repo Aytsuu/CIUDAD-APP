@@ -347,7 +347,7 @@ export default function FamilyPlanningForm5({
                     }}
                     penColor="black"
                     backgroundColor="white"
-                    disabled={isReadOnly}
+                    // disabled={isReadOnly}
                   />
                 </div>
                 <div className="flex gap-2 justify-between">
@@ -455,7 +455,7 @@ export default function FamilyPlanningForm5({
                         }}
                         penColor="black"
                         backgroundColor="white"
-                        disabled={isReadOnly}
+                        // disabled={isReadOnly}
                       />
                     </div>
                     <div className="flex gap-2 justify-between">
