@@ -12,7 +12,6 @@ import { ord_router } from "./ordinancePage-router";
 import { res_router } from "./resolutionPage-router";
 import { attendance_router } from "./attendacePage-router";
 import { mom_router } from "./MinutesOfMeetingPage-router";
-import { template_router } from './template-router';
 import { council_calendar_router } from "./calendarPage-route";
 import { patientQueue } from "./patientsQueue";
 import { healthinventory } from "./inventory";
@@ -30,7 +29,7 @@ import { medicalConsultation } from "./med-consultation";
 import { doctorRouting } from "./doctor-router";
 import { familyProfilingRoute } from "./family-profiling-route";
 import { patientsRecordRouter } from "./patients-record-router";
-import { health_administration_router } from "./administration-health-router";
+// import { health_administration_router } from "./administration-health-router";
 import { reports_router } from "./health-reports-router";
 import { medicineRequest } from "./medicine-request";
 import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
@@ -75,7 +74,7 @@ export const main_router: RouteObject[] = [
       ...res_router,
       ...attendance_router,
       ...mom_router,
-      ...template_router,
+      // ...template_router,
       ...council_calendar_router,
       ...donation_router,
       ...treasurer_router.map((route) => ({
@@ -102,7 +101,7 @@ export const main_router: RouteObject[] = [
       ...summon_router,
       ...familyProfilingRoute,
       ...patientsRecordRouter,
-      ...health_administration_router,
+
       ...medicineRequest,
       ...forwardedhealthrecord_router,
       ...firstaid_router,

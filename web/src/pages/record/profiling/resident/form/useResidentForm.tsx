@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useNavigate } from "react-router";
-import { Origin } from "../../ProfilingEnums";
+import { Origin } from "../../profilingEnums";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import isEqual from "lodash/isEqual";
 

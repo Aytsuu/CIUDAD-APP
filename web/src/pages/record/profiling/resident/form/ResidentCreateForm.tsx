@@ -193,18 +193,38 @@ export default function ResidentCreateForm({
         throw new Error("Staff information not available");
       }
 
+      // Log the payload being sent
+      console.log("ResidentCreateForm submit payload:", {
+        personalInfo,
+        staffId,
+        addresses
+      });
+
       const resident = await addResidentAndPersonal({
         personalInfo: personalInfo,
         staffId: staffId
       });
 
+      console.log("Created resident:", resident);
+
       const new_addresses = await addAddress(addresses)
 
+      console.log("Created addresses:", new_addresses);
+
+      const personalAddressData = new_addresses?.map((address: any) => ({
+        add: address.add_id,
+        per: resident.per.per_id,
+      }));
+
+      console.log("Personal Address payload:", {
+        data: personalAddressData,
+        staff_id: user?.staff?.staff_id,
+        history_id: resident.per.history
+      });
+
       await addPersonalAddress({
-        data: new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: resident.per.per_id,
-        })),
+        data: personalAddressData,
+        staff_id: user?.staff?.staff_id,
         history_id: resident.per.history
       })
       

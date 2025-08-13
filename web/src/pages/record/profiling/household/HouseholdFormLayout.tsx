@@ -73,13 +73,25 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
   React.useEffect(() => {
     const head = form.watch("householdHead")
+    console.log('Selected household head:', head)
+    console.log('Residents list:', residentsList)
+    console.log('Per address list:', perAddressList)
+    
     if (head && residentsList) {
       const resident = residentsList.find((res: any) => res.rp_id == head.split(" ")[0])
+      console.log('Found resident:', resident)
+      
       if (resident) {
         const filteredAddresses = perAddressList.filter((per_add: any) => per_add?.per === resident.personal_info.per_id)
         form.resetField('address')
+        console.log('Filtered addresses:', filteredAddresses)
+        console.log('Looking for per_id:', resident.personal_info.per_id)
+        
         setAddresses(filteredAddresses)
         setShowAddressField(filteredAddresses.length > 0)
+        
+        // Debug the formatted addresses
+        console.log('Formatted addresses:', formatAddresses(filteredAddresses))
       }
     } else {
       setAddresses([])
@@ -105,7 +117,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
       const householdInfo = form.getValues()
 
-      // Add to main household database
+      // Add to main household database and health household database
       await addHousehold({
         householdInfo: householdInfo,
         staffId: user?.staff?.staff_id,
@@ -135,7 +147,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   // ==================== RENDER HELPERS ======================
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-2xl shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/50">
+      <Card className="w-full max-w-2xl shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <HousePlus className="w-8 h-8 text-blue-600" />

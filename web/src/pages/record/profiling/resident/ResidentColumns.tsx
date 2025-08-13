@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { ArrowUpDown, Building, CircleUserRound, House, UsersRound } from "lucide-react";
-import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../ProfilingTypes";
+import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
@@ -256,6 +256,26 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
         <ArrowUpDown size={14} />
       </div>
     ),
+  },
+  {
+    accessorKey: "registered_by",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "rp_date_registered",

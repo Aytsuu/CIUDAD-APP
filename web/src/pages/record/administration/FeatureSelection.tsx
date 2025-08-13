@@ -85,7 +85,7 @@ export default function FeatureSelection({
           // Create the optimistic update
           const newAssignment: Assigned = {
             assi_id: tempId,
-            assi_date: formatDate(new Date()) as string,
+            assi_date: formatDate(new Date()) ?? "",
             feat: feature,
             pos: selectedPosition,
             permissions: [

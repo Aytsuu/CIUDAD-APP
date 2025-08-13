@@ -11,13 +11,12 @@ import { DependentRecord } from "../../profilingTypes";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 
-export default function ParentsForm({ residents, form, dependentsList, selectedParents, onSelect, prefix, title }: {
+export default function ParentsForm({ residents, form, dependentsList, onSelect, prefix, title }: {
   residents: any;
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  selectedParents: string[];
   dependentsList: DependentRecord[];
   onSelect: React.Dispatch<React.SetStateAction<string>>
-  prefix: 'motherInfo' | 'fatherInfo' | 'guardInfo';
+  prefix: 'motherInfo' | 'fatherInfo' | 'guardInfo' | 'respondentInfo';
   title: string;
 }) {
 
@@ -25,10 +24,10 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
   const filteredResidents = React.useMemo(() => {
     return residents.formatted.filter((resident: any) => {
       const residentId = resident.id.split(" ")[0]
-      return !selectedParents.includes(residentId) && 
-          !dependentsList.some((dependent) => dependent.id == residentId)
+      // Only exclude dependents, allow same person to be selected for multiple parent roles
+      return !dependentsList.some((dependent) => dependent.id == residentId)
     }
-  )}, [residents.formatted, selectedParents, dependentsList])
+  )}, [residents.formatted, dependentsList])
 
   React.useEffect(() => {
 
@@ -108,7 +107,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
             }
           />
 
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-4 gap-4">
             <FormInput control={form.control} name={`${prefix}.lastName`} label="Last Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly />

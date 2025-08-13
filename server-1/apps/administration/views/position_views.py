@@ -5,6 +5,7 @@ from django.db import transaction
 from ..models import Position, Staff
 from ..serializers.position_serializers import *
 
+
 class PositionView(generics.ListCreateAPIView):
     serializer_class = PositionBaseSerializer
     queryset = Position.objects.all()
@@ -62,4 +63,3 @@ class PositionGroupsListView(APIView):
         if queryset:
             return Response(queryset)
         return None
-        

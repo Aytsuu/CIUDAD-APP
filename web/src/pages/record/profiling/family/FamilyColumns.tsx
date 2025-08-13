@@ -19,6 +19,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
+import { useUpdateFamilyRoleHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -110,6 +111,26 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     header: "Date Registered",
   },
   {
+    accessorKey: "registered_by",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
@@ -159,6 +180,7 @@ export const familyViewColumns = (
       const data = row.getValue("data") as any;
       const { showLoading, hideLoading } = useLoading();
       const { mutateAsync: updateFamilyRole } = useUpdateFamilyRole();
+      const { mutateAsync: updateFamilyRoleHealth } = useUpdateFamilyRoleHealth();
       const [role, setRole] = React.useState<string | null>(data.fc_role);
 
       const handleViewClick = async () => {
@@ -182,19 +204,19 @@ export const familyViewColumns = (
         }
       }
 
-      const handleRoleChange = (value: string) => {
-        if(value !== role?.toLowerCase()) {
-          setRole(capitalize(value));
-          updateFamilyRole({
-            familyId: family.fam_id,
-            residentId: data.rp_id,
-            fc_role: capitalize(value)
-          }, {
-            onError: (status) => {
-              setRole(data.fc_role);
-              throw status;
-            }
-          })
+      const handleRoleChange = async (value: string) => {
+        if (value !== role?.toLowerCase()) {
+          const newRole = capitalize(value);
+          setRole(newRole);
+          try {
+            await Promise.all([
+              updateFamilyRole({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole }),
+              updateFamilyRoleHealth({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole }),
+            ]);
+          } catch (error) {
+            setRole(data.fc_role);
+            throw error;
+          }
         }
       }
 

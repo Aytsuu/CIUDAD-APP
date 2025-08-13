@@ -1,11 +1,10 @@
 export const calculateAge = (dateOfBirth: string): string => {
+  if (!dateOfBirth || isNaN(new Date(dateOfBirth).getTime())) {
+    return "-"; // or 'N/A' if you prefer
+  }
   const birthDate = new Date(dateOfBirth);
   const today = new Date();
   
-  if (isNaN(birthDate.getTime())) {
-    throw new Error('Invalid date of birth');
-  }
-
   let years = today.getFullYear() - birthDate.getFullYear();
   let months = today.getMonth() - birthDate.getMonth();
   

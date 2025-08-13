@@ -36,9 +36,8 @@ class HouseholdTableView(generics.ListAPIView):
             'rp__per__per_mname',
             'add__sitio__sitio_name',
             'add__add_street',
-            'staff__rp__per__per_lname',
-            'staff__rp__per__per_fname',
-            'staff__rp__per__per_mname',
+            'staff__staff_id',
+            'staff__staff_type',
         )
 
         search_query = self.request.query_params.get('search', '').strip()

@@ -117,9 +117,16 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
       const [isEditModalOpen, setIsEditModalOpen] =
         React.useState<boolean>(false);
       const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-      const { mutateAsync: updateStaff } = useUpdateStaff();
-      const { mutateAsync: deleteStaff } = useDeleteStaff();
+      
+      // Main database hooks (APIs handle dual database operations)
+      const { mutateAsync: updateStaff, isPending: isUpdatingMain } = useUpdateStaff();
+      const { mutateAsync: deleteStaff, isPending: isDeletingMain } = useDeleteStaff();
+      
       const { data: positions, isLoading: isLoadingPositions } = usePositions();
+
+      // Combined loading states
+      const isUpdatingAny = isUpdatingMain;
+      const isDeletingAny = isDeletingMain;
 
       const defaultValues = generateDefaultValues(positionAssignmentSchema);
       const form = useForm<z.infer<typeof positionAssignmentSchema>>({
@@ -215,10 +222,13 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
             return;
           }
 
+          const updateData = {
+            pos: values.assignPosition,
+          };
+
+          // Update staff position (API handles dual database update)
           await updateStaff({
-            data: {
-              pos: values.assignPosition,
-            },
+            data: updateData,
             staffId: row.original.staff_id,
           });
 
@@ -242,19 +252,27 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         }
       };
 
-      const handleDelete = () => {
-        deleteStaff(row.original.staff_id, {
-          onSuccess: () => {
-            toast("Staff has been removed", {
-              icon: (
-                <CircleCheck
-                  size={24}
-                  className="fill-green-500 stroke-white"
-                />
-              ),
-            });
-          },
-        });
+      const handleDelete = async () => {
+        try {
+          // Delete staff (API handles dual database deletion)
+          await deleteStaff(row.original.staff_id);
+
+          toast("Staff has been removed successfully", {
+            icon: (
+              <CircleCheck
+                size={24}
+                className="fill-green-500 stroke-white"
+              />
+            ),
+          });
+        } catch (error) {
+          console.error("Failed to delete staff:", error);
+          toast("Failed to remove staff. Please try again.", {
+            icon: (
+              <AlertCircle size={24} className="fill-red-500 stroke-white" />
+            ),
+          });
+        }
       };
 
       const getCurrentPositionName = () => {
@@ -274,7 +292,11 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
           <DropdownLayout
             trigger={
               <Button variant={"outline"} className="border">
-                <Ellipsis />
+                {isDeletingAny ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Ellipsis />
+                )}
               </Button>
             }
             options={[
@@ -289,14 +311,14 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                 name: "Change Role",
                 icon: <Pen className="w-4 h-4" />,
                 variant: "default",
-                disabled: row.original.position.toLowerCase() === "admin"
+                disabled: row.original.position.toLowerCase() === "admin" || isUpdatingAny || isDeletingAny
               },
               {
                 id: "delete",
                 name: "Remove Staff",
                 icon: <Trash className="w-4 h-4" />,
                 variant: "delete",
-                disabled: row.original.position.toLowerCase() === "admin"
+                disabled: row.original.position.toLowerCase() === "admin" || isUpdatingAny || isDeletingAny
               }
             ]}
             onSelect={handleAction}
@@ -354,6 +376,13 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                         Loading positions...
                       </div>
                     )}
+
+                    {isUpdatingAny && (
+                      <div className="flex items-center gap-2 text-sm text-blue-600">
+                        <Loader2 size={16} className="animate-spin" />
+                        Updating staff position in both databases...
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end gap-3 pt-4 border-t">
@@ -361,12 +390,12 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                       type="button"
                       variant="outline"
                       onClick={handleCloseModal}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isUpdatingAny}
                     >
                       Cancel
                     </Button>
 
-                    {!isSubmitting ? (
+                    {!isSubmitting && !isUpdatingAny ? (
                       <Button
                         type="submit"
                         disabled={
@@ -378,7 +407,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                       </Button>
                     ) : (
                       <LoadButton>
-                        Updating...
+                        {isUpdatingAny ? "Updating..." : "Processing..."}
                       </LoadButton>
                     )}
                   </div>

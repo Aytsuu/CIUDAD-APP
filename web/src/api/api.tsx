@@ -2,22 +2,31 @@ import axios from "axios";
 import supabase from "@/supabase/supabase";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
+  baseURL: "http://localhost:8000",
+ 
+});
+export const api2 = axios.create({
+  baseURL: "http://localhost:8001",
+  
 });
 
-export const api2 = axios.create({
-  baseURL: import.meta.env.VITE_API_URL2,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
+// export const api = axios.create({
+//   baseURL: "https://ciudad-app-server-1.onrender.com",
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
+
+// export const api2 = axios.create({
+//   baseURL: "https://ciudad-app-server-2.onrender.com",
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
 
 // // Request interceptor to add auth token
 // api.interceptors.request.use(async (config) => {

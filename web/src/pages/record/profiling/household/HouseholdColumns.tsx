@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
+import { useUpdateFamilyHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -125,6 +126,26 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     header: 'Date Registered'
   },
   {
+    accessorKey: 'registered_by',
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: 'action',
     header: 'Action',
     cell: ({ row }) => {
@@ -174,6 +195,7 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
       const navigate = useNavigate();
       const { showLoading, hideLoading } = useLoading();
       const { mutateAsync: updateFamily } = useUpdateFamily();
+      const { mutateAsync: updateFamilyHealth } = useUpdateFamilyHealth();
       const family = row.getValue('data') as any;
       const [building, setBuilding] = React.useState<string | null>(family.fam_building);
       
@@ -202,22 +224,27 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
         }
       };
 
-      const handleBuildingChange = (value: string) => {
-        if(value !== building?.toLowerCase()){
-          setBuilding(capitalize(value));
-
-          const data = {
-            fam_building: capitalize(value),
+      const handleBuildingChange = async (value: string) => {
+        if (value !== building?.toLowerCase()) {
+          const newBuilding = capitalize(value);
+          setBuilding(newBuilding);
+          const data = { fam_building: newBuilding };
+          try {
+            await Promise.all([
+              updateFamily({
+                data: data,
+                familyId: family.fam_id,
+                oldHouseholdId: ""
+              }),
+              updateFamilyHealth({
+                data: data,
+                familyId: family.fam_id,
+                oldHouseholdId: ""
+              })
+            ]);
+          } catch (error) {
+            setBuilding(family.fam_building);
           }
-          updateFamily({
-            data: data,
-            familyId: family.fam_id,
-            oldHouseholdId: ""
-          }, {
-            onError: () => {
-              setBuilding(family.fam_building);
-            }
-          })
         }
       };
 

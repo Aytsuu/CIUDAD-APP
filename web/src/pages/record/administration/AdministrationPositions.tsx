@@ -10,6 +10,8 @@ import { useNavigate } from "react-router"
 import { Action, Type } from "./AdministrationEnums"
 import { useDeletePosition } from "./queries/administrationDeleteQueries"
 import { ChevronRight, ChevronDown, Ellipsis, Trash, Loader2, Plus, Pen, Users, FolderOpen } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
+import { getPositionFilterContext } from "./utils/staffFilterUtils"
 
 export default function AdministrationPositions({
   positions,
@@ -20,27 +22,41 @@ export default function AdministrationPositions({
   selectedPosition: string
   setSelectedPosition: (value: string) => void
 }) {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const { mutateAsync: deletePosition, isPending: isDeleting } = useDeletePosition()
   const [openCategories, setOpenCategories] = React.useState<Set<string>>(new Set())
 
-  // Group positions by category
+  // Get filtering context based on logged-in user
+  const filterContext = React.useMemo(() => getPositionFilterContext(user), [user])
+
+  // Check if any deletion is in progress
+  const isDeletingAny = isDeleting
+
+  // Group positions by category with filtering logic
   const groupedPositions = React.useMemo(() => {
     const filtered =
       positions?.filter((position: any) => {
         const exclude = ["Admin"]
-        return !exclude.includes(position.pos_title)
+        if (exclude.includes(position.pos_title)) {
+          return false
+        }
+
+        // Backend already handles filtering based on staff_type
+        // Frontend just needs to exclude Admin positions
+        return true
       }) || []
 
     return filtered.reduce((acc: Record<string, any[]>, position: any) => {
-      const category = position.pos_group
+      // Use 'Other' category for positions without a group
+      const category = position.pos_group || 'Other'
       if (!acc[category]) {
         acc[category] = []
       }
       acc[category].push(position)
       return acc
     }, {})
-  }, [positions])
+  }, [positions, filterContext])
 
   // Initialize all categories as open
   React.useEffect(() => {
@@ -70,11 +86,20 @@ export default function AdministrationPositions({
     [selectedPosition],
   )
 
-  const handleDelete = React.useCallback(() => {
-    deletePosition(selectedPosition, {
-      onSuccess: () => setSelectedPosition(""),
-    })
-  }, [selectedPosition, deletePosition])
+  const handleDelete = React.useCallback(async () => {
+    if (!selectedPosition) return
+    
+    try {
+      // Delete position (API handles dual database deletion)
+      await deletePosition(selectedPosition)
+      
+      // Clear selection after successful deletion
+      setSelectedPosition("")
+    } catch (error) {
+      console.error("Error deleting position:", error)
+      // Handle error appropriately - you might want to show a toast notification
+    }
+  }, [selectedPosition, deletePosition, setSelectedPosition])
 
   const handleEdit = React.useCallback(() => {
     navigate("position", {
@@ -115,6 +140,28 @@ export default function AdministrationPositions({
 
   return (
     <div className="w-full h-full flex flex-col gap-4">
+      {/* Filter Info Banner */}
+      {!filterContext.canViewAllRecords && !filterContext.isAdmin && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-blue-600" />
+            <p className="text-sm text-blue-800">
+              Showing only {filterContext.isHealthStaff ? "Health Staff" : "Barangay Staff"} positions
+            </p>
+          </div>
+        </div>
+      )}
+      {filterContext.isAdmin && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-green-600" />
+            <p className="text-sm text-green-800">
+              Admin access: Showing all positions
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="w-full flex justify-between items-start">
         <div className="flex flex-col gap-1">
@@ -203,7 +250,7 @@ export default function AdministrationPositions({
 
                           <div className="flex items-center gap-2">
                             {position.pos_id === selectedPosition ? (
-                              !isDeleting ? (
+                              !isDeletingAny ? (
                                 <DropdownLayout
                                   trigger={
                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

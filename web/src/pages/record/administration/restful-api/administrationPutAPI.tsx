@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api, api2 } from "@/api/api";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export const updatePermission = async (
@@ -7,18 +7,14 @@ export const updatePermission = async (
   permission: boolean
 ) => {
   try {
-    console.log({
-      [option]: permission,
-    })
-    const res = await api.put(
-      `administration/permission/update/${assignmentId}/`,
-      {
-        [option]: permission,
-      }
-    );
-    return res;
+    const body = { [option]: permission };
+    const path = `administration/permission/update/${assignmentId}/`;
+    const res = await api.put(path, body);
+    await api2.put(path, body);
+    return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
@@ -27,22 +23,14 @@ export const batchPermissionUpdate = async (
   checked: boolean
 ) => {
   try {
-    console.log({
-      create: checked,
-      update: checked,
-      delete: checked
-    })
-    const res = await api.put(
-      `administration/permission/update/${assignmentId}/`,
-      {
-        create: checked,
-        update: checked,
-        delete: checked
-      }
-    );
-    return res;
+    const body = { create: checked, update: checked, delete: checked };
+    const path = `administration/permission/update/${assignmentId}/`;
+    const res = await api.put(path, body);
+    await api2.put(path, body);
+    return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
@@ -51,12 +39,13 @@ export const updatePosition = async (
   values: Record<string, string>
 ) => {
   try {
-    const res = await api.put(
-      `administration/position/update/${positionId}/`,
-      capitalizeAllFields(values)
-    );
+    const payload = capitalizeAllFields(values);
+    const path = `administration/position/update/${positionId}/`;
+    const res = await api.put(path, payload);
+    await api2.put(path, payload);
     return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };

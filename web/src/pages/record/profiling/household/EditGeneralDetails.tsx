@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { formatResidents } from "../profilingFormats";
 import { formatResidents } from "../ProfilingFormats";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
@@ -38,6 +39,7 @@ export default function EditGeneralDetails({
   const [invalidHead, setInvalidHead] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
   const { mutateAsync: updateHousehold } = useUpdateHousehold();
+  const { mutateAsync: updateHouseholdHealth } = useUpdateHouseholdHealth();
   const formattedResidents = React.useMemo(() => 
     formatResidents(residents), [residents]
   );
@@ -86,20 +88,28 @@ export default function EditGeneralDetails({
       });
       return;
     }
-    
-    updateHousehold({...values, hh_id: household.hh_id}, {
-        onSuccess: () => {
-          setIsSaving(false);
-          setIsOpenDialog(false);
-          setHousehold((prev) => ({
-            ...prev,
-            head_id: values.householdHead,
-            hh_nhts: values.nhts
-          }))
-        }
-      }
-    );
+
+    try {
+      // Double update: main and health database
+      await Promise.all([
+        updateHousehold({ ...values, hh_id: household.hh_id }),
+        updateHouseholdHealth({ ...values, hh_id: household.hh_id })
+      ]);
+      setIsSaving(false);
+      setIsOpenDialog(false);
+      setHousehold((prev) => ({
+        ...prev,
+        head_id: values.householdHead,
+        hh_nhts: values.nhts
+      }));
+    } catch (error) {
+      setIsSaving(false);
+      toast("Error updating household", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+      });
+    }
   }
+
 
   return (
     <Form {...form}>

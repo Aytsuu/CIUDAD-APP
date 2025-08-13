@@ -35,7 +35,7 @@ class StaffTableSerializer(serializers.ModelSerializer):
   class Meta:
     model = Staff
     fields = ['staff_id', 'lname', 'fname', 'mname', 'dob', 
-              'contact', 'position', 'group', 'staff_assign_date', 'fam']
+              'contact', 'position', 'group', 'staff_assign_date', 'staff_type', 'fam']
   
   def get_fam(self, obj):
     family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam').first()
