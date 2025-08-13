@@ -1,6 +1,4 @@
 import { api } from "@/api/api";
-import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabaseClient";
 
 export const postAnnouncement = async (announcement: Record<string, any>) => {
   try {
@@ -15,15 +13,7 @@ export const postAnnouncement = async (announcement: Record<string, any>) => {
 // Updated to accept bulk payload
 export const postAnnouncementRecipient = async (payload: { recipients: Record<string, any>[] }) => {
   try {
-    // ✅ Fetch the session/token at the moment of the request
-    const { data } = await supabase.auth.getSession();
-    const token = data?.session?.access_token;
-
-    const res = await api.post("announcement/create-recipient/", payload, {
-      headers: {
-        Authorization: `Bearer ${token}`, // ✅ Pass the token in header
-      },
-    });
+    const res = await api.post("announcement/create-recipient/", payload);
     return res.data;
   } catch (error) {
     console.error(error);

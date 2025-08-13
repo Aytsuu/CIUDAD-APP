@@ -11,9 +11,9 @@ class AnnouncementFileSerializer(serializers.ModelSerializer):
 # ✅ Move this up so it’s defined before being used
 class AnnouncementRecipientSerializer(serializers.ModelSerializer):
     ar_type = serializers.ChoiceField(choices=[
-        ('young', 'Young'),
+        ('adolecent', 'Adolecent'),
         ('adult', 'Adult'),
-        ('senior', 'Senior'),
+        ('senior citizen', 'Senior Citizen'),
         ('midwife', 'Midwife'),
         ('doctor', 'Doctor'),
         ('barangay health worker', 'Barangay Health Worker'),
