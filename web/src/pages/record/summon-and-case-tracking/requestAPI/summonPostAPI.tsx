@@ -28,38 +28,38 @@ export const addCaseActivity = async (caseInfo: Record<string, any>) => {
 }
 
 export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    
-    try{
+    // try{
 
-        if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-            throw new Error('File upload incomplete: missing URL or path');
-        }
+    //     if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
+    //         throw new Error('File upload incomplete: missing URL or path');
+    //     }
 
  
 
-        const formData = new FormData();
-        formData.append('file', media.file);
-        formData.append('ca_id', ca_id);
-        formData.append('csd_name', media.file.name);
-        formData.append('csd_type', media.file.type || 'application/octet-stream');
-        formData.append('csd_path', media.storagePath);
-        formData.append('csd_url', media.publicUrl);
-        formData.append('csd_upload_date', new Date().toISOString());
-        formData.append('csd_description', description);
+    //     const formData = new FormData();
+    //     formData.append('file', media.file);
+    //     formData.append('ca_id', ca_id);
+    //     formData.append('csd_name', media.file.name);
+    //     formData.append('csd_type', media.file.type || 'application/octet-stream');
+    //     formData.append('csd_path', media.storagePath);
+    //     formData.append('csd_url', media.publicUrl);
+    //     formData.append('csd_upload_date', new Date().toISOString());
+    //     formData.append('csd_description', description);
 
-        console.log(formData)
+    //     console.log(formData)
 
-        const res = await api.post('clerk/case-supp-doc/', formData)
+    //     const res = await api.post('clerk/case-supp-doc/', formData)
 
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
+    //     return res.data
+    // }catch(err){
+    //     console.error(err)
+    // }
 }
 
 export const addSummonDate = async (dates: string[]) => {
     try {
 
-        const res = await api.delete('clerk/delete-summon-date/')
+        await api.delete('clerk/delete-summon-date/')
         
         const responses = await Promise.all(
             dates.map(date => 
@@ -73,5 +73,21 @@ export const addSummonDate = async (dates: string[]) => {
     } catch (err) {
         console.error(err);
         throw err;
+    }
+}
+
+export const addSummonTimeSlots = async (timeSlots: Array<{
+    sd_id: number;
+    st_start_time: string;
+    st_end_time: string;
+}>) => {
+
+    console.log('Slots', timeSlots)
+    try {
+        const res = await api.post('clerk/summon-time-availability/', timeSlots);
+        return res.data;
+    } catch (err) {
+        console.error(err);
+        throw err; 
     }
 }

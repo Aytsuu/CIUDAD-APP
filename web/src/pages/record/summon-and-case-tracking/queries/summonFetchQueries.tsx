@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates} from "../requestAPI/summonGetAPI";
+import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, getSummonTimeSlots} from "../requestAPI/summonGetAPI";
 
 export type ServiceChargeRequest = {
     sr_id: string;
@@ -130,6 +130,22 @@ export const useGetSummonDates = () => {
     return useQuery<SummonDates[]>({
         queryKey: ['summonDates'],
         queryFn: getSummonDates,
+        staleTime: 5000
+    })
+}
+
+
+export type SummonTimeSlots = {
+    st_id?: number;
+    st_start_time: string;
+    st_end_time: string;
+    sd_id?: number;
+}
+
+export const useGetSummonTimeSlots = (sd_id: number) => {
+    return useQuery<SummonTimeSlots[]>({
+        queryKey: ['summonTimeSlots', sd_id],
+        queryFn: () => getSummonTimeSlots(sd_id),
         staleTime: 5000
     })
 }

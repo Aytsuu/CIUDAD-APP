@@ -1,11 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { addCaseActivity, addSuppDoc, addSummonDate } from "../requestAPI/summonPostAPI";
+import { addCaseActivity, addSuppDoc, addSummonDate, addSummonTimeSlots } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
 import { MediaUploadType } from "@/components/ui/media-upload";
-
 
 export const useAddCaseActivity = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
@@ -78,4 +77,48 @@ export const useAddSummonDates = (onSuccess?: () => void) => {
             );
         }
     })
+}
+
+
+// export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
+//     const queryClient = useQueryClient();
+
+//     return useMutation({
+//         mutationFn: (values: z.infer<typeof SummonTimeSchema>) => addSummonTimeSlot(Number(values.sd_id), values.start_time, values.end_time),
+//         onSuccess: () => {
+//             queryClient.invalidateQueries({ queryKey: ['summonTimeSlots'] });
+//             onSuccess?.();
+//         },
+//          onError: (err) => {
+//             console.error("Error updating dates:", err);
+//             toast.error(
+//                 "Failed to update dates. Please try again.",
+//                 { duration: 2000 }
+//             );
+//         }
+//     });
+// }
+
+export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (timeSlots: Array<{
+            sd_id: number;
+            st_start_time: string;
+            st_end_time: string;
+        }>) => addSummonTimeSlots(timeSlots),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['summonTimeSlots'] });
+            onSuccess?.();
+            toast.success("Time slots saved successfully", { duration: 2000 });
+        },
+        onError: (err) => {
+            console.error("Error saving time slots:", err);
+            toast.error(
+                "Failed to save time slots. Please try again.",
+                { duration: 2000 }
+            );
+        }
+    });
 }
