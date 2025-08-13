@@ -144,22 +144,22 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       form.reset(formValues);
 
       if (budgetEntry.files?.length) {
-        const files = budgetEntry.files.map((file) => {
-          const dummyFile = new File([], file.gbf_name, {
-            type: file.gbf_type || "image/jpeg",
-            lastModified: Date.now(),
-          });
+        // const files = budgetEntry.files.map((file) => {
+        //   const dummyFile = new File([], file.gbf_name, {
+        //     type: file.gbf_type || "image/jpeg",
+        //     lastModified: Date.now(),
+        //   });
 
-          return {
-            id: `receipt-${file.gbf_id}`,
-            type: "image" as const,
-            file: dummyFile,
-            publicUrl: file.gbf_url,
-            storagePath: file.gbf_path,
-            status: "uploaded" as const,
-            previewUrl: file.gbf_url,
-          };
-        });
+        //   return {
+        //     id: `receipt-${file.gbf_id}`,
+        //     type: "image" as const,
+        //     file: dummyFile,
+        //     publicUrl: file.gbf_url,
+        //     storagePath: file.gbf_path,
+        //     status: "uploaded" as const,
+        //     previewUrl: file.gbf_url,
+        //   };
+        // });
         // setMediaFiles(files);
         setRemovedFiles([]); // Clear removed files on initial load
       } else {

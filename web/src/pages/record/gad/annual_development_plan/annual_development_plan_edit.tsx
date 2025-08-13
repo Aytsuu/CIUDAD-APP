@@ -11,18 +11,6 @@ interface BudgetItem {
   gdb_price: string;
 }
 
-interface DevelopmentPlan {
-  dev_id: number;
-  dev_date: string;
-  dev_client: string;
-  dev_issue: string;
-  dev_project: string;
-  dev_indicator: string;
-  dev_gad_budget: string;
-  dev_res_person: string;
-  staff: string;
-}
-
 export default function AnnualDevelopmentPlanEdit() {
   const navigate = useNavigate();
   const { devId } = useParams();

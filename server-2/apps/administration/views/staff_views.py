@@ -73,6 +73,12 @@ class StaffDeleteView(generics.DestroyAPIView):
   queryset = Staff.objects.all()
   lookup_field = "staff_id"
 
+class HealthStaffListView(generics.ListAPIView):
+  serializer_class = StaffFullSerializer
+
+  def get_queryset(self):
+    return Staff.objects.filter(staff_type="Health Staff")
+
 class StaffDataByTitleView(APIView):
   def get(self, request, *args, **kwargs):
     title = request.query_params.get('pos_title', None)
