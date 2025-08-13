@@ -5,6 +5,3 @@ export const SummonTimeSchema = z.object({
   end_time: z.string().nonempty('This field is required')
 });  
 
-export const SummonTimeSchemaArray = z.object({
-  items: z.array(SummonTimeSchema)
-});
