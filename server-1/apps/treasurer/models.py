@@ -292,7 +292,7 @@ class Annual_Gross_Sales(models.Model):
     ags_minimum = models.DecimalField(max_digits=10, decimal_places=2)
     ags_maximum = models.DecimalField(max_digits=10, decimal_places=2)
     ags_rate = models.DecimalField(max_digits=10, decimal_places=2)
-    ags_date = models.DateField()
+    ags_date = models.DateTimeField(default=date.today)
     # staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
