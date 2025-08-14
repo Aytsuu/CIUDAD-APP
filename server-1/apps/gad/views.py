@@ -171,6 +171,7 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
         if 'status' in request.data:
             new_status = request.data['status']
             reason = request.data.get('reason', 'Status updated')
+            date_approved_rejected = timezone.now()
             
             # Create new log entry for status change
             ProjectProposalLog.objects.create(

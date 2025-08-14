@@ -52,3 +52,5 @@ export const ProjectProposalSchema = z.object({
   status: z.custom<ProposalStatus>().optional(),
   statusReason: z.string().optional(),
 });
+
+export type ProjectProposalFormValues = z.infer<typeof ProjectProposalSchema>;

@@ -24,6 +24,17 @@ export type SupportDoc = {
   psd_is_archive: boolean;
 };
 
+export type FileInput = {
+  name: string;
+  type: string;
+  file: string; // Base64 string
+};
+
+export type SupportDocInput = {
+  gpr_id: number;
+  files: FileInput[];
+};
+
 export type ProjectProposal = {
   gprId: number;
   projectTitle: string;
@@ -57,7 +68,8 @@ export type ProjectProposal = {
 };
 
 export type ProjectProposalInput = {
-  projectTitle: string;
+  gprId?: number;
+  gpr_title: string;
   background: string;
   objectives: string[];
   participants: { category: string; count: string }[];
@@ -76,6 +88,7 @@ export type ProjectProposalInput = {
   supportDocs?: SupportDoc[];
   status: ProposalStatus;
   statusReason: string | null;
+  gpr_page_size: "a4" | "letter" | "legal";
 };
 
 export type Staff = {
@@ -132,3 +145,95 @@ export interface ProposalLog {
     position: string;
   } | null;
 }
+
+export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
+  // Prepare header image data
+  let headerImageData = null;
+  if (proposalData.gpr_header_img) {
+    if (proposalData.gpr_header_img.startsWith('data:')) {
+      const [header, _data] = proposalData.gpr_header_img.split(';base64,');
+      const mimeType = header.split(':')[1];
+      const fileName = `header-${Date.now()}.${mimeType.split('/')[1]}`;
+      
+      headerImageData = {
+        name: fileName,
+        type: mimeType,
+        file: proposalData.gpr_header_img
+      };
+    } else {
+      headerImageData = proposalData.gpr_header_img;
+    }
+  }
+
+  const payload = {
+    gpr_title: proposalData.gpr_title,
+    gpr_background: proposalData.background,
+    gpr_objectives: proposalData.objectives,
+    gpr_participants: proposalData.participants.map(p => ({
+      category: p.category,
+      count: parseInt(p.count, 10),
+    })),
+    gpr_date: proposalData.date,
+    gpr_venue: proposalData.venue,
+    gpr_budget_items: proposalData.budgetItems.map(b => ({
+      name: b.name,
+      pax: b.pax,
+      amount: parseFloat(b.amount),
+    })),
+    gpr_monitoring: proposalData.monitoringEvaluation,
+    gpr_signatories: proposalData.signatories,
+    gpr_header_img: headerImageData,
+    staff: proposalData.staffId,
+    gpr_is_archive: proposalData.gprIsArchive || false,
+    gpr_page_size: proposalData.gpr_page_size,
+  };
+
+  // Clean payload by removing null/undefined values
+  return Object.fromEntries(
+    Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined)
+  );
+};
+
+export const prepareEditProposalPayload = (proposalData: ProjectProposalInput) => {
+  const payload: any = {
+    gpr_title: proposalData.gpr_title,
+    gpr_background: proposalData.background,
+    gpr_objectives: proposalData.objectives,
+    gpr_participants: proposalData.participants.map(p => ({
+      category: p.category,
+      count: parseInt(p.count, 10) || 0,
+    })),
+    gpr_date: proposalData.date,
+    gpr_venue: proposalData.venue,
+    gpr_budget_items: proposalData.budgetItems.map(b => ({
+      name: b.name,
+      pax: b.pax,
+      amount: parseFloat(b.amount) || 0,
+    })),
+    gpr_monitoring: proposalData.monitoringEvaluation,
+    gpr_signatories: proposalData.signatories,
+    staff: proposalData.staffId,
+    gpr_is_archive: proposalData.gprIsArchive || false,
+    gpr_page_size: proposalData.gpr_page_size,
+  };
+
+  // Handle header image explicitly
+  if (proposalData.gpr_header_img !== undefined) {
+    if (proposalData.gpr_header_img === null) {
+      // Case 1: Explicit removal
+      payload.gpr_header_img = null;
+    } else if (typeof proposalData.gpr_header_img === 'string') {
+      if (proposalData.gpr_header_img.startsWith('data:')) {
+        // Case 2: New upload
+        const [header, _data] = proposalData.gpr_header_img.split(';base64,');
+        const mimeType = header.split(':')[1];
+        payload.gpr_header_img = {
+          name: `header-${Date.now()}.${mimeType.split('/')[1] || 'jpg'}`,
+          type: mimeType,
+          file: proposalData.gpr_header_img
+        };
+      }
+    }
+  }
+  return payload;
+};

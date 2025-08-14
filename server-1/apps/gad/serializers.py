@@ -6,6 +6,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import base64
 from utils.supabase_client import upload_to_storage
+import urllib.parse
 
 Staff = apps.get_model('administration', 'Staff')
 
@@ -265,9 +266,91 @@ class ProjectProposalLogSerializer(serializers.ModelSerializer):
 class ProjectProposalSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     logs = ProjectProposalLogSerializer(many=True, read_only=True)
+    gpr_header_img = serializers.JSONField(write_only=True, required=False, allow_null=True)  # Accept JSON object for upload
 
     def get_status(self, obj):
         return obj.current_status
+    
+    def validate_gpr_header_img(self, value):
+        if value is None:
+            return value
+        if not isinstance(value, dict) or 'name' not in value or 'type' not in value or 'file' not in value or not value['file'].startswith('data:'):
+            raise serializers.ValidationError({
+                'gpr_header_img': 'Must be an object with name, type, and file (base64 data URL)'
+            })
+        # Optionally restrict to images
+        if not value['type'].startswith('image/'):
+            raise serializers.ValidationError({
+                'gpr_header_img': 'Only image files are allowed'
+            })
+        return value
+
+    def create(self, validated_data):
+        header_img_data = validated_data.pop('gpr_header_img', None)
+        instance = super().create(validated_data)
+
+        if header_img_data:
+            try:
+                # Upload to Supabase
+                url = upload_to_storage(header_img_data, 'image-bucket', 'Uploads')
+                instance.gpr_header_img = url
+                instance.save()
+            except Exception as e:
+                raise serializers.ValidationError({
+                    'gpr_header_img': f"Upload failed: {str(e)}"
+                })
+
+        return instance
+
+    def update(self, instance, validated_data):
+        header_img_data = None
+        header_img_provided = False
+        
+        if 'gpr_header_img' in validated_data:
+            header_img_data = validated_data.pop('gpr_header_img')
+            header_img_provided = True
+
+        # Only modify header image if it was explicitly provided in the request
+        if header_img_provided:
+            if header_img_data is None:
+                # Explicit removal - clear the header image
+                instance.gpr_header_img = None
+            elif isinstance(header_img_data, dict):
+                try:
+                    # Upload new file
+                    url = upload_to_storage(header_img_data, 'image-bucket', 'Uploads')
+                    instance.gpr_header_img = url
+                except Exception as e:
+                    raise serializers.ValidationError({
+                        'gpr_header_img': f"Upload failed: {str(e)}"
+                    })
+        # If header_img_provided is False, we don't touch the existing header image at all
+
+        instance = super().update(instance, validated_data)
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return {
+            'gprId': data['gpr_id'],
+            'gprTitle': data['gpr_title'],
+            'gprBackground': data['gpr_background'],
+            'gprDate': data['gpr_date'],
+            'gprVenue': data['gpr_venue'],
+            'gprMonitoring': data['gpr_monitoring'],
+            'gprHeaderImage': instance.gpr_header_img if instance.gpr_header_img else None,
+            'gprDateCreated': data['gpr_created'],
+            'gprIsArchive': data['gpr_is_archive'],
+            'gprObjectives': data['gpr_objectives'],
+            'gprParticipants': data['gpr_participants'],
+            'gprBudgetItems': data['gpr_budget_items'],
+            'gprSignatories': data['gpr_signatories'],
+            'gpr_page_size': data['gpr_page_size'],
+            'status': data['status'],
+            'staffId': data.get('staff'),
+            'staffName': data.get('staff_name', 'Unknown'),
+            'logs': data['logs'],
+        }
 
     class Meta:
         model = ProjectProposal
@@ -280,35 +363,9 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'gpr_id': {'read_only': True},
             'gpr_created': {'read_only': True},
-            'staff': {
-                'required': False,
-                'write_only': True
-            }
+            'staff': {'required': False, 'write_only': True},
+            'gpr_header_img': {'write_only': True}
         }
-    
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        return {
-            'gprId': data['gpr_id'],
-            'gprTitle': data['gpr_title'],
-            'gprBackground': data['gpr_background'],
-            'gprDate': data['gpr_date'],
-            'gprVenue': data['gpr_venue'],
-            'gprMonitoring': data['gpr_monitoring'],
-            'gprHeaderImage': data['gpr_header_img'],
-            'gprDateCreated': data['gpr_created'],
-            'gprIsArchive': data['gpr_is_archive'],
-            'gprObjectives': data['gpr_objectives'],
-            'gprParticipants': data['gpr_participants'],
-            'gprBudgetItems': data['gpr_budget_items'],
-            'gprSignatories': data['gpr_signatories'],
-            'gprPageSize' : data['gpr_page_size'],
-            'status': data['status'],
-            'staffId': data.get('staff'),
-            'staffName': data.get('staff_name', 'Unknown'),
-            'logs': data['logs'],
-        }
-
 
 class ProposalSuppDocSerializer(serializers.ModelSerializer):
     class Meta:
@@ -324,24 +381,26 @@ class ProposalSuppDocSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"error": "gpr_id is required"})
 
         try:
-            proposal_instance = ProjectProposal.objects.get(pk=gpr_id)
+            proposal = ProjectProposal.objects.get(pk=gpr_id)
         except ProjectProposal.DoesNotExist:
             raise serializers.ValidationError(f"ProjectProposal with id {gpr_id} does not exist")
 
         psd_files = []
         for file_data in files:
-            if 'file' not in file_data:
-                raise serializers.ValidationError({"error": "File data missing"})
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                continue
+
+            header, data = file_data['file'].split(';base64,')
+            file_content = base64.b64decode(data)
+            file_obj = ContentFile(file_content, name=file_data['name'])
+
             psd_file = ProposalSuppDoc(
                 psd_name=file_data['name'],
                 psd_type=file_data['type'],
-                psd_path=f"uploads/{file_data['name']}",
-                gpr=proposal_instance
+                psd_path=f"Uploads/{file_data['name']}",
+                gpr=proposal
             )
-            # Save file to storage
-            file_obj = file_data['file']
-            file_path = default_storage.save(f"uploads/{file_data['name']}", file_obj)
-            psd_file.psd_url = default_storage.url(file_path)
+            psd_file.psd_url = upload_to_storage(file_data, 'image-bucket', 'Uploads')
             psd_files.append(psd_file)
 
         if psd_files:

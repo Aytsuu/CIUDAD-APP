@@ -71,6 +71,8 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
     try {
       let dataUrl = data.headerImage;
       if (!dataUrl.startsWith("data:image")) {
+        dataUrl = decodeURIComponent(dataUrl);
+      dataUrl = dataUrl.split('?')[0];
         const response = await fetch(dataUrl, {
           mode: "cors",
           headers: {
