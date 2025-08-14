@@ -3,9 +3,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
   FlatList,
-  Linking,
   ActivityIndicator,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
