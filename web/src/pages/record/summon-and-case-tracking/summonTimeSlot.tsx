@@ -364,8 +364,8 @@ const formatTimeTo12Hour = (time24h: string) => {
   return `${hour12}:${minutes}${period}`;
 };
 
-export default function SummonTimeSlot({ sd_id }: { sd_id?: number }) {
-  const { mutate: addTimeSlot, isPending } = useAddSummonTimeSlots();
+export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, onSuccess: () => void }) {
+  const { mutate: addTimeSlot, isPending } = useAddSummonTimeSlots(onSuccess);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
 
   const form = useForm<z.infer<typeof SummonTimeSchema>>({
