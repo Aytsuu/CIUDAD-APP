@@ -11,10 +11,15 @@ import { updateBudgetPlanDetail } from "../request/income-expense-PostRequest";
 import { updateIncomeTracking } from "../request/income-expense-PutRequest";
 import { updateIncomeMain } from "../request/income-expense-PostRequest";
 
-
+type FileData = {
+    id: string;
+    name: string;
+    type: string;
+    file?: string;
+};
 
 type ExtendedIncomeExpenseUpdateValues = z.infer<typeof IncomeExpenseFormSchema> & {
-  mediaFiles: any[];
+  files: FileData[]; 
   years: number;
   totalBudget: number;
   totalExpense: number;
@@ -42,7 +47,7 @@ export const useUpdateIncomeExpense = (
       await updateIncomeExpense(iet_num, submissionValues);
       
       // Then handle file updates
-      await handleFileUpdates(iet_num, values.mediaFiles);
+      await handleFileUpdates(iet_num, values.files);
 
       //handle main update
       await updateIncomeExpenseMain(values.years, {
@@ -100,10 +105,11 @@ const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
     await Promise.all(filesToAdd.map(file =>
       api.post('treasurer/inc-exp-file/', {
         iet_num,
-        ief_name: file.file?.name || `file-${Date.now()}`,
-        ief_type: file.type,
-        ief_path: file.path || '',
-        ief_url: file.publicUrl
+        files: [{
+          name: file.name,
+          type: file.type,
+          file: file.file // The actual file object
+        }]
       })
     ));
   } catch (err) {

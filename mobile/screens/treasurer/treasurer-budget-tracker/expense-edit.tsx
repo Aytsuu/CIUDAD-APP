@@ -11,7 +11,7 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import _ScreenLayout from '@/screens/_ScreenLayout';
-import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
 import { useUpdateIncomeExpense } from './queries/income-expense-UpdateQueries';
@@ -50,20 +50,17 @@ function ExpenseEdit() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-    const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>(
-        parsedFiles.map((file: any) => ({
-        id: `existing-${file.ief_id}`,
-        name: `existing-${file.ief_id}`,
-        type: 'image',
-        uri: file.ief_url,
-        path: '',
-        publicUrl: file.ief_url,
-        status: 'uploaded'
-        })) || []
-    );
+  const [selectedImages, setSelectedImages] = useState<MediaItem[]>(
+    parsedFiles.map((file: any) => ({
+      id: `existing-${file.ief_id}`,
+      name: file.ief_name || `file-${file.ief_id}`,
+      type: 'image/jpeg',
+      uri: file.ief_url
+    }))
+  );
 
-    console.log("PARTICULARRRR ID:", iet_particular_id)
-     console.log("PARTICULARRRR NAME:", iet_particulars_name)   
+  console.log("PARTICULARRRR ID:", iet_particular_id)
+  console.log("PARTICULARRRR NAME:", iet_particulars_name)   
 
   const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
 
@@ -91,15 +88,12 @@ function ExpenseEdit() {
     resolver: zodResolver(IncomeExpenseFormSchema),
     defaultValues: {
       iet_serial_num: String(iet_serial_num),
-    //   iet_date: '',
-    //   iet_time: '',
       iet_datetime: String(iet_datetime),
       iet_entryType: String(iet_entryType),
       iet_particulars: `${iet_particular_id} ${iet_particulars_name}`,
       iet_amount: String(iet_amount),
       iet_actual_amount: String(iet_actual_amount),
       iet_additional_notes: String(iet_additional_notes),
-      iet_receipt_image: undefined
     }
   });
 
@@ -138,6 +132,13 @@ function ExpenseEdit() {
 
     // Particular ID
     const particularId = Number(selectedParticularId?.split(' ')[0] || 0);
+
+    const files = selectedImages.map((img: any) => ({
+      id: img.id,
+      name: img.name,
+      type: img.type,
+      file: img.file
+    }))    
 
     // Validation checks
     if (!values.iet_amount || !selectedParticularId) {
@@ -229,33 +230,16 @@ function ExpenseEdit() {
 
     updateEntry({
       ...values,
-      mediaFiles,
+      files,
       years,
       totalBudget,
       totalExpense,
       proposedBud,
       particularId
     });
-
-    // console.log('FORMMMMM:', values);
-    // console.log('Media Files:', mediaFiles);
-    // console.log('Year:', years);
-    // console.log('Total Budget:', totalBudget);
-    // console.log('Total Expense:', totalExpense);
-    // console.log('Proposed Budget:', proposedBud);
-    // console.log('Particular ID:', particularId);
   };
 
 
-
-  useEffect(() => {
-    form.setValue('iet_receipt_image', mediaFiles.map(file => ({
-      name: file.name,
-      type: file.type,
-      path: file.path,
-      uri: file.publicUrl || file.uri
-    })));
-  }, [mediaFiles, form]);
 
 
   return (
@@ -437,11 +421,12 @@ function ExpenseEdit() {
 
         <View className="mb-6 relative">
             <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Document</Text>
-            <MultiImageUploader
-                mediaFiles={mediaFiles}
-                setMediaFiles={setMediaFiles}
-                maxFiles={5}
-            />
+            <MediaPicker
+              selectedImages={selectedImages}
+              setSelectedImages={setSelectedImages}
+              multiple={true}
+              maxImages={5}
+            />    
             {!isEditing && (
                 <TouchableOpacity
                 className="absolute top-[20px] left-0 right-0 bottom-0"
