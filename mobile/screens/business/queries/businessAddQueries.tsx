@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useAddBusiness = () => {
   return useMutation({
@@ -15,6 +15,7 @@ export const useAddBusiness = () => {
 }
 
 export const useAddBusinessModification = () => {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
@@ -23,6 +24,13 @@ export const useAddBusinessModification = () => {
       } catch (err) {
         throw err;
       }
+    }, 
+    onSuccess: (newData) => {
+      queryClient.setQueryData(['modificationRequests'], (old: any[] = []) => [
+        ...old,
+        newData
+      ])
+      queryClient.invalidateQueries({queryKey: ['modificationRequests']})
     }
   })
 }

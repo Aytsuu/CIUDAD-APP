@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input"
 import { useAddIncidentReport } from "../queries/reportAdd"
 import { useGetReportType } from "../queries/reportFetch"
 import { formatReportType } from "@/helpers/formatReportType"
-import { capitalizeAllFields } from "@/helpers/capitalize"
+import { capitalize, capitalizeAllFields } from "@/helpers/capitalize"
 import { useRouter } from "expo-router"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
@@ -95,29 +95,33 @@ export default function IRForm() {
   }
 
   const submit = async () => {
-    setIsSubmitting(true)
+    const isFormValid = await validateForm()
+
+    if (!isFormValid) {
+      return
+    }
     
     try {
-      const isFormValid = await validateForm()
-      
-      if (!isFormValid) {
-        setIsSubmitting(false)
-        return
-      }
-
+      setIsSubmitting(true)
       const values = getValues()
-      
-      addIncidentReport(capitalizeAllFields({
-        ...values,
-        'ir_other_type': addReportType,
-        'rp': user?.staff?.staff_id,
-      }))
 
+      const files = selectedImages.map((media: any) => ({
+        name: media.name,
+        type: media.type,
+        file: media.file
+      }))
       
-    } catch (error) {
-      console.error('Submission error:', error)
-    } finally {
+      await addIncidentReport({
+        ...capitalizeAllFields(values),
+        'ir_other_type': capitalize(addReportType),
+        'rp': user?.staff?.staff_id,
+        'files': files
+      })
+
       setIsSubmitting(false)
+    } catch (error) {
+      setIsSubmitting(false)
+      console.error('Submission error:', error)
     }
   }
 

@@ -38,14 +38,6 @@ export default function EditBusiness() {
   // ----------------------- SIDE EFFECTS -------------------------
   React.useEffect(() => {
     if(business) {
-      setSelectedImages(business.files?.map((files: any) => {
-        return {
-          'id': files.bf_id,
-          'name': files.bf_name,
-          'type': files.bf_type
-        }
-      }) || [])
-
       const fields = [
         {key: 'bus_name', val: business.bus_name},
         {key: 'bus_gross_sales', val: business.bus_gross_sales},
@@ -128,6 +120,7 @@ export default function EditBusiness() {
             onPress={() => {
               setSelectedImages([]);
               setShowFeedback(false)
+              router.back();
             }}
           >
             <Text className="text-white text-base font-semibold">

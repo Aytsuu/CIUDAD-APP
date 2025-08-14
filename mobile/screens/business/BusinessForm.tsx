@@ -53,7 +53,7 @@ export default function BusinessForm({
           {/* Form Fields */}
           <View className="space-y-4">
             <FormInput control={control} name="bus_name" label="Business Name" placeholder="Enter your business name" returnKeyType="next" />
-            <FormInput control={control} name="bus_gross_sales" label="Business Gross Sales (₱)" placeholder="0.00" keyboardType="numeric" returnKeyType="next"/>
+            <FormInput control={control} name="bus_gross_sales" label="Business Gross Sales (₱)" placeholder="0.00" keyboardType="phone-pad" returnKeyType="next"/>
             <FormSelect control={control} name="sitio" label="Sitio" options={formattedSitio} placeholder="Select your sitio"/>
             <FormInput  control={control}  name="bus_street"  label="Business Street Address" placeholder="Enter complete street address" returnKeyType="done"/>
           </View>

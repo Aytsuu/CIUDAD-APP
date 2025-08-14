@@ -7,8 +7,8 @@ import { MapPin } from "@/lib/icons/MapPin";
 import { CheckCircle } from "@/lib/icons/CheckCircle";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import LottieView from 'lottie-react-native';
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function BusinessDetails() {
   // ------------------ STATE INITIALIZATION ----------------------
@@ -55,14 +55,7 @@ export default function BusinessDetails() {
 
   if(isLoadingBusinessInfo || isLoadingRequests) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <LottieView 
-          source={require('@/assets/animated/loading.json')}
-          autoPlay
-          loop
-          style={{ width: 70, height: 70 }}
-        />
-      </View>
+      <LoadingState/>
     )
   }
 

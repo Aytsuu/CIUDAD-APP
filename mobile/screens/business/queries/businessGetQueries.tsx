@@ -1,5 +1,7 @@
 import { api } from "@/api/api";
-import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 
 export const useOwnedBusinesses = (data: Record<string, any>) => {
   return useQuery({
@@ -15,16 +17,17 @@ export const useOwnedBusinesses = (data: Record<string, any>) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: Infinity
   })
 }
 
 export const useBusinessInfo = (busId: number) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["businessInfo", busId],
     queryFn: async () => {
       if (!busId) return null;
-      
       try {
         const res = await api.get(`profiling/business/${busId}/info/`);
         return res.data;
@@ -33,11 +36,39 @@ export const useBusinessInfo = (busId: number) => {
       }
     },
     staleTime: 5000,
+    enabled: !!busId
   });
+
+  React.useEffect(() => {
+    if(!busId) return;
+
+    const channel = supabase
+      .channel(`business-update-${busId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "business",
+          filter: `bus_id=eq.${busId}`
+        },
+        () => {
+          queryClient.invalidateQueries({queryKey: ['businessInfo', busId]})
+        }
+      ).subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
+  }, [busId, queryClient])
+
+  return query
 }
 
 export const useModificationRequests = () => {
-  return useQuery({
+  const queryClient = useQueryClient()
+
+  const query = useQuery({
     queryKey: ['modificationRequests'],
     queryFn: async () => {
       try {
@@ -48,6 +79,28 @@ export const useModificationRequests = () => {
         throw(err);
       }
     },
-    staleTime: 5000
+    staleTime: Infinity
   })
-}
+
+  React.useEffect(() => {
+    const channel = supabase
+      .channel('business-modification')
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "business_modification"
+        },
+        () => {
+          queryClient.invalidateQueries({queryKey: ['modificationRequests']})
+        }
+      ).subscribe();
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [queryClient])
+
+  return query
+} 

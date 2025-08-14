@@ -21,9 +21,9 @@ import { Download } from "@/lib/icons/Download";
 import { Eye } from "@/lib/icons/Eye";
 import PageLayout from "@/screens/_PageLayout";
 import { formatDate } from "@/helpers/dateHelpers";
-import { useBusinessInfo } from "../queries/profilingGetQueries";
 import { formatCurrency } from "@/helpers/currencyFormat";
 import { CreditCard } from "lucide-react-native";
+import { useBusinessInfo } from "@/screens/business/queries/businessGetQueries";
 
 // Loading Card Component
 const LoadingCard = ({ title, message }: { title: string, message: string }) => (
