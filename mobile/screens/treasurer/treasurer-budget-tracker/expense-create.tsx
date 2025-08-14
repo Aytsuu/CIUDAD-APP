@@ -15,6 +15,7 @@ import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input'
 import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useCreateIncomeExpense } from './queries/income-expense-AddQueries';
 import { ChevronLeft, X } from 'lucide-react-native';
@@ -30,7 +31,7 @@ function ExpenseCreateForm() {
   const years = Number(year);
 
 
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
+  const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const [currentStep, setCurrentStep] = useState(1);
   const { data: budgetItems = [] } = useBudgetItems(years);
   const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
@@ -58,7 +59,6 @@ function ExpenseCreateForm() {
       iet_amount: '',
       iet_actual_amount: '',
       iet_additional_notes: '',
-      iet_receipt_image: [],
     },
   });
 
@@ -66,21 +66,10 @@ function ExpenseCreateForm() {
     router.back();
   });
 
-  useEffect(() => {
-    form.setValue('iet_receipt_image', mediaFiles.map(file => ({
-      name: file.name,
-      type: file.type,
-      path: file.path,
-      uri: file.publicUrl || file.uri
-    })));
-  }, [mediaFiles, form]);
-
   const selectedParticularId = form.watch('iet_particulars');
   const selectedParticular = budgetItems.find(item => item.id === selectedParticularId?.split(' ')[0]);
 
   const onSubmit = (values: z.infer<typeof IncomeExpenseFormSchema>) => {
-    // const inputDate = new Date(values.iet_datetime);
-    // const inputYear = inputDate.getFullYear();
     let totalBudget = 0.00;
     let totalExpense = 0.00;
     let proposedBud = 0.00;
@@ -118,6 +107,11 @@ function ExpenseCreateForm() {
 
     const particularId = Number(selectedParticularId?.split(' ')[0] || 0);
 
+    const files = selectedImages.map((img: any) => ({
+      name: img.name,
+      type: img.type,
+      file: img.file
+    }))
 
     if(amount && actualAmount){
         totalBudget = totBUDGET - actualAmount;
@@ -145,6 +139,7 @@ function ExpenseCreateForm() {
       totalExpense,
       proposedBud,
       particularId,
+      files
     };
 
     createExpense(allValues);
@@ -309,11 +304,12 @@ function ExpenseCreateForm() {
 
             <View className="mb-6">
               <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Document</Text>
-              <MultiImageUploader
-                mediaFiles={mediaFiles}
-                setMediaFiles={setMediaFiles}
-                maxFiles={5}
-              />
+              <MediaPicker
+                selectedImages={selectedImages}
+                setSelectedImages={setSelectedImages}
+                multiple={true}
+                maxImages={5}
+              />              
             </View>
           </View>
         )}
