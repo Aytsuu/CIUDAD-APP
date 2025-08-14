@@ -297,12 +297,13 @@ const AnnouncementCreate = () => {
 
                   {recipientType === "staff" && (
                     <>
-                      <FormSelect control={form.control} name="pos_category" label="Position Category" options={categoryOptions} />
+                      <FormSelect control={form.control} name="pos_category" label="Category" options={categoryOptions} />
                       {posCategory && (
-                        <FormSelect control={form.control} name="pos_group" label="Position Group" options={groupOptions} />
+                        <FormSelect control={form.control} name="pos_group" label="Group" options={groupOptions} />
                       )}
                       {posGroup && (
                         <FormComboCheckbox
+                        label = "Positions"
                           control={form.control}
                           name="ar_type"
                           options={positionsForGroup.map((pos: { pos_title: string }) => {
@@ -319,13 +320,14 @@ const AnnouncementCreate = () => {
 
                   {recipientType === "resident" && (
                     <FormComboCheckbox
+                      label="Age Groups"
                       control={form.control}
                       name="ar_type"
                       options={[
                         { id: "all", name: "All" },
-                        { id: "adolecent", name: "Adolocent" },
-                        { id: "adult", name: "Adult" },
-                        { id: "senior citizen", name: "Senior Citizen" },
+                        { id: "adolecent", name: "Adoloscent (10-19 Years Old)" },
+                        { id: "adult", name: "Adult (20-59 Years Old)" },
+                        { id: "senior citizen", name: "Senior Citizen (60+ Years Old)" },
                       ]}
                     />
                   )}
