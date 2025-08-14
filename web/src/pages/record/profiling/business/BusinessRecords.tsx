@@ -1,8 +1,8 @@
 import React from "react"
-import { Search, Plus, Building2, FileDown, Loader2, Clock } from "lucide-react"
+import { Search, Plus, Building2, FileDown, Loader2, Clock, ClockArrowUp, Paperclip } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { activeColumns } from "./BusinessColumns"
@@ -14,11 +14,11 @@ import { useActiveBusinesses, useModificationRequests } from "../queries/profili
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Combobox } from "@/components/ui/combobox"
 import { formatModificationRequests } from "../ProfilingFormats"
-import { toast } from "sonner"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 
 export default function BusinessRecords() {
   // ----------------- STATE INITIALIZATION --------------------
+  const navigate = useNavigate();
   const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
@@ -81,16 +81,6 @@ export default function BusinessRecords() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              <Combobox 
-                options={formattedRequest}
-                value={""}
-                customTrigger={<Clock className="cursor-pointer"/>}
-                staticVal={true}
-                variant="modal"
-                placeholder="Search request by business id, name..."
-                modalTitle="Business Modification Requests"
-                emptyMessage={"No modification requests."}
-              />
               <div className="flex items-center gap-2">
                 <DropdownLayout
                   trigger={
@@ -108,8 +98,43 @@ export default function BusinessRecords() {
                 />
               </div>  
 
+              <Link to="pending" className="flex-1 sm:flex-none">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <ClockArrowUp className="h-4 w-4 mr-2" />
+                  Pending
+                </Button>
+              </Link>
+
+              <div>
+                <Combobox 
+                  options={formattedRequest}
+                  value={""}
+                  customTrigger={
+                    <Button variant="outline" className="w-full sm:w-auto">
+                      <Paperclip className="cursor-pointer"/>
+                      Modification Request
+                    </Button>
+                  }
+                  onChange={(value) => {
+                    navigate('form', {
+                      state: {
+                        params: {
+                          type: "viewing",
+                          busId: value.split(' ')[0],
+                        }
+                      }
+                    })
+                  }}
+                  staticVal={true}
+                  variant="modal"
+                  placeholder="Search request by business id, name..."
+                  modalTitle="Business Modification Requests"
+                  emptyMessage={"No modification requests."}
+                />
+              </div>
+
               <Link
-                to="/profiling/business/form"
+                to="form"
                 state={{
                   params: {
                     type: "create",

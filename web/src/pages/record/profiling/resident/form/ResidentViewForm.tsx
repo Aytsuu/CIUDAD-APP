@@ -186,7 +186,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   }
 
   const handleHistoryItemClick = (index: number) => {
-    navigate('/profiling/resident/update/view', {
+    navigate('/profiling/resident/history/view', {
       state: {
         params: {
           newData: personalHistory[index],

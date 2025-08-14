@@ -50,7 +50,6 @@ const items: BaseMenuItem[] = [
         title: "Business", 
         url: "/profiling/business/record",
         items: [
-          { title: "Pending", url: "/profiling/business/record/pending"},
           { title: "Respondent", url: "/profiling/business/record/respondent"}
         ]
       },

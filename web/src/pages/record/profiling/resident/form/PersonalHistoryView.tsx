@@ -39,7 +39,7 @@ const getChanges = (oldObj: any, newObj: any, labels: Record<string, string>) =>
     }))
 }
 
-export default function UpdateComparisonView() {
+export default function PersonalHistoryView() {
   const location = useLocation()
   const params = React.useMemo(() => location.state?.params, [location.state])
   const oldData = React.useMemo(() => params?.oldData, [params])

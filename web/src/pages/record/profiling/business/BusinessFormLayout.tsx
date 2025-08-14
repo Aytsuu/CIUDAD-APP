@@ -9,7 +9,7 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { FileText, MapPin, User, Database, Store, Loader2, ClipboardList, Clock } from "lucide-react"
+import { FileText, MapPin, User, Database, Store, Loader2, Clock, History } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
@@ -21,7 +21,7 @@ import { useUpdateBusiness } from "../queries/profilingUpdateQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button/button"
@@ -31,6 +31,8 @@ import ModificationRequest from "./ModificationRequest"
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { RenderHistory } from "../ProfilingHistory"
+import isEqual from 'lodash/isEqual';
+import { toast } from "sonner"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
@@ -99,7 +101,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
 
   React.useEffect(() => {
     if (formType !== Type.Create) {
-      setIsReadOnly(true)
+      if(formType == Type.Editing) setIsReadOnly(false);
+      else setIsReadOnly(true);
 
       // Only populate fields if business info is available
       if (businessInfo && !isLoadingBusInfo) {
@@ -114,7 +117,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     if (businessInfo?.files) {
       setMediaFiles(businessInfo?.files)
     }
-  }, [businessInfo])
+  }, [businessInfo, formType])
   
   // --------------------- HANDLERS -----------------------
   const getFormTitle = () => {
@@ -158,7 +161,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   );
 
   const handleHistoryItemClick = (index: number) => {
-    navigate('/profiling/resident/update/view', {
+    navigate('/profiling/business/history/view', {
       state: {
         params: {
           newData: businessHistory[index],
@@ -181,9 +184,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     const fields = [
       { key: "bus_name", value: businessInfo.bus_name },
       { key: "bus_gross_sales", value: String(businessInfo.bus_gross_sales) },
-      { key: "bus_province", value: businessInfo.bus_province },
-      { key: "bus_city", value: businessInfo.bus_city },
-      { key: "bus_barangay", value: businessInfo.bus_barangay },
       { key: "bus_street", value: businessInfo.bus_street },
       { key: "sitio", value: businessInfo.sitio },
     ]
@@ -262,7 +262,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   // Function to update business data
   const update = async (
     businessData: Record<string, any>,
-    files: Record<string, any>
+    files: Record<string, any>,
+    initialFiles?: Record<string, any>
   ) => {
     try {
       await updateBusiness({
@@ -274,8 +275,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
             bus_status: 'Active'
           }),
           // Exclude if viewing pending 
-          ...(formType !== Type.Request && {
-            files: files
+          ...((formType !== Type.Request && !isEqual(initialFiles, files)) && {
+            edit_files: files
           }),
           sitio: businessData.sitio.toLowerCase(),
           staff: user?.staff?.staff_id || "",
@@ -283,6 +284,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         businessId: params?.busId,
       })
       showSuccessToast("Business record updated successfully!")
+      setIsSubmitting(false);
       if(formType === Type.Request) safeNavigate.back();
       setFormType(Type.Viewing)
     } catch (err) {
@@ -293,11 +295,9 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
 
   // Function to handle form submission
   const submit = async () => {
-    setIsSubmitting(true)
-
     const validateRespondent = form.watch("rp_id") ? "rp_id" : "respondent";
     const formIsValid = await form.trigger([
-      ...(formType !== Type.Request ? [validateRespondent] : []) as any,
+      ...(formType == Type.Create ? [validateRespondent] : []) as any,
       "bus_name", 
       "bus_gross_sales", 
       "bus_street", 
@@ -305,14 +305,13 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     ])
 
     if (validateRespondent !== "rp_id" && !validateAddresses(addresses) && formType == Type.Create) {
-      setIsSubmitting(false);
       showErrorToast("Please fill out all required fields");
       return;
     }
 
     // Validate form
     if (!formIsValid) {
-      setIsSubmitting(false);
+      console.log('invalid form')
       showErrorToast("Please fill out all required fields")
       return
     }
@@ -323,7 +322,12 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     }
 
     const { rp_id, respondent, ...businessData } = form.getValues()
-
+    const initialFiles = businessInfo.files.map((media: any) => ({
+        name: media.name,
+        type: media.type,
+        file: media.file
+      }))
+  
     const files = mediaFiles.map((media) => {
       return {
         name: media.name,
@@ -332,12 +336,24 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       }
     })
 
+    if (isEqual(businessData, {
+      bus_name: businessInfo.bus_name,
+      bus_gross_sales: String(businessInfo.bus_gross_sales),
+      bus_street: businessInfo.bus_street,
+      sitio: businessInfo.sitio
+    }) && isEqual(initialFiles, files)) {
+      showPlainToast('No changes made')
+      return;
+    }
+
+    setIsSubmitting(true)
+
     switch(formType) {
       case Type.Create:
         create(respondent, businessData, rp_id as string, files);
         break;
       case Type.Editing:
-        update(businessData, files);
+        update(businessData, files, initialFiles)
         break;
       case Type.Request:
         update(businessData, files);
@@ -367,33 +383,35 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
             <Label className="text-xl font-semibold text-white">Respondent/Owner Information</Label>
           </div>
         </div>
-        <div>
-          <SheetLayout 
-            trigger={
-              <div>
-                <TooltipLayout 
-                  trigger={<ClipboardList className="text-white"/>}
-                  content="History"
+        {formType === Type.Viewing && (
+          <div>
+            <SheetLayout 
+              trigger={
+                <div>
+                  <TooltipLayout 
+                    trigger={<History className="text-white"/>}
+                    content="History"
+                  />
+                </div>
+              }
+              content={
+                <RenderHistory 
+                  history={businessHistory}
+                  isLoadingHistory={isLoadingHistory}
+                  itemTitle="Business Information Update"
+                  handleHistoryItemClick={handleHistoryItemClick}
                 />
-              </div>
-            }
-            content={
-              <RenderHistory 
-                history={businessHistory}
-                isLoadingHistory={isLoadingHistory}
-                itemTitle="Business Information Update"
-                handleHistoryItemClick={handleHistoryItemClick}
-              />
-            }
-            title={
-              <Label className="flex items-center gap-2 text-lg text-darkBlue1">
-                <Clock size={20}/>
-                Update History
-              </Label>
-            }
-            description="View all changes made to this business information"
-          />
-        </div>
+              }
+              title={
+                <Label className="flex items-center gap-2 text-lg text-darkBlue1">
+                  <Clock size={20}/>
+                  Update History
+                </Label>
+              }
+              description="View all changes made to this business information"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-1">

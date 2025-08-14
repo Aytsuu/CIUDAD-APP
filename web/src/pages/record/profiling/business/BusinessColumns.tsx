@@ -150,6 +150,7 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
     accessorKey: "businesses",
     header: "Owned Businesses",
     cell: ({row}) => {
+      const navigate = useNavigate();
       const businesses = row.original.businesses;
       const formattedBusinesses = React.useMemo(() => formatOwnedBusinesses(businesses), [businesses])
 
@@ -157,6 +158,16 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
         <Combobox 
           options={formattedBusinesses}
           value={String(row.original.businesses.length)}
+          onChange={(value) => {
+            navigate("/profiling/business/record/form", {
+              state: {
+                params: {
+                  type: "viewing",
+                  busId: value.split(' ')[0],
+                }
+              }
+            })
+          }}
           emptyMessage="No businesses owned"
           placeholder="Search business"
           staticVal={true}

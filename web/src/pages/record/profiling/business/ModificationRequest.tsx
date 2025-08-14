@@ -69,7 +69,7 @@ export default function ModificationRequest({ data } : {
             ...(current_gs !== updated_gs && { bus_gross_sales: updated_gs }),
             ...((current_sitio !== updated_sitio ||
               current_street !== updated_street) && { bus_name: updated.add }),
-            files: updated.files,
+            modification_files: updated.files,
             staff: user?.staff?.staff_id,
           },
           businessId: data?.current_details.bus_id,

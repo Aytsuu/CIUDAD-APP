@@ -108,7 +108,7 @@ export const formatOwnedBusinesses = (businesses: any) => {
   if(!businesses) return [];
 
   return businesses.map((bus: any) => ({
-    id: bus.bus_id,
+    id: `${bus.bus_id} ${bus.bus_name} ${bus.bus_gross_sales} ${bus.bus_status}`,
     name: (
       <div className="flex flex-col w-full items-start">
         <p className="text-[15px]">{bus.bus_name}</p>
@@ -126,21 +126,11 @@ export const formatOwnedBusinesses = (businesses: any) => {
 }
 
 export const formatModificationRequests = (requests: any) => {
-  const navigate = useNavigate()
   if(!requests) return [];
   return requests.map((req: any) => ({
-      id: `${req.bm_id} ${req.current_details.bus_name}`,
+      id: `${req.current_details.bus_id} ${req.current_details.bus_name} ${req.current_details.bm_id}`,
       name: (
-        <div className="flex flex-col w-full items-start py-2"
-          onClick={() => navigate('form', {
-            state: {
-              params: {
-                type: "viewing",
-                busId: req.current_details.bus_id,
-              }
-            }
-          })}
-        >
+        <div className="flex flex-col w-full items-start py-2">
           <div className="flex items-center gap-2">
             <p className="text-[15px] font-medium">{req.current_details.bus_name}</p>
             <Badge variant="outline" className="text-xs">
