@@ -79,26 +79,6 @@ export const useAddSummonDates = (onSuccess?: () => void) => {
     })
 }
 
-
-// export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
-//     const queryClient = useQueryClient();
-
-//     return useMutation({
-//         mutationFn: (values: z.infer<typeof SummonTimeSchema>) => addSummonTimeSlot(Number(values.sd_id), values.start_time, values.end_time),
-//         onSuccess: () => {
-//             queryClient.invalidateQueries({ queryKey: ['summonTimeSlots'] });
-//             onSuccess?.();
-//         },
-//          onError: (err) => {
-//             console.error("Error updating dates:", err);
-//             toast.error(
-//                 "Failed to update dates. Please try again.",
-//                 { duration: 2000 }
-//             );
-//         }
-//     });
-// }
-
 export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
