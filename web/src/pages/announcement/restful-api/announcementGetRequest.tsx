@@ -16,9 +16,9 @@ export const getAnnouncementRequest = async () => {
   }
 };
 
-export const getAnnouncementRecipientRequest = async () => {
+export const getAnnouncementRecipientRequest = async (ann_id: number) => {
   try {
-    const response = await api.get(`announcement/create-recipient/`);
+    const response = await api.get(`announcement/create-recipient/?ann_id=${ann_id}`);
     const data = response.data?.data ?? response.data ?? [];
     return Array.isArray(data) ? data : [];
   } catch (err) {
@@ -26,4 +26,3 @@ export const getAnnouncementRecipientRequest = async () => {
     return [];
   }
 };
-

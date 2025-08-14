@@ -20,16 +20,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card/card";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  Megaphone,
-  FileText,
-  Calendar,
-  Users,
-  Clock,
-} from "lucide-react";
+import { Megaphone, FileText, Calendar, Users, Clock } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+
+// --- Helper functions ---
+const capitalizeWords = (str: string) =>
+  str ? str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase()) : "";
+
+const uniquePreserve = (arr: string[]) =>
+  arr.filter((item, idx) => arr.indexOf(item) === idx);
 
 function AnnouncementView() {
   const { id } = useParams<{ id: string }>();
@@ -37,7 +37,7 @@ function AnnouncementView() {
 
   const [isEditing] = useState(false);
   const { data: announcements } = useGetAnnouncement();
-  const { data: recipients } = useGetAnnouncementRecipient();
+  const { data: recipients } = useGetAnnouncementRecipient(ann_id);
 
   const announcement = announcements?.find((a) => a.ann_id === ann_id);
   const matchingRecipients = recipients?.filter((r) => r.ann === ann_id) || [];
@@ -50,15 +50,15 @@ function AnnouncementView() {
   const form = useForm<z.infer<typeof AnnouncementSchema>>({
     resolver: zodResolver(AnnouncementSchema),
     defaultValues: {
-      ann_title: announcement?.ann_title || "",
-      ann_details: announcement?.ann_details || "",
+      ann_title: capitalizeWords(announcement?.ann_title || ""),
+      ann_details: capitalizeWords(announcement?.ann_details || ""),
       ann_start_at: announcement?.ann_start_at
         ? formatDateTimeLocal(announcement.ann_start_at)
         : formatDateTimeLocal(new Date()),
       ann_end_at: announcement?.ann_end_at
         ? formatDateTimeLocal(announcement.ann_end_at)
         : formatDateTimeLocal(new Date()),
-      ann_type: (announcement as any)?.ann_type || "General",
+      ann_type: capitalizeWords((announcement as any)?.ann_type || "General"),
     },
   });
 
@@ -113,7 +113,8 @@ function AnnouncementView() {
                   </label>
                   <textarea
                     {...form.register("ann_details")}
-                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+                    value={capitalizeWords(form.getValues("ann_details"))}
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     readOnly={!isEditing}
                   />
                 </div>
@@ -142,12 +143,12 @@ function AnnouncementView() {
                       {file.af_type.startsWith("image/") ? (
                         <img
                           src={file.af_url}
-                          alt={file.af_name}
+                          alt={capitalizeWords(file.af_name)}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full text-sm text-gray-500">
-                          {file.af_name}
+                          {capitalizeWords(file.af_name)}
                         </div>
                       )}
                     </div>
@@ -192,53 +193,68 @@ function AnnouncementView() {
                     type="datetime-local"
                   />
                 </div>
+                {announcement.ann_event_start && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Clock className="h-4 w-4" />
+                      Event Start
+                    </div>
+                    <input
+                      type="datetime-local"
+                      value={formatDateTimeLocal(announcement.ann_event_start)}
+                      readOnly
+                      className="flex w-full rounded-md border border-input px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+                {announcement.ann_event_end && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Clock className="h-4 w-4" />
+                      Event End
+                    </div>
+                    <input
+                      type="datetime-local"
+                      value={formatDateTimeLocal(announcement.ann_event_end)}
+                      readOnly
+                      className="flex w-full rounded-md border border-input px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Recipients */}
-            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Recipients</CardTitle>
-                </div>
-                <CardDescription>Who received this announcement</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Positions */}
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Target Positions</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(new Set(matchingRecipients.map((r) => r.position_title)))
-                      .slice(0, 5)
-                      .map((title, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs px-2 py-1">
-                          {title}
-                        </Badge>
-                      ))}
-                    {matchingRecipients.length > 5 && (
-                      <Badge variant="outline" className="text-xs px-2 py-1">
-                        +{matchingRecipients.length - 5} more
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+         {/* Recipients - Hide if public */}
+{announcement.ann_type?.toLowerCase() !== "public" &&
+  matchingRecipients.some(r => r.ar_type?.trim()) && (
+    <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-gray-600" />
+          <CardTitle className="text-lg">Recipients</CardTitle>
+        </div>
+        <CardDescription>Who received this announcement</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-1">Recipient Types</p>
+          <div className="flex flex-wrap gap-2">
+            {uniquePreserve(
+              matchingRecipients
+                .map(r => r.ar_type?.trim())
+                .filter(Boolean)
+                .map(capitalizeWords)
+            ).map((type, i) => (
+              <Badge key={i} variant="secondary" className="text-xs px-2 py-1">
+                {type}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )}
 
-                {/* Age Groups */}
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">Target Age Group</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(new Set(matchingRecipients.map((r) => r.ar_age))).map((age, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs px-2 py-1 capitalize">
-                        {age}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <Separator />
-              </CardContent>
-            </Card>
           </form>
         </Form>
       </div>

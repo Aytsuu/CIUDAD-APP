@@ -17,6 +17,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import axios from "axios";
 import { usePositions } from "@/pages/record/administration/queries/administrationFetchQueries";
+import { useNavigate } from "react-router-dom";
+
+
 
 /** display helper */
 function capitalizeWords(str: string) {
@@ -56,6 +59,8 @@ function uniquePreserve<T>(
 const AnnouncementCreate = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const navigate = useNavigate();
+
 
   type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema> & {
     pos_category: string;
@@ -186,10 +191,17 @@ const AnnouncementCreate = () => {
       }
 
       // ♻️ Reset form to defaults after success (keep staff id)
-      form.reset({
-        ...defaultValues,
-        staff: user?.staff?.staff_id || "",
-      });
+form.reset({
+  ...defaultValues,
+  staff: user?.staff?.staff_id || "",
+});
+
+// 🔄 Refresh list
+queryClient.invalidateQueries({ queryKey: ["announcements"] });
+
+// ⬅ Go back
+navigate("/announcement"); // goes to previous page
+
 
       // 🔄 Refresh list
       queryClient.invalidateQueries({ queryKey: ["announcements"] });

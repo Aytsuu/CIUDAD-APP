@@ -82,3 +82,6 @@ class AnnouncementRecipientByTypeView(APIView):
         queryset = AnnouncementRecipient.objects.filter(ar_type=ar_type)
         serializer = AnnouncementRecipientFilteredSerializer(queryset, many=True)
         return Response(serializer.data)
+
+
+
