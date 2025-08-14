@@ -36,36 +36,30 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
 
 
 
+
 export const resolution_file_create = async (data: {
-    res_num: number;
-    file_data: {
-        name: string;
-        type: string;
-        path: string;
-        url: string;
-    };
+  res_num: number;
+  file_data: {
+    name: string;
+    type: string;
+    file: any;
+  };
 }) => {
-    try {
+  try {
+    // Create the payload that matches your serializer's _upload_files method
+    const payload = {
+      res_num: data.res_num,
+      files: [{
+        name: data.file_data.name,
+        type: data.file_data.type,
+        file: data.file_data.file // The actual file object
+      }]
+    };
 
-        console.log({
-            res_num: data.res_num,
-            rf: data.file_data.name,
-            rf_type: data.file_data.type,
-            rf_path: data.file_data.path,
-            rf_url: data.file_data.url
-        })
-
-        const res = await api.post('council/resolution-file/', {
-            res_num: data.res_num,  
-            rf_name: data.file_data.name,
-            rf_type: data.file_data.type,
-            rf_path: data.file_data.path,
-            rf_url: data.file_data.url
-        });
-
-        return res.data;
-    } catch (err) {
-        console.error(`Failed to create file ${data.file_data.name}:`, err);
-        throw err;
-    }
+    const res = await api.post('council/resolution-file/', payload);
+    return res.data;
+  } catch (err) {
+    console.error(`Failed to create file ${data.file_data.name}:`, err);
+    throw err;
+  }
 }

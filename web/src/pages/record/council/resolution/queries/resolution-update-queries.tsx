@@ -7,12 +7,16 @@ import { useUpdateResolution } from "../request/resolution-put-request";
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
 
 
-
-
+type FileData = {
+    id: string;
+    name: string;
+    type: string;
+    file?: string;
+};
 
 
 type ExtendedResolutionUpdateValues = z.infer<typeof resolutionFormSchema> & {
-  mediaFiles: any[];
+  files: FileData[]; 
   res_num: number;
 };
 
@@ -29,7 +33,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
       });
       
       // Handle file updates
-      await handleResolutionFileUpdates(values.res_num, values.mediaFiles);
+      await handleResolutionFileUpdates(values.res_num, values.files);
       
       return values.res_num;
     },
@@ -78,10 +82,11 @@ const handleResolutionFileUpdates = async (res_num: number, mediaFiles: any[]) =
     await Promise.all(filesToAdd.map(file =>
       api.post('council/resolution-file/', {
         res_num,
-        rf_name: file.file?.name || `file-${Date.now()}`,
-        rf_type: file.type,
-        rf_path: file.storagePath || '',
-        rf_url: file.publicUrl
+        files: [{
+          name: file.name,
+          type: file.type,
+          file: file.file // The actual file object
+        }]
       })
     ));
   } catch (err) {

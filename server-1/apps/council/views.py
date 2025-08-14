@@ -324,6 +324,23 @@ class ResolutionFileView(generics.ListCreateAPIView):
             queryset = queryset.filter(res_num=res_num)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        # Get res_num from either query params or request data
+        res_num = request.query_params.get('res_num') or request.data.get('res_num')
+        
+        if not res_num:
+            return Response(
+                {"error": "res_num is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, res_num=res_num)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
+
+
 # Deleting Res File or replace if updated
 class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
     queryset = ResolutionFile.objects.all()

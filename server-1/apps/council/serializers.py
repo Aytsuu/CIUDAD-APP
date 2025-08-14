@@ -3,6 +3,8 @@ from rest_framework import serializers
 from .models import *
 from django.apps import apps
 from apps.treasurer.models import Purpose_And_Rates
+from utils.supabase_client import upload_to_storage
+
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,6 +72,33 @@ class ResolutionFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResolutionFile
         fields = '__all__'
+    
+    def _upload_files(self, files, res_num=None):
+
+        if not res_num:
+            return
+        
+        try:
+            tracking_instance = Resolution.objects.get(pk=res_num)
+        except Resolution.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {res_num} does not exist")       
+        
+        rf_files = []
+        for file_data in files:
+            rf_file = ResolutionFile(
+                rf_name=file_data['name'],
+                rf_type=file_data['type'],
+                rf_path=f"uploads/{file_data['name']}",
+                res_num=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            rf_file.rf_url = url
+            rf_files.append(rf_file)
+
+        if rf_files:
+            ResolutionFile.objects.bulk_create(rf_files)    
 
 class ResolutionSupDocsSerializer(serializers.ModelSerializer):
     class Meta:
