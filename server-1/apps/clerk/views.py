@@ -187,3 +187,7 @@ class SummonTimeAvailabilityByDateView(generics.ListAPIView):
             queryset = queryset.filter(sd_id=sd_id)
         return queryset
 
+class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
+    queryset = SummonTimeAvailability.objects.all()
+    serializer_class = SummonTimeAvailabilitySerializer
+    lookup_field = 'st_id'

@@ -16,4 +16,5 @@ urlpatterns = [
     path('delete-summon-date/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date'),
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),
     path('summon-time-availability/<int:sd_id>/', SummonTimeAvailabilityByDateView.as_view(), name='summon-time-availability-by-date'),
+    path('delete-summon-time-availability/<int:st_id>/', DeleteSummonTimeAvailabilityView.as_view(), name='delete-summon-time-availability'),
 ]

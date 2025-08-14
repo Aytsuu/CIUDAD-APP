@@ -19,6 +19,8 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import SummonTimeSlot from "./summonTimeSlot";
 import { Label } from "@/components/ui/label";
 import { formatTime } from "@/helpers/timeFormatter";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useDeleteSummonTime } from "./queries/summonDeleteQueries";
 
 const getStartOfWeek = (date: Date) => {
   return startOfWeek(date, { weekStartsOn: 1 }); 
@@ -53,8 +55,9 @@ const SummonCalendar = () => {
     });
   };
 
-  const { mutate: addDate, isPending } = useAddSummonDates(onSuccess);
+  const { mutate: addDate, isPending: isPendingAdd } = useAddSummonDates(onSuccess);
   const { data: summonDates = [], isLoading: isLoadingDates } = useGetSummonDates();
+  const { mutate: deleteTimeSlot, isPending: isPendingDelete } = useDeleteSummonTime();
 
   // Fetch time slots only when we have a valid sd_id
   const { data: fetchedTimeSlots = [], isLoading: isLoadingTimeSlots, refetch: refetchTimeSlots } = useGetSummonTimeSlots(currentSdId || 0);
@@ -188,7 +191,7 @@ const SummonCalendar = () => {
           <Checkbox 
             checked={isSelected} 
             onChange={() => handleDateSelection(date)}
-            disabled={isPending}
+            disabled={isPendingAdd}
           />
         )}
         <span style={{
@@ -205,6 +208,10 @@ const SummonCalendar = () => {
   const dayHeaderFormat = (date: Date) => {
     return format(date, 'EEE', { locale: enUS });
   };
+
+  const handleDeleteTimeSlot = (st_id: number) => {
+      deleteTimeSlot(st_id);
+  }
 
   if (isLoadingDates) {
     return (
@@ -251,14 +258,14 @@ const SummonCalendar = () => {
                     <div className='flex flex-grid gap-3'>
                       <Button 
                         onClick={handleSave}
-                        disabled={isPending}
+                        disabled={isPendingAdd}
                       >
-                        {isPending ? "Saving..." : "Save"}
+                        {isPendingAdd ? "Saving..." : "Save"}
                       </Button>
                       <Button 
                         variant="outline" 
                         onClick={handleCancel}
-                        disabled={isPending}
+                        disabled={isPendingAdd}
                       >
                         Cancel
                       </Button>
@@ -382,13 +389,18 @@ const SummonCalendar = () => {
                                     </div>
                                   </div>
                                   <div className="flex gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-gray-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 h-auto"
-                                    >
-                                      <Trash2 size={12} color="red" />
-                                    </Button>
+
+                                    <ConfirmationModal
+                                      title="Confirm Delete Time Slot"
+                                      description="Are you sure you want to delete this time slot?"
+                                      trigger={
+                                        <Button variant="ghost" size="sm" >
+                                          <Trash2 size={12} color="red" />
+                                        </Button>
+                                      }
+                                      onClick={() => deleteTimeSlot(slot?.st_id || 0)}
+                                      actionLabel="Confirm"
+                                    />
                                   </div>
                                 </div>
                               ))
