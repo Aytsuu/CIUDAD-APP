@@ -15,7 +15,6 @@ export default function Profile() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -67,28 +66,6 @@ export default function Profile() {
     <div className="min-h-screen bg-gray-100">
       <div className="space-y-4">
         <div className="rounded-lg shadow-sm overflow-hidden">
-          {/* Cover Photo Section */}
-          <div className="relative h-80 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
-            {/* Cover Image Placeholder - you can replace with actual cover image */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 via-indigo-600/80 to-purple-600/80"></div>
-
-            {/* Cover Photo Edit Button */}
-            <Button
-              variant="secondary"
-              className="absolute bottom-4 right-4 bg-white/90 text-gray-700 hover:bg-white border border-gray-300"
-              onClick={() => coverInputRef.current?.click()}
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Edit cover photo
-            </Button>
-
-            <input
-              type="file"
-              ref={coverInputRef}
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-            />
-          </div>
 
           {/* Profile Info Section */}
           <div className="relative px-6 pb-6">
@@ -170,7 +147,7 @@ export default function Profile() {
             </div>
 
             <div className="space-y-6 bg-white p-6 col-span-3 rounded-lg shadow-sm border border-gray-200">
-              <div className="grid grid-cols-3 gap-x-6 gap-y-6">
+              <div className="grid grid-cols-3 grid-rows-2 gap-x-6 gap-y-6">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700">
                     Username

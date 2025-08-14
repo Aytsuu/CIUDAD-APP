@@ -2,7 +2,7 @@ import axios from "axios";
 import { supabase } from "@/lib/supabase";
 
 export const api = axios.create({
-  baseURL: "http://192.168.211.121:8000",
+  baseURL: "http://192.168.1.31:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -48,6 +48,5 @@ api.interceptors.request.use(async (config) => {
   } catch (err) {
     console.error("Error in request interceptor:", err);
   }
-
   return config;
 });

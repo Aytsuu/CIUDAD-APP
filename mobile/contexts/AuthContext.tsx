@@ -30,43 +30,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkAuthStatus = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log("🔍 Starting auth status check...");
       
-      // First check if we have a valid Supabase session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session?.access_token) {
-        console.log("❌ No valid Supabase session found");
+        console.log("No valid Supabase session found");
         setUser(null);
         setIsAuthenticated(false);
         return;
       }
 
-      console.log("✅ Found Supabase session, verifying with backend...");
-
-      // If we have a session, verify with backend
       const response = await api.get("authentication/mobile/user/");
-      
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        console.log("✅ Authentication verified successfully:", response.data.user.email);
-      } else {
-        console.warn("⚠️ No user data in response");
-        setUser(null);
-        setIsAuthenticated(false);
-      }
+      setUser(response.data.user);
+      setIsAuthenticated(true);
       
     } catch (error: any) {
-      console.error("Error details:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
+      console.error("Authentication check failed:", error);
       
-      if (error?.response?.status === 401) {
-        // 401 = Authentication failed, clear session
-        console.log("🧹 Clearing invalid session due to 401...");
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
         await supabase.auth.signOut();
       }
       
@@ -79,57 +60,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Listen to Supabase auth changes
   useEffect(() => {
-    console.log("👂 Setting up auth state listener...");
-    let mounted = true; 
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return; // Prevent updates if unmounted
+        console.log("Supabase auth state changed:", event, session?.user?.email);
         
         if (event === 'SIGNED_OUT' || !session) {
-          if (mounted) {
-            setUser(null);
-            setIsAuthenticated(false);
-            setIsLoading(false);
-            setError(null); // Clear any permission errors
-          }
+          setUser(null);
+          setIsAuthenticated(false);
+          setIsLoading(false);
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Add delay to prevent rapid successive calls
-          setTimeout(() => {
-            if (mounted) {
-              checkAuthStatus();
-            }
-          }, 500);
+          // It does not automatically set as authenticated it waits for backend verification
+          if (event === 'TOKEN_REFRESHED') {
+            checkAuthStatus();
+          }
         }
-      } 
+      }
     );
 
-    // Initial auth check with delay
-    setTimeout(() => {
-      if (mounted) {
-        checkAuthStatus();
-      }
-    }, 100);
+    checkAuthStatus();
 
-    return () => {
-      console.log("🧹 Cleaning up auth state listener");
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []); 
+    return () => subscription.unsubscribe();
+  }, [checkAuthStatus]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     clearError();
 
     try {
-      const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+      const { data: _supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (supabaseError) {
-        console.error("❌ Supabase authentication failed:", supabaseError);
         throw new Error(supabaseError.message);
       }
 
@@ -137,16 +100,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
       });
-
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-      } else {
-        throw new Error("No user data in login response");
-      }
       
+      console.log("Login successful:", response.data);
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      console.log("position: ", response.data.user.staff.assignments[0].pos.pos_title)
+      console.log("position: ", response.data.user.staff.assignments[1].pos.pos_title)
     } catch (error: any) {
-      console.error("❌ Login error:", error);
+      console.error("Login error:", error);
       
       await supabase.auth.signOut();
       
@@ -173,20 +134,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       // If signup successful and no confirmation required, user might be auto-logged in
-      // if (!response.data.requiresConfirmation && response.data.user) {
-      //   setUser(response.data.user);
-      //   setIsAuthenticated(true);
-      // }
+      if (!response.data.requiresConfirmation && response.data.user) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+      }
 
-      return { requiresConfirmation: response.data?.requiresConfirmation ?? false };
-    } catch (error: any){
-      console.error("❌ Signup error:", error);
+      return { 
+        requiresConfirmation: response.data?.requiresConfirmation ?? false 
+      };
       
-      // If backend signup fails, clean up supabase user
+    } catch (error: any) {
       try {
         await supabase.auth.signOut();
       } catch (cleanupError) {
-        console.error("❌ Error during signup cleanup:", cleanupError);
+        console.error("Error during signup cleanup:", cleanupError);
       }
       
       const message = error.response?.data?.error || 'Signup failed';
@@ -203,22 +164,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await supabase.auth.signOut();
       
-      try {
-        await api.post('authentication/logout/');
-      } catch (logoutError) {
-        console.warn("⚠️ Backend logout failed:", logoutError);
-        // Continue anyway
-      }
-
-      console.log("✅ Logout successful");
+      await api.post('authentication/logout/');
 
     } catch (error) {
-      console.error('❌ Logout error: ', error);
+      console.error('Logout error: ', error);
     } finally {
       setUser(null);
       setIsAuthenticated(false);
       setIsLoading(false);
-      setError(null);
     }
   };
 
@@ -233,24 +186,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const response = await api.post('authentication/refresh/');
-      
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        console.log("✅ Session refresh successful");
-      } else {
-        throw new Error("No user data in refresh response");
-      }
+      setUser(response.data.user);
+      setIsAuthenticated(true);
       
     } catch (error: any) {
-      console.error('❌ Session refresh failed: ', error);
+      console.error('Session refresh failed: ', error);
       
-      // If refresh fails, sign out completely
       await supabase.auth.signOut();
       setUser(null);
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      const {data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      })
+
+      if (error) {
+        console.error("Google sign-in error", error.message);
+      }
+
+    } catch (error) {
+      console.error("Unexpected error: ", error)
     }
   };
 
@@ -266,6 +227,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signUp,
         refreshSession,
         clearError,
+        loginWithGoogle,
       }}
     >
       {children}

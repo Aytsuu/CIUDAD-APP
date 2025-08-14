@@ -162,12 +162,11 @@ const InfoRow: React.FC<InfoRowProps> = ({
   </View>
 );
 
-// Fixed formatAddress function with better null/undefined handling
 const formatAddress = (address: AddressData | null | undefined): string => {
   if (!address) return "Not provided";
-  
+
   const parts: string[] = [];
-  
+
   // Safely check each property and add to parts if it exists and is not empty
   if (address.street && address.street.trim()) {
     parts.push(address.street.trim());
@@ -184,7 +183,7 @@ const formatAddress = (address: AddressData | null | undefined): string => {
   if (address.province && address.province.trim()) {
     parts.push(address.province.trim());
   }
-  
+
   return parts.length > 0 ? parts.join(", ") : "Not provided";
 };
 
@@ -217,10 +216,10 @@ const safeGetString = (value: any): string => {
 
 // Helper function to safely parse address data
 const safeParseAddress = (addressData: any): AddressData => {
-  if (!addressData || typeof addressData !== 'object') {
+  if (!addressData || typeof addressData !== "object") {
     return {};
   }
-  
+
   return {
     street: safeGetString(addressData.street) || undefined,
     barangay: safeGetString(addressData.barangay) || undefined,
@@ -303,8 +302,10 @@ export const ComplaintRecordView: React.FC = () => {
         gender: complainant.gender || "Not provided",
         customGender: safeGetString(complainant.customGender) || undefined,
         age: safeGetString(complainant.age) || "Not provided",
-        relation_to_respondent: safeGetString(complainant.relation_to_respondent) || "Not provided",
-        contactNumber: safeGetString(complainant.contactNumber) || "Not provided",
+        relation_to_respondent:
+          safeGetString(complainant.relation_to_respondent) || "Not provided",
+        contactNumber:
+          safeGetString(complainant.contactNumber) || "Not provided",
         address: safeParseAddress(complainant.address),
       }));
 
@@ -330,7 +331,10 @@ export const ComplaintRecordView: React.FC = () => {
         incident: {
           type: apiData.comp_incident_type || "Other",
           location: safeGetString(apiData.comp_location) || "Not provided",
-          description: safeGetString(apiData.comp_allegation || apiData.comp_description) || "Not provided",
+          description:
+            safeGetString(
+              apiData.comp_allegation || apiData.comp_description
+            ) || "Not provided",
           date: date || new Date().toISOString().split("T")[0],
           time: time || "00:00",
         },
@@ -500,38 +504,42 @@ export const ComplaintRecordView: React.FC = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
-
-        <Text className="text-lg font-semibold text-gray-900">
-          Complaint Details
-        </Text>
-
-        <View className="flex-row space-x-2">
-          <TouchableOpacity
-            onPress={handleShare}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <Share size={20} className="text-gray-700" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleDownload}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <Download size={20} className="text-gray-700" />
-          </TouchableOpacity>
-        </View>
-      </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Complaint Header */}
-        <View className="bg-white p-4 border-b border-gray-100">
-          <View className="flex-row items-center justify-between mb-3">
+        <View className="bg-white p-4 pt-12 border-b border-gray-100">
+          <View className="relative flex-row items-center justify-center px-4 py-3 bg-white border-b border-gray-100">
+            {/* Left back button - absolute on left */}
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="absolute left-0 w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm"
+            >
+              <ChevronLeft size={24} className="text-gray-700" />
+            </TouchableOpacity>
+
+            {/* Center title */}
+            <Text className="text-lg font-semibold text-gray-900">
+              Complaint Details
+            </Text>
+
+            {/* Right icons - absolute on right */}
+            <View className="absolute right-4 flex-row space-x-2">
+              <TouchableOpacity
+                onPress={handleShare}
+                className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+              >
+                <Share size={20} className="text-gray-700" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDownload}
+                className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+              >
+                <Download size={20} className="text-gray-700" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between mb-3 mt-4">
             <Text className="text-xl font-bold text-gray-900">
               {record.complaintNumber}
             </Text>
@@ -551,14 +559,11 @@ export const ComplaintRecordView: React.FC = () => {
               Last Updated: {formatDate(record.lastUpdated)}
             </Text>
           </View>
-
-          {record.assignedOfficer && (
-            <View className="mt-3 p-3 bg-blue-50 rounded-lg">
-              <Text className="text-sm font-medium text-blue-900">
-                Assigned Officer: {record.assignedOfficer}
-              </Text>
-            </View>
-          )}
+          <View className="mt-3 p-3 bg-blue-50 rounded-lg">
+            <Text className="text-sm font-medium text-blue-900">
+              Assigned Officer: {record.assignedOfficer}
+            </Text>
+          </View>
         </View>
 
         {/* Incident Details */}

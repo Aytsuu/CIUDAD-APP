@@ -67,3 +67,15 @@ class Account(models.Model):
         
     def __str__(self):
         return f"{self.username} (ID: {self.acc_id})"
+    
+    
+class OTPLog(models.Model):
+    phone = models.CharField(max_length=15)
+    otp = models.CharField(max_length=6)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)    
+    
+    def is_valid(self, otp_input):
+        return self.otp == otp_input and now() < self.expires_at
+    
+    

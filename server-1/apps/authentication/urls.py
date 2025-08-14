@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
 from .views import *
 
 urlpatterns = [
@@ -11,8 +12,14 @@ urlpatterns = [
     path('refresh/', RefreshView.as_view(), name='refresh-session'),
     path('upload-image/', UploadImageView.as_view(), name='upload-image'),
     
-    path('forgot-password/send-code/', SendResetCodeView.as_view(), name='send-reset-code'),
-    path('forgot-password/verify-code/', VerifyResetCodeView.as_view(), name='verify-reset-code'),
-    path('forgot-password/reset/', ResetPasswordView.as_view(), name='reset-password'),
-    path('forgot-password/resend-code/', ResendResetCodeView.as_view(), name='resend-reset-code'),
+    # path('forgot-password/send-code/', SendResetCodeView.as_view(), name='send-reset-code'),
+    # path('forgot-password/verify-code/', VerifyResetCodeView.as_view(), name='verify-reset-code'),
+    # path('forgot-password/reset/', ResetPasswordView.as_view(), name='reset-password'),
+    # path('forgot-password/resend-code/', ResendResetCodeView.as_view(), name='resend-reset-code'),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),    
+    ]

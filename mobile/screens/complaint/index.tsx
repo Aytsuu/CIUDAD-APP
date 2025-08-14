@@ -157,7 +157,7 @@ const ComplaintListScreen = () => {
                     >
                       {complainantNames}
                     </Text>
-                    <Text className="text-xs">Pending</Text>
+                    <Text className="text-xs bg-red-500 rounded-full px-2 py-1 text-white animate-ping-slow" >Pending</Text>
                   </View>
 
                   <View className="flex flex-row justify-between">

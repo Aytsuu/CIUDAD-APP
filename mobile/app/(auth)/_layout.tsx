@@ -27,6 +27,7 @@ export default () => {
           <RegistationFormProvider methods={methods}>
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="login/otp" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/register-new" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/respondent" options={{ headerShown: false }} />

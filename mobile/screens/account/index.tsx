@@ -219,7 +219,7 @@ export default () => {
         </AccountSection>
 
         {/* Sign Out */}
-        <View className="mx-4 mb-8">
+        <View className="mx-4 mb-20">
           <TouchableOpacity 
             className="bg-red-50 rounded-xl px-4 py-4"
             onPress={() => handleSignOut()}

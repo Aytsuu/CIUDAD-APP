@@ -29,7 +29,10 @@ const EmailSchema = z.object({
 });
 
 const VerificationSchema = z.object({
-  code: z.string().min(6, "Code must be at least 6 characters").max(6, "Code must be exactly 6 characters"),
+  code: z.string()
+    .min(6, "Code must be exactly 6 characters")
+    .max(6, "Code must be exactly 6 characters")
+    .regex(/^[A-Z0-9]{6}$/, "Code must contain only uppercase letters and numbers"),
 });
 
 const ResetPasswordSchema = z.object({
@@ -52,6 +55,7 @@ export default function ForgotPassword({ onBackToSignIn }: ForgotPasswordProps) 
   const [errorMessage, setErrorMessage] = useState("");
   const [email, setEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
+  
   // Forms for each step
   const emailForm = useForm<z.infer<typeof EmailSchema>>({
     resolver: zodResolver(EmailSchema),
@@ -68,84 +72,120 @@ export default function ForgotPassword({ onBackToSignIn }: ForgotPasswordProps) 
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-const handleSendCode = async (data: any) => {
-  setLoading(true);
-  setErrorMessage("");
+  const handleSendCode = async (data: any) => {
+    setLoading(true);
+    setErrorMessage("");
 
-  try {
-    const result = await api.post('authentication/forgot-password/send-code/', {
-      email: data.email
-    });
-    
-    setEmail(data.email);
-    setCurrentStep('verification');
-  } catch (error) {
-    console.error("Send code error:", error);
-    setErrorMessage(error.message || "Failed to send reset code. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      console.log("[FRONTEND] Sending reset code request for:", data.email);
+      
+      const result = await api.post('authentication/forgot-password/send-code/', {
+        email: data.email
+      });
+      
+      console.log("[FRONTEND] Send code response:", result);
+      
+      setEmail(data.email);
+      setCurrentStep('verification');
+      
+    } catch (error: any) {
+      console.error("[FRONTEND] Send code error:", error);
+      console.error("[FRONTEND] Error response:", error.response?.data);
+      setErrorMessage(error.response?.data?.error || error.message || "Failed to send reset code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleVerifyCode = async (data) => {
-  setLoading(true);
-  setErrorMessage("");
+  const handleVerifyCode = async (data: any) => {
+    setLoading(true);
+    setErrorMessage("");
 
-  try {
-    const result = await api.post('authentication/forgot-password/verify-code/', {
-      email: email,
-      code: data.code
-    });
-    
-    // Store the reset token for the next step
-    setResetToken(result.reset_token);
-    setCurrentStep('reset');
-  } catch (error : any) {
-    console.error("Verify code error:", error);
-    setErrorMessage(error.message || "Invalid or expired code. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      console.log("[FRONTEND] Verifying code for:", email, "with code:", data.code);
+      
+      const result = await api.post('authentication/forgot-password/verify-code/', {
+        email: email,
+        code: data.code
+      });
+      
+      console.log("[FRONTEND] Verify code response:", result);
+      
+      // Check if result.data exists (axios wraps response in data)
+      const responseData = result.data || result;
+      
+      if (responseData.reset_token) {
+        setResetToken(responseData.reset_token);
+        setCurrentStep('reset');
+        console.log("[FRONTEND] Reset token received:", responseData.reset_token.substring(0, 10) + "...");
+      } else {
+        console.error("[FRONTEND] No reset token in response:", responseData);
+        setErrorMessage("Invalid response from server. Please try again.");
+      }
+      
+      // Show debug info if available
+      if (responseData.debug_info) {
+        console.log("[FRONTEND] Debug info:", responseData.debug_info);
+      }
+      
+    } catch (error: any) {
+      console.error("[FRONTEND] Verify code error:", error);
+      console.error("[FRONTEND] Error response:", error.response?.data);
+      setErrorMessage(error.response?.data?.error || error.message || "Invalid or expired code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleResetPassword = async (data: any) => {
-  setLoading(true);
-  setErrorMessage("");
+  const handleResetPassword = async (data: any) => {
+    setLoading(true);
+    setErrorMessage("");
 
-  try {
-    const result = await api.post('authentication/forgot-password/reset/', {
-      email: email,
-      reset_token: resetToken, // You'll need to add this state
-      new_password: data.password
-    });
-    
-    setCurrentStep('success');
-  } catch (error: any) {
-    console.error("Reset password error:", error);
-    setErrorMessage(error.message || "Failed to reset password. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      console.log("[FRONTEND] Resetting password for:", email, "with token:", resetToken.substring(0, 10) + "...");
+      
+      const result = await api.post('authentication/forgot-password/reset/', {
+        email: email,
+        reset_token: resetToken,
+        new_password: data.password
+      });
+      
+      console.log("[FRONTEND] Reset password response:", result);
+      
+      setCurrentStep('success');
+    } catch (error: any) {
+      console.error("[FRONTEND] Reset password error:", error);
+      console.error("[FRONTEND] Error response:", error.response?.data);
+      setErrorMessage(error.response?.data?.error || error.message || "Failed to reset password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleResendCode = async () => {
-  setLoading(true);
-  setErrorMessage("");
+  const handleResendCode = async () => {
+    setLoading(true);
+    setErrorMessage("");
 
-  try {
-    const result = await api.post('authentication/forgot-password/resend-code/', {
-      email: email
-    });
-    
-    // Show success message
-    alert("Code resent successfully!");
-  } catch (error: any) {
-    console.error("Resend code error:", error);
-    setErrorMessage(error.message || "Failed to resend code. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      console.log("[FRONTEND] Resending code for:", email);
+      
+      const result = await api.post('authentication/forgot-password/resend-code/', {
+        email: email
+      });
+      
+      console.log("[FRONTEND] Resend code response:", result);
+      
+      // Show success message
+      alert("Code resent successfully! Please check your email.");
+      
+    } catch (error: any) {
+      console.error("[FRONTEND] Resend code error:", error);
+      console.error("[FRONTEND] Error response:", error.response?.data);
+      setErrorMessage(error.response?.data?.error || error.message || "Failed to resend code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -211,7 +251,7 @@ const handleResendCode = async () => {
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl text-center">Enter Verification Code</CardTitle>
               <CardDescription className="text-center">
-                We've sent a 6-digit code to {email}. Enter it below to continue.
+                We've sent a 6-character code to {email}. Enter it below to continue.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -226,14 +266,23 @@ const handleResendCode = async () => {
                         <FormControl>
                           <Input
                             type="text"
-                            placeholder="Enter 6-digit code"
+                            placeholder="Enter 6-character code (e.g. A1B2C3)"
                             maxLength={6}
                             {...field}
                             disabled={loading}
-                            className="text-center text-lg tracking-wider"
+                            className="text-center text-lg tracking-wider uppercase"
+                            onChange={(e) => {
+                              // Convert to uppercase automatically and filter out invalid characters
+                              const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                              field.onChange(value);
+                            }}
+                            value={field.value}
                           />
                         </FormControl>
                         <FormMessage />
+                        <div className="text-sm text-gray-500 text-center">
+                          Code contains letters and numbers (e.g. A1B2C3)
+                        </div>
                       </FormItem>
                     )}
                   />
