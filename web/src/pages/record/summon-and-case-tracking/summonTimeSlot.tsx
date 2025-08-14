@@ -347,10 +347,10 @@ import { useAddSummonTimeSlots } from "./queries/summonInsertQueries";
 
 type TimeSlot = {
   id: number;
-  displayStart: string; // Formatted for display (12-hour)
-  displayEnd: string;   // Formatted for display (12-hour)
-  rawStart: string;    // Raw value from input (24-hour)
-  rawEnd: string;      // Raw value from input (24-hour)
+  displayStart: string; 
+  displayEnd: string;  
+  rawStart: string;   
+  rawEnd: string;     
 };
 
 const formatTimeTo12Hour = (time24h: string) => {
@@ -373,7 +373,7 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
     defaultValues: {
       start_time: "",
       end_time: "",
-      sd_id: String(sd_id)
+      sd_id: String(sd_id),
     }
   });
 
@@ -400,8 +400,9 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
   const handleSubmit = () => {
     const submissionData = timeSlots.map(slot => ({
       sd_id: Number(sd_id),
-      st_start_time: slot.rawStart, // Using raw 24-hour value
-      st_end_time: slot.rawEnd      // Using raw 24-hour value
+      st_start_time: slot.rawStart, 
+      st_end_time: slot.rawEnd,
+      st_is_booked: false
     }));
 
     console.log("Submitting raw time slots:", submissionData);

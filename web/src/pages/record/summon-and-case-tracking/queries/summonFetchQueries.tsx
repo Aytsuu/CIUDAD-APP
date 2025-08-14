@@ -140,6 +140,7 @@ export type SummonTimeSlots = {
     st_start_time: string;
     st_end_time: string;
     sd_id?: number;
+    st_is_booked?: boolean;
 }
 
 export const useGetSummonTimeSlots = (sd_id: number) => {

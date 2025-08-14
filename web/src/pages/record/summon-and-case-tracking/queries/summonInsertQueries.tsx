@@ -87,6 +87,7 @@ export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
             sd_id: number;
             st_start_time: string;
             st_end_time: string;
+            st_is_booked?: boolean;
         }>) => addSummonTimeSlots(timeSlots),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonTimeSlots'] });

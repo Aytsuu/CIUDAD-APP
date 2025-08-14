@@ -46,7 +46,6 @@ const SummonCalendar = () => {
   const [selectedDateForTimeSlots, setSelectedDateForTimeSlots] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentSdId, setCurrentSdId] = useState<number | undefined>(undefined);
-  const isBooked = false;
 
   const onSuccess = () => {
     toast.success('Dates saved successfully!', {
@@ -375,7 +374,7 @@ const SummonCalendar = () => {
                                 <div
                                   key={slot.st_id}
                                   className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
-                                    isBooked
+                                    slot.st_is_booked
                                       ? "bg-red-50 border-red-200 hover:bg-red-100"
                                       : "bg-green-50 border-green-200 hover:bg-green-100"
                                   }`}
@@ -384,8 +383,8 @@ const SummonCalendar = () => {
                                     <div className="text-sm font-medium">
                                       {formatTime(slot.st_start_time)} - {formatTime(slot.st_end_time)}
                                     </div>
-                                    <div className={`text-xs ${isBooked ? "text-red-600" : "text-green-600"}`}>
-                                      {isBooked ? "Booked" : "Available"}
+                                    <div className={`text-xs ${slot.st_is_booked ? "text-red-600" : "text-green-600"}`}>
+                                      {slot.st_is_booked ? "Booked" : "Available"}
                                     </div>
                                   </div>
                                   <div className="flex gap-1">
@@ -394,7 +393,7 @@ const SummonCalendar = () => {
                                       title="Confirm Delete Time Slot"
                                       description="Are you sure you want to delete this time slot?"
                                       trigger={
-                                        <Button variant="ghost" size="sm" >
+                                        <Button variant="ghost" size="sm" disabled={slot.st_is_booked}>
                                           <Trash2 size={12} color="red" />
                                         </Button>
                                       }
