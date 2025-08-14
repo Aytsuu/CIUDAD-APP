@@ -352,6 +352,10 @@ export default function MaternalIndivRecords() {
     console.log(`Record ${recordId} of type ${recordType} marked as completed`)
   }
 
+  const handlePregnancyLossRecord = (recordId: string, recordType: "Prenatal") => {
+    console.log(`Record ${recordId} of type ${recordType} marked as pregnancy loss`)
+  }
+
   const handleRefetching = async () => {
     try {
       setIsRefetching(true);
@@ -479,6 +483,7 @@ export default function MaternalIndivRecords() {
                 getRecordTypeBadge={getRecordTypeBadge}
                 onCompletePregnancy={handleCompletePregnancy}
                 onCompleteRecord={handleCompleteRecord}
+                onPregnancyLossRecord={handlePregnancyLossRecord}
               />
             )}
           </div>

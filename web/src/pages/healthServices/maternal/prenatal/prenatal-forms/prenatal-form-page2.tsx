@@ -28,7 +28,6 @@ import { showErrorToast } from "@/components/ui/toast"
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 // import { fetchVaccinesWithStock } from "../../../vaccination/restful-api/fetch"
-import { usePrenatalPatientPrevPregnancy } from "../../queries/maternalFetchQueries"
 
 
 export default function PrenatalFormSecPg({
@@ -45,9 +44,6 @@ export default function PrenatalFormSecPg({
   const [labErrors, setLabErrors] = useState<Record<string, string>>({})
   const [ttRecords, setTTRecords] = useState<TetanusToxoidType[]>([])
 
-  const pat_id = form.watch("pat_id")
-
-  const { data: prevPregnancyData, isLoading: prevPregnancyLoading } = usePrenatalPatientPrevPregnancy(pat_id || "")
   // const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock()
 
 
@@ -87,49 +83,15 @@ export default function PrenatalFormSecPg({
     }
   }
 
-
+  // tt status fetching
   useEffect(() => {
-    // previous pregnancy data
-    const currPrevPregnancy = prevPregnancyData?.previous_pregnancy
-    console.log("Current Previous Pregnancy Data:", currPrevPregnancy)
-
-    if(prevPregnancyData && !prevPregnancyLoading){
-      if(currPrevPregnancy) {
-        form.setValue("previousPregnancy.dateOfDelivery", currPrevPregnancy.date_of_delivery || "")
-        form.setValue("previousPregnancy.outcome", currPrevPregnancy.outcome || "")
-        form.setValue("previousPregnancy.typeOfDelivery", currPrevPregnancy.type_of_delivery || "")
-        form.setValue("previousPregnancy.babysWt", currPrevPregnancy.babys_wt || undefined)
-        form.setValue("previousPregnancy.gender", currPrevPregnancy?.gender || "")
-        form.setValue("previousPregnancy.ballardScore", 
-          currPrevPregnancy.ballard_score !== null && currPrevPregnancy.ballard_score !== undefined 
-            ? Number(currPrevPregnancy.ballard_score) 
-            : undefined
-        )
-        form.setValue("previousPregnancy.apgarScore", 
-          currPrevPregnancy?.apgar_score !== null && currPrevPregnancy.apgar_score !== undefined
-            ? Number(currPrevPregnancy.apgar_score)
-            : undefined
-          )
-      } else {
-      console.log("No previous pregnancy data or still loading")
-    }
-    } else {
-      form.setValue("previousPregnancy.dateOfDelivery", "")
-      form.setValue("previousPregnancy.outcome", "")
-      form.setValue("previousPregnancy.typeOfDelivery", "")
-      form.setValue("previousPregnancy.babysWt", 0)
-      form.setValue("previousPregnancy.gender", "")
-      form.setValue("previousPregnancy.ballardScore", undefined)
-      form.setValue("previousPregnancy.apgarScore", undefined)
-    }
-
     const existingTTRecords = form.getValues("prenatalVaccineInfo.ttRecordsHistory") || []
     
     if (existingTTRecords.length > 0 && ttRecords.length === 0) {
       console.log("Loading existing TT records from API:", existingTTRecords)
       setTTRecords(existingTTRecords)
     }
-  }, [prevPregnancyData, ttRecords.length, form])
+  }, [ttRecords.length, form])
 
 
   useEffect(() => {

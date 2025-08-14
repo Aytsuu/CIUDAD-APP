@@ -61,10 +61,10 @@ export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
 	return (
 		<div className="bg-white rounded-sm shadow-md border border-gray-200">
 			<div className="p-4 w-full">
-				<h2 className="text-lg font-semibold mb-3">Pregnancy Summary</h2>
+				<h2 className="text-lg font-semibold mb-3">Overall Pregnancy Summary</h2>
 				<div className="grid grid-cols-2 gap-2 w-full">
 					{/* active */}
-					<div className="flex flex-col text-center rounded-md shadow-md p-4 gap-2">
+					<div className="flex flex-col text-center rounded-md border p-4 gap-2">
 						<span className="flex items-center">
 							<Clock size={16} color="green"/>
 							<h3 className="text-sm font-semibold ml-1">Active Pregnancies</h3>
@@ -76,14 +76,14 @@ export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
 					</div>
 					{/* completed and pregnancy loss*/}
 					<div className="grid grid-rows-2 gap-1">
-						<div className="flex flex-col text-center shadow-md rounded-md p-3">
+						<div className="flex flex-col text-center border rounded-md p-3">
 							<span className="flex items-center">
 								<CheckCircle size={16} color="blue"/>
 								<h3 className="text-sm font-semibold ml-1">Completed Pregnancies</h3>
 							</span>
 							<p className="text-[20px] font-bold">{completedPregnancies}</p>
 						</div>
-						<div className="flex flex-col text-center shadow-md rounded-md p-3">
+						<div className="flex flex-col text-center border rounded-md p-3">
 							<span className="flex items-center">
 								<HeartHandshake size={16} className="text-red-500"/>
 								<h3 className="text-sm font-semibold ml-1">Pregnancy Loss</h3>

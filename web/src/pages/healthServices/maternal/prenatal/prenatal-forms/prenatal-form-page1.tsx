@@ -84,7 +84,7 @@ export default function PrenatalFormFirstPg({
   const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId) //obstetric history
   const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId) //body measurement
   const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId) //tt status
-  const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord && activePregnancyId ?  selectedPatientId : "") //latest prenatal record
+  const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord ?  selectedPatientId : "") //latest prenatal record
  
 
   // This function will only be called by form.handleSubmit if validation passes
@@ -146,22 +146,34 @@ export default function PrenatalFormFirstPg({
   // use to populate form with latest prenatal data if available 
   useEffect(() => { 
     const latestPF = latestPrenatalData?.latest_prenatal_form
-    if (isFromIndividualRecord && latestPrenatalData && !latestPrenatalLoading && activePregnancyId) {
-      setValue("pregnancy_id", latestPrenatalData.pregnancy_id || "")
 
-      if (latestPF) {
+    if (isFromIndividualRecord && latestPrenatalData && !latestPrenatalLoading) {
+      setValue("pregnancy_id", latestPrenatalData.pregnancy_id || "")
+      
+      if(latestPF?.spouse_details) {
+        setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "")
+        setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "")
+        setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "")
+        setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "")
+        setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || "")
+        console.log("Latest Prenatal Form Data:", latestPF)
+      }
+
+      if (latestPF && activePregnancyId) {
         setValue("presentPregnancy.pf_lmp", latestPF.pf_lmp || "")
         setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "")
         setValue("followUpSchedule.aogWeeks", latestPF.prenatal_care_entries[0]?.pfpc_aog_wks || "")
         setValue("followUpSchedule.aogDays", latestPF.prenatal_care_entries[0]?.pfpc_aog_days || "")
 
-        // spouse
-        if(latestPF.spouse_details) {
-          setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "")
-          setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "")
-          setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "")
-          setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "")
-          setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || "")
+        if (latestPF.previous_pregnancy) {
+          const prevPregnancy = latestPF.previous_pregnancy
+          setValue("previousPregnancy.dateOfDelivery", prevPregnancy.date_of_delivery || "")
+          setValue("previousPregnancy.outcome", prevPregnancy.outcome || "")
+          setValue("previousPregnancy.typeOfDelivery", prevPregnancy.type_of_delivery || "")
+          setValue("previousPregnancy.babysWt", prevPregnancy.babys_wt || "")
+          setValue("previousPregnancy.gender", prevPregnancy.gender || "")
+          setValue("previousPregnancy.ballardScore", prevPregnancy.ballard_score || "")
+          setValue("previousPregnancy.apgarScore", prevPregnancy.apgar_score || "")
         }
 
         // guide for 4anc visits
@@ -440,9 +452,6 @@ export default function PrenatalFormFirstPg({
   useEffect(() => {
     const currBodyMeasurement = bodyMeasurementData?.body_measurement
 
-    console.log("PH Time:", phTime)
-    console.log("PH Date:", phDate)
-
     if(currBodyMeasurement && !bmLoading) {
       setValue("motherPersonalInfo.motherWt", currBodyMeasurement.weight || undefined)
       setValue("motherPersonalInfo.motherHt", currBodyMeasurement.height || undefined)
@@ -460,13 +469,13 @@ export default function PrenatalFormFirstPg({
     month: "2-digit",
     day: "2-digit"
   })
-  const phTime = date.toLocaleTimeString("en-PH", {
-    timeZone: "Asia/Manila",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  })
+  // const phTime = date.toLocaleTimeString("en-PH", {
+  //   timeZone: "Asia/Manila",
+  //   hour: "2-digit",
+  //   minute: "2-digit",
+  //   second: "2-digit",
+  //   hour12: true,
+  // })
   // end of ph date and ph time //
 
 

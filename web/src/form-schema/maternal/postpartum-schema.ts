@@ -31,7 +31,7 @@ export const PostPartumSchema = z.object({
         ironSupplement: z.string().date().optional(),
         lochialDischarges: z.string(),
         vitASupplement: z.string().date().optional(),
-        noOfPadPerDay: z.string(),
+        noOfPadPerDay: z.number(),
         mebendazole: z.string().date().optional(),
         dateBfInitiated: z.string().date().optional(),
         timeBfInitiated: z.string().optional(),

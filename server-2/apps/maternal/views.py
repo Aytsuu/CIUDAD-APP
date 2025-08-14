@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from django.db.models import OuterRef, Exists, Prefetch
 from rest_framework.response import Response
+from .serializer import *
 from .serializer import (
     MedicalHistorySerializer, ObstetricalHistorySerializer, PostpartumCompleteSerializer,
     PrenatalCompleteSerializer, PregnancyDetailSerializer,BodyMeasurementReadSerializer,
@@ -330,10 +331,27 @@ def get_latest_patient_prenatal_record(request, pat_id):
         ).order_by('-created_at').first()
 
         if not active_pregnancy:
+            latest_completed_or_pregloss = Pregnancy.objects.filter(
+                pat_id=patient,
+                status__in=['completed', 'pregnancy loss']
+            ).order_by('-created_at').first()
+
+            if latest_completed_or_pregloss:
+                latest_pf_spouse = Prenatal_Form.objects.filter(
+                    pregnancy_id=latest_completed_or_pregloss
+                ).select_related('spouse_id').order_by('created_at').first()
+
+                spouse_data = None
+                if latest_pf_spouse:
+                    spouse_serializer = SpouseCreateSerializer(latest_pf_spouse.spouse_id)
+                    spouse_data = spouse_serializer.data
+
             return Response({
                 'pat_id': pat_id,
                 'message': 'No active pregnancy',
-                'latest_prenatal_form': None
+                'latest_prenatal_form': {
+                    'spouse_details': spouse_data
+                }
             }, status=status.HTTP_200_OK)
 
         latest_pf = Prenatal_Form.objects.filter(

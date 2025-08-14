@@ -48,7 +48,7 @@ export default function PostpartumForm() {
       ttStatus: "",
       ironSupplement: "",
       vitASupplement: "",
-      noOfPadPerDay: "",
+      noOfPadPerDay: 0,
       mebendazole: "",
       dateBfInitiated: "",
       timeBfInitiated: "",

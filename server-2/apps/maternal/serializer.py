@@ -15,6 +15,7 @@ from apps.maternal.models import (
 from apps.administration.models import Staff 
 from apps.healthProfiling.models import PersonalAddress
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, SpouseSerializer    
+from .utils import handle_spouse_logic
 
 
 # serializer for models not in maternal
@@ -214,6 +215,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
     
     # Related nested data
     previous_hospitalizations = serializers.SerializerMethodField()
+    previous_pregnancy = serializers.SerializerMethodField()
     tt_statuses = serializers.SerializerMethodField()
     laboratory_results = serializers.SerializerMethodField()
     anc_visit_guide = serializers.SerializerMethodField()
@@ -229,7 +231,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
             'pregnancy_details', 'patient_record_details', 'spouse_details', 
             'body_measurement_details', 'vital_signs_details', 'follow_up_visit_details',
             'staff_details', 'previous_hospitalizations', 'tt_statuses', 
-            'laboratory_results', 'anc_visit_guide', 'checklist_data', 
+            'laboratory_results', 'anc_visit_guide', 'checklist_data', 'previous_pregnancy',
             'birth_plan_details', 'obstetric_risk_codes', 'prenatal_care_entries'
         ]
 
@@ -254,6 +256,31 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
                 'patient_id': obj.patrec_id.pat_id.pat_id
             }
         return None
+        
+    def get_previous_pregnancy(self, obj):
+        if obj.patrec_id:
+            try:
+                latest_prev_pregnancy = Previous_Pregnancy.objects.filter(
+                    patrec_id=obj.patrec_id
+                ).select_related('patrec_id').order_by('-pfpp_id').first()
+
+                if not latest_prev_pregnancy:
+                    return None
+                
+                return({
+                    'pfpp_id':latest_prev_pregnancy.pfpp_id,
+                    'date_of_delivery': latest_prev_pregnancy.date_of_delivery,
+                    'outcome': latest_prev_pregnancy.outcome,
+                    'type_of_delivery': latest_prev_pregnancy.type_of_delivery,
+                    'babys_wt': latest_prev_pregnancy.babys_wt,
+                    'gender': latest_prev_pregnancy.gender,
+                    'ballard_score': latest_prev_pregnancy.ballard_score,
+                    'apgar_score': latest_prev_pregnancy.apgar_score
+                })
+            
+            except Exception as e:
+                print(f"Error getting previous pregnancy: {e}")
+                return None
 
     def get_vital_signs_details(self, obj):
         if obj.vital_id:
@@ -387,6 +414,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
                 'pforc_postpartum_hemorrhage': risk_codes.pforc_postpartum_hemorrhage
             }
         return None
+
 
 # serializer for Complete Prenatal Form
 class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
@@ -761,51 +789,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Follow-up date cannot be in the past")
         return value
 
-    def handle_spouse_logic(self, patient, spouse_data):
-        if not spouse_data:
-            return None
-        
-        try:
-            patient_serializer = PatientSerializer(patient)
-            spouse_info = patient_serializer.get_spouse_info(patient)
-            
-            print(f"Spouse info for patient {patient.pat_id}: {spouse_info}")
-            
-            # check if spouse exists (either in family composition or medical records)
-            if spouse_info.get('spouse_exists', False):
-                spouse_source = spouse_info.get('spouse_source', '')
-                existing_spouse_info = spouse_info.get('spouse_info', {})
-                
-                if spouse_source == 'family_composition':
-                    # if father exists in family composition, don't create spouse
-                    print("Father exists in family composition, not creating spouse")
-                    return None
-                
-                elif spouse_source in ['prenatal_form', 'postpartum_record']:
-                    # existing spouse in medical records, use it
-                    spouse_id = existing_spouse_info.get('spouse_id')
-                    if spouse_id:
-                        existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
-                        print(f"Using existing spouse from {spouse_source}: {existing_spouse.spouse_id}")
-                        return existing_spouse
-            
-            # check if spouse insertion is allowed
-            if spouse_info.get('allow_spouse_insertion', False):
-                print(f"Creating new spouse. Reason: {spouse_info.get('reason', 'Unknown')}")
-                return Spouse.objects.create(**spouse_data)
-            else:
-                print("Spouse insertion not allowed")
-                return None
-                
-        except Exception as e:
-            print(f"Error in spouse logic: {str(e)}")
-            # fallback: try to create spouse if there's an error
-            try:
-                return Spouse.objects.create(**spouse_data)
-            except Exception as create_error:
-                print(f"Error creating spouse: {str(create_error)}")
-                return None
-
+    # creation of tt_status logic
     def create_tt_status_logic(self, prenatal_form, tt_statuses_data, patient):
         if not tt_statuses_data:
             return
@@ -847,7 +831,8 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f'Error creating TT Record: {str(e)}')
             raise
-    
+
+    # creation of previous hospitalization logic
     def create_previous_hospitalization_logic(self, prenatal_form, previous_hospitalizations_data, patient):
         if not previous_hospitalizations_data:
             return
@@ -887,6 +872,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             print(f'Error creating hospitalization records: {str(e)}')
             raise
 
+    # creation of all records logic
     def create(self, validated_data):
         print(f"Creating prenatal record with validated data: {validated_data}")
         
@@ -995,7 +981,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     print(f"Created body measurement: {body_measurement.bm_id}")
 
                 # handle Spouse logic
-                spouse = self.handle_spouse_logic(patient, spouse_data)
+                spouse = handle_spouse_logic(patient, spouse_data)
                 if spouse:
                     print(f"Using spouse: {spouse.spouse_id}")
                 else:
@@ -1342,51 +1328,6 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         return value
 
 
-    def handle_spouse_logic(self, patient, spouse_data):
-        if not spouse_data:
-            return None
-        
-        try:
-            patient_serializer = PatientSerializer(patient)
-            spouse_info = patient_serializer.get_spouse_info(patient)
-            
-            print(f"Spouse info for patient {patient.pat_id}: {spouse_info}")
-            
-            # check if spouse exists (either in family composition or medical records)
-            if spouse_info.get('spouse_exists', False):
-                spouse_source = spouse_info.get('spouse_source', '')
-                existing_spouse_info = spouse_info.get('spouse_info', {})
-                
-                if spouse_source == 'family_composition':
-                    # if father exists in family composition, don't create spouse
-                    print("Father exists in family composition, not creating spouse")
-                    return None
-                
-                elif spouse_source in ['prenatal_form', 'postpartum_record']:
-                    # existing spouse in medical records, use it
-                    spouse_id = existing_spouse_info.get('spouse_id')
-                    if spouse_id:
-                        existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
-                        print(f"Using existing spouse from {spouse_source}: {existing_spouse.spouse_id}")
-                        return existing_spouse
-            
-            # check if spouse insertion is allowed
-            if spouse_info.get('allow_spouse_insertion', False):
-                print(f"Creating new spouse. Reason: {spouse_info.get('reason', 'Unknown')}")
-                return Spouse.objects.create(**spouse_data)
-            else:
-                print("Spouse insertion not allowed")
-                return None
-                
-        except Exception as e:
-            print(f"Error in spouse logic: {str(e)}")
-            # fallback: try to create spouse if there's an error
-            try:
-                return Spouse.objects.create(**spouse_data)
-            except Exception as create_error:
-                print(f"Error creating spouse: {str(create_error)}")
-                return None
-
     def create(self, validated_data):
         print(f"Creating postpartum record with validated data: {validated_data}")
         
@@ -1490,7 +1431,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 print(f"Created vital signs: {vital_signs.vital_id}")
                 
                 # Handle spouse logic using your existing business rules
-                spouse = self.handle_spouse_logic(patient, spouse_data)
+                spouse = handle_spouse_logic(patient, spouse_data)
                 if spouse:
                     print(f"Using spouse: {spouse.spouse_id}")
                 else:
@@ -1504,22 +1445,8 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                     patrec=patient_record
                 )
                 print(f"Created follow-up visit: {follow_up_visit.followv_id}")
-                
-                # create PostpartumRecord - check if pf_id column exists first
-                # existing_ppr = PostpartumRecord.objects.filter(
-                #     patrec_id__pat_id=patient,
-                #     pregnancy_id=pregnancy,
-                # ).first()
 
-                # if existing_ppr:
-                #     postpartum_history = PostpartumHistory.objects.create(
-                #         ppr_id=existing_ppr,
-                #         created_at=current_datetime,
-                #     )
-                #     return existing_ppr
-                # else:
-
-
+                # create postpartum record
                 postpartum_data = {
                     'patrec_id': patient_record,
                     'vital_id': vital_signs,

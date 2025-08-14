@@ -263,9 +263,6 @@ export default function MaternalAllRecords() {
     { id: "Transient", name: "Transient" },
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-  const activePregnancyPercentage = Math.round(
-    (activePregnanciesCount / data.length) * 100
-  ) || 0;
 
   const filteredData = data.filter((item) => {
     const matchesSearchTerm =
@@ -282,7 +279,6 @@ export default function MaternalAllRecords() {
   });
 
   const totalRecords = filteredData.length;
-  // const activePregnancies = data.filter((item) => item.pregnancy.status === "Active").length;
 
   const totalEntries = Math.ceil(filteredData.length / entriesCount);
   const maternalPagination = filteredData.slice(
@@ -311,7 +307,7 @@ export default function MaternalAllRecords() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <CardLayout
               title="Total Maternal Patients"
-              description="Total number of patients with maternal records"
+              description="Patients with maternal records"
               content={
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
@@ -320,8 +316,8 @@ export default function MaternalAllRecords() {
                       Total patients
                     </span>
                   </div>
-                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                    <WomanRoundedIcon className="h-5 w-5 text-muted-foreground" />
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                    <WomanRoundedIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </div>
               }
@@ -332,17 +328,17 @@ export default function MaternalAllRecords() {
 
             <CardLayout
               title="Active Pregnancies"
-              description="Total patients with active pregnancies"
+              description="Patients with active pregnancies"
               content={
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-2xl font-bold">{activePregnanciesCount}</span>
                     <div className="flex items-center text-xs text-muted-foreground">
-                      <span>{activePregnancyPercentage}% of total {data.length}</span>
+                      <span>Total active pregnancies</span>
                     </div>
                   </div>
-                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                    <PregnantWomanIcon className="h-5 w-5 text-muted-foreground" />
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                    <PregnantWomanIcon fontSize="large" className="text-muted-foreground" />
                   </div>
                 </div>
               }
