@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, Count
 from ..models import Business, BusinessFile
 from apps.account.models import Account
 from ..serializers.business_serializers import *
@@ -64,7 +64,9 @@ class BusinessRespondentTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = BusinessRespondent.objects.all()
+    queryset = BusinessRespondent.objects.annotate(
+      business_count=Count('owned_business')
+    ).filter(business_count__gt=0)
 
     return queryset
 
@@ -157,6 +159,17 @@ class SpecificOwnerView(generics.ListAPIView):
 class BusinessModificationCreateView(generics.CreateAPIView):
   serializer_class = BusinessModificationCreateSerializer
   queryset = BusinessModification.objects.all()
+
+  def create(self, request, *args, **kwargs):
+    serializer = self.get_serializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    instance = serializer.save()
+
+    return Response(
+        BusinessModificationListSerializer(instance).data,
+        status=status.HTTP_200_OK
+    )
+
 
 class BusinessModificationListView(generics.ListAPIView):
   serializer_class = BusinessModificationListSerializer

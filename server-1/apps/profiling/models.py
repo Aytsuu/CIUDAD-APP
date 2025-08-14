@@ -175,7 +175,7 @@ class Business(models.Model):
     bus_date_of_registration = models.DateField(default=date.today)
     bus_date_verified = models.DateField(null=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, related_name="owned_business")
-    br = models.ForeignKey(BusinessRespondent, on_delete=models.CASCADE, null=True)
+    br = models.ForeignKey(BusinessRespondent, on_delete=models.CASCADE, null=True, related_name="owned_business")
     add = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     staff = models.ForeignKey('administration.Staff', null=True, on_delete=models.CASCADE, related_name='businesses')
 

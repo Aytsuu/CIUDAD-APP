@@ -111,14 +111,16 @@ class ARCreateSerializer(serializers.ModelSerializer):
   def _upload_files(self, ar_instance, files):
       ar_files = []
       for file_data in files:
+        folder = "images" if file_data['type'].split("/")[0] == 'image' else "documents"
+
         arf_file = ARFile(
           ar=ar_instance,
           arf_name=file_data['name'],
           arf_type=file_data['type'],
-          arf_path=f"ar/{file_data['name']}",
+          arf_path=f"ar/{folder}/{file_data['name']}",
         )
 
-        url = upload_to_storage(file_data, 'report-bucket', 'ar')
+        url = upload_to_storage(file_data, 'report-bucket', f'ar/{folder}')
         arf_file.arf_url = url
         ar_files.append(arf_file)
 

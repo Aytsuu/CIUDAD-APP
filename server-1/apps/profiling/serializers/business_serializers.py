@@ -152,6 +152,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
   def get_files(self, obj):
     files = [
       {
+        'id': file.bf_id,
         'name': file.bf_name,
         'type': file.bf_type,
         'url': file.bf_url
@@ -189,7 +190,8 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     slug_field='sitio_id',
     write_only=True, 
     required=False)
-  files = FileInputSerializer(write_only=True, many=True, required=False)
+  modification_files = FileInputSerializer(write_only=True, many=True, required=False)
+  edit_files = FileInputSerializer(write_only=True, many=True, required=False)
   respondent = RespondentInputSerializer(write_only=True, required=False)
   rp = serializers.CharField(write_only=True, required=False)
   br = serializers.CharField(write_only=True, required=False)
@@ -199,7 +201,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     model = Business
     fields = ['bus_name', 'rp', 'br', 'respondent', 'bus_gross_sales', 
               'bus_status', 'bus_date_verified','sitio', 'bus_street', 
-              'staff', 'files', 'add']
+              'staff', 'modification_files', 'edit_files', 'add']
 
   @transaction.atomic
   def create(self, validated_data):
@@ -250,14 +252,16 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   def _upload_files(self, business_instance, files):
       business_files = []
       for file_data in files:
+        folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"
+
         business_file = BusinessFile(
           bus=business_instance,
           bf_name=file_data['name'],
           bf_type=file_data['type'],
-          bf_path=f"uploads/{file_data['name']}",
+          bf_path=f"{folder}/{file_data['name']}",
         )
         
-        url = upload_to_storage(file_data, 'business-bucket', 'uploads')
+        url = upload_to_storage(file_data, 'business-bucket', folder)
         business_file.bf_url=url
         business_files.append(business_file)
 
@@ -266,7 +270,8 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   
   @transaction.atomic
   def update(self, instance, validated_data):
-    files = validated_data.pop('files', [])
+    modification_request_files = validated_data.pop('modification_files', [])
+    edit_files = validated_data.pop('edit_files', [])
     sitio = validated_data.pop('sitio', None)
     street = validated_data.pop('bus_street', None)
     staff = validated_data.pop('staff', None)
@@ -300,19 +305,54 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     instance._history_user = staff
     instance.save()
 
-    if files:
+    if modification_request_files:
       # Delete the current files attached to the business
       files_to_delete = BusinessFile.objects.filter(bus=instance)
       for file in files_to_delete:
-        remove_from_storage('business-bucket', f'uploads/{file.bf_path}')
+        folder = "images" if file['type'].split("/")[0] == "image" else "documents"
+        remove_from_storage('business-bucket', f'{folder}/{file.bf_path}')
       files_to_delete.delete()
 
       # Attach the files from the new update
-      for file_data in files:
+      for file_data in modification_request_files:
         file = BusinessFile.objects.filter(bf_name=file_data['name']).first()
         file.bus = instance
         file.save()
+    
+    if edit_files:
+      current_files = BusinessFile.objects.filter(bus_id=instance.bus_id)
 
+      business_files = []
+      files_to_keep = []
+
+      # Check for files to add and keep
+      for file_data in edit_files:
+        if 'file' in file_data:
+          folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"
+
+          business_file = BusinessFile(
+            bus=instance,
+            bf_name=file_data['name'],
+            bf_type=file_data['type'],
+            bf_path=f"{folder}/{file_data['name']}",
+          )
+
+          url = upload_to_storage(file_data, 'business-bucket', folder)
+          business_file.bf_url=url
+          business_files.append(business_file)
+          continue
+
+        files_to_keep.append(file_data['name'])
+      
+      # Consider removed files, should be removed in the db
+      for file in current_files:
+        if file.bf_name not in files_to_keep:
+          file.delete()
+
+      # Bulk create newly added files
+      if len(business_files) > 0:
+        BusinessFile.objects.bulk_create(business_files)
+        
     return instance
 
 class ForSpecificOwnerSerializer(serializers.ModelSerializer):
@@ -365,14 +405,16 @@ class BusinessModificationCreateSerializer(serializers.ModelSerializer):
     if files:
       business_files = []
       for file_data in files:
+        folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"
+
         business_file = BusinessFile(
           bm=instance,
           bf_name=file_data['name'],
           bf_type=file_data['type'],
-          bf_path=f"uploads/{file_data['name']}",
+          bf_path=f"{folder}/{file_data['name']}",
         )
         
-        url = upload_to_storage(file_data, 'business-bucket', 'uploads')
+        url = upload_to_storage(file_data, 'business-bucket', folder)
         business_file.bf_url=url
         business_files.append(business_file)
 
