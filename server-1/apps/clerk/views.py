@@ -447,3 +447,42 @@ def webhook_payment_status(request):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+class SummonDateAvailabilityView(generics.ListCreateAPIView):
+    serializer_class = SummonDateAvailabilitySerializer
+    queryset = SummonDateAvailability.objects.all()
+
+
+class DeleteSummonDateAvailability(generics.RetrieveDestroyAPIView):
+    queryset = SummonDateAvailability.objects.all()
+    serializer_class = SummonDateAvailabilitySerializer
+    lookup_field = 'sd_id'
+
+class SummonTimeAvailabilityView(generics.ListCreateAPIView):
+    serializer_class = SummonTimeAvailabilitySerializer
+    queryset = SummonTimeAvailability.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        if isinstance(request.data, list):
+            serializer = self.get_serializer(data=request.data, many=True)
+            serializer.is_valid(raise_exception=True)
+            SummonTimeAvailability.objects.bulk_create([
+                SummonTimeAvailability(**data) for data in serializer.validated_data
+            ])
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return super().create(request, *args, **kwargs)
+
+class SummonTimeAvailabilityByDateView(generics.ListAPIView):
+    serializer_class = SummonTimeAvailabilitySerializer
+
+    def get_queryset(self):
+        sd_id = self.request.query_params.get('sd_id')
+        queryset = SummonTimeAvailability.objects.all()
+        if sd_id is not None:
+            queryset = queryset.filter(sd_id=sd_id)
+        return queryset
+
+class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
+    queryset = SummonTimeAvailability.objects.all()
+    serializer_class = SummonTimeAvailabilitySerializer
+    lookup_field = 'st_id'

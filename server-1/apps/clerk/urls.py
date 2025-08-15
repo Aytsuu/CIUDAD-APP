@@ -13,6 +13,11 @@ urlpatterns = [
     path('delete-case-supp-doc/<int:csd_id>/', DeleteCaseSuppDocView.as_view(), name='delete-case-supp-doc'),
     path('update-case-supp-doc/<int:csd_id>/', UpdateCaseSuppDocView.as_view(), name='update-case-supp-doc'),
     path('service-charge-request-file/', ServiceChargeRequestFileView.as_view(), name='service-charge-request-file'),
+    path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
+    path('delete-summon-date/<int:sd_id>/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date'),
+    path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),
+    path('summon-time-availability/<int:sd_id>/', SummonTimeAvailabilityByDateView.as_view(), name='summon-time-availability-by-date'),
+    path('delete-summon-time-availability/<int:st_id>/', DeleteSummonTimeAvailabilityView.as_view(), name='delete-summon-time-availability'),
     
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),

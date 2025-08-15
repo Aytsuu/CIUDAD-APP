@@ -204,3 +204,22 @@ class CaseSuppDoc(models.Model):
 
     class Meta:
         db_table = 'case_activity_supp_doc'
+
+
+class SummonDateAvailability(models.Model):
+    sd_id = models.BigAutoField(primary_key=True)
+    sd_date = models.DateField(default=date.today)
+    
+    class Meta:
+        db_table = 'summon_date_availability'
+
+
+class SummonTimeAvailability(models.Model):
+    st_id = models.BigAutoField(primary_key=True)
+    st_start_time = models.TimeField(null=False)
+    st_end_time = models.TimeField(null=False)
+    st_is_booked = models.BooleanField(default=False)
+    sd_id = models.ForeignKey('SummonDateAvailability', on_delete=models.CASCADE, related_name='time_slots')
+
+    class Meta:
+        db_table = 'summon_time_availability'

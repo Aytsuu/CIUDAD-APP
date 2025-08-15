@@ -356,3 +356,15 @@ class FileActionRequestSerializer(serializers.ModelSerializer):
             'file_action_file',
             'comp'
         ]
+
+
+class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonDateAvailability
+        fields = '__all__'
+
+
+class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonTimeAvailability
+        fields = '__all__'
