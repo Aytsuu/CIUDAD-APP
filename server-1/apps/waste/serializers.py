@@ -274,6 +274,33 @@ class WasteReportFileSerializer(serializers.ModelSerializer):
         model = WasteReport_File
         fields = '__all__'
 
+    def _upload_files(self, files, rep_id=None):
+
+        if not rep_id:
+            return
+        
+        try:
+            tracking_instance = WasteReport.objects.get(pk=rep_id)
+        except WasteReport.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {rep_id} does not exist")       
+        
+        rep_files = []
+        for file_data in files:
+            rep_file = WasteReport_File(
+                wrf_name =file_data['name'],
+                wrf_type=file_data['type'],
+                wrf_path=f"illegal-dumping/{file_data['name']}",
+                rep_id=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'report-bucket', 'illegal-dumping')
+            rep_file.wrf_url = url
+            rep_files.append(rep_file)
+
+        if rep_files:
+            WasteReport_File.objects.bulk_create(rep_files)
+
 
 class WasteReportResolveFileSerializer(serializers.ModelSerializer):
     class Meta:

@@ -9,12 +9,6 @@ const IllegalDumpResSchema = z.object({
     rep_matter: z.string().nonempty("Report Matter is required"),
     rep_anonymous: z.boolean(),
     sitio_id: z.string().nonempty("Sitio is required"),
-    rep_image: z.array(z.object({
-        name: z.string(),
-        type: z.string(),
-        path: z.string(),
-        uri: z.string(),
-    })).optional(),
 });
 
 export default IllegalDumpResSchema;
