@@ -3,14 +3,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useCallback, useEffect, useRef } from "react";
-
 import SoapFormFields from "@/components/ui/soap-form";
-
 import { useAuth } from "@/context/AuthContext";
 import { usePhysicalExamQueries } from "../queries.tsx/fetch";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
 import { useSubmitSoapForm } from "../queries.tsx/soap-submission";
-
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../../types";
 
@@ -49,7 +46,6 @@ export default function SoapForm({
   });
 
   const [examSections, setExamSections] = useState<ExamSection[]>([]);
-
   // Add a ref to prevent infinite loops
   const isUpdatingFromChild = useRef(false);
 
@@ -96,19 +92,7 @@ export default function SoapForm({
     }
   }, [initialData, form, patientData]);
 
-  // REMOVE THIS EFFECT - it's causing the infinite loop
-  // useEffect(() => {
-  //   return () => {
-  //     if (onFormDataUpdate) {
-  //       const currentValues = form.getValues();
-  //       onFormDataUpdate({
-  //         ...currentValues,
-  //         selectedMedicines,
-  //       });
-  //     }
-  //   };
-  // }, [form, selectedMedicines, onFormDataUpdate]);
-
+ 
   const hasInvalidQuantities = selectedMedicines.some((med) => {
     const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
     return med.medrec_qty < 1 || (stock && med.medrec_qty > stock.avail);

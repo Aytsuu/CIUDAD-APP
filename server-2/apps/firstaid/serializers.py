@@ -24,6 +24,7 @@ class PatientFirstaidRecordSerializer(serializers.ModelSerializer):
         print(f"firstaid count for patient {obj.pat_id} with status RECORDED: {count}")
         return count
     
+    
 class FirstaidRecordSerializer(serializers.ModelSerializer):
     finv_details = FirstAidInventorySerializer(source='finv', read_only=True)
     patrec_details = PatientRecordSerializer(source='patrec', read_only=True)

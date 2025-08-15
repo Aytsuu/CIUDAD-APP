@@ -238,7 +238,7 @@ class Illness(models.Model):
 # FINDINGS
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
-    assessment_summary =models.TextField(default="")
+    assessment_summary =models.TextField(default="",blank=True,null=True)
     obj_summary = models.TextField(default="")
     subj_summary = models.TextField(default="")
     plantreatment_summary=models.TextField(default="")
@@ -251,7 +251,7 @@ class Finding(models.Model):
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='ill_id')
-    year = models.CharField(max_length=255 null=True, blank=True)
+    year = models.CharField(max_length=255, null=True, blank=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:

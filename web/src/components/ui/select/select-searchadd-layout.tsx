@@ -16,6 +16,7 @@ interface SelectProps {
   onChange: (value: string) => void;
   onAdd?: (newValue: string) => void;
   onDelete?: (id: string) => void;
+  disabled?: boolean;
 }
 
 export function SelectLayoutWithAdd({
@@ -27,6 +28,7 @@ export function SelectLayoutWithAdd({
   onChange,
   onAdd,
   onDelete,
+  disabled = false,
 }: SelectProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -34,23 +36,53 @@ export function SelectLayoutWithAdd({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Only sync search term when value changes from outside
+  // Check if we're in a loading state
+  const isLoading = options.some(option => option.id === "loading");
+
+  // Initialize search term with selected option name only when dropdown is closed
   useEffect(() => {
-    if (!isOpen && value) {
-      const selectedOption = options.find((opt) => opt.id === value);
-      if (selectedOption) {
-        setSearchTerm(selectedOption.name);
+    if (!isOpen) {
+      if (value) {
+        const selectedOption = options.find((opt) => opt.id === value);
+        if (selectedOption && !isLoading) {
+          setSearchTerm(selectedOption.name);
+        }
+      } else {
+        setSearchTerm("");
       }
-    } else if (!value) {
+    }
+  }, [value, options, isOpen, isLoading]);
+
+  // Reset search term when dropdown opens to show all options
+  useEffect(() => {
+    if (isOpen) {
       setSearchTerm("");
     }
-  }, [value, options, isOpen]);
+  }, [isOpen]);
 
-  const filteredOptions = options.filter((option) =>
-    option.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
-  );
+  // Debug logging
+  useEffect(() => {
+    console.log('SelectLayoutWithAdd Debug:', {
+      value,
+      options: options.map(o => ({ id: o.id, name: o.name })),
+      isLoading,
+      searchTerm,
+      isOpen
+    });
+  }, [value, options, isLoading, searchTerm, isOpen]);
+
+  const filteredOptions = isOpen && searchTerm.trim() 
+    ? options.filter((option) => {
+        // Don't filter loading option
+        if (option.id === "loading") return false;
+        return option.name.toLowerCase().includes(searchTerm.toLowerCase().trim());
+      })
+    : options.filter(option => option.id !== "loading"); // Show all non-loading options when no search
 
   const handleSelect = (selectedValue: string) => {
+    // Don't allow selection of loading option
+    if (selectedValue === "loading") return;
+    
     // Check if this is adding a new item
     const existingOption = options.find((opt) => opt.id === selectedValue);
     
@@ -68,12 +100,14 @@ export function SelectLayoutWithAdd({
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (onDelete) {
+    if (onDelete && !isLoading) {
       onDelete(id);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLoading || disabled) return;
+    
     const newValue = e.target.value;
     setSearchTerm(newValue);
     setHighlightedIndex(-1);
@@ -85,7 +119,7 @@ export function SelectLayoutWithAdd({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen) return;
+    if (!isOpen || isLoading || disabled) return;
 
     switch (e.key) {
       case "Enter":
@@ -125,8 +159,12 @@ export function SelectLayoutWithAdd({
   };
 
   const handleTriggerClick = () => {
+    if (disabled || isLoading) return;
+    
     setIsOpen(!isOpen);
     if (!isOpen) {
+      // Clear search term when opening to show all options
+      setSearchTerm("");
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
@@ -149,14 +187,19 @@ export function SelectLayoutWithAdd({
   }, [isOpen]);
 
   const hasExactMatch = options.some(
-    (option) => option.name.toLowerCase() === searchTerm.toLowerCase().trim()
+    (option) => option.name.toLowerCase() === searchTerm.toLowerCase().trim() && option.id !== "loading"
   );
 
-  const shouldShowAddOption = searchTerm.trim() && !hasExactMatch && onAdd;
+  const shouldShowAddOption = searchTerm.trim() && !hasExactMatch && onAdd && !isLoading;
 
-  const displayValue = value 
-    ? options.find((opt) => opt.id === value)?.name || placeholder
-    : placeholder;
+  const getDisplayValue = () => {
+    if (isLoading) return "Loading categories...";
+    if (value) {
+      const selectedOption = options.find((opt) => opt.id === value);
+      return selectedOption?.name || placeholder;
+    }
+    return placeholder;
+  };
 
   return (
     <div className={cn("relative w-full", className)} ref={dropdownRef}>
@@ -164,22 +207,26 @@ export function SelectLayoutWithAdd({
       <button
         type="button"
         onClick={handleTriggerClick}
-        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled || isLoading}
+        className={cn(
+          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          (disabled || isLoading) ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+        )}
       >
         <span className={cn(
           "truncate",
           !value && "text-muted-foreground"
         )}>
-          {displayValue}
+          {getDisplayValue()}
         </span>
         <ChevronDown className={cn(
           "h-4 w-4 opacity-50 transition-transform duration-200",
-          isOpen && "rotate-180"
+          isOpen && !isLoading && "rotate-180"
         )} />
       </button>
 
       {/* Custom Dropdown */}
-      {isOpen && (
+      {isOpen && !isLoading && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
           {/* Search Input */}
           <div className="p-2">
@@ -192,6 +239,7 @@ export function SelectLayoutWithAdd({
               onKeyDown={handleKeyDown}
               className="w-full px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
+              disabled={disabled}
             />
           </div>
 
@@ -211,13 +259,15 @@ export function SelectLayoutWithAdd({
                     className={cn(
                       "flex items-center justify-between rounded-sm px-2 py-1.5 text-sm cursor-pointer",
                       highlightedIndex === index && "bg-accent text-accent-foreground",
+                      option.id === value && "bg-blue-100 dark:bg-blue-900", // Highlight selected option
                       "hover:bg-accent hover:text-accent-foreground"
                     )}
                     onClick={() => handleSelect(option.id)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                   >
                     <span className="flex-1">{option.name}</span>
-                    {onDelete && (
+                    {/* Hide delete button for loading states and show only for valid options */}
+                    {onDelete && !isLoading && option.id !== "loading" && !option.name.toLowerCase().includes('loading') && (
                       <button
                         onClick={(e) => handleDelete(option.id, e)}
                         className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded opacity-70 hover:opacity-100"

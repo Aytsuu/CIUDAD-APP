@@ -480,3 +480,73 @@ class MonthlyMedicineCountAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
+class MonthlyMedicineChart(APIView):
+    def get(self, request, month):
+        try:
+            # Validate month format (YYYY-MM)
+            try:
+                year, month_num = map(int, month.split('-'))
+                if month_num < 1 or month_num > 12:
+                    raise ValueError
+            except ValueError:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid month format. Use YYYY-MM.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get medicine counts for the specified month
+            queryset = MedicineRecord.objects.filter(
+                fulfilled_at__year=year,
+                fulfilled_at__month=month_num
+            ).values(
+                'minv_id__med_id__med_name'  # Assuming this is the path to medicine name
+            ).annotate(
+                count=Count('minv_id__med_id')
+            ).order_by('-count')
+
+            # Convert to dictionary format {medicine_name: count}
+            medicine_counts = {
+                item['minv_id__med_id__med_name']: item['count'] 
+                for item in queryset
+            }
+
+            return Response({
+                'success': True,
+                'month': month,
+                'medicine_counts': medicine_counts,
+                'total_records': sum(medicine_counts.values())
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+ 
+class MedicineTotalCountAPIView(APIView):
+    def get(self, request):
+        try:
+            # Count total medicine request items
+            total_records = MedicineRecord.objects.count()
+
+            # Count records grouped by medicine name
+            items_count = MedicineRecord.objects.values(
+                'minv_id__med_id__med_name'  # Adjust this based on your actual model relationships
+            ).annotate(
+                count=Count('medrec_id')
+            ).order_by('-count')
+            return Response({
+                'success': True,
+                'total_records': total_records,
+                'items_count': items_count
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

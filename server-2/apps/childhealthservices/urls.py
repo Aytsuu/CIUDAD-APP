@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
 
+
 urlpatterns = [
     
     path('records/', ChildHealthRecordsView.as_view(), name='child-health-records'),
@@ -30,12 +31,11 @@ urlpatterns = [
     path('child-immunization-status/',ChildHealthImmunizationStatusListView.as_view(), name='child-immunization-status'),
     path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
     
-    # OPT TRACKING
-    path('opt-tracking/', OPTTrackingViews.as_view(), name='opt-tracking'),
-    path('opt-tracking/monthly/summaries/', MonthlyOPTChildHealthSummariesAPIView.as_view(), name='opt-tracking-detail'),
-    path('opt-tracking/current-last-month/count', ChildHealthCurrentandLastMonthCountAPIView.as_view(), name='opt-tracking-detail'),
-    path('opt-tracking/reports/<str:month>/', MonthlyOPTChildHealthReportAPIView.as_view(), name='opt-tracking-detail'),
-    path('opt-tracking/summary/', OPTSummaryAllMonths.as_view(), name='opt-tracking-monthlyoverall'),
+ 
     
-    path('opt-tracking/summary/<str:month>/', MonthlyOPTSummaryDetailedReport.as_view(), name='opt-tracking-detail-overall'),
-]
+    path('childhealth-totalrecords/', ChildHealthTotalCountAPIView.as_view(), name='monthly_child_health_records'),   
+
+    
+    
+   
+  ]

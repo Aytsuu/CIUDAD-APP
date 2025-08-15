@@ -46,12 +46,11 @@ class VaccineListView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         vac_name = request.data.get('vac_name')
-        age_group_id = request.data.get('ageGroup')  # this must match the field name in your model
 
         # Check if vaccine already exists for that age group
-        if VaccineList.objects.filter(vac_name__iexact=vac_name, ageGroup_id=age_group_id).exists():
+        if VaccineList.objects.filter(vac_name__iexact=vac_name).exists():
             return Response(
-                {"detail": "This vaccine alreasdsddy exists for the selected age group."},
+                {"detail": "This vaccine already exists for the selected age group."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

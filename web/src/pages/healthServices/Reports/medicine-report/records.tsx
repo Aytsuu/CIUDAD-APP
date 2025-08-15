@@ -20,7 +20,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select/select";
-import { useMedicineReports } from "./queries/fetchQueries";
+import { useMedicineDetailedReports } from "./queries/fetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { MonthlyMedicineRecord } from "./types";
@@ -44,7 +44,7 @@ export default function MonthlyMedicineDetails() {
   const [currentPage, setCurrentPage] = useState(1);
   const { monthlyrcplist_id, month, monthName, recordCount } = state || {};
 
-  const { data: apiResponse, isLoading, error } = useMedicineReports(month);
+  const { data: apiResponse, isLoading, error } = useMedicineDetailedReports(month);
   const monthlyData = apiResponse?.data as { records: MonthlyMedicineRecord[]; report: any } | undefined;
 
   const records = monthlyData?.records || [];

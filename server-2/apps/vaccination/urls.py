@@ -34,11 +34,15 @@ urlpatterns = [
     path('to-be-administered/', TobeAdministeredVaccinationView.as_view(), name='administered_vaccination'),
     
     path('count-scheduled-vaccinations/', CountScheduledVaccinationView.as_view(), name='count_scheduled_vaccinations'),
+      
+    path('child-vaccination/', BulkVaccinationCreateView.as_view(), name='child-vaccination'),
+    
+    
     path('vaccination-records/monthly/', MonthlyVaccinationSummariesAPIView.as_view(), name='monthly_vaccination_records'),
     path('vaccination-reports/<str:month>/', MonthlyVaccinationRecordsDetailAPIView.as_view(), name='vaccination-reports'),
-    path('month-count/', MonthlyVaccinationCountAPIView.as_view(), name='month-count'),
-  
-    path('child-vaccination/', BulkVaccinationCreateView.as_view(), name='child-vaccination'),
+    path('vaccination-records/monthly/chart/<str:month>/', MonthlyVaccinationChart.as_view(), name='vaccination_records_list'),
+    path('vaccination-totalrecords/', VaccinationTotalCountAPIView.as_view(), name='vaccination_total_count'),
+
     
     
     

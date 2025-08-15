@@ -4,6 +4,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
 import { toTitleCase } from "@/helpers/ToTitleCase";
+import { useQuery,useQueryClient } from "@tanstack/react-query";
 
 interface Option {
   id: string;
@@ -14,15 +15,14 @@ export const useCategoriesMedicine = () => {
   const [categories, setCategories] = useState<Option[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
   // State for delete confirmation dialog
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
-
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const queryClient = useQueryClient();
 
   // State to store the onCategoryAdded callback
   const [onCategoryAddedCallback, setOnCategoryAddedCallback] = useState<((newId: string) => void) | null>(null);
@@ -42,34 +42,41 @@ export const useCategoriesMedicine = () => {
     }
   };
 
-  // GET CATEGORIES
-  const getCategories = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data } = await api2.get("inventory/category/", {
-        params: { cat_type: "Medicine" },
-      });
+  // GET CATEGORIES with react-query
+  const { refetch: getCategories } = useQuery({
+    queryKey: ['medicineCategories'],
+    queryFn: async () => {
+      try {
+        setLoading(true);
+        const { data } = await api2.get("inventory/category/", {
+          params: { cat_type: "Medicine" },
+        });
 
-      if (Array.isArray(data)) {
-        const transformedCategories = data
-          .filter((cat) => cat.cat_type === "Medicine")
-          .map((cat) => ({
-            id: String(cat.cat_id),
-            name: cat.cat_name,
-          }));
+        if (Array.isArray(data)) {
+          const transformedCategories = data
+            .filter((cat) => cat.cat_type === "Medicine")
+            .map((cat) => ({
+              id: String(cat.cat_id),
+              name: cat.cat_name,
+            }));
 
-        setCategories(transformedCategories);
-      } else {
-        console.error("Unexpected data format:", data);
-        setError("Unexpected data format from server");
+          setCategories(transformedCategories);
+          return transformedCategories;
+        } else {
+          console.error("Unexpected data format:", data);
+          setError("Unexpected data format from server");
+          return [];
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Failed to fetch categories");
+        return [];
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch categories");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes stale time
+  });
 
   useEffect(() => {
     getCategories();

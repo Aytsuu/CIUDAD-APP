@@ -7,8 +7,7 @@ import {
   addVaccineIntervals,
   addRoutineFrequency,
   addconvaccine,
-  VaccineType,
-} from "../../restful-api/Antigen/VaccinePostAPI";
+} from "../../restful-api/Antigen/postAPI";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -69,7 +68,7 @@ export const useSubmitVaccine = () => {
   const addRoutineFrequencyMutation = useAddRoutineFrequency();
 
   return useMutation({
-    mutationFn: async (formData: VaccineType) => {
+    mutationFn: async (formData: any) => {
       if (!formData.vaccineName || !formData.ageGroup) {
         throw new Error("Vaccine name and age group are required");
       }
@@ -102,7 +101,7 @@ export const useSubmitVaccine = () => {
       // Handle intervals based on vaccine type
       else if (formData.type === "primary") {
         await Promise.all(
-          (formData.intervals || []).map((interval, i) =>
+          (formData.intervals || []).map((interval:any, i:any) =>
             addVaccineIntervalsMutation.mutateAsync({
               vac_id: vaccineId,
               dose_number: i + 2,

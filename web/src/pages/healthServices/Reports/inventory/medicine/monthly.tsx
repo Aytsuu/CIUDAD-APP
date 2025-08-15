@@ -1,16 +1,15 @@
 // MonthlyMedicineRecords.tsx
 import { useState, useEffect } from "react";
-import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Loader2, Search, ChevronLeft } from "lucide-react";
+import { Loader2, Search, ChevronLeft, Folder } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { MedicineMonthItem } from "./types";
 import { useMedicineMonths } from "./queries/fetch";
+import { MonthInfoCard } from "../../month-folder-comonent";
 
 export default function InventoryMonthlyMedicineRecords() {
   const { showLoading, hideLoading } = useLoading();
@@ -41,60 +40,13 @@ export default function InventoryMonthlyMedicineRecords() {
     else hideLoading();
   }, [isLoading, showLoading, hideLoading]);
 
-  // === Correct this part: unwrap from apiResponse.results ===
   const monthlyData: MedicineMonthItem[] = apiResponse?.results?.data || [];
   const totalMonths: number = apiResponse?.results?.total_months || 0;
   const totalPages = Math.ceil(totalMonths / pageSize);
 
-  // Reset page on search/year change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, yearFilter]);
-
-  const columns: ColumnDef<MedicineMonthItem>[] = [
-    {
-      accessorKey: "month",
-      header: "Month",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {new Date(row.original.month + "-01").toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          })}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "total_medicines",
-      header: "Total Medicines",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.total_items.toLocaleString()}
-        </div>
-      ),
-    },
-
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <Button
-          onClick={() =>
-            navigate("/inventory-monthly-medicine-details", {
-              state: {
-                month: row.original.month,
-                monthName: new Date(row.original.month + "-01").toLocaleString(
-                  "default",
-                  { month: "long", year: "numeric" }
-                ),
-              },
-            })
-          }
-        >
-          View Details
-        </Button>
-      ),
-    },
-  ];
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -106,7 +58,7 @@ export default function InventoryMonthlyMedicineRecords() {
         >
           <ChevronLeft />
         </Button>
-        <div className="flex-col items-center ">
+        <div className="flex-col items-center">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Monthly Medicine Records
           </h1>
@@ -118,15 +70,12 @@ export default function InventoryMonthlyMedicineRecords() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
-      <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
-        <div className="w-full flex flex-col sm:flex-row gap-2">
+      <div className="w-full flex justify-end sm:flex-row gap-2">
+        <div className="sm:flex-row w-[250px] gap-2 mb-2">
           <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-              size={17}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={17} />
             <Input
-              placeholder="Search by month (e.g. 'August 2025')..."
+              placeholder="Search by month (e.g. '2025-08')..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -144,7 +93,7 @@ export default function InventoryMonthlyMedicineRecords() {
               className="w-[70px] h-8"
               value={pageSize}
               onChange={(e) => {
-                const value = parseInt(e.target.value);
+                const value = Number.parseInt(e.target.value);
                 setPageSize(value > 0 ? value : 1);
                 setCurrentPage(1);
               }}
@@ -154,23 +103,45 @@ export default function InventoryMonthlyMedicineRecords() {
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
+        <div className="bg-white w-full p-6">
           {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+            <div className="w-full h-[200px] flex text-gray-500 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Loading...</span>
             </div>
+          ) : monthlyData.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {monthlyData.map((monthItem) => (
+                <MonthInfoCard 
+                  key={monthItem.month} 
+                  monthItem={monthItem}
+                  navigateTo={{
+                    path: "/inventory-monthly-medicine-details",
+                    state: {
+                      month: monthItem.month,
+                      monthName: new Date(monthItem.month + "-01").toLocaleString("default", {
+                        month: "long",
+                        year: "numeric",
+                      })
+                    }
+                  }}
+                  className="[&_.icon-gradient]:from-yellow-400 [&_.icon-gradient]:to-orange-500 [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700"
+                />
+              ))}
+            </div>
           ) : (
-            <DataTable columns={columns} data={monthlyData} />
+            <div className="w-full h-[200px] flex flex-col text-gray-500 items-center justify-center">
+              <Folder className="w-12 h-12 text-gray-300 mb-3" />
+              <p className="text-md font-medium">No months found</p>
+              <p className="text-sm">Try adjusting your search criteria</p>
+            </div>
           )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray">
-            Showing{" "}
-            {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths}{" "}
-            months
+            Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
           </p>
           {totalPages > 1 && (
             <PaginationLayout

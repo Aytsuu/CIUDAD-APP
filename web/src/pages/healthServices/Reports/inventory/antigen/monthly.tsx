@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
-import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Loader2, Search, ChevronLeft } from "lucide-react";
+import { Loader2, Search, ChevronLeft, Folder } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { VaccineMonthItem } from "./types";
 import { useVaccineMonths } from "./queries/fetch";
+import { MonthInfoCard } from "../../month-folder-comonent";
 
 export default function MonthlyInventoryAntigenRecords() {
   const { showLoading, hideLoading } = useLoading();
@@ -47,48 +46,6 @@ export default function MonthlyInventoryAntigenRecords() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, yearFilter]);
-
-  const columns: ColumnDef<VaccineMonthItem>[] = [
-    {
-      accessorKey: "month",
-      header: "Month",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {new Date(row.original.month + "-01").toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          })}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "total_items",
-      header: "Total Items",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.total_items.toLocaleString()}
-        </div>
-      ),
-    },
-
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <Button
-          onClick={() =>
-            navigate("/inventory-monthly-antigen-details", {
-              state: {
-                month: row.original.month,
-                monthName: row.original.month_name,
-              },
-            })
-          }
-        >
-          View Details
-        </Button>
-      ),
-    },
-  ];
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -145,14 +102,46 @@ export default function MonthlyInventoryAntigenRecords() {
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
+        <div className="bg-white w-full p-6">
           {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+            <div className="w-full h-[200px] flex text-gray-500 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Loading...</span>
             </div>
+          ) : monthlyData.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {monthlyData.map((monthItem) => {
+                const monthName = new Date(monthItem.month + "-01").toLocaleString("default", {
+                  month: "long",
+                  year: "numeric",
+                });
+                
+                return (
+                  <MonthInfoCard 
+                    key={monthItem.month}
+                    monthItem={{
+                      month: monthItem.month,
+                      total_items: monthItem.total_items,
+                      month_name: monthName
+                    }}
+                    navigateTo={{
+                      path: "/inventory-monthly-antigen-details",
+                      state: {
+                        month: monthItem.month,
+                        monthName: monthName
+                      }
+                    }}
+                    className="[&_.icon-gradient]:from-yellow-400 [&_.icon-gradient]:to-orange-500 [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700"
+                  />
+                );
+              })}
+            </div>
           ) : (
-            <DataTable columns={columns} data={monthlyData} />
+            <div className="w-full h-[200px] flex flex-col text-gray-500 items-center justify-center">
+              <Folder className="w-12 h-12 text-gray-300 mb-3" />
+              <p className="text-md font-medium">No months found</p>
+              <p className="text-sm">Try adjusting your search criteria</p>
+            </div>
           )}
         </div>
 

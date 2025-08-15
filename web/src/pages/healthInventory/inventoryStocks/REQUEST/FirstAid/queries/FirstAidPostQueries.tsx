@@ -29,30 +29,12 @@ export const useAddFirstAidInventory = () => {
   });
 };
 
-export const useAddFirstAidTransaction = () => {
-  return useMutation({
-    mutationFn: ({
-      finv_id,
-      string_qty,
-      action,
-      staffId,
-    }: {
-      finv_id: number;
-      string_qty: string;
-      action: string;
-      staffId: string;
-    }) => addFirstAidTransaction(finv_id, string_qty, action, staffId),
-    onError: (error: Error) => {
-      console.error(error.message);
-    },
-  });
-};
+
 
 export const useSubmitFirstAidStock = () => {
   const queryClient = useQueryClient();
   const navigate=useNavigate()
   const { mutateAsync: addFirstAidInventory } = useAddFirstAidInventory();
-  const { mutateAsync: addFirstAidTransaction } = useAddFirstAidTransaction();
   const { mutateAsync: addInventory } = useAddInventory();
 
   return useMutation({
@@ -95,8 +77,8 @@ export const useSubmitFirstAidStock = () => {
 
       await addFirstAidTransaction({
         finv_id: firstAidInventoryResponse.finv_id,
-        string_qty,
-        action: "Added",
+        fat_qty:string_qty,
+        fat_action: "Added",
         staffId,
       });
       queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });

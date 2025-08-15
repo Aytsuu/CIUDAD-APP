@@ -14,7 +14,7 @@ export const getOPTMonths = async (
     params.append('page', page.toString());
     params.append('page_size', pageSize.toString());
 
-    const response = await api2.get<OPTMonthsResponse>(`/child-health/opt-tracking/monthly/summaries/?${params.toString()}`);
+    const response = await api2.get<OPTMonthsResponse>(`/reports/opt-tracking/monthly/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching OPT months:", error);
@@ -34,7 +34,7 @@ export const getMonthlyOPTRecords = async (
   age_range?: string
 ): Promise<OPTMonthlyDetailResponse> => {
   try {
-    const response = await api2.get<OPTMonthlyDetailResponse>(`/child-health/opt-tracking/reports/${month}/`, {
+    const response = await api2.get<OPTMonthlyDetailResponse>(`/reports/opt-tracking/reports/${month}/`, {
       params: {
         page,
         page_size: pageSize,

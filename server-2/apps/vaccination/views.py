@@ -378,36 +378,73 @@ class MonthlyVaccinationRecordsDetailAPIView(APIView):
 
             
 
-class MonthlyVaccinationCountAPIView(APIView):
-    def get(self, request):
+class MonthlyVaccinationChart(APIView):
+    def get(self, request, month):
         try:
-            today = now()
-            current_month_start = today.replace(day=1)
-            last_month_start = (current_month_start - relativedelta(months=1)).replace(day=1)
-            last_month_end = current_month_start - timedelta(days=1)
+            # Validate month format (YYYY-MM)
+            try:
+                year, month_num = map(int, month.split('-'))
+                if month_num < 1 or month_num > 12:
+                    raise ValueError
+            except ValueError:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid month format. Use YYYY-MM.'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Count records for current month
-            current_month_count = VaccinationHistory.objects.filter(
-                created_at__year=current_month_start.year,
-                created_at__month=current_month_start.month
-            ).count()
+            # Get vaccination counts for the specified month
+            queryset = VaccinationHistory.objects.filter(
+                created_at__year=year,
+                created_at__month=month_num
+            ).values(
+                'vacStck_id__vac_id__vac_name'  # Path to vaccine name
+            ).annotate(
+                count=Count('vacStck_id__vac_id')
+            ).order_by('-count')
 
-            # Count records for last month
-            last_month_count = VaccinationHistory.objects.filter(
-                created_at__year=last_month_start.year,
-                created_at__month=last_month_start.month
-            ).count()
+            # Convert to dictionary format {vaccine_name: count}
+            vaccine_counts = {
+                item['vacStck_id__vac_id__vac_name']: item['count'] 
+                for item in queryset
+            }
 
             return Response({
                 'success': True,
-                'current_month': {
-                    'month': current_month_start.strftime('%Y-%m'),
-                    'total_records': current_month_count
-                },
-                'last_month': {
-                    'month': last_month_start.strftime('%Y-%m'),
-                    'total_records': last_month_count
-                }
+                'month': month,
+                'vaccine_counts': vaccine_counts,
+                'total_records': sum(vaccine_counts.values())
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+class VaccinationTotalCountAPIView(APIView):
+    def get(self, request):
+        try:
+            # Count records connected to vacStck_id (and not vac_id)
+            total_records = VaccinationHistory.objects.filter(
+                vacStck_id__isnull=False,
+                vac__isnull=True  # Exclude records with vac_id
+            ).count()
+
+            # Count records grouped by vaccine name from vacStck_id
+            items_count = VaccinationHistory.objects.filter(
+                vacStck_id__isnull=False,
+                vac__isnull=True
+            ).values(
+                'vacStck_id__vac_id__vac_name'  # Adjust based on your model relationships
+            ).annotate(
+                count=Count('vachist_id')
+            ).order_by('-count')
+
+            return Response({
+                'success': True,
+                'total_records': total_records,
+                'items_count': items_count
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

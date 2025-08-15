@@ -1,5 +1,4 @@
-import { getVaccineList } from "@/pages/healthInventory/InventoryList/restful-api/Antigen/VaccineFetchAPI";
-
+import { getVaccineList } from "@/pages/healthInventory/InventoryList/restful-api/Antigen/fetchAPI";
 // services/vaccineService.ts
 export const fetchVaccineList = async () => {
   const data = await getVaccineList();

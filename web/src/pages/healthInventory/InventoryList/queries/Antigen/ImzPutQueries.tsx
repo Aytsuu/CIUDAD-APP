@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateImzSuppliesList } from "../../restful-api/Antigen/ImzPutAPI";
-
+import { updateImzSuppliesList } from "../../restful-api/Antigen/putAPI";
 
 export const useUpdateImzSupply = () => {
     const queryClient = useQueryClient();

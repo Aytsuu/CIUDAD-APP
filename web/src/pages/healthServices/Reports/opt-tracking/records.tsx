@@ -59,7 +59,7 @@ export default function OPTTrackingDetails() {
 
   const [sitioSearch, setSitioSearch] = useState("");
   const [nutritionalStatus, setNutritionalStatus] = useState("");
-  const [pageSize, setPageSize] = useState(13);
+  const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [ageRange, setAgeRange] = useState("");
 
@@ -86,7 +86,7 @@ export default function OPTTrackingDetails() {
 
   const records: OPTChildHealthRecord[] =
     apiResponse?.results?.report_data || [];
-  const totalEntries = apiResponse?.results?.total_entries || 0;
+  const totalEntries = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
 
   useEffect(() => {
@@ -117,7 +117,6 @@ export default function OPTTrackingDetails() {
       Sitio: item.sitio || "N/A",
       Transient: item.transient ? "Yes" : "No",
       "Date of Weighing": item.date_of_weighing || "N/A",
-      "Age at Weighing": item.age_at_weighing || "N/A",
       "Weight (kg)": item.weight?.toString() || "N/A",
       "Height (cm)": item.height?.toString() || "N/A",
       "WFA Status": item.nutritional_status?.wfa || "N/A",
@@ -202,18 +201,7 @@ export default function OPTTrackingDetails() {
             />
           </div>
 
-          <Select value={ageRange} onValueChange={setAgeRange}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Filter by age range" />
-            </SelectTrigger>
-            <SelectContent>
-              {ageRangeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        
         </div>
 
         <div className="flex gap-2 items-center">
@@ -242,7 +230,6 @@ export default function OPTTrackingDetails() {
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
             className="w-20 h-8 bg-white border rounded-md text-sm text-center"
-            readOnly
           />
           <span className="text-sm text-gray-700">entries</span>
         </div>

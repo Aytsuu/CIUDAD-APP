@@ -117,13 +117,13 @@ export const useSubmitSoapForm = () => {
           formData.selectedIllnesses &&
           formData.selectedIllnesses.length > 0
         ) {
-          const medicalHistoryData = formData.selectedIllnesses.map(
+            const medicalHistoryData = formData.selectedIllnesses.map(
             (illnessId) => ({
               patrec: MedicalConsultation?.patrec,
               ill: illnessId,
-              year: new Date().getFullYear(),
+              year: new Date().toISOString(),
             })
-          );
+            );
           await createMedicalHistory(medicalHistoryData);
           medHistoryCreated = true;
         }

@@ -125,30 +125,10 @@ export const VaccineColumns = (
      
       return (
         <div className="flex justify-center gap-2">
-          {/* <DialogLayout
-            trigger={
-              <Button variant="outline">
-                <Edit size={16} />
-              </Button>
-            }
-            mainContent={
-              isVaccine ? (
-                <EditVaccineListModal
-                  vaccineData={vaccine}
-                  setIsDialog={setIsDialog}
-                />
-              ) : (
-                <EditImmunizationSupplies
-                  initialData={vaccine}
-                  setIsDialog={setIsDialog}
-                />
-              )
-            }
-          /> */}
           <Button variant="outline" asChild>
             <Link
-              to={isVaccine ? "/editVaccineModal" : "/editImmunizationSupplies"}
-              state={{ initialData: vaccine }}
+            to={isVaccine ? "/addVaccinationList" : "/editImmunizationSupplies"}
+              state={{ initialData: vaccine, mode:"edit" }}
             >
               <Edit size={16} />
             </Link>

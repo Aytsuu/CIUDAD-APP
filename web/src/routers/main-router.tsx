@@ -15,7 +15,6 @@ import { mom_router } from "./MinutesOfMeetingPage-router";
 import { template_router } from './template-router';
 import { summon_router } from './summon-router';
 import { council_calendar_router } from "./calendarPage-route";
-import { patientQueue } from "./patientsQueue";
 import { healthinventory } from "./inventory";
 import { donation_router } from "./donation-router";
 import { waste_router } from "./waste-router";
@@ -80,7 +79,6 @@ export const main_router: RouteObject[] = [
       ...famplanning_route,
       ...healthinventory,
       ...medicalConsultation,
-      ...patientQueue,
       ...doctorRouting,
       ...summon_router,
       ...familyProfilingRoute,

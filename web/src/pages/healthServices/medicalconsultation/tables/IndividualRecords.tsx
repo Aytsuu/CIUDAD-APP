@@ -16,11 +16,10 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { Patient } from "../../restful-api-patient/type";
-import { MedicalConsultationHistory, previousIllness } from "../types";
+import { MedicalConsultationHistory } from "../types";
 import { usePatientMedicalRecords } from "../queries/fetchQueries";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
-import { ColumnDef } from "@tanstack/react-table";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Badge } from "@/components/ui/badge";
 
@@ -41,14 +40,8 @@ export default function InvMedicalConRecords() {
     }
   }, [patientData]);
 
-  const { data: medicalRecords, isLoading } = usePatientMedicalRecords(
-    patientData?.pat_id
-  );
-  const {
-    data: medHistoryData,
-    isLoading: medHistoryLoading,
-    error,
-  } = usePrenatalPatientMedHistory(patientData?.pat_id);
+  const { data: medicalRecords, isLoading } = usePatientMedicalRecords(patientData?.pat_id);
+  const {data: medHistoryData,isLoading: medHistoryLoading,error,} = usePrenatalPatientMedHistory(patientData?.pat_id);
 
   const getMedicalHistoryCardsData = useCallback(() => {
     if (medHistoryLoading) {

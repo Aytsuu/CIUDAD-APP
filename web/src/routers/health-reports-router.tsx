@@ -17,12 +17,20 @@ import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/Reports/inve
 import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/Reports/inventory/firstaid/records";
 import MonthlyInventoryAntigenRecords from "@/pages/healthServices/Reports/inventory/antigen/monthly";
 import MonthlyInventoryAntigenDetails from "@/pages/healthServices/Reports/inventory/antigen/records"; 
+// OPT
 import MonthlyOPTRecords from "@/pages/healthServices/Reports/opt-tracking/monthly";
 import MonthlyOPTDetails from "@/pages/healthServices/Reports/opt-tracking/records";
-
 import OPTSummariesAllMonths from "@/pages/healthServices/Reports/opt-tracking-summary/monthly";
 import OPTMonthlyDetails from "@/pages/healthServices/Reports/opt-tracking-summary/records";
+import MasterListChildHealthSupplementsReport  from "@/pages/healthServices/Reports/masterlist/opt-supplements-masterliist/masterlist";
+import YearlySemiAnnualOPTRecords from "@/pages/healthServices/Reports/opt-semiannual/yearly";
+import SemiAnnualOPTDetails from "@/pages/healthServices/Reports/opt-semiannual/records";
+import YearlyJanDecOPTRecords from "@/pages/healthServices/Reports/opt-tracking-023mos.tsx/yearly";
+import YearlyJanDecOPTDetails from "@/pages/healthServices/Reports/opt-tracking-023mos.tsx/records";
+
 import path from "path";
+
+
 export const reports_router = [
   {
     path: "/bhwmonthlyreport",
@@ -106,7 +114,29 @@ export const reports_router = [
   {
     path: "/opt-summry-details",
     element: <OPTMonthlyDetails />
+  },
+  {
+    path: "/child-supplements-masterlist",
+    element: <MasterListChildHealthSupplementsReport />
+  },
+  {
+    path: "/semiannual-opt-yearly",
+    element: <YearlySemiAnnualOPTRecords />
+
+  },
+  {
+    path: "/semiannual-opt-yearly/details",
+    element: <SemiAnnualOPTDetails />
+  },
+  {
+    path: "/yearly-opt-records-jantodec",
+    element: <YearlyJanDecOPTRecords />
+  },
+
+  {
+    path  : "/yearly-opt-records-jantodec/details",
+    element: <YearlyJanDecOPTDetails />
   }
 
-   
+
 ];

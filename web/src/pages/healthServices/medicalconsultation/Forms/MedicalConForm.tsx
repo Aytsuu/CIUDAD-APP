@@ -36,6 +36,8 @@ import { createPatientRecord } from "../../restful-api-patient/createPatientReco
 import { createVitalSigns } from "../../vaccination/restful-api/post";
 import { createBodyMeasurement } from "../../childservices/forms/restful-api/createAPI";
 import { createMedicalConsultation } from "../restful-api/post";
+import { useLatestVitals } from "../../vaccination/queries/fetch";
+import { format } from "date-fns";
 
 export default function MedicalConsultationForm() {
   const navigate = useNavigate();
@@ -49,21 +51,31 @@ export default function MedicalConsultationForm() {
     user?.resident?.per?.per_mname || ""
   } ${user?.resident?.per?.per_lname || ""}`.trim();
 
-  // const [patients, setPatients] = useState({
-  //   default: [] as any[],
-  //   formatted: [] as { id: string; name: string }[],
-  // });
-  
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   // const [loading, setLoading] = useState(false);
   const [selectedPatientData, setSelectedPatientData] = useState<any>(
     patientData || null
   );
+
+  const pat_id = selectedPatientId.split(",")[0].trim() || patientData?.pat_id || "";
+  const [previousVitals, setPreviousVitals] = useState<{
+    pulse?: string;
+    temperature?: string;
+    bp_systolic?: string;
+    bp_diastolic?: string;
+    respiratory_rate?: string;
+    created_at?: string;
+  } | null>(null);
+  console.log("Selected Patient ID:", selectedPatientId);
+  console.log("patient id", pat_id);
+
   const [previousMeasurements, setPreviousMeasurements] = useState<{
     height?: number;
     weight?: number;
     created_at?: string;
   } | null>(null);
+
+  const { data: latestVitals } = useLatestVitals(pat_id);
 
   // Initialize form
   const form = useForm<nonPhilHealthType>({
@@ -83,29 +95,14 @@ export default function MedicalConsultationForm() {
     },
   });
 
-  // useEffect(() => {
-  //   if (mode === "fromallrecordtable") {
-  //     const loadPatients = async () => {
-  //       setLoading(true);
-  //       try {
-  //         const data = await fetchPatientRecords();
-  //         setPatients(data);
-  //       } catch (error) {
-  //         toast.error("Failed to load patients");
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     };
-  //     loadPatients();
-  //   }
-  // }, [mode]);
+
+
+ 
 
   useEffect(() => {
     const loadPreviousMeasurements = async () => {
       const patientId =
-        mode === "fromindivrecord"
-          ? patientData?.pat_id
-          : selectedPatientId.split(",")[0].trim();
+           patientData?.pat_id || selectedPatientId.split(",")[0].trim();
 
       if (patientId) {
         try {
@@ -113,6 +110,19 @@ export default function MedicalConsultationForm() {
           if (prevMeasurements) {
             form.setValue("height", prevMeasurements.height);
             form.setValue("weight", prevMeasurements.weight);
+            form.setValue("vital_pulse", latestVitals.pulse?.toString() || "");
+            form.setValue("vital_temp",  latestVitals.temperature?.toString() || "");
+            form.setValue(
+              "vital_bp_systolic",
+              latestVitals.bp_systolic?.toString() || ""
+            );
+            form.setValue(
+              "vital_bp_diastolic",
+              latestVitals.bp_diastolic?.toString() || ""
+            );
+            form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() || "");
+
+
             setPreviousMeasurements(prevMeasurements);
           } else {
             setPreviousMeasurements(null);
@@ -124,7 +134,7 @@ export default function MedicalConsultationForm() {
       }
     };
     loadPreviousMeasurements();
-  }, [patientData, selectedPatientId, mode, form]);
+  }, [form]);
 
   // Handle vital signs warnings using the reusable function
 
@@ -170,11 +180,11 @@ export default function MedicalConsultationForm() {
         }
       }
 
-      const serviceResponse = await createPatientRecord(
-        data.pat_id,
-        "Medical Consultation",
-        staff_id
-      );
+      const serviceResponse = await createPatientRecord({
+        pat_id: data.pat_id,
+        patrec_type: "Medical Consultation",
+        staff: staff_id,
+      });
 
       patrec = serviceResponse.patrec_id;
 
@@ -207,10 +217,9 @@ export default function MedicalConsultationForm() {
         medrec_chief_complaint: data.medrec_chief_complaint,
         created_at: new Date().toISOString(),
         medrec_age: calculateAge(currentPatient?.personal_info?.per_dob),
-        staff:staff_id
+        staff: staff_id,
       });
 
-  
       toast.success("Medical record created successfully");
       navigate(-1);
     } catch (error) {
@@ -294,6 +303,18 @@ export default function MedicalConsultationForm() {
                     <h2 className="font-semibold text-darkBlue1 rounded-md py-2 mt-8 flex gap-2">
                       <BriefcaseMedical /> Vital Sign
                     </h2>
+                    <span className="text-sm text-yellow-600">
+                    {previousVitals?.created_at && (
+                      <div className="text-sm text-yellow-600 italic ">
+                        Note* Previous vitals recorded on:{" "}
+                        {new Date(previousVitals.created_at).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </div>
+                    )}
+</span>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
                       <FormInput
@@ -325,16 +346,41 @@ export default function MedicalConsultationForm() {
                       />
                     </div>
 
+{/* Blood Pressure */}
+<div className="flex flex-col gap-4 pt-3">
+                      <h2 className="font-semibold text-darkBlue1 rounded-md py-2  flex gap-2">
+                        <MdBloodtype size={24} className="text-red-400" /> Blood
+                        Pressure
+                      </h2>
+                      <div className="flex gap-2">
+                        <FormInput
+                          control={form.control}
+                          name="vital_bp_systolic"
+                          label="Systolic"
+                          type="number"
+                          placeholder="range 90-130"
+                          maxLength={3}
+                        />
+                        <FormInput
+                          control={form.control}
+                          name="vital_bp_diastolic"
+                          label="Diastolic"
+                          type="number"
+                          placeholder=" range 60-80"
+                          maxLength={3}
+                        />
+                      </div>
+                    </div>
                     <div>
                       {previousMeasurements?.created_at && (
                         <div className="text-sm text-yellow-600 italic mb-2">
-                          Note* Previous measurements from:{" "}
+                          Note* Previous measurements recorded on:{" "}
                           {new Date(
-                            previousMeasurements.created_at
+                          previousMeasurements.created_at
                           ).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
                           })}
                         </div>
                       )}
@@ -361,31 +407,7 @@ export default function MedicalConsultationForm() {
                       </div>
                     </div>
 
-                    {/* Blood Pressure */}
-                    <div className="flex flex-col gap-4 pt-3">
-                      <h2 className="font-semibold text-darkBlue1 rounded-md py-2  flex gap-2">
-                        <MdBloodtype size={24} className="text-red-400" /> Blood
-                        Pressure
-                      </h2>
-                      <div className="flex gap-2">
-                        <FormInput
-                          control={form.control}
-                          name="vital_bp_systolic"
-                          label="Systolic"
-                          type="number"
-                          placeholder="range 90-130"
-                          maxLength={3}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="vital_bp_diastolic"
-                          label="Diastolic"
-                          type="number"
-                          placeholder=" range 60-80"
-                          maxLength={3}
-                        />
-                      </div>
-                    </div>
+                    
                   </div>
 
                   {/* Chief Complaint */}

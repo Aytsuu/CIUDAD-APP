@@ -9,12 +9,12 @@ import {
   createExclusiveBFCheck,
   createSupplementStatus,
   createChildHealthHistory,
+  processMedicineRequest
 } from "./createAPI";
 import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
 import { AddRecordArgs } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
-import { processMedicineRequest } from "@/pages/healthServices/medicineservices/queries/processSubmit";
 
 export async function updateChildHealthRecord({
   submittedData,
@@ -125,6 +125,7 @@ export async function updateChildHealthRecord({
             })),
           },
           staff || null,
+          current_chhist_id
         );
       }
     }
@@ -365,6 +366,7 @@ export async function updateChildHealthRecord({
           })),
         },
         staff || null,
+        current_chhist_id
       );
     }
 

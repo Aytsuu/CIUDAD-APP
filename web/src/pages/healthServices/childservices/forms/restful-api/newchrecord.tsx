@@ -11,8 +11,8 @@ import {
   createExclusiveBFCheck,
   createChildHealthRecord,
   createChildHealthHistory,
+  processMedicineRequest
 } from "./createAPI";
-import { processMedicineRequest } from "@/pages/healthServices/medicineservices/queries/processSubmit";
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
@@ -250,7 +250,10 @@ export async function addChildHealthRecord({
         })),
       },
       staff || null,
+      current_chhist_id
+
     );
+    
   }
 
   return {

@@ -1,12 +1,10 @@
 import MainInventoryList from "@/pages/healthInventory/InventoryList/tables/MainInventoryList";
 import MainInventoryStocks from "@/pages/healthInventory/inventoryStocks/tables/StocksMain";
 import TransactionMainInventoryList from "@/pages/healthInventory/transaction/tables/TransactionMainInventoryList";
-import MedicineModal from "@/pages/healthInventory/InventoryList/addListModal/MedicineModal";
-import MedicineListEdit from "@/pages/healthInventory/InventoryList/editListModal/EditMedicineModal";
-import CommodityModal from "@/pages/healthInventory/InventoryList/addListModal/CommodityModal";
-import CommodityEditModal from "@/pages/healthInventory/InventoryList/editListModal/EditCommodityModal";
-import FirstAidModal from "@/pages/healthInventory/InventoryList/addListModal/FirstAidModal";
-import FirstAidListEdit from "@/pages/healthInventory/InventoryList/editListModal/EditFirstAidModal";
+// import MedicineModal from "@/pages/healthInventory/InventoryList/addListModal/MedicineModal";
+// import MedicineListEdit from "@/pages/healthInventory/InventoryList/editListModal/EditMedicineModal";
+// import CommodityModal from "@/pages/healthInventory/InventoryList/addListModal/CommodityModal";
+// import CommodityEditModal from "@/pages/healthInventory/InventoryList/editListModal/EditCommodityModal";
 import AddVaccinationList from "@/pages/healthInventory/InventoryList/addListModal/VaccineModal";
 import AddImmunizationSupplies from "@/pages/healthInventory/InventoryList/addListModal/ImmunizationSupplies";
 import EditVaccineModal from "@/pages/healthInventory/InventoryList/editListModal/EditVaccineModal";
@@ -16,7 +14,6 @@ import AddCommodityStock from "@/pages/healthInventory/inventoryStocks/addstocks
 import AddFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/FirstAidStockModal";
 import AddVaccineStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/VacStockModal";
 import AddImzSupplyStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/ImmunizationSupplies";
-import UsedFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/UsedFAModal";
 import WastedAntigen from "@/pages/healthInventory/inventoryStocks/addstocksModal/WastedDoseModal";
 import ArchiveMainInventoryStocks from "@/pages/healthServices/Archive/Inventory/tables/MainArchiveInventoryStocks";
 import MainInventory from "@/pages/healthInventory/inventoryStocks/tables/MainTable";
@@ -27,16 +24,14 @@ export const healthinventory = [
 {path: "/main-inventory",element: <MainInventory />,},
 {path: "/main-inventory-stocks",element: <MainInventoryStocks />},
 {path: "/transactionMainInventoryList",element: <TransactionMainInventoryList />,},
-{path: "/addMedicineList",element: <MedicineModal />,},
-{path: "/addCommodityList", element: <CommodityModal />,},
-{path: "/addFirstAidList",element: <FirstAidModal />,},
+// {path: "/addMedicineList",element: <MedicineModal />,},
+// {path: "/addCommodityList", element: <CommodityModal />,},
 {path: "/addVaccinationList", element:<AddVaccinationList/> },
 {path: "/addImmunizationSupplies", element: <AddImmunizationSupplies />}, 
 {path: "/editVaccineModal", element: <EditVaccineModal />}, 
 {path: "/editImmunizationSupplies", element: <EditImmunizationSupplies />}, 
-{path: "/editCommodityList",element: <CommodityEditModal />,},
-{path: "/editFirstAidList", element: <FirstAidListEdit />,},
-{path: "/editMedicineList", element: <MedicineListEdit />,},
+// {path: "/editCommodityList",element: <CommodityEditModal />,},
+// {path: "/editMedicineList", element: <MedicineListEdit />,},
 
 
 
@@ -46,7 +41,6 @@ export const healthinventory = [
 {path: "/addCommodityStock", element: <AddCommodityStock />}, 
 {path: "/addVaccineStock", element: <AddVaccineStock />}, 
 {path: "/addImzSupplyStock", element: <AddImzSupplyStock />}, 
-{path: "/usedFirstAidStock", element: <UsedFirstAidStock />}, 
 {path: "/wastedAntigen", element: <WastedAntigen />},
 
 

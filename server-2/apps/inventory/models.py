@@ -4,7 +4,8 @@ from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
 from django.core.validators import MinValueValidator
 from apps.administration.models import Staff
-# kene,e
+
+
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
@@ -51,7 +52,14 @@ class CommodityList(models.Model):
         ('New acceptor', 'New acceptor'),
         ('Both', 'Both'),
     ]
+    
+    SEX_TYPE_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Both', 'Both'),
+    ]
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    gender_type = models.CharField(max_length=10, choices=SEX_TYPE_CHOICES, default='Both')
 
     class Meta:
         db_table = 'commodity_list'

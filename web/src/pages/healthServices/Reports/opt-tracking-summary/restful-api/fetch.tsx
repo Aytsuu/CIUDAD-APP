@@ -13,7 +13,7 @@ export const getOPTSummaries = async (
       if (searchQuery) params.append('search', searchQuery);
       
       const response = await api2.get<OPTSummaryResponse>(
-        `/child-health/opt-tracking/summary/`,
+        `/reports/opt-tracking/summary/`,
         { params }
       );
       
@@ -37,7 +37,7 @@ export const getOPTMonthlyReport = async (
 ): Promise<OPTMonthlyDetailsResponse> => {
   try {
     const response = await api2.get<OPTMonthlyDetailsResponse>(
-      `/child-health/opt-tracking/summary/${month}/`,
+      `/reports/opt-tracking/summary/${month}/`,
       { params: { sitio } }
     );
     return response.data;

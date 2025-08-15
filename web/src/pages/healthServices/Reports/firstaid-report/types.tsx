@@ -84,3 +84,14 @@ export interface FirstAidRecordsResponse {
   };
   total_records?: number;
 }
+
+
+
+export type FirstAidChartResponse = {
+  success: boolean;
+  month: string;
+  first_aid_counts: {
+    [firstAidName: string]: number;
+  };
+  total_records: number;
+};

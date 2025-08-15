@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
-import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Loader2, Search, ChevronLeft } from "lucide-react";
+import { Loader2, Search, ChevronLeft, Folder } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { OPTMonthItem } from "./types";
 import { useOPTMonths } from "./queries/fetch";
+import { MonthInfoCard } from "../month-folder-comonent";
 
 export default function MonthlyOPTRecords() {
   const { showLoading, hideLoading } = useLoading();
@@ -48,44 +47,6 @@ export default function MonthlyOPTRecords() {
     setCurrentPage(1);
   }, [searchQuery, yearFilter]);
 
-  const columns: ColumnDef<OPTMonthItem>[] = [
-    {
-      accessorKey: "month",
-      header: "Month",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.month_name}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "record_count",
-      header: "Records Count",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.record_count.toLocaleString()}
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <Button
-          onClick={() =>
-            navigate("/monthly-opt-details", {
-              state: {
-                month: row.original.month,
-                monthName: row.original.month_name,
-              },
-            })
-          }
-        >
-          View Details
-        </Button>
-      ),
-    },
-  ];
-
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -101,7 +62,8 @@ export default function MonthlyOPTRecords() {
             Monthly OPT Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            View child health records grouped by month ({totalMonths} months found)
+            View child health records grouped by month ({totalMonths} months
+            found)
           </p>
         </div>
       </div>
@@ -109,7 +71,10 @@ export default function MonthlyOPTRecords() {
 
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={17} />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2"
+            size={17}
+          />
           <Input
             placeholder="Search by month (e.g. 'August 2025')..."
             className="pl-10 bg-white w-full"
@@ -138,21 +103,48 @@ export default function MonthlyOPTRecords() {
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
+        <div className="bg-white w-full p-6">
           {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+            <div className="w-full h-[200px] flex text-gray-500 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Loading...</span>
             </div>
+          ) : monthlyData.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {monthlyData.map((monthItem) => (
+                <MonthInfoCard
+                  key={monthItem.month}
+                  monthItem={{
+                    month: monthItem.month,
+                    total_items: monthItem.record_count,
+                    month_name: monthItem.month_name,
+                  }}
+                  navigateTo={{
+                    path: "/monthly-opt-details",
+                    state: {
+                      month: monthItem.month,
+                      monthName: monthItem.month_name,
+                    },
+                  }}
+                  className="[&_.icon-gradient]:from-yellow-400 [&_.icon-gradient]:to-orange-500 [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700"
+                />
+              ))}
+            </div>
           ) : (
-            <DataTable columns={columns} data={monthlyData} />
+            <div className="w-full h-[200px] flex flex-col text-gray-500 items-center justify-center">
+              <Folder className="w-12 h-12 text-gray-300 mb-3" />
+              <p className="text-md font-medium">No months found</p>
+              <p className="text-sm">Try adjusting your search criteria</p>
+            </div>
           )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray">
-            Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
+            Showing{" "}
+            {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths}{" "}
+            months
           </p>
           {totalPages > 1 && (
             <PaginationLayout

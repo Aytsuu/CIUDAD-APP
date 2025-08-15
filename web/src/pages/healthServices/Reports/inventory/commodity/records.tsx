@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select/select";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
-import { useMonthlyCommodityRecords } from "./queries/fetch."; // commodity hook here
+import { useMonthlyCommodityRecords } from "./queries/fetch"; // commodity hook here
 import { CommodityInventorySummaryItem } from "./types"; // commodity types here
 
 export default function MonthlyCommodityDetails() {

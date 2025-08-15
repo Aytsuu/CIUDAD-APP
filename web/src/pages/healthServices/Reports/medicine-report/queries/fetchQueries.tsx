@@ -1,30 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMedicineRecords,getMedicineMonthCount,getMedicineReports } from "../restful-api/getAPI";
+import { getMedicineMonthly,getMedicineDetailedReports,getMedicineChart } from "../restful-api/getAPI";
 
 
-export const useMedicineRecords = (yearFilter: string) => {
+export const useMedicineMonthly = (yearFilter: string) => {
   return useQuery({
     queryKey: ["medicineRecords", yearFilter],
     queryFn: () =>
-      getMedicineRecords(yearFilter === "all" ? undefined : yearFilter),
+      getMedicineMonthly(yearFilter === "all" ? undefined : yearFilter),
   });
 };
 
-export const useMedicineReports = (month: string) => {
+
+export const useMedicineDetailedReports = (month: string) => {
   return useQuery({
-    queryKey: ["fareport", month],
+    queryKey: ["medreport", month],
  queryFn: () =>
-  getMedicineReports(month),
+  getMedicineDetailedReports(month),
   });   
-
-
 };
 
-export const MeduseMonthCount = () => {
+export const useMedicineChart = (month: string) => {
   return useQuery({
-    queryKey: ["medmonthCount"],
-    queryFn: getMedicineMonthCount,
-    retry: 3,
-    staleTime: 60 * 1000, // 1 minute
-  })
-}
+    queryKey: ["medicineChart", month],
+    queryFn: () => getMedicineChart(month),
+  });
+};
