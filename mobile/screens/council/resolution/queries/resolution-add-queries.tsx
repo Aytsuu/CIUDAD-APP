@@ -6,7 +6,16 @@ import { resolution_file_create } from "../request/resolution-post-request";
 import { resolution_supp_doc_create } from "../request/resolution-post-request";
 import resolutionFormSchema from "@/form-schema/council/resolutionFormSchema";
 
+type FileData = {
+    name: string;
+    type: string;
+    file?: string;
+};
 
+type ExtendedResolution= z.infer<typeof resolutionFormSchema> & {
+  resFiles: FileData[]; 
+  resSuppDocs: FileData[]; 
+};
 
 
 export const useCreateResolution = (onSuccess?: () => void) => {
@@ -14,44 +23,47 @@ export const useCreateResolution = (onSuccess?: () => void) => {
   const { toast } = useToastContext();
   
   return useMutation({
-    mutationFn: async (values: z.infer<typeof resolutionFormSchema>) => {
+    mutationFn: async (values: ExtendedResolution) => {
       // 1. Create main resolution
       const res_num = await resolution_create(values);
       
       // 2. Create all file resolution
-      if (values.res_file?.length) {
+      if (values.resFiles && values.resFiles.length > 0) {
         await Promise.all(
-          values.res_file.map(file => 
+          values.resFiles.map(file => 
             resolution_file_create({
               res_num,
-              file_data: file
+              file_data: {
+                name: file.name,
+                type: file.type,
+                file: file.file
+              }
+            }).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
             })
           )
         );
-      }
+      }   
 
-      // 3. Create all supporting documents
-      if (values.res_supp_docs && values.res_supp_docs.length > 0) {
-        // Filter out any invalid files before processing
-        const validFiles = values.res_supp_docs.filter(file => 
-          file && (file.uri || file.path) && file.name
+      // 3. Create all supporting documents 
+      if (values.resSuppDocs && values.resSuppDocs.length > 0) {
+        await Promise.all(
+          values.resSuppDocs.map(file => 
+            resolution_supp_doc_create({
+              res_num,
+              file_data: {
+                name: file.name,
+                type: file.type,
+                file: file.file
+              }
+            }).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
+            })
+          )
         );
-        
-        if (validFiles.length > 0) {
-          await Promise.all(
-            validFiles.map(file => 
-              resolution_supp_doc_create({
-                res_num,
-                file_data: file
-              }).catch(error => {
-                console.error("Error creating file entry:", error);
-                // Continue with other files even if one fails
-                return null;
-              })
-            )
-          );
-        }
-      }      
+      }     
       
       return res_num;
     },  

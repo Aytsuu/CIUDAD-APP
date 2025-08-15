@@ -10,8 +10,8 @@ import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
-import DocumentUploader, { DocumentFileType } from '@/components/ui/document-upload';
-import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
+import DocumentPickerComponent, {DocumentItem} from '@/components/ui/document-upload';
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema';
 import { usingUpdateResolution } from './queries/resolution-update-queries';
@@ -41,29 +41,22 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
 
 
     const router = useRouter();
-    const [documentFiles, setDocumentFiles] = useState<DocumentFileType[]>(
+    const [selectedDocuments, setSelectedDocuments] = useState<DocumentItem[]>(
         parsedFiles.map((file: any) => ({
-            id: `existing-${file.rf_id}`,
-            uri: file.rf_url,
-            name: file.rf_name,
-            type: file.rf_type,
-            size: 0, 
-            path: file.rf_path,
-            publicUrl: file.rf_url,
-            status: 'uploaded'
-        })) || []
+        id: `existing-${file.rf_id}`,
+        name: file.rf_name || `file-${file.rf_id}`,
+        type: 'application/pdf',
+        uri: file.rf_url
+        }))
     );
 
-    const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>(
+    const [selectedImages, setSelectedImages] = useState<MediaItem[]>(
         parsedSuppDocs.map((file: any) => ({
         id: `existing-${file.rsd_id}`,
-        name: `existing-${file.rsd_name}`,
-        type: 'image',
-        uri: file.rsd_url,
-        path: '',
-        publicUrl: file.rsd_url,
-        status: 'uploaded'
-        })) || []
+        name: file.rsd_name || `file-${file.rsd_id}`,
+        type: 'image/jpeg',
+        uri: file.rsd_url
+        }))
     );    
     
     // Update mutation
@@ -84,19 +77,32 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             res_title: String(res_title),        
             res_date_approved: String(res_date_approved),
             res_area_of_focus: parsedAreaOfFocus,
-            res_file: [],
         },
     });
 
 
     const onSubmit = (values: z.infer<typeof resolutionFormSchema>) => {
+
+        const resFiles = selectedDocuments.map((docs: any) => ({
+            id: docs.id,
+            name: docs.name,
+            type: docs.type,
+            file: docs.file
+        }))
+
+        const resSuppDocs = selectedImages.map((img: any) => ({
+            id: img.id,
+            name: img.name,
+            type: img.type,
+            file: img.file
+        }))
+
         updateEntry({ 
             ...values, 
-            documentFiles,
-            mediaFiles,
+            resFiles,
+            resSuppDocs,
             res_num: Number(res_num) 
         });
-        console.log("NEW FILES IF EVER: ", documentFiles)
     };
 
     return (
@@ -154,20 +160,23 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
                 />                               
 
                 <View className="pt-5">
-                    <DocumentUploader
-                        mediaFiles={documentFiles}
-                        setMediaFiles={setDocumentFiles}
-                        maxFiles={1}
+                    <Text className="text-[12px] font-PoppinsRegular pb-1">Resolution File</Text>
+                    <DocumentPickerComponent
+                        selectedDocuments={selectedDocuments}
+                        setSelectedDocuments={setSelectedDocuments}
+                        multiple={true} 
+                        maxDocuments={1} 
                     />
                 </View>
 
                 <View className="pt-7">
                     <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Document</Text>
-                    <MultiImageUploader
-                        mediaFiles={mediaFiles}
-                        setMediaFiles={setMediaFiles}
-                        maxFiles={5}
-                    />
+                    <MediaPicker
+                        selectedImages={selectedImages}
+                        setSelectedImages={setSelectedImages}
+                        multiple={true}
+                        maxImages={5}
+                    />  
                 </View>
             </View>
         </_ScreenLayout>
