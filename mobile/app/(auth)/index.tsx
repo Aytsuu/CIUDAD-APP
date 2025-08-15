@@ -1,8 +1,8 @@
 import LoginScreen from "@/screens/auth/login";
 import Business from "../(business)";
-import ResidentRecords from "@/screens/profiling/resident/ResidentRecords";
+import HomeScreen from "@/screens/home";
 
 export default () => {
-    return <ResidentRecords/>
+    return <HomeScreen/>
 }
  

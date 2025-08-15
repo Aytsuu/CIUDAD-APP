@@ -94,9 +94,9 @@ export default function HomeScreen() {
 
   const RenderPage = React.memo(() => (
     <View className="flex-1 mb-16">
-      <View className="px-4 py-3">
+      <View className="px-5 flex-1 justify-center">
         {/* <Text className="font-PoppinsSemiBold text-lg text-blue-500"></Text> */}
-        <Ciudad width={30} height={30}/>
+        <Ciudad width={80} height={70}/>
       </View>
       
       {/* Header Card Section */}
