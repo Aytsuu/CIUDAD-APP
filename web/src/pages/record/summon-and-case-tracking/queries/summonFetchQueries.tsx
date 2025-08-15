@@ -124,7 +124,6 @@ export const useGetSummonTemplate = () => {
 export type SummonDates = {
     sd_id: number;
     sd_date: string;
-    sd_is_checked: boolean;
 }
 
 export const useGetSummonDates = () => {

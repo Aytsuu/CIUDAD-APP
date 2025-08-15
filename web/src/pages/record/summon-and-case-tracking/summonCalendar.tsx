@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Container, CardHeader } from "@mui/material";
 import { Button } from "@/components/ui/button/button";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import format from "date-fns/format";
-import parse from "date-fns/parse";
-import startOfWeek from "date-fns/startOfWeek";
-import getDay from "date-fns/getDay";
-import { enUS } from "date-fns/locale";
+import { Calendar } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card/card";
@@ -22,23 +17,8 @@ import { formatTime } from "@/helpers/timeFormatter";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteSummonTime } from "./queries/summonDeleteQueries";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const getStartOfWeek = (date: Date) => {
-  return startOfWeek(date, { weekStartsOn: 1 });
-};
-
-const getWeekDay = (date: Date) => {
-  return getDay(date) === 0 ? 6 : getDay(date) - 1;
-};
-
-const locales = { "en-US": enUS };
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: getStartOfWeek,
-  getDay: getWeekDay,
-  locales,
-});
+import { formatDate } from "@/helpers/dateHelper";
+import { localizer } from "@/helpers/calendarDateHelper";
 
 const SummonCalendar = () => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -191,7 +171,7 @@ const SummonCalendar = () => {
       if (!isStillSelected) {
         oldDates.push({
           sd_id: dbDate.sd_id,
-          sd_is_checked: false, // Since it's not in tempSelectedDates, it's unchecked
+          sd_is_checked: false, 
         });
       }
     });
@@ -252,9 +232,9 @@ const SummonCalendar = () => {
   };
 
   const dayHeaderFormat = (date: Date) => {
-    return format(date, "EEE", { locale: enUS });
+    return date.toLocaleString('en-US', { weekday: 'short' });
   };
-
+  // Returns "Mon", "Tue", etc.
   if (isLoadingDates) {
     return (
       <Box mb={2} component="main" sx={{ flexGrow: 1, py: 1 }}>
@@ -346,10 +326,10 @@ const SummonCalendar = () => {
                     <div className="text-sm font-medium text-center p-3 bg-blue-50 rounded-lg border">
                       <div className="flex items-center justify-center gap-2 text-blue-700">
                         <CalendarIcon size={16} />
-                        <span>{format(selectedDateForTimeSlots, "EEEE")}</span>
+                        <span>{selectedDateForTimeSlots.toLocaleString('default', { weekday: 'long' })}</span>
                       </div>
                       <div className="text-lg font-semibold text-blue-800 mt-1">
-                        {format(selectedDateForTimeSlots, "MMMM d, yyyy")}
+                        {formatDate(selectedDateForTimeSlots, true)}
                       </div>
                     </div>
 
@@ -420,7 +400,7 @@ const SummonCalendar = () => {
                           <Plus size={14} className="mr-2" /> Add Time Slot
                         </Button>
                       }
-                      title={`Add new time slots for ${format(selectedDateForTimeSlots, "MMMM d, yyyy")}`}
+                      title={`Add new time slots for ${formatDate(selectedDateForTimeSlots, true)}`}
                       description="Add or manage time slots for the selected date"
                       mainContent={
                         <SummonTimeSlot
