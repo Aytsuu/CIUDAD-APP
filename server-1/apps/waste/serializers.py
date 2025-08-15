@@ -296,11 +296,11 @@ class WasteReportResolveFileSerializer(serializers.ModelSerializer):
             rep_rslv_file = WasteReportResolve_File(
                 wrsf_name =file_data['name'],
                 wrsf_type=file_data['type'],
-                wrsf_path=f"uploads/{file_data['name']}",
+                wrsf_path=f"illegal-dumping/{file_data['name']}",
                 rep_id=tracking_instance  # THIS SETS THE FOREIGN KEY
             )
 
-            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            url = upload_to_storage(file_data, 'report-bucket', 'illegal-dumping')
             rep_rslv_file.wrsf_url = url
             rep_rslv_files.append(rep_rslv_file)
 

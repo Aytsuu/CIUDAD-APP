@@ -94,6 +94,8 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
                         activeVideoId={activeVideoId}
                         setMediaFiles={setMediaFiles}
                         setActiveVideoId={setActiveVideoId}
+                        acceptableFiles='document'
+                        maxFiles={1}
                     />                             
 
                     {/*Resolution Area of Focus*/}

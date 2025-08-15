@@ -89,11 +89,11 @@ class ResolutionFileSerializer(serializers.ModelSerializer):
             rf_file = ResolutionFile(
                 rf_name=file_data['name'],
                 rf_type=file_data['type'],
-                rf_path=f"uploads/{file_data['name']}",
+                rf_path=f"documents/{file_data['name']}",
                 res_num=tracking_instance  # THIS SETS THE FOREIGN KEY
             )
 
-            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            url = upload_to_storage(file_data, 'council-res-bucket', 'documents')
             rf_file.rf_url = url
             rf_files.append(rf_file)
 
