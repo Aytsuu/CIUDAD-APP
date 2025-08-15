@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Box, Container, CardHeader, Skeleton } from "@mui/material";
+import { Box, Container, CardHeader } from "@mui/material";
 import { Button } from "@/components/ui/button/button";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import format from "date-fns/format";
 import parse from "date-fns/parse";
 import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
-import { enUS } from "date-fns/locale"; 
+import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card/card";
@@ -21,13 +21,14 @@ import { Label } from "@/components/ui/label";
 import { formatTime } from "@/helpers/timeFormatter";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteSummonTime } from "./queries/summonDeleteQueries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const getStartOfWeek = (date: Date) => {
-  return startOfWeek(date, { weekStartsOn: 1 }); 
+  return startOfWeek(date, { weekStartsOn: 1 });
 };
 
 const getWeekDay = (date: Date) => {
-  return getDay(date) === 0 ? 6 : getDay(date) - 1; 
+  return getDay(date) === 0 ? 6 : getDay(date) - 1;
 };
 
 const locales = { "en-US": enUS };
@@ -48,23 +49,27 @@ const SummonCalendar = () => {
   const [currentSdId, setCurrentSdId] = useState<number | undefined>(undefined);
 
   const onSuccess = () => {
-    toast.success('Dates saved successfully!', {
+    toast.success("Dates saved successfully!", {
       icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      duration: 2000
+      duration: 2000,
     });
   };
 
   const { mutate: addDate, isPending: isPendingAdd } = useAddSummonDates(onSuccess);
   const { data: summonDates = [], isLoading: isLoadingDates } = useGetSummonDates();
-  const { mutate: deleteTimeSlot, isPending: isPendingDelete } = useDeleteSummonTime();
+  const { mutate: deleteTimeSlot } = useDeleteSummonTime();
 
   // Fetch time slots only when we have a valid sd_id
-  const { data: fetchedTimeSlots = [], isLoading: isLoadingTimeSlots, refetch: refetchTimeSlots } = useGetSummonTimeSlots(currentSdId || 0);
+  const {
+    data: fetchedTimeSlots = [],
+    isLoading: isLoadingTimeSlots,
+    refetch: refetchTimeSlots,
+  } = useGetSummonTimeSlots(currentSdId || 0);
 
   // Update currentSdId when selected date changes
   useEffect(() => {
     if (selectedDateForTimeSlots) {
-      const found = summonDates.find(item => {
+      const found = summonDates.find((item) => {
         const dbDate = new Date(item.sd_date);
         return (
           dbDate.getFullYear() === selectedDateForTimeSlots.getFullYear() &&
@@ -81,8 +86,8 @@ const SummonCalendar = () => {
   // Initialize selected dates from summonDates
   useEffect(() => {
     if (summonDates.length > 0) {
-      const dates = summonDates.map(item => {
-        const [year, month, day] = item.sd_date.split('-').map(Number);
+      const dates = summonDates.map((item) => {
+        const [year, month, day] = item.sd_date.split("-").map(Number);
         return new Date(year, month - 1, day);
       });
       setSelectedDates(dates);
@@ -100,34 +105,41 @@ const SummonCalendar = () => {
   const handleDateSelection = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (!editMode) {
       if (date < today) return;
-      
-      const isSelectedDate = selectedDates.some(d => 
-        d.getFullYear() === date.getFullYear() &&
-        d.getMonth() === date.getMonth() &&
-        d.getDate() === date.getDate()
+
+      const isSelectedDate = selectedDates.some(
+        (d) =>
+          d.getFullYear() === date.getFullYear() &&
+          d.getMonth() === date.getMonth() &&
+          d.getDate() === date.getDate()
       );
 
       if (isSelectedDate) {
         setSelectedDateForTimeSlots(date);
       } else {
-        toast.info('Enable this date to view and add time slots.');
+        toast.info("Enable this date to view and add time slots.", {
+          duration: 1000
+        });
       }
     } else {
-      setTempSelectedDates(prev => {
-        const isSelected = prev.some(d => 
-          d.getFullYear() === date.getFullYear() &&
-          d.getMonth() === date.getMonth() &&
-          d.getDate() === date.getDate()
+      setTempSelectedDates((prev) => {
+        const isSelected = prev.some(
+          (d) =>
+            d.getFullYear() === date.getFullYear() &&
+            d.getMonth() === date.getMonth() &&
+            d.getDate() === date.getDate()
         );
-        
-        return isSelected 
-          ? prev.filter(d => 
-              !(d.getFullYear() === date.getFullYear() &&
-                d.getMonth() === date.getMonth() &&
-                d.getDate() === date.getDate())
+
+        return isSelected
+          ? prev.filter(
+              (d) =>
+                !(
+                  d.getFullYear() === date.getFullYear() &&
+                  d.getMonth() === date.getMonth() &&
+                  d.getDate() === date.getDate()
+                )
             )
           : [...prev, new Date(date)];
       });
@@ -140,15 +152,65 @@ const SummonCalendar = () => {
   };
 
   const handleSave = () => {
-    const formattedDates = tempSelectedDates.map(date => localDateFormatter(date));
-    addDate({ 
-      formattedDates 
-    }, {
-      onSuccess: () => {
-        setSelectedDates([...tempSelectedDates]);
-        setEditMode(false);
+    // Prepare the payloads
+    const newDates: Date[] = [];
+    const oldDates: { sd_id: number; sd_is_checked: boolean }[] = [];
+
+    tempSelectedDates.forEach((date) => {
+      // Check if this date exists in the stored dates
+      const existingDate = summonDates.find((item) => {
+        const dbDate = new Date(item.sd_date);
+        return (
+          dbDate.getFullYear() === date.getFullYear() &&
+          dbDate.getMonth() === date.getMonth() &&
+          dbDate.getDate() === date.getDate()
+        );
+      });
+
+      if (existingDate) {
+        oldDates.push({
+          sd_id: existingDate.sd_id,
+          sd_is_checked: true, // Since it's in tempSelectedDates, it's checked
+        });
+      } else {
+        // New date - add to newDates payload
+        newDates.push(date);
       }
     });
+
+    // Also need to handle dates that were unchecked (exist in DB but not in tempSelectedDates)
+    summonDates.forEach((dbDate) => {
+      const date = new Date(dbDate.sd_date);
+      const isStillSelected = tempSelectedDates.some(
+        (d) =>
+          d.getFullYear() === date.getFullYear() &&
+          d.getMonth() === date.getMonth() &&
+          d.getDate() === date.getDate()
+      );
+
+      if (!isStillSelected) {
+        oldDates.push({
+          sd_id: dbDate.sd_id,
+          sd_is_checked: false, // Since it's not in tempSelectedDates, it's unchecked
+        });
+      }
+    });
+
+    // Format newDates for API
+    const formattedNewDates = newDates.map((date) => localDateFormatter(date));
+
+    addDate(
+      {
+        newDates: formattedNewDates,
+        oldDates: oldDates,
+      },
+      {
+        onSuccess: () => {
+          setSelectedDates([...tempSelectedDates]);
+          setEditMode(false);
+        },
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -157,60 +219,41 @@ const SummonCalendar = () => {
 
   const renderDateCell = (date: Date) => {
     const isSelected = editMode
-      ? tempSelectedDates.some(d => 
-          d.getFullYear() === date.getFullYear() &&
-          d.getMonth() === date.getMonth() &&
-          d.getDate() === date.getDate()
+      ? tempSelectedDates.some(
+          (d) =>
+            d.getFullYear() === date.getFullYear() &&
+            d.getMonth() === date.getMonth() &&
+            d.getDate() === date.getDate()
         )
-      : selectedDates.some(d => 
-          d.getFullYear() === date.getFullYear() &&
-          d.getMonth() === date.getMonth() &&
-          d.getDate() === date.getDate()
+      : selectedDates.some(
+          (d) =>
+            d.getFullYear() === date.getFullYear() &&
+            d.getMonth() === date.getMonth() &&
+            d.getDate() === date.getDate()
         );
 
     return (
-      <div 
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          padding: "2px",
-          backgroundColor: isSelected ? "rgba(63, 81, 181, 0.1)" : "transparent",
-          borderRadius: "4px",
-          cursor: "pointer" 
-        }}
+      <div
+        className={`absolute inset-0 flex justify-between items-start p-1 rounded cursor-pointer ${
+          isSelected ? "bg-indigo-100" : ""
+        }`}
         onClick={() => handleDateSelection(date)}
       >
         {editMode && (
-          <Checkbox 
-            checked={isSelected} 
-            onChange={() => handleDateSelection(date)}
-            disabled={isPendingAdd}
-          />
+          <Checkbox checked={isSelected} onChange={() => handleDateSelection(date)} disabled={isPendingAdd} className="mt-1"/>
         )}
-        <span style={{
-          margin: "4px 6px 0 0",
-          fontSize: "0.875rem",
-          fontWeight: isSelected ? "bold" : "normal",
-          color: isSelected ? "#3f51b5" : "inherit"
-        }}>
-        </span>
+        <span
+          className={`ml-auto mt-1 text-[0.875rem] ${
+            isSelected ? "font-bold text-indigo-700" : "font-normal"
+          }`}
+        ></span>
       </div>
     );
   };
 
   const dayHeaderFormat = (date: Date) => {
-    return format(date, 'EEE', { locale: enUS });
+    return format(date, "EEE", { locale: enUS });
   };
-
-  const handleDeleteTimeSlot = (st_id: number) => {
-      deleteTimeSlot(st_id);
-  }
 
   if (isLoadingDates) {
     return (
@@ -218,24 +261,18 @@ const SummonCalendar = () => {
         <Container>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2">
-              <Card>
-                <CardHeader 
-                  title="Summon Dates"
-                  action={<Skeleton variant="rounded" width={100} height={36} />}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '16px 24px'
-                  }}
-                />
-                <CardContent>
-                  <Skeleton variant="rounded" height={900} width="100%" />
-                </CardContent>
-              </Card>
+              <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-lg font-semibold">Summon Dates</span>
+                  <Skeleton className="rounded w-[100px] h-[36px]" />
+                </div>
+                <Skeleton className="rounded w-full h-[900px]" />
+              </div>
             </div>
             <div className="lg:col-span-1">
-              <Skeleton variant="rounded" height={400} width="100%" />
+              <div className="bg-white rounded-xl shadow p-6">
+                <Skeleton className="rounded w-full h-[400px]" />
+              </div>
             </div>
           </div>
         </Container>
@@ -244,72 +281,46 @@ const SummonCalendar = () => {
   }
 
   return (
-    <Box mb={2} component="main" sx={{ flexGrow: 1, py: 1 }}>
+    <Box className="mb-2 flex-grow py-1" component="main">
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Calendar Area */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader 
-                title="Summon Dates"
+            <Card className="bg-white rounded-xl shadow">
+              <CardHeader title="Summon Dates"
                 action={
                   editMode ? (
-                    <div className='flex flex-grid gap-3'>
-                      <Button 
-                        onClick={handleSave}
-                        disabled={isPendingAdd}
-                      >
+                    <div className="flex gap-3">
+                      <Button onClick={handleSave} disabled={isPendingAdd}>
                         {isPendingAdd ? "Saving..." : "Save"}
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={handleCancel}
-                        disabled={isPendingAdd}
-                      >
+                      <Button variant="outline" onClick={handleCancel} disabled={isPendingAdd}>
                         Cancel
                       </Button>
                     </div>
                   ) : (
-                    <Button onClick={handleEditClick}>
-                      Edit
-                    </Button>
+                    <Button onClick={handleEditClick}>Edit</Button>
                   )
                 }
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 24px'
-                }}
+                className="flex items-center justify-between px-6 py-4"
               />
               <CardContent>
                 <div className="mb-4 text-sm text-gray-600">
-                  {editMode 
-                    ? "Select dates to add to your summon calendar" 
+                  {editMode
+                    ? "Select dates to add to your summon calendar"
                     : "Click on a date to manage time slots"}
                 </div>
-                
-                <Calendar
-                  localizer={localizer}
-                  events={[]}
-                  startAccessor="start"
-                  endAccessor="end"
-                  defaultView="month"
-                  selectable={false}
+                <Calendar localizer={localizer} events={[]} startAccessor="start" endAccessor="end" defaultView="month" selectable={false}
                   formats={{
-                    dayHeaderFormat: dayHeaderFormat
+                    dayHeaderFormat: dayHeaderFormat,
                   }}
                   components={{
                     dateCellWrapper: ({ children, value }) => (
-                      <div style={{ 
-                        position: "relative",
-                        height: "100%",
-                        width: "100%"
-                      }}>
+                      <div className="relative h-full w-full">
                         {children}
                         {renderDateCell(value)}
                       </div>
-                    )
+                    ),
                   }}
                   style={{ height: 900, width: "100%" }}
                 />
@@ -319,7 +330,7 @@ const SummonCalendar = () => {
 
           {/* Time Slots Management Area */}
           <div className="lg:col-span-1">
-            <Card className="h-fit sticky top-4">
+            <Card className="h-fit sticky top-4 bg-white rounded-xl shadow">
               <CardHeader
                 title={
                   <div className="flex items-center gap-2">
@@ -327,12 +338,7 @@ const SummonCalendar = () => {
                     <span>Time Slots</span>
                   </div>
                 }
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "16px 24px",
-                }}
+                className="flex items-center justify-between px-6 py-4"
               />
               <CardContent className="space-y-4">
                 {selectedDateForTimeSlots ? (
@@ -388,7 +394,6 @@ const SummonCalendar = () => {
                                     </div>
                                   </div>
                                   <div className="flex gap-1">
-
                                     <ConfirmationModal
                                       title="Confirm Delete Time Slot"
                                       description="Are you sure you want to delete this time slot?"

@@ -157,11 +157,10 @@ class SummonDateAvailabilityView(generics.ListCreateAPIView):
     queryset = SummonDateAvailability.objects.all()
 
 
-class DeleteSummonDateAvailability(APIView):
-    def delete(self, request):
-        current_year = date.today().year
-        SummonDateAvailability.objects.filter(sd_date__year=current_year).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class DeleteSummonDateAvailability(generics.RetrieveDestroyAPIView):
+    queryset = SummonDateAvailability.objects.all()
+    serializer_class = SummonDateAvailabilitySerializer
+    lookup_field = 'sd_id'
 
 class SummonTimeAvailabilityView(generics.ListCreateAPIView):
     serializer_class = SummonTimeAvailabilitySerializer
