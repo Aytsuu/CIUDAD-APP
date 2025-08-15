@@ -11,7 +11,7 @@ import supabase from "@/supabase/supabase";
 // });
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.31:8000",
+  baseURL: "http://192.168.209.208:8000",
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",

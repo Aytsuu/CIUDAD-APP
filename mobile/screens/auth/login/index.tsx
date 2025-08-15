@@ -1,51 +1,45 @@
 import "@/global.css";
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableWithoutFeedback, Image } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
-import { FormInput } from "@/components/ui/form/form-input";
-import { Eye } from "@/lib/icons/Eye";
-import { EyeOff } from "@/lib/icons/EyeOff";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { useToastContext } from "@/components/ui/toast";
 import { SignupOptions } from "./SignupOptions";
 import { useAuth } from "@/contexts/AuthContext";
-import { signInSchema } from "@/form-schema/signin-schema";
-
-type SignInForm = z.infer<typeof signInSchema>;
+import GoogleIcon from "@/assets/images/google.svg";
 
 export default function SignInScreen() {
   const { toast } = useToastContext();
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
   const [showSignupOptions, setShowSignupOptions] = useState(false);
+  const [phone, setPhone] = useState("");
 
-  const defaultValues: Partial<SignInForm> = generateDefaultValues(signInSchema);
   const {
-    control,
-    trigger,
-    getValues,
-    formState: { errors },
-  } = useForm<SignInForm>({
-    resolver: zodResolver(signInSchema),
-    defaultValues,
-  });
+    loginWithGoogle,
+    isLoading,
+    isAuthenticated,
+    user,
+    error,
+    clearError,
+    sendOtp,
+  } = useAuth();
 
-  const { login, isLoading, isAuthenticated, user, error, clearError } = useAuth();
-
-  // Handle successful authentication
   useEffect(() => {
     if (isAuthenticated && user) {
       toast.success("Welcome back!");
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
     }
   }, [isAuthenticated, user, router, toast]);
 
-  // Handle auth errors
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -53,111 +47,121 @@ export default function SignInScreen() {
     }
   }, [error, toast, clearError]);
 
-  const handleLogin = async () => {
-    // Clear any previous errors
-    clearError();
-    
-    const isValid = await trigger();
-    if (!isValid) {
-      if (errors.email) {
-        toast.error(errors.email.message ?? "Invalid email");
-      } else if (errors.password) {
-        toast.error(errors.password.message ?? "Invalid password");
-      }
+  const handleContinue = useCallback(async () => {
+    const phoneRegex = /^9\d{9}$/;
+    if (!phoneRegex.test(phone.trim())) {
+      toast.error(
+        "Please enter a valid mobile number starting with 9 and 10 digits long"
+      );
       return;
     }
+    console.log("Sending OTP to", `+63${phone}`);
+    // const response = await sendOtp(phone);
+    toast.success(`OTP sent to 63${phone}`);
+    router.push("/(auth)/otp");
+  }, [phone, toast, router]);
 
-    const { email, password } = getValues();
-
-    try {
-      await login(email, password);
-      // Success handling is now done in useEffect above
-    } catch (error: any) {
-      // Error handling is now done in useEffect above
-      console.error("Login failed:", error);
-    }
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
   };
 
   return (
-    <ScreenLayout 
-      showExitButton={false}
-      showBackButton={false}
-    > 
+    <ScrollView
+      className="flex-1 mt-20 px-2"
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       <View className="flex-1 px-5">
-        <View className="items-center mt-7">
-          <Image source={require("@/assets/images/Logo.png")} className="w-24 h-24" />
-        </View>
-
-        <View className="mt-6 items-center">
-          <Text className="text-[24px] font-PoppinsMedium">Welcome back</Text>
-        </View>
-
-        <View className="flex-grow mt-6">
-          <FormInput
-            control={control}
-            name="email"
-            label="Email"
-            keyboardType="email-address"
-          />
-          <View className="relative">
-            <FormInput
-              control={control}
-              name="password"
-              label="Password"
-              secureTextEntry={!showPassword}
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <View className="items-center mt-7">
+            <Image
+              source={require("@/assets/images/Logo.png")}
+              className="w-56 h-56"
             />
-            <TouchableWithoutFeedback 
-              onPress={() => setShowPassword(!showPassword)}
-              disabled={isLoading}
-            >
-              <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
-                {showPassword ? 
-                  <Eye className={`${isLoading ? 'text-gray-400' : 'text-gray-700'}`} /> : 
-                  <EyeOff className={`${isLoading ? 'text-gray-400' : 'text-gray-700'}`} />
-                }
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-
-          <TouchableWithoutFeedback 
-            // onPress={() => router.push("/forgot-password")}
-            disabled={isLoading}
-          >
-            <View className="flex-row justify-end mt-3 mb-4">
-              <Text className={`font-PoppinsMedium text-[13px] ${
-                isLoading ? 'text-gray-400' : 'text-primaryBlue'
-              }`}>
-                Forgot Password?
+            <View className="mt-6 items-center">
+              <Text className="text-[24px] font-PoppinsSemiBold">Welcome!</Text>
+              <Text className="text-[12px] font-PoppinsRegular">
+                Log in with your phone or Google
               </Text>
             </View>
-          </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+
+        <View className="flex-grow mt-16">
+          <Text className="font-PoppinsRegular text-gray-800 mb-2 text-[15px]">
+            Mobile Number
+          </Text>
+          <View className="flex-row items-center">
+            {/* Country Code Container */}
+            <View className="bg-gray-50 border border-gray-300 rounded-l-xl px-4 py-3 shadow-sm border-r-0">
+              <Text className="text-gray-800 font-PoppinsMedium text-[15px]">
+                +63
+              </Text>
+            </View>
+            {/* Phone Number Input */}
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Enter your phone number"
+              keyboardType="phone-pad"
+              returnKeyType="done"
+              className="flex-1 font-PoppinsRegular text-[15px] text-gray-800 bg-gray-50 border border-gray-300 rounded-r-xl px-4 py-3 shadow-sm"
+              placeholderTextColor="#999"
+              blurOnSubmit={true}
+              maxLength={10}
+            />
+          </View>
 
           <Button
-            className={`${isLoading ? 'bg-gray-400' : 'bg-primaryBlue'}`}
+            className={`${
+              isLoading ? "bg-gray-400" : "bg-[#00AEEF]"
+            } mt-6 rounded-xl shadow-md`}
             size="lg"
-            onPress={handleLogin}
+            onPress={handleContinue}
             disabled={isLoading}
           >
-            <Text className="text-white font-PoppinsSemiBold text-[14px]">
-              {isLoading ? "Signing in..." : "Sign In"}
+            <Text className="text-white font-PoppinsSemiBold text-[15px]">
+              {isLoading ? "Sending..." : "Continue"}
             </Text>
           </Button>
+
+          <View className="flex-row items-center my-6 mt-14">
+            <View className="flex-1 h-[1px] bg-gray-300" />
+            <Text className="mx-3 text-gray-500 font-PoppinsRegular">or</Text>
+            <View className="flex-1 h-[1px] bg-gray-300" />
+          </View>
+
+          <TouchableOpacity
+            onPress={loginWithGoogle}
+            disabled={isLoading}
+            className="flex-row items-center justify-center bg-white border border-gray-300 rounded-lg py-3"
+            activeOpacity={0.7}
+          >
+            <GoogleIcon width={30} height={30} style={{ marginRight: 20 }} />
+            <Text className="font-PoppinsSemiBold text-[14px]">
+              Login with Google
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View className="flex-row justify-center gap-2 mt-8 mb-6">
           <Text className="text-gray-600 font-PoppinsRegular text-[13px]">
             Don't have an account?
           </Text>
-          <TouchableWithoutFeedback 
+          <TouchableOpacity
             onPress={() => setShowSignupOptions(true)}
             disabled={isLoading}
+            activeOpacity={0.6}
           >
-            <Text className={`font-PoppinsMedium text-[13px] ${
-              isLoading ? 'text-gray-400' : 'text-primaryBlue'
-            }`}>
+            <Text
+              className={`font-PoppinsMedium text-[13px] ${
+                isLoading ? "text-gray-400" : "text-primaryBlue"
+              }`}
+            >
               Sign up
             </Text>
-          </TouchableWithoutFeedback>
+          </TouchableOpacity>
         </View>
 
         <SignupOptions
@@ -165,6 +169,6 @@ export default function SignInScreen() {
           onClose={() => setShowSignupOptions(false)}
         />
       </View>
-    </ScreenLayout>
+    </ScrollView>
   );
 }

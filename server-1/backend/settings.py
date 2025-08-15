@@ -455,7 +455,10 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # ========================
 # SMS CONFIGURATION
 # ========================
+PHIL_SMS_API_KEY = config('PHILSMS_API_KEY')
+PHIL_SMS_URL = config('PHILSMS_URL')
 
+SEPHAMORE_API_KEY = config('SEPHAMORE_API_KEY', default=None)
 # ========================
 # DATABASE CONFIGURATION
 # ========================

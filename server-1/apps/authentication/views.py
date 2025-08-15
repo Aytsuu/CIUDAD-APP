@@ -10,14 +10,13 @@ from django.contrib.auth.models import User
 from django.conf import settings
 import logging
 from django.http import JsonResponse
-from supabase import create_client
 from apps.account.models import Account
 from apps.profiling.models import ResidentProfile, BusinessRespondent
 from apps.administration.models import Staff, Assignment
 from .serializers import UserAccountSerializer
 from utils.supabase_client import supabase
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.hashers import check_password 
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -274,7 +273,6 @@ class WebLoginView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 class WebUserView(APIView):
     permission_classes = [AllowAny]
 
@@ -458,3 +456,92 @@ class LogoutView(APIView):
                 {'error': 'Logout failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class SendOTP(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        logger.info("SendOTP called")
+
+        try:
+            phone_number = request.data.get('phone_number')
+            logger.info(f"Received phone number: {phone_number}")
+            if not phone_number:
+                return Response(
+                    {'error': 'Phone number is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not phone_number.startswith("63"):
+                phone_number = f"63{phone_number.lstrip('0')}"
+
+            payload = {
+                "apikey": settings.SEMAPHORE_API_KEY,
+                "number": phone_number,
+                # "sendername": getattr(settings, "SEMAPHORE_SENDERNAME", "SEMAPHORE"),
+                "message": "Your OTP code is: %otp_code%", 
+                "code": "numeric",
+                "length": 6
+            }
+
+            try:
+                response = requests.post(
+                    "https://api.semaphore.co/api/v4/otp",
+                    data=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                logger.info(f"Semaphore OTP Response: {data}")
+            except requests.RequestException as e:
+                logger.error(f"Failed to send OTP via Semaphore: {str(e)}", exc_info=True)
+                return Response(
+                    {'error': 'Failed to send OTP'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Unexpected OTP send error: {str(e)}", exc_info=True)
+            return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class VerifyOTP(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        phone_number = request.data.get('phone_number')
+        otp_input = request.data.get('otp')
+
+        if not phone_number or not otp_input:
+            return Response(
+                {'error': 'Phone number and OTP are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not phone_number.startswith("63"):
+            phone_number = f"63{phone_number.lstrip('0')}"
+
+        payload = {
+            "apikey": settings.SEMAPHORE_API_KEY,
+            "number": phone_number,
+            "code": otp_input
+        }
+
+        try:
+            response = requests.post(
+                "https://api.semaphore.co/api/v4/otp/verify",
+                data=payload
+            )
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"Semaphore OTP Verify Response: {data}")
+
+            if data.get("status") == "success":
+                return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to verify OTP via Semaphore: {str(e)}", exc_info=True)
+            return Response({'error': 'Failed to verify OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

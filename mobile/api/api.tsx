@@ -2,7 +2,7 @@ import axios from "axios";
 import { supabase } from "@/lib/supabase";
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.31:8000",
+  baseURL: "http://192.168.209.208:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -21,7 +21,8 @@ api.interceptors.request.use(async (config) => {
   // Define unprotected paths
   const unprotectedPaths = [
     "/authentication/mobile/login/",
-    "/authentication/signup/"
+    "/authentication/signup/",
+    "/authentication/mobile/send-otp/",
   ];
 
   const requestPath = new URL(config.url!, api.defaults.baseURL).pathname;

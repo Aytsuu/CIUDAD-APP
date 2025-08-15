@@ -30,9 +30,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkAuthStatus = useCallback(async () => {
     try {
       setIsLoading(true);
-      
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
       if (sessionError || !session?.access_token) {
         console.log("No valid Supabase session found");
         setUser(null);
@@ -43,14 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await api.get("authentication/mobile/user/");
       setUser(response.data.user);
       setIsAuthenticated(true);
-      
     } catch (error: any) {
       console.error("Authentication check failed:", error);
-      
+
       if (error?.response?.status === 401 || error?.response?.status === 403) {
         await supabase.auth.signOut();
       }
-      
+
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -60,22 +62,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Listen to Supabase auth changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Supabase auth state changed:", event, session?.user?.email);
-        
-        if (event === 'SIGNED_OUT' || !session) {
-          setUser(null);
-          setIsAuthenticated(false);
-          setIsLoading(false);
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // It does not automatically set as authenticated it waits for backend verification
-          if (event === 'TOKEN_REFRESHED') {
-            checkAuthStatus();
-          }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Supabase auth state changed:", event, session?.user?.email);
+
+      if (event === "SIGNED_OUT" || !session) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoading(false);
+      } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        // It does not automatically set as authenticated it waits for backend verification
+        if (event === "TOKEN_REFRESHED") {
+          checkAuthStatus();
         }
       }
-    );
+    });
 
     checkAuthStatus();
 
@@ -87,34 +89,90 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearError();
 
     try {
-      const { data: _supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data: _supabaseData, error: supabaseError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
       if (supabaseError) {
         throw new Error(supabaseError.message);
       }
 
-      const response = await api.post('authentication/mobile/login/', {
+      const response = await api.post("authentication/mobile/login/", {
         email,
         password,
       });
-      
+
       console.log("Login successful:", response.data);
       setUser(response.data.user);
       setIsAuthenticated(true);
-      console.log("position: ", response.data.user.staff.assignments[0].pos.pos_title)
-      console.log("position: ", response.data.user.staff.assignments[1].pos.pos_title)
+      console.log(
+        "position: ",
+        response.data.user.staff.assignments[0].pos.pos_title
+      );
+      console.log(
+        "position: ",
+        response.data.user.staff.assignments[1].pos.pos_title
+      );
     } catch (error: any) {
       console.error("Login error:", error);
-      
+
       await supabase.auth.signOut();
-      
-      const message = error?.response?.data?.error || error?.message || 'Login failed';
-      handleError({message}, "Login failed");
+
+      const message =
+        error?.response?.data?.error || error?.message || "Login failed";
+      handleError({ message }, "Login failed");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const sendOtp = async (phoneNumber: string): Promise<{ success: boolean; message: string }> => {
+    setIsLoading(true);
+    clearError();
+
+    try {
+      const res = await api.post("authentication/mobile/send-otp/", {
+        phone_number: phoneNumber,
+      });
+
+      return { success: true, message: "OTP sent successfully!" };
+    } catch (error: any) {
+      const message = error?.response?.data?.error || "Failed to send OTP";
+      handleError({ message }, "Failed to send OTP");
+      return { success: false, message };
+    }
+  };
+
+  const verifyOtp = async (phoneNumber: string, otp: string) => {
+    setIsLoading(true);
+    clearError();
+
+    try {
+      const res = await api.post("authentication/mobile/verify-otp/", {
+        phone_number: phoneNumber,
+        otp: otp,
+      });
+
+      if (!res) {
+        console.log("No Existing Data Fetched");
+        return;
+      }
+      setUser(res.data.user);
+      setIsAuthenticated(true);
+
+      return res.data
+      
+    } catch (error: any) {
+      console.log(
+        "Failed to send OTP Verification. Check connection between frontend and backend if established"
+      );
+      const message = error?.response?.data?.error;
+      handleError(
+        { message },
+        "Failed to Verify Otp. Check connection if its established between backend and frontend"
+      );
     }
   };
 
@@ -127,8 +185,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearError();
 
     try {
-      const response = await api.post('authentication/signup/', {
-        email, 
+      const response = await api.post("authentication/signup/", {
+        email,
         password,
         username,
       });
@@ -139,19 +197,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(true);
       }
 
-      return { 
-        requiresConfirmation: response.data?.requiresConfirmation ?? false 
+      return {
+        requiresConfirmation: response.data?.requiresConfirmation ?? false,
       };
-      
     } catch (error: any) {
       try {
         await supabase.auth.signOut();
       } catch (cleanupError) {
         console.error("Error during signup cleanup:", cleanupError);
       }
-      
-      const message = error.response?.data?.error || 'Signup failed';
-      handleError({message}, "Signup failed");
+
+      const message = error.response?.data?.error || "Signup failed";
+      handleError({ message }, "Signup failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -163,11 +220,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       await supabase.auth.signOut();
-      
-      await api.post('authentication/logout/');
 
+      await api.post("authentication/logout/");
     } catch (error) {
-      console.error('Logout error: ', error);
+      console.error("Logout error: ", error);
     } finally {
       setUser(null);
       setIsAuthenticated(false);
@@ -180,18 +236,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const { data, error } = await supabase.auth.refreshSession();
-      
+
       if (error || !data.session) {
         throw new Error("Failed to refresh Supabase session");
       }
 
-      const response = await api.post('authentication/refresh/');
+      const response = await api.post("authentication/refresh/");
       setUser(response.data.user);
       setIsAuthenticated(true);
-      
     } catch (error: any) {
-      console.error('Session refresh failed: ', error);
-      
+      console.error("Session refresh failed: ", error);
+
       await supabase.auth.signOut();
       setUser(null);
       setIsAuthenticated(false);
@@ -202,21 +257,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginWithGoogle = async () => {
     try {
-      const {data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-      })
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+      });
 
       if (error) {
         console.error("Google sign-in error", error.message);
       }
-
     } catch (error) {
-      console.error("Unexpected error: ", error)
+      console.error("Unexpected error: ", error);
     }
   };
 
   return (
-    <AuthContext.Provider 
+    <AuthContext.Provider
       value={{
         user,
         isAuthenticated,
@@ -228,6 +282,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         refreshSession,
         clearError,
         loginWithGoogle,
+        verifyOtp,
+        sendOtp
       }}
     >
       {children}
@@ -237,6 +293,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if(!context) throw new Error("useAuth must be used within AuthProvider");
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
