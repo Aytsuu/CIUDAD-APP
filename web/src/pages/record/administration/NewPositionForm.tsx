@@ -17,10 +17,9 @@ import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";
-import { formatPositionGroups } from "./AdministrationFormats";
 
 export default function NewPositionForm() {
-  const { user } = useAuth();
+  const { user } = useAuth(); 
   const { mutate: addPosition, isPending: isAdding } = useAddPosition();
   const { mutate: editPosition, isPending: isUpdating } = useEditPosition();
   const { data: positionGroups, isLoading: isLoadingGroups } = usePositionGroups();
