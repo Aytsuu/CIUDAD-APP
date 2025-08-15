@@ -64,7 +64,10 @@ export const useAddSummonDates = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (values: { formattedDates: string[] }) => addSummonDate(values.formattedDates),
+        mutationFn: (values: {newDates: string[]; oldDates: {
+            sd_id: number;
+            sd_is_checked: boolean;
+        }[]}) => addSummonDate(values.newDates, values.oldDates),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonDates'] });
             onSuccess?.();

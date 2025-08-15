@@ -56,13 +56,20 @@ export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], d
     // }
 }
 
-export const addSummonDate = async (dates: string[]) => {
+export const addSummonDate = async (newDates: string[], oldDates: {
+    sd_id: number;
+    sd_is_checked: boolean;
+}[]) => {
     try {
 
-        await api.delete('clerk/delete-summon-date/')
-        
+        oldDates.forEach(oldDate => {
+            if (!oldDate.sd_is_checked) {
+                api.delete(`clerk/delete-summon-date/${oldDate.sd_id}/`);
+            }
+        });
+
         const responses = await Promise.all(
-            dates.map(date => 
+            newDates.map(date => 
                 api.post('clerk/summon-date-availability/', {
                     sd_date: date 
                 })
