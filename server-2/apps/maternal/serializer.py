@@ -207,6 +207,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
     # Related model serializers for reading
     pregnancy_details = serializers.SerializerMethodField()
     patient_record_details = serializers.SerializerMethodField()
+    
     spouse_details = SpouseSerializer(source='spouse_id', read_only=True)
     body_measurement_details = BodyMeasurementReadSerializer(source='bm_id', read_only=True)
     vital_signs_details = serializers.SerializerMethodField()

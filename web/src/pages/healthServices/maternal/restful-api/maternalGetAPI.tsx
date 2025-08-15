@@ -27,7 +27,6 @@ export const getPatientPrenatalCount = async (patientId: string): Promise<number
   try {
     const res = await api2.get(`maternal/patient/${patientId}/prenatal_count`)
 
-    console.log("Prenatal count response: ", res.data)
     return res.data.prenatal_count || 0
 
   } catch (error) {
@@ -53,10 +52,8 @@ export const getPatientPrenatalCount = async (patientId: string): Promise<number
 // postpartum record count
 export const getPatientPostpartumCount = async (patientId: string): Promise<number> => {
   try {
-    console.log("Fetching postpartum count for patient:", patientId)
     const res = await api2.get(`maternal/patient/${patientId}/postpartum_count/`)
 
-    console.log("Postpartum count response:", res.data)
     return res.data.postpartum_count || 0
 
   } catch (error) {

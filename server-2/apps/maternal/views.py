@@ -271,7 +271,14 @@ def get_patient_prenatal_count(request, pat_id):
     try:
         patient = Patient.objects.get(pat_id=pat_id)
 
-        pf_count = Prenatal_Form.objects.filter(patrec_id__pat_id=patient).count()
+        pregnancies = Pregnancy.objects.filter(
+            pat_id=patient
+        )
+
+        pf_count = Prenatal_Form.objects.filter(
+            pregnancy_id__in=pregnancies
+        ).values('pregnancy_id').distinct().count()
+
 
         return Response({
             'pat_id': pat_id,
@@ -295,15 +302,17 @@ def get_patient_prenatal_count(request, pat_id):
 def get_patient_postpartum_count(request, pat_id):
     """Get count of postpartum records for a specific patient"""
     try:
-        # verify patient exists
         patient = Patient.objects.get(pat_id=pat_id)
+
+        pregnancies = Pregnancy.objects.filter(pat_id=patient)
         
-        # count postpartum records for this patient
-        count = PostpartumRecord.objects.filter(patrec_id__pat_id=patient).count()
+        ppr_count = PostpartumRecord.objects.filter(
+            pregnancy_id__in=pregnancies
+        ).values('pregnancy_id').distinct().count()
         
         return Response({
             'pat_id': pat_id,
-            'postpartum_count': count,
+            'postpartum_count': ppr_count,
             'patient_name': f"{patient.personal_info.per_fname} {patient.personal_info.per_lname}" if hasattr(patient, 'personal_info') else "Unknown"
         }, status=status.HTTP_200_OK)
         

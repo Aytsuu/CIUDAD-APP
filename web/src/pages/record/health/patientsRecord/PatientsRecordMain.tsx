@@ -157,8 +157,19 @@ export const columns: ColumnDef<Report>[] = [
     header: "Action",
     cell: ({ row }) => (
       <RouterLink
-        to={`/view-patients-record/${row.getValue("id")}`}
-        state={{ patientId: row.getValue("id") }}
+        to="/view-patients-record"
+        state={
+          { patientId: row.getValue("id"), 
+            patientData: {
+              id: row.original.id,
+              sitio: row.original.sitio,
+              lastName: row.original.lastName,
+              firstName: row.original.firstName,
+              mi: row.original.mi,
+              type: row.original.type,
+              noOfRecords: row.original.noOfRecords
+            }
+          }}
       >
         <Button variant="outline">View</Button>
       </RouterLink>

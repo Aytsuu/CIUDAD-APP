@@ -27,7 +27,7 @@ def handle_spouse_logic(patient, spouse_data):
                 return None
             
             elif spouse_source in ['prenatal_form', 'postpartum_record']:
-                # existing spouse in medical records, use it
+                # existing spouse in medical records
                 spouse_id = existing_spouse_info.get('spouse_id')
                 if spouse_id:
                     existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
@@ -43,13 +43,13 @@ def handle_spouse_logic(patient, spouse_data):
             return None
             
     except Exception as e:
-        print(f"Error in spouse logic: {str(e)}")
+        return (f"Error in spouse logic: {str(e)}") 
         # fallback: try to create spouse if there's an error
-        try:
-            return Spouse.objects.create(**spouse_data)
-        except Exception as create_error:
-            print(f"Error creating spouse: {str(create_error)}")
-            return None
+        # try:
+        #     return Spouse.objects.create(**spouse_data)
+        # except Exception as create_error:
+        #     print(f"Error creating spouse: {str(create_error)}")
+        #     return None
 
 
 def calculate_missed_visits(pregnancy_id, current_aog_weeks=None, current_aog_days=0):

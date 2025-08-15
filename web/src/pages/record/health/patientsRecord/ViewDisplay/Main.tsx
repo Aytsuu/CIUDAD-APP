@@ -4,7 +4,7 @@ import React from "react"
 import { ChevronLeft, Edit, AlertCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useParams } from "react-router"
+import { useLocation } from "react-router"
 import { toast } from "sonner"
 
 import { Separator } from "@/components/ui/separator"
@@ -37,9 +37,12 @@ import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
   const [isEditable, setIsEditable] = useState(false)
-  const { patientId } = useParams<{ patientId: string }>()
+  // const { patientId } = useParams<{ patientId: string }>()
+  const location = useLocation()
+  const { patientId } = location.state || {}
+
   const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "")
-  const { data: rawChildHealthRecords, isLoading: isLoadingChildHealthRecords } = useChildHealthRecords(patientId);
+  const { data: rawChildHealthRecords } = useChildHealthRecords(patientId);
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
@@ -150,7 +153,7 @@ export default function ViewPatientRecord() {
   }
 
   const patientLinkData = useMemo(() => {
-    console.log("Creating patientLinkData with currentPatient:", currentPatient)
+    // console.log("Creating patientLinkData with currentPatient:", currentPatient)
 
     const linkData = {
       pat_id: currentPatient?.pat_id ?? patientId ?? "",
@@ -178,8 +181,8 @@ export default function ViewPatientRecord() {
       },
     }
 
-    console.log("Generated patientLinkData:", linkData)
-    console.log("Address in patientLinkData:", linkData.address)
+    // console.log("Generated patientLinkData:", linkData)
+    // console.log("Address in patientLinkData:", linkData.address)
 
     return linkData
   }, [currentPatient, patientData, patientId])
@@ -303,7 +306,7 @@ export default function ViewPatientRecord() {
     toast("Edit cancelled. No changes were made.")
   }
 
-  if (isError) {
+  if (isError && !patientId) {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <Alert className="border-red-200 bg-red-50">
@@ -324,13 +327,13 @@ export default function ViewPatientRecord() {
     )
   }
 
-  if (!patientData) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-lg text-gray-500">No patient data available</p>
-      </div>
-    )
-  }
+  // if (!patientData) {
+  //   return (
+  //     <div className="flex justify-center items-center h-64">
+  //       <p className="text-lg text-gray-500">No patient data available</p>
+  //     </div>
+  //   )
+  // }
 
   const isTransient = patientData?.patientType?.toLowerCase() === "transient"
 
@@ -365,22 +368,22 @@ export default function ViewPatientRecord() {
               </Avatar>
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold">
-                  {`${patientData.firstName} ${
-                    patientData.middleName ? patientData.middleName + " " : ""
-                  }${patientData.lastName}`}
+                  {`${patientData?.firstName} ${
+                    patientData?.middleName ? patientData.middleName + " " : ""
+                  }${patientData?.lastName}`}
                 </h2>
                 <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                   <span>
                     ID: <span className="font-medium text-foreground">{patientId}</span>
                   </span>
                   <span>•</span>
-                  <span>{calculateAge(patientData.dateOfBirth)}</span>
+                  <span>{calculateAge(patientData?.dateOfBirth)}</span>
                   <span>•</span>
-                  <span>{patientData.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
+                  <span>{patientData?.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <Badge variant={patientData.patientType === "Resident" ? "default" : "secondary"}>
-                    {patientData.patientType}
+                  <Badge variant={patientData?.patientType === "Resident" ? "default" : "secondary"}>
+                    {patientData?.patientType}
                   </Badge>
                 </div>
               </div>

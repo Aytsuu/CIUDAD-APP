@@ -1,9 +1,14 @@
 export const calculateAge = (dateOfBirth: string): string => {
+  if(!dateOfBirth || dateOfBirth.trim() === '') {
+    return '0 years old';
+  }
+
   const birthDate = new Date(dateOfBirth);
   const today = new Date();
   
   if (isNaN(birthDate.getTime())) {
-    throw new Error('Invalid date of birth');
+    console.warn('Invalid date of birth', dateOfBirth);
+    return '0 years old';
   }
 
   let years = today.getFullYear() - birthDate.getFullYear();
@@ -22,6 +27,8 @@ export const calculateAge = (dateOfBirth: string): string => {
 
   // Ensure months is positive after adjustment
   months = Math.max(0, months);
+
+  years = Math.max(0, years);
 
   if (years > 0) {
     return `${years} year${years > 1 ? 's' : ''} old`;
