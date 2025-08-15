@@ -3,7 +3,6 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { CommodityStocksRecord } from "../../tables/type";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert";
-import { Plus } from "lucide-react";
 
 export const CommodityStocksColumns = (
 ): ColumnDef<CommodityStocksRecord>[] => [

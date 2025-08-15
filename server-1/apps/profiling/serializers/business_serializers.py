@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import *
+from django.db import transaction
 from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 from utils.supabase_client import supabase, upload_to_storage
@@ -115,7 +116,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
               'bus_registered_by', 'files']
     
   def get_files(self, obj):
-    files = BusinessFile.objects.filter(bus=obj)
+    files = BusinessFile.objects.filter(bus=obj.bus_id)
     return [
       {
         'id': file.bf_id,
@@ -137,7 +138,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
     return f'{info.per_lname}, {info.per_fname} ' \
           f'{info.per_mname}' if info.per_mname else None 
   
-class BusinessFileInputSerializer(serializers.Serializer):
+class FileInputSerializer(serializers.Serializer):
   name = serializers.CharField()
   type = serializers.CharField()
   file = serializers.CharField()
@@ -158,7 +159,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     slug_field='sitio_id',
     write_only=True, 
     required=False)
-  files = BusinessFileInputSerializer(write_only=True, many=True, required=False)
+  files = FileInputSerializer(write_only=True, many=True, required=False)
   respondent = RespondentInputSerializer(write_only=True, required=False)
   rp = serializers.CharField(write_only=True, required=False)
   br = serializers.CharField(write_only=True, required=False)
@@ -169,12 +170,12 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
               'bus_status', 'bus_date_verified','sitio', 'bus_street', 
               'staff', 'files', ]
 
+  @transaction.atomic
   def create(self, validated_data):
     try:
         sitio = validated_data.pop('sitio', None)
         street = validated_data.pop('bus_street', '')
         files = validated_data.pop('files', [])
-        respondent = validated_data.pop('respondent', None)
         rp = validated_data.pop('rp', None)
         br = validated_data.pop('br', None)
 
@@ -194,7 +195,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
 
         # Handle respondent/rp/br logic
         business_instance = self._create_business_instance(
-            validated_data, address, respondent, rp, br
+            validated_data, address, rp, br
         )
 
         # Handle file uploads
@@ -207,43 +208,36 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         logger.error(f"Business creation failed: {str(e)}")
         raise serializers.ValidationError(str(e))
 
-  def _create_business_instance(self, validated_data, address, respondent, rp, br):
-      if respondent:
-          respondent_instance = BusinessRespondent.objects.create(**respondent)
-          return Business.objects.create(
-              br=respondent_instance,
-              add=address,
-              **validated_data
-          )
-      else:
-          return Business.objects.create(
-            rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
-            br=BusinessRespondent.objects.get(br_id=br) if br else None,
-            add=address,
-            **validated_data
-          )
-
+  def _create_business_instance(self, validated_data, address, rp, br):
+      return Business.objects.create(
+        rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
+        br=BusinessRespondent.objects.get(br_id=br) if br else None,
+        add=address,
+        **validated_data
+      )
+  
   def _upload_files(self, business_instance, files):
       business_files = []
       for file_data in files:
-        url = upload_to_storage(file_data)
-        business_files.append(BusinessFile(
-            bus=business_instance,
-            bf_name=file_data['name'],
-            bf_type=file_data['type'],
-            bf_path=f"uploads/{file_data['name']}",
-            bf_url=url
-        ))
+        business_file = BusinessFile(
+          bus=business_instance,
+          bf_name=file_data['name'],
+          bf_type=file_data['type'],
+          bf_path=f"uploads/{file_data['name']}",
+        )
+        
+        url = upload_to_storage(file_data, 'business-bucket', 'uploads')
+        business_file.bf_url=url
+        business_files.append(business_file)
 
       if business_files:
           BusinessFile.objects.bulk_create(business_files)
   
+  @transaction.atomic
   def update(self, instance, validated_data):
     files = validated_data.pop('files', [])
     sitio = validated_data.pop('sitio')
     street = validated_data.pop('bus_street')
-    BusinessFile.objects.filter(bus=instance).delete()
-
     address, _ = Address.objects.get_or_create(
         sitio=sitio,
         add_street=street,
@@ -262,10 +256,8 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     instance.save()
 
     if files:
-      BusinessFile.objects.bulk_create([
-        BusinessFile(bus=instance, **file) 
-        for file in files
-      ])
+      self._upload_files(instance, files)
+      
     return instance
 
 class ForSpecificOwnerSerializer(serializers.ModelSerializer):
@@ -273,7 +265,7 @@ class ForSpecificOwnerSerializer(serializers.ModelSerializer):
   bus_street = serializers.CharField(source='add.add_street')
   class Meta:
     model = Business
-    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_street', 
+    fields = ['bus_id', 'bus_name', 'bus_status', 'bus_gross_sales', 'bus_street', 
               'sitio', 'bus_date_verified']
 
   

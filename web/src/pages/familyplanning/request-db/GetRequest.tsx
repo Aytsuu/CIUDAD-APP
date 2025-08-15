@@ -1,9 +1,10 @@
-
 import { api2 } from "@/api/api"
+import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 
-// Type for a single FP Record entry in the individual patient's table
-interface IndividualFPRecordDetail {
+export interface IndividualFPRecordDetail {
+  patient_id: any
+  fprecord: any
   patrec_id: string
   fprecord_id: number
   client_id: string
@@ -13,6 +14,9 @@ interface IndividualFPRecordDetail {
   client_type: string
   method_used: string
   created_at: string
+  dateOfFollowUp?: string
+  followv_status?: string // Add this field to match backend
+  otherMethod?: any
 }
 
 export interface FPPatientsCount {
@@ -23,13 +27,24 @@ export interface FPPatientsCount {
 
 export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
   try {
-    const response = await api2.get("/familyplanning/patient-counts/"); // Adjust this URL if your Django URL pattern is different
+    const response = await api2.get("/familyplanning/patient-counts/");
     return response.data;
   } catch (error) {
     console.error("Error fetching FP patient counts:", error);
     throw error;
   }
 };
+
+export const getAllFPRecordsForPatient = async (patrec_id: any) => {
+  try{
+    const res = await api2.get(`/familyplanning/get_all_fp_records_for_patient/${patrec_id}`);
+          return res.data;
+      } catch (error) {
+    console.error("Error fetching FP patient counts:", error);
+    throw error;
+  }
+
+  };  
 
 // Updated getFPRecordsList to match the new backend structure for the overall table
 export const getFPRecordsList = async () => {
@@ -58,6 +73,7 @@ export const getFPRecordsList = async () => {
     return []
   }
 }
+
 export interface FullFPRecordDetail {
   fprecord_id: number;
   client_id: string;

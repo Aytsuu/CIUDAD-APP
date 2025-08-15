@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Alert } from "react-native"
 import {
   archiveProjectProposal,
   restoreProjectProposal,
@@ -7,18 +6,8 @@ import {
   deleteSupportDocument, restoreSupportDocument,
   archiveSupportDocument
 } from "../api/delreq"
-import type { ProjectProposal } from "./fetchqueries"
+import type { ProjectProposal } from "../projprop-types"
 import { useToastContext } from "@/components/ui/toast"
-
-
-// // Mobile toast replacement using Alert
-// const showSuccessAlert = (title: string, message?: string) => {
-//   Alert.alert("Success", title)
-// }
-
-// const showErrorAlert = (title: string, message?: string) => {
-//   Alert.alert("Error", `${title}${message ? `\n${message}` : ""}`)
-// }
 
 export const useArchiveProjectProposal = () => {
   const queryClient = useQueryClient()

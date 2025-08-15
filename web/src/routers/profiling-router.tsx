@@ -14,44 +14,50 @@ import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLay
 import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
 import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
-import { Navigate } from "react-router";
 import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
 import UpdateComparisonView from "@/pages/record/profiling/resident/form/UpdateComparisonView";
 import ActiveRecords from "@/pages/record/profiling/business/ActiveRecords";
 import PendingRecords from "@/pages/record/profiling/business/PendingRecords";
 import RespondentRecords from "@/pages/record/profiling/business/RespondentRecords";
 import RespondentDetails from "@/pages/record/profiling/business/RespondentDetails";
+import ProfilingAllRecords from "@/pages/record/profiling/ProfilingAllRecords";
 
 export const profiling_router = [
+  // All Records
+  {
+    path: "profiling/all",
+    element: <ProfilingAllRecords />
+  },
+
   // Account
   {
-    path: "account/create",
+    path: "profiling/account/create",
     element: <AccountRegistrationLayout/>
   },
 
   // Resident
   {
-    path: "resident",
+    path: "profiling/resident",
     element: <ResidentRecords />,
   },
   {
-    path: "resident/form",
+    path: "profiling/resident/form",
     element: <ResidentFormLayout />,
   },
   {
-    path: "resident/registration",
+    path: "profiling/resident/registration",
     element: <RegistrationLayout />,
   },
   {
-    path: "resident/view",
+    path: "profiling/resident/view",
     element: <ResidentFormLayout />,
   },
   {
-    path: "resident/update/view",
+    path: "profiling/resident/update/view",
     element: <UpdateComparisonView />,
   },
   {
-    path: "request/pending",
+    path: "profiling/request/pending",
     element: <RegistrationRequests />,
     children: [
       {
@@ -65,57 +71,53 @@ export const profiling_router = [
     ]
   },
   {
-    path: "request/pending/individual/registration",
+    path: "profiling/request/pending/individual/registration",
     element: <RegistrationLayout />,
   },
   {
-    path: "request/pending/family/registration",
+    path: "profiling/request/pending/family/registration",
     element: <RequestFamilyReg />,
-  },
-  {
-    path: "resident/additional-registration",
-    element: <AddRegOptions/>
   },
 
   // Family
   {
-    path: "family",
+    path: "profiling/family",
     element: <FamilyRecords />,
   },
   {
-    path: "family/form",
+    path: "profiling/family/form",
     element: <FamilyProfileForm />,
   },
   {
-    path: "family/family-profile-form",
+    path: "profiling/family/family-profile-form",
     element: <HealthFamilyForm />,
   },
   {
-    path: "family/form/solo",
+    path: "profiling/family/form/solo",
     element: <SoloFormLayout />,
   },
   {
-    path: "family/view",
+    path: "profiling/family/view",
     element: <FamilyRecordView />,
   },
 
   // Household
   {
-    path: "household",
+    path: "profiling/household",
     element: <HouseholdRecords />,
   },
   {
-    path: "household/form",
+    path: "profiling/household/form",
     element: <HouseholdFormLayout />,
   },
   {
-    path: "household/view",
+    path: "profiling/household/view",
     element: <HouseholdRecordView />,
   },
 
   // Business
   {
-    path: "business/record",
+    path: "profiling/business/record",
     element: <BusinessRecords />,
     children: [
       {
@@ -137,7 +139,7 @@ export const profiling_router = [
     ]
   },
   {
-    path: "business/form",
+    path: "profiling/business/form",
     element: <BusinessFormLayout />,
   },
 ];

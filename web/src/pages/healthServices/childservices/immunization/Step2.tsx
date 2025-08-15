@@ -1,57 +1,31 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { HeartPulse, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
 } from "@/components/ui/card/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Form } from "@/components/ui/form/form";
 
 import { toast } from "sonner";
-import { format, isValid } from "date-fns";
-import { api2 } from "@/api/api";
 import {
   VitalSignType,
   VaccineRecord,
   ExistingVaccineRecord,
   ImmunizationFormData,
-  OptionalImmunizationFormSchema,
 } from "@/form-schema/ImmunizationSchema";
 import { createImmunizationColumns } from "./columns";
-import {
-  createFollowUpVisit,
-  createChildHealthNotes,
-} from "../forms/restful-api/createAPI";
+
+
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
-import { updateCHHistory } from "../forms/restful-api/updateAPI";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
 import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
-import { createPatientRecord } from "../../restful-api-patient/createPatientRecord";
-import { getVaccineStock } from "../../vaccination/restful-api/get";
-import { getVaccineList } from "@/pages/healthInventory/InventoryList/restful-api/Antigen/VaccineFetchAPI";
-import { createAntigenStockTransaction } from "../../vaccination/restful-api/post";
 import { useAuth } from "@/context/AuthContext";
 import { NotesDialog } from "./NotesDialog";
 import { VaccinationSection } from "./VaccinationSection";
-import { updateFollowUpVisit } from "../../vaccination/restful-api/update";
-import {
-  deleteVaccinationHistory,
-  deleteVaccinationRecord,
-  deletePatientRecord,
-  deleteFollowUpVisit,
-} from "../../vaccination/restful-api/delete";
-import { createVaccinationRecord,createVaccinationHistory } from "../../vaccination/restful-api/post";
-import { getVaccinationRecordById } from "../../vaccination/restful-api/get";
-import { createimmunizationRecord } from "./restful-api/postAPI";
-import { updateVaccineStock } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/restful-api/VaccinePutAPI";
+
+
 import { useImmunizationMutations } from "./queries/submitStep2";
 
 
@@ -133,16 +107,16 @@ export default function Immunization({
   const [nextVisitDescription, setNextVisitDescription] = useState<
     string | null
   >(null);
-  const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(
-    null
-  );
+  // const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(
+  //   null
+  // );
   const [isVaccineComplted, setisVaccineComplted] = useState(false);
   const [currentVaccineTotalDoses, setCurrentVaccineTotalDoses] =
     useState<number>(1);
   const [existingVaccineTotalDoses, setExistingVaccineTotalDoses] =
     useState<number>(1);
-  const [currentDoseNumber, setCurrentDoseNumber] = useState<number>(1);
-  const [newVaccineErrors, setNewVaccineErrors] = useState<{
+  // const [currentDoseNumber, setCurrentDoseNumber] = useState<number>(1);
+  const [newVaccineErrors] = useState<{
     vaccine?: string;
     dose?: string;
     date?: string;
@@ -152,12 +126,10 @@ export default function Immunization({
     dose?: string;
     date?: string;
   }>({});
-  let pat_id =
+  const pat_id =
     ChildHealthRecord?.chrec_details?.patrec_details?.pat_id.toString() || "";
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [basicVaccineList, setBasicVaccineList] = useState<any[]>([]);
 
  
@@ -189,7 +161,7 @@ export default function Immunization({
         })),
       });
     }
-  }, [vaccinesData]);
+  }, [vaccinesData,vaccineOptions]);
 
 
 
@@ -292,7 +264,7 @@ export default function Immunization({
 
     if (!value) return;
 
-    const [vacStck_id, vac_id, vac_name, expiry_date] = value.split(",");
+    const [vacStck_id, vac_id, vac_name,] = value.split(",");
     const numericVacId = parseInt(vac_id, 10);
 
     const selectedVaccine = vaccinesData?.default?.find(
@@ -343,7 +315,7 @@ export default function Immunization({
     console.log("Vaccination Record", existingVacrecId);
 
     form.setValue("vaccines.0.dose", nextDose.toString());
-    setCurrentDoseNumber(nextDose);
+    // setCurrentDoseNumber(nextDose);
 
     if (vaccinelist.no_of_doses) {
       form.setValue(
@@ -368,7 +340,7 @@ export default function Immunization({
       );
     }
 
-    setSelectedVaccineType(vaccinelist.vac_type_choices);
+    // setSelectedVaccineType(vaccinelist.vac_type_choices);
 
     // Modified follow-up date calculation logic
     if (vaccinelist.vac_type_choices === "routine") {
@@ -457,7 +429,7 @@ export default function Immunization({
     form.setValue("existingVaccines.0.totalDoses", existingTotalDoses.toString());
 
     form.setValue(`existingVaccines.0.dose`, nextDose.toString());
-    setCurrentDoseNumber(nextDose);
+    // setCurrentDoseNumber(nextDose);
 
     if (selectedVaccine.no_of_doses) {
       form.setValue(
@@ -479,7 +451,7 @@ export default function Immunization({
       );
     }
 
-    setSelectedVaccineType(selectedVaccine.vac_type_choices);
+    // setSelectedVaccineType(selectedVaccine.vac_type_choices);
   };
 
   const addVac = () => {
@@ -618,10 +590,10 @@ export default function Immunization({
 
   const handleSaveNotes = async (data: VitalSignType) => {
     try {
-      const notesData = {
-        ...data,
-        chrec: ChildHealthRecord.chrec,
-      };
+      // const notesData = {
+      //   ...data,
+      //   chrec: ChildHealthRecord.chrec,
+      // };
 
       if (editingRowIndex !== null) {
         handleUpdateVitalSign(editingRowIndex, {

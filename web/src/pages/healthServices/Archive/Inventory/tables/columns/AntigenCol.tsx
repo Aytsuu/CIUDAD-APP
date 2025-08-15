@@ -84,7 +84,7 @@ export const getStockColumns = (
         const dosesPerVial = record.dose_ml;
         const availableDoses = record.availableStock;
         const fullVials = Math.ceil(availableDoses / dosesPerVial);
-        const leftoverDoses = availableDoses % dosesPerVial;
+        // const leftoverDoses = availableDoses % dosesPerVial;
 
         return (
           <div
@@ -196,7 +196,7 @@ export const getStockColumns = (
       const record = row.original;
       let total_stocks = 0;
       let unit = "";
-      let availQty = Number(record.availableStock) || 0;
+      const availQty = Number(record.availableStock) || 0;
 
       if (record.type === "vaccine") {
         if (record.solvent === "diluent") {

@@ -38,7 +38,7 @@ export default function ChildHRPage2({
     },
   })
 
-  const { handleSubmit, reset, watch, setValue, getValues, formState, control } = form
+  const { handleSubmit, watch, setValue, getValues, formState, control } = form
   const { errors, isValid, isSubmitting } = formState
   const BFdates = watch("BFdates")
   const [currentBFDate, setCurrentBFDate] = useState<string>("")
@@ -257,7 +257,7 @@ export default function ChildHRPage2({
                     <FormField
                       control={control}
                       name="BFdates"
-                      render={({ field }) => (
+                      render={({ }) => (
                         <FormItem>
                           <FormLabel>Breastfeeding Check Dates</FormLabel>
                           {/* Add/Edit Date Section */}

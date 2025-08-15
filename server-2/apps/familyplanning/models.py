@@ -95,14 +95,14 @@ class FP_Physical_Exam(models.Model):
     ABDOMEN_EXAM_CHOICES = [("normal", "Normal"),("abdominal_mass", "Abdominal Mass"),("varicosities", "Varicosities")]
     EXTREMITIES_EXAM_CHOICES = [("normal", "Normal"),("edema", "Edema"),("varicosities", "Varicosities")]
     
-    skinExamination = models.CharField(max_length=20, choices=SKIN_EXAM_CHOICES)
-    conjunctivaExamination = models.CharField(max_length=20, choices=CONJUNCTIVA_EXAM_CHOICES)
-    neckExamination = models.CharField(max_length=30, choices=NECK_EXAM_CHOICES)
-    breastExamination = models.CharField(max_length=30, choices=BREAST_EXAM_CHOICES)
-    abdomenExamination = models.CharField(max_length=30, choices=ABDOMEN_EXAM_CHOICES)
-    extremitiesExamination = models.CharField(max_length=30, choices=EXTREMITIES_EXAM_CHOICES)
+    skinExamination = models.CharField(max_length=20, choices=SKIN_EXAM_CHOICES, null=True,blank=True)
+    conjunctivaExamination = models.CharField(max_length=20, choices=CONJUNCTIVA_EXAM_CHOICES,null=True,blank=True)
+    neckExamination = models.CharField(max_length=30, choices=NECK_EXAM_CHOICES,null=True,blank=True)
+    breastExamination = models.CharField(max_length=30, choices=BREAST_EXAM_CHOICES,null=True,blank=True)
+    abdomenExamination = models.CharField(max_length=30, choices=ABDOMEN_EXAM_CHOICES,null=True,blank=True)
+    extremitiesExamination = models.CharField(max_length=30, choices=EXTREMITIES_EXAM_CHOICES,null=True,blank=True)
 
-    fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
+    fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE, related_name="fp_physical_exam")
     bm = models.ForeignKey(BodyMeasurement,on_delete=models.CASCADE,null=True)
     vital = models.ForeignKey(VitalSigns,on_delete=models.CASCADE,null=True)
     class Meta:
@@ -151,7 +151,7 @@ class FP_Acknowledgement(models.Model):
     ack_clientSignatureDate = models.DateField(auto_now_add=True)
     guardian_signature_date = models.DateField(null=True, blank=True)
    
-    fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
+    fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE,related_name="fp_acknowledgement")
     type = models.ForeignKey(FP_type, on_delete=models.CASCADE)
     
     class Meta:
@@ -207,7 +207,7 @@ class FP_Assessment_Record(models.Model):
     as_provider_name = models.CharField(max_length=35, null=True,blank=True)
     as_findings = models.TextField(default="None",blank=True,null=True)
     
-    fprecord = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
+    fprecord = models.ForeignKey(FP_Record,on_delete=models.CASCADE, related_name="fp_assessment_record")
 
     followv = models.ForeignKey(FollowUpVisit,on_delete=models.CASCADE)
 

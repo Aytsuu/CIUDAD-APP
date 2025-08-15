@@ -31,9 +31,8 @@ import {
 } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { useCreateGADBudget } from "./queries/BTAddQueries";
-import GADAddEntrySchema, {
-  FormValues,
-} from "@/form-schema/gad-budget-track-create-form-schema";
+import GADAddEntrySchema, {FormValues,} from "@/form-schema/gad-budget-track-create-form-schema";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   const { year } = useParams<{ year: string }>();
@@ -190,9 +189,6 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
           refetchYearBudgets();
           onSuccess?.();
         },
-        onError: (error) => {
-          console.error("Creation failed:", error.response?.data || error.message);
-        },
       }
     );
 };
@@ -297,11 +293,12 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                         <select
                           {...field}
                           className="w-full p-2 border rounded"
+                          value={field.value ?? ""} // Ensure null is converted to an empty string
                           onChange={(e) => {
                             const selectedItem = expenseItems?.find(
                               (item: any) => item.gdb_name === e.target.value
                             );
-                            field.onChange(e.target.value);
+                            field.onChange(e.target.value || undefined); // Convert empty string to undefined for form state
                             form.setValue("gdb_id", selectedItem?.gdb_id || undefined);
                           }}
                         >
@@ -407,23 +404,23 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
             {Object.keys(form.formState.errors).length > 0 && (
               <div className="text-red-500 text-sm">
                 Please fix double check your input
-                {/* <ul>
-                  {Object.entries(form.formState.errors).map(([field, error]) => (
-                    <li key={field}>
-                      {field}: {error?.message}
-                    </li>
-                  ))}
-                </ul> */}
               </div>
             )}
-              <Button
-                type="submit"
-                className=" hover:bg-blue hover:opacity-[95%]"
-                // disabled={!isFormValid || isPending}
-                disabled={isPending}
-              >
-                {isPending ? "Saving..." : "Save"}
-              </Button>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className="hover:bg-blue hover:opacity-[95%]"
+                    disabled={isPending || Object.keys(form.formState.errors).length > 0}
+                  >
+                    {isPending ? "Saving..." : "Save"}
+                  </Button>
+                }
+                title="Confirm Save"
+                description="Are you sure the details are accurate for this new budget entry?"
+                actionLabel="Confirm"
+                onClick={() => form.handleSubmit(onSubmit)()}
+              />
             </div>
           </form>
         </Form>

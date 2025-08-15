@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { Pencil } from "lucide-react";
 import type {
   VitalSignType,
   NutritionalStatusType,

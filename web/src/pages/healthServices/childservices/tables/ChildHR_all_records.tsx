@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Trash, Eye, ArrowUpDown, FileInput } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, Loader2, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +15,6 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
 import { ChildHealthRecord } from "../forms/muti-step-form/types";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { useLoading } from "@/context/LoadingContext";
 import { filterOptions } from "./types";
 import { childColumns } from "./columns/all_col";
@@ -227,7 +225,10 @@ export default function AllChildHealthRecords() {
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <TableSkeleton columns={childColumns} rowCount={5} />
+              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
+              </div>
             ) : (
               <DataTable columns={childColumns} data={currentData} />
             )}

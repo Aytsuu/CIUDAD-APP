@@ -372,10 +372,6 @@ function ExpenseCreateForm() {
       return;
     }
 
-    if(!values.iet_additional_notes){
-        values.iet_additional_notes = "None";
-    }
-
     //proposed budget
     const proposedBudget = selectedParticular?.proposedBudget;
     const propBudget = Number(proposedBudget);

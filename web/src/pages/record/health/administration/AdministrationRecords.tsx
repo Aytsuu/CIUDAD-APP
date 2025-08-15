@@ -44,7 +44,7 @@ export default function AdministrationRecords() {
 
   // Filtering formatted staff data (searching)
   const filteredStaffs = React.useMemo(() => {
-    let filtered = formatStaffData();
+    const filtered = formatStaffData();
 
     return filtered.filter((record: any) =>
       Object.values(record)

@@ -4,7 +4,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, FileInput, Users2 } from "lucide-react";
+import { Search, FileInput, Users2, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   DropdownMenu,
@@ -13,13 +13,14 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useVaccinationRecords } from "../../queries/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
 import CardLayout from "@/components/ui/card/card-layout";
 import { vaccinationColumns } from "../columns/all-vac-col";
-import { BasicInfoVaccinationRecord, VaccinationCounts } from "../columns/types";
-import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
+import {
+  BasicInfoVaccinationRecord,
+  VaccinationCounts,
+} from "../columns/types";
 
 export default function AllVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,7 +108,6 @@ export default function AllVaccinationRecords() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
 
   return (
     <>
@@ -231,13 +231,16 @@ export default function AllVaccinationRecords() {
             </div>
           </div>
 
-             <div className="bg-white w-full overflow-x-auto">
-                     {isLoading ? (
-                       <TableSkeleton columns={vaccinationColumns} rowCount={5} />
-                     ) : (
-                       <DataTable columns={vaccinationColumns} data={paginatedData} />
-                     )}
-                   </div>
+          <div className="bg-white w-full overflow-x-auto">
+            {isLoading ? (
+              <div className="w-full h-[100px] flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">loading....</span>
+              </div>
+            ) : (
+              <DataTable columns={vaccinationColumns} data={paginatedData} />
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}

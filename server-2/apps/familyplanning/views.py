@@ -9,6 +9,7 @@ from django.db.models import Count, Max, OuterRef, Subquery, Sum # Import Sum fo
 from django.utils import timezone
 from datetime import date
 from .models import *
+from django.db.models import Prefetch
 from .serializers import *
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
 from apps.patientrecords.models import *
@@ -23,7 +24,6 @@ from apps.maternal.serializer import PreviousPregnancyCreateSerializer
 from apps.patientrecords.serializers.spouse_serializers import *
 from apps.inventory.models import CommodityList, CommodityInventory # Import CommodityList and CommodityInventory
 
-    
 @api_view(['GET'])
 def get_fp_patient_counts(request):
     """
@@ -604,6 +604,27 @@ class PatientListForOverallTable(generics.ListAPIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+def get_filtered_commodity_list(request):
+    client_type = request.query_params.get('client_type', None)
+    gender = request.query_params.get('gender', None)
+
+    commodities = CommodityList.objects.all()
+
+    if client_type:
+        # Filter by user_type: 'New acceptor', 'Current user', or 'Both'
+        commodities = commodities.filter(user_type__in=[client_type, 'Both'])
+
+    if gender:
+        # Filter by gender_type: 'Male', 'Female', or 'Both'
+        commodities = commodities.filter(gender_type__in=[gender, 'Both'])
+
+    formatted_commodities = [
+        {'id': com.com_name, 'name': com.com_name, 'user_type': com.user_type, 'gender_type': com.gender_type}
+        for com in commodities
+    ]
+    return Response(formatted_commodities, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def get_commodity_stock(request, commodity_name):
@@ -656,7 +677,7 @@ def get_fp_records_for_patient(request, patient_id):
             # Get the assessment record to find follow-up date
             assessment = FP_Assessment_Record.objects.filter(fprecord=record).first()
             follow_up_date = assessment.followv.followv_date if assessment and hasattr(assessment, 'followv') else None
-
+            follow_up_status = assessment.followv.followv_status if assessment and hasattr(assessment, 'followv') else None
             patient_name = ""
             patient_age = None
             patient_sex = ""
@@ -709,6 +730,9 @@ def get_fp_records_for_patient(request, patient_id):
                    
                     "dateOfFollowUp": (
                         follow_up_date.isoformat() if follow_up_date else "N/A"
+                    ),
+                    "followv_status": (
+                        follow_up_status if follow_up_status else "N/A"
                     ),
                     "avg_monthly_income": record.avg_monthly_income or "N/A",
                 }
@@ -989,7 +1013,6 @@ def get_latest_fp_record_for_patient(request, patient_id):
             {"error": f"Error fetching latest complete FP record for patient: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(["GET"])
 def get_complete_fp_record(request, fprecord_id):
     try:
@@ -1013,9 +1036,10 @@ def get_complete_fp_record(request, fprecord_id):
         complete_data["plan_more_children"] = fp_record.plan_more_children
         complete_data["occupation"] = fp_record.occupation or "N/A"  # Set once
         complete_data["avg_monthly_income"] = fp_record.avg_monthly_income or "N/A"
-        
         print("Initial occupation set:", complete_data["occupation"])  # Debug
-        
+        pat_id = fp_record.pat_id
+
+        # Serialize related data for the current record
         try:
             fp_type = FP_type.objects.get(fprecord_id=fp_record)
             complete_data["fp_type"] = FPTypeSerializer(fp_type).data
@@ -1455,55 +1479,58 @@ def get_complete_fp_record(request, fprecord_id):
                 "disabilityDetails": ""
             }
 
-        # Fetch FP_Assessment_Record
-        try:
-            fp_physical_exam = FP_Physical_Exam.objects.select_related('vital').get(fprecord_id=fp_record)
-            complete_data["fp_physical_exam"] = FPPhysicalExamSerializer(fp_physical_exam).data
-            complete_data["vital_signs_detail"] = VitalSignsSerializer(fp_physical_exam.vital).data if fp_physical_exam.vital else None
-        except FP_Physical_Exam.DoesNotExist:
-            complete_data["fp_physical_exam"] = None
-            complete_data["vital_signs_detail"] = None
+        # Fetch ALL historical FP_Assessment_Records for the patient, filtered by method if not latest
+        current_method = fp_type.fpt_method_used if fp_type else None
+        is_latest = fp_record.created_at == FP_Record.objects.filter(pat_id=pat_id).aggregate(Max('created_at'))['created_at__max']
 
-        try:
-            fp_assessment = FP_Assessment_Record.objects.get(fprecord=fp_record)
-            assessment_serialized_data = FPAssessmentSerializer(fp_assessment).data
-            follow_up_date_value = fp_assessment.followv.followv_date if fp_assessment.followv else ""
-            complete_data["fp_assessment"] = assessment_serialized_data
-            complete_data["serviceProvisionRecords"] = [
-                {
-                    "dateOfVisit": (
-                        fp_assessment.fprecord.created_at.strftime('%Y-%m-%d')
-                        if fp_assessment.fprecord and fp_assessment.fprecord.created_at else ""
-                    ),
-                    "methodAccepted": assessment_serialized_data.get("fpt_method_used") or "",
-                    "nameOfServiceProvider": assessment_serialized_data.get("as_provider_name") or "",
-                    "dateOfFollowUp": follow_up_date_value or "",
-                    "methodQuantity": str(assessment_serialized_data.get("quantity", "")),
-                    "serviceProviderSignature": assessment_serialized_data.get("as_provider_signature") or "",
-                    "medicalFindings": assessment_serialized_data.get("as_findings") or "",
-                    "weight": assessment_serialized_data.get("bm_weight", 0),
-                    "bp_systolic": (
-                        int(fp_physical_exam.vital.vital_bp_systolic)
-                        if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.vital_bp_systolic and fp_physical_exam.vital.vital_bp_systolic != "N/A"
-                        else 0
-                    ),
-                    "bp_diastolic": (
-                        int(fp_physical_exam.vital.vital_bp_diastolic)
-                        if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.vital_bp_diastolic and fp_physical_exam.vital.vital_bp_diastolic != "N/A"
-                        else 0
-                    ),
-                    "vital_pulse": (
-                        int(fp_physical_exam.vital.vital_pulse)
-                        if fp_physical_exam and fp_physical_exam.vital and fp_physical_exam.vital.vital_pulse and fp_physical_exam.vital.vital_pulse != "N/A"
-                        else 0
-                    ),
-                }
-            ]
-            complete_data["follow_up_visit"] = FollowUpVisitSerializer(fp_assessment.followv).data if fp_assessment.followv else None
-        except FP_Assessment_Record.DoesNotExist:
-            complete_data["fp_assessment"] = None
-            complete_data["follow_up_visit"] = None
-            complete_data["serviceProvisionRecords"] = []
+        all_fp_records_qs = FP_Record.objects.filter(pat_id=pat_id)
+        if not is_latest and current_method:
+            all_fp_records_qs = all_fp_records_qs.filter(fp_type__fpt_method_used=current_method)  # Filter by method
+        all_fp_records = all_fp_records_qs.order_by('-created_at').prefetch_related(
+            Prefetch('fp_assessment_record', queryset=FP_Assessment_Record.objects.select_related('followv')),
+            Prefetch('fp_physical_exam', queryset=FP_Physical_Exam.objects.select_related('bm', 'vital')),
+            Prefetch('fp_acknowledgement', queryset=FP_Acknowledgement.objects.select_related('type'))
+        )
+
+        service_provision_records = []
+        for historical_fp_record in all_fp_records:
+            assessment = historical_fp_record.fp_assessment_record.first()
+            if not assessment:
+                continue
+
+            physical_exam = historical_fp_record.fp_physical_exam.first()
+            acknowledgement = historical_fp_record.fp_acknowledgement.first()
+
+            service_dict = {
+                'dateOfVisit': (
+                    assessment.followv.date_of_visit.strftime('%Y-%m-%d')
+                    if assessment.followv and hasattr(assessment.followv, 'date_of_visit') and assessment.followv.date_of_visit
+                    else historical_fp_record.created_at.strftime('%Y-%m-%d')
+                ),
+                'dateOfFollowUp': (
+                    assessment.followv.followv_date.strftime('%Y-%m-%d')
+                    if assessment.followv and assessment.followv.followv_date
+                    else ''
+                ),
+                'weight': (
+                    physical_exam.bm.weight if physical_exam and physical_exam.bm else 0
+                ),
+                'bloodPressure': (
+                    f"{physical_exam.vital.vital_bp_systolic}/{physical_exam.vital.vital_bp_diastolic}"
+                    if physical_exam and physical_exam.vital and physical_exam.vital.vital_bp_systolic and physical_exam.vital.vital_bp_diastolic
+                    else 'N/A'
+                ),
+                'medicalFindings': assessment.as_findings or '',
+                'methodAccepted': (
+                    acknowledgement.type.fpt_method_used if acknowledgement and acknowledgement.type else ''
+                ),
+                'methodQuantity': assessment.quantity or 0,
+                'serviceProviderSignature': assessment.as_provider_signature or '',
+                'nameOfServiceProvider': assessment.as_provider_name or '',
+            }
+            service_provision_records.append(service_dict)
+
+        complete_data["serviceProvisionRecords"] = service_provision_records if service_provision_records else []
 
         print("Final occupation before response:", complete_data["occupation"])  # Debug
         return Response(complete_data, status=status.HTTP_200_OK)
@@ -1515,7 +1542,156 @@ def get_complete_fp_record(request, fprecord_id):
             {"error": f"Error fetching complete FP record: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+    
+# new view to fetch the latest FP record for a patient
+@api_view(['GET'])
+def get_latest_fp_record_by_patient_id(request, patient_id):
+    """
+    Fetches the latest complete FP record for a given patient,
+    consolidating data from multiple related models.
+    """
+    try:
+        # Find the latest FP_Record for the patient
+        latest_fp_record = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at').first()
 
+        if not latest_fp_record:
+            return Response({"detail": "No Family Planning record found for this patient."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # Initialize a dictionary to hold all the consolidated data
+        complete_data = {}
+
+        # Fetch and serialize Patient and PatientRecord data
+        patient = latest_fp_record.pat
+        pat_record = latest_fp_record.patrec
+        
+        # Get patient details (Resident or Transient)
+        if patient.rp_id:
+            resident_info = patient.rp_id
+            complete_data.update({
+                "lastName": resident_info.res_lname,
+                "givenName": resident_info.res_fname,
+                "middleInitial": resident_info.res_mname[:1] if resident_info.res_mname else "",
+                "dateOfBirth": resident_info.res_dob.isoformat(),
+                "age": calculate_age_from_dob(resident_info.res_dob.isoformat()),
+                "educationalAttainment": resident_info.res_ed_attainment,
+                "philhealthNo": resident_info.philhealthNo,
+                "nhts_status": resident_info.hh_id.hh_nhts if resident_info.hh_id else "",
+                "address": {
+                    "houseNumber": resident_info.res_house_no,
+                    "street": resident_info.res_street,
+                    "barangay": resident_info.res_barangay,
+                    "municipality": resident_info.res_municipality,
+                    "province": resident_info.res_province,
+                }
+            })
+        elif patient.trans_id:
+            transient_info = patient.trans_id
+            complete_data.update({
+                "lastName": transient_info.tran_lname,
+                "givenName": transient_info.tran_fname,
+                "middleInitial": transient_info.tran_mname[:1] if transient_info.tran_mname else "",
+                "dateOfBirth": transient_info.tran_dob.isoformat(),
+                "age": calculate_age_from_dob(transient_info.tran_dob.isoformat()),
+                "educationalAttainment": transient_info.tran_ed_attainment,
+                "philhealthNo": "",
+                "nhts_status": "",
+                "address": {
+                    "houseNumber": "",
+                    "street": transient_info.tradd_id.tradd_street,
+                    "barangay": transient_info.tradd_id.tradd_barangay,
+                    "municipality": transient_info.tradd_id.tradd_city,
+                    "province": transient_info.tradd_id.tradd_province,
+                }
+            })
+        
+        # Fetch Spouse data
+        if latest_fp_record.spouse:
+            spouse_data = SpouseSerializer(latest_fp_record.spouse).data
+            complete_data["spouse"] = {
+                "s_lastName": spouse_data.get("spouse_lname", ""),
+                "s_givenName": spouse_data.get("spouse_fname", ""),
+                "s_middleInitial": spouse_data.get("spouse_mname", "")[:1] if spouse_data.get("spouse_mname") else "",
+                "s_dateOfBirth": spouse_data.get("spouse_dob"),
+                "s_occupation": spouse_data.get("spouse_occupation", ""),
+                "s_educationalAttainment": spouse_data.get("spouse_ed_attainment", "")
+            }
+        else:
+            complete_data["spouse"] = {}
+
+        # Fetch Obstetrical History
+        obstetrical_history = Obstetrical_History.objects.filter(patrec=pat_record).first()
+        if obstetrical_history:
+            complete_data["obstetricalHistory"] = ObstetricalHistorySerializer(obstetrical_history).data
+            
+        # Fetch Medical History
+        medical_history_records = MedicalHistory.objects.filter(patrec=pat_record)
+        selected_illness_ids = [mh.ill.ill_id for mh in medical_history_records]
+        complete_data["medicalHistory"] = {
+            "selected_illness_ids": selected_illness_ids,
+            "severeHeadaches": any(ill.ill_id == 14 for ill in [mh.ill for mh in medical_history_records]),
+            "strokeHeartAttackHypertension": any(ill.ill_id == 15 for ill in [mh.ill for mh in medical_history_records]),
+            "hematomaBruisingBleeding": any(ill.ill_id == 16 for ill in [mh.ill for mh in medical_history_records]),
+            "breastCancerHistory": any(ill.ill_id == 17 for ill in [mh.ill for mh in medical_history_records]),
+            "severeChestPain": any(ill.ill_id == 18 for ill in [mh.ill for mh in medical_history_records]),
+            "cough": any(ill.ill_id == 19 for ill in [mh.ill for mh in medical_history_records]),
+            "jaundice": any(ill.ill_id == 20 for ill in [mh.ill for mh in medical_history_records]),
+            "unexplainedVaginalBleeding": any(ill.ill_id == 21 for ill in [mh.ill for mh in medical_history_records]),
+            "abnormalVaginalDischarge": any(ill.ill_id == 22 for ill in [mh.ill for mh in medical_history_records]),
+            "phenobarbitalOrRifampicin": any(ill.ill_id == 23 for ill in [mh.ill for mh in medical_history_records]),
+            "smoker": any(ill.ill_id == 24 for ill in [mh.ill for mh in medical_history_records]),
+            "disability": any(ill.ill_id == 25 for ill in [mh.ill for mh in medical_history_records]),
+            "disabilityDetails": next((mh.mh_details for mh in medical_history_records if mh.ill.ill_id == 25), ""),
+        }
+        
+        # Fetch FP_type
+        fp_type = FP_type.objects.filter(fprecord_id=latest_fp_record).first()
+        if fp_type:
+            complete_data.update({
+                "typeOfClient": fp_type.fpt_client_type,
+                "subTypeOfClient": fp_type.fpt_sub_client_type,
+                "reasonForFP": fp_type.fpt_reason_fp,
+                "reason": fp_type.fpt_reason,
+                "otherReasonForFP": fp_type.fpt_other_reason,
+                "methodCurrentlyUsed": fp_type.fpt_method_used,
+            })
+            
+        # Fetch FP_Service_Provision
+        service_provision = FP_Assessment_Record.objects.filter(fprecord_id=latest_fp_record).first()
+        if service_provision:
+            complete_data.update({
+                "serviceProvision": {
+                    "counseling": service_provision.counseling,
+                    "physicalExam": service_provision.physicalExam,
+                    "breastExam": service_provision.breastExam,
+                    "pregnancyCheck": service_provision.pregnancyCheck,
+                }
+            })
+            
+        # Fetch FP_Assessment_Record
+        assessment_record = FP_Assessment_Record.objects.filter(fprecord_id=latest_fp_record).first()
+        if assessment_record:
+            complete_data.update({
+                "assessmentRecord": {
+                    "body_weight": assessment_record.body_weight,
+                    "height": assessment_record.height,
+                    "bmi": assessment_record.bmi,
+                    "bloodPressure": assessment_record.bloodPressure,
+                    "pulseRate": assessment_record.pulseRate,
+                    "temperature": assessment_record.temperature,
+                    "skin": assessment_record.skin,
+                    "conjunctiva": assessment_record.conjunctiva,
+                    "neck": assessment_record.neck,
+                    "breast": assessment_record.breast,
+                    "abdomen": assessment_record.abdomen,
+                    "extremities": assessment_record.extremities,
+                }
+            })
+
+        return Response(complete_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 def get_complete_fp_record_data(request, fprecord_id):
     try:
         fp_record = FP_Record.objects.select_related(
@@ -2216,11 +2392,20 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
         if fpob_type_last_delivery_val == "":
             fpob_type_last_delivery_val = None
             
+        # Apply the same logic for menstrual period dates
+        last_period_val = fp_obstetrical_history_data.get('lastMenstrualPeriod')
+        if last_period_val == "":
+            last_period_val = None
+
+        previous_period_val = fp_obstetrical_history_data.get('previousMenstrualPeriod')
+        if previous_period_val == "":
+            previous_period_val = None
+
         fp_obs_serializer_data = {
             "fpob_last_delivery": fpob_last_delivery_val,
             "fpob_type_last_delivery": fpob_type_last_delivery_val,
-            "fpob_last_period": fp_obstetrical_history_data.get('lastMenstrualPeriod'),
-            "fpob_previous_period": fp_obstetrical_history_data.get('previousMenstrualPeriod'),
+            "fpob_last_period": last_period_val,
+            "fpob_previous_period": previous_period_val,
             "fpob_mens_flow": fp_obstetrical_history_data.get('menstrualFlow') or "Normal",
             "fpob_dysme": fp_obstetrical_history_data.get('dysmenorrhea') or False,
             "fpob_hydatidiform": fp_obstetrical_history_data.get('hydatidiformMole') or False,
@@ -2452,6 +2637,14 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
             except (ValueError, TypeError):
                 logger.error(f"Invalid quantity provided: {method_quantity_str}. Defaulting to 0.")
 
+        last_follow_up_visit = FollowUpVisit.objects.filter(patrec=patient_record_instance).order_by('-followv_date').first()
+        if last_follow_up_visit:
+            last_follow_up_visit.followv_status = 'completed'  # Update status to completed
+            last_follow_up_visit.completed_at = timezone.now().date()
+            last_follow_up_visit.save()  # Save the changes
+
+            logger.info(f"Updated last follow-up visit (ID: {last_follow_up_visit.followv_id}) status to 'completed'.")
+
         # Create Follow-up Visit
         follow_up_data = {
             "patrec": patrec_id, # Link to the determined patrec_id
@@ -2468,7 +2661,16 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
         # Deduct stock and log transaction if quantity > 0 and method is a commodity
         if method_accepted and method_quantity > 0:
             try:
+                print(f"DEBUG: Attempting stock deduction for {method_accepted} (qty: {method_quantity})...") # Debugging line
                 commodity = CommodityList.objects.get(com_name=method_accepted)
+
+                print(f"DEBUG: Looking for inventory for commodity {commodity.com_name} with at least {method_quantity} units")
+                all_items = CommodityInventory.objects.filter(com_id=commodity)
+                print(f"DEBUG: Found {all_items.count()} inventory items for commodity.")
+
+                for item in all_items:
+                    print(f"Item: qty={item.cinv_qty_avail}, archived={item.inv_id.is_Archived}, expiry={item.inv_id.expiry_date}")
+
                 commodity_inventory_item = CommodityInventory.objects.filter(
                     com_id=commodity,
                     cinv_qty_avail__gte=method_quantity,
@@ -2478,19 +2680,36 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
                 if not commodity_inventory_item:
                     raise ValueError(f"Insufficient stock ({method_quantity}) for commodity '{method_accepted}' or no suitable inventory item found.")
 
+                # Deduct the stock
                 commodity_inventory_item.cinv_qty_avail -= method_quantity
                 commodity_inventory_item.save()
 
+                # --- START OF NEW LOGIC TO FIX THE comt_qty ---
+                # Get the unit from the inventory item
+                original_unit = commodity_inventory_item.cinv_qty_unit
+                transaction_unit = original_unit
+
+                # Check if the unit is 'boxes' and change it to 'pc/s'
+                if original_unit == "boxes":
+                    transaction_unit = "pc/s"
+
+                # Construct the final quantity string to be saved in the transaction
+                final_comt_qty = f"{method_quantity} {transaction_unit}"
+                # --- END OF NEW LOGIC ---
+
                 CommodityTransaction.objects.create(
                     cinv_id=commodity_inventory_item,
-                    comt_qty=str(method_quantity),
+                    comt_qty=final_comt_qty, # Use the new formatted string here
                     comt_action="Deducted for FP Service",
                     staff = staff_id_from_request or None
                 )
                 logger.info(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
+                print(f"DEBUG: Stock deducted successfully for {method_accepted}. Transaction quantity logged as: {final_comt_qty}") # Debugging line
 
             except CommodityList.DoesNotExist:
+                # ... (your existing exception handling) ...
                 logger.warning(f"Commodity '{method_accepted}' not found in CommodityList. Stock not deducted.")
+                print(f"DEBUG: Commodity '{method_accepted}' not found for stock deduction.") # Debugging line
                 raise # Re-raise to trigger rollback if commodity not found
             except ValueError as ve:
                 logger.error(f"Stock deduction error for {method_accepted}: {ve}", exc_info=True)

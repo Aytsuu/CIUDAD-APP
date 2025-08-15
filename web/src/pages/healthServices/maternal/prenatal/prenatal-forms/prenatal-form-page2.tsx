@@ -7,7 +7,7 @@ import type { z } from "zod"
 
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form" 
-import { Combobox } from "@/components/ui/combobox"
+// import { Combobox } from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -23,7 +23,7 @@ import LaboratoryResults, {
   type LabResults,
 } from "@/pages/healthServices/maternal/maternal-components/lab-result"
 
-import { fetchVaccinesWithStock } from "../../../vaccination/restful-api/fetch"
+// import { fetchVaccinesWithStock } from "../../../vaccination/restful-api/fetch"
 import { usePrenatalPatientPrevPregnancy } from "../../queries/maternalFetchQueries"
 
 
@@ -142,9 +142,10 @@ export default function PrenatalFormSecPg({
     }
   }
 
-  const handleVaccineChange = (value: string) => {
-    form.setValue("prenatalVaccineInfo.vaccineType", value)
-  }
+  // const handleVaccineChange = (value: string) => {
+  //   form.setValue("prenatalVaccineInfo.vaccineType", value)
+  // }
+
   //tt type
   type TetanusToxoidType = {
     vaccineType?: string

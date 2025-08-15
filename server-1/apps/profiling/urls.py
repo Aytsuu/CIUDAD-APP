@@ -10,8 +10,12 @@ from .views.request_registration_views import *
 from .views.business_views import *
 from .views.analytics_views import *
 from .views.kyc_views import *
+from .views.all_record_views import *
 
 urlpatterns = [
+    # All record (combined record of resident and business respondents)
+    path("all/", AllRecordTableView.as_view(), name="all-record"),
+
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
 
@@ -79,6 +83,6 @@ urlpatterns = [
     path("sidebar/analytics/data/", SidebarAnalyticsView.as_view(), name="sidebar-analytics"),
     
     # KYC
-    path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
-    path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
+    # path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
+    # path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
 ]

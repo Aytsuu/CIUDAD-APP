@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
-import FamilyPlanningSchema, { page3Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page3Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Form, FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form/form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -25,7 +25,7 @@ const referralOptions = {
 }
 
 const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData, mode="create" }: Page3Props) => {
-  const isReadOnly = mode === "view"
+  // const isReadOnly = mode === "view"
   const form = useForm<FormData>({
      resolver: zodResolver(page3Schema),
     defaultValues: formData,
@@ -209,13 +209,13 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData, m
                                 type="radio"
                                 id={`referral-${option}`}
                                 value={option}
-                                checked={field.value === option || (option === "Others" && !["DSWD", "WCPU", "NGOs"].includes(field.value))}
+                                checked={field.value === option || (option === "Others" && !["DSWD", "WCPU", "NGOs"].includes(field.value ?? ""))}
                                 onChange={() => field.onChange(option)}
                               />
                               <label htmlFor={`referral-${option}`}>{option}</label>
                             </div>
                           ))}
-                          {(field.value === "Others" || !["DSWD", "WCPU", "NGOs"].includes(field.value)) && (
+                          {(field.value === "Others" || !["DSWD", "WCPU", "NGOs"].includes(field.value ?? "")) && (
                             <div className="ml-6 mt-2">
                               <FormLabel>Specify:</FormLabel>
                               <Input

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, CircleCheck, Loader2 } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,15 +10,10 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCommodityStocks } from "@/pages/healthInventory/inventoryStocks/REQUEST/Commodity/restful-api/CommodityGetAPI";
 import { CommodityStocksColumns } from "./columns/CommodityCol";
-import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { Link } from "react-router";
 import { CommodityStocksRecord } from "./type";
 import { useCommodityStocks } from "../queries/fetch";
@@ -68,17 +63,17 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 };
 
 export default function CommodityStocks() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [commodityToArchive, setCommodityToArchive] = useState<string | null>(
-    null
-  );
+  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+  //   useState(false);
+  // const [commodityToArchive, setCommodityToArchive] = useState<string | null>(
+  //   null
+  // );
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const { data: commodityStocks, isLoading, error } = useCommodityStocks();
 

@@ -16,7 +16,7 @@ export default () => {
   {
     title: "Certification Request",
      description: "Request official certification documents for personal or legal use.",
-     route: ""
+     route: "/(request)/certification-request/cert-choices"
   },
   {
     title: "Medicine Request",
@@ -49,6 +49,9 @@ export default () => {
       customRightAction={<View className="w-10 h-10"/>}
     >
       <View className="flex-1 px-5">
+        <Text className="text-sm text-center text-gray-600 leading-6 px-5 mb-4">
+          Monitor barangay requests. Select a category below to view records.
+        </Text> 
         {
           menuItem.map((item: any, index: number) => (
             <TouchableOpacity

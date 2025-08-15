@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import supabase from "@/supabase/supabase";
-import { WebSocketStatus } from "@/services/web-socket-service";
 
 export function useConnectionStatus() {
-  const [status, setStatus] = useState<WebSocketStatus>('disconnected');
+  const [status, setStatus] = useState<any>('disconnected');
   
   useEffect(() => {
     const subscription = supabase

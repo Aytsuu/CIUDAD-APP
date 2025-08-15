@@ -8,44 +8,52 @@ import ScheduleDialog from "../scheduler/schedule-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
 import type { WeeklySchedule, DailySchedule } from "../scheduler/schedule-types"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { useGetServices, useGetScheduler } from "../scheduler/queries/schedulerFetchQueries"
+import { useGetServices, useGetDays, useGetScheduler } from "../scheduler/queries/schedulerFetchQueries"
 
 export default function SchedulerMain() {
-  // ✅ Fetch services from database instead of hardcoded values
   const { data: servicesData = []} = useGetServices()
   const { data: schedulersData = [] } = useGetScheduler()
+  const { data: daysData = [] } = useGetDays()
 
   const [services, setServices] = useState<string[]>([])
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>({})
   const [weekDays, setWeekDays] = useState<Date[]>([])
 
-  // ✅ Update services state when data is fetched from database
   useEffect(() => {
     if (servicesData.length > 0) {
       const serviceNames = servicesData.map((service) => service.service_name)
-      console.log("Setting services from database:", servicesData)
       setServices(serviceNames)
     }
   }, [servicesData])
 
   useEffect(() => {
-    const today = new Date()
-    const monday = startOfWeek(today, { weekStartsOn: 1, locale: enUS })
-    const days: Date[] = []
-    for (let i = 0; i < 5; i++) {
-      days.push(addDays(monday, i))
-    }
-    setWeekDays(days)
+    if(daysData.length > 0) {
+      const today = new Date()
+      const monday = startOfWeek(today, { weekStartsOn: 1, locale: enUS })
 
-    // build schedule from database data instead of simulated data
-    if (schedulersData.length > 0) {
-      // console.log("Building schedule from database:")
-      // console.log("Schedulers data:", schedulersData)
-      // console.log("Services data:", servicesData)
+      const days = daysData.map((dayData) => {
+      const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+      const dayIndex = dayNames.indexOf(dayData.day)
+      
+      if (dayIndex !== -1) {
+        // Monday = 0, Tuesday = 1, etc.
+        return addDays(monday, dayIndex)
+      } else {
+        console.error('Invalid day name:', dayData.day)
+        return null
+      }
+    }).filter((d): d is Date => d !== null)
+
+      setWeekDays(days)
+    }
+  }, [daysData])
+
+  useEffect(() => {
+    if (schedulersData.length > 0 && servicesData.length > 0 && weekDays.length > 0) {
 
       const schedule: WeeklySchedule = {}
 
-      days.forEach((day) => {
+      weekDays.forEach((day) => {
         const formattedDate = format(day, "yyyy-MM-dd")
         const dayName = format(day, "EEEE")
         const daily: DailySchedule = {}
@@ -69,7 +77,7 @@ export default function SchedulerMain() {
     } else {
       console.log("No schedulers data found")
     }
-  }, [schedulersData, servicesData])
+  }, [schedulersData, servicesData, weekDays])
 
 
   const handleSaveSchedule = (newSchedule: WeeklySchedule) => {

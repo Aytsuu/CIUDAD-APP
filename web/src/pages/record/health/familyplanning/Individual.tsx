@@ -14,106 +14,69 @@ import { getPatientDetails } from "../patientsRecord/restful-api/get";
 import ViewButton from "@/components/ui/view-button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface IndividualFPRecordDetail {
-  otherMethod: any;
-  patient_id: any;
-  fprecord: any;
-  patrec_id: any;
-  client_id: string;
-  patient_name: string;
-  patient_age: number;
-  sex: string;
-  client_type: string;
-  method_used: string;
-  created_at: string;
-  updated_at: string;
-  dateOfVisit?: string;
-  methodAccepted?: string;
-  nameOfServiceProvider?: string;
-  dateOfFollowUp?: string;
-  methodQuantity?: string;
-  serviceProviderSignature?: string;
-  medicalFindings?: string;
-  weight?: number;
-  bp_systolic?: number;
-  bp_diastolic?: number;
-  violenceAgainstWomen?: {
-    unpleasantRelationship?: boolean;
-    partnerDisapproval?: boolean;
-    domesticViolence?: boolean;
-    referredTo?: string;
-  };
-  pregnancyCheck?: {
-    breastfeeding?: boolean;
-    abstained?: boolean;
-    recent_baby?: boolean;
-    recent_period?: boolean;
-    recent_abortion?: boolean;
-    using_contraceptive?: boolean;
-  };
-  riskSti?: {
-    abnormalDischarge?: boolean;
-    soresLesions?: boolean;
-    itching?: boolean;
-    stiHistory?: boolean;
-    abnormalBleeding?: boolean;
-    referredTo?: string;
-  };
-  riskVaw?: {
-    unpleasantRelationship?: boolean;
-    partnerDisapproval?: boolean;
-    domesticViolence?: boolean;
-    referredTo?: string;
-  };
-  physicalExam?: {
-    skin?: string;
-    extremities?: string;
-    conjunctiva?: string;
-    neck?: string;
-    breast?: string;
-    abdomen?: string;
-    pelvicExam?: string;
-  };
-  obstetricalHistory?: {
-    g_pregnancies?: number;
-    p_pregnancies?: number;
-    fullTerm?: number;
-    premature?: number;
-    abortion?: number;
-    livingChildren?: number;
-  };
-}
+// Import the correct type from your API or shared types
+import type { IndividualFPRecordDetail } from "@/pages/familyplanning/request-db/GetRequest";
 
-const isFollowUpMissed = (followUpDate: string) => {
-  if (!followUpDate || followUpDate === "N/A") return { missed: false, days: 0 };
-  const followUp = new Date(followUpDate);
-  const today = new Date("2025-08-11T12:10:00-07:00"); // Set to 12:10 PM PST, August 11, 2025
-  followUp.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  if (followUp < today) {
-    const diffTime = Math.abs(today.getTime() - followUp.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return { missed: true, days: diffDays };
+// Updated function to determine follow-up status based on backend status and date
+const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string) => {
+  // If no follow-up data exists
+  if (!followv_status || !followUpDate) {
+    return { 
+      status: "No Follow-up", 
+      className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+    };
   }
-  return { missed: false, days: 0 };
+
+  // If status is "Completed", always show as completed regardless of date
+  if (followv_status.toLowerCase() === "completed") {
+    return { 
+      status: "Completed", 
+      className: "bg-green-100 text-green-800 border-green-300 hover:bg-green-200" 
+    };
+  }
+
+  // If status is "Pending", check if the date has passed
+  if (followv_status.toLowerCase() === "pending") {
+    const today = new Date();
+    const followUp = new Date(followUpDate);
+    
+    // Set hours to 0 for date-only comparison
+    today.setHours(0, 0, 0, 0);
+    followUp.setHours(0, 0, 0, 0);
+
+    if (followUp < today) {
+      return { 
+        status: "Missed", 
+        className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" 
+      };
+    } else if (followUp.getTime() === today.getTime()) {
+      return { 
+        status: "Due Today", 
+        className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+      };
+    } else {
+      return { 
+        status: "Pending", 
+        className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+      };
+    }
+  }
+
+  // Default case - show the backend status as is with yellow color
+  return { 
+    status: followv_status, 
+    className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+  };
 };
 
-const getFollowUpStatus = (followUpDate: string) => {
-  if (!followUpDate || followUpDate === "N/A") return { status: "No Follow-up", days: 0 };
-
-  const today = new Date("2025-08-11T12:10:00-07:00"); // Set to 12:10 PM PST, August 11, 2025
-  today.setHours(0, 0, 0, 0);
-  const followUp = new Date(followUpDate);
-  followUp.setHours(0, 0, 0, 0);
-
-  if (followUp < today) {
-    const diffTime = Math.abs(today.getTime() - followUp.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return { status: "Missed", days: diffDays };
-  }
-  if (followUp.getTime() === today.getTime()) return { status: "Today", days: 0 };
-  return { status: "Upcoming", days: 0 };
+// Check if any record has missed follow-ups for the warning banner
+const hasMissedFollowUps = (records: IndividualFPRecordDetail[]) => {
+  return records.some(record => {
+    const { status } = getFollowUpDisplayStatus(record.followv_status, record.dateOfFollowUp);
+    return status === "Missed";
+  });
 };
 
 const IndividualFamPlanningTable: React.FC = () => {
@@ -127,7 +90,7 @@ const IndividualFamPlanningTable: React.FC = () => {
     isLoading: isLoadingFPRecords,
     isError: isErrorFPRecords,
     error: errorFPRecords,
-  } = useQuery({
+  } = useQuery<IndividualFPRecordDetail[]>({
     queryKey: ["individualFPRecordsList", patientId],
     queryFn: () => getFPRecordsForPatient(patientId),
     enabled: !!patientId,
@@ -146,10 +109,11 @@ const IndividualFamPlanningTable: React.FC = () => {
 
   const displayPatientName = useMemo(() => {
     if (patientInfoForCard) {
-      return `${patientInfoForCard.personal_info.per_fname} ${patientInfoForCard.personal_info.per_mname
+      return `${patientInfoForCard.personal_info.per_fname} ${
+        patientInfoForCard.personal_info.per_mname
           ? patientInfoForCard.personal_info.per_mname + " "
           : ""
-        }${patientInfoForCard.personal_info.per_lname}`;
+      }${patientInfoForCard.personal_info.per_lname}`;
     }
     return "Loading patient name...";
   }, [patientInfoForCard]);
@@ -175,11 +139,12 @@ const IndividualFamPlanningTable: React.FC = () => {
     }
     const patrecIdToReuse = record.patrec_id;
     if (!patrecIdToReuse) {
-      toast.error("Patient Record ID (patrec_id) not found for follow-up. Please check API response.");
+      toast.error("Patient Record ID (patrec_id) not found for follow-up.");
       return;
     }
     navigate(
-      `/familyplanning/new-record/${record.patient_id}?mode=followup&patrecId=${patrecIdToReuse}&prefillFromFpRecord=${record.fprecord}`
+      `/familyplanning/new-record/${record.patient_id}?mode=followup&patrecId=${patrecIdToReuse}&prefillFromFpRecord=${record.fprecord}`,
+      { state: { gender: record.sex } }
     );
   };
 
@@ -188,20 +153,21 @@ const IndividualFamPlanningTable: React.FC = () => {
       toast.error("Please select at least two records to compare.");
       return;
     }
-    const recordIdsToCompare = selectedRecords.map((record) => record.fprecord);
-    console.log("Individual.tsx: IDs being sent to comparison page:", recordIdsToCompare);
-    navigate("/familyplanning/compare-multiple", { state: { recordIds: recordIdsToCompare } });
+    navigate("/familyplanning/compare-multiple", {
+      state: { recordIds: selectedRecords.map((record) => record.fprecord) },
+    });
   };
 
-  const handleCreateNewRecord = () => {
+  const handleCreateNewRecord = (patient: { gender: any }) => {
     if (!patientId) {
       toast.error("Patient ID not found");
       return;
     }
-    navigate(`/familyplanning/new-record/${patientId}?mode=create&prefill=true`);
+    navigate(`/familyplanning/new-record/${patientId}?mode=create&prefill=true`, {
+      state: { gender: patient.gender },
+    });
   };
 
-  // Group records by patrec_id
   const groupedRecords = useMemo(() => {
     const groups: { [key: string]: IndividualFPRecordDetail[] } = {};
     fpPatientRecords.forEach((record) => {
@@ -211,34 +177,34 @@ const IndividualFamPlanningTable: React.FC = () => {
       }
       groups[patrecId].push(record);
     });
+
     // Sort each group by created_at descending
     Object.keys(groups).forEach((patrecId) => {
       groups[patrecId].sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
     });
-    // Sort groups by the latest created_at in each group
-    const sortedGroups = Object.entries(groups).sort(([, aRecords], [, bRecords]) => {
+
+    // Sort groups by latest record's created_at
+    return Object.entries(groups).sort(([, aRecords], [, bRecords]) => {
       const aLatest = new Date(aRecords[0]?.created_at || 0).getTime();
       const bLatest = new Date(bRecords[0]?.created_at || 0).getTime();
-      return bLatest - aLatest; // Newest group first
+      return bLatest - aLatest;
     });
-    return Object.fromEntries(sortedGroups);
   }, [fpPatientRecords]);
 
-  // Function to format date as DD/MM/YYYY
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
-  // Function to get latest record info for group header
   const getGroupHeader = (records: IndividualFPRecordDetail[]) => {
     if (records.length === 0) return "Unknown";
-    const latestRecord = records[0]; // Since sorted descending by created_at
+    const latestRecord = records[0];
     const date = formatDate(latestRecord.created_at);
     const method = latestRecord.method_used || latestRecord.otherMethod || "N/A";
     return `${date} (${method})`;
@@ -277,7 +243,7 @@ const IndividualFamPlanningTable: React.FC = () => {
       {
         accessorKey: "client_type",
         header: "Client Type",
-        cell: ({ row }) => row.original.client_type,
+        cell: ({ row }) => row.original.client_type || "N/A",
       },
       {
         accessorKey: "method_used",
@@ -291,45 +257,25 @@ const IndividualFamPlanningTable: React.FC = () => {
       {
         accessorKey: "dateOfFollowUp",
         header: "Date of Follow-Up",
-        cell: ({ row }) => {
-          const date = row.original.dateOfFollowUp;
-          if (date && date !== "N/A") {
-            const formattedDate = formatDate(date);
-            return formattedDate;
-          }
-          return "N/A";
-        },
+        cell: ({ row }) => formatDate(row.original.dateOfFollowUp || ""),
       },
       {
-        accessorKey: "dateOfFollowUp",
+        accessorKey: "followv_status",
         header: "Follow-up Status",
         cell: ({ row }) => {
-          const date = row.original.dateOfFollowUp;
-          const { status, days } = getFollowUpStatus(date ?? "");
-
-          if (!date || date === "N/A") {
-            return <span className="text-gray-500">No Follow-up</span>;
-          }
-
-          const formattedDate = formatDate(date);
-
+          const { status, className } = getFollowUpDisplayStatus(
+            row.original.followv_status,
+            row.original.dateOfFollowUp
+          );
+          
           return (
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={
-                  status === "Missed"
-                    ? "bg-red-100 text-red-800 border-red-300"
-                    : status === "Today"
-                      ? "bg-blue-100 text-blue-800 border-blue-300"
-                      : "bg-green-100 text-green-800 border-green-300"
-                }
+            <div className="items-center gap-2">
+              <Badge 
+                variant="outline" 
+                className={className}
               >
-                {formattedDate}
+                {status}
               </Badge>
-              {status === "Missed" && (
-                <span className="text-red-600 text-sm font-medium">({days} days missed)</span>
-              )}
             </div>
           );
         },
@@ -390,7 +336,7 @@ const IndividualFamPlanningTable: React.FC = () => {
             <LayoutList className="h-5 w-5 mr-2" /> Compare Selected Records
           </Button>
           <Button
-            onClick={handleCreateNewRecord}
+            onClick={() => handleCreateNewRecord({ gender: patientInfoForCard?.personal_info.per_sex || "Unknown" })}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <Plus className="h-5 w-5 mr-2" /> New Record for Patient
@@ -400,9 +346,8 @@ const IndividualFamPlanningTable: React.FC = () => {
 
       {patientInfoForCard && <PatientInfoCard patient={patientInfoForCard} />}
 
-      {Object.values(groupedRecords).flat().some(record =>
-        isFollowUpMissed(record.dateOfFollowUp ?? "").missed
-      ) && (
+      {/* Updated warning banner to use the new logic */}
+      {hasMissedFollowUps(fpPatientRecords) && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex items-center">
             <MessageCircleWarning className="h-5 w-5 text-red-500 mr-2" />
@@ -411,17 +356,16 @@ const IndividualFamPlanningTable: React.FC = () => {
             </h3>
           </div>
           <ul className="list-disc pl-5 mt-2 text-red-700">
-            {Object.values(groupedRecords)
-              .flat()
-              .filter(record => isFollowUpMissed(record.dateOfFollowUp ?? "").missed)
-              .map((record, index) => {
-                const { days } = isFollowUpMissed(record.dateOfFollowUp ?? "");
-                return (
-                  <li key={index}>
-                    Missed follow-up on {formatDate(record.dateOfFollowUp ?? "")} (Record #{record.fprecord}) - {days} days missed
-                  </li>
-                );
-              })}
+            {fpPatientRecords
+              .filter((record) => {
+                const { status } = getFollowUpDisplayStatus(record.followv_status, record.dateOfFollowUp);
+                return status === "Missed";
+              })
+              .map((record, index) => (
+                <li key={index}>
+                  Missed follow-up on {formatDate(record.dateOfFollowUp ?? "")} (Record #{record.fprecord})
+                </li>
+              ))}
           </ul>
         </div>
       )}
@@ -431,41 +375,70 @@ const IndividualFamPlanningTable: React.FC = () => {
           <FileText size={20} />
           Family Planning Records
         </h2>
-        {Object.keys(groupedRecords).length > 0 ? (
+        {groupedRecords.length > 0 ? (
           <Accordion type="single" collapsible className="w-full">
-            {Object.entries(groupedRecords).map(([patrecId, records]) => (
-              <AccordionItem key={patrecId} value={patrecId}>
-                <AccordionTrigger className="hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-blue-500" />
-                      <span className="font-medium">{getGroupHeader(records)}</span>
-                      <Badge variant="secondary" className="ml-2">
-                        {records.length} Records
-                      </Badge>
+            {groupedRecords.map(([patrecId, records], index) => {
+              const isLatestGroup = index === 0; // First group is always the latest
+              return (
+                <AccordionItem key={patrecId} value={patrecId}>
+                  <AccordionTrigger className="hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-500" />
+                        <span className="font-medium">{getGroupHeader(records)}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {records.length} Records
+                        </Badge>
+                        {!isLatestGroup && (
+                          <Badge variant="outline" className="ml-2 text-gray-500">
+                            Historical
+                          </Badge>
+                        )}
+                      </div>
+                      {isLatestGroup ? (
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddFollowUp(records[0]);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> Add Follow-up
+                        </Button>
+                      ) : (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled
+                                className="text-gray-400"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Follow-up not available
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Follow-ups can only be added to the most recent method record</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent accordion toggle
-                        handleAddFollowUp(records[0]); // Use the latest record in the group
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add Follow-up
-                    </Button>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <DataTable columns={tableColumns} data={records} />
-                </AccordionContent>
-              </AccordionItem>
-            ))}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <DataTable columns={tableColumns} data={records} />
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
           </Accordion>
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">No family planning records found for this patient.</p>
             <Button
-              onClick={handleCreateNewRecord}
+              onClick={() => handleCreateNewRecord({ gender: patientInfoForCard?.personal_info.per_sex || "Unknown" })}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="h-5 w-5 mr-2" /> Create First Record

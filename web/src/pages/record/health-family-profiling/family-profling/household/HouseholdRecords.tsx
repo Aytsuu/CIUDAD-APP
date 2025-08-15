@@ -49,7 +49,7 @@ export default function HouseholdRecords() {
   }, [households]);
 
   const filteredHouseholds = React.useMemo(() => {
-    let formattedData = formatHouseholdData();
+    const formattedData = formatHouseholdData();
 
     return formattedData.filter((record: any) =>
       Object.values(record)

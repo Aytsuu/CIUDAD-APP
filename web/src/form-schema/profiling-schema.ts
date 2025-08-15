@@ -125,20 +125,20 @@ export const householdFormSchema = z.object({
 });
 
 export const businessFormSchema = z.object({
+  rp_id: z.string().optional(),
   respondent: z.object({
-    rp_id: z.string().optional(),
-    br_lname: z.string()
+    per_lname: z.string()
       .min(1, 'Last Name is required')
       .min(2, 'Last Name must be atleast 2 letters'),
-    br_fname: z.string()
+    per_fname: z.string()
       .min(1, 'First Name is required')
       .min(2, 'First Name must be atleast 2 letters'),
-    br_mname: z.string()
+    per_mname: z.string()
       .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
       .optional(),
-    br_sex: z.string().min(1, 'Sex is required'),
-    br_dob: z.string().min(1, 'Date of Birth is required'),
-    br_contact: z.string()
+    per_sex: z.string().min(1, 'Sex is required'),
+    per_dob: z.string().min(1, 'Date of Birth is required'),
+    per_contact: z.string()
       .min(1, "Contact is required")
       .regex(
         /^09\d{9}$/,
@@ -147,7 +147,6 @@ export const businessFormSchema = z.object({
       .refine((val) => val.length === 11, {
         message: "Must be 11 digits (e.g., 09171234567)",
       }),
-    br_address: z.string().min(1, 'Address is required'),
   }),
   bus_name: z.string().min(1, 'Business Name is required'),
   bus_gross_sales: z.string().min(1, 'Gross Sales is required'),

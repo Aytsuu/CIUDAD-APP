@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { ChevronLeft } from "lucide-react"
@@ -23,7 +22,7 @@ type Page1Props = {
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
   mode?: "create" | "edit" | "view"
-  isPatientPreSelected?: boolean // NEW: Indicates if patient is already selected
+  isPatientPreSelected?: boolean
 }
 
 function calculateAge(dateOfBirth: string): number {
@@ -42,7 +41,7 @@ export default function FamilyPlanningForm({
   updateFormData,
   formData,
   mode = "create",
-  isPatientPreSelected = false, // NEW: Default to false
+  isPatientPreSelected = false,
 }: Page1Props) {
   const isReadOnly = mode === "view"
   const navigate = useNavigate()
@@ -72,7 +71,7 @@ export default function FamilyPlanningForm({
 
   interface FormattedPatient {
     id: string
-    name: React.ReactNode // Change name to React.ReactNode to accommodate JSX
+    name: React.ReactNode
   }
 
   interface FormattedCommodity {
@@ -88,7 +87,7 @@ export default function FamilyPlanningForm({
   const [commodities, setCommodities] = useState<FormattedCommodity[]>([])
   const [loadingCommodities, setLoadingCommodities] = useState(false)
 
-  // NEW: Set selected patient ID if pre-selected
+  // Set selected patient ID if pre-selected
   useEffect(() => {
     if (isPatientPreSelected && formData.pat_id) {
       setSelectedPatientId(formData.pat_id)
@@ -96,7 +95,6 @@ export default function FamilyPlanningForm({
   }, [isPatientPreSelected, formData.pat_id])
 
   useEffect(() => {
-    // Only fetch patients if patient is not pre-selected
     if (!isPatientPreSelected) {
       const fetchPatients = async () => {
         setLoadingPatients(true)
@@ -126,8 +124,6 @@ export default function FamilyPlanningForm({
     }
   }, [isPatientPreSelected])
 
-
-
   const handlePatientSelection = async (id: string) => {
     setSelectedPatientId(id);
     try {
@@ -143,12 +139,10 @@ export default function FamilyPlanningForm({
         s_occupation: "",
       };
 
-      // 3. Determine spouse based on patient gender and family head info
       const gender = patientData.personal_info?.per_sex?.toLowerCase();
       const familyHeads = patientData.family_head_info?.family_heads;
       const spouseData = patientData.spouse_info?.spouse_info;
 
-      // First check if there's direct spouse info in the patient record
       if (spouseData) {
         spouseInfo = {
           s_lastName: spouseData.spouse_lname || "",
@@ -159,9 +153,7 @@ export default function FamilyPlanningForm({
           s_occupation: spouseData.spouse_occupation || "",
         };
       }
-      // If no direct spouse info, try to determine from family heads
       else if (gender === 'female' && familyHeads?.father) {
-        // For female patients, use father as spouse
         const father = familyHeads.father.personal_info;
         spouseInfo = {
           s_lastName: father.per_lname || "",
@@ -172,7 +164,6 @@ export default function FamilyPlanningForm({
           s_occupation: "",
         };
       } else if (gender === 'male' && familyHeads?.mother) {
-        // For male patients, use mother as spouse
         const mother = familyHeads.mother.personal_info;
         spouseInfo = {
           s_lastName: mother.per_lname || "",
@@ -184,7 +175,6 @@ export default function FamilyPlanningForm({
         };
       }
 
-      // 4. Fetch other required data
       const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse, personalResponse] = await Promise.all([
         api2.get(`familyplanning/body-measurements/${id}`),
         api2.get(`familyplanning/obstetrical-history/${id}/`),
@@ -199,7 +189,6 @@ export default function FamilyPlanningForm({
 
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
 
-      // 5. Prepare the complete form data
       const newFormData = {
         ...formData,
         ...patientData,
@@ -235,7 +224,6 @@ export default function FamilyPlanningForm({
         typeOfLastDelivery: lastPrevPregData.last_delivery_type || "",
       };
 
-      // 6. Update the form with the new data
       form.reset(newFormData);
       updateFormData(newFormData);
       toast.success("Patient data loaded successfully");
@@ -245,11 +233,11 @@ export default function FamilyPlanningForm({
     }
   };
 
-
   const dateOfBirth = form.watch("dateOfBirth")
   const spouseDOB = form.watch("spouse.s_dateOfBirth")
   const typeOfClient = form.watch("typeOfClient")
   const subTypeOfClient = form.watch("subTypeOfClient")
+  const patientGender = form.watch("gender") // Watch the patient's gender
   const isNewAcceptor = typeOfClient === "newacceptor"
   const isCurrentUser = typeOfClient === "currentuser"
   const isChangingMethod =
@@ -311,23 +299,34 @@ export default function FamilyPlanningForm({
 
         let filteredCommodities: FormattedCommodity[] = []
 
+        // First filter by user type
         if (typeOfClient === "newacceptor") {
           filteredCommodities = allCommodities
             .filter((com) => com.user_type === "New acceptor" || com.user_type === "Both")
-            .map((com) => ({ id: com.com_name, name: com.com_name, user_type: com.user_type }))
         } else if (typeOfClient === "currentuser") {
           if (subTypeOfClient === "changingmethod") {
             filteredCommodities = allCommodities
               .filter((com) => com.user_type === "Current user" || com.user_type === "Both")
-              .map((com) => ({ id: com.com_name, name: com.com_name, user_type: com.user_type }))
           } else {
-            filteredCommodities = allCommodities.map((com) => ({
-              id: com.com_name,
-              name: com.com_name,
-              user_type: com.user_type,
-            }))
+            filteredCommodities = allCommodities
           }
         }
+
+        // Then filter by gender if available
+        if (patientGender) {
+          const genderLower = patientGender.toLowerCase()
+          filteredCommodities = filteredCommodities.filter((com) => {
+            const comGender = com.gender_type?.toLowerCase()
+            return comGender === "both" || comGender === genderLower
+          })
+        }
+
+        // Map to the required format
+        filteredCommodities = filteredCommodities.map((com) => ({
+          id: com.com_name,
+          name: com.com_name,
+          user_type: com.user_type,
+        }))
 
         setCommodities(filteredCommodities)
       } catch (error) {
@@ -339,7 +338,7 @@ export default function FamilyPlanningForm({
     }
 
     fetchCommodities()
-  }, [typeOfClient, subTypeOfClient])
+  }, [typeOfClient, subTypeOfClient, patientGender]) // Add patientGender to dependencies
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -420,7 +419,6 @@ export default function FamilyPlanningForm({
               </p>
             </div>
 
-            {/* NEW: Conditionally render patient selection */}
             {!isPatientPreSelected && (
               <div className="flex flex-col sm:flex-row items-center justify-between w-full">
                 <div className="grid gap-2">
@@ -447,7 +445,6 @@ export default function FamilyPlanningForm({
               </div>
             )}
 
-            {/* NEW: Show patient info if pre-selected */}
             {isPatientPreSelected && formData.pat_id && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-center">
@@ -484,9 +481,9 @@ export default function FamilyPlanningForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value === true}
-                          onCheckedChange={() => { }} // Empty function prevents changes
-                          disabled={true} // Force disabled
-                          className="cursor-not-allowed" // Visual indication
+                          onCheckedChange={() => { }}
+                          disabled={true}
+                          className="cursor-not-allowed"
                         />
                       </FormControl>
                       <Label>Yes</Label>
@@ -494,8 +491,8 @@ export default function FamilyPlanningForm({
                         <Checkbox
                           className="ml-4 cursor-not-allowed"
                           checked={field.value === false}
-                          onCheckedChange={() => { }} // Empty function prevents changes
-                          disabled={true} // Force disabled
+                          onCheckedChange={() => { }}
+                          disabled={true}
                         />
                       </FormControl>
                       <Label>No</Label>
@@ -854,7 +851,6 @@ export default function FamilyPlanningForm({
                                 </Label>
                               </div>
                             }
-                          // readOnly={true}
                           />
                           <FormMessage />
                         </FormItem>

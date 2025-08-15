@@ -6,7 +6,6 @@ import {
   Ellipsis,
   Info,
   Loader2,
-  Lock,
   Pen,
   Trash,
   User,
@@ -16,7 +15,7 @@ import { AdministrationRecord } from "./administrationTypes";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
-import { Action } from "./administrationEnums";
+import { Action } from "./AdministrationEnums";
 import { useUpdateStaff } from "./queries/administrationUpdateQueries";
 import { useDeleteStaff } from "./queries/administrationDeleteQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -30,11 +29,11 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Form } from "@/components/ui/form/form";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { usePositions } from "./queries/administrationFetchQueries";
-import { formatPositions } from "./administrationFormats";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { useLoading } from "@/context/LoadingContext";
 import { getPersonalInfo } from "../profiling/restful-api/profilingGetAPI";
+import { formatPositions } from "./AdministrationFormats";
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
   {

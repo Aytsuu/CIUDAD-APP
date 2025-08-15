@@ -1,7 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { Origin, Type } from "../../profilingEnums";
-import { renderActionButton } from "../../profilingActionConfig";
+import { Origin, Type } from "../../ProfilingEnums";
+import { renderActionButton } from "../../ProfilingActionConfig";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
@@ -85,7 +85,7 @@ const PersonalInfoForm = ({
 
   const handleRemoveAddress = (idx: number) => {
     setValidAddresses && setValidAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
-    setAddresses&& setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
+    setAddresses && setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
   }
 
   // ==================== RENDER ====================

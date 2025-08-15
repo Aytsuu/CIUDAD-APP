@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateCommodity } from "../../restful-api/commodity/CommodityPutAPI";
-import { CommodityType } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 export const useUpdateCommodity = () => {

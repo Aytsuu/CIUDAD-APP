@@ -2,8 +2,6 @@ import { Control } from "react-hook-form";
 import { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Patient } from "@/components/ui/patientSearch";
 
 interface FormSectionsProps {
@@ -56,7 +54,6 @@ export const MotherInfoSection = ({ control, isAddNewMode, selectedPatient, isTr
         label="Age"
         type="text"
         readOnly
-        className="bg-gray-100"
       />
       <FormInput
         control={control}

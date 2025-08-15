@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button/button";
 import { Edit, Trash } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Link } from "react-router-dom";
-import EditVaccineListModal from "../../editListModal/EditVaccineModal";
-import EditImmunizationSupplies from "../../editListModal/EditImmunizationSuppies";
 
 export type VaccineRecords = {
   id: number;
@@ -24,7 +22,7 @@ export type VaccineRecords = {
   }[];
 };
 export const VaccineColumns = (
-  setIsDialog: (isOpen: boolean) => void,
+  // setIsDialog: (isOpen: boolean) => void,
   setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>
 ): ColumnDef<VaccineRecords>[] => [

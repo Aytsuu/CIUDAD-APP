@@ -7,7 +7,6 @@ import {
   ArrowUpDown,
   Search,
   ChevronLeft,
-  Plus,
   Pill,
   AlertCircle,
 } from "lucide-react";
@@ -61,7 +60,7 @@ export default function IndivMedicineRecords() {
   const {
     data: medicineRecords,
     isLoading,
-    refetch,
+    // refetch,
   } = useQuery({
     queryKey: ["patientMedicineDetails", patientData.pat_id],
     queryFn: async () => {

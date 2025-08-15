@@ -21,6 +21,33 @@ import {
 } from "../restful-api/profilingGetAPI";
 import { api } from "@/api/api";
 
+// ================ ALL =================
+export const useProfilingAllRecord = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+) => {
+  return useQuery({
+    queryKey: ['profilingAllRecord', page, pageSize, searchQuery],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/all/', {
+          params: {
+            page,
+            page_size: pageSize,
+            search: searchQuery
+          }
+        });
+
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+} 
+ 
 // ================ ADDRESS =================
 export const usePerAddressesList = () => {
   return useQuery({

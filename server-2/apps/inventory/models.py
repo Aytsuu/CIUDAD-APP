@@ -52,6 +52,14 @@ class CommodityList(models.Model):
         ('Both', 'Both'),
     ]
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    
+    SEX_TYPE_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Both', 'Both'),
+    ]
+    gender_type = models.CharField(max_length=10, choices=SEX_TYPE_CHOICES, default='Both')
+
 
     class Meta:
         db_table = 'commodity_list'

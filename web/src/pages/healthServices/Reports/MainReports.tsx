@@ -1,23 +1,38 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import {
   Activity,
   ClipboardList,
   Package,
-  CheckCircle,
-  AlertCircle,
   Syringe,
-  Star,
   Eye,
-  Download,
-  Settings,
 } from "lucide-react";
 import { Link } from "react-router";
+import { FAuseMonthCount } from "./firstaid-report/queries/fetchQueries";
+import { VacuseMonthCount } from "./vaccination-report/queries/fetchQueries";
+import { MeduseMonthCount } from "./medicine-report/queries/fetchQueries";
 
 export default function HealthcareReports() {
+
+  const { data: monthCountData } =
+  FAuseMonthCount();
+  const { data: vacMonthCountData } =
+    VacuseMonthCount();
+  const { data: medMonthCountData } =
+    MeduseMonthCount();
+
+
+
+  const FAmonthCount = monthCountData?.current_month?.total_records;
+  const FAlastMonthCount = monthCountData?.last_month?.total_records;
+  const VacmonthCount = vacMonthCountData?.current_month?.total_records;
+  const VaclastMonthCount = vacMonthCountData?.last_month?.total_records;
+  const MedmonthCount = medMonthCountData?.current_month?.total_records;
+  const MedlastMonthCount = medMonthCountData?.last_month?.total_records;
+
+  
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -102,12 +117,12 @@ export default function HealthcareReports() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-500">Current Month:</span>
-                      <span className="font-medium">56 records</span>
+                      <span className="font-medium">{MedmonthCount || "0"} records</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-500">Last Month</span>
                       <span className="font-medium text-red-500">
-                        20 records
+                        {MedlastMonthCount || "0"} records
                       </span>
                     </div>
                   </div>
@@ -147,12 +162,12 @@ export default function HealthcareReports() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-500">Current Month:</span>
-                      <span className="font-medium">56 records</span>
+                      <span className="font-medium">{FAmonthCount || "0"} records</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-500">Last Month</span>
                       <span className="font-medium text-red-500">
-                        20 records
+                        {FAlastMonthCount || "0"} records
                       </span>
                     </div>
                   </div>
@@ -192,18 +207,18 @@ export default function HealthcareReports() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-500">Current Month:</span>
-                      <span className="font-medium">56 records</span>
+                      <span className="font-medium">{VacmonthCount || "0"} records</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-500">Last Month</span>
                       <span className="font-medium text-red-500">
-                        20 records
+                        {VaclastMonthCount || "0"} records
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="mt-6">
-                  <Link to="/monthly-firstaid-records">
+                  <Link to="/monthly-vaccine-records">
                     <Button size="sm" className="w-full">
                       <Eye className="w-4 h-4 mr-2" />
                       View Report

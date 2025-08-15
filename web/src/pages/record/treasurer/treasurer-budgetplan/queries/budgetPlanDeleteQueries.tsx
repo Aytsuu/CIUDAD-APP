@@ -8,7 +8,7 @@ export const useDeleteBudgetPlan = () => {
 
     return useMutation({
         mutationFn: deleteBudgetPlan,
-        onMutate: async (plan_id) => {
+        onMutate: async () => {
             await queryClient.cancelQueries({ queryKey: ['budgetPlan'] });
             toast.loading("Deleting budget plan...", { id: 'deleteBudgetplan' });
         },

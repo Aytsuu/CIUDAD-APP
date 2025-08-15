@@ -1,5 +1,3 @@
-import MainForwardedRecord from "@/pages/healthServices/forwardedrecord/Main";
-import path from "path";
 import ForwardedCHimmunization from "@/pages/healthServices/forwardedrecord/forwardedrecords/ChildImmunization";
 import CombinedHealthRecordsTable from "@/pages/healthServices/forwardedrecord/forwardedrecords/CombineConsultation";
 import ScheduledVaccinations from "@/pages/healthServices/forwardedrecord/forwardedrecords/ScheduledVaccinations";

@@ -9,14 +9,12 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Loader2, UserPlus, Building2, CheckCircle2, XCircle } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { LoadButton } from "@/components/ui/button/load-button";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 // Import hooks for both databases
 import { usePositions } from "./queries/administrationFetchQueries";
-import { usePositionsHealth } from "../health/administration/queries/administrationFetchQueries";
-import { formatPositions } from "./administrationFormats";
+import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
 import { useAddStaffHealth } from "../health/administration/queries/administrationAddQueries";
 import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";

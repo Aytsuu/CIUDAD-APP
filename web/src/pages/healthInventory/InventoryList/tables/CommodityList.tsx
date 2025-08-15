@@ -1,20 +1,15 @@
-import React, { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import CommodityModal from "../addListModal/CommodityModal";
-import { useQueryClient } from "@tanstack/react-query";
-import { handleDeleteCommodityList } from "../restful-api/commodity/CommodityDeleteAPI";
+// import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { CommodityRecords, CommodityColumns } from "./columns/commodityCol";
 import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
-import { toast } from "sonner";
-import { CircleCheck, CircleX } from "lucide-react";
 import { Link } from "react-router";
 import { useDeleteCommodity } from "../queries/commodity/CommodityDeleteQueries";
 
@@ -25,7 +20,7 @@ export default function CommodityList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [comToDelete, setComToDelete] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const { data: commodities, isLoading: isLoadingCommodities } = useCommodities();
 
   const formatCommodityData = useCallback((): CommodityRecords[] => {
@@ -34,6 +29,7 @@ export default function CommodityList() {
       id: commodity.com_id,
       com_name: commodity.com_name,
       user_type: commodity.user_type,
+      gender_type: commodity.gender_type
     }));
   }, [commodities]);
 
@@ -61,6 +57,7 @@ export default function CommodityList() {
         <Skeleton className="h-10 w-1/6 mb-3" />
         <Skeleton className="h-7 w-1/4 mb-6" />
         <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
         <Skeleton className="h-4/5 w-full mb-4" />
       </div>
     );

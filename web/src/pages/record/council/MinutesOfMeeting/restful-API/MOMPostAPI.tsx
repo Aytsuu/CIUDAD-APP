@@ -1,33 +1,33 @@
 import { api } from "@/api/api";
 import { MediaUploadType } from '@/components/ui/media-upload';
 
-export const createMOMFile = async (media: MediaUploadType[number], momId: number) => {
-if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-    throw new Error('File upload incomplete: missing URL or path');
-}
+export const createMOMFile = async (_media: MediaUploadType[number], _momId: number) => {
+// if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
+//     throw new Error('File upload incomplete: missing URL or path');
+// }
 
-const formData = new FormData();
-formData.append('file', media.file);
-formData.append('mom_id', momId.toString());
-formData.append('momf_name', media.file.name);
-formData.append('momf_type', media.file.type || 'application/octet-stream');
-formData.append('momf_path', media.storagePath);
-formData.append('momf_url', media.publicUrl);
+// const formData = new FormData();
+// formData.append('file', media.file);
+// formData.append('mom_id', momId.toString());
+// formData.append('momf_name', media.file.name);
+// formData.append('momf_type', media.file.type || 'application/octet-stream');
+// formData.append('momf_path', media.storagePath);
+// formData.append('momf_url', media.publicUrl);
 
-try {
-    const response = await api.post('council/mom-file/', formData, {
-    headers: {
-        'Content-Type': 'multipart/form-data',
-    },
-    });
-    return response.data;
-} catch (error: any) {
-    console.error('MOM file upload failed:', error.response?.data || error);
-    throw error;
-}
+// try {
+//     const response = await api.post('council/mom-file/', formData, {
+//     headers: {
+//         'Content-Type': 'multipart/form-data',
+//     },
+//     });
+//     return response.data;
+// } catch (error: any) {
+//     console.error('MOM file upload failed:', error.response?.data || error);
+//     throw error;
+// }
 };
 
-export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, mediaFiles: MediaUploadType) => {
+export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, _mediaFiles: MediaUploadType) => {
     try {
         const momResponse = await api.post('council/minutes-of-meeting/', {
             mom_date: momInfo.meetingDate,
@@ -48,9 +48,9 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, media
         
 
         // 3. Handle file upload if exists
-        if (mediaFiles.length > 0 && mediaFiles[0].status === 'uploaded') {
-            await createMOMFile(mediaFiles[0], momId);
-        }
+        // if (mediaFiles.length > 0 && mediaFiles[0].status === 'uploaded') {
+        //     await createMOMFile(mediaFiles[0], momId);
+        // }
 
         return momResponse.data;
     } catch (error) {

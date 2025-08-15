@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import DependentForm from "./DependentForm";
 import { DataTable } from "@/components/ui/table/data-table";
-import { DependentRecord } from "../../profilingTypes";
+import { DependentRecord } from "../../ProfilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { CircleAlert, CircleCheck, Trash } from "lucide-react";
@@ -143,7 +143,7 @@ export default function DependentsInfoLayout({
         staffId: user?.staff?.staff_id || ""
       }, {
         onSuccess: (family) => {
-          let bulk_composition: {
+          const bulk_composition: {
           fam: string, 
           fc_role: string, 
           rp: string}[] = [];

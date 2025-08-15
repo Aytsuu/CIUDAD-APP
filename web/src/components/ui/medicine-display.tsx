@@ -44,7 +44,7 @@ export const MedicineDisplay = ({
   const [searchQuery, setSearchQuery] = useState("")
 
   // Move the medicine fetching logic inside the component
-  const { medicineStocksOptions, isLoading } = fetchMedicinesWithStock()
+  const { data:medicineStocksOptions, isLoading } = fetchMedicinesWithStock()
   const medicines = propMedicines || medicineStocksOptions || []
 
   // Sync internal state with props
@@ -126,7 +126,7 @@ export const MedicineDisplay = ({
   }
 
   const PaginationControls = () => (
-    <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50">
+    <div className="flex items-center justify-between px-6 py-3 ">
       <div className="text-sm text-gray-500">
         Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredMedicines.length)} of{" "}
         {filteredMedicines.length} medicines
@@ -162,36 +162,36 @@ export const MedicineDisplay = ({
     <tr className="animate-pulse">
       <td className="px-6 py-4 text-center whitespace-nowrap">
         <div className="flex items-center justify-center">
-          <div className="h-4 w-4 bg-gray-200 rounded"></div>
+          <div className="h-4 w-4 rounded"></div>
         </div>
       </td>
       <td className="px-6 py-4 text-center">
         <div className="flex items-center gap-3 justify-center">
           <div>
-            <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-24"></div>
+            <div className="h-4 rounded w-32 mb-2"></div>
+            <div className="h-3 rounded w-24"></div>
           </div>
         </div>
       </td>
       <td className="px-2 py-4 text-center">
-        <div className="h-3 bg-gray-200 rounded w-20 mx-auto mb-1"></div>
-        <div className="h-3 bg-gray-200 rounded w-16 mx-auto"></div>
+        <div className="h-3 rounded w-20 mx-auto mb-1"></div>
+        <div className="h-3 rounded w-16 mx-auto"></div>
       </td>
       <td className="px-6 py-4 text-center whitespace-nowrap">
-        <div className="h-6 bg-gray-200 rounded-full w-16 mx-auto"></div>
+        <div className="h-6 rounded-full w-16 mx-auto"></div>
       </td>
       <td className="px-6 py-4 text-center whitespace-nowrap">
-        <div className="h-8 bg-gray-200 rounded w-20 mx-auto"></div>
+        <div className="h-8 rounded w-20 mx-auto"></div>
       </td>
       <td className="px-6 py-4 text-center w-64">
-        <div className="h-8 bg-gray-200 rounded w-full"></div>
+        <div className="h-8 rounded w-full"></div>
       </td>
     </tr>
   )
 
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200 mx-3">
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <div className="px-6 py-4 border-b border-gray-200 ">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <Package className="h-5 w-5 text-gray-600" />

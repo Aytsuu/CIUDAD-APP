@@ -62,6 +62,16 @@ class AcknowledgementSerializer(serializers.ModelSerializer):
 
 
 class FP_ObstetricalHistorySerializer(serializers.ModelSerializer):
+    fpob_last_period = serializers.DateField(
+        required=False,
+        allow_null=True
+    )
+    
+    fpob_previous_period = serializers.DateField(
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = FP_Obstetrical_History
         fields = '__all__'

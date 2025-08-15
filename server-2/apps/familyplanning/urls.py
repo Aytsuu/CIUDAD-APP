@@ -25,7 +25,7 @@ urlpatterns = [
 
     # Patient Record CRUD (if needed separately)
     path('patient-record/', PatientRecordCreateView.as_view(), name='patient_record_create'), 
-
+    path('commodities/filtered/',get_filtered_commodity_list, name='filtered_commodity_list'),
 
     path('submit-full-form/', submit_full_family_planning_form, name='submit_full_family_planning_form'),
     path('commodity-stock/<str:commodity_name>/', get_commodity_stock, name='get_commodity_stock'),

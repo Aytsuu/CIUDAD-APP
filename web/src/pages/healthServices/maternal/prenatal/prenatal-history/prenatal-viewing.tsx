@@ -128,70 +128,70 @@ const medicalHistory = [
 
 
 // previous pregnancy
-const previousPregnancy = [
-    {
-        name: "DATE OF DELIVERIES",
-        value: ""
-    },
-    {
-        name: "OUTCOME",
-        value: ""
-    },
-    {
-        name: "TYPE OF DELIVERY (NSCD / CS)",
-        value: ""
-    },
-    {
-        name: "BABY'S WT",
-        value: ""
-    },
-    {
-        name: "GENDER",
-        value: ""
-    },
-    {
-        name: "BALLARD SCORE",
-        value: ""
-    },
-    {
-        name: "APGAR SCORE",
-        value: ""
-    }
-] 
+// const previousPregnancy = [
+//     {
+//         name: "DATE OF DELIVERIES",
+//         value: ""
+//     },
+//     {
+//         name: "OUTCOME",
+//         value: ""
+//     },
+//     {
+//         name: "TYPE OF DELIVERY (NSCD / CS)",
+//         value: ""
+//     },
+//     {
+//         name: "BABY'S WT",
+//         value: ""
+//     },
+//     {
+//         name: "GENDER",
+//         value: ""
+//     },
+//     {
+//         name: "BALLARD SCORE",
+//         value: ""
+//     },
+//     {
+//         name: "APGAR SCORE",
+//         value: ""
+//     }
+// ] 
 
 
-// tetanus toxoid
-const tetanusToxoidGiven = [
-    {
-        name: "TT1",
-        subInfo: "(FIRST VISIT)",
-        value: ""
-    },
-    {
-        name: "TT2",
-        subInfo: "(ONE MO AFTER THE FIRST DOSE)",
-        value: ""
-    },
-    {
-        name: "TT3",
-        subInfo: "(6 MONTHS AFTER THE SECOND DOSE)",
-        value: ""
-    },
-    {
-        name: "TT4",
-        subInfo: "(1 YEAR AFTER THE THIRD DOSE)",
-        value: ""
-    },
-    {
-        name: "TT5",
-        subInfo: "(1 YEAR AFTER THE FOURTH DOSE)",
-        value: ""
-    },
-    {
-        name: "FIM",
-        value: ""
-    }
-]
+// // tetanus toxoid
+// const tetanusToxoidGiven = [
+//     {
+//         name: "TT1",
+//         subInfo: "(FIRST VISIT)",
+//         value: ""
+//     },
+//     {
+//         name: "TT2",
+//         subInfo: "(ONE MO AFTER THE FIRST DOSE)",
+//         value: ""
+//     },
+//     {
+//         name: "TT3",
+//         subInfo: "(6 MONTHS AFTER THE SECOND DOSE)",
+//         value: ""
+//     },
+//     {
+//         name: "TT4",
+//         subInfo: "(1 YEAR AFTER THE THIRD DOSE)",
+//         value: ""
+//     },
+//     {
+//         name: "TT5",
+//         subInfo: "(1 YEAR AFTER THE FOURTH DOSE)",
+//         value: ""
+//     },
+//     {
+//         name: "FIM",
+//         value: ""
+//     }
+// ]
 
 
 // present pregnancy
@@ -235,20 +235,20 @@ const presentPregnancyFieldGroups = [
 
 
 // guide for 4ANC Visits
-const guide4ANCVisits = [
-    {
-        name: "1st tri up to 12 weeks and 6 days",
-        value: "",
-    },
-    {
-        name: "2nd tri up to 13-27 wks and 6 days",
-        value: "",
-    },
-    {
-        name: "3rd tri 28 wks and more",
-        value: "",
-    }
-]
+// const guide4ANCVisits = [
+//     {
+//         name: "1st tri up to 12 weeks and 6 days",
+//         value: "",
+//     },
+//     {
+//         name: "2nd tri up to 13-27 wks and 6 days",
+//         value: "",
+//     },
+//     {
+//         name: "3rd tri 28 wks and more",
+//         value: "",
+//     }
+// ]
 
 // laboratory results
 const labResults = [

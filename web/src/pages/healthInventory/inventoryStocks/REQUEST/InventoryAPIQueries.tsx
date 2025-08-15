@@ -1,5 +1,5 @@
 import {api2} from "@/api/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 // 2. Wrapped function version (still fully combined)
 export const addInventory = async (data:any, inv_type: string,staff:string) => {

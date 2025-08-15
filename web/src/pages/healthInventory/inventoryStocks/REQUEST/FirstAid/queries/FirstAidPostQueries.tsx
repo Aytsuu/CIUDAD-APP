@@ -7,7 +7,6 @@ import {
   addFirstAidTransaction,
 } from "../restful-api/FirstAidPostAPI";
 import { useAddInventory } from "../../InventoryAPIQueries";
-import { formatQuantityString } from "../../FormatQuantityString";
 import { useNavigate } from "react-router";
 
 export const useAddFirstAidInventory = () => {

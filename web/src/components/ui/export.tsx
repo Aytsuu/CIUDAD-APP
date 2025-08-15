@@ -1,5 +1,4 @@
 // components/export/ExportButton.tsx
-import React from "react";
 import { Button } from "@/components/ui/button/button";
 import { FileInput } from "lucide-react";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
@@ -13,7 +12,7 @@ interface ExportButtonProps<T> {
   columns: {
     key: string;
     header: string;
-    format?: (value: any) => any;
+    format?: (row: any) => any;  // Changed to accept the full row
   }[];
 }
 
@@ -23,14 +22,16 @@ export function ExportButton<T>({ data, filename, columns }: ExportButtonProps<T
       const headers = columns.map(col => col.header);
       const csvData = data.map(item =>
         columns.map(col => {
-          const value = (item as any)[col.key] ?? "";
-          return col.format ? col.format(value) : value;
+          // Pass the entire item to the format function if it exists
+          return col.format 
+            ? `"${col.format(item)}"` 
+            : `"${(item as any)[col.key] ?? ''}"`;
         })
       );
 
       const csvContent = [
         headers.join(','),
-        ...csvData.map(row => row.map(cell => `"${cell}"`).join(',')) // Quote values to handle commas
+        ...csvData.map(row => row.join(','))
       ].join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -50,8 +51,9 @@ export function ExportButton<T>({ data, filename, columns }: ExportButtonProps<T
     try {
       const excelData = data.map(item =>
         columns.reduce((acc, col) => {
-          const value = (item as any)[col.key] ?? "";
-          acc[col.header] = col.format ? col.format(value) : value;
+          acc[col.header] = col.format 
+            ? col.format(item)
+            : (item as any)[col.key] ?? '';
           return acc;
         }, {} as Record<string, any>)
       );
@@ -72,8 +74,9 @@ export function ExportButton<T>({ data, filename, columns }: ExportButtonProps<T
       const headers = columns.map(col => col.header);
       const pdfData = data.map(item =>
         columns.map(col => {
-          const value = (item as any)[col.key] ?? "";
-          return col.format ? col.format(value) : value;
+          return col.format 
+            ? col.format(item)
+            : (item as any)[col.key] ?? '';
         })
       );
   
@@ -81,10 +84,9 @@ export function ExportButton<T>({ data, filename, columns }: ExportButtonProps<T
         head: [headers],
         body: pdfData,
         theme: 'grid',
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [22, 163, 74] }
+        styles: { fontSize: 8, textColor: [0, 0, 0] }, // Ensure text is black
+        headStyles: { fillColor: [229, 231, 235], textColor: [0, 0, 0] } // bg-gray-200 in RGB, text black
       });
-  
       doc.save(`${filename}.pdf`);
     } catch (error) {
       console.error("Error exporting to PDF:", error);
@@ -92,7 +94,7 @@ export function ExportButton<T>({ data, filename, columns }: ExportButtonProps<T
     }
   };
   
-  // Map option IDs to their names
+  // Rest of your component remains the same...
   const exportOptions = [
     { id: "csv", name: "Export as CSV" },
     { id: "excel", name: "Export as Excel" },
@@ -128,7 +130,7 @@ export function ExportButton<T>({ data, filename, columns }: ExportButtonProps<T
   return (
     <DropdownLayout
       trigger={
-        <Button variant="outline" className="h-[2rem]">
+        <Button variant="outline" className="border border-gray-200">
           <FileInput /> Export
         </Button>
       }

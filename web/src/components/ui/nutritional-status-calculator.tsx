@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent } from "@/components/ui/card/card"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react"
 import type { NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema"
@@ -198,7 +198,7 @@ export function NutritionalStatusCalculator({
     <Card className="w-full">
       <CardContent className="space-y-4">
         {/* Input Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 ">
           <div>
             <Label className="text-sm font-medium">Current Measurements</Label>
             <div className="mt-2 space-y-1 text-sm text-gray-600">

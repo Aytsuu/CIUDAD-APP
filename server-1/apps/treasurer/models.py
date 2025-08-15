@@ -1,7 +1,5 @@
 from django.db import models
-from datetime import date, datetime
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
+from datetime import date
 
 
 class Budget_Plan(models.Model): 
@@ -35,6 +33,7 @@ class Budget_Plan_Detail(models.Model):
 class BudgetPlan_File(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
     bpf_upload_date = models.DateTimeField(auto_now_add=True)
+    bpf_description = models.CharField(max_length=500   )
     bpf_type = models.CharField(max_length=100, null=True)
     bpf_name = models.CharField(max_length=255, null=True)
     bpf_path = models.CharField(max_length=500, null=True)
@@ -211,6 +210,13 @@ class Income_Expense_Tracking(models.Model):
     iet_receipt_image = models.CharField(null=True, blank=True)
     iet_is_archive = models.BooleanField(default=False)
     exp_id = models.ForeignKey('expense_particular', on_delete=models.CASCADE, null=True)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = "income_expense_tracking"
@@ -237,6 +243,13 @@ class Income_Tracking(models.Model):
     inc_is_archive = models.BooleanField(default=False)
     # inv_num = models.ForeignKey( 'invoice', on_delete=models.CASCADE, null=True, blank=True)
     incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = "income_tracking"

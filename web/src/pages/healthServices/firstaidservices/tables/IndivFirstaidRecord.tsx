@@ -7,7 +7,6 @@ import {
   ArrowUpDown,
   Search,
   ChevronLeft,
-  Plus,
   AlertCircle,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -19,12 +18,9 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { api2 } from "@/api/api";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useFirstAidCount } from "../queries/FirstAidCountQueries";
 import { Heart } from "lucide-react";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
@@ -99,7 +95,6 @@ export default function IndivFirstAidRecords() {
   const {
     data: firstAidRecords,
     isLoading,
-    refetch,
   } = useQuery({
     queryKey: ["patientFirstAidDetails"],
     queryFn: async () => {

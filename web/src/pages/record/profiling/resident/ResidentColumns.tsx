@@ -1,10 +1,8 @@
-import { Link, useNavigate } from "react-router";
-import { ArrowUpDown, Building, CircleAlert, CircleUserRound, House, UserRoundPlus, UsersRound } from "lucide-react";
-import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../profilingTypes";
+import { useNavigate } from "react-router";
+import { ArrowUpDown, Building, CircleUserRound, House, UsersRound } from "lucide-react";
+import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../ProfilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { getPersonalInfo } from "../restful-api/profilingGetAPI";
-import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
 import React from "react";
@@ -310,7 +308,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/resident/view", {
+        navigate("/profiling/resident/view", {
           state: {
             params: {
               type: 'viewing',
@@ -371,7 +369,7 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/resident/view", {
+        navigate("/profiling/resident/view", {
           state: {
             params: {
               type: 'viewing',
@@ -432,7 +430,7 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/business/form", {
+        navigate("/profiling/business/form", {
           state: {
             params: {
               type: "viewing",

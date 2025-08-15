@@ -1,4 +1,3 @@
-import path from "path";
 import AllFirstAidRecords from "@/pages/healthServices/firstaidservices/tables/AllFirstaidRecords";
 import IndivFirstAidRecords from "@/pages/healthServices/firstaidservices/tables/IndivFirstaidRecord";
 import FirstAidRequestForm from "@/pages/healthServices/firstaidservices/FirstAidRequestForm";

@@ -5,7 +5,6 @@ import { getUnvaccinatedVaccines } from '../restful-api/get';
 import { VaccinationRecord } from '../tables/columns/types';
 import { getAgeInUnit } from "@/helpers/ageCalculator";
 import {
-  getVaccintStocks,
   getUnvaccinatedResidents,
   getVaccinationRecords,
   getVaccinationRecordById,
@@ -99,7 +98,7 @@ export const useFollowupVaccines = (patientId?: string) => {
         if (!patientId) return [];
         
         const res = await api2.get(`/vaccination/patient-vaccine-followups/${patientId}/`);
-        return res.data;
+        return res.data || [];
       },
       staleTime: 5 * 60 * 1000, // 5 minutes cache
       enabled: !!patientId,
@@ -116,7 +115,7 @@ export const useFollowupChildHealthandVaccines = (patientId?: string) => {
       if (!patientId) return [];
       
       const res = await api2.get(`/vaccination/child-followups/${patientId}/`);
-      return res.data;
+      return res.data || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     enabled: !!patientId,

@@ -10,10 +10,8 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Plus, Info, CheckCircle } from "lucide-react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { format } from "date-fns";
 
 interface VaccinationSectionProps {
   showVaccineList: boolean;
@@ -59,15 +57,15 @@ interface VaccinationSectionProps {
 }
 
 export function VaccinationSection({
-  showVaccineList,
-  handleShowVaccineListChange,
+  // showVaccineList,
+  // handleShowVaccineListChange,
   vaccineListOptions,
   selectedVaccineListId,
   handleExistingVaccineChange,
   setSelectedVaccineListId,
   existingVaccineErrors,
   form,
-  existingVaccineTotalDoses,
+  // existingVaccineTotalDoses,
   addExistingVac,
   vaccinesData,
   formWatch,
@@ -75,7 +73,7 @@ export function VaccinationSection({
   setSelectedVaccineId,
   isLoading,
   newVaccineErrors,
-  currentVaccineTotalDoses,
+  // currentVaccineTotalDoses,
   selectedVaccineId,
   addVac,
   isVaccineCompleted,

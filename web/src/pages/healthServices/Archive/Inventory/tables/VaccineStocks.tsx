@@ -1,16 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import {
   Search,
-  Trash,
-  Plus,
   FileInput,
-  Minus,
-  Edit,
-  CircleCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,15 +13,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { getStockColumns } from "./columns/AntigenCol";
 import { StockRecords } from "./type";
-import { getCombinedStock } from "../restful-api/getAPI";
 import { useAntigenCombineStocks } from "../queries/fetch";
 
 
@@ -55,11 +46,11 @@ export default function CombinedStockTable() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [inventoryToArchive, setInventoryToArchive] = useState<string | null>(
-    null
-  );
+  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+  //   useState(false);
+  // const [inventoryToArchive, setInventoryToArchive] = useState<string | null>(
+  //   null
+  // );
 
   const { data: stockData, isLoading, error } = useAntigenCombineStocks();
 

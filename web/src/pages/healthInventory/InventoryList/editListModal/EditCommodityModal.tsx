@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
   Form,
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
@@ -16,18 +11,14 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getCommodity } from "../restful-api/commodity/CommodityFetchAPI";
 import { FormInput } from "@/components/ui/form/form-input";
-import { useCategoriesCommodity } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/CommodityCategory";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { toast } from "sonner";
 import { useUpdateCommodity } from "../queries/commodity/CommodityPutQueries";
-import { CircleCheck } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Package } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { user_type_options } from "../addListModal/CommodityModal";
+import { Link } from "react-router-dom";
+import { gender_type_options, user_type_options } from "../addListModal/CommodityModal";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
@@ -35,11 +26,11 @@ export interface CommodityData {
   id: string;
   com_name: string;
   user_type: string;
+  gender_type: string;
 }
 export default function CommodityListEdit() {
   const location = useLocation();
   const initialData = location.state?.params?.initialData as CommodityData;
-  const navigate = useNavigate();
 
   // Initialize form with default values
   const form = useForm<CommodityType>({
@@ -47,6 +38,7 @@ export default function CommodityListEdit() {
     defaultValues: {
       com_name: '',
       user_type: '',
+      gender_type: '',
     },
   });
 
@@ -56,6 +48,7 @@ export default function CommodityListEdit() {
       form.reset({
         com_name: initialData.com_name,
         user_type: initialData.user_type,
+        gender_type: initialData.gender_type,
       });
     }
   }, [initialData, form]);
@@ -99,6 +92,9 @@ export default function CommodityListEdit() {
         toTitleCase(initialData.com_name.trim());
       const isCategoryChanged =
         String(data.user_type) !== String(initialData.user_type);
+      
+      const isGenderChanged =
+        String(data.gender_type) !== String(initialData.gender_type);
 
       if (
         isNameChanged &&
@@ -110,7 +106,7 @@ export default function CommodityListEdit() {
         });
         return;
       }
-      if (!isNameChanged && !isCategoryChanged) {
+      if (!isNameChanged && !isCategoryChanged && !isGenderChanged) {
         toast.info("No changes detected");
         return;
       }
@@ -161,6 +157,13 @@ export default function CommodityListEdit() {
               name="user_type"
               label="User type"
               options={user_type_options}
+            />
+
+            <FormSelect
+              control={form.control}
+              name="gender_type"
+              label="For Gender"
+              options={gender_type_options}
             />
           </div>
 

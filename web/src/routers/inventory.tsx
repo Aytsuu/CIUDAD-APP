@@ -3,7 +3,6 @@ import MainInventoryStocks from "@/pages/healthInventory/inventoryStocks/tables/
 import TransactionMainInventoryList from "@/pages/healthInventory/transaction/tables/TransactionMainInventoryList";
 import MedicineModal from "@/pages/healthInventory/InventoryList/addListModal/MedicineModal";
 import MedicineListEdit from "@/pages/healthInventory/InventoryList/editListModal/EditMedicineModal";
-import path from "path";
 import CommodityModal from "@/pages/healthInventory/InventoryList/addListModal/CommodityModal";
 import CommodityEditModal from "@/pages/healthInventory/InventoryList/editListModal/EditCommodityModal";
 import FirstAidModal from "@/pages/healthInventory/InventoryList/addListModal/FirstAidModal";
@@ -17,17 +16,16 @@ import AddCommodityStock from "@/pages/healthInventory/inventoryStocks/addstocks
 import AddFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/FirstAidStockModal";
 import AddVaccineStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/VacStockModal";
 import AddImzSupplyStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/ImmunizationSupplies";
-import EditCommodityStock from "@/pages/healthInventory/inventoryStocks/editModal/EditComStockModal";
-import EditFirstAidStock from "@/pages/healthInventory/inventoryStocks/editModal/EditFirstAidStockModal";
-import EditMedicineStock from "@/pages/healthInventory/inventoryStocks/editModal/EditMedStockModal";
-import EditImzSupplyStock from "@/pages/healthInventory/inventoryStocks/editModal/EditImzSupply";
 import UsedFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/UsedFAModal";
 import WastedAntigen from "@/pages/healthInventory/inventoryStocks/addstocksModal/WastedDoseModal";
 import ArchiveMainInventoryStocks from "@/pages/healthServices/Archive/Inventory/tables/MainArchiveInventoryStocks";
+import MainInventory from "@/pages/healthInventory/inventoryStocks/tables/MainTable";
+
 
 export const healthinventory = [
 {path: "/mainInventoryList",element: <MainInventoryList />,},
-{path: "/mainInventoryStocks",element: <MainInventoryStocks />},
+{path: "/main-inventory",element: <MainInventory />,},
+{path: "/main-inventory-stocks",element: <MainInventoryStocks />},
 {path: "/transactionMainInventoryList",element: <TransactionMainInventoryList />,},
 {path: "/addMedicineList",element: <MedicineModal />,},
 {path: "/addCommodityList", element: <CommodityModal />,},
@@ -48,10 +46,6 @@ export const healthinventory = [
 {path: "/addCommodityStock", element: <AddCommodityStock />}, 
 {path: "/addVaccineStock", element: <AddVaccineStock />}, 
 {path: "/addImzSupplyStock", element: <AddImzSupplyStock />}, 
-{path: "/editMedicineStock", element: <EditMedicineStock />}, 
-{path: "/editCommodityStock", element: <EditCommodityStock />}, 
-{path: "/editFirstAidStock", element: <EditFirstAidStock />}, 
-{path: "/editImzSupplyStock", element: <EditImzSupplyStock />}, 
 {path: "/usedFirstAidStock", element: <UsedFirstAidStock />}, 
 {path: "/wastedAntigen", element: <WastedAntigen />},
 

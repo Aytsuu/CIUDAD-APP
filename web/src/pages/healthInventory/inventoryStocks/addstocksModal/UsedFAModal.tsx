@@ -6,7 +6,6 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FirstAidStocksRecord } from "../tables/type";
-import { useQueryClient } from "@tanstack/react-query";
 import { usedFaSchema } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { useDeductFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidUpdateQueries";
 import { Label } from "@/components/ui/label";
@@ -18,8 +17,6 @@ export default function UsedFirstAidStock() {
   const navigate = useNavigate();
   const initialData = location.state?.params
     ?.initialData as FirstAidStocksRecord;
-
-  // Properly call the mutation hook at the top level
   const { mutateAsync: deductFirstAidStock } = useDeductFirstAidStock();
   // Determine the display unit (convert boxes to pcs)
   const displayUnit = initialData.finv_qty_unit?.toLowerCase() === "boxes" ? "pcs" : initialData.finv_qty_unit;
@@ -27,13 +24,12 @@ export default function UsedFirstAidStock() {
   const form = useForm({
     resolver: zodResolver(usedFaSchema),
     defaultValues: {
-      usedItem: 0, // Set a valid default number value
+      usedItem: 0,
     },
   });
 
   const onSubmit = async (data: z.infer<typeof usedFaSchema>) => {
     try {
-      // Use the mutateAsync function from the hook
       await deductFirstAidStock({
         data: initialData,
         values: data,

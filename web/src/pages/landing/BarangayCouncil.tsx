@@ -3,7 +3,7 @@ import { Footer } from "./Footer";
 import { useBrgyCouncil } from "./queries/landingFetchQueries";
 
 export default function BarangayCouncil() {
-  const { data: brgyCouncil, isLoading } = useBrgyCouncil();
+  const { data: brgyCouncil } = useBrgyCouncil();
 
   const brgyCaptain = React.useMemo(() => brgyCouncil?.find((member: any) => 
     member.position.toLowerCase() == 'barangay captain'

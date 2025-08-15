@@ -12,16 +12,12 @@ import { deleteVaccinationRecord,
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
-  deleteVaccinationHistory,
 } from "../restful-api/delete";
 
 import   {getVaccineStock} from "../restful-api/get";
 import { api2 } from "@/api/api";
-import {useNavigation} from "react-router"
-import {
-  getVaccinationHistory,
-  getVaccinationRecords,
-} from "../restful-api/get";
+
+
 import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "../../../../helpers/Calculatenextvisit";
@@ -35,7 +31,7 @@ export const useSubmitStep1 = () => {
     mutationFn: async ({
       data,
       assignmentOption,
-      form,
+      // form,
       vacStck_id,
       vac_id,
       staff_id,
@@ -70,7 +66,7 @@ export const useSubmitStep1 = () => {
           const vaccinationRecord = await createVaccinationRecord({patrec_id:patrec_id, vacrec_totaldose:1});
 
           vacrec_id = vaccinationRecord.vacrec_id;
-          let age = data.age;
+          const age = data.age;
           console.log("age", data.age);
           if (vacrec_id) {
             await createVaccinationHistory(
@@ -128,11 +124,11 @@ export const useSubmitStep2 = () => {
     mutationFn: async ({
       data,
       form,
-      form2,
+      // form2,
       vacStck_id,
       vac_id,
       vac_name,
-      expiry_date,
+      // expiry_date,
       pat_id,
       staff_id
     }: {
@@ -170,7 +166,15 @@ export const useSubmitStep2 = () => {
         const vaccinationRecord = await createVaccinationRecord({patrec_id:patrec_id,staff:staff_id,vacrec_totaldose:maxDoses});
         vacrec_id = vaccinationRecord.vacrec_id;
 
-        const vitalSigns = await createVitalSigns(data);
+        const vitalSigns = await createVitalSigns({
+          vital_bp_systolic: data.bpsystolic,
+          vital_bp_diastolic: data.bpdiastolic,
+          vital_temp: data.temp,
+          vital_o2: data.o2,
+          vital_pulse: data.pr,
+          staff: staff_id ?? null, // Optional staff_id
+          patrec: patrec_id, // Link to patient record
+        });
         vital_id = vitalSigns.vital_id;
 
         await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck_id)}/`, {
@@ -180,7 +184,7 @@ export const useSubmitStep2 = () => {
         
         await createAntigenStockTransaction(parseInt(vacStck_id), staff_id ?? "");
 
-        let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
+        const vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
 
         if (vac_type_choices === "routine") {
           const { interval, time_unit } =

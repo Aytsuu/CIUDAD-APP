@@ -2,24 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Plus, X, Wallet } from "lucide-react";
 import { useUpdateProjectProposal } from "./queries/updatequeries";
-import { useAddSupportDocument } from "./queries/addqueries";
-import { useDeleteSupportDocument } from "./queries/delqueries";
+// import { useAddSupportDocument } from "./queries/addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useGetStaffList } from "./queries/fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -29,56 +13,58 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import {
-  ProjectProposal,
-  ProjectProposalInput,
-  SupportDoc,
-} from "./queries/fetchqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
-import { Signatory } from "./create-projprop";
-
-export interface EditProjectProposalFormProps {
-  onSuccess: (data: ProjectProposal) => void;
-  initialValues?: ProjectProposal;
-  isEditMode?: boolean;
-  isSubmitting?: boolean;
-}
+import {
+  // ProjectProposal,
+  // ProjectProposalInput,
+  EditProjectProposalFormProps,
+} from "./projprop-types";
+import { Signatory } from "./projprop-types";
+import { ComboboxInput } from "@/components/ui/form/form-combo-box";
 
 export const EditProjectProposalForm: React.FC<
   EditProjectProposalFormProps
-> = ({ onSuccess, initialValues, isEditMode, isSubmitting }) => {
+> = ({ initialValues, isEditMode, isSubmitting }) => {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const updateMutation = useUpdateProjectProposal();
-  const addSupportDocMutation = useAddSupportDocument();
-  const deleteSupportDocMutation = useDeleteSupportDocument();
+  // const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
 
   // Display remaining balance from budget tracker
-  const { data: budgetEntries = [], isLoading: isBudgetLoading, error: budgetError } = useGADBudgets(new Date().getFullYear().toString());
+  const { data: budgetEntries = [], isLoading: isBudgetLoading } =
+    useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
   const currentYearBudget = yearBudgets?.find(
     (budget) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
 
-const latestExpenseWithBalance = budgetEntries
-  .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
-  .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
+  const latestExpenseWithBalance = budgetEntries
+    .filter(
+      (entry) =>
+        entry.gbud_type === "Expense" &&
+        !entry.gbud_is_archive &&
+        entry.gbud_remaining_bal != null
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.gbud_datetime).getTime() -
+        new Date(a.gbud_datetime).getTime()
+    )[0];
 
-const availableBudget = latestExpenseWithBalance
-  ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
-    ? currentYearBudget 
-      ? Number(currentYearBudget)
-      : 0
-    : Number(latestExpenseWithBalance.gbud_remaining_bal)
-  : currentYearBudget
+  const availableBudget = latestExpenseWithBalance
+    ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
+      ? currentYearBudget
+        ? Number(currentYearBudget)
+        : 0
+      : Number(latestExpenseWithBalance.gbud_remaining_bal)
+    : currentYearBudget
     ? Number(currentYearBudget)
     : 0;
 
@@ -151,40 +137,40 @@ const availableBudget = latestExpenseWithBalance
 
   useEffect(() => {
     if (initialValues && isEditMode) {
-      const suppDocs =
-        initialValues.supportDocs?.map((doc: any) => {
-          let type: "image" | "video" | "document" = "document";
-          if (doc.psd_type?.startsWith("image/")) {
-            type = "image";
-          } else if (doc.psd_type?.startsWith("video/")) {
-            type = "video";
-          }
+      // const suppDocs =
+      //   initialValues.supportDocs?.map((doc: any) => {
+      //     let type: "image" | "video" | "document" = "document";
+      //     if (doc.psd_type?.startsWith("image/")) {
+      //       type = "image";
+      //     } else if (doc.psd_type?.startsWith("video/")) {
+      //       type = "video";
+      //     }
 
-          return {
-            id: `doc-${doc.psd_id}`,
-            type,
-            file: new File([], doc.psd_name),
-            publicUrl: doc.psd_url,
-            storagePath: doc.psd_path || `uploads/${doc.psd_name}`,
-            status: "uploaded" as const,
-            previewUrl: doc.psd_url,
-          };
-        }) || [];
+      //     return {
+      //       id: `doc-${doc.psd_id}`,
+      //       type,
+      //       file: new File([], doc.psd_name),
+      //       publicUrl: doc.psd_url,
+      //       storagePath: doc.psd_path || `uploads/${doc.psd_name}`,
+      //       status: "uploaded" as const,
+      //       previewUrl: doc.psd_url,
+      //     };
+      //   }) || [];
 
-      setSupportingDocs(suppDocs);
+      // setSupportingDocs(suppDocs);
 
       if (initialValues.headerImage) {
         setHeaderImageUrl(initialValues.headerImage);
-        setMediaFiles([
-          {
-            id: "existing-header",
-            type: "image",
-            file: new File([], "header.jpg"),
-            publicUrl: initialValues.headerImage,
-            status: "uploaded",
-            previewUrl: initialValues.headerImage,
-          },
-        ]);
+        // setMediaFiles([
+        //   {
+        //     id: "existing-header",
+        //     type: "image",
+        //     file: new File([], "header.jpg"),
+        //     publicUrl: initialValues.headerImage,
+        //     status: "uploaded",
+        //     previewUrl: initialValues.headerImage,
+        //   },
+        // ]);
       }
     }
   }, [initialValues, isEditMode]);
@@ -261,146 +247,146 @@ const availableBudget = latestExpenseWithBalance
     }
   };
 
-  const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
+  const handleSave = async (_data: z.infer<typeof ProjectProposalSchema>) => {
     if (!initialValues?.gprId) {
       setErrorMessage("No project ID provided for update.");
       return;
     }
 
-    const gprId = initialValues.gprId;
+    // const gprId = initialValues.gprId;
 
-    try {
-      setErrorMessage(null);
-      const headerImage =
-        mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+  //   try {
+  //     setErrorMessage(null);
+  //     const headerImage =
+  //       mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
 
-      const validSupportDocs = supportingDocs.filter(
-        (
-          doc
-        ): doc is {
-          id: string;
-          type: "image" | "video" | "document";
-          file: File;
-          publicUrl: string;
-          storagePath: string;
-          status: "uploaded";
-          previewUrl?: string;
-        } =>
-          doc.status === "uploaded" &&
-          !!doc.publicUrl &&
-          !!doc.storagePath &&
-          !!doc.file?.name &&
-          !!doc.file?.type
-      );
+  //     const validSupportDocs = supportingDocs.filter(
+  //       (
+  //         doc
+  //       ): doc is {
+  //         id: string;
+  //         type: "image" | "video" | "document";
+  //         file: File;
+  //         publicUrl: string;
+  //         storagePath: string;
+  //         status: "uploaded";
+  //         previewUrl?: string;
+  //       } =>
+  //         doc.status === "uploaded" &&
+  //         !!doc.publicUrl &&
+  //         !!doc.storagePath &&
+  //         !!doc.file?.name &&
+  //         !!doc.file?.type
+  //     );
 
-      // Preserve all existing supportDocs and include new ones, default to empty array if undefined
-      const existingSupportDocs = initialValues.supportDocs || [];
-      const updatedSupportDocs = validSupportDocs.map((doc) => {
-        const existingDoc = existingSupportDocs.find(
-          (d) => d.psd_url === doc.publicUrl
-        );
-        return {
-          psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
-          psd_url: doc.publicUrl,
-          psd_name: doc.file.name,
-          psd_type: doc.file.type,
-          psd_path: doc.storagePath,
-          psd_is_archive: false,
-        };
-      });
+  //     // Preserve all existing supportDocs and include new ones, default to empty array if undefined
+  //     const existingSupportDocs = initialValues.supportDocs || [];
+  //     const updatedSupportDocs = validSupportDocs.map((doc) => {
+  //       const existingDoc = existingSupportDocs.find(
+  //         (d) => d.psd_url === doc.publicUrl
+  //       );
+  //       return {
+  //         psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
+  //         psd_url: doc.publicUrl,
+  //         psd_name: doc.file.name,
+  //         psd_type: doc.file.type,
+  //         psd_path: doc.storagePath,
+  //         psd_is_archive: false,
+  //       };
+  //     });
 
-      // Identify new documents to add via mutation
-      const newDocs = updatedSupportDocs.filter(
-        (doc) =>
-          !existingSupportDocs.some(
-            (existing) => existing.psd_id === doc.psd_id
-          )
-      );
+  //     // Identify new documents to add via mutation
+  //     const newDocs = updatedSupportDocs.filter(
+  //       (doc) =>
+  //         !existingSupportDocs.some(
+  //           (existing) => existing.psd_id === doc.psd_id
+  //         )
+  //     );
 
-      // Update existing supportDocs for PUT
-      const proposalData: ProjectProposalInput = {
-        projectTitle: data.projectTitle,
-        background: data.background,
-        objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-        participants: data.participants
-          .filter((p) => p.category.trim() !== "")
-          .map((p) => ({
-            category: p.category,
-            count: p.count,
-          })),
-        date: data.date,
-        venue: data.venue,
-        budgetItems: data.budgetItems
-          .filter((item) => item.name.trim() !== "")
-          .map((item) => ({
-            name: item.name,
-            pax: item.pax,
-            amount: item.amount,
-          })),
-        monitoringEvaluation: data.monitoringEvaluation,
-        signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-        gpr_header_img: headerImage,
-        staffId: initialValues.staffId || null,
-        gprIsArchive: initialValues.gprIsArchive || false,
-        supportDocs:
-          existingSupportDocs.map((doc) => ({
-            psd_id: doc.psd_id,
-            psd_url: doc.psd_url,
-            psd_name: doc.psd_name,
-            psd_type: doc.psd_type,
-            psd_is_archive: doc.psd_is_archive,
-          })) || [], // Only existing docs with valid psdId for PUT
-      };
+  //     // Update existing supportDocs for PUT
+  //     const proposalData: ProjectProposalInput = {
+  //       projectTitle: data.projectTitle,
+  //       background: data.background,
+  //       objectives: data.objectives.filter((obj) => obj.trim() !== ""),
+  //       participants: data.participants
+  //         .filter((p) => p.category.trim() !== "")
+  //         .map((p) => ({
+  //           category: p.category,
+  //           count: p.count,
+  //         })),
+  //       date: data.date,
+  //       venue: data.venue,
+  //       budgetItems: data.budgetItems
+  //         .filter((item) => item.name.trim() !== "")
+  //         .map((item) => ({
+  //           name: item.name,
+  //           pax: item.pax,
+  //           amount: item.amount,
+  //         })),
+  //       monitoringEvaluation: data.monitoringEvaluation,
+  //       signatories: data.signatories.filter((s) => s.name.trim() !== ""),
+  //       gpr_header_img: headerImage,
+  //       staffId: initialValues.staffId || null,
+  //       gprIsArchive: initialValues.gprIsArchive || false,
+  //       supportDocs:
+  //         existingSupportDocs.map((doc) => ({
+  //           psd_id: doc.psd_id,
+  //           psd_url: doc.psd_url,
+  //           psd_name: doc.psd_name,
+  //           psd_type: doc.psd_type,
+  //           psd_is_archive: doc.psd_is_archive,
+  //         })) || [], // Only existing docs with valid psdId for PUT
+  //     };
 
-      const fullProposal: ProjectProposal = {
-        ...initialValues,
-        ...proposalData,
-        paperSize: data.paperSize,
-        headerImage: headerImage,
-        supportDocs: proposalData.supportDocs || [], // Ensure a default empty array
-        participants: proposalData.participants.map((p) => ({
-          category: p.category,
-          count: parseInt(p.count) || 0,
-        })),
-        budgetItems: proposalData.budgetItems.map((item) => ({
-          name: item.name,
-          pax: item.pax,
-          amount: parseFloat(item.amount) || 0,
-        })),
-      };
+  //     const fullProposal: ProjectProposal = {
+  //       ...initialValues,
+  //       ...proposalData,
+  //       paperSize: data.paperSize,
+  //       headerImage: headerImage,
+  //       supportDocs: proposalData.supportDocs || [], // Ensure a default empty array
+  //       participants: proposalData.participants.map((p) => ({
+  //         category: p.category,
+  //         count: parseInt(p.count) || 0,
+  //       })),
+  //       budgetItems: proposalData.budgetItems.map((item) => ({
+  //         name: item.name,
+  //         pax: item.pax,
+  //         amount: parseFloat(item.amount) || 0,
+  //       })),
+  //     };
 
-      // Add new documents via mutation before updating the proposal
-      if (newDocs.length > 0) {
-        await Promise.all(
-          newDocs.map((doc) =>
-            addSupportDocMutation.mutateAsync({
-              gprId,
-              fileData: {
-                psd_url: doc.psd_url,
-                psd_path: doc.psd_path!,
-                psd_name: doc.psd_name,
-                psd_type: doc.psd_type,
-              },
-            })
-          )
-        );
-      }
+  //     // Add new documents via mutation before updating the proposal
+  //     if (newDocs.length > 0) {
+  //       await Promise.all(
+  //         newDocs.map((doc) =>
+  //           addSupportDocMutation.mutateAsync({
+  //             gprId,
+  //             fileData: {
+  //               psd_url: doc.psd_url,
+  //               psd_path: doc.psd_path!,
+  //               psd_name: doc.psd_name,
+  //               psd_type: doc.psd_type,
+  //             },
+  //           })
+  //         )
+  //       );
+  //     }
 
-      await updateMutation.mutateAsync({
-        gprId,
-        proposalData,
-        proposalF: fullProposal,
-      });
+  //     await updateMutation.mutateAsync({
+  //       gprId,
+  //       proposalData,
+  //       proposalF: fullProposal,
+  //     });
 
-      onSuccess(fullProposal);
-    } catch (error: any) {
-      console.error("Error in handleSave:", error);
-      setErrorMessage(
-        error.response?.data?.detail ||
-          error.message ||
-          "Failed to save proposal. Please check the form data and try again."
-      );
-    }
+  //     onSuccess(fullProposal);
+  //   } catch (error: any) {
+  //     console.error("Error in handleSave:", error);
+  //     setErrorMessage(
+  //       error.response?.data?.detail ||
+  //         error.message ||
+  //         "Failed to save proposal. Please check the form data and try again."
+  //     );
+  //   }
   };
 
   const handleConfirmSave = () => {
@@ -474,35 +460,14 @@ const availableBudget = latestExpenseWithBalance
                       typeof filesOrUpdater === "function"
                         ? filesOrUpdater(prev)
                         : filesOrUpdater;
-                    const imageUrl =
-                      newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
-                    setHeaderImageUrl(imageUrl);
+                    // const imageUrl =
+                    //   newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
+                    // setHeaderImageUrl(imageUrl);
                     return newFiles;
                   });
                 }}
                 setActiveVideoId={setActiveVideoId}
               />
-              {/* {headerImageUrl && (
-                <div className="mt-2 flex flex-col sm:flex-row gap-2 items-center">
-                  <img
-                    src={headerImageUrl}
-                    alt="Header preview"
-                    className="max-h-40"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setMediaFiles([]);
-                      setHeaderImageUrl(null);
-                    }}
-                    className="mt-2 sm:mt-0"
-                  >
-                    Remove Image
-                  </Button>
-                </div>
-              )} */}
             </div>
 
             <div>
@@ -651,8 +616,10 @@ const availableBudget = latestExpenseWithBalance
             </div>
 
             <div>
-             <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium">Budgetary Requirements</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium">
+                  Budgetary Requirements
+                </label>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Wallet className="h-4 w-4 text-blue-600" />
                   <span>Available Funds:</span>
@@ -660,7 +627,8 @@ const availableBudget = latestExpenseWithBalance
                     <span className="text-gray-500">Loading...</span>
                   ) : availableBudget != null ? (
                     <span className="font-mono text-red-500">
-                      ₱{availableBudget.toLocaleString("en-US", {
+                      ₱
+                      {availableBudget.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -745,7 +713,7 @@ const availableBudget = latestExpenseWithBalance
                 <div className="space-y-2">
                   {signatories
                     .filter((s) => s.type === "prepared")
-                    .map((sig, index) => {
+                    .map((sig) => {
                       const globalIndex = signatories.findIndex(
                         (s) => s === sig
                       );
@@ -754,110 +722,36 @@ const availableBudget = latestExpenseWithBalance
                           key={globalIndex}
                           className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
                         >
-                          <div className="flex-1">
-                            <Popover
-                              open={openCombobox === globalIndex}
-                              onOpenChange={(open) =>
-                                setOpenCombobox(open ? globalIndex : null)
-                              }
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openCombobox === globalIndex}
-                                  className="w-full h-10 justify-between truncate"
-                                  disabled={isStaffLoading}
-                                >
-                                  <span className="truncate">
-                                    {isStaffLoading
-                                      ? "Loading staff..."
-                                      : sig.name || "Select staff..."}
-                                  </span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[200px] p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder="Search staff..."
-                                    onValueChange={(value) => {
-                                      if (
-                                        !staffList.some((staff) =>
-                                          staff.full_name
-                                            .toLowerCase()
-                                            .includes(value.toLowerCase())
-                                        )
-                                      ) {
-                                        updateSignatory(
-                                          globalIndex,
-                                          "name",
-                                          value
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <CommandList
-                                    className="max-h-64 overflow-auto"
-                                    onWheel={(e) => {
-                                      e.stopPropagation();
-                                      const el = e.currentTarget;
-                                      if (
-                                        e.deltaY > 0 &&
-                                        el.scrollTop >=
-                                          el.scrollHeight - el.clientHeight
-                                      ) {
-                                        return;
-                                      }
-                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
-                                        return;
-                                      }
-                                      e.preventDefault();
-                                      el.scrollTop += e.deltaY;
-                                    }}
-                                  >
-                                    <CommandEmpty>
-                                      No staff found. Enter name manually.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {staffList.map((staff) => (
-                                        <CommandItem
-                                          key={staff.staff_id}
-                                          value={staff.full_name}
-                                          onSelect={() => {
-                                            updateSignatory(
-                                              globalIndex,
-                                              "name",
-                                              staff.full_name,
-                                              staff.position
-                                            );
-                                            setOpenCombobox(null);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              sig.name === staff.full_name
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {staff.full_name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
+                          <ComboboxInput
+                            value={sig.name}
+                            options={staffList}
+                            isLoading={isStaffLoading}
+                            label=""
+                            placeholder="Select staff..."
+                            emptyText="No staff found. Enter name manually."
+                            onSelect={(value, item) => {
+                              updateSignatory(
+                                globalIndex,
+                                "name",
+                                value,
+                                item?.position
+                              );
+                            }}
+                            onCustomInput={(value) => {
+                              updateSignatory(globalIndex, "name", value);
+                            }}
+                            displayKey="full_name"
+                            valueKey="staff_id"
+                            additionalDataKey="position"
+                          />
                           <div className="flex-1">
                             <FormInput
                               control={control}
                               name={`signatories.${globalIndex}.position`}
                               label=""
-                              placeholder="Position"
+                              placeholder=""
                               type="text"
-                              className="mb-2 p-0"
+                              className="p-0"
                             />
                           </div>
                           <Button
@@ -891,7 +785,7 @@ const availableBudget = latestExpenseWithBalance
                 <div className="space-y-2">
                   {signatories
                     .filter((s) => s.type === "approved")
-                    .map((sig, index) => {
+                    .map((sig) => {
                       const globalIndex = signatories.findIndex(
                         (s) => s === sig
                       );
@@ -900,110 +794,36 @@ const availableBudget = latestExpenseWithBalance
                           key={globalIndex}
                           className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
                         >
-                          <div className="flex-1">
-                            <Popover
-                              open={openCombobox === globalIndex}
-                              onOpenChange={(open) =>
-                                setOpenCombobox(open ? globalIndex : null)
-                              }
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openCombobox === globalIndex}
-                                  className="w-full h-10 justify-between truncate"
-                                  disabled={isStaffLoading}
-                                >
-                                  <span className="truncate">
-                                    {isStaffLoading
-                                      ? "Loading staff..."
-                                      : sig.name || "Select staff..."}
-                                  </span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[200px] p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder="Search staff..."
-                                    onValueChange={(value) => {
-                                      if (
-                                        !staffList.some((staff) =>
-                                          staff.full_name
-                                            .toLowerCase()
-                                            .includes(value.toLowerCase())
-                                        )
-                                      ) {
-                                        updateSignatory(
-                                          globalIndex,
-                                          "name",
-                                          value
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <CommandList
-                                    className="max-h-64 overflow-auto"
-                                    onWheel={(e) => {
-                                      e.stopPropagation();
-                                      const el = e.currentTarget;
-                                      if (
-                                        e.deltaY > 0 &&
-                                        el.scrollTop >=
-                                          el.scrollHeight - el.clientHeight
-                                      ) {
-                                        return;
-                                      }
-                                      if (e.deltaY < 0 && el.scrollTop <= 0) {
-                                        return;
-                                      }
-                                      e.preventDefault();
-                                      el.scrollTop += e.deltaY;
-                                    }}
-                                  >
-                                    <CommandEmpty>
-                                      No staff found. Enter name manually.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {staffList.map((staff) => (
-                                        <CommandItem
-                                          key={staff.staff_id}
-                                          value={staff.full_name}
-                                          onSelect={() => {
-                                            updateSignatory(
-                                              globalIndex,
-                                              "name",
-                                              staff.full_name,
-                                              staff.position
-                                            );
-                                            setOpenCombobox(null);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              sig.name === staff.full_name
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {staff.full_name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
+                          <ComboboxInput
+                            value={sig.name}
+                            options={staffList}
+                            isLoading={isStaffLoading}
+                            label=""
+                            placeholder="Select staff..."
+                            emptyText="No staff found. Enter name manually."
+                            onSelect={(value, item) => {
+                              updateSignatory(
+                                globalIndex,
+                                "name",
+                                value,
+                                item?.position
+                              );
+                            }}
+                            onCustomInput={(value) => {
+                              updateSignatory(globalIndex, "name", value);
+                            }}
+                            displayKey="full_name"
+                            valueKey="staff_id"
+                            additionalDataKey="position"
+                          />
                           <div className="flex-1">
                             <FormInput
                               control={control}
                               name={`signatories.${globalIndex}.position`}
                               label=""
-                              placeholder="Position"
+                              placeholder=""
                               type="text"
-                              className="mb-2 p-0"
+                              className="p-0"
                             />
                           </div>
                           <Button
@@ -1023,7 +843,7 @@ const availableBudget = latestExpenseWithBalance
                     type="button"
                     onClick={() => addSignatory("approved")}
                     variant="outline"
-                    className="gap-2 w-full sm:w-auto"
+                    className="gap-2 w-full sm:w-auto mb-5"
                   >
                     <Plus size={16} />
                     Add
@@ -1031,7 +851,6 @@ const availableBudget = latestExpenseWithBalance
                 </div>
               </div>
             </div>
-
             <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
               <ConfirmationModal
                 trigger={

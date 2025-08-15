@@ -2,28 +2,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  FormField,
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
   Form,
 } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useState } from "react";
 import { isVaccine, isSupply } from "../tables/VaccineStocks";
-import { StockRecords } from "../tables/type";
 import { useLocation } from "react-router";
 import { Pill } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useHandleWaste } from "../REQUEST/Antigen/queries/WastedQueries"; // Import the custom hook
-import { Link, useNavigate } from "react-router";
-import { set } from "date-fns";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Loader2, CircleCheck } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
+
+
 const formSchema = z.object({
   wastedDose: z.coerce
     .number()
@@ -33,7 +27,7 @@ const formSchema = z.object({
 
 export default function WastedAntigen() {
   const location = useLocation();
-  const { wasted, record } = location.state;
+  const {  record } = location.state;
   const { handleVaccineWaste, handleSupplyWaste } = useHandleWaste(); // Use the custom hook
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);

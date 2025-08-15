@@ -6,7 +6,6 @@ import {
   Info,
   Calendar,
   Trash2,
-  Plus,
   Pencil,
 } from "lucide-react";
 import {

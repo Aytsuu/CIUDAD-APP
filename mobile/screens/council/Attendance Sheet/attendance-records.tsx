@@ -4,7 +4,6 @@ import {
   Text,
   SafeAreaView,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   RefreshControl
 } from 'react-native';
@@ -12,20 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGetCouncilEvents, useGetAttendanceSheets } from '../ce-events/queries';
 import { SearchInput } from '@/components/ui/search-input';
 import { useRouter } from 'expo-router';
-import ScreenLayout from '@/screens/_ScreenLayout';
 import { ChevronLeft } from 'lucide-react-native';
 import PageLayout from '@/screens/_PageLayout';
+import { AttendanceRecords } from '../ce-events/ce-att-typeFile';
 
-interface AttendanceRecord {
-  ceId: number;
-  attMettingTitle: string;
-  attMeetingDate: string;
-  attMeetingDescription: string;
-  isArchived: boolean;
-  sheets: any[];
-}
-
-const AttendanceRecords = () => {
+const AttendanceRecord = () => {
   const router = useRouter();
   const { data: councilEvents = [], isLoading, error, refetch } = useGetCouncilEvents();
   const { data: attendanceSheets = [] } = useGetAttendanceSheets();
@@ -38,7 +28,7 @@ const AttendanceRecords = () => {
     setRefreshing(false)
   }
 
-  const filteredTableData: AttendanceRecord[] = React.useMemo(() => {
+  const filteredTableData: AttendanceRecords[] = React.useMemo(() => {
     const data = councilEvents
       .filter(event => event.ce_type === 'meeting' && !event.ce_is_archive)
       .map(event => {
@@ -100,7 +90,6 @@ const AttendanceRecords = () => {
           }
         >
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        {/* Search Bar */}
         <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
@@ -115,7 +104,7 @@ const AttendanceRecords = () => {
               key={record.ceId}
               onPress={() =>
                 router.push({
-                  pathname: '/(council)/attendance/attendance-info',
+                  pathname: '/council/attendance/attendance-info',
                   params: { ceId: record.ceId, sheets: JSON.stringify(record.sheets) },
                 })
               }
@@ -132,12 +121,6 @@ const AttendanceRecords = () => {
                     <CardTitle className="text-lg font-semibold text-black flex-1 pr-2">
                       {record.attMettingTitle}
                     </CardTitle>
-                    {/* <TouchableOpacity
-                      className="p-2 -m-2"
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <MoreVertical size={20} color="#666" />
-                    </TouchableOpacity> */}
                   </View>
                 </CardHeader>
 
@@ -169,4 +152,4 @@ const AttendanceRecords = () => {
   );
 };
 
-export default AttendanceRecords;
+export default AttendanceRecord;

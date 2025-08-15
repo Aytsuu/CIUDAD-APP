@@ -7,7 +7,8 @@ export const addCommodity = async (data: Record<string,string>) => {
         com_name: toTitleCase(data.com_name),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        user_type:data.user_type,
+        user_type: data.user_type,
+        gender_type: data.gender_type
       });
       return res.data;
     } catch (err) {

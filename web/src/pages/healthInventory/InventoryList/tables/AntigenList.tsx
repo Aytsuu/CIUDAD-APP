@@ -3,10 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import VaccineModal from "../addListModal/VaccineModal";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
@@ -44,10 +41,10 @@ export default function AntigenList() {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     React.useState(false);
   const [vaccineToDelete, setVaccineToDelete] = useState<number | null>(null);
-  const [isDialog, setIsDialog] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
-    "vaccine"
-  );
+  // const [isDialog, setIsDialog] = useState(false);
+  // const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
+  //   "vaccine"
+  // );
   const navigate = useNavigate();
 
   // Use the custom hook here

@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import {
   Form,
-  FormControl,
-  FormField,
   FormItem,
   FormLabel,
 } from "@/components/ui/form/form";
@@ -14,17 +12,15 @@ import {
   CommodityStocksSchema,
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { fetchCommodity } from "../REQUEST/Commodity/restful-api/CommodityFetchAPI";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitCommodityStock } from "../REQUEST/Commodity/queries/CommodityPostQueries";
-import { toast } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AddCommodityStock() {
@@ -52,12 +48,12 @@ export default function AddCommodityStock() {
   const { mutate: submit, isPending } = useSubmitCommodityStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<CommodityStockType | null>(null);
-  const [selectedUserType, setSelectedUserType] = useState<string>(""); // State to store user_type
+  const [selectedUserType, setSelectedUserType] = useState<string>(""); 
   const navigate = useNavigate();
   const currentUnit = form.watch("cinv_qty_unit");
   const qty = form.watch("cinv_qty") || 0;
   const pcs = form.watch("cinv_pcs") || 0;
-  const comId = form.watch("com_id"); // Watch for com_id changes
+  const comId = form.watch("com_id"); 
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   // Update user_type when com_id changes

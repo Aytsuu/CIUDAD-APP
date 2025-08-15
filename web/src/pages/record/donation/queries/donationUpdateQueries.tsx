@@ -2,17 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { putdonationreq } from "../request-db/donationPutRequest";
-import { Donation } from "./donationFetchQueries"; // Import the Donation type
+import { Donations } from "../donation-types";
 
 export const useUpdateDonation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ don_num, donationInfo }: { don_num: string; donationInfo: Partial<Donation> }) => 
+    mutationFn: ({ don_num, donationInfo }: { don_num: string; donationInfo: Partial<Donations> }) => 
       putdonationreq(don_num, donationInfo),
     onSuccess: (updatedData, variables) => {
       // Optimistically update the cache
-      queryClient.setQueryData(["donations"], (old: Donation[] = []) => 
+      queryClient.setQueryData(["donations"], (old: Donations[] = []) => 
         old.map(donation => 
           donation.don_num === variables.don_num ? { ...donation, ...updatedData } : donation
         )
@@ -40,7 +40,7 @@ export const useUpdateDonation = () => {
       const previousDonations = queryClient.getQueryData(['donations']);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['donations'], (old: Donation[] = []) => 
+      queryClient.setQueryData(['donations'], (old: Donations[] = []) => 
         old.map(donation => 
           donation.don_num === variables.don_num ? { ...donation, ...variables.donationInfo } : donation
         )

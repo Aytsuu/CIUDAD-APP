@@ -1,16 +1,13 @@
-import React from "react";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, CircleCheck, Loader2 } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getColumns } from "./columns/MedicineCol";
-import { toast } from "sonner";
 import { Link } from "react-router";
 import { useMedicineStocks } from "../queries/fetch";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
@@ -25,23 +22,23 @@ type StockFilter =
 
 // Using your existing alert functions
 export default function MedicineStocks() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [medicineToArchive, setMedicineToArchive] = useState<string | null>(
-    null
-  );
+  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+  //   useState(false);
+  // const [medicineToArchive, setMedicineToArchive] = useState<string | null>(
+  //   null
+  // );
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const { data: medicineStocks, isLoading: isLoadingMedicines } =
     useMedicineStocks();
 
   const formatMedicineStocksData = useCallback((): MedicineStocksRecord[] => {
     if (!medicineStocks) return [];
     return medicineStocks.map((medicineStock: any) => {
-      let availQty = medicineStock.minv_qty_avail;
+      const availQty = medicineStock.minv_qty_avail;
       let unit = medicineStock.minv_qty_unit;
       let qty = medicineStock.minv_qty;
       let pcs= medicineStock.minv_pcs * medicineStock.minv_qty;

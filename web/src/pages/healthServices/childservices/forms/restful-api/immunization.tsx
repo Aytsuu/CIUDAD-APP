@@ -1,23 +1,13 @@
 // src/services/childHealthAPI.ts
 import {
   createFollowUpVisit,
-  createBodyMeasurement,
   createPatientDisability,
-  createChildHealthNotes,
-  createChildVitalSign,
-  createNutritionalStatus,
+  // createChildHealthNotes,
+  createExclusiveBFCheck
 } from "./createAPI";
-import {
-  createExclusiveBFCheck,
-  createSupplementStatus,
-  createChildHealthRecord,
-  createChildHealthHistory,
-} from "./chrecord";
-import { deleteFollowUpVisit } from "./deleteAPI";
 import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
 import { processMedicineRequest } from "./createAPI";
-import type { FormData } from "@/form-schema/chr-schema/chr-schema";
-import { AddRecordArgs, AddRecordResult } from "../muti-step-form/types";
+import { AddRecordArgs } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
 
 export async function updateChildHealthRecord({
@@ -40,9 +30,9 @@ export async function updateChildHealthRecord({
     throw new Error("Transient ID is required for transient residents");
   }
 
-  let patrec_id = old_patrec_id;
-  let chrec_id = old_chrec_id;
-  let current_chhist_id = old_chhist;
+  const patrec_id = old_patrec_id;
+  const chrec_id = old_chrec_id;
+  const current_chhist_id = old_chhist;
   let chvital_id: string | undefined;
   let followv_id: string | null = null;
 
@@ -81,24 +71,24 @@ export async function updateChildHealthRecord({
         });
         followv_id = newFollowUp.followv_id;
 
-        const newNotes = await createChildHealthNotes({
-          chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          followv: followv_id,
-          chhist: current_chhist_id,
-          staff: staff || null,
-        });
+        // const newNotes = await createChildHealthNotes({
+        //   chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
+        //   created_at: new Date().toISOString(),
+        //   updated_at: new Date().toISOString(),
+        //   followv: followv_id,
+        //   chhist: current_chhist_id,
+        //   staff: staff || null,
+        // });
       } else {
         if (submittedNotes !== originalNotes) {
-          const newNotes = await createChildHealthNotes({
-            chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            followv: originalFollowvId,
-            chhist: current_chhist_id,
-            staff: staff,
-          });
+          // const newNotes = await createChildHealthNotes({
+          //   chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
+          //   created_at: new Date().toISOString(),
+          //   updated_at: new Date().toISOString(),
+          //   followv: originalFollowvId,
+          //   chhist: current_chhist_id,
+          //   staff: staff,
+          // });
         }
       }
 
@@ -186,14 +176,19 @@ export async function updateChildHealthRecord({
       if (updates.length > 0) {
         try {
           await updateSupplementStatus(
-            updates.filter(
-              (
-                update
-              ): update is {
-                chssupplementstat_id: number;
-                date_completed: string | null;
-              } => update !== null
-            )
+            updates
+              .filter(
+                (
+                  update
+                ): update is {
+                  chssupplementstat_id: number;
+                  date_completed: string | null;
+                } => update !== null
+              )
+              .map((update) => ({
+                ...update,
+                date_given_iron: null, // Provide a default value for date_given_iron
+              }))
           );
           console.log(
             `Successfully updated ${updates.length} supplement status records`

@@ -7,10 +7,9 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import { FormData,page2Schema } from "@/form-schema/FamilyPlanningSchema"
+import { FormData, page2Schema } from "@/form-schema/FamilyPlanningSchema"
 import { api2 } from "@/api/api"
 
-// NEW: Interface for illness data
 interface Illness {
   ill_id: number
   illname: string
@@ -18,11 +17,10 @@ interface Illness {
   ill_code: string
 }
 
-// NEW: Function to fetch illnesses from database
 const fetchIllnesses = async (illCodePrefix?: string): Promise<Illness[]> => {
   try {
-    const params = illCodePrefix ? { params: { ill_code_prefix: illCodePrefix } } : {};
-    const response = await api2.get("/familyplanning/illnesses/", params);
+    const params = illCodePrefix ? { params: { ill_code_prefix: illCodePrefix } } : {}
+    const response = await api2.get("/familyplanning/illnesses/", params)
     return response.data
   } catch (error) {
     console.error("Error fetching illnesses:", error)
@@ -46,14 +44,12 @@ export default function FamilyPlanningForm2({
   mode = "create",
 }: Page2Props) {
   const isReadOnly = mode === "view"
-
-  // NEW: State for selected illnesses
+  const isObstetricalHistoryDisabled = isReadOnly || formData.gender?.toLowerCase() === 'male'
   const [selectedIllnesses, setSelectedIllnesses] = useState<number[]>([])
 
-  // NEW: Fetch illnesses from database
   const { data: illnesses = [], isLoading: isLoadingIllnesses } = useQuery<Illness[]>({
     queryKey: ["illnesses"],
-    queryFn: () => fetchIllnesses("FP")
+    queryFn: () => fetchIllnesses()
   })
 
   const form = useForm<FormData>({
@@ -68,32 +64,27 @@ export default function FamilyPlanningForm2({
   }, [form, formData])
 
   useEffect(() => {
-  if (formData.pat_id) {
-    // Fetch last pregnancy data when patient ID is available
-    api2.get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
-      .then(response => {
-        const { last_delivery_date, last_delivery_type } = response.data;
-        
-        // Set the values in your form
-        if (last_delivery_date) {
-          form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date);
-        }
-        if (last_delivery_type) {
-          form.setValue("obstetricalHistory.typeOfLastDelivery", last_delivery_type);
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching last pregnancy data:", error);
-      });
-  }
-}, [formData.pat_id, form]);
+    if (formData.pat_id) {
+      api2.get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
+        .then(response => {
+          const { last_delivery_date, last_delivery_type } = response.data
+          if (last_delivery_date) {
+            form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date)
+          }
+          if (last_delivery_type) {
+            form.setValue("obstetricalHistory.typeOfLastDelivery", last_delivery_type)
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching last pregnancy data:", error)
+        })
+    }
+  }, [formData.pat_id, form])
 
-  // NEW: Convert the old boolean medical history to selected illness IDs
   useEffect(() => {
     if (illnesses.length > 0 && formData.medicalHistory) {
       const selected: number[] = []
 
-      // Map the old boolean fields to illness IDs
       const medicalHistoryMapping: Record<string, string> = {
         severeHeadaches: "Severe headaches / migraine",
         strokeHeartAttackHypertension: "History of stroke / heart attack / hypertension",
@@ -106,7 +97,6 @@ export default function FamilyPlanningForm2({
         abnormalVaginalDischarge: "Abnormal vaginal discharge",
         phenobarbitalOrRifampicin: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
         smoker: "Is this client a SMOKER?",
-        // disability: "Others",
       }
 
       Object.entries(formData.medicalHistory).forEach(([key, value]) => {
@@ -122,18 +112,12 @@ export default function FamilyPlanningForm2({
     }
   }, [illnesses, formData.medicalHistory])
 
-  // NEW: Handle illness selection toggle
   const handleIllnessToggle = (illnessId: number, checked: boolean) => {
-    setSelectedIllnesses((prev) => {
-      if (checked) {
-        return [...prev, illnessId]
-      } else {
-        return prev.filter((id) => id !== illnessId)
-      }
-    })
+    setSelectedIllnesses((prev) => (
+      checked ? [...prev, illnessId] : prev.filter((id) => id !== illnessId)
+    ))
   }
 
-  // ORIGINAL: Keep the original medical history options as fallback
   const medicalHistoryOptions = [
     { name: "severeHeadaches", label: "Severe headaches / migraine" },
     { name: "strokeHeartAttackHypertension", label: "History of stroke / heart attack / hypertension" },
@@ -146,24 +130,9 @@ export default function FamilyPlanningForm2({
     { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
     { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
     { name: "smoker", label: "Is this client a SMOKER?" },
-    // { name: "disability", label: "Others" },
   ]
 
   const onSubmit = async (data: FormData) => {
-
-  // let customDisabilityIllnessId: number | null = null;
-  if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
-    const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
-    if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
-        selectedIllnesses.push(disabilityIllness.ill_id);
-    }
-  } else {
-    // If disability is unchecked or details are empty, ensure the "Others" illness is not selected
-    const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
-    if (disabilityIllness) {
-        setSelectedIllnesses(prev => prev.filter(id => id !== disabilityIllness.ill_id));
-    }
-  }
     const medicalHistory = {
       severeHeadaches: false,
       strokeHeartAttackHypertension: false,
@@ -176,11 +145,10 @@ export default function FamilyPlanningForm2({
       abnormalVaginalDischarge: false,
       phenobarbitalOrRifampicin: false,
       smoker: false,
-      disability: false,
+      disability: fieldValues.medicalHistory?.disability || false,
       disabilityDetails: data.medicalHistory?.disabilityDetails || "",
     }
 
-    // NEW: Map selected illnesses back to boolean fields
     selectedIllnesses.forEach((illnessId) => {
       const illness = illnesses.find((ill) => ill.ill_id === illnessId)
       if (illness) {
@@ -218,40 +186,29 @@ export default function FamilyPlanningForm2({
           case "Is this client a SMOKER?":
             medicalHistory.smoker = true
             break
-          case "Others":
-            medicalHistory.disability = true
-            break
         }
       }
     })
 
-    // NEW: Store selected illness IDs for later use in medical history creation
     const updatedData = {
       ...data,
       medicalHistory,
-      selectedIllnessIds: selectedIllnesses, 
-      customDisabilityDetails: data.medicalHistory?.disabilityDetails || null,
+      selectedIllnessIds: selectedIllnesses,
     }
 
-    console.log("PAGE 2 Data:", updatedData)
     updateFormData(updatedData)
     onNext3()
   }
 
   const saveFormData = () => {
     const currentValues = form.getValues()
-
-    // NEW: Include selected illness IDs when saving
     const dataToSave = {
       ...currentValues,
       selectedIllnessIds: selectedIllnesses,
     }
-
-    console.log("Saving current form data:", dataToSave)
     updateFormData(dataToSave)
   }
 
-  // NEW: Show loading state while fetching illnesses
   if (isLoadingIllnesses) {
     return <div className="text-center py-8">Loading medical conditions...</div>
   }
@@ -261,16 +218,13 @@ export default function FamilyPlanningForm2({
       <div className="rounded-lg w-full p-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* <h5 className="text-lg text-right font-semibold mb-2 ">Page 2</h5> */}
             <div className="grid grid-cols-2 gap-6">
               {/* Medical History Section */}
               <div className="p-1">
                 <Label className="text-lg font-bold mb-3">I. MEDICAL HISTORY</Label>
                 <p className="text-sm mb-3">Does the client have any of the following?</p>
 
-                {/* NEW: Use database illnesses if available, otherwise use hardcoded options */}
-                {illnesses.length > 0
-                  ? // NEW: Render illnesses from database
+                {illnesses.length > 0 ? (
                   illnesses.map((illness) => (
                     <div key={illness.ill_id} className="flex justify-between items-center mb-4">
                       <Label className="flex-1">■ {illness.illname}</Label>
@@ -294,12 +248,12 @@ export default function FamilyPlanningForm2({
                       </div>
                     </div>
                   ))
-                  :
+                ) : (
                   medicalHistoryOptions.map((item) => (
                     <FormField
                       key={item.name}
                       control={form.control}
-                      name={`medicalHistory.${item.name}` as `medicalHistory.${keyof FormData["medicalHistory"] & string}`}
+                      name={`medicalHistory.${item.name}`}
                       render={({ field }) => (
                         <FormItem className="flex justify-between items-center">
                           <Label className="mt-6">■ {item.label}</Label>
@@ -328,7 +282,8 @@ export default function FamilyPlanningForm2({
                         </FormItem>
                       )}
                     />
-                  ))}
+                  ))
+                )}
 
                 <div className="flex justify-between items-center mb-4">
                   <Label className="flex-1">■ Others</Label>
@@ -369,9 +324,16 @@ export default function FamilyPlanningForm2({
                 )}
               </div>
 
-              {/* Obstetrical History Section - ORIGINAL CODE PRESERVED */}
+              {/* Obstetrical History Section */}
               <div className="border-l-4 pl-5">
-                <Label className="text-lg font-bold mb-3">II. OBSTETRICAL HISTORY</Label>
+                <div className="flex items-center gap-2 mb-3">
+                  <Label className="text-lg font-bold">II. OBSTETRICAL HISTORY</Label>
+                  {isObstetricalHistoryDisabled && !isReadOnly && (
+                    <span className="text-sm text-red-500 italic font-normal">
+                      (Not applicable for male patients)
+                    </span>
+                  )}
+                </div>
 
                 {/* Number of Pregnancies */}
                 <div className="grid grid-cols-6 mt-5">
@@ -389,7 +351,7 @@ export default function FamilyPlanningForm2({
                             type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            disabled={isObstetricalHistoryDisabled}
                           />
                         </FormControl>
                         <FormMessage />
@@ -406,11 +368,11 @@ export default function FamilyPlanningForm2({
                           <Input
                             {...field}
                             placeholder="P"
-                            className=" w-20 mt-8"
+                            className="w-20 mt-8"
                             type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            disabled={isObstetricalHistoryDisabled}
                           />
                         </FormControl>
                         <FormMessage />
@@ -428,10 +390,10 @@ export default function FamilyPlanningForm2({
                           <Input
                             {...field}
                             type="number"
-                            className=" w-[80px]"
+                            className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            disabled={isObstetricalHistoryDisabled}
                           />
                         </FormControl>
                         <FormMessage />
@@ -449,10 +411,10 @@ export default function FamilyPlanningForm2({
                           <Input
                             {...field}
                             type="number"
-                            className=" w-[80px]"
+                            className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            disabled={isObstetricalHistoryDisabled}
                           />
                         </FormControl>
                         <FormMessage />
@@ -473,7 +435,7 @@ export default function FamilyPlanningForm2({
                             className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            disabled={isObstetricalHistoryDisabled}
                           />
                         </FormControl>
                         <FormMessage />
@@ -494,7 +456,7 @@ export default function FamilyPlanningForm2({
                             className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            disabled={isObstetricalHistoryDisabled}
                           />
                         </FormControl>
                         <FormMessage />
@@ -512,7 +474,12 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Date of last delivery</Label>
                         <FormControl>
-                          <Input {...field} type="date" className="w-[150px]" readOnly={isReadOnly} />
+                          <Input
+                            {...field}
+                            type="date"
+                            className="w-[150px]"
+                            disabled={isObstetricalHistoryDisabled}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -531,15 +498,15 @@ export default function FamilyPlanningForm2({
                             <Checkbox
                               checked={field.value === "Vaginal"}
                               onCheckedChange={() => field.onChange("Vaginal")}
-                              disabled={isReadOnly}
+                              disabled={isObstetricalHistoryDisabled}
                             />
                           </FormControl>
                           <Label>Vaginal</Label>
                           <FormControl>
                             <Checkbox
-                              checked={field.value === "Cesarean Section"} // Keep this as "Cesarean Section"
-                              onCheckedChange={() => field.onChange("Cesarean Section")} // Change this to "Cesarean Section"
-                              disabled={isReadOnly}
+                              checked={field.value === "Cesarean Section"}
+                              onCheckedChange={() => field.onChange("Cesarean Section")}
+                              disabled={isObstetricalHistoryDisabled}
                             />
                           </FormControl>
                           <Label>Cesarean Section</Label>
@@ -559,7 +526,12 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Last menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly} />
+                          <Input
+                            {...field}
+                            type="date"
+                            className="w-[150px]"
+                            disabled={isObstetricalHistoryDisabled}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -573,7 +545,12 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Previous menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly} />
+                          <Input
+                            {...field}
+                            type="date"
+                            className="w-[150px]"
+                            disabled={isObstetricalHistoryDisabled}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -581,7 +558,7 @@ export default function FamilyPlanningForm2({
                   />
                 </div>
 
-                {/* Menstrual Flow - Fixed for Radio Buttons */}
+                {/* Menstrual Flow */}
                 <div className="mt-5">
                   <Label>Menstrual Flow</Label>
                   <FormField
@@ -599,7 +576,7 @@ export default function FamilyPlanningForm2({
                                   checked={field.value === flow}
                                   onChange={() => field.onChange(flow)}
                                   className="w-4 h-4"
-                                  disabled={isReadOnly}
+                                  disabled={isObstetricalHistoryDisabled}
                                 />
                               </FormControl>
                               <Label htmlFor={`flow-${flow.toLowerCase()}`}>
@@ -623,7 +600,11 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-4">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isObstetricalHistoryDisabled}
+                        />
                       </FormControl>
                       <Label className="ml-2">Dysmenorrhea</Label>
                       <FormMessage />
@@ -637,7 +618,11 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isObstetricalHistoryDisabled}
+                        />
                       </FormControl>
                       <Label className="ml-2">Hydatidiform mole (within the last 12 months)</Label>
                       <FormMessage />
@@ -651,7 +636,11 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isObstetricalHistoryDisabled}
+                        />
                       </FormControl>
                       <Label className="ml-2">History of ectopic pregnancy</Label>
                       <FormMessage />
@@ -677,18 +666,15 @@ export default function FamilyPlanningForm2({
                 type="button"
                 onClick={async () => {
                   const currentValues = form.getValues()
-                  // NEW: Include selected illness IDs when moving to next page
                   const dataToUpdate = {
                     ...currentValues,
                     selectedIllnessIds: selectedIllnesses,
-                    customDisabilityDetails: currentValues.medicalHistory?.disabilityDetails || null,
                   }
                   updateFormData(dataToUpdate)
                   onNext3()
                 }}
-              // disabled={isReadOnly}
               >
-                Next{" "}
+                Next
               </Button>
             </div>
           </form>

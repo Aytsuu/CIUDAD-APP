@@ -122,7 +122,7 @@ export default function ScheduledVaccine() {
           previousVaccination.follow_up_visit.followv_id
         );
       }
-      await updateVaccinationHistory(Vaccination.vachist_id, "immunization");
+      await updateVaccinationHistory({vachist_id:Vaccination.vachist_id, vachist_status:"completed"});
 
       queryClient.invalidateQueries({
         queryKey: ["patientVaccinationRecords", patientId],

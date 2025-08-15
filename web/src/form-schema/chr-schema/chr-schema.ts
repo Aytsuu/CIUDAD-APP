@@ -1,4 +1,4 @@
-import { date, z } from "zod"
+import { z } from "zod"
 import { temperatureSchema, weightSchema, heightSchema } from "../medicalConsultation/nonPhilhealthSchema"
 import { positiveNumberSchema } from "@/helpers/PositiveNumber"
 // BasicInfoSchema is now a plain ZodObject, allowing it to be merged

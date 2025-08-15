@@ -24,6 +24,8 @@ export const deleteDay = async(dayId: number) => {
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
 			console.error("Day deletion error: ", error.response?.data || error.message);
+			console.error("Status:", error.response?.status);
+            console.error("Full response:", error.response);
 		} else {
 			console.error("Unexpected error: ", error);
 		}

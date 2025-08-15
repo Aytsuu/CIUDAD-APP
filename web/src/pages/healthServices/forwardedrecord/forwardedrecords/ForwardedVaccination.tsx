@@ -6,7 +6,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { Toaster } from "sonner";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";

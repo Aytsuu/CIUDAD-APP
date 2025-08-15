@@ -201,10 +201,10 @@ export default function WeeklyAR() {
                                         key={index}
                                         variant={"outline"}
                                         className={`text-white border-none ${
-                                          war.status === "Signed" ? "bg-green-500" : "bg-orange-500"
+                                          war.war_files.length > 0 ? "bg-green-500" : "bg-orange-500"
                                         }`}
                                       >
-                                        {war.status}
+                                        {war.war_files.length > 0 ? "Signed" : "Unsigned"}
                                       </Badge>
                                     ))}
                                     <Badge variant="secondary">

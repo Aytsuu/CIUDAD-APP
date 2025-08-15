@@ -53,7 +53,7 @@ class ServiceSchedulerCreateSerializer(serializers.ModelSerializer):
                day_id=day,
                meridiem=validated_data['meridiem']
             )
-            print("Service Scheduler created successfully:", service_scheduler)
+            # print("Service Scheduler created successfully:", service_scheduler)
             return service_scheduler
       
       except Exception as e:

@@ -276,7 +276,6 @@
 import { useState } from 'react';
 import React from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Button } from "@/components/ui/button/button";
 import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, CircleAlert } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
@@ -495,11 +494,11 @@ function ResolutionPage() {
                                 description="Update the resolution details."
                                 mainContent={
                                     <EditResolution
-                                        res_num={row.original.res_num}
+                                        // res_num={row.original.res_num}
                                         res_title={row.original.res_title}
                                         res_date_approved={row.original.res_date_approved}
                                         res_area_of_focus={row.original.res_area_of_focus} 
-                                        resolution_files={row.original.resolution_files}        
+                                        // resolution_files={row.original.resolution_files}        
                                         onSuccess={() => setEditingRowId(null)}  
                                     />
                                 }

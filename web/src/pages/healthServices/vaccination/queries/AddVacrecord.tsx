@@ -16,7 +16,6 @@ import {
   deleteFollowUpVisit,
   deleteVaccinationHistory,
 } from "../restful-api/delete";
-import { api2 } from "@/api/api";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
@@ -32,11 +31,11 @@ export const useSubmitStep2 = () => {
       data,
       pat_id,
       form,
-      form2,
+      // form2,
       vacStck_id,
-      vac_id,
+      // vac_id,
       vac_name,
-      expiry_date,
+      // expiry_date, 
       followUpData, // Optional follow-up data
       staff_id, // Optional staff_id parameter
       vaccinationHistory, // Optional vaccination history data
@@ -62,33 +61,43 @@ export const useSubmitStep2 = () => {
       let patrec_id: string | null = null;
       let vacrec_id: string | null = null;
       let vital_id: string | null = null;
-      let vachist_id: string | null = null;
+      const vachist_id: string | null = null;
       let followv_id: string | null = null;
 
       try {
         const vaccineData = await getVaccineStock(vacStck_id);
-        let vac_type = vaccineData.vaccinelist.vac_type_choices;
+        const vac_type = vaccineData.vaccinelist.vac_type_choices;
         const doseNo = form.getValues("vachist_doseNo");
         console.log("doseNo:", doseNo);
-        let form_vacrec_totaldose = parseInt(
+        const form_vacrec_totaldose = parseInt(
           form.getValues("vacrec_totaldose"),
           10
         );
         console.log("Form Vacrec Total Dose:", form_vacrec_totaldose);
         console.log("Vaccine Type:", vac_type);
-        let age = form.getValues("age");
+        const age = form.getValues("age");
 
         console.log("VACCCination ", vaccinationHistory);
-        let old_vacrec_id = vaccinationHistory[0]?.vacrec || null;
-        let vacrec_totaldose = Number(
-          vaccinationHistory[0]?.vacrec_details?.vacrec_totaldose
-        );
+        const old_vacrec_id = vaccinationHistory[0]?.vacrec || null;
+        // const vacrec_totaldose = Number(
+        //   vaccinationHistory[0]?.vacrec_details?.vacrec_totaldose
+        // );
         console.log("Old Vaccination Record ID:", old_vacrec_id);
 
         if (assignmentOption == "other") {
           vital_id == null;
         } else {
-          const vitalSigns = await createVitalSigns(data);
+          const vitalSigns = await createVitalSigns(
+            
+            {
+              vital_bp_systolic: form.getValues("bpsystolic"),
+              vital_bp_diastolic: form.getValues("bpdiastolic"),
+              vital_temp: form.getValues("temp"),
+              vital_o2: form.getValues("o2"),
+              vital_pulse: form.getValues("pr"),
+              staff: staff_id , 
+              patrec: patrec_id, 
+            });
           vital_id = vitalSigns.vital_id;
         }
 

@@ -2,10 +2,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Archive  } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { Link } from "react-router";
 import { CommodityStocksRecord } from "../../tables/type";
 import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert";
-import { Plus } from "lucide-react";
 
 export const CommodityStocksColumns = (
   setCommodityToArchive: (id: string | null) => void,
@@ -190,7 +188,7 @@ export const CommodityStocksColumns = (
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
+      // const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
           {/* <Button variant="outline" disabled={expired} >

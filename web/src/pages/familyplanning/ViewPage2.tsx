@@ -232,7 +232,6 @@ export default function FamilyPlanningView2() {
 </div>
 
 
-      {/* Service Provision Records - You might need to iterate over an array here */}
       {/* Service Provision Records - Updated to match the image */}
 <div className="border border-black p-3 mb-6">
   <h2 className="font-bold text-lg mb-2">SERVICE PROVISION RECORDS:</h2>
@@ -257,10 +256,10 @@ export default function FamilyPlanningView2() {
             <tr key={index}>
               <td className="border border-black p-2">{service.dateOfVisit || ""}</td>
               <td className="border border-black p-2">{service.dateOfFollowUp || ""}</td>
-              <td className="border border-black p-2">{recordData.weight || ""}</td>
-              <td className="border border-black p-2">{recordData.bloodPressure || ""}</td>
+              <td className="border border-black p-2">{service.weight || ""}</td>
+              <td className="border border-black p-2">{service.bloodPressure || ""}</td>
               <td className="border border-black p-2">{service.medicalFindings || ""}</td>
-              <td className="border border-black p-2">{recordData.acknowledgement?.selectedMethod || recordData.methodCurrentlyUsed || ""}</td>
+              <td className="border border-black p-2">{service.methodAccepted || ""}</td>
               <td className="border border-black p-2">{service.methodQuantity || ""}</td>
               <td className="border border-black p-2">
                 {service.serviceProviderSignature ? (

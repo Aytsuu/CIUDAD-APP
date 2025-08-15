@@ -47,11 +47,13 @@ export default function PendingGarbageRequest() {
     });
   };
 
-  const handleAccept = (garb_id: string) => { 
+  const handleAccept = (garb_id: string, pref_date: string, pref_time: string) => { 
     router.push({
       pathname: '/(waste)/garbage-pickup/staff/accept-request',
       params: { 
-        garb_id: garb_id
+        garb_id: garb_id,
+        pref_date: pref_date,
+        pref_time: pref_time
       }
     });
   };
@@ -166,7 +168,7 @@ export default function PendingGarbageRequest() {
                     <View className="flex-row justify-end gap-2 mt-4">
                       <Button 
                         className="bg-[#17AD00] p-2"
-                        onPress={() => handleAccept(request.garb_id)}
+                        onPress={() => handleAccept(request.garb_id, request.garb_pref_date, request.garb_pref_time)}
                       >
                         <CheckCircle size={16} color="white" />
                       </Button>

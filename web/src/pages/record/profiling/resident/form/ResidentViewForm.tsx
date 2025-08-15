@@ -2,7 +2,7 @@ import React from "react"
 import { Form } from "@/components/ui/form/form"
 import PersonalInfoForm from "./PersonalInfoForm"
 import { useResidentForm } from "./useResidentForm"
-import { Type } from "../../profilingEnums"
+import { Type } from "../../ProfilingEnums"
 import { useUpdateProfile } from "../../queries/profilingUpdateQueries"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card } from "@/components/ui/card/card"
@@ -15,7 +15,7 @@ import {
   usePersonalInfo,
   useSitioList,
 } from "../../queries/profilingFetchQueries"
-import { formatSitio } from "../../profilingFormats"
+import { formatSitio } from "../../ProfilingFormats"
 import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
@@ -215,7 +215,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   }
 
   const handleHistoryItemClick = (index: number) => {
-    navigate('/resident/update/view', {
+    navigate('/profiling/resident/update/view', {
       state: {
         params: {
           newData: personalHistory[index],

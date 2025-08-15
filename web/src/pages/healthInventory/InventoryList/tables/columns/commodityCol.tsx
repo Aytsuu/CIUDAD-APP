@@ -2,8 +2,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Edit, Trash } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import EditCommodityModal from "../../editListModal/EditCommodityModal";
 import { Link
   
  } from "react-router";
@@ -34,7 +32,11 @@ export const CommodityColumns = (
   },
   {
     accessorKey: "user_type",
-    header: "User_type",
+    header: "User type",
+  },
+    {
+    accessorKey: "gender_type",
+    header: "For Gender",
   },
   {
     accessorKey: "action",

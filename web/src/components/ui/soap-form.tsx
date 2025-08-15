@@ -7,8 +7,6 @@ import { IllnessComponent } from "@/components/ui/add-search-illness";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { PhysicalExam } from "@/components/ui/physical-exam";
 import { Loader2,ChevronLeft } from "lucide-react";
-import { Control } from "react-hook-form";
-import { SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "@/pages/healthServices/doctor/types";
 
 interface SoapFormFieldsProps {

@@ -59,9 +59,9 @@ function WasteHotSched({onSuccess}: {
         addHotspotAssignment(values)    
     };
 
-    const handleResetAnnouncements = () => {
-        form.setValue('selectedAnnouncements', []);
-    };
+    // const handleResetAnnouncements = () => {
+    //     form.setValue('selectedAnnouncements', []);
+    // };
 
     if(isLoadingSitio || isLoadingWatchman){
          return (

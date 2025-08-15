@@ -6,7 +6,6 @@ import { Complaint } from "./complaint-type";
 import {
   FileText,
   User,
-  Users,
   AlertTriangle,
   FolderOpen,
   Calendar,
@@ -17,7 +16,6 @@ import {
   UserX,
   Phone,
   Mail,
-  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";

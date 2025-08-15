@@ -1,16 +1,3 @@
-import { DataTable } from "@/components/ui/table/data-table";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Label } from "@/components/ui/label";
-import { Search, ChevronLeft, Trash, Pen} from "lucide-react";
-import AnnualDevelopmentPlan from "./annual_development_plan_main";
-
-type DevelopmentPlan = [
-    {
-        
-    }
-]
-
 function AnnaualDevelopmentPlanTable(){
     return(
         <div className="bg-snow w-full h-full">

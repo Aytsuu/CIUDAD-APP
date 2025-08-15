@@ -3,7 +3,7 @@ import { Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { useLatestExpenses, useLatestIncomes } from "./btracker-analytics-queries";
-import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/queries/BTFetchQueries";
+import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ export const GADExpenseSidebar = () => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear().toString();
   const { data: expenses, isLoading } = useLatestExpenses(currentYear);
-  const [selectedExpense, setSelectedExpense] = useState<GADBudgetEntryUI | null>(null);
+  const [_, setSelectedExpense] = useState<GADBudgetEntryUI | null>(null);
 
   return (
     <Card className="w-80 bg-white h-full flex flex-col">

@@ -48,6 +48,7 @@ const FamilyPlanningBaseSchema = z.object({
   age: z.coerce.number().min(1),
   educationalAttainment: z.string().optional(),
   occupation: z.string().optional(),
+  gender: z.string().optional(),
 
   address: z.object({
     houseNumber: z.string().optional(),
@@ -139,12 +140,12 @@ const FamilyPlanningBaseSchema = z.object({
   pulseRate: z.coerce.number().min(1),
   bodyMeasurementRecordedAt: z.string().optional(),
 
-  skinExamination: z.enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"]),
-  conjunctivaExamination: z.enum(["normal", "pale", "yellowish", "not_applicable"]),
-  neckExamination: z.enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"]),
-  breastExamination: z.enum(["normal", "mass", "nipple_discharge", "not_applicable"]),
-  abdomenExamination: z.enum(["normal", "abdominal_mass", "varicosities", "not_applicable"]),
-  extremitiesExamination: z.enum(["normal", "edema", "varicosities", "not_applicable"]),
+  skinExamination: z.string().optional(),
+  conjunctivaExamination: z.string().optional(),
+  neckExamination: z.string().optional(),
+  breastExamination: z.string().optional(),
+  abdomenExamination: z.string().optional(),
+  extremitiesExamination: z.string().optional(),
 
 
 
@@ -190,6 +191,7 @@ const FamilyPlanningBaseSchema = z.object({
 
 export const page1Schema = FamilyPlanningBaseSchema.pick({
   pat_id: true,
+  patrec_id: true,
   client_id: true,
   philhealthNo: true,
   nhts_status: true,

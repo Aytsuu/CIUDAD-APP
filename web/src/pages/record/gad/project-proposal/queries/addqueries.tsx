@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { postProjectProposal, addSupportDocument } from "../api/postreq";
-import { ProjectProposalInput } from "./fetchqueries";
+import { ProjectProposalInput } from "../projprop-types";
 
 export const useAddProjectProposal = () => {
   const queryClient = useQueryClient();
@@ -11,7 +11,7 @@ export const useAddProjectProposal = () => {
 
   return useMutation({
     mutationFn: (proposalData: ProjectProposalInput) => postProjectProposal(proposalData),
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
       toast.success("Project proposal added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -49,7 +49,7 @@ export const useAddSupportDocument = () => {
       }
       return addSupportDocument(gprId, fileData);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals", variables.gprId] });
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
       // toast.success("Support document added successfully", {

@@ -9,6 +9,7 @@ export const updateCommodity = async (com_id: string, data:Record<string,string>
         com_name: toTitleCase(data.com_name),
         user_type: data.user_type,
         updated_at: new Date().toISOString(),
+        gender_type: data.gender_type
       });
   
       return res.data;

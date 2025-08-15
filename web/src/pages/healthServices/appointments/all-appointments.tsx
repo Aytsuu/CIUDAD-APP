@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { ArrowUpDown, Search, FileInput, Loader2, AlertCircle } from "lucide-react"
+import { ArrowUpDown, Search, FileInput, AlertCircle } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { DataTable } from "@/components/ui/table/data-table"
@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { LinearLoader } from "@/components/ui/linear-loader"
 
 import ScheduleTab from "./appointments-tab"
 
@@ -39,46 +40,36 @@ export default function ScheduleRecords() {
     patrecType: string
   }
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("All");
   const [timeFrame, setTimeFrame] = useState("today");
 
   // fetch data 
-  const { data: followUpVisits, isLoading, error, refetch } = useAllFollowUpVisits()
+  const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
+    page,
+    page_size: pageSize,
+    status: selectedFilter !== "All" ? selectedFilter : undefined,
+    search: searchTerm || undefined,
+    time_frame: timeFrame,
+  })
 
   // Transform the Django API data to match our ScheduleRecord type
   const transformedData = useMemo((): ScheduleRecord[] => {
-    // Handle different response structures
-    let visitsArray = []
-    if (followUpVisits) {
-      if (Array.isArray(followUpVisits)) {
-        visitsArray = followUpVisits
-      } else if (followUpVisits.results && Array.isArray(followUpVisits.results)) {
-        visitsArray = followUpVisits.results
-      } else {
-        console.error("Unexpected data structure:", followUpVisits)
-        return []
-      }
-    } else {
-      return []
-    }
+    if (!paginatedData?.results) return [];
 
-    const validRecords: ScheduleRecord[] = []
-
-    visitsArray.forEach((visit: any) => {
+    return paginatedData.results.map((visit: any) => {
       try {
-        console.log("Processing visit:", visit)
-        
-        // Handle patient details from the new API structure
         const patientDetails = visit.patient_details
         if (!patientDetails) {
           console.warn("No patient details found for visit:", visit)
-          return
+          return null
         }
 
-        // Extract patient info - handle both patient_info and direct access
         const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
         const address = patientDetails.address || {}
 
-        // Calculate age from date of birth
         const calculateAge = (dob: string) => {
           if (!dob) return { age: 0, ageTime: "yrs" }
           try {
@@ -98,7 +89,6 @@ export default function ScheduleRecords() {
 
         const ageInfo = calculateAge(patientInfo.per_dob)
 
-        // Format date
         const formatDate = (dateStr: string) => {
           if (!dateStr) return new Date().toISOString().split("T")[0]
           try {
@@ -127,50 +117,72 @@ export default function ScheduleRecords() {
           patrecType: patientDetails.patrec_type || "Unknown",
         }
 
-        console.log("Created record:", record)
-        validRecords.push(record)
+        return record
       } catch (error) {
         console.error("Error transforming visit data:", error, visit)
+        return null
       }
-    })
-
-    console.log("Final transformed data:", validRecords)
-    return validRecords
-  }, [followUpVisits])
+    }).filter(Boolean) // Remove null values
+  }, [paginatedData])
 
 
-  const filteredDataByTimeFrame = (data: any) => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    const endOfWeek = new Date(today);
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  // const filteredDataByTimeFrame = (data: any) => {
+  //   const today = new Date();
+  //   const startOfWeek = new Date(today);
+  //   const endOfWeek = new Date(today);
+  //   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  //   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    switch (timeFrame) {
-      case 'today':
-        return data.filter((visit: any) => new Date(visit.scheduledDate).toDateString() === today.toDateString());
+  //   switch (timeFrame) {
+  //     case 'today':
+  //       return data.filter((visit: any) => new Date(visit.scheduledDate).toDateString() === today.toDateString());
 
-      case 'thisWeek':
-        startOfWeek.setDate(today.getDate() - today.getDay())
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        return data.filter((visit: any) => {
-          const visitDate = new Date(visit.scheduledDate);
-          return visitDate >= startOfWeek && visitDate <= endOfWeek;
-        });
+  //     case 'thisWeek':
+  //       startOfWeek.setDate(today.getDate() - today.getDay())
+  //       endOfWeek.setDate(startOfWeek.getDate() + 6);
+  //       return data.filter((visit: any) => {
+  //         const visitDate = new Date(visit.scheduledDate);
+  //         return visitDate >= startOfWeek && visitDate <= endOfWeek;
+  //       });
 
-      case 'thisMonth':
-        return data.filter((visit:any) => {
-          const visitDate = new Date(visit.scheduledDate);
-          return visitDate >= startOfMonth && visitDate <= endOfMonth;
-        })
+  //     case 'thisMonth':
+  //       return data.filter((visit:any) => {
+  //         const visitDate = new Date(visit.scheduledDate);
+  //         return visitDate >= startOfMonth && visitDate <= endOfMonth;
+  //       })
       
-      default:
-        return data;
-    }
-  };
+  //     default:
+  //       return data;
+  //   }
+  // };
 
-  const filteredTimeData = useMemo(() => filteredDataByTimeFrame(transformedData), [transformedData, timeFrame]);
+  // const filteredTimeData = useMemo(() => filteredDataByTimeFrame(transformedData), [transformedData, timeFrame]);
 
+  const totalPages = Math.ceil((paginatedData?.count || 0) / pageSize)
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+  }
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search)
+    setPage(1) // Reset to first page on search
+  }
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter)
+    setPage(1) // Reset to first page on filter change
+  }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    setPage(1) // Reset to first page
+  }
+
+  const handleTimeFrameChange = (timeFrame: string) => {
+    setTimeFrame(timeFrame)
+    setPage(1) // Reset to first page
+  }
 
   // Function to determine if appointment is missed
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
@@ -318,10 +330,6 @@ export default function ScheduleRecords() {
     },
   ]
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
-
   const filter = [
     { id: "All", name: "All" },
     { id: "pending", name: "Pending" },
@@ -329,64 +337,51 @@ export default function ScheduleRecords() {
     { id: "missed", name: "Missed" },
     { id: "cancelled", name: "Cancelled" },
   ]
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
   // Filter and search logic
-  const filteredData = useMemo(() => {
-    let filtered = filteredTimeData
+  // const filteredData = useMemo(() => {
+  //   let filtered = filteredTimeData
 
-    // Apply status filter
-    if (selectedFilter !== "All") {
-      filtered = filtered.filter((item:any) => {
-        const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
-        return actualStatus === selectedFilter
-      })
-    }
+  //   // Apply status filter
+  //   if (selectedFilter !== "All") {
+  //     filtered = filtered.filter((item:any) => {
+  //       const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
+  //       return actualStatus === selectedFilter
+  //     })
+  //   }
 
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase()
-      filtered = filtered.filter((item:any) => {
-        const fullName = `${item.patient.firstName} ${item.patient.middleName} ${item.patient.lastName}`.toLowerCase()
-        const purpose = item.purpose.toLowerCase()
-        const sitio = item.sitio.toLowerCase()
-        const type = item.type.toLowerCase()
+  //   // Apply search filter
+  //   if (searchTerm) {
+  //     const searchLower = searchTerm.toLowerCase()
+  //     filtered = filtered.filter((item:any) => {
+  //       const fullName = `${item.patient.firstName} ${item.patient.middleName} ${item.patient.lastName}`.toLowerCase()
+  //       const purpose = item.purpose.toLowerCase()
+  //       const sitio = item.sitio.toLowerCase()
+  //       const type = item.type.toLowerCase()
 
-        return (
-          fullName.includes(searchLower) ||
-          purpose.includes(searchLower) ||
-          sitio.includes(searchLower) ||
-          type.includes(searchLower) ||
-          item.id.toString().includes(searchLower) ||
-          item.patient.patientId.toLowerCase().includes(searchLower)
-        )
-      })
-    }
+  //       return (
+  //         fullName.includes(searchLower) ||
+  //         purpose.includes(searchLower) ||
+  //         sitio.includes(searchLower) ||
+  //         type.includes(searchLower) ||
+  //         item.id.toString().includes(searchLower) ||
+  //         item.patient.patientId.toLowerCase().includes(searchLower)
+  //       )
+  //     })
+  //   }
 
-    return filtered
-  }, [filteredTimeData, selectedFilter, searchTerm])
+  //   return filtered
+  // }, [filteredTimeData, selectedFilter, searchTerm])
 
   // Sort data by date (most recent first)
-  const sortedData = [...filteredData].sort((a, b) => {
-    return new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
-  })
-
-  // Pagination logic (similar to maternal records)
-  const totalEntries = Math.ceil(sortedData.length / itemsPerPage)
-  const paginatedData = sortedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
-
-  // Reset to first page when filters change
-  useMemo(() => {
-    setCurrentPage(1)
-  }, [selectedFilter, searchTerm, itemsPerPage])
+  // const sortedData = [...filteredData].sort((a, b) => {
+  //   return new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
+  // })
 
   // Export to CSV
   const exportToCSV = () => {
     const headers = ["ID", "Patient Name", "Date", "Purpose", "Status", "Sitio", "Type"]
-    const csvData = sortedData.map((record) => {
+    const csvData = transformedData.map((record:any) => {
       const fullName = `${record.patient.lastName}, ${record.patient.firstName} ${record.patient.middleName}`
       const actualStatus = getAppointmentStatus(record.scheduledDate, record.status)
       return [
@@ -400,7 +395,7 @@ export default function ScheduleRecords() {
       ]
     })
 
-    const csvContent = [headers, ...csvData].map((row) => row.map((field) => `"${field}"`).join(",")).join("\n")
+    const csvContent = [headers, ...csvData].map((row) => row.map((field:any) => `"${field}"`).join(",")).join("\n")
 
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
@@ -416,7 +411,7 @@ export default function ScheduleRecords() {
     return (
       <LayoutWithBack title="Schedule Records" description="Manage and view patient appointment schedules">
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <LinearLoader/>
           <span>Loading follow-up visits...</span>
         </div>
       </LayoutWithBack>
@@ -443,7 +438,7 @@ export default function ScheduleRecords() {
     <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
         <div className="mb-4 w-full">
-          <ScheduleTab onTimeFrameChange={setTimeFrame} />
+          <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           
@@ -455,7 +450,7 @@ export default function ScheduleRecords() {
                   placeholder="Search schedules..."
                   className="pl-10 w-full bg-white"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
               <SelectLayout
@@ -464,7 +459,7 @@ export default function ScheduleRecords() {
                 className="w-full md:w-[200px] bg-white text-black"
                 options={filter}
                 value={selectedFilter}
-                onChange={setSelectedFilter}
+                onChange={handleFilterChange}
               />
             </div>
           </div>
@@ -481,8 +476,8 @@ export default function ScheduleRecords() {
               <Input
                 type="number"
                 className="w-14 h-8"
-                value={itemsPerPage}
-                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
@@ -504,8 +499,8 @@ export default function ScheduleRecords() {
           </div>
 
           <div className="w-full h-[30rem] overflow-x-auto">
-            {paginatedData.length > 0 ? (
-              <DataTable columns={columns} data={paginatedData} />
+            {transformedData.length > 0 ? (
+              <DataTable columns={columns} data={transformedData} />
             ) : (
               <div className="flex items-center justify-center h-64">
                 <p className="text-gray-500">No follow-up visits found</p>
@@ -516,16 +511,16 @@ export default function ScheduleRecords() {
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-gray-600 pl-0 sm:pl-4">
-              Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, sortedData.length)} of {sortedData.length} rows
+              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, paginatedData?.count)} of {paginatedData?.count} rows
             </p>
 
             {/* Pagination */}
             <div className="w-full sm:w-auto flex justify-center">
-              {totalEntries > 1 && (
-                <PaginationLayout 
-                  currentPage={currentPage} 
-                  totalPages={totalEntries} 
-                  onPageChange={setCurrentPage} 
+              {totalPages > 1 && (
+                <PaginationLayout
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
                 />
               )}
             </div>

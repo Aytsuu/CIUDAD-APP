@@ -10,12 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
-import { formatResidents, formatSitio } from "../profilingFormats";
+import { formatResidents } from "../ProfilingFormats";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { useUpdateHousehold } from "../queries/profilingUpdateQueries";
-import { useLoading } from "@/context/LoadingContext";
 
 export default function EditGeneralDetails({
   residents,

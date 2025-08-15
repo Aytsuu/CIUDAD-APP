@@ -4,7 +4,7 @@ import { Eye, Trash, ArrowUpDown, Search, Archive, ArchiveRestore } from 'lucide
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Link } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -50,7 +50,7 @@ function BudgetPlan() {
         return { filtered, paginated, total };
     };
 
-    const { filtered, paginated, total } = filterAndPaginate(visiblePlans, searchTerm, currentPage, pageSize, activeTab);
+    const { paginated, total } = filterAndPaginate(visiblePlans, searchTerm, currentPage, pageSize, activeTab);
 
     // Check if current year plan exists (regardless of archive status)
     const hasCurrentYearPlan = visiblePlans.some(plan => plan.plan_year === currentYear);

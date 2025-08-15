@@ -1,15 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
 import { updateWasteReport } from "../request/waste-ReportPutRequest";
 import { uploadResolvedImage } from "../request/waste-ReportPutRequest";
 
-interface UpdateWasteReportData {
-  rep_status: string;
-  rep_resolved_img?: string;
-}
+// interface UpdateWasteReportData {
+//   rep_status: string;
+//   rep_resolved_img?: string;
+// }
 
 interface ResolvedImage {
     name: string;

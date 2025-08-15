@@ -8,8 +8,7 @@ import {
   MedicineStockType,
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { toast } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { fetchMedicines } from "../REQUEST/Medicine/restful-api/MedicineFetchAPI";
 import { useSubmitMedicineStock } from "../REQUEST/Medicine/restful-api/MedicineSubmit";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -18,11 +17,10 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { formOptions, unitOptions, dosageUnitOptions } from "./options";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AddMedicineStock() {
-
   const {user} =useAuth()
   const staff_id = user?.staff?.staff_id
   const form = useForm<MedicineStockType>({
@@ -65,15 +63,7 @@ export default function AddMedicineStock() {
     return () => subscription.unsubscribe();
   }, [form, medicines]);
 
-  // Watch for unit changes and reset pcs when not boxes
-  // useEffect(() => {
-  //   const subscription = form.watch((value, { name }) => {
-  //     if (name === "unit" && value.unit !== "boxes") {
-  //       form.setValue("pcs", 0);
-  //     }
-  //   });
-  //   return () => subscription.unsubscribe();
-  // }, [form]);
+ 
 
   const onSubmit = (data: MedicineStockType) => {
     setformData(data);

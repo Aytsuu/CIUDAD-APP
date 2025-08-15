@@ -37,8 +37,8 @@ export async function updateChildHealthRecord({
   }
 
   // Declare variables that will be returned
-  let patrec_id = old_patrec_id;
-  let chrec_id = old_chrec_id;
+  const patrec_id = old_patrec_id;
+  const chrec_id = old_chrec_id;
   let current_chhist_id = old_chhist;
   let chvital_id: string | undefined;
   let followv_id: string | null = null;
@@ -76,7 +76,7 @@ export async function updateChildHealthRecord({
         });
         followv_id = newFollowUp.followv_id;
 
-        const newNotes = await createChildHealthNotes({
+       await createChildHealthNotes({
           chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -86,7 +86,7 @@ export async function updateChildHealthRecord({
         });
       } else {
         if (submittedNotes !== originalNotes) {
-          const newNotes = await createChildHealthNotes({
+          await createChildHealthNotes({
             chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -253,7 +253,7 @@ export async function updateChildHealthRecord({
       chhist: current_chhist_id,
       staff: staff,
     });
-    const chnotes_id = newNotes.chnotes_id;
+    newNotes.chnotes_id;
 
     // Create body measurements
     const newBMI = await createBodyMeasurement({
@@ -267,7 +267,9 @@ export async function updateChildHealthRecord({
     const bmi_id = newBMI.bm_id;
 
     const vitalsigns = await createVitalSigns({
-      temp: submittedData.vitalSigns?.[0]?.temp || "",
+      vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
+      staff: staff || null,
+      patrec_id: patrec_id,
     });
     const vital_id = vitalsigns.vital_id;
 

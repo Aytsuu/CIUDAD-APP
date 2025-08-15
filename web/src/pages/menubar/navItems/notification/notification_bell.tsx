@@ -5,7 +5,6 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Bell, CheckCheck, Clock, AlertCircle, MessageSquare, Heart, Star, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Notification } from '@/context/auth-types'
-import DropdownLayout from '@/components/ui/dropdown/dropdown-layout'
 
 const getNotificationIcon = (type: string) => {
   switch (type) {

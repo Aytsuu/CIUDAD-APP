@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, X, Calendar, Loader2 } from "lucide-react"
+import { Plus, X, Calendar } from "lucide-react"
 
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
@@ -31,19 +31,10 @@ export default function ServiceScheduleForm({
   onAddService,
 }: ServiceScheduleFormProps & { onAddDay?: (newDay: Date) => void }) {
 
-  interface ServiceData {
-    service_id: number;
-    service_name: string;
-  }
-
-  interface DayData {
-    day_id: number;
-    day: string;
-  }
   
   // fetch services and days
-  const { data: servicesData, isLoading: servicesLoading } = useGetServices()
-  const { data: daysData, isLoading: daysLoading } = useGetDays()
+  const { data: servicesData } = useGetServices()
+  const { data: daysData } = useGetDays()
 
   const [currentWeeklySchedule, setCurrentWeeklySchedule] = useState<WeeklySchedule>(initialSchedule)
   const [days, setDays] = useState<string[]>([]);
@@ -152,6 +143,7 @@ export default function ServiceScheduleForm({
     }
   }
 
+  // remove service
   const handleRemoveService = async (service: string) => {
     try {
         const serviceObj = servicesData?.find(s => s.service_name === service)
@@ -198,6 +190,7 @@ export default function ServiceScheduleForm({
     }
   }
 
+  // remove day
   const handleRemoveDay = async (day: string) => {
   try {
     const dayObj = daysData?.find(d => d.day === day)
@@ -266,15 +259,6 @@ export default function ServiceScheduleForm({
     }
   }
 
-  if(servicesLoading || daysLoading) {
-    return (
-      <Card className="w-full max-w-6xl">
-        <CardContent className="flex justify-center items-center h-32">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> <span>Loading...</span >
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <Card className="w-full max-w-6xl max-h-[80vh] overflow-y-auto">
@@ -437,7 +421,7 @@ export default function ServiceScheduleForm({
 
             return (
               <div key={dayName} className="border rounded-lg p-4 bg-white">
-                <h3 className="border-l-4 border-blue-900 rounded-md shadow-md p-1 text-lg text-center font-semibold mb-3">{dayName}</h3>
+                <h3 className="border rounded-md p-1 text-lg text-center font-semibold mb-5">{dayName}</h3>
                 <div className="grid gap-3">
                   {services.length === 0 ? (
                     <div className="text-center text-sm text-gray-400 py-4">
