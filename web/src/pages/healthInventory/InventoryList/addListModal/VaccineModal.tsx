@@ -62,7 +62,7 @@ export const fetchAgeGroups = async () => {
     return {
       default: ageGroupData,
       formatted: ageGroupData.map((ageGroup: any) => ({
-        id: `${ageGroup.agegrp_id},${ageGroup.agegroup_name},${ageGroup.min_age},${ageGroup.max_age},${ageGroup.time_unit}`,
+        id: String(ageGroup.agegrp_id), // Simplified ID format
         name: `${ageGroup.agegroup_name} (${ageGroup.min_age}-${ageGroup.max_age} ${ageGroup.time_unit})`,
         originalData: ageGroup,
       })),
