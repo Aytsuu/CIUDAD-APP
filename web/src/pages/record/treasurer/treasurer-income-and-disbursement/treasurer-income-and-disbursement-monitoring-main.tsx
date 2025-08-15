@@ -35,7 +35,7 @@ import {
   usePermanentDeleteDisbursementFolder,
   useRestoreDisbursementFolder,
 } from "./queries/delqueries";
-import { formatDate } from "@/helpers/dateFormatter";
+import { formatDate } from "@/helpers/dateHelper";
 
 function IncomeandDisbursementView() {
   const [currentPage, setCurrentPage] = useState(1);

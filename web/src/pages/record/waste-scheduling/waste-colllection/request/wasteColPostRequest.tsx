@@ -1,5 +1,5 @@
-import api from '@/pages/api/api';
-import { formatDate } from '@/helpers/dateFormatter';
+import { api } from '@/api/api';
+import { formatDate } from '@/helpers/dateHelper';
 
 // export const wasteColData = async (collectionInfo: Record<string, any>) => {
 //     try {

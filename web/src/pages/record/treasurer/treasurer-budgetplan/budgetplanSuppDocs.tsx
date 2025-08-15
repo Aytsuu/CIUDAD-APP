@@ -1,4 +1,4 @@
-import { FolderOpen, Plus, Trash2, Calendar, FileText, Eye, Download } from 'lucide-react';
+import { FolderOpen, Plus, Trash2, Calendar, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button/button';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';
 import { useState } from 'react';
@@ -85,10 +85,7 @@ export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: number }) {
     );
 }
 
-function DocumentCard({
-    doc,
-    onDelete
-}: {
+function DocumentCard({ doc, onDelete}: {
     doc: {
         bpf_id: number;
         bpf_url: string;
@@ -101,14 +98,14 @@ function DocumentCard({
     const [imageError, setImageError] = useState(false);
 
     return (
-        <div className="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+        <div className="group relative bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
             {/* Image Container */}
             <div className="relative aspect-square bg-gray-50">
                 {!imageError ? (
                     <img
                         src={doc.bpf_url || "/placeholder.svg"}
                         alt={doc.bpf_name}
-                        className="object-cover w-full h-full transition-transform duration-200 group-hover:scale-105"
+                        className="object-cover w-full h-full"
                         onError={() => setImageError(true)}
                     />
                 ) : (
@@ -116,46 +113,9 @@ function DocumentCard({
                         <FileText className="h-12 w-12 text-gray-400" />
                     </div>
                 )}
-                
-                {/* Overlay Actions */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-2">
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white/90 hover:bg-white text-gray-700 shadow-sm"
-                            asChild
-                        >
-                            <a
-                                href={doc.bpf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center"
-                            >
-                                <Eye className="h-4 w-4 mr-1" />
-                                View
-                            </a>
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white/90 hover:bg-white text-gray-700 shadow-sm"
-                            asChild
-                        >
-                            <a
-                                href={doc.bpf_url}
-                                download={doc.bpf_name}
-                                className="flex items-center"
-                            >
-                                <Download className="h-4 w-4 mr-1" />
-                                Save
-                            </a>
-                        </Button>
-                    </div>
-                </div>
 
-                {/* Delete Button */}
-                <div className="absolute top-2 right-2">
+                {/* Delete Button - Only shown on hover */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <ConfirmationModal
                         title="Delete Document"
                         description="Are you sure you want to delete this document? This action cannot be undone."
@@ -164,7 +124,7 @@ function DocumentCard({
                             <Button
                                 size="sm"
                                 variant="destructive"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0 bg-red-500/90 hover:bg-red-600"
+                                className="h-8 w-8 p-0 bg-red-500/90 hover:bg-red-600"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -225,10 +185,6 @@ function EmptyState() {
                     <div className="flex items-center justify-center">
                         <FileText className="h-4 w-4 mr-2 text-blue-500" />
                         Support for images and documents
-                    </div>
-                    <div className="flex items-center justify-center">
-                        <Eye className="h-4 w-4 mr-2 text-blue-500" />
-                        Easy preview and download
                     </div>
                 </div>
             </div>
