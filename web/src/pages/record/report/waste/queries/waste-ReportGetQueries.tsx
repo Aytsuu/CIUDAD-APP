@@ -26,7 +26,7 @@ export type WasteReport = {
     waste_report_rslv_file: {
         wrsf_id: number;
         wrsf_url: string;
-        wsrf_type: string;
+        wrsf_type: string;
     }[];
 };
   
