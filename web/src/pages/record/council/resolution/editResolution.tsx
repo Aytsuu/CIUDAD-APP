@@ -30,20 +30,6 @@ interface ResolutionEditFormProps {
 
 function EditResolution({ res_num, res_title, res_date_approved, res_area_of_focus, resolution_files, onSuccess }: ResolutionEditFormProps) {
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-
-
-    // const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => 
-    //     resolution_files?.map(file => ({
-    //         id: `existing-${file.rf_id}`,
-    //         type: 'document' as const,
-    //         file: new File([], file.rf_url.split('/').pop() || `document-${file.rf_id}`), // Create dummy File object
-    //         publicUrl: file.rf_url,
-    //         storagePath: '', // You might want to set this if you have it
-    //         status: 'uploaded' as const,
-    //         previewUrl: file.rf_url
-    //     })) || []
-    // );
-
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
         return resolution_files?.map(file => ({
             id: `existing-${file.rf_id}`,
@@ -140,6 +126,8 @@ function EditResolution({ res_num, res_title, res_date_approved, res_area_of_foc
                         activeVideoId={activeVideoId}
                         setMediaFiles={setMediaFiles}
                         setActiveVideoId={setActiveVideoId}
+                        acceptableFiles='document'
+                        maxFiles={1}
                     />                            
 
                     {/*Resolution Area of Focus*/}
