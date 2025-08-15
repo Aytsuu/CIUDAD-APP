@@ -11,7 +11,7 @@ import {
   User,
   UserRoundCheck,
 } from "lucide-react";
-import { AdministrationRecord } from "./administrationTypes";
+import { AdministrationRecord } from "./AdministrationTypes";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";

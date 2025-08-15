@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import type { Assigned } from "./administrationTypes"
+import type { Assigned } from "./AdministrationTypes"
 import { useBatchPermissionUpdate, useUpdatePermission } from "./queries/administrationUpdateQueries"
 import { useQueryClient } from "@tanstack/react-query"
 import {

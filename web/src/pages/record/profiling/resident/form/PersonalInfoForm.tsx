@@ -50,6 +50,13 @@ const MARITAL_STATUS_OPTIONS = [
   { id: "widowed", name: "Widowed" },
 ];
 
+const RELIGION_OPTIONS = [
+  { id: "roman catholic", name: "Roman Catholic" },
+  { id: "muslim", name: "Muslim" },
+  { id: "iglesia ni cristo", name: "Iglesia ni Cristo" },
+  { id: "born again", name: "Born Again" },
+]
+
 // ==================== COMPONENT ====================
 const PersonalInfoForm = ({
   formattedSitio,
@@ -139,7 +146,7 @@ const PersonalInfoForm = ({
       {/* Education, Religion, Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <FormInput control={control} name="per_edAttainment" label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} />
-        <FormInput control={control} name="per_religion" label="Religion" placeholder="Enter religion" readOnly={isReadOnly} />
+        <FormSelect control={control} name="per_religion" label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} />
       </div>
       <div className="grid grid-cols-1 gap-4">
         {

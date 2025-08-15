@@ -166,19 +166,4 @@ export const addBusinessFile = async (data: Record<string, any>[]) => {
   }
 }
 
-export const addFile = async (name: string, type: string, path: string, url: string) => {
-  try {
-    const res = await api.post('file/upload/', {
-      file_name: name,
-      file_type: type,
-      file_path: path,
-      file_url: url
-    })
-
-    return res.data
-  } catch (err) {
-    throw err;
-  }
-}
-
 // ----------------------------------------------------------------------------------------------------------------------------
