@@ -100,22 +100,7 @@ export default function HomeScreen() {
       </View>
       
       {/* Header Card Section */}
-      <TouchableOpacity
-          className="active:opacity-80 w-screen"
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel="Featured content card"
-        >
-          <Card className="h-[140px] border-0 bg-gray-400 justify-center items-center shadow-lg rounded-none">
-            <Text className="text-white font-semibold text-lg">
-              Featured
-            </Text>
-            <Text className="text-white/80 text-sm mt-1">
-              Discover new content 
-            </Text>
-          </Card>
-        </TouchableOpacity>
-      {/* <ScrollView
+      <ScrollView
         className="flex-1"
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -137,7 +122,7 @@ export default function HomeScreen() {
             </Text>
           </Card>
         </TouchableOpacity>
-      </ScrollView> */}
+      </ScrollView>
 
       {/* Features Section */}
       <Card className="p-5 bg-white rounded-none border-b border-border">
