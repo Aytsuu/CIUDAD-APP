@@ -2637,26 +2637,30 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
             except (ValueError, TypeError):
                 logger.error(f"Invalid quantity provided: {method_quantity_str}. Defaulting to 0.")
 
-        last_follow_up_visit = FollowUpVisit.objects.filter(patrec=patient_record_instance).order_by('-followv_date').first()
+        last_follow_up_visit = FollowUpVisit.objects.filter(patrec=patient_record_instance).order_by('-created_at').first()
         if last_follow_up_visit:
-            last_follow_up_visit.followv_status = 'completed'  # Update status to completed
-            last_follow_up_visit.completed_at = timezone.now().date()
-            last_follow_up_visit.save()  # Save the changes
-
-            logger.info(f"Updated last follow-up visit (ID: {last_follow_up_visit.followv_id}) status to 'completed'.")
-
-        # Create Follow-up Visit
+            # Only update if the status is not already 'completed' to avoid redundant updates
+            if last_follow_up_visit.followv_status != 'completed':
+                last_follow_up_visit.followv_status = 'completed'  # Update status to completed
+                last_follow_up_visit.completed_at = timezone.now().date()
+                last_follow_up_visit.save()  # Save the changes
+                logger.info(f"Updated last follow-up visit (ID: {last_follow_up_visit.followv_id}) status to 'completed'.")
+            else:
+                logger.info(f"Last follow-up visit (ID: {last_follow_up_visit.followv_id}) was already 'completed'. No update needed.")
+        else:
+            logger.info(f"No previous follow-up visit found for patrec_id: {patient_record_instance.patrec_id} to mark as completed.")
+        # Create the NEW Follow-up Visit for the current record
         follow_up_data = {
             "patrec": patrec_id, # Link to the determined patrec_id
             "followv_date": latest_record.get("dateOfFollowUp") or None,
-            "followv_status": "pending",
+            "followv_status": "pending", # New follow-up starts as pending
             "followv_description": "Family Planning Follow up",
         }
         follow_up_serializer = FollowUpVisitSerializer(data=follow_up_data)
         follow_up_serializer.is_valid(raise_exception=True)
         follow_up_instance = follow_up_serializer.save()
         followv_id = follow_up_instance.followv_id
-        logger.info(f"Created FollowUpVisit with ID: {followv_id}")
+        logger.info(f"Created NEW FollowUpVisit with ID: {followv_id}")
 
         # Deduct stock and log transaction if quantity > 0 and method is a commodity
         if method_accepted and method_quantity > 0:
