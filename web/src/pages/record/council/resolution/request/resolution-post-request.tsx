@@ -46,18 +46,19 @@ export const resolution_file_create = async (data: {
   };
 }) => {
   try {
-    // Create the payload that matches your serializer's _upload_files method
+  
     const payload = {
       res_num: data.res_num,
       files: [{
         name: data.file_data.name,
         type: data.file_data.type,
-        file: data.file_data.file // The actual file object
+        file: data.file_data.file 
       }]
     };
 
-    const res = await api.post('council/resolution-file/', payload);
-    return res.data;
+    console.log(payload)
+    // const res = await api.post('council/resolution-file/', payload);
+    // return res.data;
   } catch (err) {
     console.error(`Failed to create file ${data.file_data.name}:`, err);
     throw err;

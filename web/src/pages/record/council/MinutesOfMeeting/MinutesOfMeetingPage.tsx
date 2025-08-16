@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/card/card"
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 
 function MinutesOfMeetingPage() {
-  const [filter, setFilter] = useState<string>("all")
+  const [filter, _setFilter] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingRowId, setEditingRowId] = useState<number | null>(null)
   const { data: momRecords = [], isLoading } = useGetMinutesOfMeetingRecords()
@@ -313,7 +313,7 @@ function MinutesOfMeetingPage() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-medium text-gray-800">
-              {activeSubTab === "active" ? "Active Records" : "Archived Records"} (
+              {activeSubTab === "active" ? "Active Records" : "Inactive Records"} (
               {activeSubTab === "active" ? filteredActiveData.length : filteredArchivedData.length})
             </h2>
           </div>
@@ -355,7 +355,7 @@ function MinutesOfMeetingPage() {
               <TabsTrigger value="active">Records</TabsTrigger>
               <TabsTrigger value="all">
                 <div className="flex items-center gap-2">
-                  <Archive size={16} /> Archive
+                  <Archive size={16} /> Inactive
                 </div>
               </TabsTrigger>
             </TabsList>
@@ -392,8 +392,8 @@ function MinutesOfMeetingPage() {
               ) : (
                 <div className="text-center py-12">
                   <Archive className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No archived records</h3>
-                  <p className="mt-1 text-sm text-gray-500">Archived records will appear here.</p>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No inactive records</h3>
+                  <p className="mt-1 text-sm text-gray-500">Inactive records will appear here.</p>
                 </div>
               )}
             </div>

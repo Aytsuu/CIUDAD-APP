@@ -9,7 +9,6 @@ import { minutesOfMeetingFormSchema } from '@/form-schema/council/minutesOfMeeti
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
-import { useEffect } from 'react';
 import { useInsertMinutesOfMeeting } from './queries/MOMInsertQueries';
 
 
@@ -18,7 +17,7 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 }) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const {mutate: addMOM} = useInsertMinutesOfMeeting(onSuccess)
+    const {mutate: addMOM, isPending} = useInsertMinutesOfMeeting(onSuccess)
     const form = useForm<z.infer<typeof minutesOfMeetingFormSchema>>({
         resolver: zodResolver(minutesOfMeetingFormSchema),
             defaultValues: {
@@ -26,7 +25,6 @@ export default function AddMinutesOfMeeting({onSuccess}: {
             meetingAgenda: "",
             meetingDate: "",
             meetingAreaOfFocus: [],
-            meetingFile: ""
         },
     });
 
@@ -39,19 +37,15 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingFormSchema>)  => {
-        console.log("Values", values);
-        console.log('Media Files:', mediaFiles)
-        addMOM({ values, mediaFiles });
-
+        const files = mediaFiles.map((media) => ({
+                'name': media.name,
+                'type': media.type,
+                'file': media.file
+            }))    
+            
+        addMOM({ values, files });
     }
 
-    useEffect(() => {
-            if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-            form.setValue('meetingFile', mediaFiles[0].publicUrl);
-        } else {
-            form.setValue('meetingFile', 'no-image-url-fetched');
-        }
-    }, [mediaFiles, form]);
 
     return(
        <div className="max-h-[80vh] overflow-y-auto p-4">
@@ -80,25 +74,21 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                         type="date"    
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="meetingFile"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormControl>
-                                    <MediaUpload
-                                        title="Meeting File"
-                                        description="Upload meeting documentation"
-                                        mediaFiles={mediaFiles}
-                                        setMediaFiles={setMediaFiles}
-                                        activeVideoId={activeVideoId}
-                                        setActiveVideoId={setActiveVideoId}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    
+                    <FormItem>
+                        <FormControl>
+                            <MediaUpload
+                                title="Meeting File"
+                                description="Upload meeting documentation"
+                                mediaFiles={mediaFiles}
+                                setMediaFiles={setMediaFiles}
+                                activeVideoId={activeVideoId}
+                                setActiveVideoId={setActiveVideoId}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                      
                     
                     {/* Categories Field */}
                     <FormComboCheckbox
@@ -110,8 +100,8 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 
                     {/* Submit Button (Inside Dialog) */}
                     <div className="flex items-center justify-end pt-4">
-                        <Button type="submit" className="w-[100px]">
-                            Create
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Submitting..." : "Submit"}
                         </Button>
                     </div>
                 </form>

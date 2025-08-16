@@ -4,6 +4,8 @@ from .models import *
 from django.apps import apps
 from apps.treasurer.models import Purpose_And_Rates
 from utils.supabase_client import upload_to_storage
+from apps.treasurer.serializers import FileInputSerializer
+from django.db import transaction
 
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
@@ -162,9 +164,45 @@ class MOMAreaOfFocusSerializer(serializers.ModelSerializer):
         model = MOMAreaOfFocus
         fields = '__all__'
 
-class MOMFileSerialzer(serializers.ModelSerializer):
-    class Meta: 
+class MOMFileCreateSerializer(serializers.ModelSerializer):
+    files = serializers.ListField( child=serializers.DictField(), write_only=True, required=False)
+
+    class Meta:
+        model = MOMFile
+        fields = ['mom_id', 'files']  
+
+    @transaction.atomic
+    def create(self, validated_data):
+        files = validated_data.pop('files', [])
+        mom_instance = validated_data.get('mom_id')
+        
+        # Create initial instance (if needed)
+        mom_file_instance = super().create(validated_data)
+        
+        if files and mom_instance:
+            self._upload_files(mom_instance, files)
+
+        return mom_file_instance
+
+    def _upload_files(self, mom_instance, files):
+        mom_files = []
+        for file_data in files:
+            url = upload_to_storage(file_data, 'council-mom-bucket', 'documents')
+            
+            mom_files.append(MOMFile(
+                mom_id=mom_instance,
+                momf_name=file_data['name'],
+                momf_type=file_data['type'],
+                momf_path=f"documents/{file_data['name']}",
+                momf_url=url
+            ))
+
+        if mom_files:
+            MOMFile.objects.bulk_create(mom_files)
+
+
+
+class MOMFileViewSerializer(serializers.ModelSerializer):
+    class Meta:
         model = MOMFile
         fields = '__all__'
-
-

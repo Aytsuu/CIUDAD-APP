@@ -381,9 +381,15 @@ class MOMAreaOfFocusView(generics.ListCreateAPIView):
     queryset = MOMAreaOfFocus.objects.all()
 
 class MOMFileView(generics.ListCreateAPIView):
-    serializer_class = MOMFileSerialzer
+    serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(serializer.errors) 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
 
 class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
     serializer_class = MinutesOfMeetingSerializer
@@ -408,7 +414,7 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
     
 
 class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
-    serializer_class = MOMFileSerialzer
+    serializer_class = MOMFileSerializer
     queryset = MOMFile.objects.all()
     lookup_field = 'momf_id'
 
