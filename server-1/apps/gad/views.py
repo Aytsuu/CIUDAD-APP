@@ -75,11 +75,17 @@ class GADBudgetFileView(generics.ListCreateAPIView):
             return Response({"error": "gbud_num is required"}, status=400)
 
         files = request.data.get('files', [])
+        files_to_delete = request.data.get('filesToDelete', [])
+
+        serializer = self.get_serializer()
+
+        if files_to_delete:
+            serializer._delete_files(files_to_delete, gbud_num=gbud_num)
+            return Response({"status": "Files deleted successfully"}, status=200)
 
         if not files:
             return Response({"status": "No files uploaded"}, status=201)
 
-        serializer = self.get_serializer()
         serializer._upload_files(files, gbud_num=gbud_num)
         return Response({"status": "Files uploaded successfully"}, status=201)
 

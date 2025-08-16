@@ -26,12 +26,8 @@ import { removeLeadingZeros } from "@/helpers/removeLeadingZeros";
 function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   const { year } = useParams<{ year: string }>();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
-  const [selectedBudgetItems, setSelectedBudgetItems] = useState<
-    { name: string; pax: string; amount: number }[]
-  >([]);
-  const [recordedBudgetItems, setRecordedBudgetItems] = useState<
-    { name: string; pax: string; amount: number }[]
-  >([]);
+  const [selectedBudgetItems, setSelectedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
+  const [recordedBudgetItems, setRecordedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
   const {
     data: yearBudgets,
     isLoading: yearBudgetsLoading,

@@ -1,26 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
-import { GADBudgetEntry } from "../request/get";
-import { GADBudgetCreatePayload, createGADBudget, createGADBudgetFile, GADBudgetFile } from "../request/post";
-
-type BudgetYear = {
-  gbudy_year: string;
-  gbudy_budget: number;
-  gbudy_expenses: number;
-  gbudy_income: number;
-};
-
-type BudgetEntry = {
-  gbud_type: string;
-  gbud_actual_expense?: number;
-};
-
-type FileData = {
-  name: string;
-  type: string;
-  path: string;
-  uri: string;
-};
+import { createGADBudget, createGADBudgetFile } from "../request/post";
+import { GADBudgetCreatePayload, BudgetYear, BudgetEntry} from "../bt-types";
+import { MediaItem } from "@/components/ui/media-picker";
 
 export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: BudgetEntry[]) => {
   const queryClient = useQueryClient();
@@ -29,7 +11,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
   return useMutation({
     mutationFn: async (data: {
       budgetData: GADBudgetCreatePayload;
-      files?: FileData[]; // Changed from MediaUploadType to FileData[]
+       files: MediaItem[];
     }) => {
       // Validate remaining balance for Expense
       if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
@@ -50,21 +32,44 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
       // Create budget entry
       const budgetEntry = await createGADBudget(data.budgetData);
       
-      // Upload files if they exist
+       // ✅ Fixed: Only process files that have proper data
       if (data.files && data.files.length > 0) {
-        await Promise.all(
-          data.files.map((file) => 
-            createGADBudgetFile({
-              gbud_num: budgetEntry.gbud_num,
-              file_data: file
-            })
-          )
+        // Filter for valid files with base64 data (already formatted with data: prefix)
+        const validFiles = data.files.filter(file => 
+          file.file && 
+          typeof file.file === 'string' && 
+          file.file.startsWith('data:')
         );
+
+        console.log(`Processing ${validFiles.length} valid files out of ${data.files.length} total files`);
+
+        if (validFiles.length > 0) {
+          await Promise.all(
+            validFiles.map(async (file) => {
+              try {
+                // ✅ Fixed: Send the file with proper base64 data
+                const filePayload = {
+                  id: file.id,
+                  name: file.name,
+                  type: file.type,
+                  file: file.file, // This now contains the properly formatted base64 data
+                };
+
+                return await createGADBudgetFile(budgetEntry.gbud_num, [filePayload]);
+              } catch (error) {
+                console.error("Error creating file entry:", error);
+                return null;
+              }
+            })
+          );
+        } else {
+          console.warn('No valid files to upload after filtering');
+        }
       }
-      
+
       return budgetEntry;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({
         queryKey: ['gad-budgets', year],

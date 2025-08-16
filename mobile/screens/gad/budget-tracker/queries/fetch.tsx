@@ -1,47 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/api/api";
 import {
     fetchGADBudgets,
     fetchGADBudgetEntry,
     fetchIncomeParticulars,
-    fetchExpenseParticulars,
-    GADBudgetEntry,
-    DevelopmentBudgetItem,
-    fetchGADBudgetFile,
-    fetchGADBudgetFiles
+    fetchGADBudgetFile, fetchBudgetLog,
+    fetchGADBudgetFiles, fetchProjectProposalsAvailability
 } from "../request/get";
-
-import { GADBudgetFile } from "../request/post";
-
-export type GADBudgetEntryUI = GADBudgetEntry & {
-    gbud_particulars?: string | null;
-    gbud_amount?: number | null;
-};
+import { GADBudgetEntryUI, GADBudgetEntry, GADBudgetFile, ProjectProposal, BudgetLogTable } from "../bt-types";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
   return {
     ...entry,
-    gbud_inc_amt: entry.gbud_inc_amt != null ? Number(entry.gbud_inc_amt) : undefined,
-    gbud_proposed_budget: entry.gbud_proposed_budget != null ? Number(entry.gbud_proposed_budget) : undefined,
-    gbud_actual_expense: entry.gbud_actual_expense != null ? Number(entry.gbud_actual_expense) : undefined,
     gbud_particulars: entry.gbud_type === 'Income' 
-      ? entry.gbud_inc_particulars || null
-      : entry.gbud_exp_particulars || null,
+      ? entry.gbud_inc_particulars || undefined
+      : entry.gbud_exp_particulars || undefined,
     gbud_amount: entry.gbud_type === 'Income'
       ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
-      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
+      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null,
+    gbud_exp_particulars: entry.gbud_type === 'Expense' && entry.gbud_exp_particulars
+      ? Array.isArray(entry.gbud_exp_particulars) 
+        ? entry.gbud_exp_particulars 
+        : undefined
+      : undefined,
+    files: entry.files || [],
   };
 };
-
 
 export const useGADBudgets = (year?: string) => {
     return useQuery({
         queryKey: ['gad-budgets', year],
-        queryFn: async () => {
-            const data = await fetchGADBudgets(year || '');
-            console.log('fetchGADBudgets raw response:', data);
-            return data;
-        },
+        queryFn: () => fetchGADBudgets(year || ''),
         enabled: !!year,
         select: (data) => data.map(transformBudgetEntry),
         staleTime: 1000 * 60 * 5,
@@ -67,14 +55,6 @@ export const useIncomeParticulars = (year?: string) => {
     });
 };
 
-export const useExpenseParticulars = () => {
-    return useQuery<DevelopmentBudgetItem[]>({
-        queryKey: ['expense-particulars'],
-        queryFn: fetchExpenseParticulars,
-        staleTime: 1000 * 60 * 60 * 24,
-    });
-};
-
 export const useGADBudgetFiles = () => {
     return useQuery<GADBudgetFile[]>({
         queryKey: ['gad-budget-files'],
@@ -92,14 +72,20 @@ export const useGADBudgetFile = (gbf_id?: number) => {
     });
 };
 
-export const useGetGADBudgetEntry = (gbud_num: number | undefined) => {
-  return useQuery<GADBudgetEntry>({
-    queryKey: ["gad-budget-entry", gbud_num],
-    queryFn: async () => {
-      if (!gbud_num) throw new Error("Entry ID is required");
-      const response = await api.get(`/gad/gad-budget-tracker-entry/${gbud_num}/`);
-      return response.data;
-    },
-    enabled: !!gbud_num,
+export const useProjectProposalsAvailability = (year?: string) => {
+  return useQuery<ProjectProposal[], Error>({
+    queryKey: ["projectProposalsAvailability", year],
+    queryFn: () => fetchProjectProposalsAvailability(year || ""),
+    enabled: !!year,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useGADBudgetLogs = (year: string) => {
+  return useQuery<BudgetLogTable[], Error>({
+    queryKey: ["gadBudgetLogs", year],
+    queryFn: () => fetchBudgetLog(year),
+    enabled: !!year,
+    staleTime: 1000 * 60 * 5,
   });
 };
