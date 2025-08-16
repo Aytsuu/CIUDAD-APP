@@ -1,7 +1,5 @@
 import { api2 } from "@/api/api";
-// Adjust the import path as necessary
-import { useQuery } from "@tanstack/react-query";
-import {AgeGroupRecord} from "../AgeGroup"
+
 
 export const createAgegroup = async (data: Record<string,any>) => {
     try {
@@ -61,11 +59,4 @@ export const getAgegroup = async () => {
     }
 };
 
-export const useAgeGroups = () => {
-  return useQuery<AgeGroupRecord[]>({
-    queryKey: ["ageGroups"],
-    queryFn: getAgegroup,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-};
+

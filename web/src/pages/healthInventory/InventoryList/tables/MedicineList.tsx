@@ -11,7 +11,7 @@ import { MedicineRecords } from "../tables/columns/MedicineCol";
 import { Medcolumns } from "../tables/columns/MedicineCol";
 import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
 import { useDeleteMedicine } from "../queries/medicine/MedicineDeleteQueries";
-import { MedicineModal } from "../addListModal/MedicineModal";
+import MedicineModal from "../Modal/MedicineModal";
 
 export default function MedicineList() {
   const [searchQuery, setSearchQuery] = useState("");

@@ -21,7 +21,6 @@ export const addVaccine = async (data: {
   vac_name: string;
   no_of_doses: number;
   ageGroup: number;
-  // specify_age: string;
 }): Promise<any> => {
   try {
     const res = await api2.post("inventory/vac_list/", data);

@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   Activity,

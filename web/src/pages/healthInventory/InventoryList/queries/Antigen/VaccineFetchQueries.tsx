@@ -1,5 +1,3 @@
-
-
 import { useQuery } from "@tanstack/react-query";
 import { getAntigen } from "../../restful-api/Antigen/fetchAPI";
 

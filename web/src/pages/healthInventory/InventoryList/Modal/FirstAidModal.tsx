@@ -1,12 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
-  Form,
-} from "@/components/ui/form/form";
+import { FormField, FormItem, FormMessage, FormControl, FormLabel, Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { FirstAidType, FirstAidSchema } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,11 +12,10 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
 import { useFirstAid } from "../queries/firstAid/FirstAidFetchQueries";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface FirstAidData {
   id: string;
@@ -33,18 +25,17 @@ interface FirstAidData {
 }
 
 interface FirstAidModalProps {
-  mode?: 'add' | 'edit';
+  mode?: "add" | "edit";
   initialData?: FirstAidData;
   onClose: () => void;
 }
 
-export function FirstAidModal({ mode = 'add', initialData, onClose }: FirstAidModalProps) {
+export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidModalProps) {
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [firstAidName, setFirstAidName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs} = useCategoriesFirstAid();
+  const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesFirstAid();
   const { mutateAsync: addFirstAidMutation } = useAddFirstAid();
   const { mutateAsync: updateFirstAidMutation } = useUpdateFirstAid();
   const { data: firstAids } = useFirstAid();
@@ -53,70 +44,74 @@ export function FirstAidModal({ mode = 'add', initialData, onClose }: FirstAidMo
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
       fa_name: "",
-      cat_id: "",
-    },
+      cat_id: ""
+    }
   });
 
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
+    if (mode === "edit" && initialData) {
       form.reset({
         fa_name: initialData.fa_name || "",
-        cat_id: String(initialData.cat_id),
+        cat_id: String(initialData.cat_id)
       });
       setIsInitialized(true);
-    } else if (mode === 'add') {
+    } else if (mode === "add") {
       form.reset({
         fa_name: "",
-        cat_id: "",
+        cat_id: ""
       });
       setIsInitialized(true);
     }
   }, [mode, initialData, form]);
 
   useEffect(() => {
-    if (mode === 'edit' && initialData && categories.length > 0 && initialData.cat_id) {
+    if (mode === "edit" && initialData && categories.length > 0 && initialData.cat_id) {
       const catIdString = String(initialData.cat_id);
-      const categoryExists = categories.some(cat => String(cat.id) === catIdString);
+      const categoryExists = categories.some((cat) => String(cat.id) === catIdString);
       if (categoryExists) {
-        form.setValue('cat_id', catIdString);
+        form.setValue("cat_id", catIdString);
       } else {
-        console.warn('Category not found in options:', catIdString, 'Available:', categories.map(c => c.id));
+        console.warn(
+          "Category not found in options:",
+          catIdString,
+          "Available:",
+          categories.map((c) => c.id)
+        );
       }
     }
   }, [categories, mode, initialData, form]);
 
-  const confirmAction = async () => {
-    setIsConfirmationOpen(false);    
+  const handleConfirmAction = async () => {
     setIsSubmitting(true);
     const formData = form.getValues();
     formData.cat_id = String(formData.cat_id);
-    
+
     try {
-      if (mode === 'add' || (mode === 'edit' && formData.fa_name !== initialData?.fa_name)) {
+      if (mode === "add" || (mode === "edit" && formData.fa_name !== initialData?.fa_name)) {
         const existingFirstAids = firstAids || [];
-        
+
         if (!Array.isArray(existingFirstAids)) {
           throw new Error("Invalid API response - expected an array");
         }
-  
-        if (isDuplicateFirstAid(existingFirstAids, formData.fa_name, mode === 'edit' ? initialData?.id : undefined)) {
+
+        if (isDuplicateFirstAid(existingFirstAids, formData.fa_name, mode === "edit" ? initialData?.id : undefined)) {
           form.setError("fa_name", {
             type: "manual",
-            message: "First Aid name already exists",
+            message: "First Aid name already exists"
           });
           setIsSubmitting(false);
           return;
         }
       }
-  
-      if (mode === 'edit' && initialData) {
-        await updateFirstAidMutation({fa_id: initialData.id, data: formData});
+
+      if (mode === "edit" && initialData) {
+        await updateFirstAidMutation({ fa_id: initialData.id, data: formData });
         showSuccessToast("First Aid updated successfully");
       } else {
         await addFirstAidMutation({ data: formData });
         showSuccessToast("First Aid added successfully");
       }
-      
+
       onClose();
     } catch (err) {
       console.error("Error during submission:", err);
@@ -125,86 +120,62 @@ export function FirstAidModal({ mode = 'add', initialData, onClose }: FirstAidMo
       setIsSubmitting(false);
     }
   };
-  
-  const isDuplicateFirstAid = (
-    firstAids: any[],
-    newFirstAid: string,
-    currentId?: string
-  ) => {
-    return firstAids.some(
-      (fa) =>
-        fa.id !== currentId &&
-        fa?.fa_name?.trim()?.toLowerCase() === newFirstAid?.trim()?.toLowerCase()
-    );
+
+  const isDuplicateFirstAid = (firstAids: any[], newFirstAid: string, currentId?: string) => {
+    return firstAids.some((fa) => fa.id !== currentId && fa?.fa_name?.trim()?.toLowerCase() === newFirstAid?.trim()?.toLowerCase());
   };
 
   const hasChanges = (data: FirstAidType) => {
-    if (mode === 'add') return true;
+    if (mode === "add") return true;
     if (!initialData) return false;
-    
-    return (
-      data.fa_name.trim().toLowerCase() !== initialData.fa_name.trim().toLowerCase() ||
-      String(data.cat_id) !== String(initialData.cat_id)
-    );
+
+    return data.fa_name.trim().toLowerCase() !== initialData.fa_name.trim().toLowerCase() || String(data.cat_id) !== String(initialData.cat_id);
   };
-  
+
   const onSubmit = (data: FirstAidType) => {
     if (!data.cat_id) {
       toast.error("Please select a category");
       form.setError("cat_id", {
         type: "manual",
-        message: "Category is required",
+        message: "Category is required"
       });
       return;
     }
-
-    if (mode === 'edit' && !hasChanges(data)) {
-      toast.info("No changes detected");
-      return;
-    }
-
     setFirstAidName(data.fa_name);
-    setIsConfirmationOpen(true);
   };
 
   const getCurrentCategoryName = () => {
-    if (mode === 'add') return "Select category";
-    
+    if (mode === "add") return "Select category";
+
     const currentId = form.watch("cat_id") || initialData?.cat_id;
     if (!currentId) return "Select category";
-    
+
     const currentIdString = String(currentId);
     const foundCategory = categories.find((cat) => String(cat.id) === currentIdString);
     if (foundCategory) return foundCategory.name;
-    
+
     if (initialData?.cat_name) return initialData.cat_name;
-    
+
     return "Select category";
   };
 
-  if (mode === 'edit' && !initialData) {
+  const formValues = form.watch();
+  const isEditMode = mode === "edit";
+  const hasFormChanges = isEditMode && initialData ? formValues.fa_name !== initialData.fa_name || String(formValues.cat_id) !== String(initialData.cat_id) : true;
+
+  if (mode === "edit" && !initialData) {
     return null;
   }
 
   return (
     <div>
       <Form {...form}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="w-full"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
           <div className="flex flex-col gap-3">
-            <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
-              <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              {mode === 'edit' ? 'Edit First Aid' : 'Add First Aid Item'}
-            </Label>
+            <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">{mode === "edit" ? "Edit First Aid List" : "Add First Aid List"}</Label>
+            <hr className="mb-2" />
 
-            <FormInput
-              control={form.control}
-              name="fa_name"
-              label="First Aid Name"
-              placeholder="Enter first aid name"
-            />
+            <FormInput control={form.control} name="fa_name" label="First Aid Name" placeholder="Enter first aid name" />
 
             <FormField
               control={form.control}
@@ -220,7 +191,7 @@ export function FirstAidModal({ mode = 'add', initialData, onClose }: FirstAidMo
                       disabled={isSubmitting}
                       options={
                         categories.length > 0
-                          ? categories.map(cat => ({
+                          ? categories.map((cat) => ({
                               ...cat,
                               id: String(cat.id),
                               name: cat.name
@@ -251,38 +222,33 @@ export function FirstAidModal({ mode = 'add', initialData, onClose }: FirstAidMo
           </div>
 
           <div className="w-full flex flex-col sm:flex-row justify-end mt-6 sm:mt-8 gap-2">
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
+            <Button variant="outline" className="w-full sm:w-auto" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'edit' ? "Updating..." : "Submitting..."}
-                </>
-              ) : (
-                mode === 'edit' ? "Update" : "Submit"
-              )}
-            </Button>
+
+            <ConfirmationModal
+              trigger={
+                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges)}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {mode === "edit" ? "Updating..." : "Submitting..."}
+                    </>
+                  ) : mode === "edit" ? (
+                    "Update"
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              }
+              title={mode === "edit" ? "Update First Aid" : "Add First Aid"}
+              description={`Are you sure you want to ${mode === "edit" ? "update" : "add"} the first aid "${firstAidName}"?`}
+              onClick={handleConfirmAction}
+              actionLabel={isSubmitting ? "Processing..." : "Confirm"}
+            />
           </div>
         </form>
       </Form>
-
-      <ConfirmationDialog
-        isOpen={isConfirmationOpen}
-        onOpenChange={setIsConfirmationOpen}
-        title={mode === 'edit' ? 'Update First Aid' : 'Add First Aid'}
-        description={`Are you sure you want to ${mode === 'edit' ? 'update' : 'add'} the first aid "${firstAidName}"?`}
-        onConfirm={confirmAction}
-      />
 
       <ConfirmationDialogs />
     </div>

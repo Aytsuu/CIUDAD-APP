@@ -9,7 +9,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { CommodityRecords, CommodityColumns } from "./columns/commodityCol";
 import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
 import { useDeleteCommodity } from "../queries/commodity/CommodityDeleteQueries";
-import { CommodityModal } from "../addListModal/CommodityModal";
+import { CommodityModal } from "../Modal/CommodityModal";
 
 export default function CommodityList() {
   const [searchQuery, setSearchQuery] = useState("");

@@ -10,7 +10,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { useFirstAid } from "../queries/firstAid/FirstAidFetchQueries";
 import { useDeleteFirstAid } from "../queries/firstAid/FirstAidDeleteQueries";
 import { FirstAidColumns, FirstAidRecords } from "./columns/FirstAidCol";
-import { FirstAidModal } from "../addListModal/FirstAidModal";
+import { FirstAidModal } from "../Modal/FirstAidModal";
 
 export default function FirstAidList() {
   const [searchQuery, setSearchQuery] = useState("");
