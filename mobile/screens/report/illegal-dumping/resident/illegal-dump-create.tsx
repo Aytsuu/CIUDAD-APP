@@ -15,7 +15,7 @@ import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input'
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormSingleCheckbox } from '@/components/ui/form/form-single-checkbox';
-import MultiImageUploader, {MediaFileType} from '@/components/ui/multi-media-upload';
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useEffect, useState } from 'react';
 import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
@@ -23,7 +23,7 @@ import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
 
 export default function IllegalDumpCreateForm() {
   const router = useRouter();
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
+  const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const { data: fetchedSitio = [], isLoading } = useGetWasteSitio();
   const { mutate: addReport, isPending: isCreating } = useAddWasteReport();
 
@@ -54,22 +54,24 @@ export default function IllegalDumpCreateForm() {
       rep_add_details: '',
       rep_matter: '',
       rep_anonymous: false,
-      rep_image: [],
     }
   });
 
-  useEffect(() => {
-    setValue('rep_image', mediaFiles.map(file => ({
-      name: file.name,
-      type: file.type,
-      path: file.path,
-      uri: file.publicUrl || file.uri
-    })));
-  }, [mediaFiles, setValue]);
-
 
   const onSubmit = (values: z.infer<typeof IllegalDumpResSchema>) => {
-    addReport(values)
+
+    const files = selectedImages.map((img: any) => ({
+      name: img.name,
+      type: img.type,
+      file: img.file
+    }))
+
+    const allValues = {
+      ...values,
+      files      
+    }
+
+    addReport(allValues)
   };
 
 
@@ -131,13 +133,6 @@ export default function IllegalDumpCreateForm() {
               name="rep_violator"
               placeholder="Enter Violator"
             />            
-            
-            {/* <FormDateTimeInput
-              control={control}
-              label="Date"
-              name="rep_date"
-              type="date"
-            /> */}
 
             <FormDateAndTimeInput
               control={control}
@@ -145,26 +140,22 @@ export default function IllegalDumpCreateForm() {
               label="Date and Time"
             />
 
-            <View className="mb-3 mt-3">
-              <Text className="text-[12px] font-PoppinsRegular pb-1">Add a Photo of report</Text>
-              {errors.rep_image && (
-                <Text className="text-red-500 text-xs">
-                  {errors.rep_image.message}
-                </Text>
-              )}
-              <MultiImageUploader
-                mediaFiles={mediaFiles}
-                setMediaFiles={setMediaFiles}
-                maxFiles={3}
-              />
-            </View>
-
             <FormTextArea
               control={control}
               label="Additional Notes"
               name="rep_add_details"
               placeholder='Add additional notes (optional)'
             />
+
+            <View className="mb-6 mt-3">
+              <Text className="text-[12px] font-PoppinsRegular pb-1">Add a Photo of report</Text>
+              <MediaPicker
+                selectedImages={selectedImages}
+                setSelectedImages={setSelectedImages}
+                multiple={true}
+                maxImages={3}
+              /> 
+            </View>
 
             <FormSingleCheckbox
                 control={control}

@@ -84,7 +84,7 @@ class ResolutionFileSerializer(serializers.ModelSerializer):
             tracking_instance = Resolution.objects.get(pk=res_num)
         except Resolution.DoesNotExist:
             
-            raise ValueError(f"Income_Expense_Tracking with id {res_num} does not exist")       
+            raise ValueError(f"Resolution with id {res_num} does not exist")       
         
         rf_files = []
         for file_data in files:
@@ -106,6 +106,33 @@ class ResolutionSupDocsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResolutionSupDocs
         fields = '__all__'
+    
+    def _upload_files(self, files, res_num=None):
+
+        if not res_num:
+            return
+        
+        try:
+            tracking_instance = Resolution.objects.get(pk=res_num)
+        except Resolution.DoesNotExist:
+            
+            raise ValueError(f"Resolution with id {res_num} does not exist")       
+        
+        rsd_files = []
+        for file_data in files:
+            rsd_file = ResolutionSupDocs(
+                rsd_name=file_data['name'],
+                rsd_type=file_data['type'],
+                rsd_path=f"images/{file_data['name']}",
+                res_num=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'council-res-bucket', 'images')
+            rsd_file.rsd_url = url
+            rsd_files.append(rsd_file)
+
+        if rsd_files:
+            ResolutionSupDocs.objects.bulk_create(rsd_files)       
 
 class ResolutionSerializer(serializers.ModelSerializer):
     resolution_files = ResolutionFileSerializer(many=True, read_only=True)

@@ -110,26 +110,24 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
         }
 
         // Check if there are any images to upload
-        if (!reportInfo.rep_image || reportInfo.rep_image.length === 0) {
+        if (!reportInfo.files || reportInfo.files.length === 0) {
             return wasteReportResponse.data;
         }
 
         // Upload all images
-        const uploadPromises = reportInfo.rep_image.map(async (fileData: any) => {
-            console.log("FILE WASTE DATA: ", {
-                wrf_name: fileData.name,
-                wrf_type: fileData.type,
-                wrf_path: fileData.path,
-                wrf_url: fileData.uri,
-                rep_id: Number(RepNum)
-            });      
+        const uploadPromises = reportInfo.files.map(async (fileData: any) => { 
 
             const payload = {
-                wrf_name: fileData.name,
-                wrf_type: fileData.type,
-                wrf_path: fileData.path,
-                wrf_url: fileData.uri,
-                rep_id: Number(RepNum)
+                // wrf_name: fileData.name,
+                // wrf_type: fileData.type,
+                // wrf_path: fileData.path,
+                // wrf_url: fileData.uri,
+                rep_id: Number(RepNum),
+                files: [{
+                    name: fileData.name,
+                    type: fileData.type,
+                    file: fileData.file // The actual file object
+                }]
             };
 
             return api.post('waste/waste-rep-file/', payload);
