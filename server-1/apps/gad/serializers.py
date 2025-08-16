@@ -5,8 +5,7 @@ from decimal import Decimal
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import base64
-from utils.supabase_client import upload_to_storage
-import urllib.parse
+from utils.supabase_client import upload_to_storage, remove_from_storage
 
 Staff = apps.get_model('administration', 'Staff')
 
@@ -47,33 +46,67 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
 
         gbf_files = []
         for file_data in files:
-            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+            try:
+                if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                    continue
+                
+                # Upload to storage and get URL
+                file_url = upload_to_storage(
+                    file_data,
+                    'gad-btracker-bucket',
+                    'images'
+                )
+                
+                # Create file record
+                gbf_file = GAD_Budget_File(
+                    gbf_name=file_data.get('name', f"file_"),
+                    gbf_type=file_data.get('type', 'application/octet-stream'),
+                    gbf_path=f"images/{file_data.get('name')}",
+                    gbf_url=file_url,
+                    gbud=tracker_instance
+                )
+                gbf_files.append(gbf_file)
+                
+            except Exception as e:
+                print(f"Error processing file: {str(e)}")
                 continue
-
-            # Decode base64
-            header, data = file_data['file'].split(';base64,')
-            file_content = base64.b64decode(data)
-            file_obj = ContentFile(file_content, name=file_data['name'])
-
-            gbf_file = GAD_Budget_File(
-                gbf_name=file_data['name'],
-                gbf_type=file_data['type'],
-                gbf_path=f"Uploads/{file_data['name']}",  # Local or Supabase path
-                gbud=tracker_instance
-            )
-            # Use upload_to_storage to get the Supabase public URL
-            gbf_file.gbf_url = upload_to_storage(file_data, 'image-bucket', 'Uploads')
-            gbf_files.append(gbf_file)
 
         if gbf_files:
             GAD_Budget_File.objects.bulk_create(gbf_files)
         else:
             print('No valid files to save.')
+    
+    def _delete_files(self, files_to_delete, gbud_num=None):
+        if not gbud_num:
+            raise serializers.ValidationError({"error": "gbud_num is required"})
+
+        try:
+            tracker_instance = GAD_Budget_Tracker.objects.get(pk=gbud_num)
+        except GAD_Budget_Tracker.DoesNotExist:
+            raise serializers.ValidationError(f"GAD_Budget_Tracker with id {gbud_num} does not exist")
+
+        for file_data in files_to_delete:
+            try:
+                file_id = file_data.get('id')
+                file_path = file_data.get('path')
+                
+                if not file_id or not file_path:
+                    print(f"Skipping file deletion: Missing id or path in {file_data}")
+                    continue
+
+                # Delete from Supabase storage
+                remove_from_storage('gad-btracker-bucket', file_path)
+                
+                # Delete the database record
+                GAD_Budget_File.objects.filter(gbf_id=file_id, gbud=tracker_instance).delete()
+                
+            except Exception as e:
+                print(f"Error deleting file {file_data.get('id', 'unknown')}: {str(e)}")
+                continue
             
-    def get_gbf_url(self, obj):
-        # Ensure URL is properly encoded
-        import urllib.parse
-        return urllib.parse.quote(obj.gbf_url, safe=':/')
+    # def get_gbf_url(self, obj):
+    #     import urllib.parse
+    #     return urllib.parse.quote(obj.gbf_url, safe=':/')
 
 class GADBudgetFileReadSerializer(serializers.ModelSerializer):
     gbf_url = serializers.SerializerMethodField()
@@ -109,7 +142,8 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
             'gbud_actual_expense': {'required': False, 'allow_null': True},
             'gbud_reference_num': {'required': False, 'allow_null': True},
             'gbud_remaining_bal': {'required': False, 'allow_null': True},
-            'gbud_type': {'required': True}
+            'gbud_type': {'required': True},
+            'gpr': {'required': False}
         }
 
     def validate(self, data):
@@ -120,8 +154,6 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
         if data["gbud_type"] == "Expense":
             if not data.get("gbud_exp_project"):
                 raise serializers.ValidationError({"gbud_exp_project": "Project title is required for expense entries"})
-            if not data.get("gpr"):
-                raise serializers.ValidationError({"gpr": "Valid project ID is required for expense entries"})
             if not data.get("gbud_exp_particulars") or not isinstance(data["gbud_exp_particulars"], list):
                 raise serializers.ValidationError({"gbud_exp_particulars": "At least one budget item is required for expense entries"})
             
@@ -292,7 +324,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         if header_img_data:
             try:
                 # Upload to Supabase
-                url = upload_to_storage(header_img_data, 'image-bucket', 'Uploads')
+                url = upload_to_storage(header_img_data, 'gad-projprop-bucket', 'header_images')
                 instance.gpr_header_img = url
                 instance.save()
             except Exception as e:
@@ -318,7 +350,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             elif isinstance(header_img_data, dict):
                 try:
                     # Upload new file
-                    url = upload_to_storage(header_img_data, 'image-bucket', 'Uploads')
+                    url = upload_to_storage(header_img_data, 'gad-projprop-bucket', 'header_images')
                     instance.gpr_header_img = url
                 except Exception as e:
                     raise serializers.ValidationError({
@@ -390,17 +422,13 @@ class ProposalSuppDocSerializer(serializers.ModelSerializer):
             if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
                 continue
 
-            header, data = file_data['file'].split(';base64,')
-            file_content = base64.b64decode(data)
-            file_obj = ContentFile(file_content, name=file_data['name'])
-
             psd_file = ProposalSuppDoc(
                 psd_name=file_data['name'],
                 psd_type=file_data['type'],
                 psd_path=f"Uploads/{file_data['name']}",
                 gpr=proposal
             )
-            psd_file.psd_url = upload_to_storage(file_data, 'image-bucket', 'Uploads')
+            psd_file.psd_url = upload_to_storage(file_data, 'gad-projprop-bucket', 'supp_docs')
             psd_files.append(psd_file)
 
         if psd_files:

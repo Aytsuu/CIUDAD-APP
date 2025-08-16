@@ -1,4 +1,3 @@
-// form-schema/gad-budget-tracker-schema.ts
 import { z } from 'zod';
 
 const DataRequirement = z.union([
@@ -26,72 +25,72 @@ const DataRequirement = z.union([
 ]).nullable();
 
 const BudgetTrackerSchema = z.object({
-  gbud_type: z.enum(["Income", "Expense"], { message: "Type must be 'income' or 'expense'" }),
+  gbud_type: z.enum(["Income", "Expense"], { message: "Type must be 'Income' or 'Expense'" }),
   gbud_datetime: z.string().nonempty("Date is required"),
-  gbud_add_notes: z.string().max(500, "Notes must not exceed 500 characters").optional().nullable(),
-  gbud_inc_particulars: z.string().max(200, "Particulars must not exceed 200 characters").optional().nullable(),
-  gbud_inc_amt: DataRequirement.optional().nullable(),
-  gbud_exp_particulars: z.string().max(200, "Particulars must not exceed 200 characters").optional().nullable(),
-  gbud_proposed_budget: DataRequirement.optional().nullable(),
-  gbud_actual_expense: DataRequirement.optional().nullable(),
-  gbud_reference_num: z.string().max(200, "Reference number must not exceed 200 characters").optional().nullable(),
-  gbud_remaining_bal: DataRequirement.optional().nullable(),
-  gbudy: z.number().min(1, "Valid year budget is required"),
-  gdb_id: z.number().optional().nullable(),
-  gbud_files: z.array(
+  gbud_add_notes: z.string().max(500, "Notes must not exceed 500 characters").optional(),
+  gbud_inc_particulars: z.string().max(200, "Particulars must not exceed 200 characters").optional(),
+  gbud_inc_amt: DataRequirement.optional(),
+  gbud_exp_project: z.string().max(200, "Project title must not exceed 200 characters").optional(),
+  gbud_exp_particulars: z.array(
     z.object({
-      name: z.string(),
-      type: z.string(),
-      path: z.string(),
-      uri: z.string(),
+      name: z.string().nonempty("Budget item name is required"),
+      pax: z.string().nonempty("Pax is required"),
+      amount: z.union([
+        z.number().min(0, "Amount must be non-negative"),
+        z.string().transform((val) => parseFloat(val)).refine((val) => !isNaN(val), "Amount must be a valid number"),
+      ]).transform((val) => Number(val)),
     })
   ).optional(),
-}).refine(
-  (data) => {
-    if (data.gbud_type === "Income") {
-      return (
-        !!data.gbud_inc_particulars &&
-        data.gbud_inc_amt != null
-      );
+  gbud_actual_expense: DataRequirement.optional(),
+  gbud_reference_num: z.string().max(200, "Reference number must not exceed 200 characters").optional().nullable(),
+  gbud_remaining_bal: DataRequirement.optional(),
+  gbud_proposed_budget: DataRequirement.optional(),
+  gbudy: z.number().min(1, "Valid year budget is required"),
+  gpr: z.number().optional().nullable(),
+}).superRefine((data, ctx) => {
+  // Income validation
+  if (data.gbud_type === "Income") {
+    if (!data.gbud_inc_particulars) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gbud_inc_particulars"],
+        message: "Income particulars required",
+      });
     }
-    if (data.gbud_type === "Expense") {
-      return (
-        !!data.gbud_exp_particulars &&
-        (data.gbud_actual_expense != null || data.gbud_proposed_budget != null)
-      );
+    if (data.gbud_inc_amt === undefined || data.gbud_inc_amt === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gbud_inc_amt"],
+        message: "Income amount required",
+      });
     }
-    return false;
-  },
-  {
-    message: "Particulars and either proposed budget or actual expense are required for expenses",
-    path: ["gbud_type"],
   }
-);
+
+  // Expense validation
+  if (data.gbud_type === "Expense") {
+    if (!data.gbud_exp_project) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gbud_exp_project"],
+        message: "Project title is required",
+      });
+    }
+    if (!data.gbud_exp_particulars || data.gbud_exp_particulars.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gbud_exp_particulars"],
+        message: "At least one budget item is required",
+      });
+    }
+  if (data.gbud_actual_expense !== null && data.gbud_actual_expense !== undefined && data.gbud_actual_expense < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gbud_actual_expense"],
+        message: "Actual expense cannot be negative",
+      });
+    }
+  }
+});
 
 export type FormValues = z.infer<typeof BudgetTrackerSchema>;
 export default BudgetTrackerSchema;
-
-export const GADEditEntrySchema = z.object({
-  gbud_datetime: z.string(),
-  gbud_type: z.enum(['Income', 'Expense']),
-  gbud_add_notes: z.string().nullish(),
-  gbud_inc_particulars: z.string().nullish(),
-  gbud_inc_amt: z.string().nullish(),
-  gbud_exp_particulars: z.string().nullish(),
-  gbud_proposed_budget: z.string().nullish(),
-  gbud_actual_expense: z.string().nullish(),
-  gbud_reference_num: z.string().nullish(),
-  gbud_remaining_bal: z.number().nullish(),
-  gbudy: z.number(),
-  gdb: z.number().nullish(),
-  gbud_files: z.array(
-    z.object({
-      name: z.string(),
-      type: z.string(),
-      path: z.string(),
-      uri: z.string(),
-    })
-  ).optional(),
-});
-
-export type EditFormValues = z.infer<typeof GADEditEntrySchema>;
