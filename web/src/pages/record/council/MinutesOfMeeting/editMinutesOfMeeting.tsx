@@ -1,6 +1,6 @@
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Button } from '@/components/ui/button/button.tsx';
-import { Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
+import { Form, FormControl, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -22,20 +22,20 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
     onSuccess?: () => void;
 }) {
 
-
-   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
+    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
         return momf_url
             ? [{
                 id: `existing-${momf_id}`,
                 name: momf_url.split('/').pop() || `file-${momf_id}`,
-                type: 'document/pdf', 
+                type: 'document/pdf',
                 url: momf_url
             }]
             : [];
     });
     const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [fileError, setFileError] = useState<string>("");
 
-    const{mutate: editMOM, isPending} = useUpdateMinutesOfMeeting(onSuccess);
+    const { mutate: editMOM, isPending } = useUpdateMinutesOfMeeting(onSuccess);
     const form = useForm<z.infer<typeof minutesOfMeetingEditFormSchema>>({
         resolver: zodResolver(minutesOfMeetingEditFormSchema),
         defaultValues: {
@@ -55,46 +55,43 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
     ];
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingEditFormSchema>) => {
+        if (!mediaFiles || mediaFiles.length === 0) {
+            setFileError("Meeting file is required.");
+            return;
+        }
+        setFileError("");
         const files = mediaFiles.map((media) => ({
-            'id': media.id,
-            'name': media.name,
-            'type': media.type,
-            'file': media.file
-        }))   
-        console.log('Submitting files:', files);     
-        console.log('Values:', values)
-        editMOM({...values, files })
+            id: media.id,
+            name: media.name,
+            type: media.type,
+            file: media.file
+        }));
+        editMOM({ ...values, files });
     };
 
-
-    return(
-    <div className="max-h-[80vh] overflow-y-auto p-4">
-            {/* Form Inside Dialog */}
+    return (
+        <div className="max-h-[80vh] overflow-y-auto p-4">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    {/* Title Field */}
                     <FormTextArea
                         control={form.control}
                         name="meetingTitle"
-                        label="Meeting Tile"    
+                        label="Meeting Tile"
                     />
-
-                    {/*Meeting Agenda */}
+                    
                     <FormTextArea
                         control={form.control}
                         name="meetingAgenda"
-                        label="Meeting Agenda"    
-                    />                                 
+                        label="Meeting Agenda"
+                    />
 
-                    {/* Date Approved Field */}
                     <FormDateTimeInput
                         control={form.control}
                         name="meetingDate"
                         label="Date"
-                        type="date"    
+                        type="date"
                     />
 
-                  
                     <FormItem>
                         <FormControl>
                             <MediaUpload
@@ -109,18 +106,17 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
                             />
                         </FormControl>
                         <FormMessage />
+                        {fileError && (
+                            <div className="text-red-500 text-xs mt-2">{fileError}</div>
+                        )}
                     </FormItem>
-                     
-                    
-                    {/* Categories Field */}
+
                     <FormComboCheckbox
                         control={form.control}
                         name="meetingAreaOfFocus"
                         label="Select Area of Focus"
                         options={meetingAreaOfFocus}
                     />
-
-                    {/* Submit Button */}
                     <div className="flex items-center justify-end pt-4">
                         <Button type="submit" onClick={() => console.log('clicked')} className="w-[100px]" disabled={isPending}>
                             {isPending ? "Updating..." : "Update"}
@@ -129,5 +125,5 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
                 </form>
             </Form>
         </div>
-    )
+    );
 }
