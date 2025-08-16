@@ -117,7 +117,7 @@ export const FormInput = ({
               `}
               placeholder={placeholder}
               placeholderTextColor="#888"
-              value={value || ""}
+              value={value != null ? String(value): ''}
               onChangeText={handleChange} // Use the custom handler
               onBlur={onBlur}
               secureTextEntry={secureTextEntry}
