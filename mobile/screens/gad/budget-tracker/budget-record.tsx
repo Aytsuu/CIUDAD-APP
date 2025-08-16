@@ -359,7 +359,7 @@ const BudgetTrackerRecords = () => {
       <View className="flex p-2">
         <View className="flex-row items-center">
           <Text className="text-gray-600">Budget:</Text>
-          <Text className="text-red-500 font-bold ml-2">
+          <Text className="text-blue-500 font-bold ml-2">
             ₱
             {Number(currentYearBudget).toLocaleString("en-US", {
               minimumFractionDigits: 2,
@@ -377,7 +377,7 @@ const BudgetTrackerRecords = () => {
         </View>
         <View className="flex-row items-center mt-1">
           <Text className="text-gray-600">Pending Expenses:</Text>
-          <Text className="text-blue-600 font-bold ml-2">
+          <Text className="text-red-600 font-bold ml-2">
             ₱
             {calculateTotalProposedWithoutActual().toLocaleString("en-US", {
               minimumFractionDigits: 2,
