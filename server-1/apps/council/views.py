@@ -430,7 +430,7 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
     
 
 class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
-    serializer_class = MOMFileSerializer
+    serializer_class = MOMFileViewSerializer
     queryset = MOMFile.objects.all()
     lookup_field = 'momf_id'
 

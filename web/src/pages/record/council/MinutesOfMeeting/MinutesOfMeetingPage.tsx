@@ -16,6 +16,7 @@ import EditMinutesOfMeeting from "./editMinutesOfMeeting"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Card } from "@/components/ui/card/card"
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { formatDate } from "@/helpers/dateHelper"
 
 function MinutesOfMeetingPage() {
   const [filter, _setFilter] = useState<string>("all")
@@ -105,7 +106,7 @@ function MinutesOfMeetingPage() {
             <CardTitle className="text-xl font-semibold text-gray-900 leading-tight mb-2">{record.mom_title}</CardTitle>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Calendar size={16} />
-              <span>{record.mom_date}</span>
+              <span>{formatDate(record.mom_date, true)}</span>
             </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">

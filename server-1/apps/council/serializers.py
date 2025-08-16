@@ -155,10 +155,10 @@ class MOMSuppDocSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
-    file_url = serializers.SerializerMethodField()
-    file_id = serializers.SerializerMethodField()
-    areas_of_focus = serializers.SerializerMethodField()
-    supporting_docs = MOMSuppDocSerializer(source='momsuppdoc_set', many=True, read_only=True)
+    file_url = serializers.SerializerMethodField(read_only=True)  # Read-only
+    file_id = serializers.SerializerMethodField(read_only=True)   # Read-only
+    areas_of_focus = serializers.SerializerMethodField(read_only=True)  # Read-only
+    supporting_docs = MOMSuppDocSerializer(source='momsuppdoc_set', many=True, read_only=True)  # Read-only
 
     class Meta:
         model = MinutesOfMeeting
@@ -169,14 +169,24 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
             'areas_of_focus',
             'supporting_docs'
         ]
+        read_only_fields = [
+            'file_url',
+            'file_id',
+            'areas_of_focus',
+            'supporting_docs'
+        ]
 
     def get_file_url(self, obj):
-        file = obj.momfile_set.first()
-        return file.momf_url if file else None
+        try:
+            return obj.momfile.momf_url 
+        except MOMFile.DoesNotExist:
+            return None
 
     def get_file_id(self, obj):
-        file = obj.momfile_set.first()
-        return file.momf_id if file else None
+        try:
+            return obj.momfile.momf_id  
+        except MOMFile.DoesNotExist:
+            return None
 
     def get_areas_of_focus(self, obj):
         return [
@@ -185,6 +195,8 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
             if area.mof_area
         ]
 
+    def create(self, validated_data):
+        return MinutesOfMeeting.objects.create(**validated_data)
 
 class MOMAreaOfFocusSerializer(serializers.ModelSerializer):
     class Meta:
@@ -196,36 +208,39 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MOMFile
-        fields = ['mom_id', 'files']  
+        fields = ['mom_id', 'files']
 
     @transaction.atomic
-    def create(self, validated_data):
+    def create(self, validated_data):   
         files = validated_data.pop('files', [])
-        mom_instance = validated_data.get('mom_id')
-        
-        # Create initial instance (if needed)
-        mom_file_instance = super().create(validated_data)
-        
-        if files and mom_instance:
-            self._upload_files(mom_instance, files)
+        if not files:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        mom_id = validated_data.pop('mom_id')
+        created_files = self._upload_files(files, mom_id)
 
-        return mom_file_instance
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
 
-    def _upload_files(self, mom_instance, files):
+        return created_files[0]
+
+    def _upload_files(self, files, mom_id):
         mom_files = []
         for file_data in files:
-            url = upload_to_storage(file_data, 'council-mom-bucket', 'documents')
-            
-            mom_files.append(MOMFile(
-                mom_id=mom_instance,
+            mom_file = MOMFile(
                 momf_name=file_data['name'],
                 momf_type=file_data['type'],
-                momf_path=f"documents/{file_data['name']}",
-                momf_url=url
-            ))
+                momf_path=file_data['name'],
+                mom_id=mom_id
+            )
+
+            url = upload_to_storage(file_data, 'council-mom-bucket', 'documents')
+            mom_file.momf_url = url
+            mom_files.append(mom_file)
 
         if mom_files:
-            MOMFile.objects.bulk_create(mom_files)
+            return MOMFile.objects.bulk_create(mom_files)
+        return []
 
 
 

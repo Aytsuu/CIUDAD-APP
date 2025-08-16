@@ -71,7 +71,8 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                         control={form.control}
                         name="meetingDate"
                         label="Date"
-                        type="date"    
+                        type="date"
+                        max={new Date().toISOString().split('T')[0]}
                     />
 
                     
