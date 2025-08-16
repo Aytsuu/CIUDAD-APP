@@ -40,6 +40,7 @@ function AdminGADProjectProposal() {
     { id: "Pending", name: "Pending" },
     { id: "Viewed", name: "Viewed" },
     { id: "Amend", name: "Amend" },
+    { id: "Resubmitted", name: "Resubmitted"},
     { id: "Approved", name: "Approved" },
     { id: "Rejected", name: "Rejected" },
   ];
