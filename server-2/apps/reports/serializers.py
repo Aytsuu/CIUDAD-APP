@@ -9,3 +9,8 @@ class MonthlyRCPReportSerializer(serializers.ModelSerializer):
         model = MonthlyRecipientListReport
         fields = '__all__'
         
+
+class FileInputSerializer(serializers.Serializer):
+  name = serializers.CharField()
+  type = serializers.CharField()
+  file = serializers.CharField()
