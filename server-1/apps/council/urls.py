@@ -23,14 +23,16 @@ urlpatterns=[
     path('summon-template/', SummonTemplateView.as_view(), name='summon-template'),
 
     # MINUTES OF MEETING
+    # mobile and web
     path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
     path('mom-area-of-focus/', MOMAreaOfFocusView.as_view(), name='mom-area-of-focus'),
     path('delete-mom-area-of-focus/<int:mom_id>/', DeleteMOMAreaOfFocusView.as_view(), name='delete-mom-area-of-focus'),
-    path('mom-details-view/<int:mom_id>/', MinutesOfMeetingDetailView.as_view(), name='mom-detail-view' ),
     path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
     path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),
-    path('update-mom-file/<int:momf_id>/', UpdateMOMFileView.as_view(), name="update-mom-file"),
+    path('delete-mom-file/<int:mom_id>/', DeleteMOMFileView.as_view(), name="delete-mom-file"),
+    # mobile
+    path('mom-details-view/<int:mom_id>/', MinutesOfMeetingDetailView.as_view(), name='mom-detail-view' ),
     path('mom-supp-doc/', MOMSuppDocView.as_view(), name='mom-supp-doc',),
     path('meeting-supp-docs/<int:mom_id>/', MeetingSuppDocsView.as_view(), name='meeting-supp-docs'),
     path('delete-mom-supp-doc/<int:momsp_id>/', DeleteMOMSuppDocView.as_view(), name = 'delete-mom-supp-doc'),

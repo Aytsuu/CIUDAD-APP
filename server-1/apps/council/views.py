@@ -356,6 +356,86 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     
 
 # ==================== MINUTES OF MEETING=======================
+# class MinutesOfMeetingView(generics.ListCreateAPIView):
+#     serializer_class = MinutesOfMeetingSerializer
+#     queryset = MinutesOfMeeting.objects.all()
+
+# class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
+#     queryset = MinutesOfMeeting.objects.all()
+#     serializer_class = MinutesOfMeetingSerializer
+#     lookup_field = 'mom_id'
+
+# class MOMAreaOfFocusView(generics.ListCreateAPIView):
+#     serializer_class = MOMAreaOfFocusSerializer
+#     queryset = MOMAreaOfFocus.objects.all()
+
+# class MOMFileView(generics.ListCreateAPIView):
+#     serializer_class = MOMFileSerialzer
+#     queryset = MOMFile.objects.all()
+
+# class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
+#     serializer_class = MinutesOfMeetingSerializer
+#     queryset = MinutesOfMeeting.objects.all()
+#     lookup_field = 'mom_id'
+
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
+#     serializer_class = MinutesOfMeetingSerializer    
+#     queryset = MinutesOfMeeting.objects.all()
+
+#     def get_object(self):
+#         mom_id = self.kwargs.get('mom_id')
+#         return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
+    
+
+# class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
+#     serializer_class = MOMFileSerialzer
+#     queryset = MOMFile.objects.all()
+#     lookup_field = 'momf_id'
+
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+# class DeleteMOMAreaOfFocusView(APIView):
+#     def delete(self, request, mom_id):
+#         get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
+#         deleted_count, _ = MOMAreaOfFocus.objects.filter(mom_id=mom_id).delete()
+
+#         return Response(
+#             {"detail": f"{deleted_count} area(s) of focus deleted."},
+#             status=status.HTTP_204_NO_CONTENT
+#         )
+    
+
+# class MOMSuppDocView(generics.ListCreateAPIView):
+#     serializer_class = MOMSuppDocSerializer
+#     query_set = MOMSuppDoc.objects.all()
+
+# class MeetingSuppDocsView(generics.ListAPIView):
+#     serializer_class = MOMSuppDocSerializer
+    
+#     def get_queryset(self):
+#         mom_id = self.kwargs['mom_id']
+#         return MOMSuppDoc.objects.filter(mom_id=mom_id)
+
+# class DeleteMOMSuppDocView(generics.DestroyAPIView):
+#     queryset = MOMSuppDoc.objects.all()
+#     serializer_class = MOMSuppDocSerializer
+#     lookup_field = 'momsp_id'
+
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
@@ -370,8 +450,15 @@ class MOMAreaOfFocusView(generics.ListCreateAPIView):
     queryset = MOMAreaOfFocus.objects.all()
 
 class MOMFileView(generics.ListCreateAPIView):
-    serializer_class = MOMFileSerialzer
+    serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(serializer.errors) 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
 
 class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
     serializer_class = MinutesOfMeetingSerializer
@@ -395,19 +482,14 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
         return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
     
 
-class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
-    serializer_class = MOMFileSerialzer
+class DeleteMOMFileView(generics.DestroyAPIView):
+    serializer_class = MOMFileViewSerializer    
     queryset = MOMFile.objects.all()
-    lookup_field = 'momf_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+    def get_object(self):
+        mom_id = self.kwargs.get('mom_id')
+        return get_object_or_404(MOMFile, mom_id=mom_id)
+
 
 class DeleteMOMAreaOfFocusView(APIView):
     def delete(self, request, mom_id):

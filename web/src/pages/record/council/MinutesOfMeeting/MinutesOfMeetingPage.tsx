@@ -16,6 +16,7 @@ import EditMinutesOfMeeting from "./editMinutesOfMeeting"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Card } from "@/components/ui/card/card"
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { formatDate } from "@/helpers/dateHelper"
 
 function MinutesOfMeetingPage() {
   const [filter, _setFilter] = useState<string>("all")
@@ -37,7 +38,7 @@ function MinutesOfMeetingPage() {
       case "council":
         return "Council"
       case "waste":
-        return "Waste"
+        return "Waste Committee"
       default:
         return focus
     }
@@ -105,7 +106,7 @@ function MinutesOfMeetingPage() {
             <CardTitle className="text-xl font-semibold text-gray-900 leading-tight mb-2">{record.mom_title}</CardTitle>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Calendar size={16} />
-              <span>{record.mom_date}</span>
+              <span>{formatDate(record.mom_date, true)}</span>
             </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">
@@ -113,7 +114,7 @@ function MinutesOfMeetingPage() {
               <TooltipLayout
                 trigger={
                   <a
-                    href={record.file_url}
+                    href={record.momf_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 p-2.5 rounded-lg cursor-pointer flex items-center justify-center transition-colors"
@@ -142,8 +143,8 @@ function MinutesOfMeetingPage() {
                               mom_agenda={record.mom_agenda}
                               mom_date={record.mom_date}
                               mom_id={Number(record.mom_id)}
-                              file_id={Number(record.file_id)}
-                              file_url={record.file_url}
+                              momf_id={Number(record.momf_id)}
+                              momf_url={record.momf_url}
                               areas_of_focus={record.areas_of_focus}
                               onSuccess={() => setEditingRowId(null)}
                             />
@@ -310,10 +311,10 @@ function MinutesOfMeetingPage() {
 
       <div className="rounded-lg">
         {/* Header with Search and Create Button */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-6">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-medium text-gray-800">
-              {activeSubTab === "active" ? "Active Records" : "Archived Records"} (
+              {activeSubTab === "active" ? "Active Records" : "Inactive Records"} (
               {activeSubTab === "active" ? filteredActiveData.length : filteredArchivedData.length})
             </h2>
           </div>
@@ -355,7 +356,7 @@ function MinutesOfMeetingPage() {
               <TabsTrigger value="active">Records</TabsTrigger>
               <TabsTrigger value="all">
                 <div className="flex items-center gap-2">
-                  <Archive size={16} /> Archive
+                  <Archive size={16} /> Inactive
                 </div>
               </TabsTrigger>
             </TabsList>
@@ -392,8 +393,8 @@ function MinutesOfMeetingPage() {
               ) : (
                 <div className="text-center py-12">
                   <Archive className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No archived records</h3>
-                  <p className="mt-1 text-sm text-gray-500">Archived records will appear here.</p>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No inactive records</h3>
+                  <p className="mt-1 text-sm text-gray-500">Inactive records will appear here.</p>
                 </div>
               )}
             </div>
@@ -409,4 +410,3 @@ function MinutesOfMeetingPage() {
 }
 
 export default MinutesOfMeetingPage
-

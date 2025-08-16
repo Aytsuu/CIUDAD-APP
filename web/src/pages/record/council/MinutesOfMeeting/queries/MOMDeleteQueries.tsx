@@ -1,7 +1,8 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { deleteMinutesOfMeeting } from "../restful-API/MOMDeleteAPI";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 
 export const useDeleteMinutesofMeeting = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -14,20 +15,12 @@ export const useDeleteMinutesofMeeting = (onSuccess?: () => void) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });
 
-            toast.success('Record is deleted successfully', {
-                id: "deleteMOM",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
-            
+            showSuccessToast("Record deleted successfully");
             onSuccess?.();
         },
         onError: (err) => {
             console.error("Error deleting record:", err);
-            toast.error("Failed to delete record", {
-            id: "deleteMOM",
-            duration: 2000
-            });
+            showErrorToast("Failed to delete record");
         }
     })
 }
