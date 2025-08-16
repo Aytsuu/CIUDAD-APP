@@ -8,6 +8,7 @@ import _ScreenLayout from '@/screens/_ScreenLayout';
 import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteReport } from '../queries/illegal-dump-update-queries';
+import { ActivityIndicator } from 'react-native';
 
 
 export default function WasteIllegalDumpingDetails() {
@@ -102,10 +103,11 @@ export default function WasteIllegalDumpingDetails() {
           files: files,
       };
       
-      updateRep(updateData);
-      console.log("UPDATE REPORT: ", updateData)
-
-      setShowResolutionModal(false);
+      updateRep(updateData, {
+        onSuccess: () => {
+          setTimeout(() => setShowResolutionModal(false), 100);
+        }
+      });
   };
 
 
@@ -265,9 +267,20 @@ export default function WasteIllegalDumpingDetails() {
                                     className={`py-3 rounded-md mt-4 items-center ${
                                         isResolved ? "bg-gray-400" : "bg-blue-500"
                                     }`}
-                                    disabled={isResolved}
+                                    disabled={isResolved || isPending}
                                 >
-                                    <Text className="text-white font-medium">Submit</Text>
+                                    {isPending ? (
+                                      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                                        <ActivityIndicator 
+                                          size="small" 
+                                          color="white" 
+                                          style={{marginRight: 8}}
+                                        />
+                                        <Text className="text-white font-medium">Submitting...</Text>
+                                      </View>
+                                    ) : (
+                                      <Text className="text-white font-medium">Submit</Text>
+                                    )}                                    
                                 </TouchableOpacity>
                             }
                             title="Confirm Save"
