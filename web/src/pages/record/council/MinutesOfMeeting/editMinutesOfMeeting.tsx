@@ -11,32 +11,31 @@ import { useState } from 'react';
 import { minutesOfMeetingEditFormSchema } from '@/form-schema/council/minutesOfMeetingSchema';
 import { useUpdateMinutesOfMeeting } from './queries/MOMUpdateQueries';
 
-export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, mom_id, file_url, file_id, areas_of_focus, onSuccess}: {
+export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, mom_id, momf_url, momf_id, areas_of_focus, onSuccess}: {
     mom_title: string;
     mom_agenda: string;
     mom_date: string;
     mom_id: number;
-    file_url: string;
-    file_id: number;
+    momf_url: string;
+    momf_id: number;
     areas_of_focus: string[];
     onSuccess?: () => void;
 }) {
 
 
-    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
-        return file_url ? [{
-            id: `existing-${file_id || 'default'}`,
-            type: 'document',
-            status: 'uploaded' as const,
-            publicUrl: file_url,
-            previewUrl: file_url,
-            storagePath: '',
-            file: new File([], file_url.split('/').pop() || 'document')
-        }] : [];
+   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
+        return momf_url
+            ? [{
+                id: `existing-${momf_id}`,
+                name: momf_url.split('/').pop() || `file-${momf_id}`,
+                type: 'document/pdf', 
+                url: momf_url
+            }]
+            : [];
     });
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
-    const{mutate: editMOM} = useUpdateMinutesOfMeeting(onSuccess);
+    const{mutate: editMOM, isPending} = useUpdateMinutesOfMeeting(onSuccess);
     const form = useForm<z.infer<typeof minutesOfMeetingEditFormSchema>>({
         resolver: zodResolver(minutesOfMeetingEditFormSchema),
         defaultValues: {
@@ -44,9 +43,7 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
             meetingAgenda: mom_agenda,
             meetingDate: mom_date,
             meetingAreaOfFocus: areas_of_focus,
-            meetingFile: file_url || '', 
             mom_id: mom_id,
-            momf_id: file_id,
         },
     });
 
@@ -58,19 +55,15 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
     ];
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingEditFormSchema>) => {
+        const files = mediaFiles.map((media) => ({
+            'id': media.id,
+            'name': media.name,
+            'type': media.type,
+            'file': media.file
+        }))   
+        console.log('Submitting files:', files);     
         console.log('Values:', values)
-        editMOM({
-            mom_id: Number(values.mom_id),
-            momf_id: Number(values.momf_id),
-            values: {
-                meetingTitle: values.meetingTitle,
-                meetingAgenda: values.meetingAgenda,
-                meetingDate: values.meetingDate,
-                meetingAreaOfFocus: values.meetingAreaOfFocus,
-                meetingFile: [], // submit empty because its not needed
-            },
-            mediaFiles
-        });
+        editMOM({...values, files })
     };
 
 
@@ -101,25 +94,23 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
                         type="date"    
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="meetingFile"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormControl>
-                                    <MediaUpload
-                                        title="Meeting File"
-                                        description="Upload meeting documentation"
-                                        mediaFiles={mediaFiles}
-                                        setMediaFiles={setMediaFiles}
-                                        activeVideoId={activeVideoId}
-                                        setActiveVideoId={setActiveVideoId}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                  
+                    <FormItem>
+                        <FormControl>
+                            <MediaUpload
+                                title="Meeting File"
+                                description="Upload meeting documentation"
+                                mediaFiles={mediaFiles}
+                                setMediaFiles={setMediaFiles}
+                                activeVideoId={activeVideoId}
+                                setActiveVideoId={setActiveVideoId}
+                                maxFiles={1}
+                                acceptableFiles='document'
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                     
                     
                     {/* Categories Field */}
                     <FormComboCheckbox
@@ -131,8 +122,8 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
 
                     {/* Submit Button */}
                     <div className="flex items-center justify-end pt-4">
-                        <Button type="submit" onClick={() => console.log('clicked')} className="w-[100px]">
-                            Save
+                        <Button type="submit" onClick={() => console.log('clicked')} className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Updating..." : "Update"}
                         </Button>
                     </div>
                 </form>

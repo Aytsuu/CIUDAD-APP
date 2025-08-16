@@ -114,7 +114,7 @@ function MinutesOfMeetingPage() {
               <TooltipLayout
                 trigger={
                   <a
-                    href={record.file_url}
+                    href={record.momf_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 p-2.5 rounded-lg cursor-pointer flex items-center justify-center transition-colors"
@@ -143,8 +143,8 @@ function MinutesOfMeetingPage() {
                               mom_agenda={record.mom_agenda}
                               mom_date={record.mom_date}
                               mom_id={Number(record.mom_id)}
-                              file_id={Number(record.file_id)}
-                              file_url={record.file_url}
+                              momf_id={Number(record.momf_id)}
+                              momf_url={record.momf_url}
                               areas_of_focus={record.areas_of_focus}
                               onSuccess={() => setEditingRowId(null)}
                             />
@@ -311,7 +311,7 @@ function MinutesOfMeetingPage() {
 
       <div className="rounded-lg">
         {/* Header with Search and Create Button */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-6">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-medium text-gray-800">
               {activeSubTab === "active" ? "Active Records" : "Inactive Records"} (

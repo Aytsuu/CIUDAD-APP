@@ -155,8 +155,8 @@ class MOMSuppDocSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
-    file_url = serializers.SerializerMethodField(read_only=True)  # Read-only
-    file_id = serializers.SerializerMethodField(read_only=True)   # Read-only
+    momf_url = serializers.SerializerMethodField(read_only=True)  # Read-only
+    momf_id = serializers.SerializerMethodField(read_only=True)   # Read-only
     areas_of_focus = serializers.SerializerMethodField(read_only=True)  # Read-only
     supporting_docs = MOMSuppDocSerializer(source='momsuppdoc_set', many=True, read_only=True)  # Read-only
 
@@ -164,25 +164,25 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
         model = MinutesOfMeeting
         fields = '__all__'
         extra_fields = [
-            'file_url',
-            'file_id',
+            'momf_url',
+            'momf_id',
             'areas_of_focus',
             'supporting_docs'
         ]
         read_only_fields = [
-            'file_url',
-            'file_id',
+            'momf_url',
+            'momf_id',
             'areas_of_focus',
             'supporting_docs'
         ]
 
-    def get_file_url(self, obj):
+    def get_momf_url(self, obj):
         try:
             return obj.momfile.momf_url 
         except MOMFile.DoesNotExist:
             return None
 
-    def get_file_id(self, obj):
+    def get_momf_id(self, obj):
         try:
             return obj.momfile.momf_id  
         except MOMFile.DoesNotExist:

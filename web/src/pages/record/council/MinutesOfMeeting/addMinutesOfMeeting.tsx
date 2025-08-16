@@ -85,6 +85,8 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                                 setMediaFiles={setMediaFiles}
                                 activeVideoId={activeVideoId}
                                 setActiveVideoId={setActiveVideoId}
+                                maxFiles={1}
+                                acceptableFiles='document'
                             />
                         </FormControl>
                         <FormMessage />
